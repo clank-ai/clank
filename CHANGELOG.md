@@ -4,7 +4,7 @@
 
 Clank is a local LLM suite: an AI coding and research assistant that runs on your own hardware, or with a cloud model
 through an API key. This is its first public release. Start with [docs/getting-started.md](docs/getting-started.md).
-It is free software under the GNU Affero General Public License, version 3 (AGPL-3.0-only).
+Free and open source under the AGPL-3.0.
 
 ### What works (on Windows)
 

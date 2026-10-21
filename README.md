@@ -67,6 +67,22 @@ Clank exists for two reasons.
 Clank's aim is to be far more useful than a hosted coding agent, because nothing about how your models run is hidden
 from you or decided for you.
 
+## Made to be forked
+
+Clank is not meant to be used as it comes. It is meant to be **forked, redesigned and rebuilt for what you need**: your
+models, your tools, your way of working. It is built to make that easy:
+
+- **One shape for every part.** Each component (models, workspaces, the gateway, agents, flows) has the same layout of
+  adapters and console pages, so a new engine, a new cloud provider, a new kind of flow box or a new console page
+  follows a pattern you can see.
+- **Every design and decision written down**, with its reasons ([designs](docs/design/README.md),
+  [decisions](docs/decisions/README.md)), and a plan for every step of the work.
+- **[AGENTS.md](AGENTS.md)** explains the project to people and language models alike, so your own local model can read
+  it and help you change Clank.
+- **Tests come first**, and one command runs every check: `uv run python -m tools.check`.
+
+**[Fork it on GitHub](https://github.com/clank-ai/clank/fork) and make it yours.**
+
 ## Everything in one place
 
 Running language models on your own computer usually means a dozen tools and guides. Clank brings every step into one
@@ -143,16 +159,10 @@ and macOS, and the iPhone app. Local models need their engine built by hand for 
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md): tests come first, every check passes, and every
-decision is recorded with its reasons. Security problems: please report them privately, as
-[SECURITY.md](SECURITY.md) explains.
+Changes that would help others are welcome: read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).
+Security problems: please report them privately, as [SECURITY.md](SECURITY.md) explains.
 
 ## License
 
-Clank is free software under the [GNU Affero General Public License, version 3](LICENSE) (AGPL-3.0-only), Copyright (C)
-2026 The Clank contributors. You may use, study, change and share it; every modified version you share, or offer to
-others as an online service, must be released under the same license with its source, so Clank and everything built
-on it stay open. The name Clank and its logo identify this project: please don't present a modified version or a
-service as Clank itself.
-
-Clank runs [OpenCode](https://opencode.ai), the open-source coding agent, in each workspace.
+Free and open source under the [AGPL-3.0](LICENSE). Clank runs [OpenCode](https://opencode.ai), the open-source coding
+agent, in each workspace.
