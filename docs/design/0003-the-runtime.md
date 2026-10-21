@@ -37,7 +37,7 @@ stays as the record of what was built and why, each such part marked.*
 | 2 | Where engines run: hosts | Proposed 2026-10-12; built at the owner's instruction (decision 0030) |
 | 3 | Records | Proposed 2026-10-12; built at the owner's instruction |
 | 4 | Engine adapters: KVMem and NInfer | Proposed 2026-10-12; built at the owner's instruction; NInfer's retired 2026-10-13 (decision 0034) |
-| 4.1 | Sampling and the GPU's layers | Added and approved 2026-10-21 (the owner: make these settings visible; decision 0119) |
+| 4.1 | Sampling and the GPU's layers | Added and approved 2026-10-21 (the owner: make these settings visible; decision 0119); built 2026-10-21 (plan s37) |
 | 5 | NInfer on this machine | Retired 2026-10-13 (decision 0034); built 2026-10-12 (decision 0031) |
 | 6 | A slot, and switching it | Proposed 2026-10-12; built at the owner's instruction |
 | 7 | Installs and models | Proposed 2026-10-12; built at the owner's instruction |
@@ -161,7 +161,8 @@ which the fit check compares with its estimate. *Its adapter was removed on 2026
 ### 4.1 Sampling and the GPU's layers
 
 *Added and approved 2026-10-21 (the owner: make these settings visible: "Let's go ahead and fix this gap in Clank so
-that these settings are visible"); decision [0119](../decisions/0119-sampling-and-gpu-layers-are-launch-options-left-unset.md).*
+that these settings are visible"); decision [0119](../decisions/0119-sampling-and-gpu-layers-are-launch-options-left-unset.md).
+Built 2026-10-21 ([plan s37](../plans/s37-sampling-and-gpu-layers.md)).*
 
 KVMem's server takes more than §4 listed: how many of the model's layers it puts on the GPU (`-ngl`, 99 by default:
 every layer) and the sampling a request gets when it does not say (`--temp`, `--top-p`, `--top-k`, `--min-p`,

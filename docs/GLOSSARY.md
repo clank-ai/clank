@@ -109,6 +109,10 @@ Words with a special meaning in Clank's documents and code, defined once. Alphab
   KVMem/llama.cpp. Clank starts and stops engines on the user's machine.
 - **Engine adapter**: the one module per engine that tells Clank what options the engine has, how to launch it with a
   model, and how to read its health and metrics.
+- **Engine's own default**: what an engine does with an option it is not given. A launch option left unset passes no
+  flag and keeps it; where one value cannot say it (KVMem's temperature is 1.0 with thinking and 0.7 without), the
+  option says it in words, and the console shows them (design 0003 §4.1, decision
+  [0119](decisions/0119-sampling-and-gpu-layers-are-launch-options-left-unset.md)).
 - **Event**: a record of something that happened: its id, time, type, subject, actor, a one-line summary and its data.
   Events are the history, and clients receive them on one stream (design 0002 §2.3).
 - **First message** (of a box): the one message a box's fresh session is sent, kept as `first-message.md` beside its
@@ -286,7 +290,9 @@ Words with a special meaning in Clank's documents and code, defined once. Alphab
   switching, health and metrics. Called "the runtime service" before decision 0013 made it a component (decision
   [0006](decisions/0006-runtime-service-with-adapters.md)).
 - **Sampling**: the request options that shape the model's choice of tokens (temperature, top_p, top_k, min_p, penalties)
-  and its thinking (whether, and how many tokens).
+  and its thinking (whether, and how many tokens). An engine has its own sampling defaults, which a preset may set as
+  launch options (`sampling.temperature` and the rest, unset unless set: the *engine's own default*); a request's own
+  fields win over them.
 - **Sandbox**: a container that holds an agent program and only the folders its workspace names. It reaches nothing
   but its edge.
 - **Serving setup**: a way of serving models: an engine adapter, the recipe to build or install the engine at a pinned

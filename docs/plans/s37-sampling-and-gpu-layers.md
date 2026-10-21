@@ -51,7 +51,7 @@ engine's own defaults; the memory estimate follows fewer layers on the GPU.
   was not kept), shown on the highlighted request beside the preset's values (`gateway/records.py`,
   `gateway/console/requests.py`; `tests/components/gateway/test_recent_requests.py`,
   `tests/console/test_requests_page.py`).
-- [ ] **Documents:** the roadmap, the glossary, this plan; the generated files regenerated; the full check.
+- [x] **Documents:** the roadmap, the glossary, this plan; the generated files regenerated; the full check.
 
 ## What only a real launch can confirm
 
