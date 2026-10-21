@@ -52,7 +52,8 @@ from clank.console.actions import ENDED, follow
 from clank.console.confirm import ConfirmScreen
 from clank.console.data import ConsoleData
 from clank.console.form import SecretField
-from clank.console.keys import KeysBar, PageKey
+from clank.console.keys import PageKey
+from clank.console.keysbar import KeysBar
 from clank.console.menu import MenuEntry
 from clank.console.pages import Page
 from clank.console.panel import Panel
@@ -475,7 +476,7 @@ class AddModelPage(Page):
 
     def _keys(self) -> None:
         if self.console.query("#keys"):
-            self.console.query_one("#keys", KeysBar).show(self.shown_keys())
+            self.console.query_one("#keys", KeysBar).show_keys(self.shown_keys())
 
     def _focus(self) -> None:
         """The focus where the step's keys act: its field or list, else the page itself."""
