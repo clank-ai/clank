@@ -1,0 +1,30 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway              13:54
+F4 This folder   ✗ │ ┌─ Happening now ──────────────────────────────────────┐
+1 Home             │ │ Nothing runs right now.                              │
+2 Questions        │ └──────────────────────────────────────────────────────┘
+3 History          │
+4 Docker         ● │ ┌─ Waiting for you ────────────────────────────────────┐
+5 Machine          │ │ ✓ Nothing waits for you.                             │
+6 Operations       │ │ questions from the agent and from Clank land here    │
+7 Records          │ └──────────────────────────────────────────────────────┘
+8 Models         ● │
+9 Presets          │ ┌─ What runs ──────────────────────────────────────────┐
+0 Providers and…   │ │ service    ● v0.0.0 · API on 127.0.0.1:47720 · 1     │
+F1 Help            │ │              client connected (console)              │
+F2 Launch optio…   │ │ docker     ● Fake Docker · running · 2 containers    │
+F3 MCP servers     │ │              running, none of them Clank's           │
+F6 Workspaces      │ │              s stops it                              │
+F7 Requests        │ │ workspace  ○ none running   F6 lists them            │
+F8 CPU models      │ │ models     ○ main: stopped (never started)           │
+F9 Phone         ● │ │              8 opens Models                          │
+F10 Monitor        │ │ gpu        RTX 5080 · 3% busy · 2.0 GB of 15.9 GB in │
+F12 Add a model    │ │            use · 34°C                                │
+                   │ │ gateway    ○ stopped   F4, then g, starts it         │
+                   │ │ machine    not detected yet                          │
+                   │ │            d runs the doctor, which detects it       │
+                   │ │ folder     /work/paper   F4: get ready and work here │
+                   │ └──────────────────────────────────────────────────────┘▅▅
+                   │
+                   │ ┌─ History ────────────────────────────────────────────┐
+
+ s start or stop Docker  d run the doctor  ? explain  f1 help

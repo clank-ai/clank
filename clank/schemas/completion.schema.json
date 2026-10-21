@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Completion",
+  "description": "Gray text after the cursor in VS Code, from the model in the fast slot: whether it is on, how long it waits after a keystroke, and whether it writes a few lines after a line that opens a block.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "completion/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "enabled": {
+      "default": true,
+      "description": "Suggest the rest of the line as you type in VS Code; off: nothing is asked.",
+      "title": "On",
+      "type": "boolean"
+    },
+    "delay_ms": {
+      "default": 120,
+      "description": "How long, in milliseconds, VS Code waits after you stop typing before it asks for a suggestion.",
+      "maximum": 2000,
+      "minimum": 0,
+      "title": "Wait",
+      "type": "integer"
+    },
+    "lines": {
+      "default": "few",
+      "description": "one: the rest of the line; few: also a few lines on an empty line after one that opens a block (ending with :, {, ( or [).",
+      "enum": [
+        "one",
+        "few"
+      ],
+      "title": "Lines",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

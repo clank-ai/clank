@@ -1,0 +1,40 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway                      09:14
+F4 This folder   ✗ │ ┌─ Cloud ──────────────────────────────────────────────────────┐
+1 Home             │ │ No cloud provider. a adds one: Add a model, OpenRouter with  │
+2 Questions        │ │ your key (no GPU needed).                                    │
+3 History          │ └──────────────────────────────────────────────────────────────┘
+4 Docker         ● │
+5 Machine          │ ┌─ Serving setups ─────────────────────────────────────────────┐
+6 Operations       │ │ KVMem/llama.cpp (kvmem-llamacpp), reads gguf                 │
+7 Records          │ │   v0.00.0-rc1  not installed                                 │
+8 Models         ● │ │ llama.cpp (llamacpp), reads gguf                             │
+9 Presets          │ │   b11588  not installed · Clank has its recipe               │
+0 Providers and…   │ └──────────────────────────────────────────────────────────────┘
+F1 Help            │
+F2 Launch optio…   │ ┌─ Models ─────────────────────────────────────────────────────┐
+F3 MCP servers     │ │ Qwen2.5-Coder 0.5B (qwen2.5-coder-0.5b)                      │
+F6 Workspaces      │ │   gguf weights     qwen2.5-coder-0.5b-q8_0.gguf, 531 MB,     │
+F7 Requests        │ │ from ggml-org/Qwen2.5-Coder-0.5B-Q8_0-GGUF@5788aee90e72      │
+F8 CPU models      │ │     no host has an engine that reads it                      │
+F9 Phone         ● │ │ Qwen3-VL 4B (qwen3-vl-4b)                                    │
+F10 Monitor        │ │   gguf weights     Qwen3VL-4B-Instruct-Q4_K_M.gguf, 2.5 GB,  │
+F12 Add a model    │ │ from Qwen/Qwen3-VL-4B-Instruct-GGUF@1cd86afb9a95             │
+                   │ │     no host has an engine that reads it                      │
+                   │ │   gguf projector   mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf, 454 │
+                   │ │ MB, from Qwen/Qwen3-VL-4B-Instruct-GGUF@1cd86afb9a95         │
+                   │ │     no host has an engine that reads it                      │
+                   │ │ Qwen3.8-27B (qwen3.8-27b)                                    │
+                   │ │   gguf weights     Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf, 12.1  │
+                   │ │ GB, from ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF@d562806dbafa   │
+                   │ │     no host has an engine that reads it                      │
+                   │ │   gguf projector   mmproj-Q8_0.gguf, 629 MB, from            │
+                   │ │ unsloth/Qwen3.8-27B-GGUF                                     │
+                   │ │     no host has an engine that reads it                      │
+                   │ │ Swift 1.5 Qwen3.8-27B IQ3_XXS (swift-1.5-qwen3.8-27b-iq3xxs) │▁▁
+                   │ │   gguf weights                                               │
+                   │ │ Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_XXS-mtp.gguf, 10.4 GB,     │
+                   │ │ from ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF@d74895bbe5db  │
+                   │ │     no host has an engine that reads it                      │
+                   │ │ Swift 1.5 Qwen3.8-27B (swift-1.5-qwen3.8-27b)                │
+
+ a add a cloud model  k set the key  c check it  o data policy  ? explain  f1 help

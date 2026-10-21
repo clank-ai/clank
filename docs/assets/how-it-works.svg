@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" role="img" aria-label="How Clank works: you use the console, VS Code or your phone; Clank holds the Monitor, the Guide, flows, presets and workspaces; the agent, OpenCode, runs in a Docker workspace for each folder; every model request goes through Clank's gateway, which records it, stops loops, keeps a context margin, measures cost and asks consent; the gateway sends it to your GPU and/or a cloud API key.">
+  <style>
+    text { font-family: ui-monospace, 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace; }
+    .t { font-weight: 700; font-size: 18px; letter-spacing: 1.5px; }
+    .b { fill: #c0caf5; font-size: 16px; }
+    .m { fill: #a9b1d6; font-size: 15px; }
+  </style>
+  <rect x="0" y="0" width="1200" height="600" rx="18" fill="#16161e"/>
+
+  <rect x="24" y="24" width="1152" height="552" rx="14" fill="none" stroke="#bb9af7" stroke-width="2"/>
+  <text class="t" x="48" y="60" fill="#bb9af7">YOU</text>
+  <text class="m" x="104" y="60">the console · VS Code · your phone</text>
+
+  <rect x="48" y="84" width="1104" height="468" rx="12" fill="#1a1b26" stroke="#ff9e64" stroke-width="2"/>
+  <text class="t" x="72" y="118" fill="#ff9e64">CLANK</text>
+  <text class="m" x="148" y="118">the Monitor · the Guide · flows · presets · workspaces</text>
+
+  <rect x="72" y="140" width="1056" height="64" rx="10" fill="#1f2335" stroke="#3b4261" stroke-width="2"/>
+  <text class="t" x="96" y="179" fill="#e6eaff">AGENT</text>
+  <text class="b" x="176" y="179">OpenCode, in a Docker workspace for each folder</text>
+
+  <text class="m" x="96" y="234">every model request goes through Clank's gateway ↓</text>
+
+  <rect x="72" y="252" width="1056" height="276" rx="10" fill="#1f2335" stroke="#e0af68" stroke-width="2"/>
+  <text class="t" x="96" y="286" fill="#e0af68">GATEWAY</text>
+  <text class="m" x="200" y="286">records every request · stops loops · keeps a context margin · cost · consent</text>
+
+  <rect x="96" y="312" width="460" height="188" rx="10" fill="#16161e" stroke="#73daca" stroke-width="2"/>
+  <text class="t" x="120" y="350" fill="#73daca">YOUR GPU</text>
+  <text class="b" x="120" y="386">llama.cpp or KVMem</text>
+  <text class="b" x="120" y="414">any open model you choose</text>
+  <text class="b" x="120" y="442">windows larger than the GPU holds</text>
+  <text class="b" x="120" y="470">no usage limit, no price per token</text>
+
+  <text x="600" y="412" text-anchor="middle" fill="#e6eaff" font-size="18" font-weight="700">and/or</text>
+
+  <rect x="644" y="312" width="460" height="188" rx="10" fill="#16161e" stroke="#7aa2f7" stroke-width="2" stroke-dasharray="8 6"/>
+  <text class="t" x="668" y="350" fill="#7aa2f7">CLOUD API KEY</text>
+  <text class="b" x="668" y="386">OpenRouter: hundreds of models</text>
+  <text class="b" x="668" y="414">only for workspaces you allow</text>
+  <text class="b" x="668" y="442">cost to the cent, optional limits</text>
+  <text class="b" x="668" y="470">your key stays on your machine</text>
+</svg>

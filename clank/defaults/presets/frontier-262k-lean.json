@@ -1,0 +1,16 @@
+{
+  "schema": "preset/1",
+  "title": "frontier 262K lean",
+  "engine": "kvmem-llamacpp",
+  "engine_version": "v0.16.0-rc1",
+  "model": "swift-1.5-qwen3.8-27b-iq3xxs",
+  "options": {
+    "kvmem.budget": 73728,
+    "kvmem.gen_reserve": 40960,
+    "kv.type": "q4_0",
+    "max_output": 32768,
+    "thinking.budget": -1,
+    "batch": 256
+  },
+  "notes": "Decisions 0078 and 0088: frontier 262K on Swift 1.5's smaller IQ3_XXS file, for when the GPU needs room (a busy desktop, a video, another program on the card): 73,728 tokens attended exactly, older context kept in system memory and retrieved by likeness to the last user message, a 40,960-token reserve that holds the longest answer, prompts read 256 tokens at a time. Measured on 2026-10-18 to take 13,436 MiB and leave about 1.2 GB of the card free beside the desktop, for less precision: a KL divergence from the BF16 model of 0.0978 against the IQ3_S file's 0.0513."
+}

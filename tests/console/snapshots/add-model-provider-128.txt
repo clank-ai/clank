@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 9d21h  ● docker running  ● no model: Add a model  ● gateway stopped                        09:14
+F4 This folder         ✗ 4   │ ┌─ Cloud: the provider ────────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ OpenRouter: one account and one key reach the major models (OpenAI's, Anthropic's, Google's, │
+2 Questions                  │ │ open-weight ones), each at its own price. It is the one cloud provider for now; others come  │
+3 History                    │ │ later.                                                                                       │
+4 Docker               ●     │ │                                                                                              │
+5 Machine                    │ │ You need an OpenRouter account with credits, and a key: openrouter.ai, Keys, Create Key.     │
+6 Operations                 │ │ OpenRouter recommends a credit limit on every key; set one there.                            │
+7 Records                    │ │                                                                                              │
+8 Models               ●     │ │ Next: what goes to OpenRouter, then your key.                                                │
+9 Presets                    │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+0 Providers and models       │
+F1 Help                      │
+F2 Launch options            │
+F3 MCP servers               │
+F6 Workspaces                │
+F7 Requests                  │
+F8 CPU models                │
+F9 Phone               ●     │
+F10 Monitor                  │
+F12 Add a model              │
+─────────────────────────────│
+coming                       │
+Sampling              M3     │
+Sessions              M3     │
+Keys                  M3     │
+Layout                M2     │
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5     │
+Changes               M6     │
+Network access        M7     │
+Skills                M8     │
+Files                 M9     │
+Setup guide           M10    │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+
+ enter go on  esc back  ? explain  f1 help  f5 machine column  q quit                                                ^p palette

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Model file",
+  "description": "Where one of the catalog's model files is on a host, when it is kept outside the host's models folder.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "model-file/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "model": {
+      "description": "The model's id in the catalog.",
+      "title": "Model",
+      "type": "string"
+    },
+    "file": {
+      "description": "The file's name, as the catalog lists it.",
+      "title": "File",
+      "type": "string"
+    },
+    "host": {
+      "description": "The host the file is on.",
+      "title": "Host",
+      "type": "string"
+    },
+    "path": {
+      "description": "Where it is on that host.",
+      "title": "Path",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "model",
+    "file",
+    "host",
+    "path"
+  ],
+  "additionalProperties": false
+}

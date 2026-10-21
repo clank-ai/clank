@@ -1,0 +1,37 @@
+{
+  "schema": "model/1",
+  "id": "swift-1.5-qwen3.8-27b-iq3xxs",
+  "name": "Swift 1.5 Qwen3.8-27B IQ3_XXS",
+  "facts": {
+    "architecture": "Swift 1.5 (Qwen3.8-27B retrained by UkisAI to think less) in a smaller allocation: 64 layers, of which 16 attend fully (the rest are linear-attention layers with a recurrent state); an MTP head",
+    "parameters": "27B",
+    "context": 262144,
+    "attention_layers": 16,
+    "kv_width": 1024,
+    "abilities": ["tools", "reasoning"]
+  },
+  "template": {
+    "earlier_thinking": "dropped",
+    "tool_calls": "xml",
+    "reasoning": ["<think>", "</think>"],
+    "source": "Qwen's reference chat template, as design 0012 §4.2 reads it: earlier thinking rendered only after the last user message, tool calls as XML; the template inside the model file is still to read (design 0012 §10)"
+  },
+  "files": [
+    {
+      "format": "gguf",
+      "role": "weights",
+      "repository": "ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF",
+      "revision": "d74895bbe5db4bec1e0024e7cc87d59c02d7631a",
+      "path": "Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_XXS-mtp.gguf",
+      "size": 10442827776,
+      "sha256": "e23eb251493b8a89f7d0217590b593e696ac9bacaeac8605541e477533dc5838",
+      "notes": "IQ3_XXS with ISTA-DASLab's GSQ-RCO allocation, refined by UkisAI, the MTP head embedded: 1,600 MiB less of the GPU than the IQ3_S file, for a KL divergence from the BF16 model of 0.0978 against 0.0513 (UkisAI's development measure; 0.0625 against 0.0354 on held-out code). Under the Swift Open License v1.0. No vision projector"
+    }
+  ],
+  "engines": {
+    "kvmem-llamacpp": {
+      "sizes": {"gpu_weights_mib": 9560, "buffers_mib": 277, "overhead_mib": 424, "mtp_bytes_per_cell": 4096, "compute_bytes_per_cell": 5120},
+      "source": "Its tensors read with gguf's reader on 2026-10-18: 9,560.19 MiB beside the 388.38 MiB token embedding, which llama.cpp keeps on the CPU (the same reading of the IQ3_S file gives the 11,159.69 MiB its start logged); the rest as Swift 1.5's IQ3_S, whose layers and pools are the same"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "preset/1",
+  "title": "completion 0.5B",
+  "engine": "llamacpp",
+  "engine_version": "b11588",
+  "model": "qwen2.5-coder-0.5b",
+  "slot": "fast",
+  "options": {},
+  "notes": "Completion in VS Code (design 0006): Qwen2.5-Coder 0.5B on 6 CPU threads at a low priority, an 8,192-token context, one request at a time; about 0.3 s a line while typing (the measurement of 2026-10-15). None of the GPU."
+}

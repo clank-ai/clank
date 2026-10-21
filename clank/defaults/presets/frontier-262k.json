@@ -1,0 +1,15 @@
+{
+  "schema": "preset/1",
+  "title": "frontier 262K",
+  "engine": "kvmem-llamacpp",
+  "engine_version": "v0.16.0-rc1",
+  "model": "swift-1.5-qwen3.8-27b",
+  "options": {
+    "kvmem.budget": 57344,
+    "kvmem.gen_reserve": 40960,
+    "kv.type": "q4_0",
+    "max_output": 32768,
+    "thinking.budget": -1
+  },
+  "notes": "Decisions 0069 and 0088: Swift 1.5 in its IQ3_S file, as in frontier 96K, over KVMem's whole 262,144-token context: 57,344 tokens attended exactly, older context kept in system memory and retrieved by likeness to the last user message, and a 40,960-token reserve that holds the longest answer (KVMem v0.16 fails one that outgrows it). The same GPU memory as frontier 96K, with little of the card left beside the desktop; frontier 262K lean leaves more. How it is built, and why: docs/models/frontier-262k.md."
+}

@@ -1,0 +1,15 @@
+✓ YOU Brief  BRIEF.md · 12:02
+✓ PLAN Write the study plan  PLAN.md · 12:18
+✓ VERIFY Check the plan  pass, try 2 · 12:22
+   fail ⟲ back to PLAN with 3 findings · 2 of 3 tries used
+✓ GATE You approve the plan  approved 12:30
+✓ DECOMPOSE Break it into tasks  4 tasks · 12:31
+   ✓ TASK T1 The parameter grid  grid.json · 12:33
+   ● TASK T2 Estimate run times  runs/estimates.md
+   ○ TASK T3 The sweep script  scripts/sweep.py
+   ○ TASK T4 The analysis notebook  analysis/figures.ipynb
+○ INTEGRATE Put it together  STUDY-PLAN.md
+○ GATE You review the whole  you decide
+▸ next flow: made when approved
+
+✓ done  ● running  ○ waiting  ✗ failed  proposed

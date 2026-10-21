@@ -1,0 +1,12 @@
+{
+  "schema": "preset/1",
+  "title": "daily 262K",
+  "engine": "kvmem-llamacpp",
+  "engine_version": "v0.16.0-rc1",
+  "model": "qwen3.8-27b",
+  "options": {
+    "vision": "cpu",
+    "vision.max_tokens": 512
+  },
+  "notes": "A 262K context with a 36K exact window, MTP with 3 draft tokens, thinking on with a 4096-token budget, CUDA graphs off; images in, the projector on the CPU. It needs a file Clank cannot download: the vision projector mmproj-Q8_0.gguf (sha256 f827456e…, in the model's catalog entry), whose revision is no longer known. Without it, set this preset's vision off (no images in), or run \"frontier 262K\" or \"frontier 96K\", which read no images."
+}

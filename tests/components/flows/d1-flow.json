@@ -1,0 +1,225 @@
+{
+  "schema": "flow/1",
+  "title": "A new simulation study",
+  "workspace": "myproject",
+  "defaults": {
+    "model": "daily 262K"
+  },
+  "boxes": [
+    {
+      "id": "brief",
+      "type": "you",
+      "title": "Brief",
+      "writes": [
+        "BRIEF.md"
+      ],
+      "holds": "The goal and the limits: about 60 grid points, at most 48 CPU-hours."
+    },
+    {
+      "id": "plan",
+      "type": "plan",
+      "title": "Write the study plan",
+      "sees": [
+        "BRIEF.md"
+      ],
+      "prompt": "Write the study plan for the brief: the grid, the methods, the runs and what they cost.",
+      "writes": [
+        "PLAN.md"
+      ],
+      "accept_when": [
+        "the grid has about 60 points",
+        "the runs fit in 48 CPU-hours",
+        "the seeds are fixed"
+      ]
+    },
+    {
+      "id": "check",
+      "type": "verify",
+      "title": "Check the plan",
+      "checks": "plan",
+      "sees": [
+        "BRIEF.md",
+        "PLAN.md"
+      ]
+    },
+    {
+      "id": "approve",
+      "type": "gate",
+      "title": "You approve the plan",
+      "shows": [
+        "PLAN.md"
+      ]
+    },
+    {
+      "id": "split",
+      "type": "decompose",
+      "title": "Break it into tasks",
+      "sees": [
+        "BRIEF.md",
+        "PLAN.md"
+      ]
+    },
+    {
+      "id": "T1",
+      "type": "task",
+      "title": "The parameter grid",
+      "sees": [
+        "PLAN.md"
+      ],
+      "prompt": "Write the grid of the plan's parameters to grid.json, about 60 points.",
+      "writes": [
+        "grid.json"
+      ],
+      "proposed": {
+        "run": 1,
+        "by": "split"
+      }
+    },
+    {
+      "id": "T2",
+      "type": "task",
+      "title": "Estimate run times",
+      "mode": "auto",
+      "sees": [
+        "PLAN.md",
+        "grid.json"
+      ],
+      "prompt": "Estimate the run time of each grid point in grid.json with a dry run of 50 trajectories at the smallest size, scale by system size, and write runs/estimates.md: a table with the grid point, the estimated CPU-hours and how it was estimated.\nDo not start the full runs.",
+      "writes": [
+        "runs/estimates.md"
+      ],
+      "holds": "a table: grid point, CPU-hours, method",
+      "accept_when": [
+        "every grid point has an estimate",
+        "the total is under 48 CPU-hours"
+      ],
+      "mcp_servers": [
+        "myproject-mcp"
+      ],
+      "proposed": {
+        "run": 1,
+        "by": "split"
+      }
+    },
+    {
+      "id": "T3",
+      "type": "task",
+      "title": "The sweep script",
+      "sees": [
+        "PLAN.md",
+        "grid.json"
+      ],
+      "prompt": "Write scripts/sweep.py, which runs every point of grid.json with fixed seeds.",
+      "writes": [
+        "scripts/sweep.py"
+      ],
+      "accept_command": "python -m py_compile scripts/sweep.py",
+      "proposed": {
+        "run": 1,
+        "by": "split"
+      }
+    },
+    {
+      "id": "T4",
+      "type": "task",
+      "title": "The analysis notebook",
+      "sees": [
+        "PLAN.md"
+      ],
+      "prompt": "Write analysis/figures.ipynb, which reads the sweep's results and draws the plan's figures.",
+      "writes": [
+        "analysis/figures.ipynb"
+      ],
+      "proposed": {
+        "run": 1,
+        "by": "split"
+      }
+    },
+    {
+      "id": "join",
+      "type": "integrate",
+      "title": "Put it together",
+      "sees": [
+        "BRIEF.md",
+        "PLAN.md",
+        "grid.json",
+        "runs/estimates.md",
+        "scripts/sweep.py",
+        "analysis/figures.ipynb"
+      ],
+      "writes": [
+        "STUDY-PLAN.md",
+        "NEXT.md"
+      ],
+      "holds": "the study plan as it now stands, and the next flow's brief"
+    },
+    {
+      "id": "review",
+      "type": "gate",
+      "title": "You review the whole",
+      "shows": [
+        "STUDY-PLAN.md"
+      ]
+    }
+  ],
+  "lines": [
+    {
+      "from": "brief",
+      "to": "plan"
+    },
+    {
+      "from": "plan",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "approve",
+      "when": "pass"
+    },
+    {
+      "from": "check",
+      "to": "plan",
+      "when": "fail"
+    },
+    {
+      "from": "approve",
+      "to": "split"
+    },
+    {
+      "from": "split",
+      "to": "T1"
+    },
+    {
+      "from": "split",
+      "to": "T2"
+    },
+    {
+      "from": "split",
+      "to": "T3"
+    },
+    {
+      "from": "split",
+      "to": "T4"
+    },
+    {
+      "from": "T1",
+      "to": "join"
+    },
+    {
+      "from": "T2",
+      "to": "join"
+    },
+    {
+      "from": "T3",
+      "to": "join"
+    },
+    {
+      "from": "T4",
+      "to": "join"
+    },
+    {
+      "from": "join",
+      "to": "review"
+    }
+  ]
+}

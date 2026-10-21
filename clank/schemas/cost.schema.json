@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cloud cost limits",
+  "description": "An optional daily and monthly limit of what cloud models may cost, in US dollars: once one is reached, each new cloud request is held until you raise it (or the day or month ends). Days and months are this computer's.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "cost/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "day_usd": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "What the cloud may cost in a day, in US dollars; empty: no limit.",
+      "title": "Daily limit"
+    },
+    "month_usd": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "What the cloud may cost in a month, in US dollars; empty: no limit.",
+      "title": "Monthly limit"
+    },
+    "warn_at": {
+      "default": 0.8,
+      "description": "The share of a limit at which you are told once, such as 0.8.",
+      "exclusiveMaximum": 1,
+      "exclusiveMinimum": 0,
+      "title": "Warn at",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MCP servers, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: nowrap">Workspace</div>
+<div style="display: flex; gap: 18px; white-space: pre"><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis"><span style="font-weight: 700">myproject</span>  ·  <span style="color: #9ece6a">● agent running</span>      <span style="color: #828bb8">folder</span>  C:\work\myproject</span><span style="flex: none; color: #828bb8">read again every 5 s · last 12:47:05</span></div>
+<div style="color: #828bb8">State: running, stopped or failed is what the agent running here says; s changes it at once in a running agent, and for its next start.</div>
+</section>
+
+<div style="display: flex; gap: 14px">
+
+<section style="position: relative; flex: 0 0 520px; min-width: 0; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: nowrap">Servers</div>
+<div style="white-space: pre; color: #828bb8">{{ header }}</div>
+<sc-for list="{{ servers }}" as="s" hint-placeholder-count="6">
+<div style="white-space: pre; margin: 0 -6px; padding: 0 6px; {{ s.style }}"><span style="color: {{ s.color }}">{{ s.dot }}</span>{{ s.name }} {{ s.source }} <span style="color: {{ s.color }}">{{ s.state }}</span> {{ s.tools }}</div>
+</sc-for>
+<div style="color: #828bb8; margin-top: 8px">Built in is Clank's own (send_to_phone); yours are added for you, in every folder; project ones are this folder's .mcp.json, used once you allow them (s).</div>
+</section>
+
+<section style="position: relative; flex: 1; min-width: 0; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: nowrap">Details · myproject-mcp</div>
+<div style="display: flex"><span style="flex: none; width: 104px; color: #828bb8">Starts with</span><span style="flex: 1; min-width: 0">myproject-mcp --quiet</span></div>
+<div style="display: flex"><span style="flex: none; width: 104px; color: #828bb8">Defined in</span><span style="flex: 1; min-width: 0">C:\work\myproject\.mcp.json</span></div>
+<div style="display: flex"><span style="flex: none; width: 104px; color: #828bb8">Server</span><span style="flex: 1; min-width: 0">myproject-mcp 0.3.1, checked 12:41 in myproject's container</span></div>
+<div style="display: flex"><span style="flex: none; width: 104px; color: #828bb8">Tools</span><span style="flex: 1; min-width: 0">list_studies, read_study, run_simulation, simulation_status, +6 more</span></div>
+<div style="color: #828bb8; margin-top: 8px">c checks a server: starts it where the agent would, asks for its tools, and ends it.</div>
+</section>
+
+</div>
+
+<section style="position: relative; flex: 1; min-height: 0; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: nowrap">Tools of myproject-mcp</div>
+<div style="flex: 1; min-height: 0; overflow: hidden; display: flex; gap: 28px">
+<div style="flex: 1; min-width: 0">
+<sc-for list="{{ toolsLeft }}" as="t" hint-placeholder-count="22">
+<div style="height: 18px; white-space: pre; overflow: hidden; text-overflow: ellipsis"><span style="color: inherit; {{ t.aStyle }}">{{ t.a }}</span><span style="color: inherit; {{ t.bStyle }}">{{ t.b }}</span><span>{{ t.c }}</span></div>
+</sc-for>
+</div>
+<div style="flex: 1; min-width: 0">
+<sc-for list="{{ toolsRight }}" as="t" hint-placeholder-count="22">
+<div style="height: 18px; white-space: pre; overflow: hidden; text-overflow: ellipsis"><span style="color: inherit; {{ t.aStyle }}">{{ t.a }}</span><span style="color: inherit; {{ t.bStyle }}">{{ t.b }}</span><span>{{ t.c }}</span></div>
+</sc-for>
+</div>
+</div>
+</section>
+
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">Enter</span> tools</span><span><span style="color: #7aa2f7">s</span> start or stop</span><span><span style="color: #7aa2f7">c</span> check</span><span><span style="color: #7aa2f7">a</span> add</span><span><span style="color: #7aa2f7">d</span> remove</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'MCP servers' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const ok = '#9ece6a', bad = '#f7768e', quiet = '#828bb8';
+    const header = '  ' + 'NAME'.padEnd(20) + ' ' + 'SOURCE'.padEnd(9) + ' ' + 'STATE'.padEnd(14) + ' TOOLS';
+    const servers = [
+      ['clank', 'built in', 'running', '11', ok],
+      ['fetch', 'yours', 'running', '1', ok],
+      ['sqlite', 'yours', 'failed', '6', bad],
+      ['web-search', 'yours', 'stopped', '—', quiet],
+      ['plots', 'project', 'stopped', '—', quiet],
+      ['myproject-mcp', 'project', 'running', '10', ok]
+    ].map(([name, source, state, tools, color]) => ({
+      dot: state === 'running' || state === 'on' ? '● ' : '○ ',
+      name: name.padEnd(20), source: source.padEnd(9), state: state.padEnd(14), tools: tools.padStart(5), color,
+      style: name === 'myproject-mcp' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const line = (a, aStyle, b, bStyle, c) => ({ a, aStyle, b, bStyle, c });
+    const blank = line('', '', '', '', '');
+    const tool = (name, about, params) => [
+      line(name, 'color: #7aa2f7; font-weight: 700', '', '', ''),
+      line('  ' + about, '', '', '', ''),
+      ...params.map(([p, kind, what]) => line('    ' + p.padEnd(16), 'font-weight: 700', kind, 'color: #828bb8', '  ' + what))
+    ];
+    const join = (tools) => tools.reduce((all, t, i) => all.concat(i ? [blank] : [], t), []);
+    const toolsLeft = join([
+      tool('list_studies', 'The studies in studies/, each with its state and its last run.', [
+        ['state', 'string, optional', 'planned, running or done']
+      ]),
+      tool('read_study', "A study's plan and settings, in Markdown.", [
+        ['study', 'string, required', 'its folder under studies/']
+      ]),
+      tool('run_simulation', "Run a study's simulation in the container; answers with a run id.", [
+        ['study', 'string, required', 'its folder under studies/'],
+        ['seed', 'integer, optional', "the study's own if left out"],
+        ['trials', 'integer, optional', 'how many trials (100 if left out)']
+      ]),
+      tool('simulation_status', 'Where a run stands: its progress and the last lines of its log.', [
+        ['run', 'string, required', 'the id run_simulation answered']
+      ]),
+      tool('read_results', "A finished run's results table, as CSV, its first rows.", [
+        ['run', 'string, required', "the run's id"],
+        ['rows', 'integer, optional', 'how many rows (50 if left out)']
+      ])
+    ]);
+    const toolsRight = join([
+      tool('plot_results', "Plot two columns of a run's results; the PNG goes to figures/.", [
+        ['run', 'string, required', "the run's id"],
+        ['x', 'string, required', 'the column across'],
+        ['y', 'string, required', 'the column up']
+      ]),
+      tool('compare_runs', 'Two runs side by side: their settings and their summary numbers.', [
+        ['first', 'string, required', "a run's id"],
+        ['second', 'string, required', "another run's id"]
+      ]),
+      tool('list_figures', 'The figures in figures/, newest first.', []),
+      tool('write_note', "Add a dated note to a study's notes.md.", [
+        ['study', 'string, required', 'its folder under studies/'],
+        ['text', 'string, required', 'the note, in Markdown']
+      ]),
+      tool('search_notes', "Find text in every study's notes.", [
+        ['query', 'string, required', 'the words to look for']
+      ])
+    ]);
+    return { menu, header, servers, toolsLeft, toolsRight };
+  }
+}
+</script>
+</body>
+</html>

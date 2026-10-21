@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Preset",
+  "description": "A saved launch configuration: a serving setup at a version, a model, and the launch options that differ from the engine's defaults (design 0001 §3.4).",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "preset/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "engine": {
+      "default": "",
+      "description": "The engine adapter that runs it, such as kvmem-llamacpp; empty for a cloud preset.",
+      "title": "Serving setup",
+      "type": "string"
+    },
+    "engine_version": {
+      "default": "",
+      "description": "The engine's version, such as v0.16.0-rc1; empty for a cloud preset.",
+      "title": "Engine version",
+      "type": "string"
+    },
+    "endpoint": {
+      "default": "",
+      "description": "For a cloud preset, in place of an engine: the provider someone else runs that serves its model (config/endpoints/<id>.json), such as openrouter (design 0016 §7).",
+      "title": "Provider",
+      "type": "string"
+    },
+    "model": {
+      "description": "The model's id in the catalog, such as qwen3.8-27b; for a cloud preset, its id exactly as its provider lists it.",
+      "title": "Model",
+      "type": "string"
+    },
+    "options": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "description": "The options that differ from the engine's defaults, by their keys (design 0001 §3.1); for a cloud preset: context, max_output, reasoning and images.",
+      "title": "Launch options",
+      "type": "object"
+    },
+    "slot": {
+      "default": "main",
+      "description": "The slot it is for (design 0001 §1).",
+      "title": "Slot",
+      "type": "string"
+    },
+    "host": {
+      "default": "",
+      "description": "Where it runs; empty: the one host its engine is installed on (decision 0030).",
+      "title": "Host",
+      "type": "string"
+    },
+    "notes": {
+      "default": "",
+      "description": "Anything worth knowing: where it came from, what it deviates in.",
+      "title": "Notes",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "model"
+  ],
+  "additionalProperties": false
+}

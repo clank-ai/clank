@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service  ● docker  ● daily 262K … 09:14
+F4 This folder   ✗ │ ┌─ Local: a model on this computer ──┐
+1 Home             │ │ Clank's presets for the main slot, │
+2 Questions        │ │ each with its fit on this GPU and  │
+3 History          │ │ what it needs here. Each missing   │
+4 Docker         ● │ │ step is done in order: the engine  │
+5 Machine          │ │ by Clank's recipe, the model's     │
+6 Operations       │ │ files, the load; each is asked     │
+7 Records          │ │ first. A local model costs nothing │
+8 Models         ● │ │ per request.                       │
+9 Presets          │ │ daily 262K                         │
+0 Providers and…   │ │   kvmem-llamacpp v0.00.0-rc1 ·     │
+F1 Help            │ │ qwen3.8-27b · fit: known once its  │
+F2 Launch optio…   │ │ engine is installed                │
+F3 MCP servers     │ │   KVMem/llama.cpp v0.00.0-rc1 is   │
+F6 Workspaces      │ │ not installed here, and Clank has  │
+F7 Requests        │ │ no recipe for it                   │
+F8 CPU models      │ │ frontier 262K                      │
+F9 Phone         ● │ │   kvmem-llamacpp v0.00.0-rc1 ·     │
+F10 Monitor        │ │ swift-1.5-qwen3.8-27b · fit: known │
+F12 Add a model    │ │ once its engine is installed       │
+                   │ │   KVMem/llama.cpp v0.00.0-rc1 is   │
+                   │ │ not installed here, and Clank has  │
+                   │ │ no recipe for it                   │
+                   │ │ frontier 262K lean                 │
+                   │ │   kvmem-llamacpp v0.00.0-rc1 ·     │
+                   │ │ swift-1.5-qwen3.8-27b-iq3xxs ·     │
+                   │ │ fit: known once its engine is      │
+                   │ │ installed                          │
+                   │ │   KVMem/llama.cpp v0.00.0-rc1 is   │
+                   │ │ not installed here, and Clank has  │
+                   │ │ no recipe for it                   │
+                   │ │ frontier 96K                       │
+                   │ │   kvmem-llamacpp v0.00.0-rc1 ·     │
+                   │ │ swift-1.5-qwen3.8-27b · fit: known │
+                   │ │ once its engine is installed       │
+                   │ │   KVMem/llama.cpp v0.00.0-rc1 is   │
+                   │ │ not installed here, and Clank has  │
+                   │ │ no recipe for it                   │
+                   │ │                                    │
+                   │ │                                    │
+                   │ └────────────────────────────────────┘
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+ 09:14  cloud: Example Coder is written: now its test
+ enter set it up  esc back  ? explain  f1 help

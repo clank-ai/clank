@@ -1,0 +1,748 @@
+/* The review of a batch of Notion changes (design 0010 §6): VS Code's own colors, the mockup's where a theme gives
+   none (a page outside VS Code, as the tests show it). */
+
+:root {
+  --bg: var(--vscode-editor-background, #1f1f1f);
+  --fg: var(--vscode-foreground, #cccccc);
+  --strong: var(--vscode-editor-foreground, #e7e7e7);
+  --muted: var(--vscode-descriptionForeground, #9d9d9d);
+  --border: var(--vscode-panel-border, #2b2b2b);
+  --head: var(--vscode-editorWidget-background, #252526);
+  --panel: var(--vscode-sideBar-background, #202020);
+  --focus: var(--vscode-focusBorder, #0078d4);
+  --link: var(--vscode-textLink-foreground, #4daafc);
+  --primary: var(--vscode-button-background, #0078d4);
+  --primary-fg: var(--vscode-button-foreground, #ffffff);
+  --primary-hover: var(--vscode-button-hoverBackground, #026ec1);
+  --secondary: var(--vscode-button-secondaryBackground, #313131);
+  --secondary-fg: var(--vscode-button-secondaryForeground, #cccccc);
+  --secondary-hover: var(--vscode-button-secondaryHoverBackground, #3c3c3c);
+  --selected: var(--vscode-list-inactiveSelectionBackground, #37373d);
+  --added: var(--vscode-gitDecoration-addedResourceForeground, #73c991);
+  --changed: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d);
+  --removed: var(--vscode-gitDecoration-deletedResourceForeground, #f48771);
+  --added-bg: var(--vscode-diffEditor-insertedLineBackground, rgba(46, 160, 67, 0.15));
+  --removed-bg: var(--vscode-diffEditor-removedLineBackground, rgba(248, 81, 73, 0.15));
+  --added-text: var(--vscode-diffEditor-insertedTextBackground, rgba(46, 160, 67, 0.35));
+  --removed-text: var(--vscode-diffEditor-removedTextBackground, rgba(248, 81, 73, 0.35));
+  --note-bg: var(--vscode-textBlockQuote-background, #202a33);
+  --note-border: var(--vscode-textBlockQuote-border, #2c4256);
+  --warn-bg: var(--vscode-inputValidation-warningBackground, #352a05);
+  --warn-border: var(--vscode-inputValidation-warningBorder, #b89500);
+  --mono: var(--vscode-editor-font-family, "Cascadia Mono", Consolas, monospace);
+  --comment-bg: var(--vscode-editorCommentsWidget-unresolvedBorder, #2a2615);
+  --comment-fg: var(--vscode-foreground, #f0e2bf);
+  --comment-border: var(--vscode-editorWarning-foreground, #5c4d1f);
+  --input-bg: var(--vscode-input-background, #1f1f1f);
+  --input-fg: var(--vscode-input-foreground, #e7e7e7);
+  --input-border: var(--vscode-input-border, #3c3c3c);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  padding: 0 24px 24px;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--vscode-font-family, "Segoe UI", system-ui, sans-serif);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+h1 {
+  margin: 16px 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--strong);
+}
+
+h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--strong);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.grow {
+  flex: 1;
+  min-width: 220px;
+}
+
+button {
+  font: inherit;
+  border-radius: 4px;
+  padding: 5px 12px;
+  min-height: 28px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 120ms ease;
+}
+
+button:focus-visible {
+  outline: 1px solid var(--focus);
+  outline-offset: 1px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.primary {
+  background: var(--primary);
+  color: var(--primary-fg);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.secondary {
+  background: var(--secondary);
+  color: var(--secondary-fg);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--secondary-hover);
+}
+
+.warm {
+  background: var(--comment-bg);
+  color: var(--comment-fg);
+  border-color: var(--comment-border);
+}
+
+.warm:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+
+.toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.toggle button {
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.toggle button[aria-pressed="true"],
+.toggle button[aria-selected="true"] {
+  background: var(--selected);
+  color: var(--strong);
+}
+
+.top {
+  padding-bottom: 8px;
+}
+
+.banner {
+  margin: 4px 0 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--note-bg);
+  border: 1px solid var(--note-border);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 4px;
+}
+
+.tabs button {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--border);
+}
+
+.tabs button[aria-selected="true"] {
+  background: var(--selected);
+  color: var(--strong);
+  border-color: var(--focus);
+}
+
+.tabs .counts {
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.table-frame {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 720px;
+}
+
+th {
+  padding: 7px 10px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--head);
+}
+
+td {
+  padding: 7px 10px;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+  max-width: 360px;
+  overflow-wrap: anywhere;
+}
+
+td.mark {
+  width: 52px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+tr {
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+tr.same {
+  opacity: 0.6;
+}
+
+tr.added {
+  background: var(--added-bg);
+}
+
+tr.removed {
+  background: var(--removed-bg);
+}
+
+tr.removed td:not(.mark) {
+  text-decoration: line-through;
+}
+
+tr.selected {
+  box-shadow: inset 0 0 0 1px var(--focus);
+}
+
+tr:hover {
+  background-color: var(--selected);
+}
+
+.sign {
+  display: inline-block;
+  width: 12px;
+  margin-left: 4px;
+  font-weight: 700;
+}
+
+.added .sign,
+.sign.added {
+  color: var(--added);
+}
+
+.changed .sign,
+.sign.changed {
+  color: var(--changed);
+}
+
+.removed .sign,
+.sign.removed {
+  color: var(--removed);
+}
+
+.written {
+  color: var(--added);
+}
+
+.failed {
+  color: var(--removed);
+}
+
+.cell-title {
+  color: var(--strong);
+}
+
+.was {
+  display: block;
+  text-decoration: line-through;
+  color: var(--removed);
+  font-size: 12px;
+}
+
+.now {
+  display: block;
+  color: var(--added);
+}
+
+#detail {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.detail-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--strong);
+}
+
+.status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 3px;
+  background: var(--secondary);
+}
+
+.status.added {
+  color: var(--added);
+}
+
+.status.changed {
+  color: var(--changed);
+}
+
+.status.removed {
+  color: var(--removed);
+}
+
+.why,
+.result {
+  margin: 12px 14px 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 18px;
+  background: var(--note-bg);
+  border: 1px solid var(--note-border);
+}
+
+.why p {
+  margin: 0;
+}
+
+.why p + p {
+  margin-top: 4px;
+}
+
+.result.failed {
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+  color: var(--fg);
+}
+
+.body {
+  padding: 12px 14px 16px;
+}
+
+.fields {
+  min-width: 0;
+}
+
+.fields td.include {
+  width: 72px;
+  text-align: center;
+}
+
+.fields tr {
+  cursor: default;
+}
+
+.fields tr.unchanged {
+  opacity: 0.6;
+}
+
+.fields tr.proposed {
+  background: var(--added-bg);
+}
+
+.fields tr.proposed.gone {
+  background: var(--removed-bg);
+}
+
+.fields .was-cell {
+  color: var(--removed);
+  text-decoration: line-through;
+}
+
+.fields .now-cell {
+  color: var(--added);
+}
+
+.page-include {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.block {
+  padding: 5px 12px;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.block.kept {
+  color: var(--muted);
+  font-size: 12px;
+  padding: 0 12px;
+}
+
+.block.add {
+  background: var(--added-bg);
+}
+
+.block.remove {
+  background: var(--removed-bg);
+  text-decoration: line-through;
+}
+
+.block.update {
+  padding: 0;
+}
+
+.block.update .old,
+.block.update .new {
+  padding: 5px 12px;
+}
+
+.block.update .old {
+  display: block;
+  text-decoration: line-through;
+  background: var(--removed-text);
+}
+
+.block.update .new {
+  display: block;
+  background: var(--added-text);
+}
+
+.notion {
+  background: #ffffff;
+  color: #37352f;
+  border-radius: 6px;
+  padding: 24px 32px;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.5;
+}
+
+.notion h1 {
+  margin: 0 0 12px;
+  font-size: 26px;
+  line-height: 32px;
+  color: #37352f;
+}
+
+.notion .props {
+  display: grid;
+  grid-template-columns: minmax(0, 160px) minmax(0, 1fr);
+  gap: 6px 16px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e9e9e7;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+}
+
+.notion .props .name {
+  color: #6b6a66;
+}
+
+.notion .md-h1,
+.notion .md-h2,
+.notion .md-h3 {
+  font-weight: 700;
+  margin: 14px 0 4px;
+}
+
+.notion .md-h1 {
+  font-size: 22px;
+}
+
+.notion .md-h2 {
+  font-size: 18px;
+}
+
+.notion .md-h3 {
+  font-size: 16px;
+}
+
+.notion .md-p {
+  margin: 4px 0;
+  white-space: pre-wrap;
+}
+
+.notion .md-li {
+  margin: 2px 0;
+}
+
+.notion .md-quote {
+  border-left: 3px solid #37352f;
+  padding-left: 12px;
+  margin: 6px 0;
+}
+
+.notion .md-eq,
+.notion .md-code {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: #f7f6f3;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin: 6px 0;
+  white-space: pre-wrap;
+}
+
+.notion code,
+.notion .md-math {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  background: #f7f6f3;
+  padding: 0 3px;
+  border-radius: 3px;
+}
+
+.notion .md-link {
+  color: #37352f;
+  text-decoration: underline;
+  text-decoration-color: #9b9a97;
+}
+
+.notion .md-hr {
+  border: none;
+  border-top: 1px solid #e9e9e7;
+}
+
+.notion .after {
+  margin-top: 14px;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 12px;
+  color: #6b6a66;
+}
+
+.empty {
+  color: var(--muted);
+  padding: 4px 0;
+}
+
+footer {
+  margin-top: 16px;
+}
+
+.comment-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 2px 6px;
+  background: none;
+  color: var(--muted);
+  border: 1px solid transparent;
+  font-size: 12px;
+}
+
+.comment-button:hover {
+  color: var(--changed);
+  border-color: var(--border);
+}
+
+.comment-button svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.comment-count {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 15px;
+  color: var(--bg);
+  background: var(--changed);
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.bubble {
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--comment-border);
+  background: var(--comment-bg);
+  color: var(--fg);
+  line-height: 18px;
+  white-space: pre-wrap;
+}
+
+.bubble.answered {
+  opacity: 0.85;
+}
+
+.bubble-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--changed);
+}
+
+.bubble-head .take-back {
+  margin-left: auto;
+  min-height: 0;
+  padding: 0 4px;
+  background: none;
+  color: var(--link);
+  font-size: 11px;
+}
+
+.reply {
+  margin-top: 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--added);
+}
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+.composer label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.composer textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+  min-height: 56px;
+  padding: 8px;
+  resize: vertical;
+  font: inherit;
+  color: var(--input-fg);
+  background: var(--input-bg);
+  border: 1px solid var(--focus);
+  border-radius: 4px;
+}
+
+.composer .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.batch-comments:empty {
+  display: none;
+}
+
+.batch-comments {
+  margin: 0 0 8px;
+}
+
+.entry-comments {
+  padding: 0 14px 14px;
+}
+
+.section-title {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 4px 0;
+}
+
+.fields td.talk {
+  width: 56px;
+  text-align: center;
+}
+
+.fields tr.thread-row td {
+  border-top: none;
+  padding-top: 0;
+}
+
+.block-line {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.block-line .block {
+  flex: 1;
+  min-width: 0;
+}
+
+input[type="checkbox"] {
+  margin: 0;
+  vertical-align: middle;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 0 12px 16px;
+  }
+}

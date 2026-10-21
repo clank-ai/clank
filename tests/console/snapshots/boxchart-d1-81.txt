@@ -1,0 +1,47 @@
+┌──────────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐
+│ YOU                 ✓│──▸│ PLAN ⟲2             ✓│──▸│ VERIFY ⟲2           ✓│
+│ Brief                │   │ Write the study plan │   │ Check the plan       │
+│ you                  │   │ daily 262K           │   │ daily 262K           │
+│ BRIEF.md · 12:02     │   │ PLAN.md · 12:18      │   │ pass, try 2 · 12:22  │
+└──────────────────────┘   └─▴────────────────────┘   └───────────────────┬─┬┘
+                             ╰─ fail ⟲ 3 findings · 2 of 3 tries used ────╯ │
+            ╭───────────────────────────────────────────────────────────────╯
+            ▾
+┌──────────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐
+│ GATE                ✓│──▸│ DECOMPOSE           ✓│─┬▸│ TASK T1             ✓│┄┐
+│ You approve the plan │   │ Break it into tasks  │ │ │ The parameter grid   │ ┆
+│ you                  │   │ daily 262K           │ │ │ daily 262K           │ ┆
+│ approved 12:30       │   │ 4 tasks · 12:31      │ │ │ grid.json · 12:33    │ ┆
+└──────────────────────┘   └──────────────────────┘ │ └──────────────────────┘ ┆
+                                                    │                          ┆
+                                                    │ ┏━━━━━━━━━━━━━━━━━━━━━━┓ ┆
+                                                    ├▸┃ TASK T2             ●┃┄┤
+                                                    ┆ ┃ Estimate run times   ┃ ┆
+                                                    ┆ ┃ daily 262K           ┃ ┆
+                                                    ┆ ┃ runs/estimates.md    ┃ ┆
+                                                    ┆ ┗━━━━━━━━━━━━━━━━━━━━━━┛ ┆
+                                                    ┆                          ┆
+                                                    ┆ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐ ┆
+                                                    ├▸┆ TASK T3             ○┆┄┤
+                                                    ┆ ┆ The sweep script     ┆ ┆
+                                                    ┆ ┆ daily 262K           ┆ ┆
+                                                    ┆ ┆ scripts/sweep.py     ┆ ┆
+                                                    ┆ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘ ┆
+                                                    ┆                          ┆
+                                                    ┆ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐ ┆
+                                                    └▸┆ TASK T4             ○┆┄┤
+                                                      ┆ The analysis notebook┆ ┆
+                                                      ┆ daily 262K           ┆ ┆
+                                                      ┆ analysis/figures.ipy…┆ ┆
+                                                      └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘ ┆
+            ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯
+            ▾
+┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+┆ INTEGRATE           ○┆┄┄▸┆ GATE                ○┆┄┄▸┆ ▸ next flow          ┆
+┆ Put it together      ┆   ┆ You review the whole ┆   ┆ made when approved   ┆
+┆ daily 262K           ┆   ┆ you                  ┆   ┆ brief from INTEGRATE ┆
+┆ STUDY-PLAN.md        ┆   ┆ you decide           ┆   ┆                      ┆
+└┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘
+
+✓ done  ● running  ○ waiting  ✗ failed  ┄┄ proposed  ── pass  ── fail ⟲ back
+── now  ┄┄ not yet

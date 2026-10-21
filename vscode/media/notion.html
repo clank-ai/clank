@@ -1,0 +1,67 @@
+<!doctype html>
+<!-- The review of a batch of Notion changes (design 0010 §6). The extension fills in the {{...}} fields: the content
+     security policy's sources, the nonce of the script, and the addresses of the style sheet and the script. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src {{source}}; script-src 'nonce-{{nonce}}';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{css}}" />
+    <title>Notion changes</title>
+  </head>
+  <body>
+    <header class="top">
+      <h1 id="summary">Loading the batch…</h1>
+      <div id="line" class="muted"></div>
+    </header>
+    <div id="banner" class="banner" hidden></div>
+    <section id="batch-comments" class="batch-comments" aria-label="Comments on the batch"></section>
+    <nav id="databases" class="tabs" role="tablist" aria-label="Databases" hidden></nav>
+    <section class="bar">
+      <div class="grow">
+        <h2 id="database"></h2>
+        <div id="database-line" class="muted"></div>
+      </div>
+      <div class="toggle" role="group" aria-label="Rows shown">
+        <button id="near" type="button">Changes and neighbors</button>
+        <button id="all" type="button">All rows</button>
+      </div>
+      <button id="send-back" class="warm" type="button">Send back</button>
+      <button id="reject" class="secondary" type="button">Reject…</button>
+      <button id="approve" class="primary" type="button">Approve</button>
+    </section>
+    <div class="table-frame">
+      <table id="table">
+        <thead><tr id="head"></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <section id="detail" aria-label="The selected entry">
+      <div class="detail-head">
+        <div class="grow">
+          <div id="crumb" class="muted"></div>
+          <div class="detail-title"><span id="title"></span><span id="status" class="status"></span></div>
+        </div>
+        <div class="toggle" role="tablist" aria-label="View">
+          <button data-view="fields" type="button" role="tab">Fields</button>
+          <button data-view="page" type="button" role="tab">Page</button>
+          <button data-view="notion" type="button" role="tab">As in Notion</button>
+        </div>
+        <button id="open" class="secondary" type="button" hidden>Open in Notion</button>
+        <button id="approve-this" class="primary" type="button" hidden>Approve this</button>
+      </div>
+      <div id="why" class="why" hidden></div>
+      <div id="result" class="result" hidden></div>
+      <div id="body" class="body"></div>
+      <div id="entry-comments" class="entry-comments"></div>
+    </section>
+    <footer class="muted">
+      Nothing reaches Notion until you approve it; what you leave unchecked stays staged. A rejection goes back to the
+      agent with your reason.
+    </footer>
+    <script nonce="{{nonce}}" src="{{script}}"></script>
+  </body>
+</html>

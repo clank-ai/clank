@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 9d21h  ● docker running  ● no model  ● gateway stopped  ● cloud                            09:14
+F4 This folder         ✗ 4   │ ┌─ Cloud ──────────────────────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ OpenRouter (openrouter) · agreed 2026-10-11 11:40                                            │
+2 Questions                  │ │   key       set 2026-10-11 11:40, ends …-key                                                 │
+3 History                    │ │   policy    Clank asks only for providers that do not keep your data (data_collection deny). │
+4 Docker               ●     │ │   account   key "made-up key label" (ends …-key): its own limit $20.00, $18.71 left;         │
+5 Machine                    │ │ OpenRouter counts $0.12 today, $1.29 this month (UTC days)                                   │
+6 Operations                 │ │   Clank     cloud $0.42 today · $0.42 this month (this computer's days); today's limit       │
+7 Records                    │ │ $5.00; no monthly limit                                                                      │
+8 Models               ●     │ │   check     not checked yet: c checks it                                                     │
+9 Presets                    │ │   presets   cloud: Example Coder                                                             │
+0 Providers and models       │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+F1 Help                      │
+F2 Launch options            │ ┌─ Serving setups ─────────────────────────────────────────────────────────────────────────────┐
+F3 MCP servers               │ │ KVMem/llama.cpp (kvmem-llamacpp), reads gguf                                                 │
+F6 Workspaces                │ │   v0.00.0-rc1  not installed                                                                 │
+F7 Requests                  │ │ llama.cpp (llamacpp), reads gguf                                                             │
+F8 CPU models                │ │   b11588  not installed · Clank has its recipe                                               │
+F9 Phone               ●     │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+F10 Monitor                  │
+F12 Add a model              │ ┌─ Models ─────────────────────────────────────────────────────────────────────────────────────┐
+─────────────────────────────│ │ Qwen2.5-Coder 0.5B (qwen2.5-coder-0.5b)                                                      │
+coming                       │ │   gguf weights     qwen2.5-coder-0.5b-q8_0.gguf, 531 MB, from                                │
+Sampling              M3     │ │ ggml-org/Qwen2.5-Coder-0.5B-Q8_0-GGUF@5788aee90e72                                           │
+Sessions              M3     │ │     no host has an engine that reads it                                                      │
+Keys                  M3     │ │ Qwen3-VL 4B (qwen3-vl-4b)                                                                    │
+Layout                M2     │ │   gguf weights     Qwen3VL-4B-Instruct-Q4_K_M.gguf, 2.5 GB, from                             │
+Tests and trials      M2     │ │ Qwen/Qwen3-VL-4B-Instruct-GGUF@1cd86afb9a95                                                  │
+Agents                M5     │ │     no host has an engine that reads it                                                      │
+Modes                 M5     │ │   gguf projector   mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf, 454 MB, from                        │
+Changes               M6     │ │ Qwen/Qwen3-VL-4B-Instruct-GGUF@1cd86afb9a95                                                  │
+Network access        M7     │ │     no host has an engine that reads it                                                      │
+Skills                M8     │ │ Qwen3.8-27B (qwen3.8-27b)                                                                    │
+Files                 M9     │ │   gguf weights     Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf, 12.1 GB, from                         │
+Setup guide           M10    │ │ ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF@d562806dbafa                                            │
+                             │ │     no host has an engine that reads it                                                      │
+                             │ │   gguf projector   mmproj-Q8_0.gguf, 629 MB, from unsloth/Qwen3.8-27B-GGUF                   │
+                             │ │     no host has an engine that reads it                                                      │
+                             │ │ Swift 1.5 Qwen3.8-27B IQ3_XXS (swift-1.5-qwen3.8-27b-iq3xxs)                                 │
+                             │ │   gguf weights     Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_XXS-mtp.gguf, 10.4 GB, from             │
+                             │ │ ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF@d74895bbe5db                                       │
+                             │ │     no host has an engine that reads it                                                      │
+                             │ │ Swift 1.5 Qwen3.8-27B (swift-1.5-qwen3.8-27b)                                                │
+                             │ │   gguf weights     Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf, 12.1 GB, from               │
+                             │ │ ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF@d74895bbe5db                                       │
+                             │ │     no host has an engine that reads it                                                      │
+                             │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+                             │
+
+ a add a cloud model  k set the key  c check it  o data policy  L cost limits  r remove it  ? explain  f1 help

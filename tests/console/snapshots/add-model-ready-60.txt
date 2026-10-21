@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service  ● docker  ● daily 262K … 09:14
+F4 This folder   ✗ │ ┌─ Ready ────────────────────────────┐
+1 Home             │ │ cloud: Example Coder is written    │
+2 Questions        │ │ and tested; daily 262K keeps the   │
+3 History          │ │ main slot. Load cloud: Example     │
+4 Docker         ● │ │ Coder from Presets. Its test: OK   │
+5 Machine          │ │ in 0.0 s, $0.000021.               │
+6 Operations       │ │                                    │
+7 Records          │ │ Docker runs: a workspace's         │
+8 Models         ● │ │ container can start.               │
+9 Presets          │ │                                    │
+0 Providers and…   │ │ This folder's agent works with it; │
+F1 Help            │ │ it asks once whether this          │
+F2 Launch optio…   │ │ workspace may use the cloud model. │
+F3 MCP servers     │ │                                    │
+F6 Workspaces      │ │ Each request costs money: Home,    │
+F7 Requests        │ │ Requests and the Monitor show what │
+F8 CPU models      │ │ each cost; the Providers and       │
+F9 Phone         ● │ │ models page sets the limits.       │
+F10 Monitor        │ └────────────────────────────────────┘
+F12 Add a model    │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+ 09:14  cloud: Example Coder is written: now its test
+ enter this folder  ? explain  f1 help  f5 machine column

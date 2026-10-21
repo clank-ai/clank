@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 9d1h  ● docker running  ● no model: Add a model  ● gateway stopped                                                         12:41
+F4 This folder         ✗ 3   │  Flow   Session   Context
+1 Home                       │ flow “A new simulation study” · workspace myproject · run 1 · started 12:02 · running: T2
+2 Questions                  │
+3 History                    │ ┌─ Flow ─────────────────────────────────┐  ┌─ T2 · Estimate run times · settings ─────────────────────────────────────────────┐
+4 Docker               ●     │ │ ✓ YOU Brief  BRIEF.md · 12:02          │  │ ● running since 12:35                                                            │
+5 Machine                    │ │ ✓ PLAN Write the study plan  PLAN.md…  │  │ It is running: a change here applies from its next try.                          │
+6 Operations                 │ │ ✓ VERIFY Check the plan  pass, try 2…  │  │                                                                                  │
+7 Records                    │ │    fail ⟲ back to PLAN with 3 findin…  │  │ t  Type         TASK · proposed by split, accepted by you                        │
+8 Models               ●     │ │ ✓ GATE You approve the plan  approve…  │  │ m  Model        daily 262K (the flow's) · another preset loads before this box … │
+9 Presets                    │ │ ✓ DECOMPOSE Break it into tasks        │  │ o  Mode         auto: changes accepted at once                                   │
+0 Providers and models       │ │    ✓ TASK T1 The parameter grid        │  │ i  Sees         PLAN.md, grid.json · not the whole history: a fresh session      │
+F1 Help                      │ │    ● TASK T2 Estimate run times        │  │ p  Prompt       Estimate the run time of each grid point in grid.json with a dr… │
+F2 Launch options            │ │    ○ TASK T3 The sweep script  scrip…  │  │ d  Deliverable  runs/estimates.md · a table: grid point, CPU-hours, method       │
+F3 MCP servers               │ │    ○ TASK T4 The analysis notebook     │  │ a  Accept when  every grid point has an estimate; the total is under 48 CPU-hou… │
+F6 Workspaces                │ │ ○ INTEGRATE Put it together  STUDY-P…  │  │ n  When done    go on to TASK T3                                                 │
+F7 Requests                  │ │ ○ GATE You review the whole  you dec…  │  │ r  Tries        up to 3, then a gate decides · this is try 1                     │
+F8 CPU models                │ │ ▸ next flow: made when approved        │  │ l  Limits       30 minutes, 200,000 tokens                                       │
+F9 Phone               ●     │ │                                        │  │ u  Tools        bash · read · edit · myproject-mcp                               │
+F10 Monitor                  │ │ ✓ done  ● running  ○ waiting           │  │ w  Network      none · nothing it runs can reach the internet (network grants c… │
+F12 Add a model              │ │ ✗ failed  proposed                     │  │                                                                                  │
+─────────────────────────────│ │                                        │  │ v shows the whole first message: this prompt, the files it sees, its tools.      │
+coming                       │ └────────────────────────────────────────┘  └──────────────────────────────────────────────────────────────────────────────────┘
+Sampling              M3     │
+Sessions              M3     │
+Keys                  M3     │
+Layout                M2     │
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5     │
+Changes               M6     │
+Network access        M7     │
+Skills                M8     │
+Files                 M9     │
+Setup guide           M10    │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+
+ t type  m model  o mode  i sees  p prompt  d deliverable  a accept when  n when done  r tries  l limits  u tools  w network  ? explain  f1 help

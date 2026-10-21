@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phone, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; gap: 14px">
+<section style="position: relative; flex: 1; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Remote access</div>
+<div style="white-space: pre-wrap"><span style="color: #9ece6a">●</span> on: https://my-pc.example.ts.net:8445/</div>
+<div style="white-space: pre-wrap">  for you@example.com's devices on the tailnet</div>
+<div style="margin-top: 8px; white-space: pre-wrap"><span style="font-weight: 700">pairing code: </span><span style="font-weight: 700; color: #ff9e64">7KQ3 MX9P</span>   for work phone, until 13:01:10</div>
+<div style="white-space: pre-wrap">on the device, open https://my-pc.example.ts.net:8445/ and type it   (<span style="color: #7aa2f7">c</span> cancels it)</div>
+<div style="color: #828bb8; margin-top: 8px; white-space: pre-wrap">published on your tailnet only, through Tailscale (never Funnel)</div>
+<div style="color: #828bb8; white-space: pre-wrap">it answers only your own Tailscale login, then only paired devices</div>
+</section>
+<section style="position: relative; flex: 0 0 38%; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Paired devices</div>
+<sc-for list="{{ devices }}" as="d" hint-placeholder-count="3">
+<div style="display: flex; margin: 0 -6px; padding: 0 6px; white-space: pre; {{ d.style }}"><span style="flex: 0 0 160px; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ d.name }}</span><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis">paired {{ d.paired }}   last used {{ d.used }}</span></div>
+</sc-for>
+<div style="flex: 1"></div>
+<div style="color: #828bb8; margin-top: 8px; white-space: pre-wrap"><span style="color: #7aa2f7">Enter</span> shows everything it and this computer exchanged</div>
+<div style="color: #828bb8; white-space: pre-wrap"><span style="color: #7aa2f7">d</span> revokes it · a pairing lasts 30 days from its last use</div>
+</section>
+</div>
+
+<section style="position: relative; flex: 1; min-height: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Sent to the phone</div>
+<div style="flex: 1; min-height: 0; overflow: hidden">
+<sc-for list="{{ sent }}" as="f" hint-placeholder-count="8">
+<div style="display: flex; gap: 16px; margin-bottom: 2px"><span style="flex: none; color: #828bb8; white-space: pre">{{ f.time }}</span><span style="flex: 1; min-width: 0; white-space: pre-wrap"><span style="color: #e0af68">{{ f.ws }}</span>: {{ f.text }}</span></div>
+</sc-for>
+<div style="color: #828bb8; margin-top: 6px; white-space: pre-wrap">the files the agents send you also show on the phone page; ask one to send you a figure</div>
+</div>
+</section>
+
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">x</span> on or off</span><span><span style="color: #7aa2f7">p</span> pairs</span><span><span style="color: #7aa2f7">c</span> cancels the code</span><span><span style="color: #7aa2f7">enter</span> what a device exchanged</span><span><span style="color: #7aa2f7">d</span> revokes</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Phone' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const selected = 'background: #283457; color: #ffffff; font-weight: 700';
+    const devices = [
+      { name: 'my phone', paired: '08:31:40', used: '12:44:30', style: selected },
+      { name: 'laptop', paired: '11:02:51', used: '11:40:07', style: '' },
+      { name: 'tablet', paired: '12:10:05', used: '12:10:05', style: '' }
+    ];
+    const ws = 'myproject';
+    const sent = [
+      { time: '12:41:07', ws, text: 'Figure 2: solve time against matrix size, on a log scale' },
+      { time: '12:33:52', ws, text: 'figures/solve-time.png' },
+      { time: '12:22:40', ws, text: "The simulation study's plan: four stages, what each one measures and how long it should take; read it and reply with what to change" },
+      { time: '12:05:13', ws, text: 'Table 1: memory used by each method, by matrix size' },
+      { time: '11:52:30', ws, text: 'The test report: 212 passed, 0 failed' },
+      { time: '11:31:08', ws, text: 'Figure 1: how dense the matrices of the benchmark set are' },
+      { time: '11:02:44', ws, text: 'notes/next-steps.md' },
+      { time: '10:47:19', ws, text: 'A first look at the benchmark: three methods on twelve matrices, the fastest on each one marked' }
+    ];
+    return { menu, devices, sent };
+  }
+}
+</script>
+</body>
+</html>

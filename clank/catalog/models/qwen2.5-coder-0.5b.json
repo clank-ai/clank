@@ -1,0 +1,31 @@
+{
+  "schema": "model/1",
+  "id": "qwen2.5-coder-0.5b",
+  "name": "Qwen2.5-Coder 0.5B",
+  "facts": {
+    "architecture": "Qwen2: 24 layers, all attending fully, with 2 KV heads of 64; trained to fill in the middle",
+    "parameters": "0.5B",
+    "context": 32768,
+    "attention_layers": 24,
+    "kv_width": 128,
+    "abilities": ["fill in the middle"]
+  },
+  "files": [
+    {
+      "format": "gguf",
+      "role": "weights",
+      "repository": "ggml-org/Qwen2.5-Coder-0.5B-Q8_0-GGUF",
+      "revision": "5788aee90e725673490be18f553d234feaa8303d",
+      "path": "qwen2.5-coder-0.5b-q8_0.gguf",
+      "size": 531068128,
+      "sha256": "d0f8cd6c49bab52a0abdbe47948518b1f4d9b1a8a2a6825099cea31cea10ac56",
+      "notes": "Q8_0, the file llama.cpp's own VS Code extension suggests for completion on a CPU"
+    }
+  ],
+  "engines": {
+    "llamacpp": {
+      "sizes": {"weights_mib": 501},
+      "source": "llama.cpp b11588's log on this file (CPU_Mapped model buffer 500.79 MiB; KV 96 MiB at 8,192 tokens, which the model's facts give; compute 90.54 MiB), 2026-10-15"
+    }
+  }
+}

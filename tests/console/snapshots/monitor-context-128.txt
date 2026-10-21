@@ -1,0 +1,60 @@
+ ◆ CLANK  paper   ● service up 8d0h  ● docker running  ● no model: Add a model  ● gateway                                                                 12:21
+F4 This folder         ✗ 4   │  Flow   Session   Context
+1 Home                       │ OpenCode · workspace myproject · “Plan a new simulation study” · build · working · 19 steps, 20 calls · since 11:58 · the newes…
+2 Questions                  │
+3 History                    │ ┌─ Context window ─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+4 Docker               ●     │ │ 37,790 of 262,144 tokens (14%) · 191,586 left before OpenCode compacts at 229,376 · 95% read from the cache                  │
+5 Machine                    │ │ ██████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ │
+6 Operations                 │ │ estimate: █ system 3.3K · █ tools 10.2K · █ you 25 · █ thinking 2.9K · █ calls 606 · █ results 18.6K · █ loop 2.0K           │
+7 Records                    │ │ ● the engine holds this session's conversation                                                                               │
+8 Models               ●     │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+9 Presets                    │
+0 Providers and models       │ ┌─ What is in it ────────────────────────────────────────────── estimate ─┐  ┌─ On the GPU exactly ────────────────────────────┐
+F1 Help                      │ │ part         tokens share items  the biggest              last 10 steps │  │ The model reads 36,864 tokens exactly:          │
+F2 Launch options            │ │ █ system      3,333    9%     1  3.3K the system prompt      ▂▂▃▄▅▅▆▇▇█ │  │ █ the first       128  the prompt's start       │
+F3 MCP servers               │ │ █ tools      10,177   27%    12  2.8K the definition of…     ▂▂▃▄▄▅▆▇▇█ │  │ █ the newest   ~2,000  after the cached part    │
+F6 Workspaces                │ │ █ you            25    0%     1  25 your message: Plan…      ▂▂▃▄▅▅▆▇▇█ │  │ █ picked      ~34,736  by likeness to the last… │
+F7 Requests                  │ │ █ text            0    0%     0                                         │  │ ░ the rest        926  in system memory         │
+F8 CPU models                │ │ █ thinking    2,915    8%    15  285 thinking: magnetiz…     ▂▂▃▄▄▅▆▇▇█ │  │ steps pick by your message of 12:05             │
+F9 Phone               ●     │ │ █ calls         606    2%    18  131 call: todowrite         ▂▂▃▄▅▅▆▇▇█ │  │ its picks by part: not reported by this engine  │
+F10 Monitor                  │ │ █ results    18,624   49%    18  5.6K read src/simulato…     ▂▂▃▄▅▅▆▇▇█ │  │                                                 │
+F12 Add a model              │ │ █ loop        2,049    5%     1  2.0K thinking: the ene…     ▂▂▃▄▄▅▆▇▇█ │  │                                                 │
+─────────────────────────────│ └─────────────────────────────────────────────────────────────────────────┘  └─────────────────────────────────────────────────┘
+coming                       │
+Sampling              M3     │ ┌─ Over this session ─────────────────────────────────────────────────────┐  ┌─ Where the room went ───────────────────────────┐
+Sessions              M3     │ │  262K                                                                   │  │ read: 8 results                     15,424  41% │
+Keys                  M3     │ │                                                                         │  │ the system prompt and tool defini…  13,510  36% │
+Layout                M2     │ │                                                                         │  │ thinking sent back: 15 items         2,915   8% │
+Tests and trials      M2     │ │                        ▁                                                │  │ loop text: 1 item                    2,049   5% │
+Agents                M5     │ │  131K              ▂▄▆▆█                                                │  │ myproject_capabilities: 1 result     1,939   5% │
+Modes                 M5     │ │               ▂▃▅▇██████                                                │  │ tool calls: 18 items                   606   2% │
+Changes               M6     │ │          ▁▃▅▆███████████                                                │  │                                                 │
+Network access        M7     │ │     0 ▄▆▇███████████████                                                │  │                                                 │
+Skills                M8     │ │                       ✗                                                 │  │                                                 │
+Files                 M9     │ │       11:58        12:05                                                │  │                                                 │
+Setup guide           M10    │ │ ✗ 12:04 the loop guard stopped step 17                                  │  │                                                 │
+                             │ └─────────────────────────────────────────────────────────────────────────┘  └─────────────────────────────────────────────────┘
+                             │
+                             │ ┌─ Could be freed ─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+                             │ │    the earlier results of calls made again: 1 item                                                         frees about 1,212 │
+                             │ │  k the loop text the model wrote, which only compacting clears: 1 item                                     frees about 2,049 │
+                             │ │  k compact now: OpenCode sums the session up                                                              frees about 22,729 │
+                             │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                             │
+                             │ ┌─ Where these figures come from ──────────────────────────────────────────────────────────────────────────────────────────────┐
+                             │ │ the engine: KVMem/llama.cpp v0.00.0-rc1 (“daily 262K”): a window of 262,144 tokens, at most 16,384 an answer; it attends     │
+                             │ │ 36,864 tokens exactly on the GPU, its first block of 128 and blocks of 128 picked by likeness to the last user message; it   │
+                             │ │ does not count tokens                                                                                                        │
+                             │ │ the model: Qwen3.8-27B: thinking before your last message left out; tool calls written as XML; thinking between <think> and  │
+                             │ │ </think> (Qwen's reference chat template, as design 0012 §4.2 reads it: earlier thinking rendered only after the last user   │
+                             │ │ message, tool calls as XML; the template inside the model file is still to read (design 0012 §10))                           │
+                             │ │ the estimate: each part's characters, shared out so the parts add up to the engine's own count of 37,729 tokens; Qwen3.8-27B │
+                             │ │ is not calibrated, so every part counts alike by its characters                                                              │
+                             │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                             │
+                             │
+                             │
+                             │
+                             │
+
+ f10 next view  enter open  esc back  k compact  x drop  ? explain  f1 help  f5 machine column  q quit                                               ^p palette

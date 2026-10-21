@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 9d1h  ● docker running  ● no model: Add a model  ● gateway stopped                                                         12:41
+F4 This folder         ✗ 3   │  Flow   Session   Context
+1 Home                       │ flow “A new simulation study” · building with the model · DRAFT 1, refused · workspace myproject
+2 Questions                  │
+3 History                    │ ┌─ Flow ────────────────────────────────────────── DRAFT 1 · refused: 1 problem ─┐  ┌─ Building it with the model ───────────┐
+4 Docker               ●     │ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐       │  │ ✓ started by you (console) · 12:41     │
+5 Machine                    │ │ ┆ YOU               ○┆┄┄▸┆ PLAN              ○┆┄┄▸┆ VERIFY            ○┆       │  │ ● reading the folder: 7 tool calls so  │
+6 Operations                 │ │ ┆ Your brief         ┆   ┆ Write the plan     ┆   ┆ Check the plan     ┆       │  │   far                                  │
+7 Records                    │ │ ┆ you                ┆   ┆ main slot's model  ┆   ┆ main slot's model  ┆       │  │ ✓ BRIEF.md written · 12:44             │
+8 Models               ●     │ │ ┆ BRIEF.md           ┆   ┆ PLAN.md            ┆   ┆ a verdict: pass or…┆       │  │ ✗ draft 1 · 12:41 · refused: 1 problem │
+9 Presets                    │ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄▴┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┬┘       │  │     - boxes.1.when_done: a built flow  │
+0 Providers and models       │ │                            ╰┄ fail ⟲ back ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯ ┆        │  │       waits only at its end: leave     │
+F1 Help                      │ │            ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯        │  │       plan's when_done out (go on)     │
+F2 Launch options            │ │            ▾                                                                   │  │                                        │
+F3 MCP servers               │ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐       │  │ ┌─ Live ─────────────────────────────┐ │
+F6 Workspaces                │ │ ┆ DECOMPOSE         ○┆┄┄▸┆ INTEGRATE         ○┆┄┄▸┆ GATE              ○┆       │  │ │ answering · step 4                 │ │
+F7 Requests                  │ │ ┆ Break it into tasks┆   ┆ Put it together    ┆   ┆ You review the who…┆       │  │ │ speed   41 tok/s ▇█                │ │
+F8 CPU models                │ │ ┆ main slot's model  ┆   ┆ main slot's model  ┆   ┆ you                ┆       │  │ │ context no model runs              │ │
+F9 Phone               ●     │ │ ┆ proposes tasks     ┆   ┆ SUMMARY.md         ┆   ┆ you decide         ┆       │  │ │ guard   watching · nothing repeats │ │
+F10 Monitor                  │ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘       │  │ │ Enter opens its session: the Sess… │ │
+F12 Add a model              │ │            ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯        │  │ └────────────────────────────────────┘ │
+─────────────────────────────│ │            ▾                                                                   │  └────────────────────────────────────────┘
+coming                       │ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                                         │
+Sampling              M3     │ │ ┆ ▸ next flow        ┆                                                         │  ┌─ Models in this flow ──────────────────┐
+Sessions              M3     │ │ ┆ made when approved ┆                                                         │  │ ○ main slot's model · switches nothin… │
+Keys                  M3     │ │ ┆ brief from INTEGRA…┆                                                         │  │ the other 2 are you                    │
+Layout                M2     │ │ ┆                    ┆                                                         │  │ e on a box picks another preset for it │
+Tests and trials      M2     │ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                                         │  └────────────────────────────────────────┘
+Agents                M5     │ │                                                                                │
+Modes                 M5     │ │ ✓ done  ● running  ○ waiting  ✗ failed  ┄┄ proposed  ── pass  ── fail ⟲ back   │  ┌─ Waiting for you ──────────────────────┐
+Changes               M6     │ │ ── now  ┄┄ not yet                                                             │  │ ? talk with the model in OpenCode, on  │
+Network access        M7     │ │                                                                                │  │   “flow · building the flow”           │
+Skills                M8     │ │                                                                                │  │   Enter opens its session here; once   │
+Files                 M9     │ │                                                                                │  │   the model's draft is written: look,  │
+Setup guide           M10    │ │                                                                                │  │   then r                               │
+                             │ └────────────────────────────────────────────────────────────────────────────────┘  └────────────────────────────────────────┘
+                             │
+                             │ ┌─ The brief, checked ────────────────────────────────────────────────────────────────────────────────────────── 0 of 2 met ─┐
+                             │ │ ○ about 60 grid points  not checked yet                                                                                    │
+                             │ │ ○ at most 48 CPU-hours  not checked yet                                                                                    │
+                             │ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                             │
+                             │ ┌─ Deliverables ─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+                             │ │ nothing written yet                                                                                                        │
+                             │ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                             │
+                             │ ┌─ Ahead ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+                             │ │ YOU Your brief  done by BRIEF.md, written with the model                                                                   │
+
+ f10 next view  enter open  n new flow  N new flow in VS Code  ? explain  f1 help  f5 machine column  q quit                                         ^p palette

@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gateway",
+  "description": "Where the gateway listens, how long a request waits for a model that is starting or switching, whether it answers OpenCode's session titles itself, and what it keeps of each request.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "gateway/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "start": {
+      "default": true,
+      "description": "Start the gateway when the service starts, and again whenever it is found not running.",
+      "title": "Start with the service",
+      "type": "boolean"
+    },
+    "port": {
+      "default": 18210,
+      "description": "Where tools reach the gateway, on this machine only.",
+      "maximum": 65535,
+      "minimum": 1024,
+      "title": "Port",
+      "type": "integer"
+    },
+    "hold_seconds": {
+      "default": 300,
+      "description": "How long a request waits, in seconds, for a slot that is starting or switching, before refusal.",
+      "minimum": 0,
+      "title": "Hold",
+      "type": "integer"
+    },
+    "local_titles": {
+      "default": true,
+      "description": "Answer OpenCode's session-title requests in the gateway, so they never take the place of the conversation the engine keeps cached (design 0001 §6.4).",
+      "title": "Answer titles here",
+      "type": "boolean"
+    },
+    "loop_guard": {
+      "default": true,
+      "description": "Stop an answer that repeats itself: the engine stops writing it, and the stream ends with an error that says what repeated (design 0004 §2). A change applies when the gateway restarts: clank gateway restart.",
+      "title": "Loop guard",
+      "type": "boolean"
+    },
+    "loop_windows": {
+      "description": "The stretches of the thinking and the text that the loop guard reads, their newest characters: a short one finds a short repeat soon, a long one prose said again every 600 to 800 characters.",
+      "items": {
+        "minimum": 256,
+        "type": "integer"
+      },
+      "minItems": 1,
+      "title": "Loop stretches",
+      "type": "array"
+    },
+    "loop_tool_windows": {
+      "description": "The stretches of a tool call's arguments that the loop guard reads: the short one only, since a file written from a template (records that differ by an id, rows of a table) compresses over a long stretch as far as a loop does.",
+      "items": {
+        "minimum": 256,
+        "type": "integer"
+      },
+      "minItems": 1,
+      "title": "Loop stretches, tool calls",
+      "type": "array"
+    },
+    "loop_ratio": {
+      "default": 0.06,
+      "description": "A part repeats itself when a stretch compresses to under this share of its size (real answers stay above 0.18; the measurement of 2026-10-18).",
+      "exclusiveMaximum": 1,
+      "exclusiveMinimum": 0,
+      "title": "Loop share",
+      "type": "number"
+    },
+    "records": {
+      "default": true,
+      "description": "Keep each request and its answer in logs/traffic.",
+      "title": "Keep requests",
+      "type": "boolean"
+    },
+    "record_limit_kib": {
+      "default": 256,
+      "description": "The longest text kept of one field of a request or answer, in KiB.",
+      "minimum": 1,
+      "title": "Field limit",
+      "type": "integer"
+    },
+    "keep_days": {
+      "default": 14,
+      "description": "How many days of requests are kept.",
+      "minimum": 1,
+      "title": "Days kept",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

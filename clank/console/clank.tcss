@@ -1,0 +1,250 @@
+/* The console's look (design 0001 §5.5). CLANK_HOME/config/console.tcss, when it exists, is loaded after this file,
+   so any rule there wins; the console reloads both when one is saved. Every color is an element of the style, named
+   by its role ($clank-good, design 0011 §6): none is written here or in the code. */
+
+Screen {
+    layout: vertical;
+}
+
+#header {
+    height: 1;
+    background: $clank-bars;
+    color: $clank-text;
+}
+
+#header-left {
+    width: 1fr;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+}
+
+#header-clock {
+    width: auto;
+    padding: 0 1;
+    color: $clank-quiet;
+}
+
+#body {
+    height: 1fr;
+}
+
+#menu {
+    width: 30;
+    height: 1fr;
+    border-right: solid $clank-border;
+    color: $clank-text;
+}
+
+/* The menu's highlighted entry, whether the menu has the focus or not: the page on screen. */
+#menu > ListItem.-highlight, #menu:focus > ListItem.-highlight {
+    background: $clank-selection;
+    color: $clank-selected-text;
+    text-style: bold;
+}
+
+/* A small terminal (narrower than SMALL_FROM columns): the menu narrows, its planned entries hidden. */
+Screen.-small #menu {
+    width: 20;
+}
+
+Screen.-small #menu .planned, Screen.-small #menu .divider {
+    display: none;
+}
+
+#menu .divider {
+    border-top: solid $clank-border;
+    color: $clank-quiet;
+}
+
+#pages {
+    width: 1fr;
+    height: 1fr;
+    padding: 0 1;
+}
+
+/* The machine column, on the right (machine.py): on screen when the terminal is wide enough (the screen's -wide class,
+   ClankConsole.MACHINE_FROM columns), F5 shows or hides it whatever the width. Its two panels have their own borders
+   and padding, so it has none. */
+#machine {
+    width: 38;
+    height: 1fr;
+    display: none;
+}
+
+Screen.-wide #machine {
+    display: block;
+}
+
+/* A very wide terminal (ClankConsole.WIDER_FROM columns): a wider column, so processes' names fit. */
+Screen.-wider #machine {
+    display: block;
+    width: 46;
+}
+
+/* Beside a page whose panels need the room (Page.MACHINE_COLUMN: the Monitor, design 0012 §2), the machine column is
+   hidden whatever the width, until F5 shows it. */
+Screen.-no-machine-column #machine {
+    display: none;
+}
+
+Screen.-machine-on #machine {
+    display: block;
+}
+
+Screen.-machine-off #machine {
+    display: none;
+}
+
+/* The last panel of the column ends it: no row under it (MachineColumn.draw counts the one between the two). */
+#machine-now-panel {
+    margin-bottom: 0;
+}
+
+#machine Label {
+    width: 1fr;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* A page's text wraps at the page's width; rows of a table or of most lists are cut instead, ending in an ellipsis,
+   and each list shows a set number of rows at most, scrolling beyond them. A list is drawn on its panel's background,
+   focused or not: Textual's own lists draw on `surface`, which the style keeps for a button or a choice to pick, and
+   tint it when focused, which leaves a transparent background as it is. Only its highlighted row has a color. */
+#pages Label {
+    width: 1fr;
+}
+
+#pages ListView {
+    height: auto;
+    background: transparent;
+}
+
+/* The highlighted row takes the style's selection color, dark enough that a state's color in it stays readable; half
+   of it while its list does not have the focus. */
+#pages ListView > ListItem.-highlight {
+    background: $clank-selection 50%;
+}
+
+#pages ListView:focus > ListItem.-highlight {
+    background: $clank-selection;
+    color: $clank-selected-text;
+    text-style: bold;
+}
+
+#operations-list Label, #docker-containers, #records-kinds Label, #records-list Label, #records-fields Label,
+#presets-list Label {
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+}
+
+#operations-list {
+    max-height: 10;
+}
+
+#records-kinds {
+    max-height: 8;
+}
+
+#records-list {
+    max-height: 6;
+}
+
+#records-fields {
+    max-height: 16;
+}
+
+/* The message line, above the keys bar (`keys.py`): what the last action did, or why it failed. */
+#message {
+    height: 1;
+    padding: 0 1;
+    color: $clank-quiet;
+}
+
+#message.error {
+    color: $clank-attention;
+    text-style: bold;
+}
+
+/* A window over the console (design 0011 §7): a question shown whole (v), what has the focus explained (?), a choice
+   to pick, a form, an action to confirm, an MCP server's tools, a device's traffic. Each is one panel (`WindowPanel`,
+   its own rules beside it in panel.py: 90 columns, its border in border-focused), centered; the traffic window is
+   two. */
+DetailsScreen, PickScreen, FormScreen, ConfirmScreen, ToolsScreen, TrafficScreen {
+    align: center middle;
+}
+
+#tools {
+    width: 110;
+}
+
+#tools-scroll {
+    height: auto;
+    max-height: 26;
+    margin-top: 1;
+}
+
+#pick-list {
+    height: auto;
+    max-height: 20;
+}
+
+#traffic {
+    width: 96%;
+    height: 90%;
+    background: $clank-background;
+}
+
+#traffic-list {
+    height: 12;
+    background: transparent;
+}
+
+#traffic-list Label {
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+}
+
+#traffic-body-panel {
+    height: 1fr;
+    margin-bottom: 0;
+}
+
+#traffic-body {
+    height: 1fr;
+}
+
+#live-scroll {
+    height: auto;
+    max-height: 70vh;
+    margin-top: 1;
+}
+
+/* The help page (pages/help.py): two columns in each panel, a key or a page, then what it does, wrapping under itself. */
+.help-row {
+    height: auto;
+}
+
+#pages .help-key {
+    width: 13;
+    color: $clank-key;
+}
+
+#pages .help-page {
+    width: 30;
+    color: $clank-key;
+}
+
+#pages .help-what {
+    width: 1fr;
+}
+
+.hint {
+    color: $clank-quiet;
+    margin-top: 1;
+}
+
+/* What a later milestone brings: in the style's planned color, red in Clank's, until it is built (the owner's request,
+   2026-10-11). */
+.planned {
+    color: $clank-planned;
+}

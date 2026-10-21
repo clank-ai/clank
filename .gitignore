@@ -1,0 +1,23 @@
+# The user's own configuration and secrets: never committed (AGENTS.md, "Nothing personal or secret")
+/local/
+.env
+*.secret
+
+# Runtime state, logs, caches
+/state/
+/logs/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+
+# Models and other large files
+/models/
+*.gguf
+*.ninfer
+*.safetensors

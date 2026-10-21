@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Console",
+  "description": "How the console looks: the style it draws in (design 0011).",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "console/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "style": {
+      "default": "clank",
+      "description": "The style the console draws in, by its file's name.",
+      "title": "Style",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

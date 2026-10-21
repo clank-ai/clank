@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Monitor: Watch for",
+  "description": "The Monitor's Watch for rules, run in the service over each session's flow whether or not a console is open: for each rule, what it does when it fires (mark it, pause the session, tell the phone, tell the model and go on) and the words it tells the model; and how many notes in a row one rule may send before it calls you.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "monitor/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "waiting_for_you": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark",
+          "tell the phone"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. The owner will answer it."
+      },
+      "description": "When: an approval or a question waits. By default: mark, tell the phone; a key left out keeps its default.",
+      "title": "Waiting for you"
+    },
+    "engine_broke_off": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. That answer is not in your context; go on from where you were."
+      },
+      "description": "When: the last request ended in the engine's error. By default: mark; a key left out keeps its default.",
+      "title": "The engine broke off"
+    },
+    "loop_guard_stopped": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark",
+          "tell the model"
+        ],
+        "note": "Clank's loop guard stopped your last answer because it repeated itself, and that answer is not in your context. Go on from where you were, without writing it the same way again."
+      },
+      "description": "When: a request ended model_looped. By default: mark, tell the model; a key left out keeps its default.",
+      "title": "The loop guard stopped an answer"
+    },
+    "asks_about_a_repeat": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark",
+          "tell the phone"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. Try another way instead of making the same call again."
+      },
+      "description": "When: OpenCode asks about the same call made again (its doom_loop ask); unanswered, it stalls a run left alone. By default: mark, tell the phone; a key left out keeps its default.",
+      "title": "OpenCode asks about a repeated call"
+    },
+    "same_call_again": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. Its result will not change; try another way."
+      },
+      "description": "When: the same call three times or more in the last 12. By default: mark; a key left out keeps its default.",
+      "title": "The same call again"
+    },
+    "failing_again": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. Step back and find why before trying again."
+      },
+      "description": "When: four failures or more in the last 8 calls. By default: mark; a key left out keeps its default.",
+      "title": "Failing again"
+    },
+    "one_file_again": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. Read the file whole before editing it again."
+      },
+      "description": "When: one file edited six times or more in the last 30 calls. By default: mark; a key left out keeps its default.",
+      "title": "One file again and again"
+    },
+    "call_then_step_failed": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. A file may have changed without your knowing; check it before going on."
+      },
+      "description": "When: a step ended in an error after one of its calls had started: the file may have changed, and the model is not told. By default: mark; a key left out keeps its default.",
+      "title": "A call ran, then its step failed"
+    },
+    "stopped_with_an_ask_waiting": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. Take it into account, and go on."
+      },
+      "description": "When: the session stopped while an ask waits: the ask stays, and a later answer could still let it run. By default: mark; a key left out keeps its default.",
+      "title": "Stopped with an approval waiting"
+    },
+    "note_not_read": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. Take it into account, and go on."
+      },
+      "description": "When: a note was stored, and the run ended without reading it. By default: mark; a key left out keeps its default.",
+      "title": "A note not read"
+    },
+    "retrying": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. Take it into account, and go on."
+      },
+      "description": "When: OpenCode tries a request again, attempt n of at most 5. By default: mark; a key left out keeps its default.",
+      "title": "OpenCode retrying"
+    },
+    "compaction_near": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. Finish what you are doing in as few steps as you can."
+      },
+      "description": "When: the next step would likely pass the compaction line, at the last steps' pace. By default: mark; a key left out keeps its default.",
+      "title": "Compaction near"
+    },
+    "budget_near": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. Keep your thinking and your answers shorter."
+      },
+      "description": "When: the thinking or the answer is within a tenth of its budget. By default: mark; a key left out keeps its default.",
+      "title": "Thinking or answer near its budget"
+    },
+    "engine_taken": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. Take it into account, and go on."
+      },
+      "description": "When: another session's request reset the engine's conversation, so the next step reads it again. By default: mark; a key left out keeps its default.",
+      "title": "The engine taken by another session"
+    },
+    "notes_in_a_row": {
+      "default": 2,
+      "description": "The most notes one rule sends the model in a row in a session, counted again from your own next message; after that the rule marks, pauses and tells the phone (decision 0053).",
+      "maximum": 10,
+      "minimum": 0,
+      "title": "Notes in a row",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "RuleSettings": {
+      "additionalProperties": false,
+      "description": "What one Watch for rule does when it fires, and the words of its note (design 0012 §8).",
+      "properties": {
+        "do": {
+          "description": "What the rule does when it fires: mark (the mark alone: on its node in the session's flow, in the Monitor's Watch for panel and beside Monitor in the menu), pause (the session, after its step), tell the phone (the phone page lists the mark with what waits), tell the model (a note in the rule's words, and the session goes on). A rule that does anything marks too; an empty list turns the rule off.",
+          "items": {
+            "enum": [
+              "mark",
+              "pause",
+              "tell the phone",
+              "tell the model"
+            ],
+            "type": "string"
+          },
+          "title": "Does",
+          "type": "array"
+        },
+        "note": {
+          "description": "What the model is told when the rule tells it, sent as a message of yours; {why} is replaced by what the mark rests on.",
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "title": "RuleSettings",
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Docker, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Docker</div>
+<div><span style="color: #9ece6a">●</span> Docker Desktop 4.47.0 · <span style="color: #9ece6a">running</span> · engine 28.4.0</div>
+<div>  2 containers <span style="color: #9ece6a">running</span>, all of them Clank's</div>
+<div>  read 12:47:28   <span style="color: #828bb8">(s stops it · r reads it again)</span></div>
+</section>
+
+<section style="position: relative; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Containers</div>
+<div style="display: grid; grid-template-columns: 30ch 10ch 9ch 25ch minmax(0, 1fr); column-gap: 2ch; font-weight: 700; margin-bottom: 2px">
+<span>NAME</span><span>WHOSE</span><span>STATE</span><span>STATUS</span><span>IMAGE</span>
+</div>
+<sc-for list="{{ containers }}" as="c" hint-placeholder-count="6">
+<div style="display: grid; grid-template-columns: 30ch 10ch 9ch 25ch minmax(0, 1fr); column-gap: 2ch; color: {{ c.color }}">
+<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ c.name }}</span><span>{{ c.whose }}</span><span style="color: {{ c.stateColor }}">{{ c.state }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ c.status }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ c.image }}</span>
+</div>
+</sc-for>
+</section>
+
+<div style="flex: 1"></div>
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">s</span> stop Docker</span><span><span style="color: #7aa2f7">r</span> read it again</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span><span><span style="color: #7aa2f7">f5</span> machine panel</span><span><span style="color: #7aa2f7">q</span> quit</span><span style="margin-left: auto">^p palette</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Docker' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const text = '#c0caf5', quiet = '#828bb8', ok = '#9ece6a', bad = '#f7768e';
+    const rows = [
+      ['clank-3f8b2c71d0e4-edge', "Clank's", 'running', 'Up 52 minutes', 'clank-sandbox:76474ed3bffe'],
+      ['clank-3f8b2c71d0e4-myproject', "Clank's", 'running', 'Up 51 minutes', 'clank-sandbox:76474ed3bffe'],
+      ['clank-3f8b2c71d0e4-scratch', "Clank's", 'exited', 'Exited (143) 2 days ago', 'clank-sandbox:5d0c9a1e2f37'],
+      ['toolbox-sandbox', 'other', 'exited', 'Exited (0) 3 days ago', 'sha256:9c1e4b7a2d30'],
+      ['docs-preview', 'other', 'exited', 'Exited (0) 6 days ago', 'nginx:1.27-alpine'],
+      ['quizzical_turing', 'other', 'exited', 'Exited (0) 3 weeks ago', 'hello-world']
+    ];
+    const containers = rows.map(([name, whose, state, status, image]) => ({
+      name, whose, state, status, image,
+      color: state === 'running' ? text : quiet,
+      stateColor: state === 'running' ? ok : bad
+    }));
+    return { menu, containers };
+  }
+}
+</script>
+</body>
+</html>

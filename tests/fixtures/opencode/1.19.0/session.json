@@ -1,0 +1,1202 @@
+{
+ "_about": "Written by hand on 2026-10-19, not recorded: a synthetic planner session (ses_plan) with a subagent (ses_child), another session (ses_other), and bursts of events as they stream, in the shapes of OpenCode's event and route schemas as read in the program of OpenCode 1.18.31 on the development machine (message.part.delta, session.status, todo.updated, session.compacted, server.instance.disposed, the question events) and in design 0012's reading of 1.19.0's source (2026-10-18). Its sessions carry no OpenCode version, since none was recorded. To be recorded from OpenCode 1.19.0 in the sandbox image with a scripted model (plan s14).",
+ "sessions": [
+  {
+   "id": "ses_plan",
+   "slug": "plot-tau",
+   "projectID": "prj_0a1b2c",
+   "directory": "/workspace",
+   "title": "Plot tau against p",
+   "time": {
+    "created": 1760900000000,
+    "updated": 1760900240000
+   }
+  },
+  {
+   "id": "ses_child",
+   "slug": "find-helpers",
+   "projectID": "prj_0a1b2c",
+   "directory": "/workspace",
+   "parentID": "ses_plan",
+   "title": "Find the plotting helpers (@explore subagent)",
+   "time": {
+    "created": 1760900061100,
+    "updated": 1760900090000
+   }
+  },
+  {
+   "id": "ses_other",
+   "slug": "tidy-readme",
+   "projectID": "prj_0a1b2c",
+   "directory": "/workspace",
+   "title": "Tidy the README",
+   "time": {
+    "created": 1760900005000,
+    "updated": 1760900005000
+   }
+  }
+ ],
+ "messages": {
+  "ses_plan": [
+   {
+    "info": {
+     "id": "msg_01",
+     "sessionID": "ses_plan",
+     "role": "user",
+     "time": {
+      "created": 1760900000000
+     },
+     "agent": "planner",
+     "model": {
+      "providerID": "clank",
+      "modelID": "agent"
+     }
+    },
+    "parts": [
+     {
+      "id": "prt_01_t",
+      "sessionID": "ses_plan",
+      "messageID": "msg_01",
+      "type": "text",
+      "text": "Plot tau against p for n=8 and save the figure as runs/tau.png."
+     }
+    ]
+   },
+   {
+    "info": {
+     "id": "msg_02",
+     "sessionID": "ses_plan",
+     "role": "assistant",
+     "time": {
+      "created": 1760900001000,
+      "completed": 1760900041000
+     },
+     "parentID": "msg_01",
+     "modelID": "agent",
+     "providerID": "clank",
+     "mode": "planner",
+     "agent": "planner",
+     "path": {
+      "cwd": "/workspace",
+      "root": "/workspace"
+     },
+     "cost": 0,
+     "tokens": {
+      "total": 9626,
+      "input": 9214,
+      "output": 412,
+      "reasoning": 120,
+      "cache": {
+       "read": 0,
+       "write": 0
+      }
+     },
+     "finish": "tool-calls"
+    },
+    "parts": [
+     {
+      "id": "prt_02a",
+      "type": "step-start",
+      "snapshot": "4b825dc6",
+      "sessionID": "ses_plan",
+      "messageID": "msg_02"
+     },
+     {
+      "id": "prt_02b",
+      "type": "reasoning",
+      "text": "The data should be in data/tau.csv; read it first.",
+      "time": {
+       "start": 1760900003000,
+       "end": 1760900010000
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_02"
+     },
+     {
+      "id": "prt_02c",
+      "type": "tool",
+      "callID": "call_01",
+      "tool": "read",
+      "state": {
+       "status": "completed",
+       "input": {
+        "filePath": "/workspace/data/tau.csv"
+       },
+       "time": {
+        "start": 1760900011000,
+        "end": 1760900011900
+       },
+       "output": "p,tau\n0.00,0.0000\n0.01,0.3700\n0.02,0.7400\n0.03,1.1100\n0.04,1.4800\n0.05,1.8500\n0.06,2.2200\n0.07,2.5900\n0.08,2.9600\n0.09,3.3300\n0.10,3.7000\n0.11,4.0700\n0.12,4.4400\n0.13,4.8100\n0.14,5.1800\n0.15,5.5500\n0.16,5.9200\n0.17,6.2900\n0.18,6.6600\n0.19,7.0300\n0.20,7.4000\n0.21,7.7700\n0.22,8.1400\n0.23,8.5100\n0.24,8.8800\n0.25,9.2500\n0.26,9.6200\n0.27,9.9900\n0.28,10.3600\n0.29,10.7300\n0.30,11.1000\n0.31,11.4700\n0.32,11.8400\n0.33,12.2100\n0.34,12.5800\n0.35,12.9500\n0.36,13.3200\n0.37,13.6900\n0.38,14.0600\n0.39,14.4300\n0.40,14.8000\n0.41,15.1700\n0.42,15.5400\n0.43,15.9100\n0.44,16.2800\n0.45,16.6500\n0.46,17.0200\n0.47,17.3900\n0.48,17.7600\n0.49,18.1300\n0.50,18.5000\n0.51,18.8700\n0.52,19.2400\n0.53,19.6100\n0.54,19.9800\n0.55,20.3500\n0.56,20.7200\n0.57,21.0900\n0.58,21.4600\n0.59,21.8300\n0.60,22.2000\n0.61,22.5700\n0.62,22.9400\n0.63,23.3100\n0.64,23.6800\n0.65,24.0500\n0.66,24.4200\n0.67,24.7900\n0.68,25.1600\n0.69,25.5300\n0.70,25.9000\n0.71,26.2700\n0.72,26.6400\n0.73,27.0100\n0.74,27.3800\n0.75,27.7500\n0.76,28.1200\n0.77,28.4900\n0.78,28.8600\n0.79,29.2300\n0.80,29.6000\n0.81,29.9700\n0.82,30.3400\n0.83,30.7100\n0.84,31.0800\n0.85,31.4500\n0.86,31.8200\n0.87,32.1900\n0.88,32.5600\n0.89,32.9300\n0.90,33.3000\n0.91,33.6700\n0.92,34.0400\n0.93,34.4100\n0.94,34.7800\n0.95,35.1500\n0.96,35.5200\n0.97,35.8900\n0.98,36.2600\n0.99,36.6300\n0.100,37.0000\n0.101,37.3700\n0.102,37.7400\n0.103,38.1100\n0.104,38.4800\n0.105,38.8500\n0.106,39.2200\n0.107,39.5900\n0.108,39.9600\n0.109,40.3300\n0.110,40.7000\n0.111,41.0700\n0.112,41.4400\n0.113,41.8100\n0.114,42.1800\n0.115,42.5500\n0.116,42.9200\n0.117,43.2900\n0.118,43.6600\n0.119,44.0300\n0.120,44.4000\n0.121,44.7700\n0.122,45.1400\n0.123,45.5100\n0.124,45.8800\n0.125,46.2500\n0.126,46.6200\n0.127,46.9900\n0.128,47.3600\n0.129,47.7300\n0.130,48.1000\n0.131,48.4700\n0.132,48.8400\n0.133,49.2100\n0.134,49.5800\n0.135,49.9500\n0.136,50.3200\n0.137,50.6900\n0.138,51.0600\n0.139,51.4300\n0.140,51.8000\n0.141,52.1700\n0.142,52.5400\n0.143,52.9100\n0.144,53.2800\n0.145,53.6500\n0.146,54.0200\n0.147,54.3900\n0.148,54.7600\n0.149,55.1300\n0.150,55.5000\n0.151,55.8700\n0.152,56.2400\n0.153,56.6100\n0.154,56.9800\n0.155,57.3500\n0.156,57.7200\n0.157,58.0900\n0.158,58.4600\n0.159,58.8300\n0.160,59.2000\n0.161,59.5700\n0.162,59.9400\n0.163,60.3100\n0.164,60.6800\n0.165,61.0500\n0.166,61.4200\n0.167,61.7900\n0.168,62.1600\n0.169,62.5300\n0.170,62.9000\n0.171,63.2700\n0.172,63.6400\n0.173,64.0100\n0.174,64.3800\n0.175,64.7500\n0.176,65.1200\n0.177,65.4900\n0.178,65.8600\n0.179,66.2300\n0.180,66.6000\n0.181,66.9700\n0.182,67.3400\n0.183,67.7100\n0.184,68.0800\n0.185,68.4500\n0.186,68.8200\n0.187,69.1900\n0.188,69.5600\n0.189,69.9300\n0.190,70.3000\n0.191,70.6700\n0.192,71.0400\n0.193,71.4100\n0.194,71.7800\n0.195,72.1500\n0.196,72.5200\n0.197,72.8900\n0.198,73.2600\n0.199,73.6300\n0.200,74.0000\n0.201,74.3700\n0.202,74.7400\n0.203,75.1100\n0.204,75.4800\n0.205,75.8500\n0.206,76.2200\n0.207,76.5900\n0.208,76.9600\n0.209,77.3300\n0.210,77.7000\n0.211,78.0700\n0.212,78.4400\n0.213,78.8100\n0.214,79.1800\n0.215,79.5500\n0.216,79.9200\n0.217,80.2900\n0.218,80.6600\n0.219,81.0300\n",
+       "title": "data/tau.csv",
+       "metadata": {
+        "preview": "p,tau",
+        "truncated": false
+       }
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_02"
+     },
+     {
+      "id": "prt_02d",
+      "type": "step-finish",
+      "reason": "tool-calls",
+      "cost": 0,
+      "tokens": {
+       "total": 9626,
+       "input": 9214,
+       "output": 412,
+       "reasoning": 120,
+       "cache": {
+        "read": 0,
+        "write": 0
+       }
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_02"
+     }
+    ]
+   },
+   {
+    "info": {
+     "id": "msg_03",
+     "sessionID": "ses_plan",
+     "role": "assistant",
+     "time": {
+      "created": 1760900060000,
+      "completed": 1760900150000
+     },
+     "parentID": "msg_01",
+     "modelID": "agent",
+     "providerID": "clank",
+     "mode": "planner",
+     "agent": "planner",
+     "path": {
+      "cwd": "/workspace",
+      "root": "/workspace"
+     },
+     "cost": 0,
+     "tokens": {
+      "total": 13485,
+      "input": 12830,
+      "output": 655,
+      "reasoning": 210,
+      "cache": {
+       "read": 9100,
+       "write": 0
+      }
+     },
+     "finish": "tool-calls"
+    },
+    "parts": [
+     {
+      "id": "prt_03a",
+      "type": "step-start",
+      "snapshot": "5c1a8e2f",
+      "sessionID": "ses_plan",
+      "messageID": "msg_03"
+     },
+     {
+      "id": "prt_03b",
+      "type": "tool",
+      "callID": "call_02",
+      "tool": "task",
+      "state": {
+       "status": "completed",
+       "input": {
+        "description": "Find the plotting helpers",
+        "prompt": "Find where the figures are drawn.",
+        "subagent_type": "explore"
+       },
+       "time": {
+        "start": 1760900061000,
+        "end": 1760900061900
+       },
+       "output": "plot.py draws every figure.",
+       "title": "Find the plotting helpers",
+       "metadata": {
+        "sessionId": "ses_child",
+        "model": {
+         "providerID": "clank",
+         "modelID": "agent"
+        }
+       }
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_03"
+     },
+     {
+      "id": "prt_03c",
+      "type": "tool",
+      "callID": "call_03",
+      "tool": "bash",
+      "state": {
+       "status": "completed",
+       "input": {
+        "command": "python plot.py --n 8 --out runs/tau.png",
+        "description": "Draw the figure"
+       },
+       "time": {
+        "start": 1760900110000,
+        "end": 1760900110900
+       },
+       "output": "Saved runs/tau.png\n",
+       "title": "Draw the figure",
+       "metadata": {
+        "output": "Saved runs/tau.png\n",
+        "exit": 0,
+        "description": "Draw the figure",
+        "truncated": false
+       }
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_03"
+     },
+     {
+      "id": "prt_03d",
+      "type": "tool",
+      "callID": "call_04",
+      "tool": "bash",
+      "state": {
+       "status": "error",
+       "input": {
+        "command": "python check.py",
+        "description": "Check it"
+       },
+       "time": {
+        "start": 1760900130000,
+        "end": 1760900130900
+       },
+       "error": "Traceback (most recent call last): FileNotFoundError: check.py",
+       "metadata": {
+        "exit": 2
+       }
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_03"
+     },
+     {
+      "id": "prt_03e",
+      "type": "step-finish",
+      "reason": "tool-calls",
+      "cost": 0,
+      "tokens": {
+       "total": 13485,
+       "input": 12830,
+       "output": 655,
+       "reasoning": 210,
+       "cache": {
+        "read": 9100,
+        "write": 0
+       }
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_03"
+     }
+    ]
+   },
+   {
+    "info": {
+     "id": "msg_04",
+     "sessionID": "ses_plan",
+     "role": "user",
+     "time": {
+      "created": 1760900180000
+     },
+     "agent": "planner",
+     "model": {
+      "providerID": "clank",
+      "modelID": "agent"
+     }
+    },
+    "parts": [
+     {
+      "id": "prt_04_t",
+      "sessionID": "ses_plan",
+      "messageID": "msg_04",
+      "type": "text",
+      "text": "About step 3, `python check.py`: there is no check.py; skip it."
+     }
+    ]
+   },
+   {
+    "info": {
+     "id": "msg_05",
+     "sessionID": "ses_plan",
+     "role": "assistant",
+     "time": {
+      "created": 1760900240000
+     },
+     "parentID": "msg_04",
+     "modelID": "agent",
+     "providerID": "clank",
+     "mode": "planner",
+     "agent": "planner",
+     "path": {
+      "cwd": "/workspace",
+      "root": "/workspace"
+     },
+     "cost": 0,
+     "tokens": {
+      "total": 0,
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache": {
+       "read": 0,
+       "write": 0
+      }
+     }
+    },
+    "parts": [
+     {
+      "id": "prt_05a",
+      "type": "step-start",
+      "snapshot": "6d2b9f30",
+      "sessionID": "ses_plan",
+      "messageID": "msg_05"
+     },
+     {
+      "id": "prt_05b",
+      "type": "text",
+      "text": "Skipping the check; the figure is saved.",
+      "time": {
+       "start": 1760900243000
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_05"
+     }
+    ]
+   }
+  ],
+  "ses_child": [
+   {
+    "info": {
+     "id": "msg_c1",
+     "sessionID": "ses_child",
+     "role": "user",
+     "time": {
+      "created": 1760900061100
+     },
+     "agent": "explore",
+     "model": {
+      "providerID": "clank",
+      "modelID": "agent"
+     }
+    },
+    "parts": [
+     {
+      "id": "prt_c1_t",
+      "sessionID": "ses_child",
+      "messageID": "msg_c1",
+      "type": "text",
+      "text": "Find where the figures are drawn."
+     }
+    ]
+   },
+   {
+    "info": {
+     "id": "msg_c2",
+     "sessionID": "ses_child",
+     "role": "assistant",
+     "time": {
+      "created": 1760900061200,
+      "completed": 1760900090000
+     },
+     "parentID": "msg_c1",
+     "modelID": "agent",
+     "providerID": "clank",
+     "mode": "explore",
+     "agent": "explore",
+     "path": {
+      "cwd": "/workspace",
+      "root": "/workspace"
+     },
+     "cost": 0,
+     "tokens": {
+      "total": 4180,
+      "input": 4100,
+      "output": 80,
+      "reasoning": 0,
+      "cache": {
+       "read": 0,
+       "write": 0
+      }
+     },
+     "finish": "stop"
+    },
+    "parts": [
+     {
+      "id": "prt_c2a",
+      "type": "step-start",
+      "sessionID": "ses_child",
+      "messageID": "msg_c2"
+     },
+     {
+      "id": "prt_c2b",
+      "type": "tool",
+      "callID": "call_c1",
+      "tool": "grep",
+      "state": {
+       "status": "completed",
+       "input": {
+        "pattern": "savefig"
+       },
+       "time": {
+        "start": 1760900062000,
+        "end": 1760900062900
+       },
+       "output": "plot.py:41: plt.savefig(out)",
+       "title": "savefig",
+       "metadata": {}
+      },
+      "sessionID": "ses_child",
+      "messageID": "msg_c2"
+     },
+     {
+      "id": "prt_c2c",
+      "type": "text",
+      "text": "plot.py draws every figure.",
+      "sessionID": "ses_child",
+      "messageID": "msg_c2"
+     },
+     {
+      "id": "prt_c2d",
+      "type": "step-finish",
+      "reason": "stop",
+      "cost": 0,
+      "tokens": {
+       "total": 4180,
+       "input": 4100,
+       "output": 80,
+       "reasoning": 0,
+       "cache": {
+        "read": 0,
+        "write": 0
+       }
+      },
+      "sessionID": "ses_child",
+      "messageID": "msg_c2"
+     }
+    ]
+   }
+  ],
+  "ses_other": [
+   {
+    "info": {
+     "id": "msg_o1",
+     "sessionID": "ses_other",
+     "role": "user",
+     "time": {
+      "created": 1760900005000
+     },
+     "agent": "build",
+     "model": {
+      "providerID": "clank",
+      "modelID": "agent"
+     }
+    },
+    "parts": [
+     {
+      "id": "prt_o1_t",
+      "sessionID": "ses_other",
+      "messageID": "msg_o1",
+      "type": "text",
+      "text": "Tidy the README."
+     }
+    ]
+   }
+  ]
+ },
+ "bursts": {
+  "a step": [
+   {
+    "type": "session.status",
+    "properties": {
+     "sessionID": "ses_plan",
+     "status": {
+      "type": "busy"
+     }
+    }
+   },
+   {
+    "type": "message.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "info": {
+      "id": "msg_06",
+      "sessionID": "ses_plan",
+      "role": "assistant",
+      "time": {
+       "created": 1760900400000
+      },
+      "parentID": "msg_04",
+      "modelID": "agent",
+      "providerID": "clank",
+      "mode": "planner",
+      "agent": "planner",
+      "path": {
+       "cwd": "/workspace",
+       "root": "/workspace"
+      },
+      "cost": 0,
+      "tokens": {
+       "total": 0,
+       "input": 0,
+       "output": 0,
+       "reasoning": 0,
+       "cache": {
+        "read": 0,
+        "write": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "type": "message.part.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "time": 1760900400010,
+     "part": {
+      "id": "prt_06a",
+      "sessionID": "ses_plan",
+      "messageID": "msg_06",
+      "type": "step-start",
+      "snapshot": "7e3c0a41"
+     }
+    }
+   },
+   {
+    "type": "message.part.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "time": 1760900400020,
+     "part": {
+      "id": "prt_06b",
+      "sessionID": "ses_plan",
+      "messageID": "msg_06",
+      "type": "reasoning",
+      "text": "",
+      "time": {
+       "start": 1760900400020
+      }
+     }
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "The "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "figure "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "is "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "saved; "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "now "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "the "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "todo "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "list "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "says "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "to "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "check "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "the "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06b",
+     "field": "text",
+     "delta": "axis."
+    }
+   },
+   {
+    "type": "message.part.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "time": 1760900400900,
+     "part": {
+      "id": "prt_06b",
+      "sessionID": "ses_plan",
+      "messageID": "msg_06",
+      "type": "reasoning",
+      "text": "The figure is saved; now the todo list says to check the axis.",
+      "time": {
+       "start": 1760900400020,
+       "end": 1760900400900
+      }
+     }
+    }
+   },
+   {
+    "type": "todo.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "todos": [
+      {
+       "content": "Draw the figure",
+       "status": "completed",
+       "priority": "high"
+      },
+      {
+       "content": "Check the axis",
+       "status": "pending",
+       "priority": "medium"
+      }
+     ]
+    }
+   },
+   {
+    "type": "todo.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "todos": [
+      {
+       "content": "Draw the figure",
+       "status": "completed",
+       "priority": "high"
+      },
+      {
+       "content": "Check the axis",
+       "status": "in_progress",
+       "priority": "medium"
+      }
+     ]
+    }
+   },
+   {
+    "type": "session.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "info": {
+      "id": "ses_plan",
+      "slug": "plot-tau",
+      "projectID": "prj_0a1b2c",
+      "directory": "/workspace",
+      "title": "Plot tau against p (n=8)",
+      "time": {
+       "created": 1760900000000,
+       "updated": 1760900400950
+      }
+     }
+    }
+   },
+   {
+    "type": "message.part.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "time": 1760900401000,
+     "part": {
+      "id": "prt_06c",
+      "type": "tool",
+      "callID": "call_05",
+      "tool": "bash",
+      "state": {
+       "status": "pending",
+       "input": {},
+       "raw": ""
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_06"
+     }
+    }
+   },
+   {
+    "type": "message.part.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "time": 1760900401100,
+     "part": {
+      "id": "prt_06c",
+      "type": "tool",
+      "callID": "call_05",
+      "tool": "bash",
+      "state": {
+       "status": "running",
+       "input": {
+        "command": "python plot.py --n 8 --check-axis",
+        "description": "Check the axis"
+       },
+       "time": {
+        "start": 1760900401100
+       },
+       "title": "Check the axis",
+       "metadata": {}
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_06"
+     }
+    }
+   },
+   {
+    "type": "session.created",
+    "properties": {
+     "sessionID": "ses_child2",
+     "info": {
+      "id": "ses_child2",
+      "slug": "axis",
+      "projectID": "prj_0a1b2c",
+      "directory": "/workspace",
+      "parentID": "ses_plan",
+      "title": "Read the axis labels (@explore subagent)",
+      "time": {
+       "created": 1760900401200,
+       "updated": 1760900401200
+      }
+     }
+    }
+   },
+   {
+    "type": "session.status",
+    "properties": {
+     "sessionID": "ses_child2",
+     "status": {
+      "type": "busy"
+     }
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_other",
+     "messageID": "msg_o2",
+     "partID": "prt_o2a",
+     "field": "text",
+     "delta": "Tidying "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_other",
+     "messageID": "msg_o2",
+     "partID": "prt_o2a",
+     "field": "text",
+     "delta": "the "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_other",
+     "messageID": "msg_o2",
+     "partID": "prt_o2a",
+     "field": "text",
+     "delta": "README."
+    }
+   },
+   {
+    "type": "session.status",
+    "properties": {
+     "sessionID": "ses_child2",
+     "status": {
+      "type": "idle"
+     }
+    }
+   },
+   {
+    "type": "message.part.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "time": 1760900405000,
+     "part": {
+      "id": "prt_06c",
+      "type": "tool",
+      "callID": "call_05",
+      "tool": "bash",
+      "state": {
+       "status": "completed",
+       "input": {
+        "command": "python plot.py --n 8 --check-axis",
+        "description": "Check the axis"
+       },
+       "time": {
+        "start": 1760900401100,
+        "end": 1760900402000
+       },
+       "output": "axis: p from 0.00 to 2.19\n",
+       "title": "Check the axis",
+       "metadata": {
+        "exit": 0,
+        "description": "Check the axis"
+       }
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_06"
+     }
+    }
+   },
+   {
+    "type": "message.part.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "time": 1760900405100,
+     "part": {
+      "id": "prt_06d",
+      "sessionID": "ses_plan",
+      "messageID": "msg_06",
+      "type": "text",
+      "text": "",
+      "time": {
+       "start": 1760900405100
+      }
+     }
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06d",
+     "field": "text",
+     "delta": "The "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06d",
+     "field": "text",
+     "delta": "axis "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06d",
+     "field": "text",
+     "delta": "is "
+    }
+   },
+   {
+    "type": "message.part.delta",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_06",
+     "partID": "prt_06d",
+     "field": "text",
+     "delta": "right."
+    }
+   },
+   {
+    "type": "message.part.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "time": 1760900406000,
+     "part": {
+      "id": "prt_06d",
+      "sessionID": "ses_plan",
+      "messageID": "msg_06",
+      "type": "text",
+      "text": "The axis is right.",
+      "time": {
+       "start": 1760900405100,
+       "end": 1760900406000
+      }
+     }
+    }
+   },
+   {
+    "type": "message.part.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "time": 1760900406100,
+     "part": {
+      "id": "prt_06e",
+      "type": "step-finish",
+      "reason": "stop",
+      "cost": 0,
+      "tokens": {
+       "total": 14020,
+       "input": 13900,
+       "output": 120,
+       "reasoning": 40,
+       "cache": {
+        "read": 12800,
+        "write": 0
+       }
+      },
+      "sessionID": "ses_plan",
+      "messageID": "msg_06"
+     }
+    }
+   },
+   {
+    "type": "message.updated",
+    "properties": {
+     "sessionID": "ses_plan",
+     "info": {
+      "id": "msg_06",
+      "sessionID": "ses_plan",
+      "role": "assistant",
+      "time": {
+       "created": 1760900400000,
+       "completed": 1760900406100
+      },
+      "parentID": "msg_04",
+      "modelID": "agent",
+      "providerID": "clank",
+      "mode": "planner",
+      "agent": "planner",
+      "path": {
+       "cwd": "/workspace",
+       "root": "/workspace"
+      },
+      "cost": 0,
+      "tokens": {
+       "total": 14020,
+       "input": 13900,
+       "output": 120,
+       "reasoning": 40,
+       "cache": {
+        "read": 12800,
+        "write": 0
+       }
+      },
+      "finish": "stop"
+     }
+    }
+   },
+   {
+    "type": "session.status",
+    "properties": {
+     "sessionID": "ses_plan",
+     "status": {
+      "type": "idle"
+     }
+    }
+   }
+  ],
+  "retrying": [
+   {
+    "type": "session.status",
+    "properties": {
+     "sessionID": "ses_plan",
+     "status": {
+      "type": "busy"
+     }
+    }
+   },
+   {
+    "type": "session.status",
+    "properties": {
+     "sessionID": "ses_plan",
+     "status": {
+      "type": "retry",
+      "attempt": 1,
+      "message": "Provider is overloaded",
+      "next": 1760900409000
+     }
+    }
+   },
+   {
+    "type": "session.status",
+    "properties": {
+     "sessionID": "ses_plan",
+     "status": {
+      "type": "retry",
+      "attempt": 2,
+      "message": "Provider is overloaded",
+      "next": 1760900415000
+     }
+    }
+   }
+  ],
+  "compacted": [
+   {
+    "type": "session.compacted",
+    "properties": {
+     "sessionID": "ses_plan"
+    }
+   },
+   {
+    "type": "message.removed",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_05"
+    }
+   },
+   {
+    "type": "message.part.removed",
+    "properties": {
+     "sessionID": "ses_plan",
+     "messageID": "msg_03",
+     "partID": "prt_03d"
+    }
+   },
+   {
+    "type": "session.error",
+    "properties": {
+     "sessionID": "ses_plan",
+     "error": {
+      "name": "APIError",
+      "data": {
+       "message": "The engine broke off",
+       "isRetryable": false
+      }
+     }
+    }
+   }
+  ],
+  "a question": [
+   {
+    "type": "question.asked",
+    "properties": {
+     "id": "que_01",
+     "sessionID": "ses_plan",
+     "questions": [
+      {
+       "question": "Which n?",
+       "header": "n",
+       "options": [
+        {
+         "label": "8"
+        },
+        {
+         "label": "16"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  ],
+  "answered": [
+   {
+    "type": "question.replied",
+    "properties": {
+     "sessionID": "ses_plan",
+     "requestID": "que_01",
+     "answers": [
+      [
+       "8"
+      ]
+     ]
+    }
+   },
+   {
+    "type": "question.rejected",
+    "properties": {
+     "sessionID": "ses_plan",
+     "requestID": "que_02"
+    }
+   }
+  ],
+  "disposed": [
+   {
+    "type": "server.instance.disposed",
+    "properties": {
+     "directory": "/workspace"
+    }
+   }
+  ]
+ }
+}

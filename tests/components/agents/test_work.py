@@ -1,0 +1,159 @@
+"""Design 0004 §1 and §4: making a workspace's agent ready writes the program's configuration into the workspace's
+running container (the gateway at the edge, the running preset's limits, or modest ones said when no model runs) and
+answers the command that starts it there; a workspace that is not there, or whose container does not run, is refused
+saying how to open it. `clank work` starts Docker when it is stopped, opens the folder's workspace,
+loads the slot's last configuration that worked when no model runs, and runs the agent in this terminal."""
+
+from collections.abc import Iterator, Sequence
+from pathlib import Path
+
+import pytest
+from click.testing import CliRunner, Result
+from fastapi.testclient import TestClient
+
+from clank import registry
+from clank.cli import common, follow
+from clank.cli.main import main
+from clank.client import Client
+from clank.components.agents import cli as agents_cli
+from clank.components.agents.service import Agents
+from clank.components.runtime.state import LastGood
+from clank.components.workspaces import service as workspaces_service
+from clank.components.workspaces.sandbox import names
+from clank.components.workspaces.service import WorkspaceUnavailable
+from clank.kernel.api import create_app
+from clank.kernel.clock import FakeClock
+from clank.kernel.core import Kernel, open_kernel
+from clank.kernel.events import Actor
+from clank.kernel.home import Home
+from clank.kernel.processes import Answer
+from tests.fakes.platform import FakePlatform
+from tests.support.vscode import asked, fake_vscode
+
+YOU = Actor(kind="user", via="console")
+CONFIG = "/home/agent/.config/opencode/opencode.json"
+
+
+@pytest.fixture
+def platform() -> FakePlatform:
+    return FakePlatform(state="running")
+
+
+@pytest.fixture
+def kernel(home: Home, clock: FakeClock, platform: FakePlatform, monkeypatch: pytest.MonkeyPatch) -> Iterator[Kernel]:
+    monkeypatch.setattr(workspaces_service, "make_platform", lambda name: platform)
+    monkeypatch.setattr(workspaces_service, "WAIT_SECONDS", 0.001)
+    monkeypatch.setattr(follow, "POLL_SECONDS", 0.005)
+    kernel = open_kernel(home, clock, registry.components())
+    yield kernel
+    kernel.close()
+
+
+@pytest.fixture
+def http(kernel: Kernel, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
+    with TestClient(create_app(kernel, token="t", port=7727), base_url="http://127.0.0.1:7727") as client:
+        monkeypatch.setattr(common, "connect", lambda: Client("http://127.0.0.1:7727", "t", name="cli", http=client))
+        yield client
+
+
+def ran(platform: FakePlatform, kernel: Kernel, workspace: str, folder: Path) -> None:
+    """A workspace whose container runs, as `workspaces.open` leaves it."""
+    kernel.settings.write("workspace", workspace, {"path": str(folder)}, base=None, actor=YOU)
+    spec_name = names(kernel.home.id).container(workspace)
+    from tests.fakes.platform import container
+
+    platform.containers.append(container(spec_name, labels={"clank.home": kernel.home.id}))
+
+
+def test_prepare_writes_the_programs_configuration_and_answers_its_command(
+    kernel: Kernel, platform: FakePlatform, tmp_path: Path
+) -> None:
+    ran(platform, kernel, "paper", tmp_path)
+    platform.inside = lambda argv, given: Answer(0, '{"ok": true, "port": 4097}', "")  # the bridge: a free port
+    agents: Agents = kernel.parts["agents"]
+    prepared = agents.prepare("paper")
+    container = names(kernel.home.id).container("paper")
+    written = platform.files[(container, CONFIG)]
+    assert '"baseURL": "http://edge:18210/v1"' in written
+    assert prepared["limits"] == {"context": 24576, "output": 8192, "window": 32768, "margin": 8192}
+    assert prepared["notes"] == ["no model runs: its limits are 32,768 and 8,192 tokens until one does"]
+    argv = prepared["argv"]
+    assert argv[:4] == ["docker", "exec", "--interactive", "--tty"]
+    assert "OPENCODE_DISABLE_MODELS_FETCH=1" in argv
+    assert argv[-7:] == ["/workspace", container, "opencode", "--port", "4097", "--hostname", "127.0.0.1"], (
+        "its API on a port of its own, so its session can be reached (design 0005 §2)"
+    )
+    assert prepared["port"] == 4097
+    platform.inside = None  # a container that cannot say (an image from before the bridge): no port, and why
+    told = agents.prepare("paper")
+    assert told["argv"][-1] == "opencode"
+    assert "its session cannot be followed from other clients" in told["notes"][-1]
+
+
+def test_prepare_refuses_a_workspace_that_is_not_there_or_does_not_run(kernel: Kernel, tmp_path: Path) -> None:
+    agents: Agents = kernel.parts["agents"]
+    with pytest.raises(WorkspaceUnavailable, match="there is no workspace 'nope'"):
+        agents.prepare("nope")
+    kernel.settings.write("workspace", "idle", {"path": str(tmp_path)}, base=None, actor=YOU)
+    with pytest.raises(WorkspaceUnavailable, match="idle's container does not run: `clank workspace open` starts it"):
+        agents.prepare("idle")
+
+
+def test_clank_work_starts_docker_opens_the_folder_and_runs_the_agent_here(
+    kernel: Kernel, http: TestClient, platform: FakePlatform, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    platform.state = "stopped"
+    folder = tmp_path / "paper"
+    folder.mkdir()
+    monkeypatch.chdir(folder)
+    kernel.parts["runtime"].state.set_slot("main", "ready", "a test", actor=YOU, preset="daily-262k")
+    commands: list[Sequence[str]] = []
+
+    def here(argv: Sequence[str]) -> int:
+        commands.append(argv)
+        return 0
+
+    monkeypatch.setattr(agents_cli, "terminal", here)
+    monkeypatch.setattr(follow, "ask", lambda text, default: "y")  # the first open builds the image: yes
+    result = run("work")
+    assert result.exit_code == 0, result.output
+    assert "Docker is stopped: starting it" in result.output
+    assert f"OpenCode in paper ({folder} at /workspace), with daily 262K" in result.output
+    [argv] = commands
+    assert argv[-3:] == ["/workspace", names(kernel.home.id).container("paper"), "opencode"]
+    assert (names(kernel.home.id).container("paper"), CONFIG) in platform.files
+
+
+def test_with_no_model_running_clank_loads_the_slots_last_good_one_and_says_why_it_cannot(
+    kernel: Kernel, http: TestClient, platform: FakePlatform, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    folder = tmp_path / "notes"  # not tmp_path itself: it holds the test's CLANK_HOME, which a workspace may not see
+    folder.mkdir()
+    monkeypatch.chdir(folder)
+    good = LastGood(preset="daily-262k", options={}, time=kernel.clock.now())
+    kernel.parts["runtime"].state.remember_good("main", good)
+    monkeypatch.setattr(agents_cli, "terminal", lambda argv: pytest.fail("the agent ran without a model"))
+    result = run("work", "--yes")
+    assert "No model runs: loading daily-262k" in result.output
+    assert result.exit_code == 1, "a test's home has no engine installed: the load fails, saying so"
+    assert "is not installed" in result.output
+
+
+def test_clank_code_gets_the_folder_ready_then_opens_it_in_clanks_vs_code_window(
+    kernel: Kernel, http: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    folder = tmp_path / "paper"
+    folder.mkdir()
+    monkeypatch.chdir(folder)
+    kernel.parts["runtime"].state.set_slot("main", "ready", "a test", actor=YOU, preset="daily-262k")
+    state = fake_vscode(kernel, tmp_path, monkeypatch)
+    monkeypatch.setattr(follow, "ask", lambda text, default: "y")  # the first open builds the image: yes
+    result = run("code")
+    assert result.exit_code == 0, result.output
+    assert f"VS Code opens {folder}: OpenCode opens beside your files" in result.output
+    assert asked(state)["opened"] == [str(folder)]
+    assert names(kernel.home.id).container("paper") in {c.name for c in kernel.parts["workspaces"].platform.containers}
+
+
+def run(*arguments: str) -> Result:
+    return CliRunner().invoke(main, list(arguments))

@@ -1,0 +1,34 @@
+ ◆ CLANK  paper   ● service up 2h14m  ● docker running  ● no model  ● gateway stopped  ● 1 question waiting       13:54
+F4 This folder         ✗ 4   │ ┌─ Happening now ──────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ Nothing runs right now.                                                              │
+2 Questions            ● 1   │ └──────────────────────────────────────────────────────────────────────────────────────┘
+3 History                    │
+4 Docker               ●     │ ┌─ Waiting for you ────────────────────────────────────────────────────────────────────┐
+5 Machine                    │ │ > q-000000  Stop Docker Desktop?   asked 11:40:00 by Clank                           │
+6 Operations                 │ │   2 containers that Clank did not start are running: another-model-relay,            │
+7 Records                    │ │ toolbox-sandbox-017.                                                                 │
+8 Models               ●     │ │   y Stop them and Docker   n Cancel   v details                                      │
+9 Presets                    │ └──────────────────────────────────────────────────────────────────────────────────────┘
+0 Providers and models       │
+F1 Help                      │ ┌─ What runs ──────────────────────────────────────────────────────────────────────────┐
+F2 Launch options            │ │ service    ● v0.0.0 · API on 127.0.0.1:47720 · 1 client connected (console)          │
+F3 MCP servers               │ │ docker     ● Fake Docker · running · 2 containers running, none of them Clank's      │
+F6 Workspaces                │ │              s stops it                                                              │
+F7 Requests                  │ │ workspace  ○ none running   F6 lists them                                            │
+F8 CPU models                │ │ models     ○ main: stopped (never started)   8 opens Models                          │
+F9 Phone               ●     │ │ gpu        RTX 5080 · 3% busy · 2.0 GB of 15.9 GB in use · 34°C                      │
+F10 Monitor                  │ │ gateway    ○ stopped   F4, then g, starts it                                         │
+F12 Add a model              │ │ machine    not detected yet   d runs the doctor, which detects it                    │
+───────────────────────────  │ │ folder     /work/paper   F4: get ready and work here                                 │
+coming                       │ └──────────────────────────────────────────────────────────────────────────────────────┘
+Sampling              M3     │
+Sessions              M3     │ ┌─ History ────────────────────────────────────────────────────────────────────────────┐
+Keys                  M3     │ │ 11:40:00  Clank asks: Stop Docker Desktop?                                           │
+Layout                M2     │ └──────────────────────────────────────────────────────────────────────────────────────┘
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5   ▅▅│
+Changes               M6     │
+Network access        M7     │
+
+ s start or stop Docker  d run the doctor  v the question whole  ? explain  f1 help

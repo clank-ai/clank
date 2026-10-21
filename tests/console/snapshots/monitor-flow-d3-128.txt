@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 9d1h  ● docker running  ● no model: Add a model  ● gateway stopped  ● 1 question waiting                                   12:41
+F4 This folder         ✗ 3   │  Flow   Session   Context
+1 Home                       │ flow “A new simulation study” · workspace myproject · run 1 · started 12:02 · waiting for you: GATE
+2 Questions            ● 1   │
+3 History                    │ ┌─ Where the flow is ────────────────────┐  ┌─ PLAN.md ────────────────────────────────────────────────────────────────────────┐
+4 Docker               ●     │ │ ✓ YOU Brief  BRIEF.md · 12:02          │  │ written 12:18 by PLAN, try 2 · daily 262K                                        │
+5 Machine                    │ │ ✓ PLAN Write the study plan  PLAN.md … │  │ # The study plan                                                                 │
+6 Operations                 │ │ ✓ VERIFY Check the plan  pass, try 2 … │  │                                                                                  │
+7 Records                    │ │    fail ⟲ back to PLAN with 3 finding… │  │ The grid: 60 points.                                                             │
+8 Models               ●     │ │ ● GATE You approve the plan  waits fo… │  │                                                                                  │
+9 Presets                    │ │ ○ DECOMPOSE Break it into tasks  4 ta… │  │ The seeds: 1 to 60.                                                              │
+0 Providers and models       │ │    ○ TASK T1 The parameter grid  grid… │  │                                                                                  │
+F1 Help                      │ │    ○ TASK T2 Estimate run times  runs… │  │ The cost: about 41 CPU-hours.                                                    │
+F2 Launch options            │ │    ○ TASK T3 The sweep script  script… │  │ ▎ changed since try 1: 4 lines · d shows the difference                          │
+F3 MCP servers               │ │    ○ TASK T4 The analysis notebook     │  └──────────────────────────────────────────────────────────────────────────────────┘
+F6 Workspaces                │ │ ○ INTEGRATE Put it together  STUDY-PL… │
+F7 Requests                  │ │ ○ GATE You review the whole  you deci… │  ┌─ VERIFY's report ────────────────────────────────────────────────────────────────┐
+F8 CPU models                │ │ ▸ next flow: made when approved        │  │ ✓ pass (try 2) 12:22 · daily 262K in a fresh session                             │
+F9 Phone               ●     │ │                                        │  │ It saw only BRIEF.md and PLAN.md, not PLAN's session.                            │
+F10 Monitor                  │ │ ✓ done  ● running  ○ waiting  ✗ failed │  │ Try 1 found 3 things:                                                            │
+F12 Add a model              │ │ proposed                               │  │ 1  no CPU-hour budget: the grid's cost is unknown                                │
+─────────────────────────────│ │                                        │  │ 2  the seeds are not fixed: the runs would not repeat                            │
+coming                       │ │                                        │  │ 3  the grid has 240 points, the brief allows about 60                            │
+Sampling              M3     │ │                                        │  └──────────────────────────────────────────────────────────────────────────────────┘
+Sessions              M3     │ │                                        │
+Keys                  M3     │ │                                        │  ┌─ Against the brief ──────────────────────────────────────────────────────────────┐
+Layout                M2     │ │                                        │  │ ✓ about 60 grid points  60 points in PLAN.md's grid · check, try 2               │
+Tests and trials      M2     │ │                                        │  │ ✓ at most 48 CPU-hours  about 41, by PLAN.md's estimate · check, try 2           │
+Agents                M5     │ │                                        │  │ ○ the grid has about 60 points  not checked yet                                  │
+Modes                 M5     │ │                                        │  │ ○ the runs fit in 48 CPU-hours  not checked yet                                  │
+Changes               M6     │ │                                        │  │ ✓ the seeds are fixed  seeds 1 to 60, in PLAN.md · check, try 2                  │
+Network access        M7     │ │                                        │  │ ○ every grid point has an estimate  not checked yet                              │
+Skills                M8     │ │                                        │  │ ○ the total is under 48 CPU-hours  not checked yet                               │
+Files                 M9     │ │                                        │  └──────────────────────────────────────────────────────────────────────────────────┘
+Setup guide           M10    │ │                                        │
+                             │ │                                        │  ┌─ Your decision ──────────────────────────────────────────────────────────────────┐
+                             │ │                                        │  │ a  Approve and go on   next: DECOMPOSE Break it into tasks                       │
+                             │ │                                        │  │ e  Edit PLAN.md, then approve   it opens in Clank's VS Code window; a approves … │
+                             │ │                                        │  │ s  Send back to PLAN with a note   PLAN writes try 3 of 3 with your note; VERIF… │
+                             │ │                                        │  │ x  Stop the flow   The run ends here; nothing after it runs.                     │
+                             │ │                                        │  │ d  Diff with the try before                                                      │
+                             │ │                                        │  │ Also on your phone: answer it from there.                                        │
+                             │ └────────────────────────────────────────┘  └──────────────────────────────────────────────────────────────────────────────────┘
+                             │
+                             │
+                             │
+                             │
+                             │
+
+ a approve or go on  e edit, then approve  s send back  d diff  x stop the flow  esc back to the flow  ? explain  f1 help  f5 machine column  q quit

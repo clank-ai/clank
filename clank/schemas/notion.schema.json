@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Notion",
+  "description": "Clank's connection to Notion (design 0010): its API and the version Clank speaks. The integration's secret is kept with the secrets (`clank notion connect`), never in this file.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "notion/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "api": {
+      "default": "https://api.notion.com",
+      "description": "Notion's API (another address only for a test).",
+      "title": "Address",
+      "type": "string"
+    },
+    "version": {
+      "default": "2025-09-03",
+      "description": "The version of Notion's API Clank speaks (Notion-Version): 2025-09-03, in which a database holds data sources.",
+      "title": "API version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

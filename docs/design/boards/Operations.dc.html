@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Operations, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="19">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">The newest operations</div>
+<div style="display: grid; grid-template-columns: 13ch 33ch 16ch 21ch minmax(0, 1fr); padding: 0 6px; white-space: pre; color: #828bb8"><span>id</span><span>title</span><span>status</span><span>progress</span><span>started</span></div>
+<sc-for list="{{ ops }}" as="o" hint-placeholder-count="11">
+<div style="display: grid; grid-template-columns: 13ch 33ch 16ch 21ch minmax(0, 1fr); padding: 0 6px; white-space: pre; {{ o.rowStyle }}"><span style="color: {{ o.quiet }}">{{ o.id }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ o.title }}</span><span style="color: {{ o.color }}">{{ o.mark }} {{ o.status }}</span><span>{{ o.progress }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis"><span style="color: {{ o.quiet }}">{{ o.created }}</span> by {{ o.who }}</span></div>
+</sc-for>
+<div style="margin-top: 6px; padding: 0 6px; color: #828bb8"><span style="color: #7aa2f7">c</span> asks the highlighted operation to stop at its next check · <span style="color: #7aa2f7">r</span> starts an interrupted or failed one again, when that is safe</div>
+<div style="padding: 0 6px; color: #828bb8">both are refused, in the service's own words, when they cannot be done</div>
+</section>
+
+<section style="position: relative; flex: 1; min-height: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Steps and log</div>
+<div style="flex: 1; min-height: 0; overflow: hidden; padding: 0 6px">
+<div style="display: flex; gap: 12px; white-space: pre"><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis">Install a workspace's software <span style="color: #828bb8">(op-3c9e51a7)</span>: <span style="color: #ff9e64">running</span></span><span style="color: #828bb8">read again as it writes</span></div>
+<sc-for list="{{ detail }}" as="d" hint-placeholder-count="24">
+<div style="white-space: pre; overflow: hidden; text-overflow: ellipsis; color: {{ d.color }}">{{ d.pad }}<span style="color: {{ d.markColor }}">{{ d.mark }}</span>{{ d.text }}<span style="color: {{ d.statusColor }}">{{ d.status }}</span></div>
+</sc-for>
+</div>
+</section>
+
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">↑↓</span> highlight</span><span><span style="color: #7aa2f7">c</span> cancel</span><span><span style="color: #7aa2f7">r</span> retry</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span><span style="margin-left: auto">^p palette</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '     ⣾', '#ff9e64'], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Operations' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const ok = '#9ece6a', bad = '#f7768e', active = '#ff9e64', quiet = '#828bb8', plain = '#c0caf5';
+    const tones = { running: ['●', active], done: ['✓', ok], failed: ['✗', bad], interrupted: ['✗', bad], canceled: ['✗', bad] };
+    const rows = [
+      ['op-3c9e51a7', "Install a workspace's software", 'running', '2 of 2: install', '12:46:31', 'you (console)'],
+      ['op-b41d7e02', 'Open a workspace', 'done', '5 of 5: container', '12:45:58', 'you (console)'],
+      ['op-e8a2c4f9', 'Check an MCP server', 'done', '1 of 1: check', '12:31:47', 'you (console)'],
+      ['op-6f0b9d33', 'Download a model file', 'failed', '2 of 3: fetch', '12:18:20', 'you (console)'],
+      ['op-5a8e2f61', 'Check this machine', 'done', '2 of 2: check', '12:09:12', 'you (console)'],
+      ['op-91c7a0de', 'Load a preset', 'done', '4 of 4: measure', '11:57:02', 'you (console)'],
+      ['op-0d4f6b28', 'Open VS Code', 'done', '3 of 3: open', '11:56:09', 'you (console)'],
+      ['op-c2e70b15', 'Switch a slot to a preset', 'interrupted', '3 of 6: start', '11:41:09', 'you (console)'],
+      ['op-7d13a9e4', 'Stop Docker', 'canceled', '1 of 3: check', '11:38:52', 'you (console)'],
+      ['op-28b6f0c3', 'Start Docker', 'done', '2 of 2: wait', '11:30:05', 'you (console)'],
+      ['op-f05c8e37', 'Install an engine', 'done', '4 of 4: record', '11:02:13', 'you (console)']
+    ];
+    const ops = rows.map(([id, title, status, progress, created, who], index) => {
+      const selected = index === 0;
+      return {
+        id, title, status, progress, created, who,
+        mark: tones[status][0], color: tones[status][1],
+        quiet: selected ? '#ffffff' : quiet,
+        rowStyle: selected ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+      };
+    });
+    const step = (label, mark, color, status) => ({
+      pad: '  ', mark: mark + ' ', markColor: color, text: label.padEnd(18, ' '), status, statusColor: color, color: plain
+    });
+    const log = (line) => ({ pad: '      ', mark: '', markColor: quiet, text: line, status: '', statusColor: quiet, color: quiet });
+    const detail = [
+      step('1 of 2: plan', '✓', ok, 'done'),
+      step('2 of 2: install', '●', active, 'running'),
+      log('its limits: 8 CPUs, 16,384 MiB'),
+      log("running in clank-myproject-setup: python3 -m venv ~/.venv && ~/.venv/bin/python -m pip install -e '.[dev]'"),
+      log('Installing build dependencies: started'),
+      log("Installing build dependencies: finished with status 'done'"),
+      log('Checking if build backend supports build_editable: started'),
+      log("Checking if build backend supports build_editable: finished with status 'done'"),
+      log('Getting requirements to build editable: started'),
+      log("Getting requirements to build editable: finished with status 'done'"),
+      log('Preparing editable metadata (pyproject.toml): started'),
+      log("Preparing editable metadata (pyproject.toml): finished with status 'done'"),
+      log('Collecting numpy>=2.1 (from myproject==0.1.0)'),
+      log('  Downloading numpy-2.3.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)'),
+      log('Collecting scipy>=1.14 (from myproject==0.1.0)'),
+      log('  Downloading scipy-1.16.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (61 kB)'),
+      log('Collecting networkx>=3.4 (from myproject==0.1.0)'),
+      log('  Downloading networkx-3.5-py3-none-any.whl.metadata (6.3 kB)'),
+      log('Collecting pytest>=8.3 (from myproject==0.1.0)'),
+      log('  Downloading pytest-8.4.2-py3-none-any.whl.metadata (7.7 kB)'),
+      log('Collecting iniconfig>=1 (from pytest>=8.3->myproject==0.1.0)'),
+      log('  Downloading iniconfig-2.1.0-py3-none-any.whl.metadata (2.7 kB)'),
+      log('Downloading numpy-2.3.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.6 MB)'),
+      log('Downloading scipy-1.16.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (35.7 MB)')
+    ];
+    return { menu, ops, detail };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime",
+  "description": "The slots, the port engines listen on, and how long starts and health checks may take.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "runtime/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "slots": {
+      "description": "The seats for models: main for the agent's, fast for completion (design 0006), vision for the model that reads images on the CPU (design 0008).",
+      "items": {
+        "type": "string"
+      },
+      "title": "Slots",
+      "type": "array"
+    },
+    "port": {
+      "default": 18200,
+      "description": "Where an engine listens, until the gateway takes this port (design 0001 §9.2).",
+      "maximum": 65535,
+      "minimum": 1024,
+      "title": "Engines' port",
+      "type": "integer"
+    },
+    "ports": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "description": "A port of its own for a slot whose engine runs beside another; the rest take the engines' port.",
+      "title": "Slots' ports",
+      "type": "object"
+    },
+    "model_name": {
+      "default": "",
+      "description": "The model name the gateway puts in each request it passes to the engine; empty: the model's id in Clank's catalog.",
+      "title": "Model name",
+      "type": "string"
+    },
+    "tight_mib": {
+      "default": 500,
+      "description": "A fit with less spare GPU memory than this, in MiB, is tight.",
+      "minimum": 0,
+      "title": "Tight below",
+      "type": "integer"
+    },
+    "start_seconds": {
+      "default": 300,
+      "description": "How long an engine may take to be ready, in seconds.",
+      "minimum": 1,
+      "title": "Time to start",
+      "type": "integer"
+    },
+    "health_seconds": {
+      "default": 30,
+      "description": "How often a running engine is asked.",
+      "minimum": 5,
+      "title": "Health every",
+      "type": "integer"
+    },
+    "cloud_health_seconds": {
+      "default": 300,
+      "description": "How often a cloud model's provider is asked whether it still takes the key (it costs nothing).",
+      "minimum": 30,
+      "title": "Cloud health every",
+      "type": "integer"
+    },
+    "fallback_preset": {
+      "default": "daily-262k",
+      "description": "What clank work, clank code and This folder load when the main slot runs nothing and no configuration has worked yet (design 0015 §13).",
+      "title": "Fallback preset",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

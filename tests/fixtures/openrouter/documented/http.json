@@ -1,0 +1,901 @@
+{
+  "adapter": "openrouter",
+  "source": "OpenRouter's documented shapes, read 2026-10-20 on the pages design 0016 §3 cites (API reference, Authentication, List models, Get current API key, Usage accounting, Streaming, Errors and debugging, Get a generation); written by hand, never recorded from OpenRouter. Every id, label, word and number is made up; the refusals' words are not OpenRouter's (its words are to be checked with a real key, design 0016 §18). The owner's recording replaces it as the contract's first.",
+  "recorded": "2026-10-20",
+  "how": "By hand, from the documentation: each exchange is one of Clank's fixed made-up requests and the answer the documentation describes; tests/fakes/openrouter.py plays it.",
+  "key": "made-up-openrouter-key",
+  "exchanges": [
+    {
+      "name": "key",
+      "request": {
+        "method": "GET",
+        "path": "/key",
+        "query": {},
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "data": {
+            "label": "made-up key label",
+            "limit": 20,
+            "limit_remaining": 18.71,
+            "limit_reset": "monthly",
+            "include_byok_in_limit": false,
+            "usage": 1.29,
+            "usage_daily": 0.12,
+            "usage_weekly": 0.5,
+            "usage_monthly": 1.29,
+            "byok_usage": 0,
+            "byok_usage_daily": 0,
+            "byok_usage_weekly": 0,
+            "byok_usage_monthly": 0,
+            "is_free_tier": false,
+            "is_management_key": false,
+            "is_provisioning_key": false,
+            "budgets": [],
+            "effective_budget": null,
+            "creator_user_id": null,
+            "organization_id": null,
+            "workspace_id": null,
+            "expires_at": null,
+            "allowed_data_regions": [
+              "global"
+            ],
+            "free_model_daily_requests": {
+              "used": 0,
+              "limit": 1000,
+              "remaining": 1000
+            },
+            "rate_limit": {
+              "requests": -1,
+              "interval": "10s",
+              "note": "made up"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "models",
+      "request": {
+        "method": "GET",
+        "path": "/models",
+        "query": {
+          "supported_parameters": "tools",
+          "category": "programming",
+          "sort": "most-popular"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "data": [
+            {
+              "id": "example-vendor/example-coder",
+              "canonical_slug": "example-vendor/example-coder-2026",
+              "hugging_face_id": null,
+              "name": "Example Coder",
+              "created": 1790000000,
+              "description": "A made-up model for coding. It writes code and calls tools.",
+              "context_length": 262144,
+              "architecture": {
+                "modality": "text->text",
+                "input_modalities": [
+                  "text"
+                ],
+                "output_modalities": [
+                  "text"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+              },
+              "pricing": {
+                "prompt": "0.0000003",
+                "completion": "0.0000012",
+                "request": "0",
+                "image": "0",
+                "input_cache_read": "0.00000003"
+              },
+              "top_provider": {
+                "context_length": 262144,
+                "max_completion_tokens": 32768,
+                "is_moderated": false
+              },
+              "per_request_limits": null,
+              "supported_parameters": [
+                "max_tokens",
+                "temperature",
+                "tools",
+                "tool_choice",
+                "reasoning",
+                "include_reasoning"
+              ],
+              "default_parameters": null,
+              "supported_voices": null,
+              "links": {
+                "details": "/api/v1/models/example-vendor/example-coder/endpoints"
+              },
+              "reasoning": {
+                "mandatory": false,
+                "default_effort": "medium",
+                "supported_efforts": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "supports_max_tokens": false
+              },
+              "expiration_date": null,
+              "knowledge_cutoff": null
+            },
+            {
+              "id": "example-vendor/example-small:free",
+              "canonical_slug": "example-vendor/example-small-2026",
+              "hugging_face_id": null,
+              "name": "Example Small (free)",
+              "created": 1790000100,
+              "description": "A made-up small model, free with limits.",
+              "context_length": 32768,
+              "architecture": {
+                "modality": "text+image->text",
+                "input_modalities": [
+                  "text",
+                  "image"
+                ],
+                "output_modalities": [
+                  "text"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+              },
+              "pricing": {
+                "prompt": "0",
+                "completion": "0",
+                "request": "0",
+                "image": "0"
+              },
+              "top_provider": {
+                "context_length": null,
+                "max_completion_tokens": null,
+                "is_moderated": false
+              },
+              "per_request_limits": null,
+              "supported_parameters": [
+                "max_tokens",
+                "tools",
+                "tool_choice"
+              ],
+              "default_parameters": null,
+              "supported_voices": null,
+              "links": {
+                "details": "/api/v1/models/example-vendor/example-small:free/endpoints"
+              },
+              "reasoning": {
+                "mandatory": false
+              },
+              "expiration_date": "2026-12-31",
+              "knowledge_cutoff": null
+            }
+          ],
+          "total_count": 2,
+          "links": {
+            "next": null
+          }
+        }
+      }
+    },
+    {
+      "name": "every model",
+      "request": {
+        "method": "GET",
+        "path": "/models",
+        "query": {},
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "data": [
+            {
+              "id": "example-vendor/example-coder",
+              "canonical_slug": "example-vendor/example-coder-2026",
+              "hugging_face_id": null,
+              "name": "Example Coder",
+              "created": 1790000000,
+              "description": "A made-up model for coding. It writes code and calls tools.",
+              "context_length": 262144,
+              "architecture": {
+                "modality": "text->text",
+                "input_modalities": [
+                  "text"
+                ],
+                "output_modalities": [
+                  "text"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+              },
+              "pricing": {
+                "prompt": "0.0000003",
+                "completion": "0.0000012",
+                "request": "0",
+                "image": "0",
+                "input_cache_read": "0.00000003"
+              },
+              "top_provider": {
+                "context_length": 262144,
+                "max_completion_tokens": 32768,
+                "is_moderated": false
+              },
+              "per_request_limits": null,
+              "supported_parameters": [
+                "max_tokens",
+                "temperature",
+                "tools",
+                "tool_choice",
+                "reasoning",
+                "include_reasoning"
+              ],
+              "default_parameters": null,
+              "supported_voices": null,
+              "links": {
+                "details": "/api/v1/models/example-vendor/example-coder/endpoints"
+              },
+              "reasoning": {
+                "mandatory": false,
+                "default_effort": "medium",
+                "supported_efforts": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "supports_max_tokens": false
+              },
+              "expiration_date": null,
+              "knowledge_cutoff": null
+            },
+            {
+              "id": "example-vendor/example-small:free",
+              "canonical_slug": "example-vendor/example-small-2026",
+              "hugging_face_id": null,
+              "name": "Example Small (free)",
+              "created": 1790000100,
+              "description": "A made-up small model, free with limits.",
+              "context_length": 32768,
+              "architecture": {
+                "modality": "text+image->text",
+                "input_modalities": [
+                  "text",
+                  "image"
+                ],
+                "output_modalities": [
+                  "text"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+              },
+              "pricing": {
+                "prompt": "0",
+                "completion": "0",
+                "request": "0",
+                "image": "0"
+              },
+              "top_provider": {
+                "context_length": null,
+                "max_completion_tokens": null,
+                "is_moderated": false
+              },
+              "per_request_limits": null,
+              "supported_parameters": [
+                "max_tokens",
+                "tools",
+                "tool_choice"
+              ],
+              "default_parameters": null,
+              "supported_voices": null,
+              "links": {
+                "details": "/api/v1/models/example-vendor/example-small:free/endpoints"
+              },
+              "reasoning": {
+                "mandatory": false
+              },
+              "expiration_date": "2026-12-31",
+              "knowledge_cutoff": null
+            },
+            {
+              "id": "example-vendor/example-chat",
+              "canonical_slug": "example-vendor/example-chat-2026",
+              "hugging_face_id": null,
+              "name": "Example Chat",
+              "created": 1789999900,
+              "description": "A made-up model that takes no tool calls.",
+              "context_length": 131072,
+              "architecture": {
+                "modality": "text->text",
+                "input_modalities": [
+                  "text"
+                ],
+                "output_modalities": [
+                  "text"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+              },
+              "pricing": {
+                "prompt": "0.0000001",
+                "completion": "0.0000004",
+                "request": "0",
+                "image": "0"
+              },
+              "top_provider": {
+                "context_length": 131072,
+                "max_completion_tokens": 8192,
+                "is_moderated": false
+              },
+              "per_request_limits": null,
+              "supported_parameters": [
+                "max_tokens",
+                "temperature"
+              ],
+              "default_parameters": null,
+              "supported_voices": null,
+              "links": {
+                "details": "/api/v1/models/example-vendor/example-chat/endpoints"
+              },
+              "reasoning": {
+                "mandatory": false
+              },
+              "expiration_date": null,
+              "knowledge_cutoff": null
+            }
+          ],
+          "total_count": 3,
+          "links": {
+            "next": null
+          }
+        }
+      }
+    },
+    {
+      "name": "answer",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/example-coder",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with OK."
+            }
+          ],
+          "max_tokens": 16,
+          "provider": {
+            "data_collection": "deny"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "id": "gen-1790000000-MadeUpGeneration01",
+          "provider": "Example Provider",
+          "model": "example-vendor/example-coder",
+          "object": "chat.completion",
+          "created": 1790000000,
+          "choices": [
+            {
+              "logprobs": null,
+              "finish_reason": "stop",
+              "native_finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "OK",
+                "refusal": null,
+                "reasoning": null
+              }
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 12,
+            "completion_tokens": 2,
+            "total_tokens": 14,
+            "cost": 2.1e-05,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": null
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "stream",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/example-coder",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with OK."
+            }
+          ],
+          "max_tokens": 16,
+          "provider": {
+            "data_collection": "deny"
+          },
+          "stream": true
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/event-stream"
+        },
+        "stream": [
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"O\"},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"K\"},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\",\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\",\"logprobs\":null}],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":2,\"total_tokens\":14,\"cost\":2.1e-05,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0,\"audio_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":null},\"completion_tokens_details\":{\"reasoning_tokens\":0}}}",
+          "data: [DONE]"
+        ]
+      }
+    },
+    {
+      "name": "comments",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/example-coder",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with OK."
+            }
+          ],
+          "max_tokens": 16,
+          "provider": {
+            "data_collection": "deny"
+          },
+          "stream": true
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/event-stream"
+        },
+        "stream": [
+          ": OPENROUTER PROCESSING",
+          ": OPENROUTER PROCESSING",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"OK\"},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\",\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\",\"logprobs\":null}],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":2,\"total_tokens\":14,\"cost\":2.1e-05,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0,\"audio_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":null},\"completion_tokens_details\":{\"reasoning_tokens\":0}}}",
+          "data: [DONE]"
+        ]
+      }
+    },
+    {
+      "name": "thinking",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/example-coder",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with OK."
+            }
+          ],
+          "max_tokens": 16,
+          "provider": {
+            "data_collection": "deny"
+          },
+          "stream": true,
+          "reasoning": {
+            "effort": "low"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/event-stream"
+        },
+        "stream": [
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"The owner asks for OK.\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"The owner asks for OK.\",\"format\":null,\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"OK\"},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\",\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\",\"logprobs\":null}],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":9,\"total_tokens\":21,\"cost\":3e-05,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0,\"audio_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":null},\"completion_tokens_details\":{\"reasoning_tokens\":7}}}",
+          "data: [DONE]"
+        ]
+      }
+    },
+    {
+      "name": "tool call",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/example-coder",
+          "stream": true,
+          "max_tokens": 64,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "made_up_lookup",
+                "description": "Look up a made-up word.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "word": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "word"
+                  ]
+                }
+              }
+            }
+          ],
+          "tool_choice": "required",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Look up the made-up word blue."
+            }
+          ],
+          "provider": {
+            "data_collection": "deny"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/event-stream"
+        },
+        "stream": [
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"index\":0,\"id\":\"call_made_up_1\",\"type\":\"function\",\"function\":{\"name\":\"made_up_lookup\",\"arguments\":\"\"}}]},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"word\\\": \"}}]},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"blue\\\"}\"}}]},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":\"tool_calls\",\"native_finish_reason\":\"tool_calls\",\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":\"tool_calls\",\"native_finish_reason\":\"tool_calls\",\"logprobs\":null}],\"usage\":{\"prompt_tokens\":60,\"completion_tokens\":12,\"total_tokens\":72,\"cost\":3.2e-05,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0,\"audio_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":null},\"completion_tokens_details\":{\"reasoning_tokens\":0}}}",
+          "data: [DONE]"
+        ]
+      }
+    },
+    {
+      "name": "mid-stream error",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/example-coder",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with OK."
+            }
+          ],
+          "max_tokens": 16,
+          "provider": {
+            "data_collection": "deny"
+          },
+          "stream": true
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/event-stream"
+        },
+        "stream": [
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"O\"},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}",
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\"},\"finish_reason\":\"error\",\"native_finish_reason\":\"error\",\"logprobs\":null}],\"error\":{\"code\":\"server_error\",\"message\":\"Provider disconnected unexpectedly\"}}"
+        ]
+      }
+    },
+    {
+      "name": "cut",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/example-coder",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with OK."
+            }
+          ],
+          "max_tokens": 16,
+          "provider": {
+            "data_collection": "deny"
+          },
+          "stream": true
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/event-stream"
+        },
+        "stream": [
+          "data: {\"id\":\"gen-1790000000-MadeUpGeneration01\",\"provider\":\"Example Provider\",\"model\":\"example-vendor/example-coder\",\"object\":\"chat.completion.chunk\",\"created\":1790000000,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"O\"},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}"
+        ]
+      }
+    },
+    {
+      "name": "generation",
+      "request": {
+        "method": "GET",
+        "path": "/generation",
+        "query": {
+          "id": "gen-1790000000-MadeUpGeneration01"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "data": {
+            "id": "gen-1790000000-MadeUpGeneration01",
+            "upstream_id": null,
+            "total_cost": 2.1e-05,
+            "cache_discount": null,
+            "upstream_inference_cost": null,
+            "usage": 2.1e-05,
+            "created_at": "2026-10-20T12:00:00.000Z",
+            "model": "example-vendor/example-coder",
+            "app_id": null,
+            "streamed": true,
+            "is_byok": false,
+            "provider_name": "Example Provider",
+            "latency": 300,
+            "moderation_latency": null,
+            "generation_time": 500,
+            "finish_reason": "stop",
+            "native_finish_reason": "stop",
+            "tokens_prompt": 12,
+            "tokens_completion": 2,
+            "native_tokens_prompt": 12,
+            "native_tokens_completion": 2,
+            "native_tokens_reasoning": 0,
+            "native_tokens_cached": 0,
+            "origin": "",
+            "api_type": "completions",
+            "data_region": "global",
+            "session_id": null
+          }
+        }
+      }
+    },
+    {
+      "name": "key refused",
+      "request": {
+        "method": "GET",
+        "path": "/key",
+        "query": {},
+        "body": null
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": 401,
+            "message": "Made-up words: no auth credentials found"
+          }
+        }
+      }
+    },
+    {
+      "name": "no credits",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/example-coder",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with OK."
+            }
+          ],
+          "max_tokens": 16,
+          "provider": {
+            "data_collection": "deny"
+          }
+        }
+      },
+      "response": {
+        "status": 402,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": 402,
+            "message": "Made-up words: insufficient credits"
+          }
+        }
+      }
+    },
+    {
+      "name": "budget",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/example-coder",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with OK."
+            }
+          ],
+          "max_tokens": 16,
+          "provider": {
+            "data_collection": "deny"
+          }
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": 403,
+            "message": "Made-up words: a budget refused this request"
+          }
+        }
+      }
+    },
+    {
+      "name": "no model",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/gone",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with OK."
+            }
+          ],
+          "max_tokens": 16,
+          "provider": {
+            "data_collection": "deny"
+          }
+        }
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": 404,
+            "message": "Made-up words: no endpoints found for example-vendor/gone"
+          }
+        }
+      }
+    },
+    {
+      "name": "rate limited",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/example-coder",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with OK."
+            }
+          ],
+          "max_tokens": 16,
+          "provider": {
+            "data_collection": "deny"
+          }
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "content-type": "application/json",
+          "retry-after": "7"
+        },
+        "body": {
+          "error": {
+            "code": 429,
+            "message": "Made-up words: rate limited upstream"
+          }
+        }
+      }
+    },
+    {
+      "name": "no provider",
+      "request": {
+        "method": "POST",
+        "path": "/chat/completions",
+        "query": {},
+        "body": {
+          "model": "example-vendor/example-coder",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with OK."
+            }
+          ],
+          "max_tokens": 16,
+          "provider": {
+            "data_collection": "deny"
+          }
+        }
+      },
+      "response": {
+        "status": 503,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "code": 503,
+            "message": "Made-up words: no endpoints found matching your data policy"
+          }
+        }
+      }
+    }
+  ]
+}

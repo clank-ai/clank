@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 8d0h  ● docker running  ● no model: Add a model  ● gateway                                                                 12:21
+F4 This folder         ✗ 4   │  Flow   Session   Context                                                                  ┌─ Machine ──────────────────────────┐
+1 Home                       │ OpenCode · workspace myproject · “Plan a new simulation study” · build · working · 19 ste… │ CPU  ██▉░░░░░░░░░░░░░░░░░░░░░  12% │
+2 Questions                  │                                                                                            │                                    │
+3 History                    │ ┌─ Context window c ─────────────────────────────────────────────────────────────────────┐ │ 1s                 ▂       max 12% │
+4 Docker               ●     │ │ 37,790 of 262,144 tokens (14%) · 191,586 left before OpenCode compacts at 229,376 · 9… │ │ thr  ▁▃▁▁▁▃▁▁▁▃▁▁▁▃▁▁ 16 threads   │
+5 Machine                    │ │ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒ │ │                                    │
+6 Operations                 │ │ estimate: █ system 3.3K · █ tools 10.2K · █ results 18.6K · █ loop 2.0K · +3 more      │ │ RAM  █████████░░░░░░░░░░░░░░░  38% │
+7 Records                    │ │ On the GPU exactly 36,864 · 926 in system memory · blocks of 128 picked by likeness t… │ │      24.0 GB of 64.0 GB            │
+8 Models               ●     │ │ this session ▁▂▂▂▂▂▃▃▃▃▃▃▄▄▄▄▄▅  ✗ 12:04 the loop guard stopped step 17                │ │ 1s                 ▄       max 38% │
+9 Presets                    │ │ ● the engine holds this session's conversation                                         │ │                                    │
+0 Providers and models       │ │ figures from KVMem/llama.cpp v0.00.0-rc1, “daily 262K” · Qwen3.8-27B, not calibrated … │ │ GPU  ▊░░░░░░░░░░░░░░░░░░░░░░░   3% │
+F1 Help                      │ └────────────────────────────────────────────────────────────────────────────────────────┘ │                                    │
+F2 Launch options            │                                                                                            │ 1s                 ▁        max 3% │
+F3 MCP servers               │ ┌─ Now n ─────────────────────────┐  ┌─ Flow f ────────── ↑↓ a node · ←→ fold · End now ─┐ │      RTX 5080 · 34°C · 18 W        │
+F6 Workspaces                │ │ ⣾ working, between its steps ·… │  │ You                                               │ │ VRAM ███░░░░░░░░░░░░░░░░░░░░░  13% │
+F7 Requests                  │ │ prompt      no first token yet  │  │ ├─ before the todo list ▸  1 call                 │ │      2.0 GB of 15.9 GB             │
+F8 CPU models                │ │ last prompt 35,729 cached, 2,0… │  │ ├─ ✓ Read the simulator and last study ▸          │ │                                    │
+F9 Phone               ●     │ │ thinking    ░░░░░░░░░░░░ about… │  │ ├─ ✓ List the observables ▸  10 calls             │ │ Disk read 12.0 MB/s · write 3.0 M… │
+F10 Monitor                  │ │ output      ░░░░░░░░░░░░ 61 of… │  │ ├─ ● Draft the parameter grid                     │ │ 1s                 █ max 15.0 MB/s │
+F12 Add a model              │ │ writing     no call being writ… │  │ │  ├─ read studies/notes.md  14.2K chars          │ │      C: █████████▍░░░░░░░░░░░  44% │
+─────────────────────────────│ │ speed       40 tok/s  █         │  │ │  ├─ ✗ bash python -m myproject sweep --size… ⊘  │ │                                    │
+coming                       │ │ loop guard  watching · nothing… │  │ │  ├─ ✗ failed: Clank's loop guard stopped the …  │ │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
+Sampling              M3     │ └─────────────────────────────────┘  │ │  ├─ bash ls studies/  100 chars                 │ │ 1s                 █  max 1.2 MB/s │
+Sessions              M3     │                                      │ │  ├─ ✎ your note: Keep the grid to 3 sizes.      │ └────────────────────────────────────┘
+Keys                  M3     │ ┌─ Watch for w ───────────────────┐  │ │  └─ ● working                                   │
+Layout                M2     │ │ no session yet                  │  │ ├┄ ○ Estimate run times                           │ ┌─ Clank now ────────────────────────┐
+Tests and trials      M2     │ └─────────────────────────────────┘  │ └┄ ○ Write the plan file                          │ │ ✓ last 12:31:00 · 37,729 in · 61 … │
+Agents                M5     │                                      │                                                   │ └────────────────────────────────────┘
+Modes                 M5     │ ┌─ Guide g ───────────────────────┐  │                                                   │
+Changes               M6     │ │ . Stop now    no OpenCode serv… │  │                                                   │
+Network access        M7     │ │ m Note        no OpenCode serv… │  │                                                   │
+Skills                M8     │ │ k Compact now no OpenCode serv… │  │                                                   │
+Files                 M9     │ │ p Pause       the gateway does… │  │                                                   │
+Setup guide           M10    │ │ u Undo turn   no OpenCode serv… │  │                                                   │
+                             │ │ x Drop        no OpenCode serv… │  │                                                   │
+                             │ └─────────────────────────────────┘  └───────────────────────────────────────────────────┘
+                             │
+                             │ ┌─ Tool calls t ──────────────────┐  ┌─ Biggest in the context b ────────────────────────┐
+                             │ │ 12:05:01   bash                 │  │   5.6K █ step 3  read src/simulator.py            │
+                             │ │ 12:04:31 ✗ bash      python …   │  │   4.3K █ step 16 read studies/notes.md            │
+                             │ │ 12:04:11   read              ▄▄ │  │   3.3K █         the system prompt                │
+                             │ │ 12:04:01   todowrite            │  │   2.8K █         the definition of bash           │
+                             │ │ 12:03:41   read                 │  │   2.4K █         the definition of todowrite   ▇▇ │
+                             │ │ 12:03:31   read                 │  │   2.0K █ step 8  thinking: the energy gap is 0…   │
+                             │ │ 12:03:21   read                 │  │   1.9K █ step 4  myproject_capabilities           │
+                             │ └─────────────────────────────────┘  └───────────────────────────────────────────────────┘
+                             │
+
+ f10 next view  enter open  esc back  . stop  m note  k compact  p pause  u undo  x drop  l live text  ? explain  f1 help  f5 machine column  q quit

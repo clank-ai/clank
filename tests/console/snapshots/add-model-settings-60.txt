@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ●… 09:14
+F4 This folder   ✗ │ ┌─ Its settings ─────────────────────┐
+1 Home             │ │ Example Coder                      │
+2 Questions        │ │ (example-vendor/example-coder)     │
+3 History          │ │ Its title, as the pickers show it  │
+4 Docker         ● │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+5 Machine          │ │ ▊  cloud: Example Coder          ▎ │
+6 Operations       │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+7 Records          │ │ Its context, in tokens (the        │
+8 Models         ● │ │ model's window, 262,144; a smaller │
+9 Presets          │ │ one makes OpenCode compact sooner  │
+0 Providers and…   │ │ and each request cost less)        │
+F1 Help            │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+F2 Launch optio…   │ │ ▊  262144                        ▎ │
+F3 MCP servers     │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+F6 Workspaces      │ │ Its most output, in tokens (at     │
+F7 Requests        │ │ most 32,768)                       │
+F8 CPU models      │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+F9 Phone         ● │ │ ▊  16384                         ▎ │
+F10 Monitor        │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+F12 Add a model    │ │ Its thinking effort (one of        │
+                   │ │ default, low, medium, high)        │
+                   │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+                   │ │ ▊  default                       ▎ │
+                   │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+                   │ │ A day's cost limit, US dollars     │
+                   │ │ (empty: none)                      │
+                   │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+                   │ │ ▊                                ▎ │
+                   │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+                   │ │ A month's cost limit, US dollars   │
+                   │ │ (empty: none)                      │
+                   │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+                   │ │ ▊                                ▎ │
+                   │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+                   │ │                                    │
+                   │ │ OpenRouter can limit the key too   │
+                   │ │ (openrouter.ai, Keys). Taking      │
+                   │ │ these writes the preset, then      │
+                   │ │ tests it with one short request.   │
+                   │ │ One short request: about $0.000031 │
+                   │ │ at its prices. Enter takes these.  │
+                   │ └────────────────────────────────────┘
+                   │
+                   │
+                   │
+                   │
+                   │
+ 09:14  OpenRouter took the key; Clank keeps it (ends …-key)
+ enter take  tab next  esc back  ? explain  f1 help

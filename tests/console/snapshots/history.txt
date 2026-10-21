@@ -1,0 +1,34 @@
+ ◆ CLANK  paper   ● service up 2h14m  ● docker running  ● no model  ● gateway stopped  ● 2 questions waiting      13:54
+F4 This folder         ✗ 4   │ ┌─ Filter ─────────────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ / filters the history by what you type; Esc leaves the filter                        │
+2 Questions            ● 2   │ └──────────────────────────────────────────────────────────────────────────────────────┘
+3 History                    │
+4 Docker               ●     │ ┌─ Everything Clank recorded, newest last ─────────────────────────────────────────────┐
+5 Machine                    │ │ 11:40:00  Clank asks: Stop Docker Desktop?                                           │
+6 Operations                 │ │ 11:40:00  Clank asks: Switch to fast 128K?                                           │
+7 Records                    │ └──────────────────────────────────────────────────────────────────────────────────────┘
+8 Models               ●     │
+9 Presets                    │
+0 Providers and models       │
+F1 Help                      │
+F2 Launch options            │
+F3 MCP servers               │
+F6 Workspaces                │
+F7 Requests                  │
+F8 CPU models                │
+F9 Phone               ●     │
+F10 Monitor                  │
+F12 Add a model              │
+───────────────────────────  │
+coming                       │
+Sampling              M3     │
+Sessions              M3     │
+Keys                  M3     │
+Layout                M2     │
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5   ▅▅│
+Changes               M6     │
+Network access        M7     │
+
+ / filter by what you type  esc leave the filter  ? explain  f1 help  f5 machine column  q quit              ^p palette

@@ -1,0 +1,40 @@
+ ◆ CLANK  paper   ● service up 2h14m  ● docker running  ● no model: Add a model  ● gateway stopped                                                        13:54
+F4 This folder         ✗ 4   │  Flow   Session   Context                                                                  ┌─ Machine ──────────────────────────┐
+1 Home                       │ No session yet · this folder has no workspace: This folder (F4) opens one                  │ CPU  ██▉░░░░░░░░░░░░░░░░░░░░░  12% │
+2 Questions                  │                                                                                            │                                    │
+3 History                    │ ┌─ Context window c ─────────────────────────────────────────────────────────────────────┐ │ 1s                 ▂       max 12% │
+4 Docker               ●     │ │ no session yet                                                                         │ │ thr  ▁▃▁▁▁▃▁▁▁▃▁▁▁▃▁▁ 16 threads   │
+5 Machine                    │ └────────────────────────────────────────────────────────────────────────────────────────┘ │                                    │
+6 Operations                 │                                                                                            │ RAM  █████████░░░░░░░░░░░░░░░  38% │
+7 Records                    │ ┌─ Now n ─────────────────────────┐  ┌─ Flow f ──────────────────────────────────────────┐ │      24.0 GB of 64.0 GB            │
+8 Models               ●     │ │ no session yet                  │  │ no session yet                                    │ │ 1s                 ▄       max 38% │
+9 Presets                    │ └─────────────────────────────────┘  │                                                   │ │                                    │
+0 Providers and models       │                                      │                                                   │ │ GPU  ▊░░░░░░░░░░░░░░░░░░░░░░░   3% │
+F1 Help                      │ ┌─ Watch for w ───────────────────┐  │                                                   │ │                                    │
+F2 Launch options            │ │ no session yet                  │  │                                                   │ │ 1s                 ▁        max 3% │
+F3 MCP servers               │ └─────────────────────────────────┘  │                                                   │ │      RTX 5080 · 34°C · 18 W        │
+F6 Workspaces                │                                      │                                                   │ │ VRAM ███░░░░░░░░░░░░░░░░░░░░░  13% │
+F7 Requests                  │ ┌─ Guide g ───────────────────────┐  │                                                   │ │      2.0 GB of 15.9 GB             │
+F8 CPU models                │ │ no session yet                  │  │                                                   │ │                                    │
+F9 Phone               ●     │ └─────────────────────────────────┘  └───────────────────────────────────────────────────┘ │ Disk read 12.0 MB/s · write 3.0 M… │
+F10 Monitor                  │                                                                                            │ 1s                 █ max 15.0 MB/s │
+F12 Add a model              │ ┌─ Tool calls t ──────────────────┐  ┌─ Biggest in the context b ────────────────────────┐ │      C: █████████▍░░░░░░░░░░░  44% │
+─────────────────────────────│ │ no session yet                  │  │ no session yet                                    │ │                                    │
+coming                       │ └─────────────────────────────────┘  └───────────────────────────────────────────────────┘ │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
+Sampling              M3     │                                                                                            │ 1s                 █  max 1.2 MB/s │
+Sessions              M3     │                                                                                            └────────────────────────────────────┘
+Keys                  M3     │
+Layout                M2     │                                                                                            ┌─ Clank now ────────────────────────┐
+Tests and trials      M2     │                                                                                            │ ● gateway stopped                  │
+Agents                M5     │                                                                                            └────────────────────────────────────┘
+Modes                 M5     │
+Changes               M6     │
+Network access        M7     │
+Skills                M8     │
+Files                 M9     │
+Setup guide           M10    │
+                             │
+                             │
+                             │
+
+ f10 next view  enter open  esc back  . stop  m note  k compact  p pause  u undo  x drop  l live text  ? explain  f1 help  f5 machine column  q quit

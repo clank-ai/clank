@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Host",
+  "description": "Where engines run (decision 0030): a WSL distribution, or the local Linux, with its own Clank folder.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "host/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "adapter": {
+      "description": "wsl: a WSL distribution, through wsl.exe; local: the service's own Linux.",
+      "enum": [
+        "wsl",
+        "local"
+      ],
+      "title": "Kind of host",
+      "type": "string"
+    },
+    "distro": {
+      "default": "",
+      "description": "For wsl: the distribution's name, such as Ubuntu-22.04.",
+      "title": "Distribution",
+      "type": "string"
+    },
+    "clank_folder": {
+      "default": "~/.clank",
+      "description": "The folder on the host that holds its engines and models.",
+      "title": "Clank folder",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "adapter"
+  ],
+  "additionalProperties": false
+}

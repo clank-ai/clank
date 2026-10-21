@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway                13:54
+F4 This folder   ✗ │  Flow   Session   Context
+1 Home             │ No session yet · this folder has no workspace: This folder …
+2 Questions        │
+3 History          │ ┌─ Context window c ───────────────────────────────────────┐
+4 Docker         ● │ │ no session yet                                           │
+5 Machine          │ └──────────────────────────────────────────────────────────┘
+6 Operations       │
+7 Records          │ ┌─ Now n ──────────────────────────────────────────────────┐
+8 Models         ● │ │ no session yet                                           │
+9 Presets          │ └──────────────────────────────────────────────────────────┘
+0 Providers and…   │
+F1 Help            │ ┌─ Flow f ─────────────────────────────────────────────────┐
+F2 Launch optio…   │ │ no session yet                                           │
+F3 MCP servers     │ └──────────────────────────────────────────────────────────┘
+F6 Workspaces      │
+F7 Requests        │ ┌─ Watch for w ────────────────────────────────────────────┐
+F8 CPU models      │ │ no session yet                                           │
+F9 Phone         ● │ └──────────────────────────────────────────────────────────┘
+F10 Monitor        │
+F12 Add a model    │ ┌─ Guide g ────────────────────────────────────────────────┐
+                   │ │ no session yet                                           │
+                   │ └──────────────────────────────────────────────────────────┘
+                   │
+                   │ ┌─ Tool calls t ───────────────────────────────────────────┐
+                   │ │ no session yet                                           │
+                   │ └──────────────────────────────────────────────────────────┘
+                   │
+                   │ ┌─ Biggest in the context b ───────────────────────────────┐
+                   │ │ no session yet                                           │
+                   │ └──────────────────────────────────────────────────────────┘
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+
+ f10 next view  enter open  esc back  . stop  m note  ? explain  f1 help

@@ -1,0 +1,71 @@
+{
+  "program": "Docker Desktop",
+  "version": "4.85.0",
+  "recorded": "2026-10-13",
+  "how": "Recorded on Windows 11 from Docker Desktop 4.85.0 (engine 29.6.2, its docker desktop command v0.4.3): running on 2026-10-11 (the answer of `docker container inspect` was added on 2026-10-12), then through a stop and a start on 2026-10-13. `docker desktop stop --detach` answered after 13 seconds. Stopped, `docker desktop status` never answered (it was still waiting after 16 seconds, every time it was asked), while `docker version` and `docker ps` failed at once (\"failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running\"). `docker desktop start --detach`, and `docker desktop start --timeout 300` too, then answered that Docker Desktop was already running and started nothing; its own program (`Docker Desktop.exe`, beside the folder of its command) started it, and its engine answered 8 seconds later. Docker Desktop was installed for one user; its command's place is given as Docker Desktop installs it for every user, which has the same folders. The containers' ids, names, images and labels, and the session id, are replaced by made-up ones of the same form. An answer's third value, when there is one, is how many seconds it took; an exit status of null means no answer came.",
+  "platform": "win32",
+  "command": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+  "initial": "running",
+  "states": {
+    "running": {
+      "docker desktop version --format json": [
+        0,
+        "{\"version\":\"v0.4.3\"}\n"
+      ],
+      "docker desktop status --format json": [
+        0,
+        "{\n    \"SessionID\": \"1b4e28ba-2fa1-41d2-883f-0016d3cca427\",\n    \"Status\": \"running\"\n}\n"
+      ],
+      "docker version --format {{.Server.Platform.Name}}|{{.Server.Version}}": [
+        0,
+        "Docker Desktop 4.85.0 (235549)|29.6.2\n"
+      ],
+      "docker desktop stop --detach": [
+        0,
+        "\u2713 Stopping Docker Desktop\r\n",
+        12.9
+      ],
+      "docker ps --all --no-trunc --format {\"id\":{{json .ID}},\"name\":{{json .Names}},\"image\":{{json .Image}},\"state\":{{json .State}},\"status\":{{json .Status}},\"clank.home\":{{json (.Label \"clank.home\")}},\"clank.component\":{{json (.Label \"clank.component\")}},\"clank.record\":{{json (.Label \"clank.record\")}}}": [
+        0,
+        "{\"id\":\"a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1\",\"name\":\"clank-workspace-demo\",\"image\":\"clank/sandbox:0.1\",\"state\":\"running\",\"status\":\"Up 5 minutes\",\"clank.home\":\"0123456789ab\",\"clank.component\":\"workspaces\",\"clank.record\":\"workspace/demo\"}\n{\"id\":\"b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2\",\"name\":\"toolbox-sandbox-017\",\"image\":\"toolbox-sandbox:2026.10\",\"state\":\"running\",\"status\":\"Up 2 hours\",\"clank.home\":\"\",\"clank.component\":\"\",\"clank.record\":\"\"}\n{\"id\":\"c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3\",\"name\":\"postgres-dev\",\"image\":\"postgres:17\",\"state\":\"running\",\"status\":\"Up 3 days\",\"clank.home\":\"\",\"clank.component\":\"\",\"clank.record\":\"\"}\n{\"id\":\"d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4\",\"name\":\"toolbox-docs-build\",\"image\":\"toolbox-docs:4.24\",\"state\":\"exited\",\"status\":\"Exited (0) 12 hours ago\",\"clank.home\":\"\",\"clank.component\":\"\",\"clank.record\":\"\"}\n"
+      ],
+      "docker container inspect --format {\"id\":{{json .Id}},\"labels\":{{json .Config.Labels}}} a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1 b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2 c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3 d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4": [
+        0,
+        "{\"id\":\"a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1\",\"labels\":{\"clank.component\":\"workspaces\",\"clank.home\":\"0123456789ab\",\"clank.record\":\"workspace/demo\"}}\n{\"id\":\"b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2\",\"labels\":{\"toolbox.mode\":\"auto\",\"toolbox.project\":\"017\",\"toolbox.sandbox\":\"1\",\"toolbox.workspace\":\"demo\",\"desktop.docker.io/mounts/0/Source\":\"C:\\\\Work\\\\demo\",\"desktop.docker.io/mounts/0/SourceKind\":\"hostFile\",\"desktop.docker.io/mounts/0/Target\":\"/workspace\"}}\n{\"id\":\"c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3\",\"labels\":{\"com.docker.compose.project\":\"dev\",\"com.docker.compose.service\":\"postgres\"}}\n{\"id\":\"d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4\",\"labels\":{\"toolbox.project\":\"lean\",\"toolbox.role\":\"run\"}}\n"
+      ]
+    },
+    "stopped": {
+      "docker desktop version --format json": [
+        0,
+        "{\"version\":\"v0.4.3\"}\n"
+      ],
+      "docker desktop status --format json": [
+        null,
+        "",
+        16.2
+      ],
+      "docker version --format {{.Server.Platform.Name}}|{{.Server.Version}}": [
+        1,
+        "\n"
+      ],
+      "docker ps --all --no-trunc --format {\"id\":{{json .ID}},\"name\":{{json .Names}},\"image\":{{json .Image}},\"state\":{{json .State}},\"status\":{{json .Status}},\"clank.home\":{{json (.Label \"clank.home\")}},\"clank.component\":{{json (.Label \"clank.component\")}},\"clank.record\":{{json (.Label \"clank.record\")}}}": [
+        1,
+        ""
+      ],
+      "docker desktop start --detach": [
+        0,
+        "Docker Desktop is already running\n",
+        0.3
+      ],
+      "Docker Desktop": [
+        0,
+        "",
+        8.0
+      ]
+    }
+  },
+  "transitions": {
+    "docker desktop stop --detach": "stopped",
+    "Docker Desktop": "running"
+  }
+}

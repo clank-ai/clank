@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Requests, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; flex: none; border: 1px solid #3b4261; padding: 14px 24px 10px 12px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Model requests through the gateway</div>
+<div style="position: absolute; top: -10px; right: 10px; background: #1a1b26; padding: 0 6px; color: #828bb8">100 newest requests</div>
+<div style="display: flex; gap: 22px; padding: 0 6px; white-space: pre; color: #828bb8"><span style="flex: 0 0 8ch">when</span><span style="flex: 0 0 14ch">who/role</span><span style="flex: 0 0 6ch">status</span><span style="flex: 0 0 21ch">tokens in (cached)</span><span style="flex: 0 0 6ch; text-align: right">out</span><span style="flex: 0 0 11ch; text-align: right">first token</span><span style="flex: 0 0 8ch; text-align: right">total</span><span style="flex: 0 0 5ch; text-align: right">speed</span><span style="flex: 1 1 0; min-width: 0"></span></div>
+<sc-for list="{{ requests }}" as="r" hint-placeholder-count="20"><div style="display: flex; gap: 22px; padding: 0 6px; white-space: pre; {{ r.style }}"><span style="flex: 0 0 8ch; color: {{ r.timeColor }}">{{ r.time }}</span><span style="flex: 0 0 14ch; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ r.who }}</span><span style="flex: 0 0 6ch; color: {{ r.statusColor }}">{{ r.status }}</span><span style="flex: 0 0 21ch; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ r.tin }}</span><span style="flex: 0 0 6ch; text-align: right">{{ r.tout }}</span><span style="flex: 0 0 11ch; text-align: right">{{ r.first }}</span><span style="flex: 0 0 8ch; text-align: right">{{ r.total }}</span><span style="flex: 0 0 5ch; text-align: right">{{ r.speed }}</span><span style="flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: {{ r.markColor }}">{{ r.mark }}</span></div></sc-for>
+<div style="position: absolute; top: 32px; bottom: 10px; right: 9px; width: 4px; background: #1f2335"><div style="height: 20%; background: #3b4261"></div></div>
+</section>
+
+<div style="flex: 1; min-height: 0; display: flex; gap: 14px">
+
+<div style="flex: 0 0 54%; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; flex: none; border: 1px solid #3b4261; padding: 14px 18px 10px; white-space: pre; display: grid; grid-template-columns: 10ch minmax(0, 1fr); row-gap: 2px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">The highlighted request</div>
+<span style="color: #828bb8">request</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">r-5c1e9a07 · 12:13:30 · opencode/agent · 200</span>
+<span style="color: #828bb8">went to</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">preset daily 262K · kvmem-llamacpp v0.16 · model sent qwen3.8-27b</span>
+<span style="color: #828bb8">prompt</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">58 messages · 31 tools</span>
+<span style="color: #828bb8">tokens</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">146,108 in (91% cached) · 5,417 out</span>
+<span style="color: #828bb8">time</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">waited 2 ms for its slot · first 13.4 s · total 142.7 s · 42/s</span>
+</section>
+
+<section style="position: relative; flex: 1; min-height: 0; border: 1px solid #3b4261; padding: 14px 18px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Asked</div>
+<div style="position: absolute; top: -10px; right: 10px; background: #1a1b26; padding: 0 6px; color: #828bb8">the last message the user wrote</div>
+<div style="flex: 1; min-height: 0; overflow: hidden; white-space: pre-wrap">Plan a new simulation study for the walker: sweep the lattice size (256 to 2048) and the drift, estimate the spreading exponent for each size, and compare it with the prediction in notes/theory.md. Say which runs we need, how long each takes on this machine, and what we keep (seeds, raw counts, figures). Write the plan to studies/spreading/plan.md; do not run anything yet.</div>
+</section>
+
+</div>
+
+<section style="position: relative; flex: 1 1 0; min-width: 0; border: 1px solid #3b4261; padding: 14px 18px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Answered</div>
+<div style="position: absolute; top: -10px; right: 10px; background: #1a1b26; padding: 0 6px; color: #828bb8">up to 3,000 characters</div>
+<div style="flex: 1; min-height: 0; overflow: hidden; white-space: pre-wrap; display: flex; flex-direction: column">
+<div>The plan is in studies/spreading/plan.md. In short:</div>
+<div style="height: 18px"></div>
+<div>1. Sizes n = 256, 512, 1024 and 2048 on a square lattice, built</div>
+<div>   as in studies/baseline, with the same seed scheme.</div>
+<div>2. Drift d from 0.02 to 0.12 in steps of 0.005: 21 points.</div>
+<div>3. 10,000 walkers a point at the smallest drifts, 2,000 elsewhere;</div>
+<div>   raw counts kept as CSV, one file a run, with its seed.</div>
+<div>4. The exponent from the slope of the curves of successive sizes,</div>
+<div>   with a bootstrap interval, compared with the prediction</div>
+<div>   in notes/theory.md.</div>
+<div>5. About 3 h 40 min on 8 CPUs; n = 2048 is half of it, so it</div>
+<div>   runs last and can stop without losing the others.</div>
+<div style="height: 18px"></div>
+<div>Files to write when you agree: run.py (one point), sweep.py</div>
+<div>(the grid, resumable) and figures.py (the curves and their</div>
+<div>crossing). Nothing has run yet.</div>
+<div style="height: 18px"></div>
+<div>Shall I write them?</div>
+</div>
+</section>
+
+</div>
+
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">↑↓</span> highlight</span><span><span style="color: #7aa2f7">v</span> live view</span><span><span style="color: #7aa2f7">r</span> reads the requests again</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span><span style="margin-left: auto">^p palette</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Requests' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const bad = '#f7768e', attention = '#e0af68', quiet = '#828bb8';
+    const picked = 'background: #283457; color: #ffffff; font-weight: 700';
+    const commas = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // when, status, prompt tokens, % of it cached, answer tokens, first token (s), total (s), tokens a second, mark
+    const rows = [
+      ['12:13:30', '200', 146108, 91, 5417, 13.4, 142.7, 42, ''],
+      ['12:12:58', '200', 143581, 99, 186, 2.1, 5.9, 49, ''],
+      ['12:11:31', '200', 138300, 94, 3377, 8.6, 82.5, 46, ''],
+      ['12:11:15', '200', 129243, 95, 245, 6.3, 11.5, 47, ''],
+      ['12:10:59', '200', 122390, 92, 120, 9.6, 12.1, 48, ''],
+      ['12:09:16', '200', 108305, 94, 4105, 7.2, 98.8, 45, ''],
+      ['12:08:11', '200', 99340, 95, 2861, 4.9, 61.2, 51, ''],
+      ['12:08:05', '200', 94470, 100, 58, 0.7, 2.0, 45, ''],
+      ['12:04:02', 'failed', 94156, 100, null, 0.6, 15.0, null, 'looped'],
+      ['12:03:41', '200', 93774, 98, 64, 1.7, 2.9, 53, ''],
+      ['12:03:12', '200', 92132, 99, 233, 1.0, 5.2, 55, ''],
+      ['12:02:45', '200', 90493, 97, 1032, 2.7, 21.6, 55, ''],
+      ['12:02:35', '200', 88050, 99, 178, 0.9, 4.1, 56, ''],
+      ['12:01:57', '200', 85594, 96, 1644, 3.4, 33.1, 55, ''],
+      ['12:01:42', '200', 81928, 98, 146, 2.1, 5.0, 50, ''],
+      ['12:00:05', '200', 79812, 0, 212, 88.4, 92.2, 56, 'again'],
+      ['11:59:58', '200', 74316, 96, 96, 3.1, 4.9, 53, ''],
+      ['11:59:50', '200', 70955, 94, 81, 4.6, 6.1, 54, ''],
+      ['11:59:41', '200', 66410, 92, 102, 5.3, 7.2, 54, ''],
+      ['11:59:30', '200', 61277, 95, 118, 3.0, 5.2, 54, '']
+    ];
+    const requests = rows.map(([time, status, prompt, cached, out, first, total, speed, mark], index) => ({
+      time, status, mark,
+      who: 'opencode/agent',
+      tin: commas(prompt).padStart(7, ' ') + ' (' + cached + '% cached)',
+      tout: out === null ? '—' : commas(out),
+      first: first.toFixed(1) + ' s',
+      total: total.toFixed(1) + ' s',
+      speed: speed === null ? '' : speed + '/s',
+      statusColor: status === 'failed' ? bad : '',
+      markColor: mark === 'looped' ? bad : attention,
+      timeColor: index === 0 ? '' : quiet,
+      style: index === 0 ? picked : ''
+    }));
+    return { menu, requests };
+  }
+}
+</script>
+</body>
+</html>

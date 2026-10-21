@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 8d0h  ● docker running  ● no model: Add a model  ● gateway                                                                 12:21
+F4 This folder         ✗ 4   │  Flow   Session   Context                                                                  ┌─ Machine ──────────────────────────┐
+1 Home                       │ OpenCode · workspace myproject · “Plan a new simulation study” · build · working · 19 s…   │ CPU  ██▉░░░░░░░░░░░░░░░░░░░░░  12% │
+2 Questions                  │                                                                                            │                                    │
+3 History                    │ ┌─ Context window ─────────────────────────────────────────────────────────────────────┐   │ 1s                 ▂       max 12% │
+4 Docker               ●     │ │ 37,790 of 262,144 tokens (14%) · 191,586 left before OpenCode compacts at 229,376 ·… │   │ thr  ▁▃▁▁▁▃▁▁▁▃▁▁▁▃▁▁ 16 threads   │
+5 Machine                    │ │ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒ │   │                                    │
+6 Operations                 │ │ estimate: █ system 3.3K · █ tools 10.2K · █ results 18.6K · █ loop 2.0K · +3 more    │   │ RAM  █████████░░░░░░░░░░░░░░░  38% │
+7 Records                    │ │ ● the engine holds this session's conversation                                       │   │      24.0 GB of 64.0 GB            │
+8 Models               ●     │ └──────────────────────────────────────────────────────────────────────────────────────┘   │ 1s                 ▄       max 38% │
+9 Presets                    │                                                                                            │                                    │
+0 Providers and models       │ ┌─ What is in it ────────────────────── estimate ─┐  ┌─ On the GPU exactly ────────────┐   │ GPU  ▊░░░░░░░░░░░░░░░░░░░░░░░   3% │
+F1 Help                      │ │ part         tokens share  the biggest          │  │ The model reads 36,864 tokens … │   │                                    │
+F2 Launch options            │ │ █ system      3,333    9%  3.3K the system pro… │  │ █ the first       128  the pro… │   │ 1s                 ▁        max 3% │
+F3 MCP servers               │ │ █ tools      10,177   27%  2.8K the definition… │  │ █ the newest   ~2,000  after t… │   │      RTX 5080 · 34°C · 18 W        │
+F6 Workspaces                │ │ █ you            25    0%  25 your message: Pl… │  │ █ picked      ~34,736  by like… │   │ VRAM ███░░░░░░░░░░░░░░░░░░░░░  13% │
+F7 Requests                  │ │ █ text            0    0%                       │  │ ░ the rest        926  in syst… │   │      2.0 GB of 15.9 GB             │
+F8 CPU models                │ │ █ thinking    2,915    8%  285 thinking: magne… │  │ steps pick by your message of … │   │                                    │
+F9 Phone               ●     │ │ █ calls         606    2%  131 call: todowrite  │  │ its picks by part: not reporte… │   │ Disk read 12.0 MB/s · write 3.0 M… │
+F10 Monitor                  │ │ █ results    18,624   49%  5.6K read src/simul… │  │                                 │   │ 1s                 █ max 15.0 MB/s │
+F12 Add a model              │ │ █ loop        2,049    5%  2.0K thinking: the…  │  │                                 │   │      C: █████████▍░░░░░░░░░░░  44% │
+─────────────────────────────│ └─────────────────────────────────────────────────┘  └─────────────────────────────────┘   │                                    │
+coming                       │                                                                                            │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
+Sampling              M3     │ ┌─ Over this session ─────────────────────────────┐  ┌─ Where the room went ───────────┐   │ 1s                 █  max 1.2 MB/s │
+Sessions              M3     │ │  262K                                           │  │ read: 8 results     15,424  41% │   └────────────────────────────────────┘
+Keys                  M3     │ │                                                 │  │ the system prompt…  13,510  36% │
+Layout                M2     │ │                                                 │  │ thinking sent bac…   2,915   8% │   ┌─ Clank now ────────────────────────┐
+Tests and trials      M2     │ │                        ▁                        │  │ loop text: 1 item    2,049   5% │   │ ✓ last 12:31:00 · 37,729 in · 61 … │
+Agents                M5     │ │  131K              ▂▄▆▆█                        │  │ myproject_capabil…   1,939   5% │   └────────────────────────────────────┘
+Modes                 M5     │ │               ▂▃▅▇██████                        │  │ tool calls: 18 it…     606   2% │
+Changes               M6     │ │          ▁▃▅▆███████████                        │  │                                 │
+Network access        M7     │ │     0 ▄▆▇███████████████                        │  │                                 │
+Skills                M8     │ │                       ✗                         │  │                                 │
+Files                 M9     │ │       11:58        12:05                        │  │                                 │
+Setup guide           M10    │ │ ✗ 12:04 the loop guard stopped step 17          │  │                                 │
+                             │ └─────────────────────────────────────────────────┘  └─────────────────────────────────┘
+                             │
+                             │ ┌─ Could be freed ─────────────────────────────────────────────────────────────────────┐
+                             │ │    the earlier results of calls made again: 1 item                 frees about 1,212 │
+                             │ │  k the loop text the model wrote, which only compacting clears:…   frees about 2,049 │▁▁
+                             │ │  k compact now: OpenCode sums the session up                      frees about 22,729 │
+                             │ └──────────────────────────────────────────────────────────────────────────────────────┘
+                             │
+                             │ ┌─ Where these figures come from ──────────────────────────────────────────────────────┐
+                             │ │ the engine: KVMem/llama.cpp v0.00.0-rc1 (“daily 262K”): a window of 262,144 tokens,  │
+                             │ │ at most 16,384 an answer; it attends 36,864 tokens exactly on the GPU, its first     │
+                             │ │ block of 128 and blocks of 128 picked by likeness to the last user message; it does  │
+                             │ │ not count tokens                                                                     │
+
+ f10 next view  enter open  esc back  k compact  x drop  ? explain  f1 help  f5 machine column  q quit                                               ^p palette

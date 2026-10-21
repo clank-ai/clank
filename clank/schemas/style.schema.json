@@ -1,0 +1,715 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Style",
+  "description": "A style of the console: its colors by role, the colors it draws kinds in, its border, its titles, its marks, its bar and tree glyphs and its spacing; an element a style leaves out is Clank's own (design 0011 §2).",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "style/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "dark": {
+      "default": true,
+      "description": "Whether the style is dark, for the widgets Textual draws.",
+      "title": "Dark",
+      "type": "boolean"
+    },
+    "colors": {
+      "$ref": "#/$defs/StyleColors",
+      "description": "The colors by role, what each is for.",
+      "title": "Colors"
+    },
+    "data": {
+      "description": "Six colors in order, for the series of a chart; a sparkline takes the first.",
+      "items": {
+        "pattern": "^#[0-9a-fA-F]{6}$",
+        "type": "string"
+      },
+      "maxItems": 6,
+      "minItems": 6,
+      "title": "Data colors",
+      "type": "array"
+    },
+    "kinds": {
+      "$ref": "#/$defs/StyleKinds",
+      "description": "The colors the Monitor and flows draw kinds in.",
+      "title": "Kinds"
+    },
+    "border": {
+      "default": "solid",
+      "description": "A panel's border: square corners, or round.",
+      "enum": [
+        "solid",
+        "round"
+      ],
+      "title": "Border",
+      "type": "string"
+    },
+    "titles": {
+      "$ref": "#/$defs/StyleTitles",
+      "description": "A panel's title.",
+      "title": "Titles"
+    },
+    "marks": {
+      "$ref": "#/$defs/StyleMarks",
+      "description": "The glyphs that say a state.",
+      "title": "Marks"
+    },
+    "spinner": {
+      "default": "⣾⣽⣻⢿⡿⣟⣯⣷",
+      "description": "The spinner's frames, while something runs.",
+      "minLength": 2,
+      "title": "Spinner",
+      "type": "string"
+    },
+    "bar": {
+      "$ref": "#/$defs/StyleBar",
+      "title": "Bar"
+    },
+    "sparks": {
+      "default": "▁▂▃▄▅▆▇█",
+      "description": "A sparkline's steps, from none to the most.",
+      "minLength": 2,
+      "title": "Sparks",
+      "type": "string"
+    },
+    "tree": {
+      "$ref": "#/$defs/StyleTree",
+      "description": "A branching flow's connectors.",
+      "title": "Tree"
+    },
+    "spacing": {
+      "$ref": "#/$defs/StyleSpacing",
+      "description": "The room between things.",
+      "title": "Spacing"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "CallKinds": {
+      "additionalProperties": false,
+      "description": "The colors of the kinds of tool call, as the Monitor's flow draws them (design 0012 §6.3).",
+      "properties": {
+        "reading": {
+          "default": "#7aa2f7",
+          "description": "A call that reads (read, glob, grep, list).",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Reading",
+          "type": "string"
+        },
+        "running": {
+          "default": "#e0af68",
+          "description": "A call that runs a command (bash).",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Running",
+          "type": "string"
+        },
+        "editing": {
+          "default": "#73daca",
+          "description": "A call that changes a file (edit, write, patch).",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Editing",
+          "type": "string"
+        },
+        "mcp": {
+          "default": "#9d7cd8",
+          "description": "A call to an MCP server's tool.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "MCP",
+          "type": "string"
+        }
+      },
+      "title": "CallKinds",
+      "type": "object"
+    },
+    "ContextParts": {
+      "additionalProperties": false,
+      "description": "The colors of the context's parts, as the Monitor draws them (design 0012 §4.2).",
+      "properties": {
+        "system": {
+          "default": "#7aa2f7",
+          "description": "The agent program's instructions.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "System prompt",
+          "type": "string"
+        },
+        "tools": {
+          "default": "#3d59a1",
+          "description": "The tools the agent may call.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Tool definitions",
+          "type": "string"
+        },
+        "yours": {
+          "default": "#e0af68",
+          "description": "What the owner wrote.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Your messages",
+          "type": "string"
+        },
+        "text": {
+          "default": "#c0caf5",
+          "description": "What the model wrote as its answer.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Model text",
+          "type": "string"
+        },
+        "thinking": {
+          "default": "#bb9af7",
+          "description": "The model's thinking sent back with the history.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Thinking",
+          "type": "string"
+        },
+        "calls": {
+          "default": "#73daca",
+          "description": "The calls the model made.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Tool calls",
+          "type": "string"
+        },
+        "results": {
+          "default": "#9ece6a",
+          "description": "What the calls gave back.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Tool results",
+          "type": "string"
+        },
+        "loop": {
+          "default": "#f7768e",
+          "description": "Text that repeats itself, kept in the context.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Loop text",
+          "type": "string"
+        }
+      },
+      "title": "ContextParts",
+      "type": "object"
+    },
+    "FlowBoxes": {
+      "additionalProperties": false,
+      "description": "The colors of a flow's kinds of box (design 0013 §12).",
+      "properties": {
+        "you": {
+          "default": "#e0af68",
+          "description": "A brief, or work the owner does by hand.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "You",
+          "type": "string"
+        },
+        "plan": {
+          "default": "#7aa2f7",
+          "description": "A box that writes a plan.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Plan",
+          "type": "string"
+        },
+        "verify": {
+          "default": "#bb9af7",
+          "description": "A box that checks an earlier box's deliverable.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Verify",
+          "type": "string"
+        },
+        "decompose": {
+          "default": "#7dcfff",
+          "description": "A box that breaks a plan into tasks.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Decompose",
+          "type": "string"
+        },
+        "task": {
+          "default": "#73daca",
+          "description": "A box that does one task.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Task",
+          "type": "string"
+        },
+        "integrate": {
+          "default": "#c0caf5",
+          "description": "A box that puts every deliverable together.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Integrate",
+          "type": "string"
+        },
+        "gate": {
+          "default": "#e0af68",
+          "description": "The owner's checkpoint.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Gate",
+          "type": "string"
+        }
+      },
+      "title": "FlowBoxes",
+      "type": "object"
+    },
+    "StyleBar": {
+      "additionalProperties": false,
+      "description": "A bar's glyphs.",
+      "properties": {
+        "full": {
+          "default": "█",
+          "description": "A bar's full cell.",
+          "title": "Full cell",
+          "type": "string"
+        },
+        "eighths": {
+          "default": " ▏▎▍▌▋▊▉",
+          "description": "A cell filled from none to seven eighths.",
+          "maxLength": 8,
+          "minLength": 8,
+          "title": "Eighths",
+          "type": "string"
+        },
+        "empty": {
+          "default": "░",
+          "description": "A bar's empty cell.",
+          "title": "Empty cell",
+          "type": "string"
+        },
+        "kept": {
+          "default": "▒",
+          "description": "The room a bar keeps for something (the answer, design 0012).",
+          "title": "Kept",
+          "type": "string"
+        }
+      },
+      "title": "StyleBar",
+      "type": "object"
+    },
+    "StyleColors": {
+      "additionalProperties": false,
+      "description": "The colors by role: what each is for, never what it looks like.",
+      "properties": {
+        "background": {
+          "default": "#1a1b26",
+          "description": "The page, the panels and the windows.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Background",
+          "type": "string"
+        },
+        "bars": {
+          "default": "#16161e",
+          "description": "The header and the keys bar.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Bars",
+          "type": "string"
+        },
+        "inset": {
+          "default": "#16161e",
+          "description": "A diff or a command shown inside a panel.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Inset",
+          "type": "string"
+        },
+        "surface": {
+          "default": "#24283b",
+          "description": "A button, a choice to pick.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Surface",
+          "type": "string"
+        },
+        "border": {
+          "default": "#3b4261",
+          "description": "Every panel's border, the menu's edge, a divider.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Border",
+          "type": "string"
+        },
+        "border_focused": {
+          "default": "#7aa2f7",
+          "description": "The border of the panel that has the focus.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Focused border",
+          "type": "string"
+        },
+        "title": {
+          "default": "#7aa2f7",
+          "description": "A panel's title, set in its border.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Title",
+          "type": "string"
+        },
+        "key": {
+          "default": "#7aa2f7",
+          "description": "A key, in the keys bar, the menu and a sentence.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "brand": {
+          "default": "#bb9af7",
+          "description": "The header's ◆ CLANK.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Brand",
+          "type": "string"
+        },
+        "name": {
+          "default": "#e0af68",
+          "description": "The folder's name in the header, a workspace's in a sentence.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Name",
+          "type": "string"
+        },
+        "text": {
+          "default": "#c0caf5",
+          "description": "Text.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Text",
+          "type": "string"
+        },
+        "quiet": {
+          "default": "#828bb8",
+          "description": "What explains: a time, a key's words, a panel's note.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Quiet",
+          "type": "string"
+        },
+        "dim": {
+          "default": "#565f89",
+          "description": "The room kept for the answer, a list's rail, a waiting box's border.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Dim",
+          "type": "string"
+        },
+        "selection": {
+          "default": "#283457",
+          "description": "The highlighted row.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Selection",
+          "type": "string"
+        },
+        "selected_text": {
+          "default": "#ffffff",
+          "description": "The highlighted row's text, in bold.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Selected text",
+          "type": "string"
+        },
+        "good": {
+          "default": "#9ece6a",
+          "description": "As wanted: running, ready, done.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Good",
+          "type": "string"
+        },
+        "attention": {
+          "default": "#e0af68",
+          "description": "Waits for you; a warning.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Attention",
+          "type": "string"
+        },
+        "now": {
+          "default": "#ff9e64",
+          "description": "What runs now; the spinner.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Now",
+          "type": "string"
+        },
+        "failed": {
+          "default": "#f7768e",
+          "description": "What failed, or is not as it should be.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Failed",
+          "type": "string"
+        },
+        "planned": {
+          "default": "#f7768e",
+          "description": "A page a later milestone brings.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Planned",
+          "type": "string"
+        },
+        "low": {
+          "default": "#9ece6a",
+          "description": "A bar below 60% of its whole.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Low",
+          "type": "string"
+        },
+        "busy": {
+          "default": "#e0af68",
+          "description": "A bar from 60% to 85% of its whole.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Busy",
+          "type": "string"
+        },
+        "full": {
+          "default": "#f7768e",
+          "description": "A bar above 85% of its whole.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Full",
+          "type": "string"
+        },
+        "diff_hunk": {
+          "default": "#bb9af7",
+          "description": "A diff's hunk line; added lines are good, removed failed.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Diff hunk",
+          "type": "string"
+        },
+        "scrollbar": {
+          "default": "#3b4261",
+          "description": "A scroll bar's thumb.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Scroll bar",
+          "type": "string"
+        },
+        "scrollbar_track": {
+          "default": "#1f2335",
+          "description": "A scroll bar's track.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Scroll bar's track",
+          "type": "string"
+        }
+      },
+      "title": "StyleColors",
+      "type": "object"
+    },
+    "StyleKinds": {
+      "additionalProperties": false,
+      "description": "The colors the Monitor and flows draw by kind, each by name, so a kind keeps its color.",
+      "properties": {
+        "parts": {
+          "$ref": "#/$defs/ContextParts",
+          "description": "The context's parts.",
+          "title": "Parts"
+        },
+        "calls": {
+          "$ref": "#/$defs/CallKinds",
+          "description": "The kinds of tool call.",
+          "title": "Calls"
+        },
+        "boxes": {
+          "$ref": "#/$defs/FlowBoxes",
+          "description": "A flow's kinds of box.",
+          "title": "Boxes"
+        }
+      },
+      "title": "StyleKinds",
+      "type": "object"
+    },
+    "StyleMarks": {
+      "additionalProperties": false,
+      "description": "The glyphs that say a state, and the others a page draws for a meaning.",
+      "properties": {
+        "brand": {
+          "default": "◆",
+          "description": "The header's mark before CLANK.",
+          "title": "Brand",
+          "type": "string"
+        },
+        "on": {
+          "default": "●",
+          "description": "Something that runs, or a state's dot.",
+          "title": "On",
+          "type": "string"
+        },
+        "off": {
+          "default": "○",
+          "description": "Something that waits or is off.",
+          "title": "Off",
+          "type": "string"
+        },
+        "done": {
+          "default": "✓",
+          "description": "Something done, or as wanted.",
+          "title": "Done",
+          "type": "string"
+        },
+        "failed": {
+          "default": "✗",
+          "description": "Something that failed.",
+          "title": "Failed",
+          "type": "string"
+        },
+        "asks": {
+          "default": "?",
+          "description": "A question waiting.",
+          "title": "Asks",
+          "type": "string"
+        },
+        "event": {
+          "default": "·",
+          "description": "A line of history.",
+          "title": "Event",
+          "type": "string"
+        },
+        "cut": {
+          "default": "…",
+          "description": "The end of text Clank cut to fit.",
+          "title": "Cut",
+          "type": "string"
+        },
+        "note": {
+          "default": "✎",
+          "description": "A note of the owner's.",
+          "title": "Note",
+          "type": "string"
+        },
+        "held": {
+          "default": "⏸",
+          "description": "Something held: a model request, while its session is paused.",
+          "title": "Held",
+          "type": "string"
+        }
+      },
+      "title": "StyleMarks",
+      "type": "object"
+    },
+    "StyleSpacing": {
+      "additionalProperties": false,
+      "description": "The room between things, in cells.",
+      "properties": {
+        "panel_padding": {
+          "default": 1,
+          "description": "Columns inside a panel's border.",
+          "maximum": 4,
+          "minimum": 0,
+          "title": "Panel padding",
+          "type": "integer"
+        },
+        "page_padding": {
+          "default": 1,
+          "description": "Columns around a page.",
+          "maximum": 4,
+          "minimum": 0,
+          "title": "Page padding",
+          "type": "integer"
+        },
+        "rows_between": {
+          "default": 1,
+          "description": "Rows between panels stacked.",
+          "maximum": 4,
+          "minimum": 0,
+          "title": "Rows between",
+          "type": "integer"
+        },
+        "columns_between": {
+          "default": 2,
+          "description": "Columns between panels.",
+          "maximum": 8,
+          "minimum": 0,
+          "title": "Columns between",
+          "type": "integer"
+        }
+      },
+      "title": "StyleSpacing",
+      "type": "object"
+    },
+    "StyleTitles": {
+      "additionalProperties": false,
+      "description": "How a panel's title is set in its border.",
+      "properties": {
+        "align": {
+          "default": "left",
+          "description": "Where the title stands.",
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ],
+          "title": "Align",
+          "type": "string"
+        },
+        "style": {
+          "default": "bold",
+          "description": "Bold, or plain.",
+          "enum": [
+            "bold",
+            "plain"
+          ],
+          "title": "Weight",
+          "type": "string"
+        }
+      },
+      "title": "StyleTitles",
+      "type": "object"
+    },
+    "StyleTree": {
+      "additionalProperties": false,
+      "description": "The connectors a branching flow is drawn with (design 0012 §6.3).",
+      "properties": {
+        "down": {
+          "default": "│",
+          "description": "A line down.",
+          "title": "Down",
+          "type": "string"
+        },
+        "branch": {
+          "default": "├",
+          "description": "A branch off a line down.",
+          "title": "Branch",
+          "type": "string"
+        },
+        "last": {
+          "default": "└",
+          "description": "The last branch.",
+          "title": "Last",
+          "type": "string"
+        },
+        "across": {
+          "default": "─",
+          "description": "A line across.",
+          "title": "Across",
+          "type": "string"
+        },
+        "split": {
+          "default": "┬",
+          "description": "Where a line splits.",
+          "title": "Split",
+          "type": "string"
+        },
+        "split_end": {
+          "default": "╮",
+          "description": "The last arm of a split.",
+          "title": "Split's end",
+          "type": "string"
+        },
+        "join": {
+          "default": "┴",
+          "description": "Where lines join.",
+          "title": "Join",
+          "type": "string"
+        },
+        "join_end": {
+          "default": "╯",
+          "description": "The last arm of a join.",
+          "title": "Join's end",
+          "type": "string"
+        },
+        "arrow": {
+          "default": "▸",
+          "description": "Where a line leads.",
+          "title": "Arrow",
+          "type": "string"
+        },
+        "not_yet": {
+          "default": "┄",
+          "description": "A path not taken yet.",
+          "title": "Not yet",
+          "type": "string"
+        },
+        "dead_end": {
+          "default": "⊘",
+          "description": "Where a path ends.",
+          "title": "Dead end",
+          "type": "string"
+        }
+      },
+      "title": "StyleTree",
+      "type": "object"
+    }
+  }
+}

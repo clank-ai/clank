@@ -1,0 +1,87 @@
+{
+  "program": "WSL (wsl.exe and bash in a distribution)",
+  "version": "2.7.11",
+  "recorded": "2026-10-12",
+  "how": "Recorded on the machine Clank is built on, WSL 2.7.11 with Ubuntu 24.04, by running the host's own scripts: a start of `sleep 600`, its checks and its stop, the facts of two of the distribution's license files, and a step (`sh` printing two lines and its folder's name, then ending with status 3). The log's Windows path names the user as <you>.",
+  "initial": "fresh",
+  "states": {
+    "fresh": {
+      "wsl -d Ubuntu -e bash -c # clank: size\nf=\"${1/#\\~/$HOME}\"; [ -f \"$f\" ] && stat -c %s \"$f\" || echo none clank /usr/share/common-licenses/Apache-2.0": [
+        0,
+        "11358\n"
+      ],
+      "wsl -d Ubuntu -e bash -c # clank: sha256\nf=\"${1/#\\~/$HOME}\"; [ -f \"$f\" ] && sha256sum \"$f\" | cut -c1-64 || echo none clank /usr/share/common-licenses/Apache-2.0": [
+        0,
+        "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30\n"
+      ],
+      "wsl -d Ubuntu -e bash -c # clank: size\nf=\"${1/#\\~/$HOME}\"; [ -f \"$f\" ] && stat -c %s \"$f\" || echo none clank /usr/share/common-licenses/no-such-license": [
+        0,
+        "none\n"
+      ],
+      "wsl -d Ubuntu -e bash -c # clank: sha256\nf=\"${1/#\\~/$HOME}\"; [ -f \"$f\" ] && sha256sum \"$f\" | cut -c1-64 || echo none clank /usr/share/common-licenses/no-such-license": [
+        0,
+        "none\n"
+      ],
+      "wsl -d Ubuntu -e bash -c # clank: spawn\ncwd=$1; windows=$2; log=$(wslpath -u \"$2\"); shift 2; envs=()\nwhile [ \"$1\" != \"--\" ]; do envs+=(\"$1\"); shift; done; shift\ncommand -v \"$1\" > /dev/null 2>&1 || { echo \"error cannot start $1: no such program\"; exit 0; }\ncd \"$cwd\" 2> /dev/null || { echo \"error cannot enter $cwd\"; exit 0; }\nmkdir -p \"$(dirname \"$log\")\" || { echo \"error cannot write the log $windows\"; exit 0; }\nsetsid nohup env \"${envs[@]}\" \"$@\" >> \"$log\" 2>&1 < /dev/null &\npid=$!; want=$(printf \"%s\\0\" \"$@\" | sha256sum | cut -c1-64)\nfor i in $(seq 1 200); do\n  [ -d /proc/$pid ] || { echo \"error $1 ended as soon as it started; its log: $windows\"; exit 0; }\n  if [ \"$(sha256sum < /proc/$pid/cmdline 2> /dev/null | cut -c1-64)\" = \"$want\" ]; then\n    s=$(cat /proc/$pid/stat); rest=${s##*\") \"}; read -ra f <<< \"$rest\"; echo \"ok $pid ${f[19]} $want\"\n    exit 0\n  fi\n  sleep 0.05\ndone\necho \"error $1 did not become itself within 10 seconds\" clank /tmp C:\\Users\\<you>\\AppData\\Local\\Temp\\clank-host-contract\\sleep.log -- /usr/bin/sleep 600": [
+        0,
+        "ok 984 2081399 8819dd58f3592ebb5ebc466be94b2bc2fd8a4bbf5ea11855eb533f5ec1c1d9ca\n"
+      ],
+      "wsl -d Ubuntu -e bash -c # clank: step\ncwd=$1; shift; envs=()\nwhile [ \"$1\" != \"--\" ]; do envs+=(\"$1\"); shift; done; shift\nPATH=$(printf %s \"$PATH\" | tr : \"\\n\" | grep -v \"^/mnt/[a-z]/\" | paste -sd: -)\nmkdir -p \"$cwd\" 2> /dev/null && cd \"$cwd\" || { echo \"cannot enter $cwd\"; exit 126; }\nsetsid env \"${envs[@]}\" \"$@\" < /dev/null 2>&1 &\npid=$!; s=$(cat /proc/$pid/stat 2> /dev/null); rest=${s##*\") \"}; read -ra f <<< \"$rest\"\necho \"clank-group $pid ${f[19]:--}\"\nwait $pid clank /tmp/clank-contract/step CLANK_STEP=two -- sh -c echo one; echo \"$CLANK_STEP\"; basename \"$PWD\"; exit 3": [
+        3,
+        "clank-group 957 2519946\none\ntwo\nstep\n"
+      ]
+    },
+    "started": {
+      "wsl -d Ubuntu -e bash -c # clank: alive\nsame() { s=$(cat /proc/\"$1\"/stat 2> /dev/null) || return 1; rest=${s##*\") \"}; read -ra f <<< \"$rest\"; [ \"${f[0]}\" != Z ] && [ \"${f[19]}\" = \"$2\" ] || return 1; [ \"$(sha256sum < /proc/\"$1\"/cmdline 2> /dev/null | cut -c1-64)\" = \"$3\" ]; }\nsame \"$1\" \"$2\" \"$3\" && echo alive || echo gone clank 984 2081399 8819dd58f3592ebb5ebc466be94b2bc2fd8a4bbf5ea11855eb533f5ec1c1d9ca": [
+        0,
+        "alive\n"
+      ],
+      "wsl -d Ubuntu -e bash -c # clank: stop\nsame() { s=$(cat /proc/\"$1\"/stat 2> /dev/null) || return 1; rest=${s##*\") \"}; read -ra f <<< \"$rest\"; [ \"${f[0]}\" != Z ] && [ \"${f[19]}\" = \"$2\" ] || return 1; [ \"$(sha256sum < /proc/\"$1\"/cmdline 2> /dev/null | cut -c1-64)\" = \"$3\" ]; }\nsame \"$1\" \"$2\" \"$3\" || { echo gone; exit 0; }\nkill -TERM \"$1\" 2> /dev/null\nend=$(( $(date +%s) + $4 ))\nwhile [ \"$(date +%s)\" -lt \"$end\" ]; do same \"$1\" \"$2\" \"$3\" || { echo stopped; exit 0; }; sleep 0.1; done\nsame \"$1\" \"$2\" \"$3\" || { echo stopped; exit 0; }\nkill -KILL \"$1\" 2> /dev/null\nfor i in $(seq 1 100); do same \"$1\" \"$2\" \"$3\" || { echo killed; exit 0; }; sleep 0.1; done\necho killed clank 984 2081399 8819dd58f3592ebb5ebc466be94b2bc2fd8a4bbf5ea11855eb533f5ec1c1d9ca 5": [
+        0,
+        "stopped\n"
+      ]
+    },
+    "stopped": {
+      "wsl -d Ubuntu -e bash -c # clank: alive\nsame() { s=$(cat /proc/\"$1\"/stat 2> /dev/null) || return 1; rest=${s##*\") \"}; read -ra f <<< \"$rest\"; [ \"${f[0]}\" != Z ] && [ \"${f[19]}\" = \"$2\" ] || return 1; [ \"$(sha256sum < /proc/\"$1\"/cmdline 2> /dev/null | cut -c1-64)\" = \"$3\" ]; }\nsame \"$1\" \"$2\" \"$3\" && echo alive || echo gone clank 984 2081399 8819dd58f3592ebb5ebc466be94b2bc2fd8a4bbf5ea11855eb533f5ec1c1d9ca": [
+        0,
+        "gone\n"
+      ],
+      "wsl -d Ubuntu -e bash -c # clank: stop\nsame() { s=$(cat /proc/\"$1\"/stat 2> /dev/null) || return 1; rest=${s##*\") \"}; read -ra f <<< \"$rest\"; [ \"${f[0]}\" != Z ] && [ \"${f[19]}\" = \"$2\" ] || return 1; [ \"$(sha256sum < /proc/\"$1\"/cmdline 2> /dev/null | cut -c1-64)\" = \"$3\" ]; }\nsame \"$1\" \"$2\" \"$3\" || { echo gone; exit 0; }\nkill -TERM \"$1\" 2> /dev/null\nend=$(( $(date +%s) + $4 ))\nwhile [ \"$(date +%s)\" -lt \"$end\" ]; do same \"$1\" \"$2\" \"$3\" || { echo stopped; exit 0; }; sleep 0.1; done\nsame \"$1\" \"$2\" \"$3\" || { echo stopped; exit 0; }\nkill -KILL \"$1\" 2> /dev/null\nfor i in $(seq 1 100); do same \"$1\" \"$2\" \"$3\" || { echo killed; exit 0; }; sleep 0.1; done\necho killed clank 984 2081399 8819dd58f3592ebb5ebc466be94b2bc2fd8a4bbf5ea11855eb533f5ec1c1d9ca 5": [
+        0,
+        "gone\n"
+      ]
+    }
+  },
+  "transitions": {
+    "wsl -d Ubuntu -e bash -c # clank: spawn\ncwd=$1; windows=$2; log=$(wslpath -u \"$2\"); shift 2; envs=()\nwhile [ \"$1\" != \"--\" ]; do envs+=(\"$1\"); shift; done; shift\ncommand -v \"$1\" > /dev/null 2>&1 || { echo \"error cannot start $1: no such program\"; exit 0; }\ncd \"$cwd\" 2> /dev/null || { echo \"error cannot enter $cwd\"; exit 0; }\nmkdir -p \"$(dirname \"$log\")\" || { echo \"error cannot write the log $windows\"; exit 0; }\nsetsid nohup env \"${envs[@]}\" \"$@\" >> \"$log\" 2>&1 < /dev/null &\npid=$!; want=$(printf \"%s\\0\" \"$@\" | sha256sum | cut -c1-64)\nfor i in $(seq 1 200); do\n  [ -d /proc/$pid ] || { echo \"error $1 ended as soon as it started; its log: $windows\"; exit 0; }\n  if [ \"$(sha256sum < /proc/$pid/cmdline 2> /dev/null | cut -c1-64)\" = \"$want\" ]; then\n    s=$(cat /proc/$pid/stat); rest=${s##*\") \"}; read -ra f <<< \"$rest\"; echo \"ok $pid ${f[19]} $want\"\n    exit 0\n  fi\n  sleep 0.05\ndone\necho \"error $1 did not become itself within 10 seconds\" clank /tmp C:\\Users\\<you>\\AppData\\Local\\Temp\\clank-host-contract\\sleep.log -- /usr/bin/sleep 600": "started",
+    "wsl -d Ubuntu -e bash -c # clank: stop\nsame() { s=$(cat /proc/\"$1\"/stat 2> /dev/null) || return 1; rest=${s##*\") \"}; read -ra f <<< \"$rest\"; [ \"${f[0]}\" != Z ] && [ \"${f[19]}\" = \"$2\" ] || return 1; [ \"$(sha256sum < /proc/\"$1\"/cmdline 2> /dev/null | cut -c1-64)\" = \"$3\" ]; }\nsame \"$1\" \"$2\" \"$3\" || { echo gone; exit 0; }\nkill -TERM \"$1\" 2> /dev/null\nend=$(( $(date +%s) + $4 ))\nwhile [ \"$(date +%s)\" -lt \"$end\" ]; do same \"$1\" \"$2\" \"$3\" || { echo stopped; exit 0; }; sleep 0.1; done\nsame \"$1\" \"$2\" \"$3\" || { echo stopped; exit 0; }\nkill -KILL \"$1\" 2> /dev/null\nfor i in $(seq 1 100); do same \"$1\" \"$2\" \"$3\" || { echo killed; exit 0; }; sleep 0.1; done\necho killed clank 984 2081399 8819dd58f3592ebb5ebc466be94b2bc2fd8a4bbf5ea11855eb533f5ec1c1d9ca 5": "stopped"
+  },
+  "inputs": {
+    "distro": "Ubuntu",
+    "argv": [
+      "/usr/bin/sleep",
+      "600"
+    ],
+    "cwd": "/tmp",
+    "log": "C:\\Users\\<you>\\AppData\\Local\\Temp\\clank-host-contract\\sleep.log",
+    "file": "/usr/share/common-licenses/Apache-2.0",
+    "size": 11358,
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "missing": "/usr/share/common-licenses/no-such-license",
+    "step_argv": [
+      "sh",
+      "-c",
+      "echo one; echo \"$CLANK_STEP\"; basename \"$PWD\"; exit 3"
+    ],
+    "step_env": {
+      "CLANK_STEP": "two"
+    },
+    "step_cwd": "/tmp/clank-contract/step",
+    "step_lines": [
+      "one",
+      "two",
+      "step"
+    ],
+    "step_status": 3
+  }
+}

@@ -1,0 +1,44 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway                      09:14
+F4 This folder   ✗ │ ┌─ What goes to OpenRouter ──────────────────────────────────────┐
+1 Home             │ │ Read this once, for OpenRouter.                                │
+2 Questions        │ │                                                                │
+3 History          │ │ What goes: each request of an agent's session: your messages,  │
+4 Docker         ● │ │ what the agent reads of the folder, command output, and its    │
+5 Machine          │ │ instructions.                                                  │
+6 Operations       │ │                                                                │
+7 Records          │ │ Where: to OpenRouter, then the model's provider. OpenRouter    │
+8 Models         ● │ │ does not log prompts by default.                               │
+9 Presets          │ │                                                                │
+0 Providers and…   │ │ What never goes: Notion pages; the MCP servers marked local    │
+F1 Help            │ │ (below); a workspace you have not allowed. Each workspace asks │
+F2 Launch optio…   │ │ once, the first time its agent would use the cloud model;      │
+F3 MCP servers     │ │ those you have now stay local until you say.                   │
+F6 Workspaces      │ │                                                                │
+F7 Requests        │ │ What it costs: each request is paid from your OpenRouter       │
+F8 CPU models      │ │ credits. Clank shows what each request, session and flow cost, │
+F9 Phone         ● │ │ and you may set a daily and a monthly limit.                   │
+F10 Monitor        │ │                                                                │
+F12 Add a model    │ │ Clank asks only for providers that do not keep your data       │
+                   │ │ (data_collection deny). o allows any provider.                 │
+                   │ │                                                                │
+                   │ │ MCP servers (each one you have is marked local only; unmark    │
+                   │ │ one to offer it):                                              │
+                   │ │ lit  local only: never offered to the cloud model              │
+                   │ │ web  local only: never offered to the cloud model              │
+                   │ └────────────────────────────────────────────────────────────────┘
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+
+ y agree  n back  space mark  o policy  ? explain  f1 help  f5 machine column  q quit

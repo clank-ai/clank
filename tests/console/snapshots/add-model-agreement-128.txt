@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 9d21h  ● docker running  ● no model: Add a model  ● gateway stopped                        09:14
+F4 This folder         ✗ 4   │ ┌─ What goes to OpenRouter ────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ Read this once, for OpenRouter.                                                              │
+2 Questions                  │ │                                                                                              │
+3 History                    │ │ What goes: each request of an agent's session: your messages, what the agent reads of the    │
+4 Docker               ●     │ │ folder, command output, and its instructions.                                                │
+5 Machine                    │ │                                                                                              │
+6 Operations                 │ │ Where: to OpenRouter, then the model's provider. OpenRouter does not log prompts by default. │
+7 Records                    │ │                                                                                              │
+8 Models               ●     │ │ What never goes: Notion pages; the MCP servers marked local (below); a workspace you have    │
+9 Presets                    │ │ not allowed. Each workspace asks once, the first time its agent would use the cloud model;   │
+0 Providers and models       │ │ those you have now stay local until you say.                                                 │
+F1 Help                      │ │                                                                                              │
+F2 Launch options            │ │ What it costs: each request is paid from your OpenRouter credits. Clank shows what each      │
+F3 MCP servers               │ │ request, session and flow cost, and you may set a daily and a monthly limit.                 │
+F6 Workspaces                │ │                                                                                              │
+F7 Requests                  │ │ Clank asks only for providers that do not keep your data (data_collection deny). o allows    │
+F8 CPU models                │ │ any provider.                                                                                │
+F9 Phone               ●     │ │                                                                                              │
+F10 Monitor                  │ │ MCP servers (each one you have is marked local only; unmark one to offer it):                │
+F12 Add a model              │ │ lit  local only: never offered to the cloud model                                            │
+─────────────────────────────│ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+coming                       │
+Sampling              M3     │
+Sessions              M3     │
+Keys                  M3     │
+Layout                M2     │
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5     │
+Changes               M6     │
+Network access        M7     │
+Skills                M8     │
+Files                 M9     │
+Setup guide           M10    │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+
+ y agree  n back  space mark  o policy  ? explain  f1 help  f5 machine column  q quit                                ^p palette

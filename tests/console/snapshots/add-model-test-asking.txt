@@ -1,0 +1,40 @@
+ ◆ CLANK  paper   ● service  ● docker  ● daily 262K  ● gateway                    09:14
+F4 This folder   ✗ │ ┌─ The test ─────────────────────────────────────────────────────┐
+1 Home             │ │ daily 262K runs in the main slot: testing with one short       │
+2 Questions        │ │ request                                                        │
+3 History          │ │ OK in 0.0 s, $0.000021                                         │
+4 Docker         ● │ │                                                                │
+5 Machine          │ │ It answered: OK in 0.0 s, $0.000021                            │
+6 Operations       │ │                                                                │
+7 Records          │ │ Load it now? This stops daily 262K in the main slot; or keep   │
+8 Models         ● │ │ daily 262K running, and cloud: Example Coder waits on the      │
+9 Presets          │ │ Presets page.                                                  │
+0 Providers and…   │ └────────────────────────────────────────────────────────────────┘
+F1 Help            │
+F2 Launch optio…   │
+F3 MCP servers     │
+F6 Workspaces      │
+F7 Requests        │
+F8 CPU models      │
+F9 Phone         ● │
+F10 Monitor        │
+F12 Add a model    │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+ 09:14  cloud: Example Coder is written: now its test
+ y load it now  n keep it  ? explain  f1 help  f5 machine column  q quit     ^p palette

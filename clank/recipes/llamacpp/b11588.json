@@ -1,0 +1,18 @@
+{
+  "schema": "recipe/1",
+  "setup": "llamacpp",
+  "version": "b11588",
+  "summary": "llama.cpp's server, build b11588 of 2026-10-13: the project's own CPU build for Ubuntu x64, unpacked from its release archive (decision 0035).",
+  "download": "llama-b11588-bin-ubuntu-x64.tar.gz from the project's release on GitHub (17.7 MB, checked against its SHA-256); the folder holds about 60 MB after it",
+  "env": {"HOME": "{folder}/home"},
+  "steps": [
+    {
+      "name": "fetch",
+      "run": ["bash", "-c", "rm -rf release.part bin.part && curl -fsSL --retry 3 -o release.part https://github.com/ggml-org/llama.cpp/releases/download/b11588/llama-b11588-bin-ubuntu-x64.tar.gz && echo '656cba79ba40776e766070145e6d6b2f23b06158803b0fa318fb95bdefa7dd23  release.part' | sha256sum --check --quiet && mkdir bin.part && tar -xzf release.part -C bin.part --strip-components=1 && rm release.part && mv bin.part bin"],
+      "makes": "bin/llama-server"
+    }
+  ],
+  "program": ["{folder}/bin/llama-server"],
+  "library_path": ["{folder}/bin"],
+  "deviations": []
+}

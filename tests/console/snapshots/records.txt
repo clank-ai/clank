@@ -1,0 +1,40 @@
+ ◆ CLANK  Clank   ● service up 2h14m  ● docker running  ● no model: Add a model  ● gateway stopped                13:54
+F4 This folder         ✗ 3   │ ┌─ Kinds ──────────────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ service      settings  How the Clank service runs: where its API listens, and how…   │
+2 Questions                  │ │ console      settings  How the console looks: the style it draws in (design 0011).   │
+3 History                    │ │ style        settings  A style of the console: its colors by role, the colors it …▅▅ │
+4 Docker               ●     │ │ event        state     Something that happened: kept as the history, and sent to …   │
+5 Machine                    │ │ operation    state     Something that takes more than a moment, run by the servic…   │
+6 Operations                 │ │ question     state     Something Clank asks the user and waits for: an approval, …   │
+7 Records                    │ │ machine      settings  What Clank detected about this computer: its system, Pytho…   │
+8 Models               ●     │ │ docker       settings  How Clank uses Docker: which container platform, how often…   │
+9 Presets                    │ └──────────────────────────────────────────────────────────────────────────────────────┘
+0 Providers and models       │
+F1 Help                      │ ┌─ Records ────────────────────────────────────────────────────────────────────────────┐
+F2 Launch options            │ │ service  service  (built-in)                                                         │
+F3 MCP servers               │ └──────────────────────────────────────────────────────────────────────────────────────┘
+F6 Workspaces                │
+F7 Requests                  │ ┌─ Values ─────────────────────────────────────────────────────────────────────────────┐
+F8 CPU models                │ │ service service · built-in · no file yet; yours would be                             │
+F9 Phone               ●     │ │ CLANK_HOME/config/service.json                                                       │
+F10 Monitor                  │ │ title              ""                                                 Title          │
+F12 Add a model              │ │ host               "127.0.0.1"                                        Address        │
+─────────────────────────────│ │ port               7720                                               Port           │
+coming                       │ │ events_kept_days   30                                                 History kept   │
+Sampling              M3     │ └──────────────────────────────────────────────────────────────────────────────────────┘
+Sessions              M3     │
+Keys                  M3     │
+Layout                M2     │
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5     │
+Changes               M6     │
+Network access        M7     │
+Skills                M8     │
+Files                 M9     │
+Setup guide           M10    │
+                             │
+                             │
+                             │
+
+ ? explain  f1 help  f5 machine column  q quit                                                               ^p palette

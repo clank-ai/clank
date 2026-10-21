@@ -1,0 +1,68 @@
+{
+ "edit-once": {
+  "asked": {
+   "permission": "edit",
+   "patterns": [
+    "workspace/hello.py"
+   ],
+   "metadata": {
+    "filepath": "/workspace/hello.py",
+    "diff": "Index: /workspace/hello.py\n===================================================================\n--- /workspace/hello.py\n+++ /workspace/hello.py\n@@ -4,9 +4,10 @@\n value_1 = 1\n value_2 = 2\n value_3 = 3\n value_4 = 4\n-value_5 = 5\n+value_5 = 55\n+extra = True\n value_6 = 6\n value_7 = 7\n value_8 = 8\n value_9 = 9\n"
+   },
+   "always": [
+    "*"
+   ]
+  },
+  "input": {
+   "filePath": "/workspace/hello.py",
+   "oldString": "        value_5 = 5",
+   "newString": "        value_5 = 55\n        extra = True"
+  },
+  "before": "class Thing:\n    def method(self):\n        value_0 = 0\n        value_1 = 1\n        value_2 = 2\n        value_3 = 3\n        value_4 = 4\n        value_5 = 5\n        value_6 = 6\n        value_7 = 7\n        value_8 = 8\n        value_9 = 9\n        value_10 = 10\n        value_11 = 11\n        return value_0\n",
+  "after": "class Thing:\n    def method(self):\n        value_0 = 0\n        value_1 = 1\n        value_2 = 2\n        value_3 = 3\n        value_4 = 4\n        value_5 = 55\n        extra = True\n        value_6 = 6\n        value_7 = 7\n        value_8 = 8\n        value_9 = 9\n        value_10 = 10\n        value_11 = 11\n        return value_0\n"
+ },
+ "write-reject": {
+  "asked": {
+   "permission": "edit",
+   "patterns": [
+    "workspace/new.py"
+   ],
+   "metadata": {
+    "filepath": "/workspace/new.py",
+    "diff": "Index: /workspace/new.py\n===================================================================\n--- /workspace/new.py\n+++ /workspace/new.py\n@@ -0,0 +1,1 @@\n+print('new')\n"
+   },
+   "always": [
+    "*"
+   ]
+  },
+  "input": {
+   "filePath": "/workspace/new.py",
+   "content": "print('new')\n"
+  },
+  "before": null,
+  "after": null
+ },
+ "edit-after-patch": {
+  "asked": {
+   "permission": "edit",
+   "patterns": [
+    "workspace/hello.py"
+   ],
+   "metadata": {
+    "filepath": "/workspace/hello.py",
+    "diff": "Index: /workspace/hello.py\n===================================================================\n--- /workspace/hello.py\n+++ /workspace/hello.py\n@@ -7,9 +7,9 @@\n value_4 = 4\n value_5 = 55\n extra = True\n value_6 = 6\n-value_7 = 7\n+value_7 = 77\n value_8 = 8\n value_9 = 9\n value_10 = 10\n value_11 = 11\n"
+   },
+   "always": [
+    "*"
+   ]
+  },
+  "input": {
+   "filePath": "/workspace/hello.py",
+   "oldString": "        value_7 = 7",
+   "newString": "        value_7 = 77"
+  },
+  "before": "class Thing:\n    def method(self):\n        value_0 = 0\n        value_1 = 1\n        value_2 = 2\n        value_3 = 3\n        value_4 = 4\n        value_5 = 55\n        extra = True\n        value_6 = 6\n        value_7 = 7\n        value_8 = 8\n        value_9 = 9\n        value_10 = 10\n        value_11 = 11\n        return value_0\n",
+  "after": "class Thing:\n    def method(self):\n        value_0 = 0\n        value_1 = 1\n        value_2 = 2\n        value_3 = 3\n        value_4 = 4\n        value_5 = 55\n        extra = True\n        value_6 = 6\n        value_7 = 77\n        value_8 = 8\n        value_9 = 9\n        value_10 = 10\n        value_11 = 11\n        return value_0\n"
+ },
+ "_about": "Recorded 2026-10-15 from OpenCode 1.19.0 in the sandbox image with a scripted model (design 0007 section 2): each change's ask (its diff has the lines' shared indentation removed), the tool call's input, and the file before and after (null: no file)."
+}

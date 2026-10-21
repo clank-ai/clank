@@ -1,0 +1,70 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway                12:21
+F4 This folder   ✗ │  Flow   Session   Context
+1 Home             │ OpenCode · workspace myproject · “Plan a new simulation s…
+2 Questions        │
+3 History          │ ┌─ Context window c ─────────────────────────────────────┐
+4 Docker         ● │ │ 37,790 of 262,144 tokens (14%) · 191,586 left before … │
+5 Machine          │ │ ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒ │
+6 Operations       │ │ estimate: █ results 18.6K · █ loop 2.0K · +5 more      │
+7 Records          │ │ On the GPU exactly 36,864 · 926 in system memory · bl… │
+8 Models         ● │ │ this session ▁▂▂▂▂▂▃▃▃▃▃▃▄▄▄▄▄▅  ✗ 12:04 the loop gua… │
+9 Presets          │ │ ● the engine holds this session's conversation         │
+0 Providers and…   │ │ figures from KVMem/llama.cpp v0.00.0-rc1, “daily 262K… │
+F1 Help            │ └────────────────────────────────────────────────────────┘
+F2 Launch optio…   │
+F3 MCP servers     │ ┌─ Now n ────────────────────────────────────────────────┐
+F6 Workspaces      │ │ ⣾ working, between its steps · step 19                 │
+F7 Requests        │ │ prompt      no first token yet                         │
+F8 CPU models      │ │ last prompt 35,729 cached, 2,000 new                   │
+F9 Phone         ● │ │ thinking    ░░░░░░░░░░░░ about 0 of 4,096              │
+F10 Monitor        │ │ output      ░░░░░░░░░░░░ 61 of 16,384                  │
+F12 Add a model    │ │ writing     no call being written                      │
+                   │ │ speed       40 tok/s  █                                │
+                   │ │ loop guard  watching · nothing repeats                 │
+                   │ └────────────────────────────────────────────────────────┘
+                   │
+                   │ ┌─ Flow f ─────────────── ↑↓ a node · ←→ fold · End now ─┐
+                   │ │ You                                                    │
+                   │ │ ├─ before the todo list ▸  1 call                      │
+                   │ │ ├─ ✓ Read the simulator and last study ▸  6 calls      │
+                   │ │ ├─ ✓ List the observables ▸  10 calls                  │
+                   │ │ ├─ ● Draft the parameter grid                          │
+                   │ │ │  ├─ read studies/notes.md  14.2K chars               │
+                   │ │ │  ├─ ✗ bash python -m myproject sweep --sizes 8 1… ⊘  │
+                   │ │ │  ├─ ✗ failed: Clank's loop guard stopped the answe…  │
+                   │ │ │  ├─ bash ls studies/  100 chars                      │
+                   │ │ │  ├─ ✎ your note: Keep the grid to 3 sizes.           │
+                   │ │ │  └─ ● working                                        │
+                   │ │ ├┄ ○ Estimate run times                                │
+                   │ │ └┄ ○ Write the plan file                               │
+                   │ └────────────────────────────────────────────────────────┘
+                   │
+                   │ ┌─ Watch for w ──────────────────────────────────────────┐
+                   │ │ no session yet                                         │
+                   │ └────────────────────────────────────────────────────────┘
+                   │
+                   │ ┌─ Guide g ──────────────────────────────────────────────┐
+                   │ │ . Stop now    no OpenCode server is known to run this… │
+                   │ │ m Note        no OpenCode server is known to run this… │
+                   │ │ k Compact now no OpenCode server is known to run this… │
+                   │ │ p Pause       the gateway does not run                 │
+                   │ │ u Undo turn   no OpenCode server is known to run this… │
+                   │ │ x Drop        no OpenCode server is known to run this… │
+                   │ └────────────────────────────────────────────────────────┘
+                   │
+                   │ ┌─ Tool calls t ─────────────────────────────────────────┐
+                   │ │ 12:05:01   bash      ls studies/           100 chars   │
+                   │ │ 12:04:31 ✗ bash      python -m myproject sweep --si…   │
+                   │ │ 12:04:11   read      studies/notes.md    14.2K chars   │
+                   │ │ 12:04:01   todowrite                       412 chars▆▆ │
+                   │ │ 12:03:41   read      src/grid.py          3.0K chars   │
+                   │ │ 12:03:31   read      src/measure.py       3.0K chars   │▁▁
+                   │ │ 12:03:21   read      docs/estimators.md   3.0K chars   │
+                   │ │ 12:03:11   read      docs/observables.md  3.0K chars   │
+                   │ └────────────────────────────────────────────────────────┘
+                   │
+                   │ ┌─ Biggest in the context b ─────────────────────────────┐
+                   │ │   5.6K █ step 3  read src/simulator.py                 │
+                   │ │   4.3K █ step 16 read studies/notes.md                 │
+
+ f10 next view  enter open  esc back  . stop  m note  ? explain  f1 help

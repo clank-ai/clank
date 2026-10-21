@@ -1,0 +1,8 @@
+{
+  "name": "Clank",
+  "short_name": "Clank",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1a1b26",
+  "theme_color": "#1a1b26"
+}

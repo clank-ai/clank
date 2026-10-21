@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 9d21h  ● docker running  ● no model: Add a model  ● gateway stopped                        09:14
+F4 This folder         ✗ 4   │ ┌─ The model ──────────────────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ key "made-up key label" (ends …-key): its own limit $20.00, $18.71 left; OpenRouter counts   │
+2 Questions                  │ │ $0.12 today, $1.29 this month (UTC days)                                                     │
+3 History                    │ │                                                                                              │
+4 Docker               ●     │ │ 2 that take tool calls, programming models, most used first. Prices per million tokens.      │
+5 Machine                    │ │ Example Coder                                                                                │
+6 Operations                 │ │   262K window · $0.30 in, $1.20 out · thinks                                                 │
+7 Records                    │ │ Example Small (free)                                                                         │
+8 Models               ●     │ │   33K window · free (20 a minute, 50 a day; 1,000 a day once 10 credits were bought) · reads │
+9 Presets                    │ │ images                                                                                       │
+0 Providers and models       │ │                                                                                              │
+F1 Help                      │ │ example-vendor/example-coder: A made-up model for coding. Window 262,144 tokens, most output │
+F2 Launch options            │ │ 32,768.                                                                                      │
+F3 MCP servers               │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+F6 Workspaces                │
+F7 Requests                  │
+F8 CPU models                │
+F9 Phone               ●     │
+F10 Monitor                  │
+F12 Add a model              │
+─────────────────────────────│
+coming                       │
+Sampling              M3     │
+Sessions              M3     │
+Keys                  M3     │
+Layout                M2     │
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5     │
+Changes               M6     │
+Network access        M7     │
+Skills                M8     │
+Files                 M9     │
+Setup guide           M10    │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+ 09:14  OpenRouter took the key; Clank keeps it (ends …-key)
+ / search  s sort  f free  esc back  enter pick  ? explain  f1 help  f5 machine column  q quit                       ^p palette

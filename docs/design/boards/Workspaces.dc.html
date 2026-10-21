@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Workspaces, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Workspaces</div>
+<div style="position: absolute; top: -10px; right: 10px; background: #1a1b26; padding: 0 6px; color: #828bb8">4 workspaces, 1 running</div>
+<div style="display: flex; gap: 14px; padding: 0 6px; white-space: pre; color: #828bb8"><span style="flex: 0 0 2ch"></span><span style="flex: 0 0 18ch">name</span><span style="flex: 0 0 12ch">state</span><span style="flex: 0 0 19ch">software</span><span style="flex: 1 1 0; min-width: 0">folder</span></div>
+<sc-for list="{{ workspaces }}" as="w" hint-placeholder-count="4"><div style="display: flex; gap: 14px; padding: 0 6px; white-space: pre; {{ w.style }}"><span style="flex: 0 0 2ch; color: {{ w.color }}">{{ w.mark }}</span><span style="flex: 0 0 18ch; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ w.name }}</span><span style="flex: 0 0 12ch; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: {{ w.color }}">{{ w.state }}</span><span style="flex: 0 0 19ch; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: {{ w.softwareColor }}">{{ w.software }}</span><span style="flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ w.path }}</span></div></sc-for>
+</section>
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 18px 10px; white-space: pre; display: grid; grid-template-columns: 96px minmax(0, 1fr); row-gap: 2px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">The highlighted workspace</div>
+<div style="position: absolute; top: -10px; right: 10px; background: #1a1b26; padding: 0 6px; color: #e0af68">myproject</div>
+<span style="color: #828bb8">folder</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">C:\work\myproject at /workspace</span>
+<span style="color: #828bb8">container</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">clank-3f2a9c81d04e-myproject   <span style="color: #9ece6a">● running</span></span>
+<span style="color: #828bb8">limits</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">half of Docker's CPUs, a quarter of Docker's memory</span>
+<span style="color: #828bb8">using now</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">3% of the machine's CPU   <span style="color: #9ece6a">▋</span><span style="color: #3b4261">░░░░░░░░░░░░░░░░░░░</span></span>
+<span></span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">778 MB of 7.8 GB memory   <span style="color: #9ece6a">██</span><span style="color: #3b4261">░░░░░░░░░░░░░░░░░░</span>   <span style="color: #828bb8">read from Docker every ten seconds</span></span>
+<span style="grid-column: 1 / -1; margin-top: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #828bb8">d removes it, asked first: its container and home go, its folder stays</span>
+</section>
+
+<div style="display: flex; gap: 14px">
+<section style="position: relative; flex: 1.1 1 0; min-width: 0; border: 1px solid #3b4261; padding: 14px 18px 10px; white-space: pre-wrap; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Its software</div>
+<div><span style="color: #9ece6a">✓</span> installed with</div>
+<div style="padding-left: 2ch">python3 -m venv ~/.venv &amp;&amp; ~/.venv/bin/python -m pip install -e '.[dev]'</div>
+<div style="margin-top: 6px; color: #828bb8">into its home (~/.venv), where the agent finds it</div>
+<div style="color: #828bb8">proposed from the folder's pyproject.toml; kept once you change it (e)</div>
+<div style="color: #828bb8">it runs in a container of its own that reaches the internet</div>
+</section>
+<section style="position: relative; flex: 0.9 1 0; min-width: 0; border: 1px solid #3b4261; padding: 14px 18px 10px; white-space: pre-wrap; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">MCP servers its agent gets</div>
+<div><span style="color: #9ece6a">●</span> clank</div>
+<div><span style="color: #9ece6a">●</span> myproject-mcp</div>
+<div style="margin-top: 6px; color: #828bb8">not given</div>
+<div><span style="color: #828bb8">○</span> web-fetch   <span style="color: #828bb8">held back from this workspace (m gives it)</span></div>
+<div style="margin-top: 6px; color: #828bb8">chosen on This folder (F4, m) or with clank mcp allow|hold</div>
+</section>
+</div>
+
+<div style="flex: 1"></div>
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">↑↓</span> highlight</span><span><span style="color: #7aa2f7">o</span> opens</span><span><span style="color: #7aa2f7">x</span> stops</span><span><span style="color: #7aa2f7">e</span> installs its software</span><span><span style="color: #7aa2f7">d</span> removes</span><span><span style="color: #7aa2f7">r</span> reads again</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span><span style="margin-left: auto">^p palette</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Workspaces' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const ok = '#9ece6a', bad = '#f7768e', quiet = '#828bb8', attention = '#e0af68';
+    const picked = 'background: #283457; color: #ffffff; font-weight: 700';
+    const workspaces = [
+      { mark: '○', color: quiet, name: 'figures', state: 'exited', software: 'installed', softwareColor: '', path: 'C:\\work\\myproject\\figures', style: '' },
+      { mark: '○', color: quiet, name: 'notes', state: 'exited', software: 'nothing to install', softwareColor: quiet, path: 'C:\\work\\myproject\\notes', style: '' },
+      { mark: '✗', color: bad, name: 'simulations', state: 'not made', software: 'not installed', softwareColor: attention, path: 'C:\\work\\myproject\\simulations', style: '' },
+      { mark: '●', color: ok, name: 'myproject', state: 'running', software: 'installed', softwareColor: '', path: 'C:\\work\\myproject', style: picked }
+    ];
+    return { menu, workspaces };
+  }
+}
+</script>
+</body>
+</html>

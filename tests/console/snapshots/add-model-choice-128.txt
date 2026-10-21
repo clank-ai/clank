@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 9d21h  ● docker running  ● no model: Add a model  ● gateway stopped                        09:14
+F4 This folder         ✗ 4   │ ┌─ Add a model ────────────────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ No model is usable yet: no model runs in the main slot, and no preset for it can load here:  │
+2 Questions                  │ │ add one (Add a model).                                                                       │
+3 History                    │ │                                                                                              │
+4 Docker               ●     │ │ How should Clank run its model?                                                              │
+5 Machine                    │ │                                                                                              │
+6 Operations                 │ │ c  Cloud: a model at OpenRouter, with your key. No GPU needed. Each request costs money,     │
+7 Records                    │ │ from your OpenRouter credits, and Clank shows what each one cost.                            │
+8 Models               ●     │ │                                                                                              │
+9 Presets                    │ │ l  Local: a model on this computer's GPU. Nothing to pay per request; it needs an engine and │
+0 Providers and models       │ │ the model's files (many GB) here. This computer: NVIDIA GeForce RTX 5080, 15.9 GB; 64.0 GB   │
+F1 Help                      │ │ of memory.                                                                                   │
+F2 Launch options            │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+F3 MCP servers               │
+F6 Workspaces                │
+F7 Requests                  │
+F8 CPU models                │
+F9 Phone               ●     │
+F10 Monitor                  │
+F12 Add a model              │
+─────────────────────────────│
+coming                       │
+Sampling              M3     │
+Sessions              M3     │
+Keys                  M3     │
+Layout                M2     │
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5     │
+Changes               M6     │
+Network access        M7     │
+Skills                M8     │
+Files                 M9     │
+Setup guide           M10    │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+
+ c cloud  l local  esc this folder  ? explain  f1 help  f5 machine column  q quit                                    ^p palette

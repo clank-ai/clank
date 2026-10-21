@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Monitor, the context window</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #828bb8">Monitor (F10) › Context (c)</span>
+<span style="margin-left: auto; color: #828bb8">12:21</span>
+</div>
+
+<div style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 14px 14px 8px; min-height: 0">
+
+<div style="white-space: pre; display: flex; gap: 22px; flex-wrap: wrap">
+<span><span style="font-weight: 700">152,661</span> of 262,144 tokens <span style="color: #828bb8">(58%)</span></span>
+<span><span style="color: #9ece6a; font-weight: 700">93,099</span> left before OpenCode compacts <span style="color: #828bb8">(it keeps 16,384 for the answer)</span></span>
+<span style="color: #828bb8">after the next step, about 147,000 at this pace (4 steps a minute)</span>
+</div>
+
+<div style="display: flex; white-space: pre; font-size: 17px; line-height: 22px">
+<sc-for list="{{ bar }}" as="b" hint-placeholder-count="8"><span style="color: {{ b.color }}">{{ b.text }}</span></sc-for>
+</div>
+
+<div style="display: flex; gap: 14px; min-height: 0">
+<section style="position: relative; flex: 0 0 62%; border: 1px solid #3b4261; padding: 14px 12px 8px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">What is in it</div>
+<div style="display: flex; gap: 12px; color: #828bb8"><span style="width: 18px"></span><span style="width: 190px">part</span><span style="width: 70px; text-align: right">tokens</span><span style="width: 52px; text-align: right">share</span><span style="width: 44px; text-align: right">items</span><span style="flex: 1">the biggest</span><span style="width: 96px">last 10 steps</span></div>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+<div style="display: flex; gap: 12px"><span style="width: 18px; color: {{ r.color }}">██</span><span style="width: 190px">{{ r.name }}</span><span style="width: 70px; text-align: right">{{ r.tok }}</span><span style="width: 52px; text-align: right; color: #828bb8">{{ r.pct }}</span><span style="width: 44px; text-align: right; color: #828bb8">{{ r.items }}</span><span style="flex: 1; overflow: hidden; text-overflow: ellipsis; color: {{ r.bigColor }}">{{ r.big }}</span><span style="width: 96px; color: {{ r.color }}">{{ r.trend }}</span></div>
+</sc-for>
+<div style="margin-top: 8px; color: #828bb8">Counted by characters in each part, scaled so they add up to the engine's own count (152,661).</div>
+<div style="color: #828bb8">e  exact counts: ask the engine to count each part (a moment of its time)</div>
+</section>
+
+<section style="position: relative; flex: 1; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 8px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">On the GPU exactly (KVMem)</div>
+<div>The model reads <span style="font-weight: 700">36,864</span> tokens exactly:</div>
+<div><span style="color: #e0af68">█</span> the first      1,024   <span style="color: #828bb8">the system prompt's start</span></div>
+<div><span style="color: #ff9e64">█</span> the newest     4,096   <span style="color: #828bb8">steps 28 to 30</span></div>
+<div><span style="color: #7dcfff">█</span> picked        31,744   <span style="color: #828bb8">by likeness to your last message</span></div>
+<div style="margin-top: 6px"><span style="color: #3b4261">░</span> the rest     115,797   <span style="color: #828bb8">in system memory, picked when alike</span></div>
+<div style="margin-top: 8px">Your last message is from <span style="color: #e0af68">11:58</span>: every step since</div>
+<div>picks by that same message.</div>
+<div style="margin-top: 8px; color: #828bb8">Which parts were picked, part by part:</div>
+<sc-for list="{{ picks }}" as="p" hint-placeholder-count="5"><div><span style="color: {{ p.color }}">{{ p.bar }}</span> <span>{{ p.name }}</span></div></sc-for>
+<div style="margin-top: 6px; color: #f7768e">needs KVMem to report its picks (to check)</div>
+</section>
+</div>
+
+<section style="position: relative; flex: 1; min-height: 0; border: 1px solid #3b4261; padding: 14px 12px 8px; white-space: pre; display: flex; gap: 18px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Over this session</div>
+<div style="display: flex; flex-direction: column; color: #828bb8; text-align: right; line-height: 16px">
+<span>262K</span><span>&#160;</span><span>&#160;</span><span>196K</span><span>&#160;</span><span>&#160;</span><span>131K</span><span>&#160;</span><span>&#160;</span><span>65K</span><span>&#160;</span><span>0</span>
+</div>
+<div style="display: flex; flex-direction: column; line-height: 16px; font-size: 14px">
+<sc-for list="{{ chart }}" as="row" hint-placeholder-count="12"><div style="display: flex"><sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="37"><span style="color: {{ c.color }}">{{ c.ch }}</span></sc-for></div></sc-for>
+<div style="color: #828bb8; margin-top: 4px">11:58                    12:04 ▲ the loop              12:21</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+<div style="color: #7aa2f7; font-weight: 700">Where the room went</div>
+<div>14 file reads        <span style="font-weight: 700">82K</span>  <span style="color: #828bb8">54%</span></div>
+<div>thinking sent back   <span style="font-weight: 700">18K</span>  <span style="color: #828bb8">12%, it grows every step</span></div>
+<div style="color: #f7768e">the 12:04 loop       <span style="font-weight: 700">23K</span>  15%, twice the same text</div>
+<div>OpenCode's own       <span style="font-weight: 700">20K</span>  <span style="color: #828bb8">prompt and tools, every step</span></div>
+<div style="margin-top: 8px; color: #7aa2f7; font-weight: 700">Could be freed <span style="color: #f7768e; font-weight: 400">(planned: Guide)</span></div>
+<div>x  drop the loop text            <span style="color: #9ece6a">−23K</span></div>
+<div>x  drop reads of files read again <span style="color: #9ece6a">−18K</span></div>
+<div>k  compact now (OpenCode sums up)  <span style="color: #9ece6a">about −120K</span></div>
+</div>
+</section>
+
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #ffffff">c</span> context</span><span><span style="color: #7aa2f7">s</span> steps</span><span><span style="color: #7aa2f7">f</span> flow</span><span><span style="color: #7aa2f7">e</span> exact counts</span><span><span style="color: #7aa2f7">Enter</span> the highlighted part's items</span><span><span style="color: #f7768e">x</span> drop</span><span><span style="color: #f7768e">k</span> compact</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const red = '#f7768e', plain = '#c0caf5';
+    const cats = [
+      { name: 'system prompt', tok: 7464, color: '#7aa2f7', items: '1', big: 'OpenCode’s instructions', trend: '──────────' },
+      { name: 'tool definitions', tok: 12179, color: '#3d59a1', items: '26', big: 'myproject MCP: 10 tools, 5.1K', trend: '──────────' },
+      { name: 'your messages', tok: 244, color: '#e0af68', items: '1', big: 'the first, 11:58', trend: '──────────' },
+      { name: 'model text', tok: 733, color: '#c0caf5', items: '29', big: 'step 21: 41', trend: '▁▁▁▁▁▁▁▁▁▁' },
+      { name: 'thinking sent back', tok: 18007, color: '#bb9af7', items: '29', big: 'step 21: 2.1K', trend: '▂▂▃▃▃▄▄▄▅▅' },
+      { name: 'tool calls', tok: 986, color: '#73daca', items: '41', big: 'step 24: 0.1K', trend: '▁▁▁▁▁▁▁▁▁▁' },
+      { name: 'tool results', tok: 90097, color: '#9ece6a', items: '41', big: 'read src/simulator.py: 18.6K', trend: '▃▃▄▅▅▅▆▇▇▇' },
+      { name: 'loop text', tok: 22950, color: red, items: '2', big: 'the call 12.1K, its echo 10.9K', trend: '▁▁▁▁▇▇▇▇▇▇' }
+    ];
+    const total = 152661;
+    const rows = cats.map((c) => ({
+      ...c,
+      tok: c.tok.toLocaleString('en-US'),
+      pct: (c.tok / total * 100).toFixed(1) + '%',
+      bigColor: c.color === red ? red : plain
+    }));
+    const per = 262144 / 100;
+    const bar = cats.filter((c) => c.tok > 1000).map((c) => ({ color: c.color, text: '█'.repeat(Math.round(c.tok / per)) }));
+    const used = bar.reduce((n, b) => n + b.text.length, 0);
+    bar.push({ color: '#3b4261', text: '░'.repeat(94 - used) });
+    bar.push({ color: '#565f89', text: '▒'.repeat(6) });
+    const picks = [
+      { name: 'system prompt      4 of 7 blocks', n: 4, of: 7, color: '#7aa2f7' },
+      { name: 'tool definitions   9 of 12', n: 9, of: 12, color: '#3d59a1' },
+      { name: 'thinking           3 of 18', n: 3, of: 18, color: '#bb9af7' },
+      { name: 'tool results      15 of 88', n: 15, of: 88, color: '#9ece6a' },
+      { name: 'loop text          0 of 22', n: 0, of: 22, color: red }
+    ].map((p) => ({ ...p, bar: '█'.repeat(Math.round(p.n / p.of * 12)) + '░'.repeat(12 - Math.round(p.n / p.of * 12)) }));
+    const sizes = [19.9, 20.1, 21, 22.4, 53, 55, 57, 58.1, 60, 64, 66, 68, 70, 72.8, 72.9, 73.2, 73.5, 79.3, 81.6, 81.8, 82.3, 85.1, 115.6, 115.8, 132.4, 133, 139.1, 143.4, 144.6, 147.4, 147.6, 147.8, 152.7];
+    const levels = 12;
+    const chart = [];
+    for (let row = levels - 1; row >= 0; row--) {
+      const cells = sizes.map((k, i) => {
+        const h = (row + 0.5) / levels * 262;
+        if (h > k) return { ch: row === levels - 1 ? '┄' : ' ', color: row === levels - 1 ? '#f7768e' : '#3b4261' };
+        const loop = i >= 22 ? 22.95 : 0;
+        const fixed = 19.9;
+        const rest = k - fixed - loop;
+        if (h < 7.5) return { ch: '█', color: '#7aa2f7' };
+        if (h < fixed) return { ch: '█', color: '#3d59a1' };
+        if (h < fixed + rest * 0.18) return { ch: '█', color: '#bb9af7' };
+        if (h < fixed + rest) return { ch: '█', color: '#9ece6a' };
+        return { ch: '█', color: red };
+      });
+      chart.push({ cells });
+    }
+    return { rows, bar, picks, chart };
+  }
+}
+</script>
+</body>
+</html>

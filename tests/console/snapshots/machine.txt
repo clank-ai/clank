@@ -1,0 +1,40 @@
+ ◆ CLANK  paper   ● service up 2h14m  ● docker running  ● no model: Add a model  ● gateway stopped                13:54
+F4 This folder         ✗ 4   │ ┌─ Profile ────────────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ system     Windows 11 (10.0.26200)                                                   │
+2 Questions                  │ │ python     3.12.12                                                                   │
+3 History                    │ │ wsl        WSL 2, Ubuntu-22.04                                                       │
+4 Docker               ●     │ │ processor  A processor, 16 cores                                                     │
+5 Machine                    │ │ memory     62 GB                                                                     │
+6 Operations                 │ │ gpus       NVIDIA GeForce RTX 5080, 16 GB, driver 615.71                             │
+7 Records                    │ │ docker     29.6.2                                                                    │
+8 Models               ●     │ │ detected   11:40:00                                                                  │
+9 Presets                    │ └──────────────────────────────────────────────────────────────────────────────────────┘
+0 Providers and models       │
+F1 Help                      │ ┌─ Doctor ─────────────────────────────────────────────────────────────────────────────┐
+F2 Launch options            │ │ 9 of 10 passed   (d runs it again)                                                   │
+F3 MCP servers               │ │ ok    Python 3.12 or newer                     as expected                           │
+F6 Workspaces                │ │ ok    CLANK_HOME can be written                as expected                           │
+F7 Requests                  │ │ ok    The state database is intact             as expected                           │
+F8 CPU models                │ │ ok    Room for models                          as expected                           │
+F9 Phone               ●     │ │ ok    An NVIDIA GPU                            as expected                           │
+F10 Monitor                  │ │ ok    WSL 2                                    as expected                           │
+F12 Add a model              │ │ ok    Hardware-accelerated GPU scheduling off  as expected                           │
+─────────────────────────────│ │ ok    Docker installed                         as expected                           │
+coming                       │ │ warn  Docker running                           not running                           │
+Sampling              M3     │ │                                                start it with `clank docker start`    │
+Sessions              M3     │ │ (or open Docker Desktop)                                                             │
+Keys                  M3     │ │ ok    The API's port                           47720 is free for the service         │
+Layout                M2     │ └──────────────────────────────────────────────────────────────────────────────────────┘
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5     │
+Changes               M6     │
+Network access        M7     │
+Skills                M8     │
+Files                 M9     │
+Setup guide           M10    │
+                             │
+                             │
+                             │
+ 13:54  the doctor runs: done
+ d run the doctor  ? explain  f1 help  f5 machine column  q quit                                             ^p palette

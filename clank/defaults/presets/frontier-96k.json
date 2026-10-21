@@ -1,0 +1,15 @@
+{
+  "schema": "preset/1",
+  "title": "frontier 96K",
+  "engine": "kvmem-llamacpp",
+  "engine_version": "v0.16.0-rc1",
+  "model": "swift-1.5-qwen3.8-27b",
+  "options": {
+    "context": 98304,
+    "kvmem.budget": 0,
+    "kv.type": "q4_0",
+    "max_output": 32768,
+    "thinking.budget": -1
+  },
+  "notes": "Decision 0068: Swift 1.5 (Qwen3.8-27B retrained to think less), its reasoning effort left at the template's default (xhigh), thinking without a limit and 32,768 tokens out; the whole context attended exactly, as much as fits beside this desktop with a 4-bit KV cache; MTP with 3 draft tokens, no vision projector, CUDA graphs off."
+}

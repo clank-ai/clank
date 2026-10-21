@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; gap: 14px">
+<section style="position: relative; flex: 1; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Happening now</div>
+<div><span style="color: #ff9e64">●</span> the agent of <span style="color: #e0af68">myproject</span> is writing  <span style="color: #828bb8">step 30 · 48 tok/s · 36 s</span></div>
+<div style="color: #828bb8">  152,661 tokens of context (58%) · F10 shows what it does</div>
+<div style="margin-top: 6px">Last request 12:13:30 <span style="color: #828bb8">(agent, main slot)</span>: 5,417 tokens in 142.7 s, 41.9 a second</div>
+<div style="color: #f7768e">12:04 the loop guard stopped an answer that repeated itself <span style="color: #828bb8">(F7)</span></div>
+</section>
+<section style="position: relative; flex: 0 0 34%; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Waiting for you</div>
+<div><span style="color: #9ece6a">✓</span> Nothing waits for you.</div>
+<div style="color: #828bb8; margin-top: 6px">questions from the agent and from Clank land here</div>
+<div style="color: #828bb8">y yes · n no · v view the whole question</div>
+</section>
+</div>
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre; display: grid; grid-template-columns: 96px minmax(0, 1fr); row-gap: 2px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">What runs</div>
+<span style="color: #828bb8">service</span><span><span style="color: #9ece6a">●</span> v0.2.0 · API on 127.0.0.1:7720 · 3 clients (console, console, vscode)</span>
+<span style="color: #828bb8">docker</span><span><span style="color: #9ece6a">●</span> Docker Desktop · running · 2 containers, both Clank's   <span style="color: #828bb8">s stops it</span></span>
+<span style="color: #828bb8">workspace</span><span><span style="color: #9ece6a">●</span> myproject: running   <span style="color: #828bb8">F6 lists them</span></span>
+<span style="color: #828bb8">models</span><span><span style="color: #9ece6a">●</span> main: daily 262K · ready   <span style="color: #828bb8">○</span> fast: stopped   <span style="color: #828bb8">○</span> vision: stopped   <span style="color: #828bb8">8 opens Models</span></span>
+<span style="color: #828bb8">gpu</span><span>RTX 5080 · <span style="color: #7aa2f7">▎░░░░░░░░░</span> 0% busy · <span style="color: #e0af68">███████████▉</span> 15.7 of 15.9 GB · 32°C</span>
+<span style="color: #828bb8">gateway</span><span><span style="color: #9ece6a">●</span> port 18210 · idle · 30 requests served · loop guard on</span>
+<span style="color: #828bb8">machine</span><span>Windows 11 · WSL 2, Ubuntu-22.04 · RTX 5080 16 GB · 62 GB RAM   <span style="color: #828bb8">d runs the doctor</span></span>
+<span style="color: #828bb8">folder</span><span>C:\work\myproject   <span style="color: #828bb8">F4 gets it ready</span></span>
+</section>
+
+<section style="position: relative; flex: 1; min-height: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">History</div>
+<div style="flex: 1; min-height: 0; overflow: hidden">
+<sc-for list="{{ history }}" as="h" hint-placeholder-count="8">
+<div><span style="color: #828bb8">{{ h.time }}</span>  <span style="color: {{ h.color }}">{{ h.mark }}</span> {{ h.text }}</div>
+</sc-for>
+</div>
+</section>
+
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">f1</span> help</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f5</span> machine panel</span><span><span style="color: #7aa2f7">f10</span> monitor</span><span><span style="color: #7aa2f7">q</span> quit</span><span style="margin-left: auto">^p palette</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Home' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const history = [
+      { time: '11:56:23', mark: '✓', color: '#9ece6a', text: 'Open VS Code: done (settings, extensions, the window)' },
+      { time: '11:58:07', mark: '·', color: '#828bb8', text: 'you (vscode) set myproject to plan' },
+      { time: '11:58:31', mark: '●', color: '#ff9e64', text: 'the agent of myproject began: “Plan a new simulation study …”' },
+      { time: '12:04:17', mark: '✗', color: '#f7768e', text: 'a bash call repeated itself: stopped by the loop guard after 15 s' },
+      { time: '12:08:05', mark: '·', color: '#828bb8', text: 'the agent went on: bash ls studies/' },
+      { time: '12:13:30', mark: '✓', color: '#9ece6a', text: 'step 29 done: 5,417 tokens in 142.7 s' }
+    ];
+    return { menu, history };
+  }
+}
+</script>
+</body>
+</html>

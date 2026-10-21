@@ -1,0 +1,114 @@
+{
+  "schema": "flow/1",
+  "title": "A new piece of work",
+  "boxes": [
+    {
+      "id": "brief",
+      "type": "you",
+      "title": "Your brief",
+      "writes": [
+        "BRIEF.md"
+      ],
+      "holds": "The goal, and its limits: what done means, and what it may cost."
+    },
+    {
+      "id": "plan",
+      "type": "plan",
+      "title": "Write the plan",
+      "sees": [
+        "BRIEF.md"
+      ],
+      "prompt": "Write a plan for the brief in BRIEF.md: its steps, each with what it delivers and how it is checked.",
+      "writes": [
+        "PLAN.md"
+      ],
+      "accept_when": [
+        "it keeps every limit of the brief",
+        "each step says what it delivers"
+      ]
+    },
+    {
+      "id": "check",
+      "type": "verify",
+      "title": "Check the plan",
+      "checks": "plan",
+      "sees": [
+        "BRIEF.md",
+        "PLAN.md"
+      ]
+    },
+    {
+      "id": "approve",
+      "type": "gate",
+      "title": "You approve the plan",
+      "shows": [
+        "PLAN.md"
+      ]
+    },
+    {
+      "id": "split",
+      "type": "decompose",
+      "title": "Break it into tasks",
+      "sees": [
+        "BRIEF.md",
+        "PLAN.md"
+      ],
+      "prompt": "Break PLAN.md into tasks, one after another, each with its deliverable, what to accept and a drafted prompt."
+    },
+    {
+      "id": "join",
+      "type": "integrate",
+      "title": "Put it together",
+      "sees": [
+        "BRIEF.md",
+        "PLAN.md"
+      ],
+      "prompt": "Put every deliverable together in SUMMARY.md, and write the next flow's brief in NEXT.md.",
+      "writes": [
+        "SUMMARY.md",
+        "NEXT.md"
+      ],
+      "holds": "What was done and where it is, and the next flow's brief."
+    },
+    {
+      "id": "review",
+      "type": "gate",
+      "title": "You review the whole",
+      "shows": [
+        "SUMMARY.md"
+      ]
+    }
+  ],
+  "lines": [
+    {
+      "from": "brief",
+      "to": "plan"
+    },
+    {
+      "from": "plan",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "approve",
+      "when": "pass"
+    },
+    {
+      "from": "check",
+      "to": "plan",
+      "when": "fail"
+    },
+    {
+      "from": "approve",
+      "to": "split"
+    },
+    {
+      "from": "split",
+      "to": "join"
+    },
+    {
+      "from": "join",
+      "to": "review"
+    }
+  ]
+}

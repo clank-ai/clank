@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Models, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; gap: 14px">
+
+<section style="position: relative; flex: 1; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Slots</div>
+<sc-for list="{{ slots }}" as="s" hint-placeholder-count="3"><div style="margin: 0 -6px; padding: 2px 6px; {{ s.rowStyle }}"><div style="display: flex"><span style="flex: none; width: 8ch">{{ s.name }}</span><span style="flex: none; width: 9ch; color: {{ s.color }}">{{ s.status }}</span><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ s.when }}</span></div><sc-if value="{{ s.runs }}" hint-placeholder-val="{{ true }}"><div style="padding-left: 8ch; overflow: hidden; text-overflow: ellipsis">{{ s.what }}</div></sc-if></div></sc-for>
+</section>
+
+<section style="position: relative; flex: none; min-width: 47ch; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Memory</div>
+<div style="padding-top: 2px; white-space: normal">it took 14,388 MiB <span style="color: #828bb8">(estimated 14,240)</span></div>
+<div style="white-space: normal">the GPU: 16,072 of 16,303 MiB in use, 231 free</div>
+</section>
+
+</div>
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Last switches</div>
+<sc-for list="{{ launches }}" as="l" hint-placeholder-count="8"><div style="display: flex"><span style="flex: none; width: 10ch; color: #828bb8">{{ l.time }}</span><span style="flex: none; width: 20ch">{{ l.title }}</span><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ l.how }}<span style="color: {{ l.color }}">{{ l.outcome }}</span>{{ l.detail }}</span></div></sc-for>
+</section>
+
+<div style="flex: 1"></div>
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">l</span> load</span><span><span style="color: #7aa2f7">w</span> switch</span><span><span style="color: #7aa2f7">u</span> unload</span><span><span style="color: #7aa2f7">c</span> check</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span><span><span style="color: #7aa2f7">f5</span> machine panel</span><span><span style="color: #7aa2f7">q</span> quit</span><span style="margin-left: auto">^p palette</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Models' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const ok = '#9ece6a', quiet = '#828bb8', bad = '#f7768e';
+    const picked = 'background: #283457; color: #ffffff; font-weight: 700';
+    const slots = [
+      {
+        name: 'main', status: 'READY', color: ok, when: 'since 11:56:15: daily 262K answered in 13 s', runs: true,
+        what: 'daily 262K · qwen3.8-27b · kvmem-llamacpp v0.16.0-rc1 on wsl · port 18200 · process 4127', rowStyle: picked
+      },
+      { name: 'fast', status: 'STOPPED', color: quiet, when: 'since 12:31:40: unloaded (stopped)', runs: false, what: '', rowStyle: '' },
+      { name: 'vision', status: 'STOPPED', color: quiet, when: 'since 12:46:52: unloaded (stopped)', runs: false, what: '', rowStyle: '' }
+    ];
+    const tone = { runs: ok, stopped: quiet, failed: bad };
+    const launches = [
+      ['12:41:26', 'vision 4B', 'ready in 4 s · ', 'stopped', ''],
+      ['12:18:05', 'vision 4B', 'ready in 4 s · ', 'stopped', ''],
+      ['12:02:30', 'completion 0.5B', 'ready in 2 s · ', 'stopped', ''],
+      ['11:56:02', 'daily 262K', 'ready in 13 s · 14,388 MiB · ', 'runs', ''],
+      ['11:50:07', 'daily 128K', 'ready in 12 s · 13,012 MiB · ', 'stopped', ''],
+      ['11:49:44', 'daily 262K', '', 'failed', ': daily 262K ended while it started: llama_kv_cache_init: failed to allocate buffer for kv cache'],
+      ['11:31:09', 'daily 128K', 'ready in 12 s · 13,006 MiB · ', 'stopped', ''],
+      ['11:12:40', 'vision 4B', 'ready in 5 s · ', 'stopped', '']
+    ].map(([time, title, how, outcome, detail]) => ({ time, title, how, outcome, detail, color: tone[outcome] }));
+    return { menu, slots, launches };
+  }
+}
+</script>
+</body>
+</html>

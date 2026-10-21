@@ -1,0 +1,268 @@
+{
+  "name": "clank",
+  "displayName": "Clank",
+  "description": "Clank in VS Code: the service and Docker in the status bar, the questions Clank asks you, the agent beside your files, each change it makes for you to review, completion as you type, figures to mark up for the agent, the agent's proposals for your Notion to review, and the gates of your flows.",
+  "version": "0.9.0",
+  "publisher": "clank",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "vscode": "^1.138.0"
+  },
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
+  "main": "./out/src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "clank.questions",
+        "title": "Questions waiting for you",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.switchModel",
+        "title": "Switch model",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.docker",
+        "title": "Start or stop Docker",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.dockerStart",
+        "title": "Start Docker",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.dockerStop",
+        "title": "Stop Docker",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.reconnect",
+        "title": "Connect to the Clank service again",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.openAgent",
+        "title": "Start the agent beside the files",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.acceptChange",
+        "title": "Accept the change",
+        "category": "Clank",
+        "icon": "$(check)"
+      },
+      {
+        "command": "clank.rejectChange",
+        "title": "Reject the change",
+        "category": "Clank",
+        "icon": "$(close)"
+      },
+      {
+        "command": "clank.switchReview",
+        "title": "Pick the mode: Plan, Review or Auto",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.implementReview",
+        "title": "Implement the plan with Review",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.implementAuto",
+        "title": "Implement the plan with Auto",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.implementContinue",
+        "title": "Continue implementing the plan",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.toggleCompletion",
+        "title": "Turn completion on or off",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.annotateFigure",
+        "title": "Annotate with Clank",
+        "category": "Clank",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "clank.notion.open",
+        "title": "Review the Notion changes",
+        "category": "Clank",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "clank.notion.approveAll",
+        "title": "Approve all",
+        "category": "Clank",
+        "icon": "$(check)"
+      },
+      {
+        "command": "clank.notion.reject",
+        "title": "Reject…",
+        "category": "Clank",
+        "icon": "$(close)"
+      },
+      {
+        "command": "clank.notion.refresh",
+        "title": "Read the Notion changes again",
+        "category": "Clank",
+        "icon": "$(refresh)"
+      }
+    ],
+    "configuration": {
+      "title": "Clank",
+      "properties": {
+        "clank.home": {
+          "type": "string",
+          "default": "",
+          "description": "CLANK_HOME, the folder that holds Clank's settings and state. Empty: the CLANK_HOME environment variable, else .clank in your home folder."
+        },
+        "clank.agent.openOnStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Start the agent (OpenCode) in a terminal beside the files when the window opens a folder whose Clank workspace runs. Clank's own VS Code window (`clank code`) turns it on."
+        },
+        "clank.changes.showInAuto": {
+          "type": "boolean",
+          "default": true,
+          "description": "In auto mode, open each change the agent makes beside your files (the file before and after), without taking the keyboard."
+        }
+      }
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "clank.acceptChange",
+          "when": "resourceScheme == clank-review",
+          "group": "navigation@1"
+        },
+        {
+          "command": "clank.rejectChange",
+          "when": "resourceScheme == clank-review",
+          "group": "navigation@2"
+        },
+        {
+          "command": "clank.annotateFigure",
+          "when": "activeCustomEditorId == imagePreview.previewEditor",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "clank.annotateFigure",
+          "when": "resourceExtname =~ /^\\.(png|jpe?g)$/i",
+          "group": "navigation@9"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "clank.notion.refresh",
+          "when": "view == clank.notionChanges",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "clank.notion.open",
+          "when": "view == clank.notionChanges && viewItem == notion.batch",
+          "group": "inline@1"
+        },
+        {
+          "command": "clank.notion.approveAll",
+          "when": "view == clank.notionChanges && viewItem == notion.batch",
+          "group": "inline@2"
+        },
+        {
+          "command": "clank.notion.reject",
+          "when": "view == clank.notionChanges && viewItem == notion.batch",
+          "group": "inline@3"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "clank.notion.approveAll",
+          "when": "false"
+        },
+        {
+          "command": "clank.notion.reject",
+          "when": "false"
+        }
+      ]
+    },
+    "customEditors": [
+      {
+        "viewType": "clank.figure",
+        "displayName": "Clank: annotate the figure",
+        "selector": [
+          {
+            "filenamePattern": "*.png"
+          },
+          {
+            "filenamePattern": "*.jpg"
+          },
+          {
+            "filenamePattern": "*.jpeg"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "clank-notion",
+          "title": "Notion changes",
+          "icon": "media/notion-changes.svg"
+        }
+      ]
+    },
+    "views": {
+      "clank-notion": [
+        {
+          "id": "clank.notionChanges",
+          "name": "Notion changes",
+          "contextualTitle": "Clank"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "clank.notionChanges",
+        "contents": "Nothing waits for your review.\nThe local agent's proposals for your Notion show here once it submits them; nothing reaches Notion until you approve it."
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "test": "node --test \"out/test/**/*.test.js\"",
+    "check": "npm run build && npm test",
+    "test:host": "node out/host/run.js"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "@types/vscode": "1.138.0",
+    "@vscode/test-electron": "3.1.0",
+    "typescript": "7.0.2"
+  }
+}

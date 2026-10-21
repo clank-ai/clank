@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Remote access",
+  "description": "Whether the phone page is on, where it listens on this machine, and the tailnet port Tailscale gives it.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "remote/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "on": {
+      "default": false,
+      "description": "Whether the phone page is published on your tailnet (decision 0012: off until you turn it on).",
+      "title": "On",
+      "type": "boolean"
+    },
+    "port": {
+      "default": 7721,
+      "description": "Where the phone's listener listens on this machine.",
+      "maximum": 65535,
+      "minimum": 1024,
+      "title": "Local port",
+      "type": "integer"
+    },
+    "tailnet_port": {
+      "default": 8445,
+      "description": "The HTTPS port Tailscale publishes the phone page on, on your tailnet only.",
+      "maximum": 65535,
+      "minimum": 1,
+      "title": "Tailnet port",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

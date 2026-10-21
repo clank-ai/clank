@@ -1,0 +1,72 @@
+<!doctype html>
+<!-- Clank's figure annotator (design 0008 §6). The extension fills in the {{...}} fields: the content security policy's
+     sources, the nonce of the scripts, and the addresses of the style sheet and the scripts. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src data: {{source}}; style-src {{source}}; script-src 'nonce-{{nonce}}';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{css}}" />
+    <title>Annotate the figure</title>
+  </head>
+  <body>
+    <header id="toolbar" role="toolbar" aria-label="Drawing tools">
+      <div class="group" id="tools">
+        <button data-tool="pen" title="Pen (P): draw freely" aria-label="Pen">
+          <svg viewBox="0 0 16 16"><path d="M2 14l1-4 8-8 3 3-8 8-4 1zm2-3l-.5 1.5L5 12l7-7-1-1-7 7z" /></svg>
+        </button>
+        <button data-tool="box" title="Box (B): drag around something" aria-label="Box">
+          <svg viewBox="0 0 16 16"><path d="M2 3h12v10H2V3zm1.5 1.5v7h9v-7h-9z" /></svg>
+        </button>
+        <button data-tool="circle" title="Circle (C): drag around something" aria-label="Circle">
+          <svg viewBox="0 0 16 16"><path d="M8 2a6 6 0 110 12A6 6 0 018 2zm0 1.5a4.5 4.5 0 100 9 4.5 4.5 0 000-9z" /></svg>
+        </button>
+        <button data-tool="arrow" title="Arrow (A): drag from the tail to what it points at" aria-label="Arrow">
+          <svg viewBox="0 0 16 16"><path d="M3 13.5L2.5 13 11 4.5H6V3h7.5v7.5H12V5.5L3.5 14z" /></svg>
+        </button>
+        <button data-tool="text" title="Note (T): click where it goes, then type" aria-label="Note">
+          <svg viewBox="0 0 16 16"><path d="M3 3h10v2.5h-1.5v-1h-2.75V12H10v1.5H6V12h1.25V4.5H4.5v1H3V3z" /></svg>
+        </button>
+      </div>
+      <div class="group" id="colors" aria-label="Colors"></div>
+      <div class="group">
+        <button id="undo" title="Undo (Ctrl+Z)" aria-label="Undo">
+          <svg viewBox="0 0 16 16"><path d="M5 4.5H10a4 4 0 010 8H6V11h4a2.5 2.5 0 000-5H5v2.5L1.5 5.25 5 2v2.5z" /></svg>
+        </button>
+        <button id="redo" title="Redo (Ctrl+Y)" aria-label="Redo">
+          <svg viewBox="0 0 16 16"><path d="M11 4.5H6a4 4 0 000 8h4V11H6a2.5 2.5 0 010-5h5v2.5l3.5-3.25L11 2v2.5z" /></svg>
+        </button>
+        <button id="clear" title="Clear every mark" aria-label="Clear">
+          <svg viewBox="0 0 16 16"><path d="M6 2h4v1.5h4V5H2V3.5h4V2zM3.5 6h9l-.75 8h-7.5L3.5 6zm1.65 1.5l.5 5h4.7l.5-5h-5.7z" /></svg>
+        </button>
+      </div>
+      <div class="spacer"></div>
+      <span id="name" class="name"></span>
+      <button id="fit" class="text" title="Fit the figure to the window (Ctrl+wheel zooms)">Fit</button>
+    </header>
+    <main id="stage">
+      <canvas id="canvas" aria-label="The figure: draw on it"></canvas>
+      <div id="empty">Loading the figure…</div>
+    </main>
+    <section id="composer">
+      <div id="chips" aria-live="polite"></div>
+      <div class="box">
+        <textarea
+          id="message"
+          rows="1"
+          placeholder="Describe what to change, or ask about the figure…"
+          aria-label="Your message to the agent"
+        ></textarea>
+        <button id="send" title="Send to the agent (Enter)" aria-label="Send">
+          <svg viewBox="0 0 16 16"><path d="M2 2.5l12 5.5-12 5.5 1.5-5.5L2 2.5zm2.75 6.25L4 11.5 10.5 8 4 4.5l.75 2.75H9v1.5H4.75z" /></svg>
+        </button>
+      </div>
+      <div id="status">Draw on the figure, then say what to do. Enter sends; Shift+Enter starts a new line.</div>
+    </section>
+    <script nonce="{{nonce}}" src="{{marks}}"></script>
+    <script nonce="{{nonce}}" src="{{script}}"></script>
+  </body>
+</html>

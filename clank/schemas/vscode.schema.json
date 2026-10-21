@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VS Code window",
+  "description": "Clank's VS Code window, a separate instance of VS Code (its settings and extensions under CLANK_HOME/vscode, the main one untouched): which program runs it, and the extensions it has besides Clank's own.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "vscode/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "program": {
+      "description": "VS Code's command line and any arguments before VS Code's own; empty: `code` found on the PATH (on Windows, the program its code.cmd runs).",
+      "items": {
+        "type": "string"
+      },
+      "title": "Program",
+      "type": "array"
+    },
+    "extensions": {
+      "description": "The extensions installed in the window when missing, by their marketplace ids (publisher.name), besides Clank's own: Python, Pylance, the debugger, Ruff, Jupyter, Lean 4, LaTeX Workshop, a PDF viewer, Rainbow CSV, Markdown All in One, Mermaid and Even Better TOML.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Extensions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

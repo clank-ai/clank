@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Machine",
+  "description": "What Clank detected about this computer: its system, Python, WSL, processor, memory, GPUs and Docker.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "machine/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "system": {
+      "default": "",
+      "description": "The operating system and its version.",
+      "title": "System",
+      "type": "string"
+    },
+    "python": {
+      "default": "",
+      "description": "The version of Python that runs Clank.",
+      "title": "Python",
+      "type": "string"
+    },
+    "wsl": {
+      "default": "",
+      "description": "On Windows, WSL's version and default distribution, or not installed.",
+      "title": "WSL",
+      "type": "string"
+    },
+    "processor": {
+      "default": "",
+      "description": "The processor's model.",
+      "title": "Processor",
+      "type": "string"
+    },
+    "cores": {
+      "default": 0,
+      "description": "The processor's physical cores.",
+      "title": "Cores",
+      "type": "integer"
+    },
+    "memory_gb": {
+      "default": 0.0,
+      "description": "The computer's memory, in gibibytes.",
+      "title": "Memory (GB)",
+      "type": "number"
+    },
+    "gpus": {
+      "description": "The NVIDIA GPUs found.",
+      "items": {
+        "$ref": "#/$defs/Gpu"
+      },
+      "title": "GPUs",
+      "type": "array"
+    },
+    "docker": {
+      "default": "",
+      "description": "The version of the Docker command, or not installed.",
+      "title": "Docker",
+      "type": "string"
+    },
+    "detected": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "When Clank last detected all this.",
+      "title": "Detected"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Gpu": {
+      "description": "One NVIDIA GPU, as `nvidia-smi` reports it.",
+      "properties": {
+        "name": {
+          "description": "The GPU's model, such as NVIDIA GeForce RTX 5080.",
+          "title": "Name",
+          "type": "string"
+        },
+        "memory_mib": {
+          "default": 0,
+          "description": "Its memory, in mebibytes.",
+          "title": "Memory (MiB)",
+          "type": "integer"
+        },
+        "driver": {
+          "default": "",
+          "description": "The version of the NVIDIA driver.",
+          "title": "Driver",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Gpu",
+      "type": "object"
+    }
+  }
+}

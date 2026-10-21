@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 8d0h  ● docker running  ● no model: Add a model  ● gateway · 1 in flight  ⣾ working                                        12:21
+F4 This folder         ✗ 4   │  Flow   Session   Context
+1 Home                       │ OpenCode · workspace myproject · “Plan a new simulation study” · build · working · 19 steps, 20 calls · since 11:58 · the newes…
+2 Questions                  │
+3 History                    │ ┌─ Context window c ───────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+4 Docker               ●     │ │ 155,029 of 262,144 tokens (59%) · 74,347 left before OpenCode compacts at 229,376 · 96% read from the cache                  │
+5 Machine                    │ │ █████████████████████████████████████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ │
+6 Operations                 │ │ On the GPU exactly 36,864 · 118,165 in system memory · blocks of 128 picked by likeness to the last user message             │
+7 Records                    │ │ this session ▁▂▂▂▂▂▃▃▃▃▃▃▄▄▄▄▄▅  ✗ 12:04 the loop guard stopped step 17                                                      │
+8 Models               ●     │ │ ● the engine holds this session's conversation                                                                               │
+9 Presets                    │ │ figures from KVMem/llama.cpp v0.00.0-rc1, “daily 262K” · Qwen3.8-27B, not calibrated · after compacting: a summary and the … │
+0 Providers and models       │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+F1 Help                      │
+F2 Launch options            │ ┌─ Now n ────────────────────────────────────────┐  ┌─ Flow f ───────────────────────────────── ↑↓ a node · ←→ fold · End now ─┐
+F3 MCP servers               │ │ ⣾ writing a call · step 19 · 36.1 s            │  │ You ─┬─ before the todo list ▸  1 call                                   │
+F6 Workspaces                │ │ prompt      read in 1.0 s                      │  │      ├─ ✓ Read the simulator and last study ▸  6 calls                   │
+F7 Requests            ⣾     │ │ last prompt 147,815 cached, 5,799 new          │  │      ├─ ✓ List the observables ▸  10 calls                               │
+F8 CPU models                │ │ thinking    ███▌░░░░░░░░ about 1,203 of 4,096  │  │      ├─ ● Draft the parameter grid ─┬─ read studies/notes.md             │
+F9 Phone               ●     │ │ output      █░░░░░░░░░░░ about 1,415 of 16,384 │  │      │                              ├─ ✗ bash python -m myproject sw… ⊘  │
+F10 Monitor                  │ │ writing     bash python -m myproject.sweep --… │  │      │                              ├─ ✗ failed: Clank's loop guard st…  │
+F12 Add a model              │ │ speed       48 tok/s  ▇██                      │  │      │                              ├─ bash ls studies/  100 chars       │
+─────────────────────────────│ │ loop guard  thinking 31%, bash 12% · limit 6%  │  │      │                              ├─ ✎ your note: Keep the grid to 3…  │
+coming                       │ └────────────────────────────────────────────────┘  │      │                              └─ ● working                         │
+Sampling              M3     │                                                     │      ├┄ ○ Estimate run times                                             │
+Sessions              M3     │ ┌─ Watch for w ──────────────────────────────────┐  │      └┄ ○ Write the plan file                                            │
+Keys                  M3     │ │ no session yet                                 │  │                                                                          │
+Layout                M2     │ └────────────────────────────────────────────────┘  │                                                                          │
+Tests and trials      M2     │                                                     │                                                                          │
+Agents                M5     │ ┌─ Guide g ──────────────────────────────────────┐  │                                                                          │
+Modes                 M5     │ │ . Stop now    no OpenCode server is known to … │  │                                                                          │
+Changes               M6     │ │ m Note        no OpenCode server is known to … │  │                                                                          │
+Network access        M7     │ │ k Compact now no OpenCode server is known to … │  │                                                                          │
+Skills                M8     │ │ p Pause       the gateway does not run         │  │                                                                          │
+Files                 M9     │ │ u Undo turn   no OpenCode server is known to … │  │                                                                          │
+Setup guide           M10    │ │ x Drop        no OpenCode server is known to … │  │                                                                          │
+                             │ └────────────────────────────────────────────────┘  └──────────────────────────────────────────────────────────────────────────┘
+                             │
+                             │ ┌─ Tool calls t ─────────────────────────────────┐  ┌─ Biggest in the context b ───────────────────────────────────────────────┐
+                             │ │ 12:05:01   bash      ls studies/   100 chars   │  │ the parts come with the session's next finished step                     │
+                             │ │ 12:04:31 ✗ bash      python -m myproject sw…   │  │                                                                          │
+                             │ │ 12:04:11   read      studies/no… 14.2K chars   │  │                                                                          │
+                             │ │ 12:04:01   todowrite               412 chars▆▆ │  │                                                                          │
+                             │ │ 12:03:41   read      src/grid.py  3.0K chars   │  │                                                                          │
+                             │ │ 12:03:31   read      src/measure… 3.0K chars   │  │                                                                          │
+                             │ │ 12:03:21   read      docs/estima… 3.0K chars   │  │                                                                          │
+                             │ │ 12:03:11   read      docs/observ… 3.0K chars   │  │                                                                          │
+                             │ └────────────────────────────────────────────────┘  └──────────────────────────────────────────────────────────────────────────┘
+                             │
+
+ f10 next view  enter open  esc back  . stop  m note  k compact  p pause  u undo  x drop  l live text  ? explain  f1 help  f5 machine column  q quit

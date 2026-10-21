@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Questions, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="color: #e0af68">● 3 questions waiting</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; flex: none; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Waiting for your answer · 3</div>
+<sc-for list="{{ questions }}" as="q" hint-placeholder-count="3"><div style="padding: 4px 8px; display: flex; flex-direction: column; {{ q.rowStyle }}"><div style="display: flex; gap: 12px; white-space: pre"><span style="flex: none; width: 66px; color: {{ q.idColor }}">{{ q.id }}</span><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; {{ q.titleStyle }}">{{ q.title }}</span><span style="flex: none; width: 336px; overflow: hidden; text-overflow: ellipsis; color: {{ q.quiet }}">{{ q.asked }}</span></div><div style="padding-left: 78px; white-space: pre; overflow: hidden; text-overflow: ellipsis; color: {{ q.quiet }}">{{ q.detail }}</div><div style="padding-left: 78px; white-space: pre; overflow: hidden; text-overflow: ellipsis"><span style="color: #7aa2f7">{{ q.k1 }}</span> {{ q.l1 }}   <span style="color: #7aa2f7">{{ q.k2 }}</span> {{ q.l2 }}   <span style="color: #7aa2f7">v</span> details</div></div></sc-for>
+</section>
+
+<div style="flex: 1; min-height: 0; display: flex; gap: 14px">
+
+<section style="position: relative; flex: 1; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">The highlighted question, whole</div>
+<div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column">
+<div style="flex: none; white-space: pre; overflow: hidden; text-overflow: ellipsis; color: #ffffff; font-weight: 700">The agent of myproject wants to change src/myproject/sampler.py (+12 -2)</div>
+<div style="flex: none; white-space: pre; overflow: hidden; text-overflow: ellipsis; color: #828bb8">q-4e1b7a · asked 12:41:07 by Clank (review)</div>
+<div style="flex: 1; min-height: 0; overflow: hidden; margin-top: 8px; padding: 8px 10px; background: #16161e; display: flex; flex-direction: column">
+<sc-for list="{{ diff }}" as="d" hint-placeholder-count="27"><div style="flex: none; height: 18px; white-space: pre; overflow: hidden; text-overflow: ellipsis; color: {{ d.color }}">{{ d.text }}</div></sc-for>
+</div>
+</div>
+</section>
+
+<div style="flex: 0 0 38%; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; flex: none; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column; gap: 6px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Its options</div>
+<div style="display: flex; gap: 10px"><span style="flex: none; width: 16px; color: #7aa2f7; font-weight: 700">y</span><div style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 700">Accept</span><span style="color: #828bb8">The agent changes the file and goes on.</span></div></div>
+<div style="display: flex; gap: 10px"><span style="flex: none; width: 16px; color: #7aa2f7; font-weight: 700">n</span><div style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 700">Reject</span><span style="color: #828bb8">The file stays as it is; the agent is told no, and why when you say.</span></div></div>
+</section>
+
+<section style="position: relative; flex: 1; min-height: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">How it can be answered</div>
+<div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 10px">
+<div>The highlighted one is answered with an option's key (<span style="color: #7aa2f7">Tab</span> moves into the list; a digit there answers a numbered option instead of opening a page), and <span style="color: #7aa2f7">v</span> shows it whole.</div>
+<div>Answer with an option's key here, in VS Code, or with <span style="color: #7aa2f7">clank questions answer</span>; the first answer counts, and every client shows who gave it <span style="color: #828bb8">(design 0002 §2.5)</span>.</div>
+<div style="color: #828bb8">The answer is recorded as you (console); a question answered anywhere else leaves the list as soon as the event stream says so.</div>
+</div>
+</section>
+
+</div>
+</div>
+
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">↑↓</span> highlight a question</span><span><span style="color: #7aa2f7">y n …</span> answer it with an option's key</span><span><span style="color: #7aa2f7">v</span> the question whole</span><span><span style="color: #7aa2f7">tab</span> into the list</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '        ● 3', '#e0af68'], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Questions' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const highlighted = { rowStyle: 'background: #283457; color: #ffffff', idColor: '#c0caf5', titleStyle: 'color: #ffffff; font-weight: 700', quiet: '#c0caf5' };
+    const other = { rowStyle: 'margin-top: 6px', idColor: '#828bb8', titleStyle: '', quiet: '#828bb8' };
+    const questions = [
+      Object.assign({}, highlighted, {
+        id: 'q-4e1b7a',
+        title: 'The agent of myproject wants to change src/myproject/sampler.py (+12 -2)',
+        asked: 'asked 12:41:07 by Clank (review)',
+        detail: '--- a/src/myproject/sampler.py  +++ b/src/myproject/sampler.py  @@ -1,5 +1,9 @@  """Random graphs, for the simulation studies."""  +import logging  +  import numpy as np',
+        k1: 'y', l1: 'Accept', k2: 'n', l2: 'Reject'
+      }),
+      Object.assign({}, other, {
+        id: 'q-9c2d05',
+        title: "Install myproject's software?",
+        asked: 'asked 12:44:31 by Clank (workspaces.setup)',
+        detail: "Clank installs myproject's own software into its home (~/.venv), so its agent can run it:  uv sync  It runs in a container of its own that reaches the internet to download the packages, mounted like the workspace's; the workspace's container, where the agent runs, never reaches out.  The first time it may take a few minutes.",
+        k1: 'y', l1: 'Install it', k2: 'n', l2: 'Not now'
+      }),
+      Object.assign({}, other, {
+        id: 'q-d03f6b',
+        title: 'Stop Docker Desktop?',
+        asked: 'asked 12:46:13 by Clank (docker.stop)',
+        detail: '1 container that Clank did not start is running: notebook-server. Stopping Docker Desktop stops it too.',
+        k1: 'y', l1: 'Stop it and Docker', k2: 'n', l2: 'Cancel'
+      })
+    ];
+    const head = '#828bb8', hunk = '#bb9af7', add = '#9ece6a', del = '#f7768e', same = '#c0caf5';
+    const diff = [
+      ['--- a/src/myproject/sampler.py', head],
+      ['+++ b/src/myproject/sampler.py', head],
+      ['@@ -1,5 +1,9 @@', hunk],
+      [' """Random graphs, for the simulation studies."""', same],
+      [' ', same],
+      ['+import logging', add],
+      ['+', add],
+      [' import numpy as np', same],
+      [' ', same],
+      [' from myproject.graph import Graph', same],
+      ['+', add],
+      ['+log = logging.getLogger(__name__)', add],
+      ['@@ -14,6 +18,12 @@', hunk],
+      [' ', same],
+      ['-def sample_graph(n: int, p: float) -> Graph:', del],
+      ['-    rng = np.random.default_rng()', del],
+      ['+def sample_graph(n: int, p: float, seed: int | None = None) -> Graph:', add],
+      ['+    """A G(n, p) random graph; the same seed gives the same graph."""', add],
+      ['+    rng = np.random.default_rng(seed)', add],
+      ['     edges = rng.random((n, n)) < p', same],
+      ['     edges = np.triu(edges, k=1)', same],
+      ['+    if not edges.any():', add],
+      ['+        # an empty graph has nothing to study: draw again', add],
+      ['+        return sample_graph(n, p, None if seed is None else seed + 1)', add],
+      ['+', add],
+      ['+    log.debug("sampled %d edges for n=%d, p=%.3f", int(edges.sum()), n, p)', add],
+      ['     return Graph.from_adjacency(edges | edges.T)', same]
+    ].map(([text, color]) => ({ text, color }));
+    return { menu, questions, diff };
+  }
+}
+</script>
+</body>
+</html>

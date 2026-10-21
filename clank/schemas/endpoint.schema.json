@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Endpoint",
+  "description": "A provider someone else runs, reached with your key: a cloud provider such as OpenRouter (design 0016 §4). Its key is kept with the secrets (CLANK_HOME/secrets/endpoint/<id>/key), never in this file.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "endpoint/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "adapter": {
+      "description": "The endpoint adapter that speaks to it, such as openrouter.",
+      "title": "Adapter",
+      "type": "string"
+    },
+    "url": {
+      "description": "Its API's base URL; for a cloud provider the adapter's own, so the key never goes elsewhere.",
+      "title": "Address",
+      "type": "string"
+    },
+    "auth": {
+      "description": "bearer: the key in an Authorization header; none: no key.",
+      "enum": [
+        "bearer",
+        "none"
+      ],
+      "title": "Key sent as",
+      "type": "string"
+    },
+    "reach": {
+      "description": "Where what it is sent goes: this-machine, my-servers, or cloud (a company's API).",
+      "enum": [
+        "this-machine",
+        "my-servers",
+        "cloud"
+      ],
+      "title": "Reach",
+      "type": "string"
+    },
+    "options": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "description": "The adapter's own options, such as OpenRouter's data_collection (deny: only providers that keep no data) and zdr (only zero-data-retention providers).",
+      "title": "Provider options",
+      "type": "object"
+    },
+    "agreed": {
+      "default": "",
+      "description": "When you agreed that prompts and the files and command output the agent reads go to it; empty: not agreed, and nothing loads from it.",
+      "title": "Agreed",
+      "type": "string"
+    },
+    "timeout_seconds": {
+      "default": 600,
+      "description": "The longest the gateway waits for the next piece of an answer, in seconds.",
+      "minimum": 10,
+      "title": "Read timeout",
+      "type": "integer"
+    },
+    "notes": {
+      "default": "",
+      "description": "Anything worth knowing.",
+      "title": "Notes",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "adapter",
+    "url",
+    "auth",
+    "reach"
+  ],
+  "additionalProperties": false
+}

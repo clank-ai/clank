@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Providers and models, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Serving setups</div>
+<div style="display: grid; grid-template-columns: 36ch 6ch 13ch 16ch 26ch minmax(0, 1fr); column-gap: 2ch; white-space: pre; color: #828bb8; margin-bottom: 2px">
+<span>serving setup</span><span>reads</span><span>version</span><span>installed on</span><span>how</span><span>recipe</span>
+</div>
+<sc-for list="{{ setups }}" as="s" hint-placeholder-count="2">
+<div style="display: grid; grid-template-columns: 36ch 6ch 13ch 16ch 26ch minmax(0, 1fr); column-gap: 2ch; white-space: pre">
+<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ s.label }} <span style="color: #828bb8">({{ s.name }})</span></span>
+<span>{{ s.format }}</span>
+<span>{{ s.version }}</span>
+<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis"><span style="color: #9ece6a">●</span> {{ s.host }}</span>
+<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ s.how }}</span>
+<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis"><span style="color: {{ s.recipeColor }}">{{ s.recipeMark }}</span> {{ s.recipe }}</span>
+</div>
+</sc-for>
+</section>
+
+<section style="position: relative; flex: 1; min-height: 0; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Models</div>
+<div style="display: grid; grid-template-columns: 16ch 38ch 8ch minmax(0, 1fr); column-gap: 2ch; padding-left: 2ch; white-space: pre; color: #828bb8">
+<span>role</span><span>file</span><span style="text-align: right">size</span><span>from</span>
+</div>
+<div style="flex: 1; min-height: 0; overflow: hidden">
+<sc-for list="{{ models }}" as="m" hint-placeholder-count="3">
+<div style="margin-top: 10px">
+<div style="white-space: pre; font-weight: 700">{{ m.name }} <span style="color: #828bb8; font-weight: 400">({{ m.id }})</span></div>
+<sc-for list="{{ m.files }}" as="f" hint-placeholder-count="2">
+<div>
+<div style="display: grid; grid-template-columns: 16ch 38ch 8ch minmax(0, 1fr); column-gap: 2ch; padding-left: 2ch; white-space: pre">
+<span>{{ f.role }}</span>
+<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ f.path }}</span>
+<span style="text-align: right">{{ f.size }}</span>
+<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #828bb8">{{ f.from }}</span>
+</div>
+<sc-for list="{{ f.hosts }}" as="h" hint-placeholder-count="1">
+<div style="display: grid; grid-template-columns: 16ch 38ch 8ch minmax(0, 1fr); column-gap: 2ch; padding-left: 2ch; margin-bottom: 2px">
+<span style="padding-left: 2ch; white-space: pre; color: #828bb8; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ h.host }}</span>
+<span style="grid-column: 2 / 5; min-width: 0; overflow-wrap: anywhere"><span style="color: {{ h.color }}">{{ h.mark }}</span> <span style="color: {{ h.color }}">{{ h.there }}</span><span style="color: #828bb8">, {{ h.how }}</span> {{ h.path }}</span>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</section>
+
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">i</span> install an engine</span><span><span style="color: #7aa2f7">d</span> download a model's file</span><span><span style="color: #7aa2f7">x</span> remove a model's files</span><span><span style="color: #7aa2f7">u</span> remove an engine</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Providers and models' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const ok = '#9ece6a', quiet = '#828bb8';
+    const setups = [
+      { label: 'KVMem/llama.cpp', name: 'kvmem-llamacpp', format: 'gguf', version: 'v0.16.0-rc1', host: 'ubuntu-22.04',
+        how: 'adopted where it was', recipeMark: '—', recipeColor: quiet, recipe: '' },
+      { label: 'llama.cpp', name: 'llamacpp', format: 'gguf', version: 'b11588', host: 'ubuntu-22.04',
+        how: "built by Clank's recipe", recipeMark: '✓', recipeColor: ok, recipe: 'Clank has its recipe' }
+    ];
+    const inFolder = (repository, revision, file) => [{
+      host: 'ubuntu-22.04', mark: '✓', color: ok, there: 'there', how: 'in its models folder at',
+      path: '~/.clank/models/' + repository + '/' + revision + '/' + file
+    }];
+    const adopted = (path) => [{ host: 'ubuntu-22.04', mark: '✓', color: ok, there: 'there', how: 'adopted at', path }];
+    const coder = 'ggml-org/Qwen2.5-Coder-0.5B-Q8_0-GGUF', vl = 'Qwen/Qwen3-VL-4B-Instruct-GGUF';
+    const models = [
+      { name: 'Qwen2.5-Coder 0.5B', id: 'qwen2.5-coder-0.5b', files: [
+        { role: 'gguf weights', path: 'qwen2.5-coder-0.5b-q8_0.gguf', size: '531 MB', from: coder + '@5788aee90e72',
+          hosts: inFolder(coder, '5788aee90e72', 'qwen2.5-coder-0.5b-q8_0.gguf') }
+      ] },
+      { name: 'Qwen3-VL 4B', id: 'qwen3-vl-4b', files: [
+        { role: 'gguf weights', path: 'Qwen3VL-4B-Instruct-Q4_K_M.gguf', size: '2.5 GB', from: vl + '@1cd86afb9a95',
+          hosts: inFolder(vl, '1cd86afb9a95', 'Qwen3VL-4B-Instruct-Q4_K_M.gguf') },
+        { role: 'gguf projector', path: 'mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf', size: '454 MB', from: vl + '@1cd86afb9a95',
+          hosts: inFolder(vl, '1cd86afb9a95', 'mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf') }
+      ] },
+      { name: 'Qwen3.8-27B', id: 'qwen3.8-27b', files: [
+        { role: 'gguf weights', path: 'Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf', size: '12.1 GB',
+          from: 'ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF@d562806dbafa', hosts: adopted('~/models/Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf') },
+        { role: 'gguf projector', path: 'mmproj-Q8_0.gguf', size: '629 MB',
+          from: 'unsloth/Qwen3.8-27B-GGUF', hosts: adopted('~/models/mmproj-Q8_0.gguf') }
+      ] }
+    ];
+    return { menu, setups, models };
+  }
+}
+</script>
+</body>
+</html>

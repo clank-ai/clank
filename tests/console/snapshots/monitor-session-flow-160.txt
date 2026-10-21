@@ -1,0 +1,40 @@
+ ◆ CLANK  paper   ● service up 8d0h  ● docker running  ● no model: Add a model  ● gateway stopped                                                         12:21
+F4 This folder         ✗ 4   │  Flow   Session   Context
+1 Home                       │ OpenCode · workspace myproject · “Plan a new simulation study” · build · working · 19 steps, 20 calls · since 11:58 · the newes…
+2 Questions                  │
+3 History                    │ ┌─ Context window c ───────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+4 Docker               ●     │ │ no model runs in the main slot                                                                                               │
+5 Machine                    │ │ this session ▂▂▃▃▃▄▄▄▅▅▅▆▆▇▇▇▇█  ✗ 12:04 the loop guard stopped step 17                                                      │
+6 Operations                 │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+7 Records                    │
+8 Models               ●     │ ┌─ Now n ────────────────────────────────────────┐  ┌─ Flow f ───────────────────────────────── ↑↓ a node · ←→ fold · End now ─┐
+9 Presets                    │ │ ⣾ working, between its steps · step 19         │  │ You ─┬─ before the todo list ▸  1 call                                   │
+0 Providers and models       │ │ prompt      no first token yet                 │  │      ├─ ✓ Read the simulator and last study ▸  6 calls                   │
+F1 Help                      │ │ last prompt none ended since the gateway star… │  │      ├─ ✓ List the observables ▸  10 calls                               │
+F2 Launch options            │ │ thinking    nothing written yet                │  │      ├─ ● Draft the parameter grid ─┬─ read studies/notes.md             │
+F3 MCP servers               │ │ output      nothing written yet                │  │      │                              ├─ ✗ bash python -m myproject sw… ⊘  │
+F6 Workspaces                │ │ writing     no call being written              │  │      │                              ├─ ✗ failed: Clank's loop guard st…  │
+F7 Requests                  │ │ speed       —                                  │  │      │                              ├─ bash ls studies/  100 chars       │
+F8 CPU models                │ │ loop guard  the gateway is stopped             │  │      │                              ├─ ✎ your note: Keep the grid to 3…  │
+F9 Phone               ●     │ └────────────────────────────────────────────────┘  │      │                              └─ ● working                         │
+F10 Monitor                  │                                                     │      ├┄ ○ Estimate run times                                             │
+F12 Add a model              │ ┌─ Watch for w ──────────────────────────────────┐  │      └┄ ○ Write the plan file                                            │
+─────────────────────────────│ │ no session yet                                 │  │                                                                          │
+coming                       │ └────────────────────────────────────────────────┘  │                                                                          │
+Sampling              M3     │                                                     │                                                                          │
+Sessions              M3     │ ┌─ Guide g ──────────────────────────────────────┐  │                                                                          │
+Keys                  M3     │ │ . Stop now    no OpenCode server is known to … │  │                                                                          │
+Layout                M2     │ │ m Note        no OpenCode server is known to … │  │                                                                          │
+Tests and trials      M2     │ │ k Compact now no OpenCode server is known to … │  │                                                                          │
+Agents                M5     │ │ p Pause       the gateway does not run         │  │                                                                          │
+Modes                 M5     │ │ u Undo turn   no OpenCode server is known to … │  │                                                                          │
+Changes               M6     │ │ x Drop        no OpenCode server is known to … │  │                                                                          │
+Network access        M7     │ └────────────────────────────────────────────────┘  └──────────────────────────────────────────────────────────────────────────┘
+Skills                M8     │
+Files                 M9     │ ┌─ Tool calls t ─────────────────────────────────┐  ┌─ Biggest in the context b ───────────────────────────────────────────────┐
+Setup guide           M10    │ │ 12:05:01   bash      ls studies/   100 chars   │  │ the parts come with the session's next finished step                     │
+                             │ │ 12:04:31 ✗ bash      python -m myproject sw…   │  │                                                                          │
+                             │ └────────────────────────────────────────────────┘  └──────────────────────────────────────────────────────────────────────────┘
+                             │
+
+ f10 next view  enter open  esc back  . stop  m note  k compact  p pause  u undo  x drop  l live text  ? explain  f1 help  f5 machine column  q quit

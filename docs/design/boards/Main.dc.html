@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Monitor, everything on one screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #9ece6a">● service up 26m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="color: #ff9e64">● monitor: answering</span>
+<span style="margin-left: auto; color: #828bb8">12:21</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: #ff9e64">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 14px 14px 8px; display: flex; flex-direction: column; gap: 16px">
+
+<div style="white-space: pre; display: flex; gap: 16px; flex-wrap: wrap">
+<span style="color: #7aa2f7; font-weight: 700">OpenCode</span><span>workspace <span style="color: #e0af68">myproject</span></span><span>session <span style="color: #e0af68">“Plan a new simulation study”</span></span><span style="color: #828bb8">30 steps · 41 tool calls · since 11:58</span><span style="margin-left: auto; color: #828bb8">p  other sessions (2)</span>
+</div>
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Context window <span style="color: #828bb8; font-weight: 400">c</span></div>
+<div style="white-space: pre; display: flex; gap: 22px; flex-wrap: wrap">
+<span><span style="font-weight: 700">152,661</span> of 262,144 tokens <span style="color: #828bb8">(58%)</span></span>
+<span><span style="color: #9ece6a; font-weight: 700">93,099</span> left before OpenCode compacts</span>
+<span style="color: #828bb8">97% read from the cache</span>
+<span style="color: #828bb8">estimate: characters per category, scaled to the engine's count</span>
+</div>
+<div style="display: flex; white-space: pre; margin-top: 8px; font-size: 15px; line-height: 20px">
+<sc-for list="{{ bar }}" as="b" hint-placeholder-count="9"><span style="color: {{ b.color }}">{{ b.text }}</span></sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 24px; margin-top: 8px; white-space: pre">
+<sc-for list="{{ legend }}" as="l" hint-placeholder-count="10">
+<div style="display: flex; gap: 8px"><span style="color: {{ l.color }}">{{ l.mark }}</span><span style="flex: 1">{{ l.name }}</span><span style="text-align: right; width: 72px">{{ l.tok }}</span><span style="color: #828bb8; text-align: right; width: 48px">{{ l.pct }}</span></div>
+</sc-for>
+</div>
+<div style="display: flex; gap: 12px; margin-top: 10px; white-space: pre; align-items: center">
+<span style="width: 196px">On the GPU exactly <span style="color: #828bb8">36,864</span></span>
+<div style="display: flex; font-size: 15px"><sc-for list="{{ map }}" as="r" hint-placeholder-count="20"><span style="color: {{ r.color }}">{{ r.text }}</span></sc-for></div>
+</div>
+<div style="white-space: pre; color: #828bb8; margin-top: 2px; padding-left: 208px"><span style="color: #e0af68">█</span> first 1,024  <span style="color: #7dcfff">█</span> 31,744 picked by your last message  <span style="color: #ff9e64">█</span> newest 4,096  <span style="color: #3b4261">░</span> 115,797 in system memory</div>
+<div style="display: flex; gap: 12px; margin-top: 6px; white-space: pre">
+<span style="width: 196px">This session</span><span style="color: #7aa2f7">{{ spark }}</span><span style="color: #f7768e">▲ 12:04 the loop added 23K</span>
+</div>
+</section>
+
+<div style="flex: 1; display: flex; gap: 14px; min-height: 0">
+
+<div style="flex: 0 0 44%; display: flex; flex-direction: column; gap: 16px; min-width: 0">
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Now <span style="color: #828bb8; font-weight: 400">n</span></div>
+<div><span style="color: #ff9e64">● answering</span>  step 30  <span style="color: #828bb8">36.1 s</span></div>
+<div style="margin-top: 6px"><span style="color: #828bb8">prompt     </span> read in 1.0 s · 147,815 cached, 5,799 new</div>
+<div><span style="color: #828bb8">thinking   </span> <span style="color: #bb9af7">{{ thinkBar }}</span> 1,203 of 4,096</div>
+<div><span style="color: #828bb8">output     </span> <span style="color: #73daca">{{ outBar }}</span> 1,415 of 16,384</div>
+<div><span style="color: #828bb8">writing    </span> tool call <span style="color: #e0af68">bash</span>  python -m myproject…</div>
+<div><span style="color: #828bb8">speed      </span> 48 tok/s  <span style="color: #7aa2f7">▅▆▆▇▆▆▅▆▇▇▆▆▅▆▇▆</span></div>
+<div><span style="color: #828bb8">loop guard </span> <span style="color: #9ece6a">watching</span> · nothing repeats</div>
+</section>
+<section style="position: relative; flex: 1; min-height: 0; border: 1px solid #3b4261; padding: 14px 12px 6px; white-space: pre; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Tool calls <span style="color: #828bb8; font-weight: 400">t</span></div>
+<div style="flex: 1; min-height: 0; overflow: hidden">
+<sc-for list="{{ calls }}" as="c" hint-placeholder-count="8">
+<div style="display: flex; gap: 10px; color: {{ c.color }}"><span style="width: 64px">{{ c.time }}</span><span style="width: 56px">{{ c.tool }}</span><span style="flex: 1; overflow: hidden; text-overflow: ellipsis">{{ c.what }}</span><span style="width: 52px; text-align: right">{{ c.result }}</span></div>
+</sc-for>
+</div>
+</section>
+</div>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<section style="position: relative; flex: 1; min-height: 0; border: 1px solid #7aa2f7; padding: 14px 12px 6px; white-space: pre; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Flow <span style="color: #828bb8; font-weight: 400">f</span></div>
+<div style="flex: 1; min-height: 0; overflow: hidden">
+<sc-for list="{{ tree }}" as="row" hint-placeholder-count="16"><div style="display: flex; {{ row.style }}"><sc-for list="{{ row.segs }}" as="s" hint-placeholder-count="6"><span style="color: {{ s.c }}; {{ s.w }}">{{ s.t }}</span></sc-for></div></sc-for>
+</div>
+<div style="margin-top: 6px; color: #828bb8"><span style="color: #7aa2f7">↑↓</span> a step · <span style="color: #7aa2f7">←→</span> fold or open a branch · <span style="color: #7aa2f7">Enter</span> its details · <span style="color: #7aa2f7">F</span> the whole flow</div>
+</section>
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 6px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Biggest in the context <span style="color: #828bb8; font-weight: 400">b</span></div>
+<sc-for list="{{ biggest }}" as="g" hint-placeholder-count="4">
+<div style="display: flex; gap: 12px; color: {{ g.color }}"><span style="width: 52px; text-align: right">{{ g.tok }}</span><span style="flex: 1; overflow: hidden; text-overflow: ellipsis">{{ g.what }}</span><span style="color: #828bb8">{{ g.step }}</span></div>
+</sc-for>
+</section>
+</div>
+
+</div>
+
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">Tab</span> next box</span><span><span style="color: #7aa2f7">c n f t b</span> go to a box</span><span><span style="color: #7aa2f7">Enter</span> open</span><span><span style="color: #7aa2f7">Esc</span> back</span><span><span style="color: #7aa2f7">l</span> live text</span><span><span style="color: #7aa2f7">p</span> pick a session</span><span><span style="color: #7aa2f7">.</span> stop</span><span><span style="color: #7aa2f7">m</span> note</span><span><span style="color: #7aa2f7">f1</span> help</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder'], ['1', 'Home'], ['2', 'Questions'], ['3', 'History'], ['4', 'Docker'],
+      ['5', 'Machine'], ['6', 'Operations'], ['7', 'Records'], ['8', 'Models'], ['9', 'Presets'],
+      ['0', 'Providers and models'], ['F1', 'Help'], ['F2', 'Launch options'], ['F3', 'MCP servers'],
+      ['F6', 'Workspaces'], ['F7', 'Requests'], ['F8', 'CPU models'], ['F9', 'Phone'], ['F10', 'Monitor']
+    ];
+    const menu = names.map(([key, name]) => ({
+      key: key.padEnd(3, ' '), name,
+      tag: name === 'Monitor' ? '       new' : '',
+      style: name === 'Monitor' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const seg = (cells, ch, color) => ({ text: ch.repeat(cells), color });
+    const bar = [
+      seg(3, '█', '#7aa2f7'), seg(5, '█', '#3d59a1'), seg(7, '█', '#bb9af7'), seg(1, '█', '#73daca'),
+      seg(33, '█', '#9ece6a'), seg(9, '█', '#f7768e'), seg(36, '░', '#3b4261'), seg(6, '▒', '#565f89')
+    ];
+    const legend = [
+      { mark: '██', color: '#7aa2f7', name: 'system prompt', tok: '7,464', pct: '4.9%' },
+      { mark: '██', color: '#3d59a1', name: 'tool definitions (26)', tok: '12,179', pct: '8.0%' },
+      { mark: '██', color: '#e0af68', name: 'your messages (1)', tok: '244', pct: '0.2%' },
+      { mark: '██', color: '#c0caf5', name: 'model text', tok: '733', pct: '0.5%' },
+      { mark: '██', color: '#bb9af7', name: 'thinking sent back', tok: '18,007', pct: '11.8%' },
+      { mark: '██', color: '#73daca', name: 'tool calls (41)', tok: '986', pct: '0.6%' },
+      { mark: '██', color: '#9ece6a', name: 'tool results (41)', tok: '90,097', pct: '59.0%' },
+      { mark: '██', color: '#f7768e', name: 'loop text (12:04)', tok: '22,950', pct: '15.0%' },
+      { mark: '░░', color: '#3b4261', name: 'free', tok: '93,099', pct: '' },
+      { mark: '▒▒', color: '#565f89', name: 'kept for the answer', tok: '16,384', pct: '' }
+    ];
+    const picked = [1, 2, 3, 4, 7, 11, 19, 20, 27, 32, 40, 43, 49, 50, 51, 61, 69, 73, 79, 80, 88];
+    const cells = [];
+    for (let i = 0; i < 100; i++) {
+      if (i === 0) cells.push('#e0af68');
+      else if (i >= 97) cells.push('#ff9e64');
+      else cells.push(picked.includes(i) ? '#7dcfff' : '#3b4261');
+    }
+    const map = [];
+    cells.forEach((color) => {
+      const ch = color === '#3b4261' ? '░' : '█';
+      const last = map[map.length - 1];
+      if (last && last.color === color) last.text += ch; else map.push({ color, text: ch });
+    });
+    const sizes = [9, 15, 22, 28, 31, 35, 38, 41, 44, 47, 52, 55, 58, 61, 64, 66, 69, 72, 73, 73, 79, 81, 82, 82, 83, 85, 115, 116, 132, 133, 139, 143, 144, 147, 147, 148, 152];
+    const ticks = '▁▂▃▄▅▆▇█';
+    const spark = sizes.map((k) => ticks[Math.min(7, Math.floor(k / 262 * 8))]).join('');
+    const colors = { y: '#e0af68', d: '#565f89', g: '#9ece6a', b: '#7aa2f7', r: '#f7768e', o: '#ff9e64', p: '#9d7cd8', t: '#73daca', w: '#c0caf5', m: '#828bb8' };
+    const cell = 'display: inline-block; width: 1ch; text-align: center';
+    const own = (ch) => {
+      const code = ch.codePointAt(0);
+      return code >= 0x2190 && !(code >= 0x2500 && code <= 0x259f);
+    };
+    const parse = (line, selected) => {
+      const segs = [];
+      let color = colors.w;
+      line.split(/(\{[a-z]\})/).forEach((piece) => {
+        const mark = /^\{([a-z])\}$/.exec(piece);
+        if (mark) { color = colors[mark[1]]; return; }
+        let run = '';
+        for (const ch of piece) {
+          if (own(ch)) {
+            if (run) segs.push({ t: run, c: color, w: '' });
+            segs.push({ t: ch, c: color, w: cell });
+            run = '';
+          } else run += ch;
+        }
+        if (run) segs.push({ t: run, c: color, w: '' });
+      });
+      return { segs, style: selected ? 'background: #283457' : '' };
+    };
+    const tree = [
+      '{y}You {d}─┬─ {g}✓ Read the simulator and last study {d}─┬─ {b}glob {m}**/*.py',
+      '{d}     │                                       ├─ {b}read ×3 {d}─┬─ {w}src/simulator.py   {m}18.6K',
+      '{d}     │                                       │           ├─ {w}README.md           {m}2.1K',
+      '{d}     │                                       │           └─ {w}studies/notes.md    {m}4.0K',
+      '{d}     │                                       └─ {p}capabilities {m}(MCP) 6.4K',
+      '{d}     ├─ {g}✓ List the observables {d}─┬─ {y}bash ×4',
+      '{d}     │                          ├─ {p}◆ subagent: find observables {d}─┬─ {b}grep ×6',
+      '{d}     │                          │                                └─ {b}read ×2 {m}→ 1.2K back',
+      '{d}     │                          └─ {b}read ×4',
+      '{d}     ├─ {o}● Draft the parameter grid {d}─┬─ {b}read {m}studies/notes.md',
+      '{d}     │                              ├─ {r}✗ bash: a loop, stopped after 15 s',
+      '{d}     │                              ├─ {y}bash {m}ls studies/',
+      '{d}     │                              ├─ {y}✎ your note: keep the grid to 3 sizes',
+      '{d}     │                              └─ {o}● thinking {m}1,203 tokens',
+      '{d}     ├┄ {m}○ Estimate run times',
+      '{d}     └┄ {m}○ Write the plan file'
+    ].map((line, index) => parse(line, index === 13));
+    const plain = '#c0caf5';
+    const calls = [
+      { time: '12:13:30', tool: 'bash', what: 'ls studies/', result: '0.1K', color: plain },
+      { time: '12:11:47', tool: 'read', what: 'studies/PLAN.md', result: '4.1K', color: plain },
+      { time: '12:11:45', tool: 'bash', what: 'git log -5 --oneline', result: '0.2K', color: plain },
+      { time: '12:09:33', tool: 'read', what: 'src/simulator.py', result: '18.6K', color: plain },
+      { time: '12:09:01', tool: 'bash', what: 'python -c "import myproject; print(…)"', result: '1.0K', color: plain },
+      { time: '12:04:17', tool: '✗ bash', what: 'a loop: stopped by the guard after 15 s', result: '0.6K', color: '#f7768e' },
+      { time: '12:03:57', tool: 'read', what: 'docs/estimators.md', result: '9.8K', color: plain },
+      { time: '12:03:53', tool: 'bash', what: 'grep -rn "def estimate" src/', result: '0.3K', color: plain }
+    ];
+    const biggest = [
+      { tok: '18.6K', what: 'read  src/simulator.py', step: 'step 24', color: plain },
+      { tok: '14.2K', what: 'read  studies/notes.md', step: 'step 26', color: plain },
+      { tok: '12.1K', what: '✗ the 12:04 loop, as a call', step: 'step 22', color: '#f7768e' },
+      { tok: '10.9K', what: '✗ its error, echoing the loop', step: 'step 22', color: '#f7768e' }
+    ];
+    return {
+      menu, bar, legend, map, spark, tree, calls, biggest,
+      thinkBar: '█'.repeat(9) + '░'.repeat(21),
+      outBar: '█'.repeat(3) + '░'.repeat(27)
+    };
+  }
+}
+</script>
+</body>
+</html>

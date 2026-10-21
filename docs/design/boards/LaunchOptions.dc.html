@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Launch options, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">daily 262K: launch options</div>
+<div style="display: grid; grid-template-columns: 19ch 15ch 16ch 41ch minmax(0, 1fr); column-gap: 2ch; white-space: pre; color: #828bb8; margin-bottom: 4px">
+<span>option</span><span>value</span><span>comes from</span><span>the engine receives</span><span>what it does</span>
+</div>
+<sc-for list="{{ options }}" as="o" hint-placeholder-count="14">
+<div style="display: grid; grid-template-columns: 19ch 15ch 16ch 41ch minmax(0, 1fr); column-gap: 2ch; white-space: pre; margin-bottom: 3px">
+<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ o.label }}</span>
+<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 700">{{ o.value }}</span>
+<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; color: {{ o.fromColor }}">{{ o.from }}</span>
+<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; color: {{ o.givesColor }}">{{ o.gives }}</span>
+<span style="min-width: 0; white-space: normal; color: #828bb8">{{ o.help }}</span>
+</div>
+</sc-for>
+</section>
+
+<section style="position: relative; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">The command line</div>
+<div style="min-width: 0"><sc-for list="{{ command }}" as="p" hint-placeholder-count="15"><span style="display: inline-block; max-width: 100%; white-space: pre; overflow: hidden; text-overflow: ellipsis; vertical-align: top; {{ p.s }}">{{ p.t }}</span></sc-for></div>
+</section>
+
+<section style="position: relative; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Memory</div>
+<div>weights 11,160 + KV 1,768 + buffers 537 + overhead 632 + learned 298 = 14,395 MiB</div>
+<div>free now 14,621 of 16,303 MiB (1,682 in use: the desktop and other programs)</div>
+<div style="color: #e0af68; font-weight: 700">TIGHT: 226 MiB to spare, less than 500</div>
+<div style="color: #828bb8; padding-left: 2ch">KV: 53,248 cells of 34,816 bytes (q8_0)</div>
+<div style="color: #828bb8; padding-left: 2ch">learned: +298 MiB, what launch 57 on ubuntu-22.04 took beyond its estimate</div>
+</section>
+
+<div style="flex: 1"></div>
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">p</span> pick a preset</span><span><span style="color: #7aa2f7">e</span> open its file</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Launch options' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const text = '#c0caf5', quiet = '#828bb8';
+    const rows = [
+      ['Context', '262,144 tokens', "Clank's default", '-c 262144', 'Tokens the model can see; past the budget, older context is retrieved.'],
+      ['Maximum output', '16,384 tokens', "Clank's default", '-n 16384', 'The most tokens one answer may have, when a request does not say.'],
+      ['Retrieval budget', '36,864 tokens', "Clank's default", '--kvmem-budget 36864', 'Tokens attended to exactly on the GPU; 0 means the whole context.'],
+      ['Generation reserve', '16,384 tokens', "Clank's default", '--kvmem-gen-reserve 16384', 'Room kept on the GPU for the answer being written.'],
+      ['Retrieval method', 'retrieval', "Clank's default", '', 'How older context is chosen: by relevance, or the most recent.'],
+      ['KV cache type', 'q8_0', "Clank's default", '', "The cache's number format: q4_0 takes half of q8_0, maybe at a cost."],
+      ['Speculation', 'draft-mtp', "Clank's default", '--spec-type draft-mtp', "Draft tokens with the model's MTP head, checked in one step."],
+      ['Draft tokens', '3', "Clank's default", '', 'Tokens drafted per step; 3 is the tested value.'],
+      ['Vision', 'cpu', 'the preset', '--mmproj {projector} --no-mmproj-offload', 'Images in: off, the projector on the CPU, or on the GPU (0.6 GB more there).'],
+      ['Image tokens', '512 tokens', 'the preset', '--image-max-tokens 512', 'The most tokens one image may take.'],
+      ['Thinking', 'on', "Clank's default", '--enable-thinking', 'The model thinks before it answers, unless a request turns it off.'],
+      ['Thinking budget', '4,096 tokens', "Clank's default", '--reasoning-budget 4096', 'The most tokens of thinking; -1 for no limit.'],
+      ['Batch', '512', "Clank's default", '', 'Tokens read per step while reading a prompt.'],
+      ['CUDA graphs', 'off', "Clank's default", 'env:GGML_CUDA_DISABLE_GRAPHS=1', 'Faster decoding; off because they crashed v0.16 on an MTP verify step.']
+    ];
+    const options = rows.map(([label, value, from, gives, help]) => ({
+      label, value, from, help,
+      fromColor: from === 'the preset' ? text : quiet,
+      gives: gives || "(the engine's own default)",
+      givesColor: gives ? text : quiet
+    }));
+    const command = [
+      ['GGML_CUDA_DISABLE_GRAPHS=1 ', ''],
+      ['~/kvmem/build/bin/llama-kvmem-server ', 'font-weight: 700'],
+      ['-m ~/models/Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf ', ''],
+      ['-c 262144 ', ''], ['-n 16384 ', ''], ['--kvmem-budget 36864 ', ''], ['--kvmem-gen-reserve 16384 ', ''],
+      ['--spec-type draft-mtp ', ''], ['--mmproj ~/models/mmproj-Q8_0.gguf ', ''], ['--no-mmproj-offload ', ''],
+      ['--image-max-tokens 512 ', ''], ['--enable-thinking ', ''], ['--reasoning-budget 4096 ', ''],
+      ['--host 127.0.0.1 ', ''], ['--port 18200', '']
+    ].map(([t, s]) => ({ t, s }));
+    return { menu, options, command };
+  }
+}
+</script>
+</body>
+</html>

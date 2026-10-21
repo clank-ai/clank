@@ -1,0 +1,44 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway                      09:14
+F4 This folder   ✗ │ ┌─ Local: a model on this computer ──────────────────────────────┐
+1 Home             │ │ Clank's presets for the main slot, each with its fit on this   │
+2 Questions        │ │ GPU and what it needs here. Each missing step is done in       │
+3 History          │ │ order: the engine by Clank's recipe, the model's files, the    │
+4 Docker         ● │ │ load; each is asked first. A local model costs nothing per     │
+5 Machine          │ │ request.                                                       │
+6 Operations       │ │ daily 262K                                                     │
+7 Records          │ │   kvmem-llamacpp v0.00.0-rc1 · qwen3.8-27b · fit: known once   │
+8 Models         ● │ │ its engine is installed                                        │
+9 Presets          │ │   install KVMem/llama.cpp v0.00.0-rc1; download Qwen3.8-27B's  │
+0 Providers and…   │ │ weights (11.3 GB)                                              │
+F1 Help            │ │ frontier 262K                                                  │
+F2 Launch optio…   │ │   kvmem-llamacpp v0.00.0-rc1 · swift-1.5-qwen3.8-27b · fit:    │
+F3 MCP servers     │ │ known once its engine is installed                             │
+F6 Workspaces      │ │   install KVMem/llama.cpp v0.00.0-rc1; download Swift 1.5      │
+F7 Requests        │ │ Qwen3.8-27B's weights (11.3 GB)                                │
+F8 CPU models      │ │ frontier 262K lean                                             │
+F9 Phone         ● │ │   kvmem-llamacpp v0.00.0-rc1 · swift-1.5-qwen3.8-27b-iq3xxs ·  │
+F10 Monitor        │ │ fit: known once its engine is installed                        │
+F12 Add a model    │ │   install KVMem/llama.cpp v0.00.0-rc1; download Swift 1.5      │
+                   │ │ Qwen3.8-27B IQ3_XXS's weights (9.7 GB)                         │
+                   │ │ frontier 96K                                                   │
+                   │ │   kvmem-llamacpp v0.00.0-rc1 · swift-1.5-qwen3.8-27b · fit:    │
+                   │ │ known once its engine is installed                             │
+                   │ │   install KVMem/llama.cpp v0.00.0-rc1; download Swift 1.5      │
+                   │ │ Qwen3.8-27B's weights (11.3 GB)                                │
+                   │ │                                                                │
+                   │ │                                                                │
+                   │ └────────────────────────────────────────────────────────────────┘
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+
+ enter set it up  esc back  ? explain  f1 help  f5 machine column  q quit    ^p palette

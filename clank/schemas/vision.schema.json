@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Vision",
+  "description": "The model that reads images on the CPU: off, loaded only when an image is to be read (and unloaded when idle), or always loaded; how long it stays idle before it is unloaded; and its preset.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "vision/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "mode": {
+      "default": "on-demand",
+      "description": "off: no image is read (annotations go as words, the agent's model is told it takes text only); on-demand: loaded when an image is to be read, unloaded when idle; always: loaded and kept.",
+      "enum": [
+        "off",
+        "on-demand",
+        "always"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "idle_minutes": {
+      "default": 10,
+      "description": "Minutes without use after which an on-demand model is unloaded.",
+      "maximum": 1440,
+      "minimum": 1,
+      "title": "Idle",
+      "type": "integer"
+    },
+    "preset": {
+      "default": "vision",
+      "description": "The preset the vision slot loads.",
+      "title": "Preset",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

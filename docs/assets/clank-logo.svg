@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 236 64" width="236" height="64" role="img" aria-label="Clank">
+  <style>
+    .ink { fill: #1a1b26; }
+    .line { stroke: #1a1b26; }
+    @media (prefers-color-scheme: dark) {
+      .ink { fill: #e6eaff; }
+      .line { stroke: #e6eaff; }
+    }
+  </style>
+  <g transform="translate(4 4) scale(1.75)">
+    <path class="line" d="M22.4 9.6 16 3.2 3.2 16 16 28.8l6.4-6.4" fill="none" stroke-width="3.9"/>
+    <path d="M16 10.2 21.8 16 16 21.8 10.2 16Z" fill="#ff9e64"/>
+  </g>
+  <text class="ink" x="74" y="46" font-family="'Instrument Sans', Inter, 'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif" font-size="42" font-weight="600" letter-spacing="-0.5">clank</text>
+</svg>

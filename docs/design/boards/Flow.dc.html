@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Monitor, flow and guide</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+input,button{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #828bb8">Monitor (F10) › Flow (f)</span>
+<span style="margin-left: auto; color: #828bb8">12:21</span>
+</div>
+
+<div style="flex: 1; display: flex; gap: 14px; padding: 16px 14px 8px; min-height: 0">
+
+<section style="position: relative; flex: 0 0 60%; border: 1px solid #3b4261; padding: 16px 16px 8px; display: flex; flex-direction: column; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">What the model is doing, by its own plan</div>
+<div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start">
+
+<div style="border: 1px solid #e0af68; padding: 4px 10px; color: #e0af68">You  “Plan a new simulation study for …”   11:58</div>
+<div style="color: #565f89; padding-left: 40px; line-height: 14px">│<br>▼</div>
+
+<div style="display: flex; gap: 16px; align-items: stretch">
+<div style="border: 1px solid #9ece6a; padding: 4px 10px; min-width: 470px">
+<div><span style="color: #9ece6a">✓ Read the simulator and the last study</span>  <span style="color: #828bb8">11:58–12:00</span></div>
+<div><span style="color: #7aa2f7">glob</span> ─▸ <span style="color: #7aa2f7">read ×3</span> ─▸ <span style="color: #9d7cd8">capabilities</span>    <span style="color: #828bb8">5 calls · 33K into the context</span></div>
+</div>
+</div>
+<div style="color: #565f89; padding-left: 40px; line-height: 14px">│<br>▼</div>
+
+<div style="border: 1px solid #9ece6a; padding: 4px 10px; min-width: 470px">
+<div><span style="color: #9ece6a">✓ List the observables to measure</span>  <span style="color: #828bb8">12:00–12:03</span></div>
+<div><span style="color: #e0af68">bash ×4</span> ─▸ <span style="color: #7aa2f7">read ×2</span> ─▸ <span style="color: #e0af68">bash ×5</span> ─▸ <span style="color: #7aa2f7">read ×4</span>  <span style="color: #828bb8">15 calls · 27K</span></div>
+</div>
+<div style="color: #565f89; padding-left: 40px; line-height: 14px">│<br>▼</div>
+
+<div style="display: flex; gap: 0; align-items: center">
+<div style="border: 1px solid #ff9e64; padding: 4px 10px; min-width: 470px">
+<div><span style="color: #ff9e64">● Draft the parameter grid</span>  <span style="color: #828bb8">12:03–now</span></div>
+<div><span style="color: #7aa2f7">read</span> ─▸ <span style="color: #f7768e">✗ bash</span> ─▸ <span style="color: #e0af68">bash</span> ─▸ <span style="color: #7aa2f7">read ×2</span> ─▸ <span style="color: #e0af68">bash ×3</span> ─▸ <span style="color: #ff9e64">● thinking</span></div>
+</div>
+<div style="color: #565f89">───▸ </div>
+<div style="border: 1px solid #f7768e; padding: 4px 10px; color: #f7768e">
+<div>✗ 12:04 a loop: bash never closed</div>
+<div>3.7 min · 16,384 tokens · 23K kept</div>
+</div>
+</div>
+<div style="color: #565f89; padding-left: 40px; line-height: 14px">┊<br>▼</div>
+
+<div style="border: 1px dashed #565f89; padding: 4px 10px; min-width: 470px; color: #828bb8">○ Estimate run times</div>
+<div style="color: #565f89; padding-left: 40px; line-height: 14px">┊<br>▼</div>
+<div style="border: 1px dashed #565f89; padding: 4px 10px; min-width: 470px; color: #828bb8">○ Write the plan file</div>
+
+<div style="margin-top: auto; padding-top: 10px; color: #828bb8; white-space: pre-wrap">Each box is an item of the agent’s own todo list; the calls made while it was in progress sit inside it. Without a todo list, the boxes are your messages and the runs of calls between them. <span style="color: #7aa2f7">blue</span> reading  <span style="color: #e0af68">yellow</span> running  <span style="color: #73daca">teal</span> editing  <span style="color: #9d7cd8">violet</span> MCP  <span style="color: #f7768e">red</span> failed</div>
+</div>
+</section>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 16px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Watch for</div>
+<div><span style="color: #f7768e">✗</span> 12:04  a loop in a tool call <span style="color: #828bb8">(the guard would stop it)</span></div>
+<div><span style="color: #e0af68">!</span> 12:09  src/simulator.py read a 3rd time</div>
+<div><span style="color: #e0af68">!</span> 12:11  58% full, 93K left</div>
+<div><span style="color: #828bb8">·</span> 12:13  thinking near its budget twice</div>
+</section>
+
+<section style="position: relative; flex: 1; border: 1px solid #f7768e; padding: 16px 12px 10px; display: flex; flex-direction: column; gap: 8px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #f7768e; font-weight: 700">Guide (planned)</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" style="background: #24283b; color: #c0caf5; border: 1px solid #3b4261; padding: 8px 12px; min-height: 44px; cursor: pointer"><span style="color: #7aa2f7">.</span> stop now</button>
+<button type="button" style="background: #24283b; color: #c0caf5; border: 1px solid #3b4261; padding: 8px 12px; min-height: 44px; cursor: pointer"><span style="color: #7aa2f7">p</span> pause after this step</button>
+<button type="button" style="background: #24283b; color: #c0caf5; border: 1px solid #3b4261; padding: 8px 12px; min-height: 44px; cursor: pointer"><span style="color: #7aa2f7">u</span> undo the last step</button>
+<button type="button" style="background: #24283b; color: #c0caf5; border: 1px solid #3b4261; padding: 8px 12px; min-height: 44px; cursor: pointer"><span style="color: #7aa2f7">k</span> compact now</button>
+</div>
+<label for="note" style="color: #828bb8; margin-top: 4px">m  a note the model reads at its next step</label>
+<input id="note" type="text" value="Keep the grid to 3 sizes; don't run anything longer than 2 minutes." style="background: #16161e; color: #c0caf5; border: 1px solid #3b4261; padding: 8px 10px; min-height: 44px; box-sizing: border-box">
+<div style="color: #828bb8; white-space: pre-wrap">Sent as your message once the current step ends; it shows in the flow as a yellow box, like yours.</div>
+<div style="color: #828bb8; white-space: pre-wrap; margin-top: 4px">x  drop a part from the context: the gateway leaves it out of what the model is sent, and says so in the flow.</div>
+<div style="margin-top: auto; color: #828bb8; white-space: pre">loop guard  <span style="color: #9ece6a">on</span> · stops an answer repeating itself · settings</div>
+</section>
+</div>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">c</span> context</span><span><span style="color: #7aa2f7">s</span> steps</span><span><span style="color: #ffffff">f</span> flow</span><span><span style="color: #7aa2f7">Enter</span> a box's calls</span><span><span style="color: #f7768e">.</span> stop</span><span><span style="color: #f7768e">p</span> pause</span><span><span style="color: #f7768e">m</span> note</span><span><span style="color: #f7768e">u</span> undo</span><span><span style="color: #f7768e">k</span> compact</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway                      09:14
+F4 This folder   ✗ │ ┌─ Its settings ─────────────────────────────────────────────────┐
+1 Home             │ │ Example Coder (example-vendor/example-coder)                   │
+2 Questions        │ │ Its title, as the pickers show it                              │
+3 History          │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+4 Docker         ● │ │ ▊  cloud: Example Coder                                      ▎ │
+5 Machine          │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+6 Operations       │ │ Its context, in tokens (the model's window, 262,144; a smaller │
+7 Records          │ │ one makes OpenCode compact sooner and each request cost less)  │
+8 Models         ● │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+9 Presets          │ │ ▊  262144                                                    ▎ │
+0 Providers and…   │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+F1 Help            │ │ Its most output, in tokens (at most 32,768)                    │
+F2 Launch optio…   │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+F3 MCP servers     │ │ ▊  16384                                                     ▎ │
+F6 Workspaces      │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+F7 Requests        │ │ Its thinking effort (one of default, low, medium, high)        │
+F8 CPU models      │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+F9 Phone         ● │ │ ▊  default                                                   ▎ │
+F10 Monitor        │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+F12 Add a model    │ │ A day's cost limit, US dollars (empty: none)                   │
+                   │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+                   │ │ ▊                                                            ▎ │
+                   │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+                   │ │ A month's cost limit, US dollars (empty: none)                 │
+                   │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+                   │ │ ▊                                                            ▎ │
+                   │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+                   │ │                                                                │
+                   │ │ OpenRouter can limit the key too (openrouter.ai, Keys). Taking │
+                   │ │ these writes the preset, then tests it with one short request. │
+                   │ │ One short request: about $0.000031 at its prices. Enter takes  │
+                   │ │ these.                                                         │
+                   │ └────────────────────────────────────────────────────────────────┘
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+
+ enter take  tab next  esc back  ? explain  f1 help  f5 machine column  q quit

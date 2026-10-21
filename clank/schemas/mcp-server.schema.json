@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MCP server",
+  "description": "An MCP server, added as other harnesses add one (`claude mcp add`, `codex mcp add`): the command that starts it (stdio), or the address it listens at (http, sse). The values of its environment variables and headers are kept with the secrets, never in this file.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "mcp-server/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "transport": {
+      "default": "stdio",
+      "description": "How Clank talks to it: stdio, a program started and spoken to over its input and output; http, the streamable HTTP transport; sse, the older server-sent events one.",
+      "enum": [
+        "stdio",
+        "http",
+        "sse"
+      ],
+      "title": "Transport",
+      "type": "string"
+    },
+    "command": {
+      "default": "",
+      "description": "The program that starts it (stdio).",
+      "title": "Command",
+      "type": "string"
+    },
+    "args": {
+      "description": "What the program is given after its name (stdio).",
+      "items": {
+        "type": "string"
+      },
+      "title": "Arguments",
+      "type": "array"
+    },
+    "env": {
+      "description": "The names of the environment variables it is started with; their values are secrets.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Environment",
+      "type": "array"
+    },
+    "url": {
+      "default": "",
+      "description": "Where it listens (http, sse).",
+      "title": "Address",
+      "type": "string"
+    },
+    "headers": {
+      "description": "The names of the HTTP headers sent to it; their values are secrets.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Headers",
+      "type": "array"
+    },
+    "local_only": {
+      "default": false,
+      "description": "What it gives the agent never goes to a cloud model (design 0016 §10): a workspace allowed the cloud does not get it, and the gateway keeps its tools and a session that used it from the cloud.",
+      "title": "Local only",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

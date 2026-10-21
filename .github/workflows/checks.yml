@@ -1,0 +1,65 @@
+# The repository's checks: formatting, lint, types, the VS Code extension, and the tests, which include the
+# documentation, secrets and spelling checks. They run by the same command as on a working copy, `uv run python -m tools.check` (design 0001
+# §8.4). Python 3.12, the oldest Clank supports, runs on every push; Python 3.14 on Linux and Windows runs for pull
+# requests, version tags and on demand (decision 0022). Each action is pinned to the commit of a release at least two
+# weeks old.
+name: checks
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  oldest-python:
+    name: Linux, Python 3.12
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.3"
+          python-version: "3.12"
+          enable-cache: true
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: vscode/package-lock.json
+      - run: uv sync --locked
+      - run: uv run --locked python -m tools.check
+
+  newest-python:
+    name: Python 3.14
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.3"
+          python-version: "3.14"
+          enable-cache: true
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: vscode/package-lock.json
+      - run: uv sync --locked
+      - run: uv run --locked python -m tools.check
+      # The extension's suite inside a real VS Code (decision 0029), on Linux under a virtual display.
+      - if: runner.os == 'Linux'
+        run: uv run --locked python -m tools.extension --host

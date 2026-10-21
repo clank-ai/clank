@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>History, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="color: #e0af68">● 3 questions waiting</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; flex: none; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; gap: 24px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Filter</div>
+<span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #828bb8"><span style="color: #7aa2f7">/</span> filters the history by what you type; Esc leaves the filter</span>
+<span style="flex: none; color: #828bb8">it keeps the events whose summary or type holds what is typed</span>
+</section>
+
+<section style="position: relative; flex: 1; min-height: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Everything Clank recorded, newest last</div>
+<div style="flex: none; height: 36px; white-space: pre; overflow: hidden; text-overflow: ellipsis; color: #828bb8">↑ the console holds the newest 500; <span style="color: #7aa2f7">clank events</span> and the API's history reach further back (events_kept_days: 30 unless changed)</div>
+<div style="position: relative; flex: 1; min-height: 0; overflow: hidden">
+<div style="position: absolute; left: 0; right: 18px; bottom: 0; display: flex; flex-direction: column">
+<sc-for list="{{ history }}" as="h" hint-placeholder-count="46"><div style="flex: none; height: 18px; white-space: pre; overflow: hidden; text-overflow: ellipsis"><span style="color: #828bb8">{{ h.time }}</span>  <span style="color: {{ h.color }}">{{ h.mark }}</span> {{ h.text }}</div></sc-for>
+</div>
+<div style="position: absolute; top: 0; right: 0; bottom: 0; width: 6px; background: #16161e"><div style="position: absolute; left: 0; right: 0; bottom: 0; height: 8%; background: #3b4261"></div></div>
+</div>
+</section>
+
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">/</span> filter by what you type</span><span><span style="color: #7aa2f7">esc</span> leave the filter</span><span><span style="color: #7aa2f7">↑↓</span> scroll</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '        ● 3', '#e0af68'], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'History' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const tone = { '✓': '#9ece6a', '✗': '#f7768e', '●': '#ff9e64', '?': '#e0af68', '○': '#e0af68', '·': '#828bb8' };
+    const history = [
+      ['12:08:29', '·', "myproject's agent asks to change studies/sim-02/plan.md"],
+      ['12:08:29', '✓', "Clank (a plan's progress) accepted the change to studies/sim-02/plan.md in myproject"],
+      ['12:08:30', '·', "Clank (a plan's progress) replied to myproject's agent (permission: once)"],
+      ['12:08:30', '✓', "myproject's agent changed studies/sim-02/plan.md"],
+      ['12:11:02', '●', 'you (console) started Check an MCP server'],
+      ['12:11:02', '·', 'Check an MCP server: step 1 of 1, check: started'],
+      ['12:11:04', '·', 'Check an MCP server: step 1 of 1, check: done'],
+      ['12:11:04', '✓', 'Check an MCP server: done'],
+      ['12:18:02', '·', 'you (console) changed Workspace myproject: changes'],
+      ['12:18:02', '·', 'you (console) set myproject to review: Clank reviews each change'],
+      ['12:18:03', '·', "myproject's window works with build"],
+      ['12:18:03', '●', "you (console) started myproject's agent (start: Implement studies/sim-02/plan.md)"],
+      ['12:18:03', '·', "you (console) handed studies/sim-02/plan.md to myproject's agent (review)"],
+      ['12:19:40', '·', "myproject's agent asks to change studies/sim-02/plan.md"],
+      ['12:19:40', '✓', "Clank (a plan's progress) accepted the change to studies/sim-02/plan.md in myproject"],
+      ['12:19:41', '·', "Clank (a plan's progress) replied to myproject's agent (permission: once)"],
+      ['12:19:41', '✓', "myproject's agent changed studies/sim-02/plan.md"],
+      ['12:22:47', '·', "myproject's agent asks to change studies/sim-02/config.toml"],
+      ['12:22:47', '?', 'Clank (review) asks: The agent of myproject wants to create studies/sim-02/config.toml (+14)'],
+      ['12:23:31', '✓', 'you (vscode) answered q-71c0e2: Accept'],
+      ['12:23:31', '✓', 'you (vscode) accepted the change to studies/sim-02/config.toml in myproject'],
+      ['12:23:32', '✓', "myproject's agent changed studies/sim-02/config.toml"],
+      ['12:26:15', '●', "Docker Desktop · running · 3 containers running, 2 of them Clank's", '#9ece6a'],
+      ['12:29:05', '●', 'you (console) started Check this machine'],
+      ['12:29:05', '·', 'Check this machine: step 1 of 2, detect: started'],
+      ['12:29:07', '·', 'Check this machine: step 1 of 2, detect: done'],
+      ['12:29:07', '·', 'Check this machine: step 2 of 2, check: started'],
+      ['12:29:09', '·', 'Check this machine: step 2 of 2, check: done'],
+      ['12:29:09', '✓', 'Check this machine: done'],
+      ['12:33:52', '·', "myproject's agent asks to change studies/sim-02/plan.md"],
+      ['12:33:52', '✓', "Clank (a plan's progress) accepted the change to studies/sim-02/plan.md in myproject"],
+      ['12:33:53', '✓', "myproject's agent changed studies/sim-02/plan.md"],
+      ['12:36:20', '·', "myproject's agent asks to change studies/sim-02/run.py"],
+      ['12:36:20', '?', 'Clank (review) asks: The agent of myproject wants to change studies/sim-02/run.py (+6 -6)'],
+      ['12:37:02', '✗', 'you (console) answered q-5a8e93: Reject'],
+      ['12:37:02', '✗', 'you (console) rejected the change to studies/sim-02/run.py in myproject: keep the seeds in config.toml'],
+      ['12:41:07', '·', "myproject's agent asks to change src/myproject/sampler.py"],
+      ['12:41:07', '?', 'Clank (review) asks: The agent of myproject wants to change src/myproject/sampler.py (+12 -2)'],
+      ['12:44:30', '●', "you (console) started Install a workspace's software"],
+      ['12:44:30', '·', "Install a workspace's software: step 1 of 2, plan: started"],
+      ['12:44:31', '?', "Clank (workspaces.setup) asks: Install myproject's software?"],
+      ['12:44:31', '○', "Install a workspace's software waits for your answer: Install myproject's software?"],
+      ['12:46:12', '●', 'you (console) started Stop Docker'],
+      ['12:46:12', '·', 'Stop Docker: step 1 of 3, check: started'],
+      ['12:46:13', '?', 'Clank (docker.stop) asks: Stop Docker Desktop?'],
+      ['12:46:13', '○', 'Stop Docker waits for your answer: Stop Docker Desktop?']
+    ].map(([time, mark, text, color]) => ({ time, mark, text, color: color || tone[mark] }));
+    return { menu, history };
+  }
+}
+</script>
+</body>
+</html>

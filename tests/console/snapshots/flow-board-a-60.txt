@@ -1,0 +1,13 @@
+You
+├─ before the todo list ▸  1 call
+├─ ✓ Read the simulator and last study ▸  6 calls
+├─ ✓ List the observables ▸  10 calls
+├─ ● Draft the parameter grid
+│  ├─ read studies/notes.md  14.2K chars
+│  ├─ ✗ bash python -m myproject sweep --sizes 8 16 32 64… ⊘
+│  ├─ ✗ failed: Clank's loop guard stopped the answer: it r…
+│  ├─ bash ls studies/  100 chars
+│  ├─ ✎ your note: Keep the grid to 3 sizes.
+│  └─ ● answering  about 1,415 tokens
+├┄ ○ Estimate run times
+└┄ ○ Write the plan file

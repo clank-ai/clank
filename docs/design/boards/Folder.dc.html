@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>This folder, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Get ready to work here</div>
+<div style="color: #828bb8; margin-bottom: 6px">Folder  <span style="color: #c0caf5">C:\work\myproject</span></div>
+<sc-for list="{{ steps }}" as="s" hint-placeholder-count="7">
+<div style="display: flex; gap: 12px"><span style="width: 24px; text-align: right; color: #828bb8">{{ s.n }}</span><span style="width: 150px">{{ s.name }}</span><span style="color: {{ s.color }}">{{ s.mark }}</span><span style="flex: 1">{{ s.state }}</span><span style="color: #7aa2f7">{{ s.key }}</span></div>
+</sc-for>
+<div style="margin-top: 8px">Next: press <span style="color: #7aa2f7">o</span> to open the workspace · or <span style="color: #7aa2f7">g</span> to do every step that is not done.</div>
+</section>
+
+<div style="display: flex; gap: 14px">
+<section style="position: relative; flex: 1; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Then work</div>
+<div><span style="color: #7aa2f7">a</span>  OpenCode in this terminal; the menu comes back when you leave it</div>
+<div><span style="color: #7aa2f7">c</span>  VS Code on this folder, OpenCode beside your files</div>
+<div style="color: #828bb8; margin-top: 6px">   OpenCode will use daily 262K: 262,144 tokens of context, 16,384 out</div>
+<div style="color: #828bb8">   MCP servers: myproject-mcp (10 tools)   <span style="color: #7aa2f7">m</span> chooses</div>
+<div style="color: #828bb8">   mode: plan   <span style="color: #7aa2f7">p</span> plan · <span style="color: #7aa2f7">r</span> review or auto · <span style="color: #7aa2f7">i</span> implement a plan</div>
+</section>
+<section style="position: relative; flex: 0 0 38%; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">What runs from here</div>
+<div><span style="color: #9ece6a">●</span> container myproject · 8 CPUs · 778 MB</div>
+<div><span style="color: #ff9e64">●</span> OpenCode · writing, step 30   <span style="color: #7aa2f7">F10</span> watch it</div>
+<div style="color: #828bb8; margin-top: 6px">l the container's log · s stops it</div>
+</section>
+</div>
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Waiting for you</div>
+<div><span style="color: #9ece6a">✓</span> No question waits.</div>
+</section>
+
+<div style="flex: 1"></div>
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">g</span> get everything ready</span><span><span style="color: #7aa2f7">a</span> OpenCode here</span><span><span style="color: #7aa2f7">c</span> in VS Code</span><span><span style="color: #7aa2f7">p</span> plan</span><span><span style="color: #7aa2f7">e</span> its software</span><span><span style="color: #7aa2f7">m</span> MCP servers</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'This folder' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const ok = '#9ece6a', bad = '#f7768e';
+    const steps = [
+      { n: '1', name: 'Docker', mark: '✓', color: ok, state: 'running', key: '' },
+      { n: '2', name: 'This folder', mark: '✓', color: ok, state: 'ready: it can be a workspace', key: '' },
+      { n: '3', name: 'Its workspace', mark: '✗', color: bad, state: 'not opened yet', key: 'o opens it' },
+      { n: '4', name: 'The sandbox image', mark: '✓', color: ok, state: 'built: clank-sandbox:76474ed3bffe', key: '' },
+      { n: '5', name: 'Its software', mark: '✓', color: ok, state: 'installed in ~/.venv (36 s)', key: 'e again' },
+      { n: '6', name: 'A model', mark: '✓', color: ok, state: 'ready: daily 262K in the main slot', key: '' },
+      { n: '7', name: 'The gateway', mark: '✓', color: ok, state: 'running on port 18210 · loop guard on', key: '' }
+    ];
+    return { menu, steps };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# Text files are stored and checked out with LF line endings on every platform, whatever git's own settings are;
+# Windows batch files need CRLF.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf

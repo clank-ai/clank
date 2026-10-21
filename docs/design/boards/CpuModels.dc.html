@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CPU models, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; gap: 14px">
+<section style="position: relative; flex: 1; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Served</div>
+<div style="display: grid; grid-template-columns: 104px minmax(0, 1fr); row-gap: 2px">
+<span style="color: #828bb8">Fast slot</span><span style="white-space: pre-wrap"><span style="color: #9ece6a">✓</span> ready: completion 0.5B on ubuntu-22.04, since 12:31:07</span>
+<span style="color: #828bb8">In VS Code</span><span style="white-space: pre-wrap"><span style="color: #9ece6a">✓</span> on: gray text after the cursor as you type; Tab takes it (<span style="color: #7aa2f7">x</span>: off)</span>
+</div>
+<div style="color: #828bb8; margin-top: 6px; white-space: pre-wrap">Qwen2.5-Coder 0.5B on the CPU: the GPU and the agent's model are untouched</div>
+<div style="color: #828bb8; white-space: pre-wrap"><span style="color: #7aa2f7">u</span> unloads it: its memory and threads freed</div>
+</section>
+<section style="position: relative; flex: 0 0 40%; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Settings</div>
+<div style="display: grid; grid-template-columns: 104px minmax(0, 1fr); row-gap: 2px">
+<span style="color: #828bb8">On</span><span>yes</span>
+<span style="color: #828bb8">Wait</span><span style="white-space: pre-wrap">120 ms after you stop typing, before it asks</span>
+<span style="color: #828bb8">Lines</span><span style="white-space: pre-wrap">{{ lines }}</span>
+</div>
+<div style="color: #828bb8; margin-top: 6px; white-space: pre-wrap">kept in config/completion.json</div>
+</section>
+</div>
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">How fast</div>
+<div style="display: grid; grid-template-columns: 104px minmax(0, 1fr); row-gap: 2px">
+<span style="color: #828bb8">Asked</span><span style="white-space: pre-wrap">14 in the last minute · 188 in the last hour</span>
+<span style="color: #828bb8">Answered in</span><span style="white-space: pre-wrap">median 284 ms · 95% under 612 ms</span>
+<span style="color: #828bb8">Not answered</span><span style="white-space: pre-wrap">41 broken off by a newer keystroke · 0 failed · 0 refused</span>
+</div>
+<div style="margin-top: 8px">
+<sc-for list="{{ newest }}" as="c" hint-placeholder-count="8">
+<div style="display: grid; grid-template-columns: 104px 84px 56px minmax(0, 1fr); margin-bottom: 2px; white-space: pre"><span style="color: #828bb8">{{ c.time }}</span><span style="color: {{ c.color }}">{{ c.outcome }}</span><span style="text-align: right">{{ c.ms }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ c.rest }}</span></div>
+</sc-for>
+</div>
+<div style="color: #828bb8; margin-top: 6px; white-space: pre-wrap">the gateway keeps its last 200 completions in memory; a newer keystroke breaks off the one in flight, so broken-off ones are expected</div>
+</section>
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Vision: the model that reads images</div>
+<div style="display: grid; grid-template-columns: 104px minmax(0, 1fr); row-gap: 2px">
+<span style="color: #828bb8">Mode</span><span style="white-space: pre-wrap"><span style="color: #9ece6a">on demand: loaded when an image is to be read, unloaded after 10 minutes without use</span><span style="color: #828bb8">  (<span style="color: #7aa2f7">v</span>: always)</span></span>
+<span style="color: #828bb8">Model</span><span style="white-space: pre-wrap"><span style="color: #828bb8">not loaded</span> (it loads when an image is to be read)</span>
+<span style="color: #828bb8">Files</span><span style="white-space: pre-wrap"><span style="color: #9ece6a">✓</span> Qwen3-VL 4B (2.7 GB) downloaded to ubuntu-22.04</span>
+</div>
+<div style="color: #828bb8; margin-top: 6px; white-space: pre-wrap">reads a figure you marked up when the agent's own model cannot see it; the agent's look_at_figure tool asks it about a figure it made</div>
+</section>
+
+<div style="flex: 1"></div>
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">u</span> unloads</span><span><span style="color: #7aa2f7">x</span> turns it off in VS Code</span><span><span style="color: #7aa2f7">v</span> vision's mode</span><span><span style="color: #7aa2f7">g</span> gets vision's files</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '     ✓', '#9ece6a'],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'CPU models' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const ok = '#9ece6a', quiet = '#828bb8';
+    const newest = [
+      { time: '12:46:58', outcome: 'answered', color: ok, ms: '262 ms', rest: ' · read 512 tokens · wrote 9' },
+      { time: '12:46:57', outcome: 'broken off', color: quiet, ms: '88 ms', rest: '' },
+      { time: '12:46:51', outcome: 'answered', color: ok, ms: '301 ms', rest: ' · read 498 tokens · wrote 14' },
+      { time: '12:46:44', outcome: 'answered', color: ok, ms: '247 ms', rest: ' · read 471 tokens · wrote 6' },
+      { time: '12:46:43', outcome: 'broken off', color: quiet, ms: '120 ms', rest: '' },
+      { time: '12:46:40', outcome: 'broken off', color: quiet, ms: '64 ms', rest: '' },
+      { time: '12:46:31', outcome: 'answered', color: ok, ms: '338 ms', rest: ' · read 455 tokens · wrote 21' },
+      { time: '12:46:22', outcome: 'answered', color: ok, ms: '279 ms', rest: ' · read 430 tokens · wrote 11' }
+    ];
+    const lines = 'a few after a line that opens a block (ending with :, {, ( or [), else the rest of the line';
+    return { menu, newest, lines };
+  }
+}
+</script>
+</body>
+</html>

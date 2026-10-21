@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service  ● docker  ● daily 262K … 09:14
+F4 This folder   ✗ │ ┌─ The test ─────────────────────────┐
+1 Home             │ │ daily 262K runs in the main slot:  │
+2 Questions        │ │ testing with one short request     │
+3 History          │ │ OK in 0.0 s, $0.000021             │
+4 Docker         ● │ │                                    │
+5 Machine          │ │ It answered: OK in 0.0 s,          │
+6 Operations       │ │ $0.000021                          │
+7 Records          │ │                                    │
+8 Models         ● │ │ Load it now? This stops daily 262K │
+9 Presets          │ │ in the main slot; or keep daily    │
+0 Providers and…   │ │ 262K running, and cloud: Example   │
+F1 Help            │ │ Coder waits on the Presets page.   │
+F2 Launch optio…   │ └────────────────────────────────────┘
+F3 MCP servers     │
+F6 Workspaces      │
+F7 Requests        │
+F8 CPU models      │
+F9 Phone         ● │
+F10 Monitor        │
+F12 Add a model    │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+ 09:14  cloud: Example Coder is written: now its test
+ y load it now  n keep it  ? explain  f1 help

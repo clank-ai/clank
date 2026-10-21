@@ -1,0 +1,544 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Flow",
+  "description": "The work as a program of boxes (design 0013): each a big task with a deliverable, done by a model in a session of its own, or a decision you make; the lines say what comes next.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "flow/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "workspace": {
+      "default": "",
+      "description": "The workspace whose folder its boxes work in; the folder it is kept in names it, and this, when given, must be the same.",
+      "title": "Workspace",
+      "type": "string"
+    },
+    "defaults": {
+      "$ref": "#/$defs/FlowDefaults",
+      "title": "Defaults"
+    },
+    "auto_accept": {
+      "default": false,
+      "description": "Boxes the model proposes join the flow at once, when they pass the checks, up to the cap; off: each waits for you.",
+      "title": "Auto-accept",
+      "type": "boolean"
+    },
+    "auto_accept_cap": {
+      "default": 10,
+      "description": "How many proposals auto-accept may accept in one run.",
+      "minimum": 0,
+      "title": "Auto-accept cap",
+      "type": "integer"
+    },
+    "wait_after_every_box": {
+      "default": false,
+      "description": "Every box waits for you when it is done, to step through.",
+      "title": "Wait after every box",
+      "type": "boolean"
+    },
+    "next_flow": {
+      "default": "ask",
+      "description": "Once its last gate is approved, the next flow is made from its INTEGRATE's brief: ask, you are asked whether to run it now; run, it starts at once; off, none is made.",
+      "enum": [
+        "ask",
+        "run",
+        "off"
+      ],
+      "title": "Next flow",
+      "type": "string"
+    },
+    "follows": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Follows"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The flow it was made after, from that flow's INTEGRATE's brief.",
+      "title": "Follows"
+    },
+    "next": {
+      "default": "",
+      "description": "The flow made after it, from its INTEGRATE's brief: <workspace>/<name>.",
+      "title": "Next",
+      "type": "string"
+    },
+    "built": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Built"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Set when the model drafted it in a planning session and Clank wrote it: that session, when, and the brief written with the model.",
+      "title": "Built"
+    },
+    "boxes": {
+      "description": "Its boxes; DECOMPOSE's tasks run in this order.",
+      "items": {
+        "$ref": "#/$defs/Box"
+      },
+      "minItems": 1,
+      "title": "Boxes",
+      "type": "array"
+    },
+    "lines": {
+      "description": "What comes after each box.",
+      "items": {
+        "$ref": "#/$defs/Line"
+      },
+      "title": "Lines",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "boxes"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Box": {
+      "additionalProperties": false,
+      "description": "A step of a flow: a big task with a deliverable, done by a model in a session of its own, or the owner's.",
+      "properties": {
+        "id": {
+          "description": "Its name in the flow's lines: letters, digits, '-' and '_'.",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "description": "you: your brief or work; plan: a plan (PLAN.md); verify: a verdict on an earlier box's deliverable; decompose: proposed tasks; task: its deliverable; integrate: a summary of every deliverable and the next flow's brief; gate: your decision.",
+          "enum": [
+            "you",
+            "plan",
+            "verify",
+            "decompose",
+            "task",
+            "integrate",
+            "gate"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "title": {
+          "description": "What it does, in a few words.",
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "checks": {
+          "default": "",
+          "description": "A VERIFY only: the earlier box whose deliverable it checks.",
+          "title": "Checks",
+          "type": "string"
+        },
+        "model": {
+          "default": "",
+          "description": "The preset it runs on, by its id or title, loaded before it starts; empty: the flow's (a VERIFY's: the preset of the box it checks).",
+          "title": "Model",
+          "type": "string"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "enum": [
+                "plan",
+                "review",
+                "auto"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "plan, review or auto, for its own session; empty: plan for PLAN, VERIFY, DECOMPOSE and INTEGRATE, the workspace's for a TASK.",
+          "title": "Mode"
+        },
+        "sees": {
+          "description": "The files of the folder its first message hands it; it may still read any other.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Sees",
+          "type": "array"
+        },
+        "shows": {
+          "description": "A GATE's: the files it shows you, to approve or edit.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Shows",
+          "type": "array"
+        },
+        "prompt": {
+          "default": "",
+          "description": "Its own words: yours, or drafted by a DECOMPOSE.",
+          "title": "Prompt",
+          "type": "string"
+        },
+        "writes": {
+          "description": "The files it must write in the folder; it is done when each was written during its try.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Deliverable",
+          "type": "array"
+        },
+        "holds": {
+          "default": "",
+          "description": "What its deliverable's files hold, in words.",
+          "title": "What they hold",
+          "type": "string"
+        },
+        "accept_when": {
+          "description": "What makes its deliverable right, one thing per line, checked by a VERIFY or by you at a gate.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Accept when",
+          "type": "array"
+        },
+        "accept_command": {
+          "default": "",
+          "description": "A command run in the workspace's container after it, which passes when it exits 0; empty: none.",
+          "title": "Accept command",
+          "type": "string"
+        },
+        "when_done": {
+          "default": "go on",
+          "description": "go on: the box after it starts; wait: the flow waits for you first.",
+          "enum": [
+            "go on",
+            "wait"
+          ],
+          "title": "When done",
+          "type": "string"
+        },
+        "tries": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How many times it may run before a gate decides; empty: the flow's.",
+          "title": "Tries"
+        },
+        "limits": {
+          "$ref": "#/$defs/Limits",
+          "description": "What one try may use; empty values: the flow's."
+        },
+        "mcp_servers": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The workspace's MCP servers it gets; empty: those the workspace's agent gets.",
+          "title": "MCP servers"
+        },
+        "proposed": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Proposed"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Where it came from, when it was accepted from a proposal.",
+          "title": "Proposed"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "title"
+      ],
+      "title": "Box",
+      "type": "object"
+    },
+    "Built": {
+      "additionalProperties": false,
+      "description": "How a flow built with the model came to be (design 0013 §15, decision 0097): the planning session its draft came\nfrom, when Clank wrote it, and the brief the owner wrote with the model, which its first box takes (decision\n0098).",
+      "properties": {
+        "session": {
+          "default": "",
+          "description": "The planning session the draft came from; empty when not known yet.",
+          "title": "Session",
+          "type": "string"
+        },
+        "at": {
+          "description": "When Clank wrote the flow from the model's last draft.",
+          "format": "date-time",
+          "title": "Written",
+          "type": "string"
+        },
+        "brief": {
+          "description": "The brief written with the model: its first box is done by it when it is there.",
+          "title": "Brief",
+          "type": "string"
+        },
+        "before": {
+          "default": "",
+          "description": "The brief's fingerprint when the planning began (empty: not there): a brief still so is not the one written with the model, and its first box asks for it.",
+          "title": "Brief before",
+          "type": "string"
+        }
+      },
+      "required": [
+        "at",
+        "brief"
+      ],
+      "title": "Built",
+      "type": "object"
+    },
+    "FlowDefaults": {
+      "additionalProperties": false,
+      "description": "What every box takes unless it names its own.",
+      "properties": {
+        "model": {
+          "default": "",
+          "description": "The preset each box runs on, by its id or title (\"daily 262K\"); empty: whatever the main slot runs when the box starts.",
+          "title": "Model",
+          "type": "string"
+        },
+        "tries": {
+          "default": 3,
+          "description": "How many times a box may run before a gate decides (a VERIFY's loop).",
+          "minimum": 1,
+          "title": "Tries",
+          "type": "integer"
+        },
+        "limits": {
+          "$ref": "#/$defs/FlowLimits",
+          "description": "What one try of a box may use.",
+          "title": "Limits"
+        },
+        "whole_up_to": {
+          "default": 40000,
+          "description": "The bytes of a text file a box's first message hands whole; a larger one is named by its path and size, for the box to read with its tools.",
+          "minimum": 0,
+          "title": "Handed whole up to",
+          "type": "integer"
+        },
+        "note_up_to": {
+          "default": 2000,
+          "description": "The characters of each earlier box's handoff note a box's first message hands; a longer note is cut there, saying where the whole is.",
+          "minimum": 0,
+          "title": "Notes handed up to",
+          "type": "integer"
+        },
+        "copied_up_to": {
+          "default": 5000000,
+          "description": "The bytes of a deliverable copied into the run's folder when its box ends; a larger one is kept by its fingerprint only.",
+          "minimum": 0,
+          "title": "Copied up to",
+          "type": "integer"
+        }
+      },
+      "title": "FlowDefaults",
+      "type": "object"
+    },
+    "FlowLimits": {
+      "additionalProperties": false,
+      "description": "What one try of a box may use, unless the box says otherwise.",
+      "properties": {
+        "minutes": {
+          "default": 30,
+          "description": "How long one try of a box may run.",
+          "minimum": 1,
+          "title": "Minutes",
+          "type": "integer"
+        },
+        "tokens": {
+          "default": 200000,
+          "description": "How many tokens the model may write in one try, its thinking included (a prompt read again from the engine's cache is not counted).",
+          "minimum": 1,
+          "title": "Tokens written",
+          "type": "integer"
+        }
+      },
+      "title": "FlowLimits",
+      "type": "object"
+    },
+    "Follows": {
+      "additionalProperties": false,
+      "description": "Where a next flow came from (design 0013 §3, decision 0091): the flow whose last gate was approved, its run, the\nINTEGRATE that wrote its brief, and the brief's file.",
+      "properties": {
+        "flow": {
+          "description": "The flow it follows: <workspace>/<name>.",
+          "title": "Flow",
+          "type": "string"
+        },
+        "run": {
+          "description": "That flow's run whose last gate was approved.",
+          "minimum": 1,
+          "title": "Run",
+          "type": "integer"
+        },
+        "by": {
+          "description": "The INTEGRATE that wrote its brief.",
+          "title": "By",
+          "type": "string"
+        },
+        "brief": {
+          "description": "The brief's file, copied into its own first box's file when it first runs.",
+          "title": "Brief",
+          "type": "string"
+        },
+        "replaces": {
+          "default": "",
+          "description": "The fingerprint of its first box's file when it was made (empty: not in the folder): the brief is copied over it only while it is unchanged.",
+          "title": "Replaces",
+          "type": "string"
+        }
+      },
+      "required": [
+        "flow",
+        "run",
+        "by",
+        "brief"
+      ],
+      "title": "Follows",
+      "type": "object"
+    },
+    "Limits": {
+      "additionalProperties": false,
+      "description": "What one try of this box may use; each empty takes the flow's.",
+      "properties": {
+        "minutes": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How long one try may run; empty: the flow's.",
+          "title": "Minutes"
+        },
+        "tokens": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How many tokens the model may write in one try, its thinking included; empty: the flow's.",
+          "title": "Tokens written"
+        }
+      },
+      "title": "Limits",
+      "type": "object"
+    },
+    "Line": {
+      "additionalProperties": false,
+      "description": "What comes after a box: a then line, or a VERIFY's pass or fail line.",
+      "properties": {
+        "from": {
+          "description": "The box it leaves.",
+          "title": "From",
+          "type": "string"
+        },
+        "to": {
+          "description": "The box it leads to.",
+          "title": "To",
+          "type": "string"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "enum": [
+                "pass",
+                "fail"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A VERIFY's lines only: pass, to the box after it; fail, back to the box it checks, with the findings.",
+          "title": "When"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "title": "Line",
+      "type": "object"
+    },
+    "Proposed": {
+      "additionalProperties": false,
+      "description": "Where a box accepted from a proposal came from (design 0013 §9).",
+      "properties": {
+        "run": {
+          "description": "The run in which it was proposed.",
+          "minimum": 1,
+          "title": "Run",
+          "type": "integer"
+        },
+        "by": {
+          "description": "The box that proposed it, a DECOMPOSE above all.",
+          "title": "Proposed by",
+          "type": "string"
+        },
+        "accepted": {
+          "default": "owner",
+          "description": "owner: you accepted it; auto-accept: the flow's setting did, within its cap.",
+          "enum": [
+            "owner",
+            "auto-accept"
+          ],
+          "title": "Accepted by",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run",
+        "by"
+      ],
+      "title": "Proposed",
+      "type": "object"
+    }
+  }
+}

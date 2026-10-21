@@ -1,0 +1,35 @@
+# Clank for VS Code
+
+Clank in VS Code (design 0002, M0.6): the Clank service and Docker in the status bar, and the questions Clank asks you,
+answered from here or from any other client; the agent's changes to your files, reviewed beside them (design 0007); the agent's proposals for your Notion,
+reviewed before anything is written (design 0010); and the gates of your flows, with their files and tries (design 0013). It is a client of the Clank API and keeps nothing of its own: it reads
+where the service answers and the local token from CLANK_HOME each time it connects.
+
+| Where | What |
+| --- | --- |
+| Status bar, left | `Clank`: whether the service runs, and how many questions wait for you (click: the questions) |
+| Status bar, left | `Docker`: its state (click: start or stop it) |
+| Status bar, left | `Plan`, `Review` or `Auto`: the Planner, or how the agent of the window's folder changes files (click: pick one) |
+| Editor | On an open plan (a Markdown file whose header says `kind: plan`): **▶ Implement with Review**, **▶ Implement with Auto**, and **↻ Continue (k of m steps done)** when some checklist items are done; each hands the plan to the agent (design 0009) |
+| Status bar, left | `Completion`: on and served (check), on but its model not running (warning), or off (click: turn it off or on) |
+| Editor | Gray text after the cursor as you type, from the model in Clank's fast slot: Tab takes it (design 0006) |
+| Editor | A figure (PNG, JPEG) opens in Clank's annotator: draw on it (pen, box, circle, arrow, note), say what to do, Enter sends it to the agent with each mark in words (design 0008); `Clank: Annotate with Clank` opens one from the explorer |
+| Editor | A change the agent asks for opens beside your files (the file as it is, and as the agent would leave it), with **✓ Accept** and **✗ Reject** in its title bar; in auto mode, each change opens after it is made |
+| Activity bar | **Notion changes** (design 0010 §6): each batch the agent proposes for your Notion, its databases and their entries (new, changed, removed), with **Approve all** and **Reject…**; its badge counts what waits |
+| Editor | A batch's review: each database as a table (changes and their neighbors, or all rows), the chosen entry's Fields, Page and how it will look in Notion; uncheck what should wait, then **Approve N checked**; comment on the batch, an entry, a field or a paragraph, and **Send back with N comments** for the agent to revise it (its answers show under your comments) |
+| Status bar, left | `Notion: N changes waiting`, when some do (click: the Notion changes) |
+| Notifications | A question asked while VS Code is open, with its options as buttons |
+| Notifications | When a flow's box switched the main slot (design 0013 §7): the model your OpenCode window talks to now, its limits, and a preset too small for one of your sessions, named; the window takes the new limits when it next starts |
+| Notifications | A flow's gate, YOU box or failed box (design 0013 §10), with its answers, **Open** (the file it shows, in the folder: the gate comes back once you save it, to approve what you edited) and **Diff** (the file's last two tries, in VS Code's diff); *Send back* and *Try again* ask for your note first, and Escape keeps the gate waiting. The Clank item's count (or the Questions command) shows a gate again, even one whose notification went unclicked to the notification center. One answered on the phone or the console is not shown again, and its diffs close |
+| Commands (Ctrl+Shift+P) | `Clank: Questions waiting for you`, `Clank: Start Docker`, `Clank: Stop Docker`, `Clank: Start or stop Docker`, `Clank: Connect to the Clank service again`, `Clank: Accept the change`, `Clank: Reject the change`, `Clank: Pick the mode: Plan, Review or Auto`, `Clank: Implement the plan with Review`, `Clank: Implement the plan with Auto`, `Clank: Continue implementing the plan`, `Clank: Turn completion on or off`, `Clank: Review the Notion changes` |
+| Setting | `clank.home`: CLANK_HOME, when it is not the environment's or `~/.clank` |
+| Setting | `clank.changes.showInAuto`: in auto mode, open each change the agent makes (on by default) |
+
+What you do here is recorded as you (vscode), and every other client shows it.
+
+## Working on it
+
+From the repository's root, `uv run python -m tools.check` compiles and tests the extension with the rest. In this
+folder: `npm ci` installs its tools from the lock, `npm run check` compiles and tests it. Its core (`src/core/`) never
+imports `vscode`, so it is tested with Node's own test runner; `src/extension.ts` is the thin glue to VS Code.
+`src/core/kinds.ts` is generated (`uv run python -m tools.tstypes`): never edit it by hand.

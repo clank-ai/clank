@@ -1,0 +1,34 @@
+ ◆ CLANK  paper   ● service up 2h14m  ● docker starting  ● no model: Add a model  ● gateway stopped               13:54
+F4 This folder         ✗ 5   │ ┌─ The newest operations ──────────────────────────────────────────────────────────────┐
+1 Home                       │ │ op-00000000  Start Docker        canceled     2 of 2: wait        11:40:00 by you (… │
+2 Questions                  │ └──────────────────────────────────────────────────────────────────────────────────────┘
+3 History                    │
+4 Docker               ●     │ ┌─ Steps and log ──────────────────────────────────────────────────────────────────────┐
+5 Machine                    │ │ Start Docker (op-00000000): canceled: canceled by you (console)                      │
+6 Operations                 │ │   1 of 2: start  done                                                                │
+7 Records                    │ │     asked Fake Docker to start                                                       │
+8 Models               ●     │ │   2 of 2: wait  canceled                                                             │
+9 Presets                    │ └──────────────────────────────────────────────────────────────────────────────────────┘
+0 Providers and models       │
+F1 Help                      │
+F2 Launch options            │
+F3 MCP servers               │
+F6 Workspaces                │
+F7 Requests                  │
+F8 CPU models                │
+F9 Phone               ●     │
+F10 Monitor                  │
+F12 Add a model              │
+───────────────────────────  │
+coming                       │
+Sampling              M3     │
+Sessions              M3     │
+Keys                  M3     │
+Layout                M2     │
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5   ▅▅│
+Changes               M6     │
+Network access        M7     │
+ 13:54  asked op-00000000 to stop: canceled by you (console)
+ c cancel  r retry  ? explain  f1 help  f5 machine column  q quit                                            ^p palette

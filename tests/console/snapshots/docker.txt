@@ -1,0 +1,34 @@
+ ◆ CLANK  paper   ● service up 2h14m  ● docker running  ● no model: Add a model  ● gateway stopped                13:54
+F4 This folder         ✗ 4   │ ┌─ Docker ─────────────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ Fake Docker 4.85.0 · running · engine 29.6.2                                         │
+2 Questions                  │ │ 2 containers running, none of them Clank's                                           │
+3 History                    │ │ read 11:40:00   (s stops it · r reads it again)                                      │
+4 Docker               ●     │ └──────────────────────────────────────────────────────────────────────────────────────┘
+5 Machine                    │
+6 Operations                 │ ┌─ Containers ─────────────────────────────────────────────────────────────────────────┐
+7 Records                    │ │ NAME                 WHOSE      STATE     STATUS                    IMAGE            │
+8 Models               ●     │ │ another-model-relay  other      running   Up 5 minutes              another-model-r… │
+9 Presets                    │ │ toolbox-sandbox-017  other      running   Up 5 minutes              toolbox-sandbox… │
+0 Providers and models       │ │ old-build            other      exited    Exited (0) 1 hour ago     old-build:latest │
+F1 Help                      │ └──────────────────────────────────────────────────────────────────────────────────────┘
+F2 Launch options            │
+F3 MCP servers               │
+F6 Workspaces                │
+F7 Requests                  │
+F8 CPU models                │
+F9 Phone               ●     │
+F10 Monitor                  │
+F12 Add a model              │
+───────────────────────────  │
+coming                       │
+Sampling              M3     │
+Sessions              M3     │
+Keys                  M3     │
+Layout                M2     │
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5   ▅▅│
+Changes               M6     │
+Network access        M7     │
+
+ s start or stop Docker  r read it again  ? explain  f1 help  f5 machine column  q quit                      ^p palette

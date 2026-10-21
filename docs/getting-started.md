@@ -1,0 +1,162 @@
+# Getting started
+
+From nothing to an AI coding agent working in one of your folders: install Clank, add a model, open a folder. The
+quickest path uses a cloud model through an API key (OpenRouter) and needs no GPU; a model on your own GPU is the other
+path (step 3b). Written for Windows first; macOS and Linux notes are at the end.
+
+## 1. What you need
+
+| | Needed for | Notes |
+| --- | --- | --- |
+| Windows 10 or 11, with WSL 2 | everything | Docker Desktop turns WSL 2 on when it installs |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | the agent's workspaces | each folder you work in gets a container of its own; the first one downloads about a gigabyte |
+| [uv](https://docs.astral.sh/uv/) | installing Clank | it brings Python 3.12 by itself |
+| [Git](https://git-scm.com/) | getting Clank | |
+| An [OpenRouter](https://openrouter.ai/) account and API key | the cloud path | free models exist; paid ones need credits |
+| An NVIDIA GPU (16 GB is comfortable) | the local path only | not needed for the cloud path |
+| [VS Code](https://code.visualstudio.com/) and [Node.js](https://nodejs.org/) 22 or newer | Clank's VS Code window (optional) | Node builds Clank's extension once (step 2b) |
+
+## 2. Install
+
+In PowerShell:
+
+```
+winget install --id Git.Git -e
+winget install --id astral-sh.uv -e
+winget install --id Docker.DockerDesktop -e
+```
+
+Then open Docker Desktop once, accept its terms and let it finish starting. Close PowerShell and open a new one, so the
+new programs are on its path.
+
+Get Clank and install it:
+
+```
+git clone https://github.com/clank-ai/clank
+cd clank
+uv tool install --editable .
+uv tool update-shell
+```
+
+Open a new PowerShell once more, then check the computer:
+
+```
+clank doctor
+```
+
+It changes nothing; it says what is ready and what is missing (Docker, WSL, a GPU), each with what to do.
+
+## 2b. Build the VS Code extension (optional)
+
+Clank's VS Code window (`c` on **This folder**, or `clank code`) shows the agent beside your files, its changes for
+you to review and figures to mark up. It needs Clank's extension, built once from the clone (and again after an update
+that changes it); until then, `c` says the extension is not built. In PowerShell:
+
+```
+winget install --id Microsoft.VisualStudioCode -e
+winget install --id OpenJS.NodeJS.LTS -e
+```
+
+Open a new PowerShell, then in the `clank` folder:
+
+```
+cd vscode
+npm ci
+npm run build
+cd ..
+uv run --no-dev python -m tools.vsix
+```
+
+The last command writes `vscode\clank-0.9.0.vsix` (the version is the extension's own). Clank's VS Code window
+installs it by itself; to have it in your usual VS Code too:
+
+```
+code --install-extension vscode\clank-0.9.0.vsix
+```
+
+## 3a. Add a cloud model (OpenRouter)
+
+1. Make an API key at [openrouter.ai/keys](https://openrouter.ai/keys). Add credits if you want paid models.
+2. Type `clank`. With no model set up, the console opens on **Add a model** (later: F12 in the menu, or `a` on
+   **Providers and models**).
+3. Press `c` for **Cloud**, then Enter on **OpenRouter**.
+4. Read the **agreement**: what goes to OpenRouter (the prompts and the files the agent reads in a workspace you allow),
+   what never goes (Notion, and MCP servers marked local: Space marks or unmarks one), and the data policy (`o`).
+   Press `y` to agree; `n` writes nothing.
+5. Paste the key into the hidden field and press Enter. It is checked with OpenRouter once and kept in Clank's
+   secrets folder only; the console shows its last four characters, never the rest.
+6. Pick a model from the live list: `/` searches, `s` sorts, `f` shows only the free ones. Enter picks it.
+7. Check its settings (filled in for you) and press Enter. Clank sends one short test request and shows the answer
+   and what it cost.
+8. **Ready.** Clank says whether Docker is running (`s` starts it); Enter takes you to **This folder**.
+
+What it costs shows on the header, Home, Requests (F7), the Monitor and `clank cost`. You can set a daily or monthly
+limit (`L` anywhere, or `clank cost limit`); when it is reached, cloud requests pause until you raise it.
+
+## 3b. Or a model on your own GPU
+
+Clank runs local models with llama.cpp or KVMem (an engine that keeps a long context partly in system memory). On
+Windows they run in WSL. This path is not one step yet: the engine is built in WSL and the model file downloaded, then
+a **preset** (the model with its settings) is loaded into the main slot. Start from **Add a model** → `l` **Local**:
+it lists the presets with what each needs and walks you through each step, asking first. One setup worth building
+again, with every setting and why, is written up in [docs/models/](models/README.md).
+
+## 4. Work in a folder
+
+1. Open a terminal in the folder you want to work in and type `clank`. The console opens on **This folder** (F4).
+2. It lists what working here needs: Docker, the folder's workspace, its software, a model, the gateway. `g` does
+   every step that is not done. The first workspace builds Clank's sandbox image, which takes a few minutes.
+3. With a cloud model, Clank asks once whether this folder's work may go to OpenRouter. Answer `y`, or keep the folder
+   on your computer only. `u` changes it later.
+4. `a` starts **OpenCode** (the agent) in this terminal; leave it with `/exit` and the console comes back. Or `c`
+   opens the folder in VS Code with OpenCode beside your files.
+5. In **review** mode (the default) the agent asks before it changes a file: answer under **Waiting for you** (`y`,
+   `n`, `v` shows the change) or in VS Code. `r` switches to **auto**, where it changes files without asking.
+
+Then look around: the **Monitor** (F10) shows what the agent does and what fills its context window, and lets you
+stop, pause, guide or undo it; **Flows** (F10's Flow view, `n`) split a larger piece of work into steps, each a fresh
+session. [docs/console.md](console.md) explains every page and key.
+
+## 5. Updating
+
+Clank has no update command yet. To update, in the `clank` folder:
+
+```
+git pull
+clank stop
+clank serve --background
+clank gateway restart
+```
+
+Run these at the computer itself, not over SSH (started from an SSH session, the service runs where it cannot use
+Docker's sign-in). If the VS Code extension changed, build it again (step 2b). If Clank then says a workspace's
+container uses an older sandbox image, reopen that workspace: **Workspaces** (F6), `x` to stop it, then `o` to open it
+again.
+
+## 6. Troubleshooting
+
+| What you see | What to do |
+| --- | --- |
+| "Docker is stopped" | Start Docker Desktop, or `clank docker start` |
+| A workspace says its container uses an older sandbox image | Reopen it: F6, `x`, then `o` |
+| F10 opens your terminal's menu instead of the Monitor | `clank console --page monitor` |
+| The key is refused (401) | Make a new key at OpenRouter and add it again (`clank endpoint key openrouter`) |
+| "No credits" (402) | Add credits at OpenRouter, or pick a free model |
+| `clank` is not found | Open a new terminal after `uv tool update-shell` |
+
+## 7. Uninstalling
+
+```
+clank stop
+uv tool uninstall clank
+```
+
+Clank's own folder, `%USERPROFILE%\.clank`, keeps your settings, records and keys: delete it to remove those too.
+Workspace containers are removed from **Workspaces** (F6, `d`) before that, or from Docker Desktop.
+
+## macOS and Linux
+
+Clank's console, the cloud path and its commands are the same; install uv, Git and Docker (Docker Desktop on macOS;
+Docker Engine on Linux) the way your system does, then follow step 2 from `git clone`. Neither has been tested yet.
+On Linux, the agent's container reaching Clank's gateway through Docker Engine is still being built
+([design 0014](design/0014-linux-and-small-machines.md)), so the agent may not reach the model there yet.

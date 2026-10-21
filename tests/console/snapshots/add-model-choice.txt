@@ -1,0 +1,34 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway                      09:14
+F4 This folder   ✗ │ ┌─ Add a model ──────────────────────────────────────────────────┐
+1 Home             │ │ No model is usable yet: no model runs in the main slot, and no │
+2 Questions        │ │ preset for it can load here: add one (Add a model).            │
+3 History          │ │                                                                │
+4 Docker         ● │ │ How should Clank run its model?                                │
+5 Machine          │ │                                                                │
+6 Operations       │ │ c  Cloud: a model at OpenRouter, with your key. No GPU needed. │
+7 Records          │ │ Each request costs money, from your OpenRouter credits, and    │
+8 Models         ● │ │ Clank shows what each one cost.                                │
+9 Presets          │ │                                                                │
+0 Providers and…   │ │ l  Local: a model on this computer's GPU. Nothing to pay per   │
+F1 Help            │ │ request; it needs an engine and the model's files (many GB)    │
+F2 Launch optio…   │ │ here. This computer: NVIDIA GeForce RTX 5080, 15.9 GB; 64.0 GB │
+F3 MCP servers     │ │ of memory.                                                     │
+F6 Workspaces      │ └────────────────────────────────────────────────────────────────┘
+F7 Requests        │
+F8 CPU models      │
+F9 Phone         ● │
+F10 Monitor        │
+F12 Add a model    │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+
+ c cloud  l local  esc this folder  ? explain  f1 help  f5 machine column  q quit

@@ -1,0 +1,40 @@
+ ◆ CLANK  paper   ● service up 2h14m  ● docker running  ● no model: Add a model  ● gateway stopped                                                        13:54
+F4 This folder         ✗ 4   │  Flow   Session   Context
+1 Home                       │ No session yet · this folder has no workspace: This folder (F4) opens one
+2 Questions                  │
+3 History                    │ ┌─ Context window ─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+4 Docker               ●     │ │ no session yet                                                                                                               │
+5 Machine                    │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+6 Operations                 │
+7 Records                    │ ┌─ What is in it ────────────────────────────────────────────── estimate ─┐  ┌─ On the GPU exactly ────────────────────────────┐
+8 Models               ●     │ │ no session yet                                                          │  │ no session yet                                  │
+9 Presets                    │ └─────────────────────────────────────────────────────────────────────────┘  └─────────────────────────────────────────────────┘
+0 Providers and models       │
+F1 Help                      │ ┌─ Over this session ─────────────────────────────────────────────────────┐  ┌─ Where the room went ───────────────────────────┐
+F2 Launch options            │ │ no session yet                                                          │  │ no session yet                                  │
+F3 MCP servers               │ └─────────────────────────────────────────────────────────────────────────┘  └─────────────────────────────────────────────────┘
+F6 Workspaces                │
+F7 Requests                  │ ┌─ Could be freed ─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+F8 CPU models                │ │ no session yet                                                                                                               │
+F9 Phone               ●     │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+F10 Monitor                  │
+F12 Add a model              │ ┌─ Where these figures come from ──────────────────────────────────────────────────────────────────────────────────────────────┐
+─────────────────────────────│ │ no session yet                                                                                                               │
+coming                       │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+Sampling              M3     │
+Sessions              M3     │
+Keys                  M3     │
+Layout                M2     │
+Tests and trials      M2     │
+Agents                M5     │
+Modes                 M5     │
+Changes               M6     │
+Network access        M7     │
+Skills                M8     │
+Files                 M9     │
+Setup guide           M10    │
+                             │
+                             │
+                             │
+
+ f10 next view  enter open  esc back  k compact  x drop  ? explain  f1 help  f5 machine column  q quit                                               ^p palette

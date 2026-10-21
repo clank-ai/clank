@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Records, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="19">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Kinds</div>
+<div style="display: grid; grid-template-columns: 13ch 10ch minmax(0, 1fr); padding: 0 6px; white-space: pre; color: #828bb8"><span>kind</span><span>sort</span><span>what it is</span></div>
+<sc-for list="{{ kinds }}" as="k" hint-placeholder-count="21">
+<div style="display: grid; grid-template-columns: 13ch 10ch minmax(0, 1fr); padding: 0 6px; white-space: pre; {{ k.rowStyle }}"><span>{{ k.kind }}</span><span style="color: {{ k.sortColor }}">{{ k.sort }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; color: {{ k.quiet }}">{{ k.help }}</span></div>
+</sc-for>
+<div style="margin-top: 6px; padding: 0 6px; color: #828bb8">settings: the user decides them, in readable files under CLANK_HOME/config · state: Clank keeps it, in its database</div>
+</section>
+
+<div style="flex: 1; min-height: 0; display: flex; gap: 14px">
+
+<section style="position: relative; flex: 0 0 400px; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Records</div>
+<div style="flex: 1; min-height: 0; overflow: hidden">
+<div style="display: grid; grid-template-columns: 17ch 17ch minmax(0, 1fr); padding: 0 6px; white-space: pre; color: #828bb8"><span>id</span><span>title</span><span>source</span></div>
+<sc-for list="{{ records }}" as="r" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 17ch 17ch minmax(0, 1fr); padding: 0 6px; white-space: pre; {{ r.rowStyle }}"><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ r.id }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ r.title }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; color: {{ r.quiet }}">{{ r.source }}</span></div>
+</sc-for>
+<div style="margin-top: 8px; padding: 0 6px; color: #828bb8">a record is read when it is highlighted, and again when an event says a record of its kind changed</div>
+</div>
+</section>
+
+<section style="position: relative; flex: 1; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Values</div>
+<div style="flex: 1; min-height: 0; overflow: hidden">
+<div style="padding: 0 6px; margin-bottom: 6px; white-space: pre; overflow: hidden; text-overflow: ellipsis">preset daily-262k<span style="color: #828bb8"> · </span>user<span style="color: #828bb8"> · </span>CLANK_HOME/config/presets/daily-262k.json</div>
+<div style="display: grid; grid-template-columns: 17ch minmax(0, 1fr) 16ch; column-gap: 12px; padding: 0 6px; white-space: pre; color: #828bb8"><span>name</span><span>value</span><span>title</span></div>
+<sc-for list="{{ values }}" as="v" hint-placeholder-count="8">
+<div style="display: grid; grid-template-columns: 17ch minmax(0, 1fr) 16ch; column-gap: 12px; padding: 0 6px; white-space: pre; {{ v.rowStyle }}"><span>{{ v.name }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ v.value }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; color: {{ v.quiet }}">{{ v.title }}</span></div>
+</sc-for>
+<div style="margin-top: 8px; padding: 0 6px; color: #828bb8"><span style="color: #7aa2f7">?</span> on a value explains it: what it is, its value, where it comes from, the file that holds it (or would), when a change applies, and where its kind is defined</div>
+<div style="padding: 0 6px; color: #828bb8">settings change in their files, through clank records or the API</div>
+</div>
+</section>
+
+</div>
+
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">↑↓</span> highlight</span><span><span style="color: #7aa2f7">→ ←</span> between the lists</span><span><span style="color: #7aa2f7">?</span> explain a value</span><span><span style="color: #7aa2f7">f1</span> help</span><span style="margin-left: auto">^p palette</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Records' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const selectedStyle = 'background: #283457; color: #ffffff; font-weight: 700';
+    const quiet = '#828bb8', plain = '#c0caf5', white = '#ffffff';
+    const kindRows = [
+      ['service', 'settings', 'How the Clank service runs: where its API listens, and how long it keeps its history.'],
+      ['event', 'state', 'Something that happened: kept as the history, and sent to every client as it happens.'],
+      ['operation', 'state', 'Something that takes more than a moment, run by the service step by step: a switch, a download, a check.'],
+      ['question', 'state', 'Something Clank asks the user and waits for: an approval, a choice, or an answer in words.'],
+      ['machine', 'settings', 'What Clank detected about this computer: its system, Python, WSL, processor, memory, GPUs and Docker.'],
+      ['docker', 'settings', 'How Clank uses Docker: which container platform, how often it is checked, and how long it may take.'],
+      ['workspace', 'settings', "A folder agents work in, in a container of its own: the folder, and the container's CPUs and memory."],
+      ['preset', 'settings', "A saved launch configuration: a serving setup at a version, a model, and the launch options that differ from the engine's defaults (design 0001 §3.4)."],
+      ['host', 'settings', 'Where engines run (decision 0030): a WSL distribution, or the local Linux, with its own Clank folder.'],
+      ['model-file', 'settings', "Where one of the catalog's model files is on a host, when it is kept outside the host's models folder."],
+      ['runtime', 'settings', 'The slots, the port engines listen on, and how long starts and health checks may take.'],
+      ['slot', 'state', 'A seat for a model (design 0001 §1): its state since when and why, what it runs, and on which process.'],
+      ['launch', 'state', 'One start of an engine: its plan and estimate, how long it took, what memory it took, how it ended.'],
+      ['install', 'state', 'An engine installed on a host: the command that runs it, its folder and libraries, how it got there.'],
+      ['gateway', 'settings', "Where the gateway listens, how long a request waits for a model that is starting or switching, whether it answers OpenCode's session titles itself, and what it keeps of each request."],
+      ['completion', 'settings', 'Gray text after the cursor in VS Code, from the model in the fast slot: whether it is on, how long it waits after a keystroke, and whether it writes a few lines after a line that opens a block.'],
+      ['vision', 'settings', 'The model that reads images on the CPU: off, loaded only when an image is to be read (and unloaded when idle), or always loaded; how long it stays idle before it is unloaded; and its preset.'],
+      ['mcp-server', 'settings', 'An MCP server, added as other harnesses add one (`claude mcp add`, `codex mcp add`): the command that starts it (stdio), or the address it listens at (http, sse). The values of its environment variables and headers are kept with the secrets, never in this file.'],
+      ['vscode', 'settings', "Clank's VS Code window, a separate instance of VS Code (its settings and extensions under CLANK_HOME/vscode, the main one untouched): which program runs it, and the extensions it has besides Clank's own."],
+      ['remote', 'settings', 'Whether the phone page is on, where it listens on this machine, and the tailnet port Tailscale gives it.'],
+      ['notion', 'settings', "Clank's connection to Notion (design 0010): its API and the version Clank speaks. The integration's secret is kept with the secrets (`clank notion connect`), never in this file."]
+    ];
+    const kinds = kindRows.map(([kind, sort, help]) => {
+      const selected = kind === 'preset';
+      return {
+        kind, sort, help,
+        sortColor: selected ? white : (sort === 'settings' ? plain : quiet),
+        quiet: selected ? white : quiet,
+        rowStyle: selected ? selectedStyle : ''
+      };
+    });
+    const records = [
+      ['completion-0.5b', 'completion 0.5B', '(default)'],
+      ['daily-262k', 'daily 262K', '(user)'],
+      ['vision', 'vision 4B', '(default)']
+    ].map(([id, title, source]) => {
+      const selected = id === 'daily-262k';
+      return { id, title, source, quiet: selected ? white : quiet, rowStyle: selected ? selectedStyle : '' };
+    });
+    const values = [
+      ['title', '"daily 262K"', 'Title'],
+      ['engine', '"kvmem-llamacpp"', 'Serving setup'],
+      ['engine_version', '"v0.16.0-rc1"', 'Engine version'],
+      ['model', '"qwen3.8-27b"', 'Model'],
+      ['options', '{"vision": "cpu", "vision.max_tokens": 512}', 'Launch options'],
+      ['slot', '"main"', 'Slot'],
+      ['host', '""', 'Host'],
+      ['notes', '"A 262K context with a 36K exact window, MTP with 3 draft tokens, thinking on with a 4096-token budget, CUDA graphs off; images in, the projector on the CPU."', 'Notes']
+    ].map(([name, value, title]) => {
+      const selected = name === 'options';
+      return { name, value, title, quiet: selected ? white : quiet, rowStyle: selected ? selectedStyle : '' };
+    });
+    return { menu, kinds, records, values };
+  }
+}
+</script>
+</body>
+</html>

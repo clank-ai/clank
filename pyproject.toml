@@ -1,0 +1,75 @@
+[project]
+name = "clank"
+dynamic = ["version"]
+description = "A local LLM suite: a coding and research assistant on your own hardware, with the model and engine you choose."
+readme = "README.md"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+dependencies = [
+    "anyio>=4.15.1",
+    "click>=8.5.0",
+    "fastapi>=0.143.0",
+    "httpx2>=2.13.1",
+    "psutil>=7.2.2",
+    "pydantic>=2.14.1",
+    "textual>=8.2.8",
+    "uvicorn>=0.54.0",
+]
+
+[project.scripts]
+clank = "clank.cli.main:main"
+
+[dependency-groups]
+dev = [
+    "matplotlib>=3.11.2",
+    "mypy>=2.4.0",
+    "pytest>=9.1.1",
+    "ruff>=0.17.0",
+    "types-psutil>=7.2.2",
+]
+
+[build-system]
+requires = ["hatchling>=1.32.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "clank/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["clank"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, import order, bugbear, pyupgrade, simplify, pytest style, Ruff's own rules, and docstrings on
+# every module, package, public class and public function (AGENTS.md: every module says what it is for).
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "PT", "RUF", "D100", "D101", "D102", "D103", "D104"]
+# The Monitor's flow writes a run of one tool as boards A and D do: `read ×3` (design 0012 §6.3).
+allowed-confusables = ["×"]
+
+[tool.ruff.lint.per-file-ignores]
+# A test's name is the sentence it proves (design 0001 §8.5), so tests need no docstrings of their own.
+"tests/**" = ["D101", "D102", "D103"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["clank", "tools", "tests"]
+# Test folders are not packages; module names come from their paths, so two conftest.py files do not collide.
+explicit_package_bases = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
+xfail_strict = true
+filterwarnings = ["error"]
+markers = [
+    "real: starts the engines installed on this machine (run with -m real; skipped otherwise)",
+    "docker: uses this machine's Docker and builds Clank's sandbox image if needed (run with -m docker; else skipped)",
+    "openrouter: asks OpenRouter itself with the owner's key (CLANK_TEST_OPENROUTER_KEY for the run; else skipped)",
+]

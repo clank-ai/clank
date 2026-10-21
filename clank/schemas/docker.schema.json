@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Docker",
+  "description": "How Clank uses Docker: which container platform, how often it is checked, and how long it may take.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "docker/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "adapter": {
+      "default": "docker-desktop",
+      "description": "The adapter Clank uses for containers: docker-desktop (the only one so far).",
+      "title": "Container platform",
+      "type": "string"
+    },
+    "poll_seconds": {
+      "default": 5.0,
+      "description": "How often, in seconds, Clank reads Docker's state.",
+      "minimum": 1,
+      "title": "Checked every",
+      "type": "number"
+    },
+    "start_timeout_seconds": {
+      "default": 300,
+      "description": "How long a start may take before it is reported as failed.",
+      "minimum": 10,
+      "title": "Time to start",
+      "type": "integer"
+    },
+    "stop_timeout_seconds": {
+      "default": 120,
+      "description": "How long a stop may take before it is reported as failed.",
+      "minimum": 10,
+      "title": "Time to stop",
+      "type": "integer"
+    },
+    "question_minutes": {
+      "default": 30,
+      "description": "How long a question about stopping Docker waits before its default (cancel) applies.",
+      "minimum": 1,
+      "title": "Time to answer",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

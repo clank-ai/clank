@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Help, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; gap: 14px">
+
+<section style="position: relative; flex: 1; min-width: 0; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: nowrap">Keys anywhere</div>
+<sc-for list="{{ anywhere }}" as="k" hint-placeholder-count="10">
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 92px; color: #7aa2f7; white-space: pre">{{ k.key }}</span><span style="flex: 1; min-width: 0">{{ k.what }}</span></div>
+</sc-for>
+</section>
+
+<section style="position: relative; flex: 0 0 533px; min-width: 0; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: nowrap">Keys on This folder</div>
+<sc-for list="{{ folder }}" as="k" hint-placeholder-count="12">
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 20px; color: #7aa2f7; white-space: pre">{{ k.key }}</span><span style="flex: 1; min-width: 0">{{ k.what }}</span></div>
+</sc-for>
+</section>
+
+</div>
+
+<div style="flex: 1; min-height: 0; display: flex; gap: 14px">
+
+<section style="position: relative; flex: 1; min-width: 0; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: nowrap">Keys on the other pages</div>
+<div style="flex: 1; min-height: 0; overflow: hidden">
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">1   </span>Home</span><span style="flex: 1; min-width: 0"><span style="white-space: nowrap"><span style="color: #7aa2f7">s</span> start</span> or stop Docker · <span style="white-space: nowrap"><span style="color: #7aa2f7">d</span> run</span> the doctor</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">2   </span>Questions</span><span style="flex: 1; min-width: 0"><span style="white-space: nowrap"><span style="color: #7aa2f7">y, n, ...</span> answer</span> a question with one of its options' keys (Right or Tab into the list first for numbered ones) · <span style="white-space: nowrap"><span style="color: #7aa2f7">v</span> a question</span> shown whole</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">8   </span>Models</span><span style="flex: 1; min-width: 0"><span style="white-space: nowrap"><span style="color: #7aa2f7">l</span> load</span> a preset · <span style="white-space: nowrap"><span style="color: #7aa2f7">w</span> switch</span> to one · <span style="white-space: nowrap"><span style="color: #7aa2f7">u</span> unload</span> · <span style="white-space: nowrap"><span style="color: #7aa2f7">c</span> check</span></span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">9   </span>Presets</span><span style="flex: 1; min-width: 0"><span style="white-space: nowrap"><span style="color: #7aa2f7">Enter</span> switch</span> the main slot to the highlighted one · <span style="white-space: nowrap"><span style="color: #7aa2f7">c</span> check</span> it · <span style="white-space: nowrap"><span style="color: #7aa2f7">v</span> its</span> file · <span style="white-space: nowrap"><span style="color: #7aa2f7">o</span> its</span> options</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">0   </span>Providers and models</span><span style="flex: 1; min-width: 0"><span style="white-space: nowrap"><span style="color: #7aa2f7">i</span> install</span> an engine · <span style="white-space: nowrap"><span style="color: #7aa2f7">d</span> download</span> a model's file · <span style="white-space: nowrap"><span style="color: #7aa2f7">x, u</span> remove</span> them again</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">F2  </span>Launch options</span><span style="flex: 1; min-width: 0">a preset's launch options: each value, where it comes from, what the engine receives · <span style="white-space: nowrap"><span style="color: #7aa2f7">p</span> pick</span> another preset · <span style="white-space: nowrap"><span style="color: #7aa2f7">e</span> open</span> its file</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">F3  </span>MCP servers</span><span style="flex: 1; min-width: 0"><span style="white-space: nowrap"><span style="color: #7aa2f7">Enter</span> lists</span> the tools · <span style="white-space: nowrap"><span style="color: #7aa2f7">s</span> starts</span> or stops one · <span style="white-space: nowrap"><span style="color: #7aa2f7">c</span> checks</span> it · <span style="white-space: nowrap"><span style="color: #7aa2f7">a</span> adds</span> one · <span style="white-space: nowrap"><span style="color: #7aa2f7">d</span> removes</span> one</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">F6  </span>Workspaces</span><span style="flex: 1; min-width: 0"><span style="white-space: nowrap"><span style="color: #7aa2f7">o</span> opens</span> · <span style="white-space: nowrap"><span style="color: #7aa2f7">x</span> stops</span> · <span style="white-space: nowrap"><span style="color: #7aa2f7">e</span> installs</span> the software · <span style="white-space: nowrap"><span style="color: #7aa2f7">d</span> removes</span> the highlighted one</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">F7  </span>Requests</span><span style="flex: 1; min-width: 0">every model request, newest first, the highlighted one whole · <span style="white-space: nowrap"><span style="color: #7aa2f7">v</span> watches</span> the newest live</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">F8  </span>CPU models</span><span style="flex: 1; min-width: 0"><span style="white-space: nowrap"><span style="color: #7aa2f7">l</span> loads</span> completion's model · <span style="white-space: nowrap"><span style="color: #7aa2f7">u</span> unloads</span> it · <span style="white-space: nowrap"><span style="color: #7aa2f7">x</span> turns</span> completion off or on in VS Code · <span style="white-space: nowrap"><span style="color: #7aa2f7">v</span> the</span> vision model off, on demand or always · <span style="white-space: nowrap"><span style="color: #7aa2f7">g</span> get</span> its files</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">F9  </span>Phone</span><span style="flex: 1; min-width: 0"><span style="white-space: nowrap"><span style="color: #7aa2f7">x</span> on</span> or off · <span style="white-space: nowrap"><span style="color: #7aa2f7">p</span> pairs</span> a device · <span style="white-space: nowrap"><span style="color: #7aa2f7">c</span> cancels</span> its code · <span style="white-space: nowrap"><span style="color: #7aa2f7">Enter</span> shows</span> what a device exchanged · <span style="white-space: nowrap"><span style="color: #7aa2f7">d</span> revokes</span></span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 190px; white-space: pre"><span style="color: #7aa2f7">F10 </span>Monitor</span><span style="flex: 1; min-width: 0">what the agent and its model do, live · <span style="white-space: nowrap"><span style="color: #7aa2f7">Tab</span> next</span> box · <span style="white-space: nowrap"><span style="color: #7aa2f7">Enter</span> open</span> · <span style="white-space: nowrap"><span style="color: #7aa2f7">Esc</span> back</span> · <span style="white-space: nowrap"><span style="color: #7aa2f7">p</span> pick</span> a session</span></div>
+</div>
+</section>
+
+<section style="position: relative; flex: 0 0 533px; min-width: 0; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 10px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: nowrap">What each page shows</div>
+<div style="flex: 1; min-height: 0; overflow: hidden; padding-right: 8px">
+<sc-for list="{{ pages }}" as="p" hint-placeholder-count="19">
+<div style="display: flex; gap: 10px; white-space: pre"><span style="flex: none; width: 32px; color: #7aa2f7">{{ p.key }}</span><span style="flex: none; width: 160px">{{ p.name }}</span><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #828bb8">{{ p.summary }}</span></div>
+</sc-for>
+<div style="color: #828bb8">Pages in red come with a later milestone: open one to see what it will do.</div>
+<sc-for list="{{ coming }}" as="p" hint-placeholder-count="12">
+<div style="display: flex; gap: 10px; white-space: pre; color: #f7768e"><span style="flex: none; width: 32px">{{ p.key }}</span><span style="flex: none; width: 160px">{{ p.name }}</span><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ p.summary }}</span></div>
+</sc-for>
+</div>
+<div style="position: absolute; top: 14px; right: 3px; width: 3px; height: 78%; background: #3b4261; border-radius: 2px"></div>
+</section>
+
+</div>
+
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">↑↓</span> scroll</span><span><span style="color: #7aa2f7">f1</span> help</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f5</span> machine panel</span><span><span style="color: #7aa2f7">f10</span> monitor</span><span><span style="color: #7aa2f7">q</span> quit</span><span style="margin-left: auto">^p palette</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Help' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const anywhere = [
+      ['0 to 9', "open a page (the menu shows each page's key beside its name)"],
+      ['F1', 'this help'],
+      ['?', 'explain what has the focus: a value, a question, an operation, a menu entry, the page'],
+      ['Esc', 'close a window'],
+      ['Up, Down', "move in the menu (the page under the highlight opens), or in the page's list; a page without one scrolls"],
+      ['Right, Left', 'from the menu into the page and back; in a page, from one of its lists to the next and back'],
+      ['Tab', 'move between the menu and the page'],
+      ['F5', 'show or hide the machine panel on the right (it shows by itself from 130 columns)'],
+      ['Ctrl+P', 'the commands: every page and action, found by name; Change theme picks the colors (remembered)'],
+      ['q', 'quit; the service and what it runs go on']
+    ].map(([key, what]) => ({ key, what }));
+    const folder = [
+      ['F4', 'what working in the folder clank was started in needs, and the agent'],
+      ['a', 'start OpenCode'],
+      ['c', 'open VS Code with OpenCode beside your files'],
+      ['g', 'get everything ready'],
+      ['s', 'start Docker'],
+      ['o', 'open the workspace'],
+      ['l', 'load a model'],
+      ['e', "install the folder's software"],
+      ['m', 'give an MCP server to the agent or take it away'],
+      ['r', 'review each change the agent asks for (VS Code shows it), or let it change files (auto)'],
+      ['p', 'plan with the Planner (Markdown only, no code, no runs)'],
+      ['i', 'hand a plan to the agent']
+    ].map(([key, what]) => ({ key, what }));
+    const pages = [
+      ['F4', 'This folder', "Getting ready to work in the folder clank was started in, step by step (s Docker, o the workspace, e its software, l a model, g every step; m the agent's MCP servers), then working there: a starts OpenCode here, c opens VS Code with OpenCode beside your files; r switches between reviewing the agent's changes and auto."],
+      ['1', 'Home', 'What happens now, what runs, what waits for you, and what happened last.'],
+      ['2', 'Questions', 'Every question waiting for your answer, with its options.'],
+      ['3', 'History', 'Everything Clank recorded, newest last; / filters it by what you type.'],
+      ['4', 'Docker', "Docker's state, its containers and whose each one is; s starts or stops it."],
+      ['5', 'Machine', "This computer as Clank sees it, and the doctor's checks with what to do; d runs the doctor."],
+      ['6', 'Operations', 'What runs in the service, step by step, with its log; c cancels, r retries.'],
+      ['7', 'Records', 'Every record of every kind, with what each value is and where it is kept; ? explains a value.'],
+      ['8', 'Models', 'Each slot: what it runs and since when, the memory it took, the last switches; l loads, w switches, u unloads, c checks.'],
+      ['9', 'Presets', 'Each preset with its fit now and its last start; Enter switches the main slot to it, c checks it, v shows its file, o its launch options.'],
+      ['0', 'Providers and models', "Each serving setup's versions, where each is installed and how; each model's files and where they are; i installs an engine by its recipe, d downloads a model's file, x removes a model's files, u removes an engine."],
+      ['F1', 'Help', 'Every key, and what each page shows.'],
+      ['F2', 'Launch options', "A preset's options: each value, where it comes from, what the engine receives and what it does; the command line and the memory. p picks a preset, e opens its file."],
+      ['F3', 'MCP servers', "Every MCP server this folder's agent can use, its state and its tools: Enter lists its tools, s starts or stops it, c checks it, a adds one, d removes one."],
+      ['F6', 'Workspaces', "Every workspace: its container's state and use, its software and its agent's MCP servers; o opens, x stops, e installs the software, d removes."],
+      ['F7', 'Requests', 'Every model request through the gateway, newest first: who asked, its tokens in and out, how much of the prompt was cached, its first token and its speed; the highlighted one shows what was asked and answered.'],
+      ['F8', 'CPU models', 'The small models on the CPU: completion in VS Code (whether it is served, l loads it, u unloads it; how fast it answers; x turns it off or on) and the model that reads images (v: off, on demand or always; g gets it).'],
+      ['F9', 'Phone', "Your phone page on the tailnet: x turns it on or off, p pairs a device (a code to type on it), d revokes one; from the phone, drive the agents' sessions, reply to what waits, and see the files they send."],
+      ['F10', 'Monitor', 'What the agent and its model do, live: its steps, its context window and its flow; p picks a session.']
+    ].map(([key, name, summary]) => ({ key, name, summary }));
+    const coming = [
+      ['M3', 'Sampling', 'The roles and their sampling for each model; a change applies from the next request.'],
+      ['M3', 'Sessions', 'The conversations using each slot: role, tool, size, whether their context is cached, last activity.'],
+      ['M3', 'Keys', "API keys and tokens: each one's name, when it was set and its last four characters, never its value."],
+      ['M2', 'Layout', 'Which panels show, in what order and size, and the file each one is defined in; which key does what.'],
+      ['M2', 'Tests and trials', 'Check and trial results for each preset; start a suite, and compare serving setups by measured speed and useful work.'],
+      ['M5', 'Agents', "OpenCode in the workspace's container: its sessions, its questions and its approvals."],
+      ['M5', 'Modes', 'Plan, ask, auto and your own modes: what an agent may do alone, must ask about, and may not do.'],
+      ['M6', 'Changes', "The agent's changes waiting for review; accepting one applies exactly the diff that was reviewed."],
+      ['M7', 'Network access', 'Grants per host and per repository, asked for and recorded; pushes with your token.'],
+      ['M8', 'Skills', "The skills library: each skill's text shown before it is turned on."],
+      ['M9', 'Files', 'Files Clank or an agent made for you, where each came from and how long it is kept; sent to the phone.'],
+      ['M10', 'Setup guide', 'The first run: detect the machine, then a local model, an API key or a remote model, step by step.']
+    ].map(([key, name, summary]) => ({ key, name, summary }));
+    return { menu, anywhere, folder, pages, coming };
+  }
+}
+</script>
+</body>
+</html>

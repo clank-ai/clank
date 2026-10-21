@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service up 9d1h  ● docker running  ● daily 262K  ● gateway stopped                                                                    12:41
+F4 This folder         ✗ 2   │  Flow   Session   Context
+1 Home                       │ flow “A new simulation study” · workspace myproject · run 1 · started 12:02 · running: T2
+2 Questions                  │
+3 History                    │ ┌─ Flow ──────────────────────────────────────── 6 done · 1 running · 4 waiting ─┐  ┌─ Selected ─────────────────────────────┐
+4 Docker               ●     │ │ ┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐       │  │ TASK T2 · ● running                    │
+5 Machine                    │ │ │ YOU               ✓│──▸│ PLAN ⟲2           ✓│──▸│ VERIFY ⟲2         ✓│       │  │ Estimate run times                     │
+6 Operations                 │ │ │ Brief              │   │ Write the study pl…│   │ Check the plan     │       │  │ model   daily 262K                     │
+7 Records                    │ │ │ you                │   │ daily 262K         │   │ daily 262K         │       │  │ status  ● running since 12:35 · 6m · … │
+8 Models               ●     │ │ │ BRIEF.md · 12:02   │   │ PLAN.md · 12:18    │   │ pass, try 2 · 12:22│       │  │ mode    auto: changes accepted at once │
+9 Presets                    │ │ └────────────────────┘   └─▴──────────────────┘   └─────────────────┬─┬┘       │  │ sees    PLAN.md, grid.json             │
+0 Providers and models       │ │                            ╰─ fail ⟲ 3 findings · 2 of 3 tries use…─╯ │        │  │ prompt  split's draft, edited by you   │
+F1 Help                      │ │            ╭──────────────────────────────────────────────────────────╯        │  │ writes  runs/estimates.md (not yet)    │
+F2 Launch options            │ │            ▾                                                                   │  │ next    TASK T3 The sweep script       │
+F3 MCP servers               │ │ ┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐       │  │                                        │
+F6 Workspaces                │ │ │ GATE              ✓│──▸│ DECOMPOSE         ✓│─┬▸│ TASK T1           ✓│┄┐     │  │ ┌─ Live ─────────────────────────────┐ │
+F7 Requests                  │ │ │ You approve the pl…│   │ Break it into tasks│ │ │ The parameter grid │ ┆     │  │ │ idle                               │ │
+F8 CPU models                │ │ │ you                │   │ daily 262K         │ │ │ daily 262K         │ ┆     │  │ │ speed   no speed yet               │ │
+F9 Phone               ●     │ │ │ approved 12:30     │   │ 4 tasks · 12:31    │ │ │ grid.json · 12:33  │ ┆     │  │ │ context no step has ended yet      │ │
+F10 Monitor                  │ │ └────────────────────┘   └────────────────────┘ │ └────────────────────┘ ┆     │  │ │ guard   watching · nothing repeats │ │
+F12 Add a model              │ │                                                 │                        ┆     │  │ │ Enter opens its session: the Sess… │ │
+─────────────────────────────│ │                                                 │ ┏━━━━━━━━━━━━━━━━━━━━┓ ┆     │  │ └────────────────────────────────────┘ │
+coming                       │ │                                                 ├▸┃ TASK T2           ●┃┄┤     │  └────────────────────────────────────────┘
+Sampling              M3     │ │                                                 ┆ ┃ Estimate run times ┃ ┆     │
+Sessions              M3     │ │                                                 ┆ ┃ daily 262K         ┃ ┆     │  ┌─ Models in this flow ──────────────────┐
+Keys                  M3     │ │                                                 ┆ ┃ runs/estimates.md  ┃ ┆     │  │ ● daily 262K · loaded · 8 boxes        │
+Layout                M2     │ │                                                 ┆ ┗━━━━━━━━━━━━━━━━━━━━┛ ┆     │  │ the other 3 are you                    │
+Tests and trials      M2     │ │                                                 ┆                        ┆     │  │ e on a box picks another preset for it │
+Agents                M5     │ │                                                 ┆ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐ ┆     │  └────────────────────────────────────────┘
+Modes                 M5     │ │                                                 ├▸┆ TASK T3           ○┆┄┤     │
+Changes               M6     │ │                                                 ┆ ┆ The sweep script   ┆ ┆     │  ┌─ Waiting for you ──────────────────────┐
+Network access        M7     │ │                                                 ┆ ┆ daily 262K         ┆ ┆     │  │ ✓ Nothing waits for you.               │
+Skills                M8     │ │                                                 ┆ ┆ scripts/sweep.py   ┆ ┆     │  │ next: GATE You review the whole, afte… │
+Files                 M9     │ │                                                 ┆ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘ ┆     │  │ it asks here and on your phone         │
+Setup guide           M10    │ └────────────────────────────────────────────────────────────────────────────────┘  └────────────────────────────────────────┘
+                             │
+                             │ ┌─ The brief, checked ────────────────────────────────────────────────────────────────────────────────────────── 3 of 7 met ─┐
+                             │ │ ✓ about 60 grid points  60 points in PLAN.md's grid · check, try 2                                                         │
+                             │ │ ✓ at most 48 CPU-hours  about 41, by PLAN.md's estimate · check, try 2                                                     │
+                             │ │ ○ the grid has about 60 points  not checked yet                                                                            │▇▇
+                             │ │ ○ the runs fit in 48 CPU-hours  not checked yet                                                                            │
+                             │ │ ✓ the seeds are fixed  seeds 1 to 60, in PLAN.md · check, try 2                                                            │
+                             │ │ ○ every grid point has an estimate  not checked yet                                                                        │
+                             │ │ ○ the total is under 48 CPU-hours  not checked yet                                                                         │
+                             │ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                             │
+                             │ ┌─ Deliverables ─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+                             │ │ BRIEF.md   brief                                                                                                           │
+
+ f10 next view  enter open  p pause  e edit the box  o open in VS Code  r run from here  h run log  n new flow  N new flow in VS Code  ? explain  f1 help

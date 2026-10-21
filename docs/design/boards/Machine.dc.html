@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Machine, in the new look</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button,input,textarea{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="height: 24px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● daily 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #828bb8">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav style="width: 214px; flex: none; border-right: 1px solid #3b4261; padding: 4px 0; white-space: pre; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="20">
+<div style="padding: 0 10px; {{ m.style }}"><span style="color: #7aa2f7">{{ m.key }}</span> {{ m.name }}<span style="color: {{ m.tagColor }}">{{ m.tag }}</span></div>
+</sc-for>
+<div style="padding: 0 10px; color: #3b4261">──────────────────────────</div>
+<div style="padding: 0 10px; color: #828bb8">coming</div>
+<div style="padding: 0 10px; color: #f7768e">Sampling              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Sessions              M3</div>
+<div style="padding: 0 10px; color: #f7768e">Agents                M5</div>
+<div style="padding: 0 10px; color: #f7768e">Modes                 M5</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre; display: grid; grid-template-columns: 96px minmax(0, 1fr); row-gap: 2px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Profile</div>
+<span style="color: #828bb8">system</span><span>Windows 11 (10.0.26100)</span>
+<span style="color: #828bb8">python</span><span>3.12.10</span>
+<span style="color: #828bb8">wsl</span><span>WSL 2, Ubuntu-22.04</span>
+<span style="color: #828bb8">processor</span><span>Intel(R) Core(TM) i7-14700K, 20 cores</span>
+<span style="color: #828bb8">memory</span><span>62 GB</span>
+<span style="color: #828bb8">gpus</span><span>NVIDIA GeForce RTX 5080, 16 GB, driver 591.74</span>
+<span style="color: #828bb8">docker</span><span>28.4.0</span>
+<span style="color: #828bb8">detected</span><span>12:40:52</span>
+</section>
+
+<section style="position: relative; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Doctor</div>
+<div style="margin-bottom: 6px">9 of 10 passed   <span style="color: #828bb8">(d runs it again)</span></div>
+<sc-for list="{{ checks }}" as="k" hint-placeholder-count="11">
+<div style="display: grid; grid-template-columns: 4ch 40ch minmax(0, 1fr); column-gap: 2ch">
+<span style="color: {{ k.color }}">{{ k.mark }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ k.title }}</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; color: {{ k.detailColor }}">{{ k.detail }}</span>
+</div>
+</sc-for>
+</section>
+
+<div style="flex: 1"></div>
+</main>
+</div>
+
+<div style="height: 22px; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre; color: #828bb8">
+<span><span style="color: #7aa2f7">d</span> run the doctor</span><span><span style="color: #7aa2f7">?</span> explain</span><span><span style="color: #7aa2f7">f1</span> help</span><span><span style="color: #7aa2f7">f5</span> machine panel</span><span><span style="color: #7aa2f7">q</span> quit</span><span style="margin-left: auto">^p palette</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = [
+      ['F4', 'This folder', '      ✗ 1', '#f7768e'], ['1', 'Home', '', ''], ['2', 'Questions', '', ''], ['3', 'History', '', ''],
+      ['4', 'Docker', '         ●', '#9ece6a'], ['5', 'Machine', '', ''], ['6', 'Operations', '', ''], ['7', 'Records', '', ''],
+      ['8', 'Models', '         ●', '#9ece6a'], ['9', 'Presets', '', ''], ['0', 'Providers and models', '', ''],
+      ['F1', 'Help', '', ''], ['F2', 'Launch options', '', ''], ['F3', 'MCP servers', '', ''],
+      ['F6', 'Workspaces', '     1', '#c0caf5'], ['F7', 'Requests', '', ''], ['F8', 'CPU models', '', ''],
+      ['F9', 'Phone', '          ●', '#9ece6a'], ['F10', 'Monitor', '        ●', '#ff9e64']
+    ];
+    const menu = names.map(([key, name, tag, tagColor]) => ({
+      key: key.padEnd(3, ' '), name, tag, tagColor,
+      style: name === 'Machine' ? 'background: #283457; color: #ffffff; font-weight: 700' : ''
+    }));
+    const text = '#c0caf5', quiet = '#828bb8', warn = '#e0af68';
+    const tones = { ok: '#9ece6a', warn: warn, FAIL: '#f7768e', skip: quiet };
+    const rows = [
+      ['ok', 'Python 3.12 or newer', '3.12.10'],
+      ['ok', 'CLANK_HOME can be written', '~\\.clank'],
+      ['ok', 'The state database is intact', 'intact'],
+      ['warn', 'Room for models', '38 GB free'],
+      ['', '', 'a model takes 10 to 20 GB: free some room, or keep models on another disk'],
+      ['ok', 'An NVIDIA GPU', 'NVIDIA GeForce RTX 5080, 16 GB, driver 591.74'],
+      ['ok', 'WSL 2', 'WSL 2, Ubuntu-22.04'],
+      ['ok', 'Hardware-accelerated GPU scheduling off', 'off'],
+      ['ok', 'Docker installed', 'Docker 28.4.0'],
+      ['ok', 'Docker running', 'its engine answers (28.4.0)'],
+      ['ok', "The API's port", '7720 is taken (by the Clank service, if it runs; `clank status` says)']
+    ];
+    const checks = rows.map(([mark, title, detail]) => ({
+      mark, title, detail,
+      color: tones[mark] || quiet,
+      detailColor: mark ? text : warn
+    }));
+    return { menu, checks };
+  }
+}
+</script>
+</body>
+</html>

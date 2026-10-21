@@ -1,0 +1,50 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ●… 09:14
+F4 This folder   ✗ │ ┌─ The model ────────────────────────┐
+1 Home             │ │ key "made-up key label" (ends      │
+2 Questions        │ │ …-key): its own limit $20.00,      │
+3 History          │ │ $18.71 left; OpenRouter counts     │
+4 Docker         ● │ │ $0.12 today, $1.29 this month (UTC │
+5 Machine          │ │ days)                              │
+6 Operations       │ │                                    │
+7 Records          │ │ 2 that take tool calls,            │
+8 Models         ● │ │ programming models, most used      │
+9 Presets          │ │ first. Prices per million tokens.  │
+0 Providers and…   │ │ Example Coder                      │
+F1 Help            │ │   262K window · $0.30 in, $1.20    │
+F2 Launch optio…   │ │ out · thinks                       │
+F3 MCP servers     │ │ Example Small (free)               │
+F6 Workspaces      │ │   33K window · free (20 a minute,  │
+F7 Requests        │ │ 50 a day; 1,000 a day once 10      │
+F8 CPU models      │ │ credits were bought) · reads       │
+F9 Phone         ● │ │ images                             │
+F10 Monitor        │ │                                    │
+F12 Add a model    │ │ example-vendor/example-coder: A    │
+                   │ │ made-up model for coding. Window   │
+                   │ │ 262,144 tokens, most output        │
+                   │ │ 32,768.                            │
+                   │ └────────────────────────────────────┘
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+ 09:14  OpenRouter took the key; Clank keeps it (ends …-key)
+ / search  s sort  f free  esc back  ? explain  f1 help

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Service",
+  "description": "How the Clank service runs: where its API listens, and how long it keeps its history.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "service/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "host": {
+      "default": "127.0.0.1",
+      "description": "The address the API listens on; 127.0.0.1 keeps it to this machine (design 0002 §2.7).",
+      "title": "Address",
+      "type": "string"
+    },
+    "port": {
+      "default": 7720,
+      "description": "The TCP port the API listens on.",
+      "maximum": 65535,
+      "minimum": 1024,
+      "title": "Port",
+      "type": "integer"
+    },
+    "events_kept_days": {
+      "default": 30,
+      "description": "How many days events are kept before they are pruned.",
+      "minimum": 1,
+      "title": "History kept",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

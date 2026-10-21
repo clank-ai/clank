@@ -1,0 +1,34 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway                      09:14
+F4 This folder   ✗ │ ┌─ Your OpenRouter key ──────────────────────────────────────────┐
+1 Home             │ │ Paste your OpenRouter key (openrouter.ai, Keys). It is never   │
+2 Questions        │ │ shown: dots, then its last four.                               │
+3 History          │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+4 Docker         ● │ │ ▊ paste your OpenRouter key                                  ▎ │
+5 Machine          │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+6 Operations       │ │ OpenRouter refused the key: it may have been deleted or        │
+7 Records          │ │ disabled. Set a new one: Providers and models, k; or clank     │
+8 Models         ● │ │ endpoint key openrouter (OpenRouter said: Made-up words: no    │
+9 Presets          │ │ auth credentials found)                                        │
+0 Providers and…   │ │ The field is cleared: paste the key again.                     │
+F1 Help            │ │                                                                │
+F2 Launch optio…   │ │ Enter: Clank asks OpenRouter whether it takes the key (which   │
+F3 MCP servers     │ │ costs nothing) and keeps it only then, in CLANK_HOME/secrets,  │
+F6 Workspaces      │ │ readable by you alone. It is never shown, logged or copied.    │
+F7 Requests        │ └────────────────────────────────────────────────────────────────┘
+F8 CPU models      │
+F9 Phone         ● │
+F10 Monitor        │
+F12 Add a model    │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+                   │
+ 09:14  ! OpenRouter refused the key: it may have been deleted or disabled. Set a new on
+ enter check it  esc back  ? explain  f1 help  f5 machine column  q quit     ^p palette

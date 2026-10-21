@@ -1,0 +1,47 @@
+{
+  "schema": "model/1",
+  "id": "qwen3.8-27b",
+  "name": "Qwen3.8-27B",
+  "facts": {
+    "architecture": "Qwen3.8: 64 layers, of which 16 attend fully (the rest are linear-attention layers with a recurrent state); an MTP head",
+    "parameters": "27B",
+    "context": 262144,
+    "attention_layers": 16,
+    "kv_width": 1024,
+    "abilities": ["tools", "reasoning", "vision"]
+  },
+  "template": {
+    "earlier_thinking": "dropped",
+    "tool_calls": "xml",
+    "reasoning": ["<think>", "</think>"],
+    "source": "Qwen's reference chat template, as design 0012 §4.2 reads it: earlier thinking rendered only after the last user message, tool calls as XML; the template inside the model file is still to read (design 0012 §10)"
+  },
+  "files": [
+    {
+      "format": "gguf",
+      "role": "weights",
+      "repository": "ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF",
+      "revision": "d562806dbafae37109975e970aae91b43e73b440",
+      "path": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+      "size": 12120016960,
+      "sha256": "58fd826723939933dc86f45b7fe04545cbc2de1c70f6fe2cdd3858c87a98c12f",
+      "notes": "IQ3_S (GSQ-RCO) with the MTP head embedded"
+    },
+    {
+      "format": "gguf",
+      "role": "projector",
+      "repository": "unsloth/Qwen3.8-27B-GGUF",
+      "revision": "",
+      "path": "mmproj-Q8_0.gguf",
+      "size": 629247552,
+      "sha256": "f827456eac2734e2051a614f9176007881c69d320376e52394809f95883059ee",
+      "notes": "The vision projector \"daily 262K\" reads images with; no longer at the head of its repository, so its revision is not known and Clank does not download it: a user who has this exact file (its sha256 above) places it on the host, else runs the preset with its vision off"
+    }
+  ],
+  "engines": {
+    "kvmem-llamacpp": {
+      "sizes": {"gpu_weights_mib": 11160, "buffers_mib": 277, "overhead_mib": 424, "projector_mib": 600, "mtp_bytes_per_cell": 4096, "compute_bytes_per_cell": 5120},
+      "source": "KVMem v0.16.0-rc1's log on this model (model buffer 11,159.69 MiB, recurrent state 163.20 MiB, compute 374.28 MiB; the MTP head's pool 53,248 cells of 4,096 bytes, 208 MiB, at f16) and the prototype's measurement of 2026-10-06 (1,169 MiB beyond the weights and the KV cache, the buffers and the MTP head's pool included, leaving 424 MiB of overhead); the compute buffers took 594.28 MiB at 98,304 cells on 2026-10-18 (\"frontier 96K\", which took 14,453 MiB in all), so they are 114 MiB plus 5,120 bytes a cell, and buffers_mib holds the recurrent state and that 114"
+    }
+  }
+}

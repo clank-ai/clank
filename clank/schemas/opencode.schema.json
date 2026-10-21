@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OpenCode",
+  "description": "What Clank tells OpenCode of its model: how much of the engine's window is kept free for one step's tool results, so that OpenCode compacts a session before a step's results can make its next request too long for the engine.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "opencode/1",
+      "title": "Schema",
+      "description": "The kind and version this file is written in; always its first field."
+    },
+    "title": {
+      "default": "",
+      "description": "The name clients show for this record; the file's own name when empty.",
+      "title": "Title",
+      "type": "string"
+    },
+    "context_margin": {
+      "default": 16384,
+      "description": "Tokens of the engine's window OpenCode is not told of, kept free for one step's tool results. OpenCode compacts a session once a step's total reaches the window it is told less its output limit; the step's tool results then go with the next request, which the engine refuses when it and the answer's room pass its window (262,144 less 16,384 less 16,384: OpenCode compacts at 229,376 tokens). The default holds one tool output as OpenCode cuts it (51,200 bytes or 2,000 lines) of code or prose, about 13,000 tokens; one of digits or a long listing can take up to 49,000, and several results in a step add up: then the gateway tells OpenCode the context was full, and OpenCode compacts. At most a quarter of the window is kept; 0 tells OpenCode the whole window. The Monitor shows the engine's window and the line OpenCode compacts at.",
+      "minimum": 0,
+      "title": "Context margin",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}
