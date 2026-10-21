@@ -64,6 +64,18 @@ class Button:
         return shown(self.key.key)
 
 
+def from_keys(declared: Sequence[PageKey], *wanted: str | tuple[str, str]) -> list[Button]:
+    """A panel's buttons, chosen from its page's declared keys by key, each with the panel's own words when given
+    (`("a", "OpenCode in this terminal")`); a key the page does not declare is left out."""
+    found = {key.key: key for key in declared}
+    chosen = []
+    for each in wanted:
+        key, words = each if isinstance(each, tuple) else (each, "")
+        if key in found:
+            chosen.append(Button(found[key], words))
+    return chosen
+
+
 def _styles(state: State, place: Place) -> tuple[str, str, str]:
     """The fill's style, the key's and the words', for a state in a place."""
     fill, key, words = LOOKS[state]
@@ -207,8 +219,9 @@ class Buttons(Widget, can_focus=True):
                 self._hint()
 
     def reason(self, each: Button) -> str:
-        """Why a button cannot act now ("" when it can)."""
-        unable = self._unable or getattr(self.app, "unable_button", None)
+        """Why a button cannot act now ("" when it can): the group's own word, or the console's for a group that
+        presses through its door (a window's keys, pressed by the window, are never the page's)."""
+        unable = self._unable or (getattr(self.app, "unable_button", None) if self._press is None else None)
         return str(unable(each)) if unable is not None else ""
 
     def state(self, index: int) -> State:
@@ -334,9 +347,10 @@ class Buttons(Widget, can_focus=True):
             self.refresh()
 
     def on_focus(self, event: events.Focus) -> None:
-        """Draw the cursor's button focused, and say on the message line what it does."""
+        """Draw the cursor's button focused, and say on the message line what it does (Textual marks the group as
+        focused after this handler, so the hint does not ask)."""
         self.refresh()
-        self._hint()
+        self._hint(focused=True)
 
     def on_blur(self, event: events.Blur) -> None:
         """Draw the cursor's button as the others; what the message line said of it goes."""
@@ -348,7 +362,7 @@ class Buttons(Widget, can_focus=True):
     def _at(self, x: int, y: int) -> int | None:
         return next((index for index, line, start, end in self._places if line == y and start <= x < end), None)
 
-    def _hint(self) -> None:
+    def _hint(self, focused: bool = False) -> None:
         hint = getattr(self.app, "hint", None)
-        if hint is not None and self.current is not None and self.has_focus:
+        if hint is not None and self.current is not None and (focused or self.has_focus):
             hint(self.current, self.reason(self.current))

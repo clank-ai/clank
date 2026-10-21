@@ -1,7 +1,8 @@
 """Design 0011 §3 and §12.8 (the style in the console; a button's colors): the console starts in the style its settings
 pick (`clank` until changed), registered as a theme whose variables are the style's elements, before its first frame,
-a button's five colors among them; an owner's style that changes an element shows; a style that is not found, or a file that does not read, leaves the console in Clank's own style and
-the message line says why (its file, line and field); the console always starts. The marks that say a state, the
+a button's five colors among them; an owner's style that changes an element shows; a style that is not found, or a
+file that does not read, leaves the console in Clank's own style and the message line says why (its file, line and
+field); the console always starts. The marks that say a state, the
 spinner's frames, a bar's cells, a sparkline's steps and the mark of cut text are the style's: a style with plain marks
 draws only those, and a state's mark takes its state's color in any style. Ctrl+P's "Change style" lists the styles
 the service has and writes the one picked to the console's settings through the service; the console draws in a style

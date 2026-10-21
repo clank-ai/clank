@@ -1,8 +1,9 @@
-"""Design 0001 §5.1: the console is keyboard-first, so the arrows move the focus between the menu and the page on
-screen, without the mouse (the owner's request, 2026-10-15). Right goes from the menu into the page: to its first list,
-or to the page itself when it has none, so that Up and Down scroll it. Right and Left move between a page's lists, and
-Left from its first list goes back to the menu, where Up and Down open the other pages again. A window's arrows leave
-the focus behind it alone."""
+"""Design 0001 §5.1 and design 0011 §12.5: the console is keyboard-first, so the arrows move the focus between the menu
+and the page on screen, without the mouse (the owner's request, 2026-10-15). The console starts on the menu. Right, or
+Enter, goes from the menu into the page: where the focus was when the page was left, else to its first list, or to the
+page itself when it has none, so that Up and Down scroll it. Right and Left move between a page's lists, and Left from
+its first list goes back to the menu, where Up and Down open the other pages again. A window's arrows leave the focus
+behind it alone."""
 
 from typing import Any
 
@@ -65,11 +66,40 @@ async def test_right_and_left_move_between_a_pages_lists_and_left_from_the_first
 async def test_on_a_page_without_a_list_right_focuses_the_page_itself_and_left_goes_back(
     client: Client, home: Home
 ) -> None:
-    app = make(client, home, "folder")
+    app = make(client, home, "help")
     async with app.run_test(size=(120, 40)) as pilot:
         await settle(pilot, lambda: focused(app) == "menu")
-        await press(pilot, app, "right", "page-folder")
+        await press(pilot, app, "right", "page-help")
         await press(pilot, app, "left", "menu")
+
+
+async def test_enter_on_the_menu_goes_into_the_page_as_right_does(client: Client, home: Home) -> None:
+    app = make(client, home, "operations")
+    async with app.run_test(size=(120, 40)) as pilot:
+        await settle(pilot, lambda: focused(app) == "menu")
+        await press(pilot, app, "enter", "operations-list")
+        await press(pilot, app, "left", "menu")
+        assert app.query_one("#pages").current == "page-operations"  # type: ignore[attr-defined]
+
+
+async def test_back_into_a_page_the_focus_goes_where_it_was_left(client: Client, home: Home) -> None:
+    app = make(client, home, "records")
+    async with app.run_test(size=(120, 40)) as pilot:
+        await settle(pilot, lambda: focused(app) == "menu")
+        await press(pilot, app, "right", "records-kinds")
+        await press(pilot, app, "right", "records-list")
+        app.query_one("#menu", ListView).focus()  # as a click on the menu does
+        await settle(pilot, lambda: focused(app) == "menu")
+        await press(pilot, app, "right", "records-list")
+
+
+async def test_the_console_starts_on_the_menu_whose_arrows_still_open_the_pages(client: Client, home: Home) -> None:
+    app = make(client, home, "docker")
+    async with app.run_test(size=(120, 40)) as pilot:
+        await settle(pilot, lambda: focused(app) == "menu")
+        await pilot.press("down")
+        await settle(pilot, lambda: app.query_one("#pages").current == "page-machine")  # type: ignore[attr-defined]
+        assert focused(app) == "menu"
 
 
 async def test_the_arrows_in_a_window_leave_the_focus_behind_it_alone(client: Client, home: Home) -> None:

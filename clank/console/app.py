@@ -17,11 +17,14 @@ redrawn for it when nothing runs. The menu lists every page with its key, then, 
 (`menu.PLANNED`); arrowing through it opens each. Right moves the focus into the page on screen (to its first list, or
 to the page itself, which Up and Down then scroll), Right and Left move it between the page's lists, and Left from the
 first goes back to the menu; they come after the focused widget's own keys, so an input keeps its arrows. The keys bar
-(`keys.KeysBar`) shows the keys of the page on screen, wherever the focus is, then the keys that act anywhere (`?`, F1,
-F5, `q`, Ctrl+P), as each page declares them (`Page.KEYS`, design 0011 §7); a page's digit is beside it in the menu, its
-key in the style's `key`. A digit opens the page with that key, unless the focus is in the page and the page acts on it
-(a numbered option of a question); other keys go to the page on screen. A key pressed tells the service the user is
-here, at most once a minute (design 0002 §2.7). What an action did, or why it failed, shows on the message line above
+(`keysbar.KeysBar`) shows the keys of the page on screen, wherever the focus is, then the keys that act anywhere (`?`,
+F1, F5, `q`, Ctrl+P), as each page declares them (`Page.KEYS`, design 0011 §7); a page's digit is beside it in the
+menu, its key in the style's `key`. A digit opens the page with that key, unless the focus is in the page and the page
+acts on it (a numbered option of a question); other keys go to the page on screen. Every key the console shows is also
+a button (design 0011 §12, `buttons.py`): a button pressed and its key typed go through one door (`press_key`,
+`press_page_key`), so they cannot differ; a key the page says cannot act now (`Page.unable`) says why instead of acting,
+and a key acted on shows pressed on every group that shows it. A key pressed tells the service the user is here, at
+most once a minute (design 0002 §2.7). What an action did, or why it failed, shows on the message line above
 the keys. `?` explains what has the focus and says the page's keys (§5.4), and Ctrl+P finds every page and action by
 name (`commands.py`). The console knows the folder it was opened in (`folder`, the working folder unless another is
 given), for the pages that work in it (design 0004 §1), and hands its terminal to a program those pages start
@@ -58,13 +61,15 @@ from textual.widgets import ContentSwitcher, Label, ListItem, ListView
 from clank import registry
 from clank.client import Client, ClientError, NotRunning
 from clank.console import actions
+from clank.console.buttons import Button, Buttons
 from clank.console.commands import ClankCommands
 from clank.console.data import ConsoleData, Follower, Update, apply
 from clank.console.details import DetailsScreen
 from clank.console.form import Field, FormScreen
 from clank.console.gauges import fit
 from clank.console.header import header
-from clank.console.keys import ANYWHERE, KeysBar, said
+from clank.console.keys import ANYWHERE, PALETTE, PageKey, said, shown
+from clank.console.keysbar import KeysBar
 from clank.console.machine import MachineColumn, Seen, busy
 from clank.console.menu import PLANNED, MenuEntry, place
 from clank.console.pages import Page
@@ -106,6 +111,7 @@ def _pages_in_order() -> list[type[Page]]:
 
 PAGES = _pages_in_order()
 DIGITS = {page.ENTRY.key: page.ENTRY.id for page in PAGES if page.ENTRY.key.isdigit()}
+ACT_ANYWHERE = {key.key for key in (*ANYWHERE, PALETTE)}  # pressed by a button, they run their binding's action
 
 
 def _bindings() -> list[BindingType]:
@@ -179,6 +185,9 @@ class ClankConsole(App[str]):
         self._shown_header = ("", "")
         self.frame = 0  # the spinner's
         self._menu_shown: dict[str, str] = {}  # each menu entry as last drawn
+        self._hinted: Content | None = None  # what the message line says of the focused button, until a message
+        self._before_bar: Widget | None = None  # what had the focus before the keys bar
+        self._left: dict[str, Widget] = {}  # where the focus was in each page when it was last in it
 
     def compose(self) -> ComposeResult:
         """The header, the menu beside the pages, and the keys bar."""
@@ -196,7 +205,9 @@ class ClankConsole(App[str]):
         yield KeysBar(id="keys")
 
     def on_mount(self) -> None:
-        """Start following the service, and draw at most REDRAWS_PER_SECOND times a second."""
+        """Start following the service, and draw at most REDRAWS_PER_SECOND times a second. The focus starts on the
+        menu (design 0011 §12.5), not on the first group Textual finds, which is the keys bar."""
+        self.query_one("#menu", ListView).focus()
         threading.Thread(target=self._follower.run, name="console-follower", daemon=True).start()
         self.set_interval(1 / REDRAWS_PER_SECOND, self._drain)
         self.set_interval(SPIN_SECONDS, self._spin)
@@ -251,7 +262,7 @@ class ClankConsole(App[str]):
         self._page = id
         self.query_one("#pages", ContentSwitcher).current = f"page-{id}"
         self._current().show(self.data, {"all"})
-        self.query_one("#keys", KeysBar).show(self._current().shown_keys())
+        self.query_one("#keys", KeysBar).show_keys(self._current().shown_keys())
         machine = self.query_one("#machine", MachineColumn)
         hidden = not machine.display
         self.screen.set_class(not self._current().MACHINE_COLUMN, "-no-machine-column")
@@ -306,9 +317,16 @@ class ClankConsole(App[str]):
         if isinstance(self.screen, DetailsScreen):
             self.screen.dismiss()
             return
+        focused = self.focused
+        if isinstance(focused, KeysBar) and focused.current is not None and focused.current.key.key == "question_mark":
+            focused = self._before_bar  # the keys bar's own `?`: what had the focus before it
+        if isinstance(focused, Buttons) and focused.current is not None:
+            title, lines = explain_button(focused.current, focused.reason(focused.current))
+            self.push_screen(DetailsScreen(title, lines))
+            return
         menu = self.query_one("#menu", ListView)
         highlighted = menu.highlighted_child
-        if self.focused is menu and highlighted is not None and highlighted.id:
+        if focused is menu and highlighted is not None and highlighted.id:
             entry = next(entry for entry in self.entries() if f"menu-{entry.id}" == highlighted.id)
             title, lines = entry.explanation()
             page = next((page for page in PAGES if page.ENTRY.id == entry.id), None)
@@ -387,6 +405,38 @@ class ClankConsole(App[str]):
         line = self.query_one("#message", Label)
         line.update(f"{clock(self.now(), self.zone)}  {'! ' if error else ''}{text}")
         line.set_class(error, "error")
+        self._hinted = None
+
+    def hint(self, pressed: Button, reason: str) -> None:
+        """While a group has the focus (design 0011 §12.6): what its focused button does and how it is pressed, in
+        `quiet`, or why it cannot act now, in `attention`; cut to the line's one row with the style's mark."""
+        line = self.query_one("#message", Label)
+        if reason:
+            text = f"{pressed.label} {pressed.said}: {reason}"
+        else:
+            typed = "" if pressed.key.key in ("enter", "space") else f", {pressed.label}"
+            what = pressed.key.help or pressed.said
+            text = f"{pressed.label} {pressed.said}: {what} · Enter, Space{typed} or a click"
+        self._hinted = Content(fit(text, max(self.size.width - 2, 1)))  # the line is the screen's width, less padding
+        line.update(self._hinted)
+        line.set_class(bool(reason), "error")
+
+    def unhint(self) -> None:
+        """The focus left the groups: what the message line said of a button goes, unless a message came since."""
+        if self._hinted is None:
+            return
+        line = self.query_one("#message", Label)
+        line.update("")
+        line.set_class(False, "error")
+        self._hinted = None
+
+    def on_descendant_focus(self, event: events.DescendantFocus) -> None:
+        """Remember what had the focus before the keys bar, for the keys bar's own `?`, and where the focus was in the
+        page on screen, for when the focus comes back into it."""
+        if not isinstance(event.widget, KeysBar):
+            self._before_bar = event.widget
+        if self._page and self._current() in event.widget.ancestors:
+            self._left[self._page] = event.widget
 
     def action_page(self, id: str) -> None:
         """Open a page."""
@@ -396,18 +446,65 @@ class ClankConsole(App[str]):
     def action_key(self, key: str) -> None:
         """A digit: the page's when the focus is in it and the page acts on it, else the page with that key."""
         self._present()
-        shown = self._details()
-        if self._focus_in_page() and self._current().press(key):
-            self._close(shown)
+        window = self._details()
+        if self._focus_in_page() and self.press_page_key(key):
+            self._close(window)
             return
         self.show_page(DIGITS[key])
 
+    def press_button(self, pressed: Button) -> None:
+        """A button pressed by Enter, Space or a click (design 0011 §12.3): the same as its key."""
+        self.press_key(pressed.key)
+
+    def press_key(self, key: PageKey) -> None:
+        """A key pressed by its button: one that acts anywhere runs its binding's action (`?`, F1, F5, `q`, Ctrl+P);
+        a key of several says which keys it stands for; a page's key goes through the page's door."""
+        self._present()
+        if key.key in ACT_ANYWHERE:
+            self._flash(key.key)
+            self.call_later(self.run_action, key.action)
+            return
+        if " " in key.key:
+            self.say(f"{key.key} {key.words}: press one of the keys it stands for")
+            return
+        self.press_page_key(key.key)
+
+    def press_page_key(self, key: str) -> bool:
+        """The one door of a page's key, typed or pressed (design 0011 §12.3, §12.7): when the page says the key cannot
+        act now, why, on the message line, and the page is not pressed; else the page's `press`. A key acted on shows
+        pressed on every group that shows it. True when the key was taken."""
+        page = self._current()
+        reason = page.unable(key) if self.screen is page.screen else ""
+        if reason:
+            self.say(f"{shown(key)}: {reason}", True)
+            return True
+        acted = page.press(key)
+        if acted:
+            self._flash(key)
+        return acted
+
+    def unable_button(self, pressed: Button) -> str:
+        """Why a button cannot act now: its page's word for its key ("" when it can, and for a key that acts anywhere
+        or stands for several)."""
+        if pressed.key.key in ACT_ANYWHERE or " " in pressed.key.key:
+            return ""
+        return self._current().unable(pressed.key.key)
+
+    def _flash(self, key: str) -> None:
+        """Every group on the screen that shows this key shows it pressed, for a moment; a group in a list's row only
+        when it is clicked (another row's `y` is not the one a typed `y` answers)."""
+        for group in self.screen.query(Buttons).results(Buttons):
+            if group.can_focus:
+                group.flash(key)
+
     def action_inward(self) -> None:
-        """Right: from the menu into the page on screen, and in the page on to its next list."""
+        """Right: from the menu into the page on screen (where the focus was when the page was left, else its main
+        list: design 0011 §12.5), and in the page on to its next list."""
         self._present()
         stops = self._stops()
         if self.focused not in stops:
-            stops[0].focus()
+            left = self._left.get(self._page)
+            (left if left in stops else self.main()).focus()
             return
         later = stops[stops.index(self.focused) + 1 :]
         if later:
@@ -422,18 +519,39 @@ class ClankConsole(App[str]):
         index = stops.index(self.focused) if self.focused in stops else 0
         (stops[index - 1] if index > 0 else self.query_one("#menu", ListView)).focus()
 
+    def main(self) -> Widget:
+        """The page's main list (design 0011 §12.4): the first of its stops that is not a group of buttons, else its
+        first stop (its first group, or the page itself)."""
+        stops = self._stops()
+        return next((widget for widget in stops if not isinstance(widget, Buttons)), stops[0])
+
+    def to_main(self) -> None:
+        """Esc on a group of buttons: back to the page's main list."""
+        self.main().focus()
+
+    def into_page(self) -> None:
+        """↑ on the keys bar: back into the page, to its main list."""
+        self.main().focus()
+
     def on_key(self, event: events.Key) -> None:
-        """A key no binding took goes to the page on screen; while the cloud is paused at its spending limit, `L`
-        anywhere opens the limits (design 0016 §11)."""
+        """A key the focused widget did not take goes to the page on screen, through its door (`press_page_key`); a
+        digit is left to its binding (`action_key`), which gives it to the page only while the focus is in it; while the
+        cloud is paused at its spending limit, `L` anywhere opens the limits (design 0016 §11)."""
         self._present()
-        shown = self._details()
         if event.key == "L" and (self.data.cost or {}).get("paused"):
             event.stop()
             self.raise_limits()
             return
-        if self._current().press(event.key):
+        if event.key in DIGITS:
+            return
+        window = self._details()
+        if self.press_page_key(event.key):
             event.stop()
-            self._close(shown)
+            self._close(window)
+        elif event.key == "enter" and self.focused is self.query_one("#menu", ListView):
+            event.stop()
+            event.prevent_default()  # the list the focus goes to must not take this Enter too
+            self.action_inward()  # Enter on the menu goes into the page, as Right does
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
         """Open the page under the menu's highlight; one a newer highlight overtook before it was heard is left, since
@@ -515,6 +633,8 @@ class ClankConsole(App[str]):
         self._current().tick()  # a page that reads on its own draws what came, in this rhythm (the Monitor)
         self._draw_header()  # after it: what the page drew may make it busy, which the header shows
         self._draw_menu()  # a page's own reads change its badge too (This folder's steps)
+        if type(self._current()).unable is not Page.unable:  # its keys may come to act, or stop: dimmed or not
+            self.query_one("#keys", KeysBar).recheck()
         if not changed:
             return
         self.redraws += 1
@@ -594,6 +714,21 @@ class ClankConsole(App[str]):
         self._draw_header()
         self._draw_machine(machine=False)
         self._current().show(self.data, {"activity"})
+
+
+def explain_button(pressed: Button, reason: str) -> tuple[str, list[str]]:
+    """What `?` says of a focused button (design 0011 §12.4): what it does, and the keys that press it or why it
+    cannot act now."""
+    if reason:
+        how = f"It cannot act now: {reason}."
+    else:
+        ways = ["Enter or Space while it has the focus"]
+        if " " in pressed.key.key:
+            ways.append(f"one of the keys it stands for ({pressed.label}) from anywhere on this page")
+        elif pressed.key.key not in ("enter", "space"):
+            ways.append(f"{pressed.label} from anywhere on this page")
+        how = f"Pressed by {', by '.join(ways)}, or by a click."
+    return f"{pressed.label} {pressed.said}", [pressed.key.help or pressed.said, how]
 
 
 def menu_name(entry: MenuEntry, room: int) -> Content:

@@ -104,6 +104,11 @@ class Page(VerticalScroll):
         """Act on a key meant for this page; False when the page has nothing to do with it."""
         return False
 
+    def unable(self, key: str) -> str:
+        """Why one of the page's keys cannot act now, in the words its key would say ("" when it can): its buttons are
+        dimmed, and the key, typed or pressed, says why instead of acting (design 0011 §12.7)."""
+        return ""
+
     def shown_keys(self) -> tuple[PageKey, ...]:
         """The keys the keys bar shows for the page as it stands: its own (`KEYS`). A page with views shows its view's
         (the Monitor), and draws the bar again when its view changes."""

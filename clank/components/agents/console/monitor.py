@@ -90,7 +90,8 @@ from clank.console.data import ConsoleData
 from clank.console.details import DetailsScreen
 from clank.console.editor import EditScreen
 from clank.console.form import Field, FormScreen
-from clank.console.keys import KeysBar, PageKey
+from clank.console.keys import PageKey
+from clank.console.keysbar import KeysBar
 from clank.console.lists import relabel
 from clank.console.menu import MenuEntry
 from clank.console.pages import Page
@@ -708,7 +709,7 @@ class MonitorPage(Page):
     def draw_keys(self) -> None:
         """The keys bar shows the view's keys, while the page is on screen."""
         if self.display and self.is_mounted:
-            self.console.query_one("#keys", KeysBar).show(self.shown_keys())
+            self.console.query_one("#keys", KeysBar).show_keys(self.shown_keys())
 
     def panels(self, view: str) -> list[Panel]:
         """A view's panels, in order."""

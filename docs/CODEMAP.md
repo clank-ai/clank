@@ -251,6 +251,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/console/gauges.py` | How the console draws numbers that move (the owner's request, 2026-10-14: the menu should be more dynamic): a bar |
 | `clank/console/header.py` | The console's header (design 0001 §5, design 0004 §9, design 0011 §7): one row on `bars`, the same on every page: |
 | `clank/console/keys.py` | The console's keys (design 0011 §4 and §7, decision 0046): each page declares its own once, as named actions with |
+| `clank/console/keysbar.py` | The keys bar (design 0011 §7 and §12): the console's bottom row, in place of Textual's footer, and a group of buttons |
 | `clank/console/lists.py` | Lists and labels that change without flicker. The console's pages read again every few seconds; a list made again |
 | `clank/console/machine.py` | The machine column, the console's right side (the owner's request, 2026-10-14; design 0011 §7 and §9): the |
 | `clank/console/menu.py` | The console's menu: every page it has, then every page a later milestone brings (design 0002 §3.2, §3.3). |

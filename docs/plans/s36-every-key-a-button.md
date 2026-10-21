@@ -88,32 +88,32 @@ Decisions 0120-0122 record the main ones. Also:
 
 ### Task 5: The console's one door, and a key that cannot act now
 
-- [ ] **Files:** `clank/console/app.py` (`press_key`, `press_page_key`, `on_key` and `action_key` through it, the
+- [x] **Files:** `clank/console/app.py` (`press_key`, `press_page_key`, `on_key` and `action_key` through it, the
   flash); `clank/console/pages/__init__.py` (`Page.unable`).
-- [ ] **Tests first** (`tests/console/test_one_door.py`, design 0011 §12.3 and §12.7): a key typed and its button reach
+- [x] **Tests first** (`tests/console/test_one_door.py`, design 0011 §12.3 and §12.7): a key typed and its button reach
   the same `press`; a key that acts anywhere runs its binding's action; a key that cannot act now says why and the
   page's `press` is not called, typed or pressed; a key of several says its keys; every group showing a key flashes
   `pressed` when it is pressed, by its key too.
 
 ### Task 6: The keys bar is a group
 
-- [ ] **Files:** `clank/console/keys.py` (`KeysBar` a `Buttons`; `drawn` its layout).
-- [ ] **Tests first** (`tests/console/test_keys_bar.py`, design 0011 §7 and §12.1-§12.4): the keys stand at the columns
+- [x] **Files:** `clank/console/keys.py` (`KeysBar` a `Buttons`; `drawn` its layout).
+- [x] **Tests first** (`tests/console/test_keys_bar.py`, design 0011 §7 and §12.1-§12.4): the keys stand at the columns
   they stood at; Tab reaches the bar, last; → moves along it and stops at the palette; Enter, Space and a click press a
   key through the one door; ↑ and Esc go back into the page; the focused key is drawn in `button-focused`.
 
 ### Task 7: The message line and `?` on a focused button
 
-- [ ] **Files:** `app.py` (`hint`, `action_explain`); `clank/console/clank.tcss` (`#message` on one row, cut).
-- [ ] **Tests first** (`tests/console/test_one_door.py`, design 0011 §12.4 and §12.6): a focused button's words, what
+- [x] **Files:** `app.py` (`hint`, `action_explain`); `clank/console/clank.tcss` (`#message` on one row, cut).
+- [x] **Tests first** (`tests/console/test_one_door.py`, design 0011 §12.4 and §12.6): a focused button's words, what
   it does and its keys on the message line, a button that cannot act now's reason in `attention`; a message replaces
   it; leaving the groups clears it; `?` opens the details window about the focused button, and on the keys bar's own
   `?` about what had the focus before.
 
 ### Task 8: Where the focus goes
 
-- [ ] **Files:** `app.py` (Enter on the menu, where each page was left, `main`, `into_page`).
-- [ ] **Tests first** (`tests/console/test_arrows.py`, design 0011 §12.4 and §12.5): Enter on the menu goes into the
+- [x] **Files:** `app.py` (Enter on the menu, where each page was left, `main`, `into_page`).
+- [x] **Tests first** (`tests/console/test_arrows.py`, design 0011 §12.4 and §12.5): Enter on the menu goes into the
   page; → back into a page goes where it was left; Esc on a group goes to the page's main list; the console still
   starts on the menu, its ↑ ↓ opening pages.
 
@@ -122,12 +122,12 @@ Decisions 0120-0122 record the main ones. Also:
 - [ ] **Files:** `clank/components/agents/console/folder.py` (the Next row, Then work's column and its settings row,
   `unable` for `e`, `m`, `p`, `r`, `w`, `i`).
 - [ ] **Tests first** (`tests/console/test_folder_buttons.py`, design 0011 §12.1, §12.7 and §12.9): the groups and their
-  keys, from `KEYS`; a click on `l` in the Next row loads a model as `l` does; the workspace's keys dimmed until it is
-  opened, saying why; frames at 128, 88 and 60 columns (`folder-128`, `folder-88`, `folder-60`), nothing overlapping.
+  keys, from `KEYS`; a click on `l` in the Next row presses `l`, as its key does; `a` dimmed until every required step
+  is done, and the workspace's keys until it is opened, saying why; frames at 128, 88 and 60 columns (`folder-128`, `folder-88`, `folder-60`), nothing overlapping.
 
 ### Task 10: A question's options
 
-- [ ] **Files:** `clank/console/pages/questions.py` (`OptionButtons`), `pages/home.py`, `folder.py`.
+- [ ] **Files:** `clank/console/pages/questions.py` (`option_buttons`), `pages/home.py`, `folder.py`.
 - [ ] **Tests first** (`tests/console/test_questions.py`, `test_home.py`, design 0011 §12.1): Home's and This folder's
   first question's options and `v` are a group that answers it; on the Questions page a click on another question's
   option highlights it and answers it, the list keeping the focus; snapshots `home-question` and `questions`.
@@ -136,8 +136,9 @@ Decisions 0120-0122 record the main ones. Also:
 
 - [ ] **Files:** `clank/console/confirm.py`, `clank/console/details.py`.
 - [ ] **Tests first** (`tests/console/test_confirm.py`, `test_windows.py`, design 0011 §12.1 and §12.5): a window that
-  asks first opens with the focus on "do it"; Enter does it once armed, never the Enter that opened it; → and Tab reach
-  "leave it", which Enter presses; the details window's "close"; the windows' last line is their group.
+  asks first opens with the focus on "do it"; Enter does it once armed, never the Enter that opened it; → reaches
+  "leave it", which Enter presses (Tab stays on the window's one group); the details window's "close"; the windows'
+  last line is their group.
 
 ### Task 12: The Monitor's Flow view at three widths
 

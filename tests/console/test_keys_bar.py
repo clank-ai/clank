@@ -19,7 +19,8 @@ from clank.client import Client
 from clank.console import keys as keys_module
 from clank.console.app import PAGES, ClankConsole
 from clank.console.details import DetailsScreen
-from clank.console.keys import ALWAYS, ANYWHERE, PALETTE, KeysBar, PageKey, fit_keys, shown
+from clank.console.keys import ALWAYS, ANYWHERE, PALETTE, PageKey, fit_keys, shown
+from clank.console.keysbar import KeysBar
 from clank.console.pages import Page
 from clank.console.pages import help as help_module
 from clank.console.panel import Panel
