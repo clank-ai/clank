@@ -107,6 +107,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | Where engines run: hosts | `tests/components/runtime/test_hosts.py` (3), `tests/components/runtime/test_local_host.py` (10), `tests/components/runtime/test_wsl_host.py` (10), `tests/contract/test_host.py` (3) |
 | 3 | Records | `tests/components/runtime/test_catalog.py` (7), `tests/components/runtime/test_presets.py` (6), `tests/components/runtime/test_state.py` (4) |
 | 4 | Engine adapters: KVMem and NInfer | `tests/components/runtime/test_kvmem.py` (10), `tests/components/runtime/test_options.py` (6), `tests/contract/test_engine.py` (4) |
+| 4.1 | Sampling and the GPU's layers | `tests/components/runtime/test_shipped_presets.py` (2) |
 | 5 | NInfer on this machine (retired) | none yet |
 | 6 | A slot, and switching it | `tests/components/runtime/test_state.py` (4) |
 | 6.1 | Load, unload, switch | `tests/components/runtime/test_load.py` (9), `tests/components/runtime/test_model_commands.py` (3), `tests/components/runtime/test_switch.py` (7) |
@@ -2409,6 +2410,13 @@ Design 0003 §8 and the M1.5 plan's task 1: what clients read of the runtime: th
 - a host is made once and again when its record changes
 - the models say where each file is on each host whose engine reads it
 - a preset says what it needs on its host and whether each is there
+
+### `tests/components/runtime/test_shipped_presets.py`
+
+Design 0003 §4.1 and decision 0119: options added to an engine adapter change nothing a shipped preset launches. Each preset in `clank/defaults/presets/` gives, with a fixed launch, exactly the command line, the environment and the memory estimate it gave before the GPU's layers and the sampling became options: "frontier 262K", the owner's model, among them. Written before those options were added, and kept as they came.
+
+- every shipped preset is held
+- a shipped preset launches exactly as before
 
 ### `tests/components/runtime/test_state.py`
 
