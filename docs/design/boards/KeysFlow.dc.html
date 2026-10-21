@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flow view, with buttons</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0} a{color:#7aa2f7}a:hover{color:#bb9af7} button,input,textarea{font:inherit}</style>
+</helmet>
+<div data-root="1" tabIndex="-1" onKeyDown="{{ rootKeys }}" style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden; outline: none">
+
+<div style="height: 24px; flex: none; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #9aa5ce">Monitor (F10) › Flow</span>
+<span style="color: #9ece6a">● frontier 262K</span>
+<span style="color: #ff9e64">● flow running: T2</span>
+<span style="margin-left: auto; color: #9aa5ce">12:41</span>
+</div>
+
+<div style="height: 24px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 14px; white-space: pre">
+<div role="toolbar" aria-label="Views" onKeyDown="{{ keys.tabs }}" style="display: flex">
+<sc-for list="{{ tabs }}" as="b" hint-placeholder-count="3">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}">{{ b.words }}</button>
+</sc-for>
+</div>
+<span style="margin-left: auto; color: #9aa5ce">flow <span style="color: #e0af68">“A new simulation study”</span>   workspace <span style="color: #e0af68">myproject</span>   started 12:02</span>
+</div>
+
+<div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 16px; padding: 16px 14px 8px; box-sizing: border-box">
+
+<div style="flex: 1; min-height: 0; display: flex; gap: 14px">
+
+<section style="position: relative; flex: 0 0 932px; box-sizing: border-box; border: 1px solid #3b4261; padding: 16px 12px 8px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Flow</div>
+<div style="position: absolute; bottom: -10px; right: 10px; background: #1a1b26; padding: 0 6px; white-space: pre; color: #9aa5ce"><span style="color: #9ece6a">6 done</span> · <span style="color: #ff9e64">1 running</span> · 4 waiting</div>
+<div role="toolbar" aria-label="Boxes" onKeyDown="{{ boxKeys }}" style="position: relative; flex: 1; min-height: 0; overflow: hidden">
+
+<sc-for list="{{ edges }}" as="l" hint-placeholder-count="25"><div style="position: absolute; {{ l.style }}"></div></sc-for>
+
+<span style="position: absolute; left: 674px; top: 31px; color: #9ece6a">pass</span>
+<div style="position: absolute; left: 344px; top: 117px; white-space: pre"><span style="color: #f7768e">fail ⟲ back with 3 findings</span><span style="color: #9aa5ce"> · 1 of 3 tries used</span></div>
+<div style="position: absolute; left: 344px; top: 135px; color: #9aa5ce">
+<div style="white-space: pre"><span style="color: #f7768e">1</span> no CPU-hour budget: the grid’s cost is unknown</div>
+<div style="white-space: pre"><span style="color: #f7768e">2</span> the seeds are not fixed: the runs would not repeat</div>
+<div style="white-space: pre"><span style="color: #f7768e">3</span> the grid has 240 points, the brief allows about 60</div>
+</div>
+
+<span style="position: absolute; left: 216px; top: 253px; color: #9aa5ce">1</span>
+<span style="position: absolute; left: 216px; top: 351px; color: #ff9e64">2</span>
+<span style="position: absolute; left: 216px; top: 449px; color: #9aa5ce">3</span>
+<span style="position: absolute; left: 216px; top: 547px; color: #9aa5ce">4</span>
+<div style="position: absolute; left: 0; top: 478px; width: 195px; color: #9aa5ce">One model is loaded, so the tasks run one at a time, in the order 1 to 4.</div>
+
+<sc-for list="{{ nodes }}" as="n" hint-placeholder-count="11">
+<button type="button" data-k="{{ n.id }}" tabIndex="{{ n.tab }}" onClick="{{ n.click }}" onMouseDown="{{ n.down }}" onFocus="{{ n.onfocus }}" onMouseEnter="{{ n.enter }}" onMouseLeave="{{ n.leave }}" style="position: absolute; box-sizing: border-box; margin: 0; padding: 0 7px; display: flex; flex-direction: column; justify-content: center; text-align: left; outline: none; cursor: pointer; {{ n.boxStyle }}">
+<span style="display: flex; justify-content: space-between; gap: 6px; white-space: pre"><span><span style="color: {{ n.tagColor }}; font-weight: 700">{{ n.tag }}</span><span style="color: {{ n.extraColor }}">{{ n.extra }}</span></span><span style="color: {{ n.markColor }}">{{ n.right }}</span></span>
+<span style="display: block; white-space: pre; overflow: hidden; text-overflow: ellipsis; {{ n.titleStyle }}">{{ n.title }}</span>
+<span style="display: block; white-space: pre; overflow: hidden; text-overflow: ellipsis; color: {{ n.quiet }}">{{ n.model }}</span>
+<span style="display: block; white-space: pre; overflow: hidden; text-overflow: ellipsis; color: {{ n.quiet }}">{{ n.last }}</span>
+</button>
+</sc-for>
+
+<sc-for list="{{ arrows }}" as="a" hint-placeholder-count="12"><span style="position: absolute; width: 10px; height: 12px; line-height: 12px; font-size: 11px; text-align: center; {{ a.style }}">{{ a.ch }}</span></sc-for>
+
+<div style="position: absolute; left: 711px; top: 491px; width: 195px; height: 66px; box-sizing: border-box; border: 1px dashed #565f89; padding: 0 7px; display: flex; flex-direction: column; justify-content: center; color: #9aa5ce">
+<span style="white-space: pre; font-weight: 700">▸ next flow</span>
+<span style="white-space: pre; color: #c0caf5">Run the study</span>
+<span style="white-space: pre">prompt from INTEGRATE</span>
+</div>
+
+<div style="position: absolute; left: 0; bottom: 0; display: flex; align-items: center; gap: 10px; white-space: pre; color: #9aa5ce">
+<span>boxes</span>
+<span style="border: 1px solid #3b4261; padding: 0 5px; line-height: 16px">done</span>
+<span style="border: 2px solid #ff9e64; padding: 0 4px; line-height: 14px">running</span>
+<span style="border: 1px dashed #565f89; padding: 0 5px; line-height: 16px">waiting</span>
+<span style="border: 1px solid #f7768e; padding: 0 5px; line-height: 16px">failed</span>
+<span style="margin-left: 16px">lines</span>
+<span><span style="color: #9ece6a">──</span> pass</span>
+<span><span style="color: #f7768e">──</span> fail ⟲ back</span>
+<span><span style="color: #ff9e64">──</span> now</span>
+<span><span style="color: #565f89">┄┄</span> not yet</span>
+</div>
+
+</div>
+</section>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+<section style="position: relative; flex: 1; min-height: 0; box-sizing: border-box; border: 1px solid #3b4261; padding: 16px 12px 10px; display: flex; flex-direction: column; gap: 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">The box chosen</div>
+<div style="position: absolute; bottom: -10px; right: 10px; background: #1a1b26; padding: 0 6px; white-space: pre; color: #9aa5ce">arrows move · Enter opens</div>
+<div>
+<div style="display: flex; justify-content: space-between; white-space: pre"><span style="color: {{ sel.tagColor }}; font-weight: 700">{{ sel.tag }}</span><span style="color: {{ sel.stateColor }}">{{ sel.state }}</span></div>
+<div style="white-space: pre; color: #ffffff; font-weight: 700">{{ sel.title }}</div>
+</div>
+<div>
+<sc-for list="{{ sel.rows }}" as="r" hint-placeholder-count="6"><div style="display: flex"><span style="flex: none; width: 64px; white-space: pre; color: #9aa5ce">{{ r.k }}</span><span style="flex: 1; min-width: 0; white-space: pre-wrap"><sc-for list="{{ r.segs }}" as="s" hint-placeholder-count="2"><span style="color: {{ s.c }}">{{ s.t }}</span></sc-for></span></div></sc-for>
+</div>
+<sc-if value="{{ sel.isLive }}" hint-placeholder-val="{{ true }}">
+<div style="position: relative; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 10px 8px; margin-top: 8px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #ff9e64; font-weight: 700">Live</div>
+<div style="white-space: pre">step <span style="color: #ffffff; font-weight: 700">14</span> · 48 tok/s  <span style="color: #7aa2f7">▅▆▆▇▆▆▅▆▇▇▆▆▅▆</span></div>
+<div style="white-space: pre"><span style="color: #9aa5ce">context </span><span style="color: #7aa2f7">█████▋</span><span style="color: #3b4261">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span> 16%</div>
+<div style="white-space: pre; color: #9aa5ce">        41,203 of 262,144 tokens</div>
+<div style="white-space: pre"><span style="color: #9aa5ce">loop guard </span><span style="color: #9ece6a">watching</span><span style="color: #9aa5ce"> · nothing repeats</span></div>
+<div role="toolbar" aria-label="Its session" onKeyDown="{{ keys.open }}" style="display: flex; margin-top: 8px; white-space: pre">
+<sc-for list="{{ open }}" as="b" hint-placeholder-count="1">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}"><span style="color: {{ b.keyColor }}">{{ b.keyText }}</span> {{ b.words }}</button>
+</sc-for>
+</div>
+<div style="white-space: pre; color: #9aa5ce; padding-left: 1ch">the Guide (stop, pause, a note) acts in its session</div>
+</div>
+</sc-if>
+<sc-if value="{{ sel.hasExtra }}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 10px 8px; margin-top: 8px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; font-weight: 700; white-space: pre; color: {{ sel.extraColor }}">{{ sel.extraTitle }}</div>
+<sc-for list="{{ sel.extra }}" as="x" hint-placeholder-count="4"><div style="display: flex"><span style="flex: none; white-space: pre; {{ x.leadStyle }}">{{ x.lead }}</span><span style="flex: 1; min-width: 0; white-space: pre-wrap"><sc-for list="{{ x.segs }}" as="s" hint-placeholder-count="2"><span style="color: {{ s.c }}">{{ s.t }}</span></sc-for></span></div></sc-for>
+</div>
+</sc-if>
+</section>
+
+<section style="position: relative; flex: none; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Models in this flow</div>
+<div style="white-space: pre"><span style="color: #9ece6a">●</span> frontier 262K  <span style="color: #9aa5ce">loaded in the main slot</span></div>
+<div style="white-space: pre; color: #9aa5ce">  used by 8 boxes · the other 3 are you</div>
+<div role="toolbar" aria-label="Models" onKeyDown="{{ keys.models }}" style="display: flex; white-space: pre">
+<sc-for list="{{ models }}" as="b" hint-placeholder-count="1">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}"><span style="color: {{ b.keyColor }}">{{ b.keyText }}</span> {{ b.words }}</button>
+</sc-for>
+</div>
+</section>
+
+<section style="position: relative; flex: none; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Waiting for you</div>
+<div style="white-space: pre"><span style="color: #9ece6a">✓</span> Nothing waits for you.</div>
+<div style="white-space: pre; color: #9aa5ce">next: <span style="color: #e0af68">GATE</span> <span style="color: #c0caf5">You review the whole</span>, after INTEGRATE</div>
+<div style="white-space: pre; color: #9aa5ce">it asks here and on your phone</div>
+</section>
+
+</div>
+</div>
+
+<section style="position: relative; flex: none; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 8px; display: flex; gap: 24px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Run log</div>
+<div style="flex: 1; min-width: 0"><sc-for list="{{ log1 }}" as="e" hint-placeholder-count="4"><div style="display: flex; gap: 8px; white-space: pre"><span style="color: #9aa5ce">{{ e.time }}</span><span style="color: {{ e.mc }}">{{ e.mark }}</span><span><sc-for list="{{ e.segs }}" as="s" hint-placeholder-count="3"><span style="color: {{ s.c }}">{{ s.t }}</span></sc-for></span></div></sc-for></div>
+<div style="flex: 1; min-width: 0"><sc-for list="{{ log2 }}" as="e" hint-placeholder-count="4"><div style="display: flex; gap: 8px; white-space: pre"><span style="color: #9aa5ce">{{ e.time }}</span><span style="color: {{ e.mc }}">{{ e.mark }}</span><span><sc-for list="{{ e.segs }}" as="s" hint-placeholder-count="3"><span style="color: {{ s.c }}">{{ s.t }}</span></sc-for></span></div></sc-for></div>
+<div style="flex: 1; min-width: 0"><sc-for list="{{ log3 }}" as="e" hint-placeholder-count="3"><div style="display: flex; gap: 8px; white-space: pre"><span style="color: #9aa5ce">{{ e.time }}</span><span style="color: {{ e.mc }}">{{ e.mark }}</span><span><sc-for list="{{ e.segs }}" as="s" hint-placeholder-count="3"><span style="color: {{ s.c }}">{{ s.t }}</span></sc-for></span></div></sc-for></div>
+</section>
+
+</div>
+
+<div style="height: 18px; flex: none; display: flex; gap: 24px; padding: 0 10px; white-space: pre">
+<span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis"><span style="color: #c0caf5">{{ msg.lead }}</span><span style="color: #c0caf5">{{ msg.label }}</span><span style="color: {{ msg.color }}">{{ msg.text }}</span></span>
+<span style="flex: none; color: #9aa5ce">{{ msg.right }}</span>
+</div>
+
+<div role="toolbar" aria-label="Keys" onKeyDown="{{ keys.bar }}" style="height: 22px; flex: none; display: flex; align-items: center; padding: 0 2px; background: #16161e; white-space: pre">
+<sc-for list="{{ bar }}" as="b" hint-placeholder-count="12">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}"><span style="color: {{ b.keyColor }}">{{ b.keyText }}</span> {{ b.words }}</button>
+</sc-for>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      focus: 'bar:4', before: 'bar:4', hover: 'bar:2', pressed: '', msg: null,
+      cur: { tabs: 'tabs:0', boxes: 'boxes:t2', open: 'open:0', models: 'models:0', bar: 'bar:4' }
+    };
+    this.timer = null;
+    this.wasChosen = false;
+  }
+  componentWillUnmount() {
+    if (this.timer) clearTimeout(this.timer);
+  }
+  renderVals() {
+    const s = this.state;
+    const col = { y: '#e0af68', b: '#7aa2f7', p: '#bb9af7', c: '#7dcfff', t: '#73daca', w: '#c0caf5', m: '#9aa5ce', f: '#565f89', g: '#9ece6a', o: '#ff9e64', r: '#f7768e', x: '#ffffff' };
+    const B = '#7aa2f7', INK = '#1a1b26', TXT = '#c0caf5', MUTE = '#9aa5ce', DIM = '#565f89', YEL = '#e0af68';
+    const parse = (line) => {
+      const segs = [];
+      let c = col.w;
+      line.split(/(\{[a-z]\})/).forEach((piece) => {
+        const k = /^\{([a-z])\}$/.exec(piece);
+        if (k) c = col[k[1]];
+        else if (piece) segs.push({ t: piece, c: c });
+      });
+      return segs;
+    };
+    const model = 'frontier 262K{m} · loaded in the main slot';
+    const tasks = [
+      ['T1', 'The parameter grid', 'grid.json'],
+      ['T2', 'Estimate run times', 'runs/estimates.md'],
+      ['T3', 'The sweep script', 'scripts/sweep.py'],
+      ['T4', 'The analysis notebook', 'analysis/figures.ipynb']
+    ];
+    const raw = [
+      { id: 'you', x: 0, y: 10, tag: 'YOU', tc: col.y, st: 'done', right: '✓', title: 'Brief', model: 'you', last: 'BRIEF.md · 12:02',
+        state: '✓ done', opens: 'opens its deliverable, BRIEF.md',
+        rows: [['model', 'you'], ['status', '{g}✓ {w}written 12:02'], ['writes', 'BRIEF.md'], ['next', '{b}PLAN {w}Write the study plan']],
+        xt: 'BRIEF.md', xc: col.b, lw: 2,
+        xs: ['the goal and the limits:', ['·', 'about 60 grid points'], ['·', 'at most 48 CPU-hours'], '{m}VERIFY checks the plan against them'] },
+      { id: 'plan', x: 237, y: 10, tag: 'PLAN', extra: ' ⟲ 2 tries', tc: col.b, st: 'done', right: '✓', title: 'Write the study plan', model: 'frontier 262K', last: 'PLAN.md · 12:02–12:18',
+        state: '✓ done · 2 tries', opens: 'opens its deliverable, PLAN.md',
+        rows: [['model', model], ['status', '{g}✓ {w}12:02–12:18{m} · 2 tries'], ['sees', 'BRIEF.md{m}; on try 2, the 3 findings too'], ['writes', 'PLAN.md'], ['next', '{p}VERIFY {w}Check the plan']],
+        xt: 'Tries', xc: col.b, lw: 7,
+        xs: [['try 1', '12:02–12:09 wrote PLAN.md'], ['', '{r}✗ {w}check failed 12:11, 3 findings'], ['try 2', '12:11–12:18 wrote PLAN.md'], ['', '{g}✓ {w}check passed 12:22'], '{m}1 of 3 tries used'] },
+      { id: 'verify', x: 474, y: 10, tag: 'VERIFY', tc: col.p, st: 'done', right: '✓', title: 'Check the plan', model: 'frontier 262K · fresh', last: 'pass on try 2 · 12:22',
+        state: '✓ pass', opens: 'opens its verdict: pass, on try 2',
+        rows: [['model', 'frontier 262K{m} · a fresh session'], ['status', '{g}✓ pass {w}on try 2, 12:22'], ['sees', 'only BRIEF.md and PLAN.md'], ['writes', '{m}a verdict: pass, or findings'], ['pass', '{g}▸ {y}GATE {w}You approve the plan'], ['fail', '{r}⟲ {w}back to {b}PLAN {w}with the findings']],
+        xt: 'Try 1 · fail at 12:11 · 3 findings', xc: col.r, lw: 2,
+        xs: [['1', 'no CPU-hour budget: the grid’s cost is unknown', col.r], ['2', 'the seeds are not fixed: the runs would not repeat', col.r], ['3', 'the grid has 240 points, the brief allows about 60', col.r], '{m}sent back to PLAN · 1 of 3 tries used'] },
+      { id: 'gate1', x: 711, y: 10, tag: 'GATE', tc: col.y, st: 'done', right: '✓', title: 'You approve the plan', model: 'you', last: 'approved 12:30',
+        state: '✓ approved', opens: 'opens what you approved: PLAN.md and the verdict',
+        rows: [['model', 'you'], ['status', '{g}✓ {w}approved 12:30{m} · waited 8 min'], ['sees', 'PLAN.md{m} and the check’s verdict'], ['asks', 'here and on your phone'], ['next', '{c}DECOMPOSE {w}Break it into tasks']],
+        xt: 'Its log', xc: col.b, lw: 6,
+        xs: [['12:22', '{y}◆ {w}waits for you (also on your phone)'], ['12:30', '{g}✓ {w}you approved']] },
+      { id: 'decomp', x: 0, y: 377, tag: 'DECOMPOSE', tc: col.c, st: 'done', right: '✓', title: 'Break it into tasks', model: 'frontier 262K', last: '4 tasks · 12:31',
+        state: '✓ done', opens: 'opens its 4 tasks',
+        rows: [['model', model], ['status', '{g}✓ {w}12:31{m} · you accepted all 4 at 12:32'], ['sees', 'BRIEF.md, PLAN.md'], ['writes', '4 tasks{m}, each with a deliverable and a prompt']],
+        xt: 'Proposed 12:31 · accepted 12:32', xc: col.c, lw: 3,
+        xs: tasks.map((t) => [t[0], t[1].padEnd(23) + '{m}' + t[2], col.t]).concat([['✎', 'you edited T2’s prompt', col.y]]) },
+      { id: 't1', x: 237, y: 230, tag: 'TASK T1', tc: col.t, st: 'done', right: '✓', title: 'The parameter grid', model: 'frontier 262K', last: 'grid.json · 60 points',
+        state: '✓ done', opens: 'opens its deliverable, grid.json',
+        rows: [['model', model], ['status', '{g}✓ {w}12:33'], ['sees', 'its prompt, PLAN.md'], ['prompt', '{m}drafted by DECOMPOSE'], ['writes', 'grid.json{m} · 60 points'], ['next', '{t}T2 {w}Estimate run times']],
+        xt: 'Its log', xc: col.b, lw: 6,
+        xs: [['12:32', '{g}✓ {w}you accepted it'], ['12:33', '{g}✓ {w}wrote grid.json, 60 points']] },
+      { id: 't2', x: 237, y: 328, tag: 'TASK T2', tc: col.t, st: 'running', right: '● step 14', title: 'Estimate run times', model: 'frontier 262K', last: 'runs/estimates.md',
+        state: '● running', live: true, opens: 'opens its session in the Session view, at step 14',
+        rows: [['model', model], ['status', '{o}● {w}running since 12:35{m} · 6 min'], ['sees', 'its prompt, PLAN.md, grid.json'], ['prompt', '{m}drafted by DECOMPOSE, {y}✎ edited by you {m}12:32'], ['writes', 'runs/estimates.md{m} · not written yet'], ['next', '{t}T3 {w}The sweep script']] },
+      { id: 't3', x: 237, y: 426, tag: 'TASK T3', tc: col.t, st: 'waiting', right: '○', title: 'The sweep script', model: 'frontier 262K', last: 'scripts/sweep.py',
+        state: '○ waiting', why: 'nothing to open yet: it starts when T2 ends',
+        rows: [['model', model], ['status', '{m}○ waiting: starts when T2 ends'], ['sees', 'its prompt, PLAN.md, grid.json'], ['prompt', '{m}drafted by DECOMPOSE'], ['writes', 'scripts/sweep.py'], ['next', '{t}T4 {w}The analysis notebook']] },
+      { id: 't4', x: 237, y: 524, tag: 'TASK T4', tc: col.t, st: 'waiting', right: '○', title: 'The analysis notebook', model: 'frontier 262K', last: 'analysis/figures.ipynb',
+        state: '○ waiting', why: 'nothing to open yet: it starts when T3 ends',
+        rows: [['model', model], ['status', '{m}○ waiting: starts when T3 ends'], ['sees', 'its prompt, PLAN.md'], ['prompt', '{m}drafted by DECOMPOSE'], ['writes', 'analysis/figures.ipynb'], ['next', 'INTEGRATE Put it together']] },
+      { id: 'integ', x: 474, y: 377, tag: 'INTEGRATE', tc: col.w, st: 'waiting', right: '○', title: 'Put it together', model: 'frontier 262K · fresh', last: 'STUDY-PLAN.md + prompt',
+        state: '○ waiting', why: 'nothing to open yet: it waits for T1 to T4',
+        rows: [['model', 'frontier 262K{m} · a fresh session'], ['status', '{m}○ waiting for T1–T4'], ['sees', 'every deliverable above'], ['writes', 'STUDY-PLAN.md{m} and the prompt for the next flow'], ['next', '{y}GATE {w}You review the whole']],
+        xt: 'It will see', xc: col.b, lw: 0,
+        xs: ['{g}✓ {w}BRIEF.md   {g}✓ {w}PLAN.md   {g}✓ {w}grid.json', '{m}○ runs/estimates.md   ○ scripts/sweep.py', '{m}○ analysis/figures.ipynb'] },
+      { id: 'gate2', x: 711, y: 377, tag: 'GATE', tc: col.y, st: 'waiting', right: '○', title: 'You review the whole', model: 'you', last: 'also on your phone',
+        state: '○ waiting', why: 'nothing to open yet: it waits for INTEGRATE',
+        rows: [['model', 'you'], ['status', '{m}○ waiting for INTEGRATE'], ['sees', 'STUDY-PLAN.md{m} and every deliverable'], ['asks', 'here and on your phone'], ['next', '{m}▸ next flow: {w}Run the study']] }
+    ];
+    const nodeOf = {};
+    raw.forEach((n) => { nodeOf['boxes:' + n.id] = n; });
+    const chosen = nodeOf[s.cur.boxes] || raw[6];
+    const live = !!chosen.live;
+    const defs = {
+      tabs: [
+        { keyText: '', words: 'Flow', current: true, says: 'the view on screen', label: 'Flow' },
+        { keyText: '', words: 'Session', says: "opens the Session view: T2's session and the Guide", label: 'Session' },
+        { keyText: '', words: 'Context', says: "opens the Context view: what fills T2's context", label: 'Context' }
+      ],
+      open: live ? [{ keyText: 'Enter', words: 'open its session', says: 'opens its session in the Session view, at step 14', label: 'Enter · open its session' }] : [],
+      models: [{ keyText: 'e', words: 'another preset for the box', says: 'the box chosen’s settings (board D2), its preset first', label: 'e · another preset' }],
+      bar: [
+        { keyText: 'F10', words: 'next view', says: 'the next view: Session, then Context, then Flow again' },
+        { keyText: 'Enter', words: 'open', says: 'opens what the box chosen holds: for T2, its session in the Session view' },
+        { keyText: 'e', words: 'edit the box', says: 'the box chosen’s settings (board D2), each with its key' },
+        { keyText: 'o', words: 'open in VS Code', says: "the newest deliverable the box chosen wrote, in Clank's VS Code window" },
+        { keyText: 'p', words: 'pause', says: 'pauses the flow: no box starts after T2, which goes on to its end; p again resumes it' },
+        { keyText: 'r', words: 'run from here', disabled: true, reason: 'T2 is running: p pauses the flow first, then r runs it again from the box chosen' },
+        { keyText: 'h', words: 'run log', says: "the run's log, whole, oldest first, in a window" },
+        { keyText: 'n', words: 'new flow', says: 'builds a new flow with the model: a planning starts beside the console' },
+        { keyText: 'N', words: 'new flow in VS Code', says: "the same, OpenCode in Clank's VS Code window" },
+        { keyText: '…', words: '3 more', says: 'a window with every key of this view; f5 machine column, q quit and ^p palette did not fit', label: '… 3 more', noLetter: true },
+        { keyText: '?', words: 'explain', says: 'explains what has the focus', isExplain: true },
+        { keyText: 'f1', words: 'help', says: 'every key of this page, and the keys that act anywhere' }
+      ]
+    };
+    const byId = {};
+    const groups = { tabs: [], boxes: [], open: [], models: [], bar: [] };
+    const all = [];
+    Object.keys(defs).forEach((g) => {
+      defs[g].forEach((d) => {
+        const b = Object.assign({}, d);
+        b.g = g;
+        b.id = g + ':' + groups[g].length;
+        b.letter = b.noLetter ? '' : (b.keyText.length === 1 ? b.keyText : '');
+        if (!b.label) b.label = b.keyText + ' · ' + b.words;
+        groups[g].push(b.id);
+        byId[b.id] = b;
+        all.push(b);
+      });
+    });
+    raw.forEach((n) => {
+      const b = { g: 'boxes', id: 'boxes:' + n.id, keyText: '', letter: '', label: n.tag + ' · ' + n.title, says: n.opens || '', why: n.why || '', node: n };
+      groups.boxes.push(b.id);
+      byId[b.id] = b;
+    });
+    const focusedGroup = byId[s.focus] ? byId[s.focus].g : '';
+    const setFocus = (id) => {
+      const cur = Object.assign({}, this.state.cur);
+      cur[byId[id].g] = id;
+      const before = byId[id].isExplain ? this.state.focus : this.state.before;
+      this.setState({ focus: id, before: before, cur: cur, msg: null });
+    };
+    const press = (b, how) => {
+      if (this.timer) clearTimeout(this.timer);
+      this.timer = null;
+      if (b.isExplain) {
+        this.setState({ msg: { kind: 'explain', id: this.state.before } });
+        return;
+      }
+      if (b.disabled || b.why) {
+        this.setState({ msg: { kind: 'why', id: b.id, how: how } });
+        return;
+      }
+      this.setState({ pressed: b.id, msg: { kind: 'did', id: b.id, how: how } });
+      this.timer = setTimeout(() => {
+        this.timer = null;
+        this.setState({ pressed: '' });
+      }, 220);
+    };
+    const focusEl = (from, id) => {
+      const root = from && from.closest ? from.closest('[data-root]') : null;
+      const el = root ? root.querySelector('[data-k="' + id + '"]') : null;
+      if (el) el.focus();
+      else if (byId[id]) setFocus(id);
+    };
+    const firstOf = (g) => this.state.cur[g] && groups[g].indexOf(this.state.cur[g]) >= 0 ? this.state.cur[g] : groups[g][0];
+    const near = {
+      tabs: { down: 'boxes' },
+      open: { up: 'tabs', down: 'models' },
+      models: { up: live ? 'open' : 'tabs', down: 'bar' },
+      bar: { up: 'boxes' }
+    };
+    const groupKeys = (g) => (e) => {
+      const k = e.key;
+      const ids = groups[g];
+      const here = e.target && e.target.getAttribute ? e.target.getAttribute('data-k') : null;
+      let i = ids.indexOf(here);
+      if (i < 0) i = Math.max(ids.indexOf(this.state.cur[g]), 0);
+      let to = null;
+      if (k === 'ArrowLeft') to = g === 'open' || g === 'models' ? firstOf('boxes') : ids[Math.max(i - 1, 0)];
+      else if (k === 'ArrowRight') to = ids[Math.min(i + 1, ids.length - 1)];
+      else if (k === 'Home') to = ids[0];
+      else if (k === 'End') to = ids[ids.length - 1];
+      else if (k === 'ArrowUp' || k === 'ArrowDown') {
+        const n = near[g][k === 'ArrowUp' ? 'up' : 'down'];
+        to = n && groups[n].length ? firstOf(n) : ids[i];
+      } else if (k === 'Escape') to = firstOf('boxes');
+      if (!to) return;
+      e.preventDefault();
+      e.stopPropagation();
+      focusEl(e.currentTarget, to);
+    };
+    const boxKeys = (e) => {
+      const k = e.key;
+      const dirs = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+      const here = e.target && e.target.getAttribute ? e.target.getAttribute('data-k') : null;
+      const n0 = nodeOf[here] || chosen;
+      let to = null;
+      if (dirs[k]) {
+        const dx = dirs[k][0], dy = dirs[k][1];
+        let best = null, score = 1e9;
+        raw.forEach((n) => {
+          if (n === n0) return;
+          const ax = n.x - n0.x, ay = n.y - n0.y;
+          const ahead = ax * dx + ay * dy;
+          const aside = Math.abs(dx ? ay : ax);
+          if (ahead <= 0) return;
+          const sc = ahead + 2 * aside;
+          if (sc < score) { score = sc; best = n; }
+        });
+        if (best) to = 'boxes:' + best.id;
+        else if (k === 'ArrowRight') to = live ? firstOf('open') : firstOf('models');
+        else if (k === 'ArrowDown') to = firstOf('bar');
+        else if (k === 'ArrowUp') to = firstOf('tabs');
+        else to = 'boxes:' + n0.id;
+      } else if (k === 'Home') to = groups.boxes[0];
+      else if (k === 'End') to = groups.boxes[groups.boxes.length - 1];
+      if (!to) return;
+      e.preventDefault();
+      e.stopPropagation();
+      focusEl(e.currentTarget, to);
+    };
+    const rootKeys = (e) => {
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      const k = e.key;
+      if (k === '?') {
+        e.preventDefault();
+        const id = byId[this.state.focus] && byId[this.state.focus].isExplain ? this.state.before : this.state.focus;
+        this.setState({ msg: { kind: 'explain', id: id } });
+        return;
+      }
+      if (k.length !== 1) return;
+      const hits = all.filter((b) => b.letter === k && !b.isExplain);
+      if (!hits.length) return;
+      const b = hits.filter((x) => x.g === focusedGroup)[0] || hits.filter((x) => x.g === 'bar')[0] || hits[0];
+      e.preventDefault();
+      press(b, 'its letter');
+    };
+    const paint = (b, place) => {
+      const f = s.focus === b.id, p = s.pressed === b.id, h = s.hover === b.id;
+      let bg = 'transparent', fg = place === 'bar' ? MUTE : TXT, key = B, weight = 400;
+      if (b.current) { bg = '#283457'; fg = '#ffffff'; weight = 700; }
+      if (b.disabled) { fg = DIM; key = DIM; }
+      if (h && !b.disabled && !f && !p && bg === 'transparent') { bg = '#292e42'; fg = TXT; }
+      if (f && b.disabled) { bg = '#3b4261'; fg = MUTE; key = MUTE; }
+      else if (f) { bg = B; fg = INK; key = INK; }
+      if (p) { bg = '#bb9af7'; fg = INK; key = INK; }
+      return { style: 'background: ' + bg + '; color: ' + fg + '; font-weight: ' + weight + '; cursor: ' + (b.disabled ? 'default' : 'pointer'), key: key };
+    };
+    const handlers = (b) => ({
+      onfocus: () => {
+        if (this.state.focus !== b.id || this.state.msg) setFocus(b.id);
+      },
+      enter: () => this.setState({ hover: b.id }),
+      leave: () => {
+        if (this.state.hover === b.id) this.setState({ hover: '' });
+      }
+    });
+    const view = (b, place) => {
+      const look = paint(b, place);
+      return Object.assign({}, b, handlers(b), {
+        tab: firstOf(b.g) === b.id ? 0 : -1,
+        ariaDisabled: b.disabled ? 'true' : 'false',
+        style: look.style,
+        keyColor: look.key,
+        click: (e) => press(b, e && e.detail === 0 ? 'Enter or Space' : 'a click')
+      });
+    };
+    const look = { done: ['#9ece6a', '1px solid #3b4261'], running: ['#ff9e64', '2px solid #ff9e64'], waiting: ['#9aa5ce', '1px dashed #565f89'] };
+    const nodes = raw.map((n) => {
+      const id = 'boxes:' + n.id;
+      const b = byId[id];
+      const f = s.focus === id, p = s.pressed === id, h = s.hover === id, isChosen = n === chosen;
+      let bg = isChosen ? '#283457' : '#1a1b26';
+      if (h && !f && !p && !isChosen) bg = '#292e42';
+      if (f) bg = B;
+      if (p) bg = '#bb9af7';
+      const ink = f || p;
+      return Object.assign({}, handlers(b), {
+        id: id, tag: n.tag, extra: n.extra || '', right: n.right, title: n.title, model: n.model, last: n.last,
+        tab: s.cur.boxes === id ? 0 : -1,
+        tagColor: ink ? INK : n.tc, extraColor: ink ? INK : '#e0af68', markColor: ink ? INK : look[n.st][0],
+        quiet: ink ? INK : MUTE,
+        titleStyle: ink ? 'color: ' + INK + '; font-weight: 700' : (isChosen ? 'color: #ffffff; font-weight: 700' : 'color: #c0caf5'),
+        boxStyle: 'left: ' + n.x + 'px; top: ' + n.y + 'px; width: 195px; height: 84px; border: ' + look[n.st][1] + '; background: ' + bg + '; color: ' + (ink ? INK : TXT),
+        down: () => { this.wasChosen = this.state.cur.boxes === id; },
+        click: (e) => {
+          if (e && e.detail === 0) press(b, 'Enter or Space');
+          else if (this.wasChosen) press(b, 'a click on the box chosen');
+          else this.setState({ msg: { kind: 'chose', id: id } });
+        }
+      });
+    });
+    const extra = (chosen.xs || []).map((item) => (Array.isArray(item)
+      ? { lead: item[0], leadStyle: 'width: ' + chosen.lw + 'ch; color: ' + (item[2] || col.m), segs: parse(item[1]) }
+      : { lead: '', leadStyle: 'width: 0', segs: parse(item) }));
+    const sel = {
+      tag: chosen.tag, tagColor: chosen.tc, title: chosen.title,
+      state: chosen.state, stateColor: look[chosen.st][0],
+      rows: chosen.rows.map((r) => ({ k: r[0], segs: parse(r[1]) })),
+      isLive: live, hasExtra: !!chosen.xs,
+      extraTitle: chosen.xt || '', extraColor: chosen.xc || col.b, extra: extra
+    };
+    const m = s.msg || { kind: 'focus', id: s.focus };
+    const t = byId[m.id] || byId[s.focus];
+    let msg;
+    if (m.kind === 'explain') {
+      msg = { lead: '? ', label: t.label + ': ', text: t.disabled ? 'cannot act now: ' + t.reason : (t.why || t.says), color: TXT, right: 'what ? says of the focused button' };
+    } else if (m.kind === 'why') {
+      msg = { lead: '', label: t.label + ': ', text: t.reason || t.why, color: YEL, right: 'pressed by ' + m.how + ': it cannot act now' };
+    } else if (m.kind === 'did') {
+      msg = { lead: '▸ ', label: t.label + ': ', text: t.says, color: TXT, right: 'pressed by ' + m.how };
+    } else if (m.kind === 'chose') {
+      msg = { lead: '', label: t.label + ': ', text: t.why ? 'chosen; ' + t.why : 'chosen; Enter or a click on it again ' + t.says, color: MUTE, right: 'a click chooses, as today' };
+    } else if (t.disabled) {
+      msg = { lead: '', label: t.label + ': ', text: t.reason, color: YEL, right: 'dimmed: ? says why, nothing presses it' };
+    } else if (t.g === 'boxes') {
+      msg = { lead: '', label: t.label + ': ', text: t.why ? t.why : 'Enter ' + t.says, color: t.why ? YEL : MUTE, right: 'arrows move along the chart' };
+    } else {
+      const ways = t.letter ? 'Enter, Space, ' + t.letter + ' or a click presses it' : 'Enter, Space or a click presses it';
+      msg = { lead: '', label: t.label + ': ', text: t.says, color: MUTE, right: ways };
+    }
+    const G = '#565f89', O = '#ff9e64', R = '#f7768e', V = '#9ece6a';
+    const stroke = (dash, c) => '1px ' + (dash ? 'dashed ' : 'solid ') + c;
+    const hl = (x1, x2, y, c, dash) => ({ style: 'left: ' + x1 + 'px; top: ' + y + 'px; width: ' + (x2 - x1 + 1) + 'px; height: 0; border-top: ' + stroke(dash, c) });
+    const vl = (x, y1, y2, c, dash) => ({ style: 'left: ' + x + 'px; top: ' + y1 + 'px; width: 0; height: ' + (y2 - y1 + 1) + 'px; border-left: ' + stroke(dash, c) });
+    const edges = [
+      hl(195, 233, 52, G), hl(432, 470, 52, G), hl(669, 707, 52, V),
+      vl(571, 94, 112, R), hl(334, 571, 112, R), vl(334, 100, 112, R),
+      vl(808, 94, 202, G), hl(97, 808, 202, G), vl(97, 202, 371, G),
+      hl(195, 211, 419, O), vl(211, 370, 419, O), vl(211, 272, 370, G), vl(211, 419, 566, G, true),
+      hl(211, 233, 272, G), hl(211, 233, 370, O), hl(211, 233, 468, G, true), hl(211, 233, 566, G, true),
+      hl(432, 453, 272, G), hl(432, 453, 370, G, true), hl(432, 453, 468, G, true), hl(432, 453, 566, G, true),
+      vl(453, 272, 566, G, true), hl(453, 470, 419, G, true),
+      hl(669, 707, 419, G, true), vl(808, 461, 485, G, true)
+    ];
+    const arrow = (ch, x, y, c) => ({ ch: ch, style: 'left: ' + x + 'px; top: ' + y + 'px; color: ' + c });
+    const aR = (x, y, c) => arrow('►', x - 9, y - 6, c);
+    const aD = (x, y, c) => arrow('▼', x - 5, y - 11, c);
+    const aU = (x, y, c) => arrow('▲', x - 5, y - 1, c);
+    const arrows = [
+      aR(237, 52, G), aR(474, 52, G), aR(711, 52, V), aU(334, 94, R), aD(97, 377, G),
+      aR(237, 272, G), aR(237, 370, O), aR(237, 468, G), aR(237, 566, G),
+      aR(474, 419, G), aR(711, 419, G), aD(808, 491, G)
+    ];
+    const log = [
+      ['12:02', '▸', col.y, 'brief → {b}PLAN'],
+      ['12:09', '✓', col.g, '{b}PLAN {w}wrote PLAN.md'],
+      ['12:11', '✗', col.r, '{p}VERIFY{w}: fail, 3 findings → back to {b}PLAN'],
+      ['12:18', '✓', col.g, '{b}PLAN {w}try 2 wrote PLAN.md'],
+      ['12:22', '✓', col.g, '{p}VERIFY{w}: pass'],
+      ['12:22', '◆', col.y, '{y}GATE {w}waits for you (also on your phone)'],
+      ['12:30', '✓', col.g, 'you approved'],
+      ['12:31', '◆', col.y, '{c}DECOMPOSE {w}proposed 4 tasks'],
+      ['12:32', '✓', col.g, 'you accepted 4 (you edited {t}T2{w}’s prompt)'],
+      ['12:33', '✓', col.g, '{t}T1 {w}wrote grid.json'],
+      ['12:35', '●', col.o, '{t}T2 {w}started']
+    ].map((e) => ({ time: e[0], mark: e[1], mc: e[2], segs: parse(e[3]) }));
+    return {
+      tabs: groups.tabs.map((id) => view(byId[id], 'panel')),
+      open: groups.open.map((id) => view(byId[id], 'panel')),
+      models: groups.models.map((id) => view(byId[id], 'panel')),
+      bar: groups.bar.map((id) => view(byId[id], 'bar')),
+      keys: { tabs: groupKeys('tabs'), open: groupKeys('open'), models: groupKeys('models'), bar: groupKeys('bar') },
+      boxKeys: boxKeys, rootKeys: rootKeys,
+      nodes: nodes, edges: edges, arrows: arrows, sel: sel, msg: msg,
+      log1: log.slice(0, 4), log2: log.slice(4, 8), log3: log.slice(8)
+    };
+  }
+}
+</script>
+</body>
+</html>

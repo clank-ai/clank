@@ -1,7 +1,7 @@
 # Boards
 
 The screens designs 0011, 0012 and 0013 were drawn on, before they were built: mockups the owner reviewed on the design
-canvas "Clank model monitor" on 2026-10-18, copied here so that anyone (a person or a model) can read what a design
+canvas "Clank model monitor" from 2026-10-18 (K1 to K4 on 2026-10-21), copied here so that anyone (a person or a model) can read what a design
 refers to. Each file is one board's source (`.dc.html`, the canvas's own format): its titles, its panels, its figures
 and its keys are readable as text; it renders only inside the canvas. When a board and a design's words differ, the
 words are the rule, and the board is drawn again. The figures are examples (a session planning "a new simulation
@@ -36,3 +36,7 @@ study" in the workspace `myproject`), not measurements.
 | E17 · CPU models (F8) | [CpuModels.dc.html](CpuModels.dc.html) | [0011](../0011-the-consoles-look.md) | The new look |
 | E18 · Phone (F9) | [Phone.dc.html](Phone.dc.html) | [0011](../0011-the-consoles-look.md) | The new look |
 | E19 · The windows | [Windows.dc.html](Windows.dc.html) | [0011](../0011-the-consoles-look.md) | The five windows over the console as R2 built them (design 0011 §7), and a title too long for its window; drawn 2026-10-19, not yet on the canvas |
+| K1 · Every key a button: what becomes one, and how the focus moves | [KeysFocus.dc.html](KeysFocus.dc.html) | [0011](../0011-the-consoles-look.md) §12 | The behavior: what becomes a button, the keys that move and press, This folder's groups in Tab order, where the focus starts, a window's own focus, a button's states |
+| K2 · This folder, with buttons | [KeysFolder.dc.html](KeysFolder.dc.html) | [0011](../0011-the-consoles-look.md) §12 | The look the owner approved (2026-10-21: "K2 is perfect for the buttons") |
+| K3 · The Monitor's Flow view, with buttons | [KeysFlow.dc.html](KeysFlow.dc.html) | [0011](../0011-the-consoles-look.md) §12 | The focus in the keys bar of the Flow view, its boxes keeping their arrows |
+| K4 · Buttons close up | [KeysClose.dc.html](KeysClose.dc.html) | [0011](../0011-the-consoles-look.md) §12 | Each state on the keys bar, three widths, a question's options, a window that asks first, the keys that did not fit |

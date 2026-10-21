@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Every key a button: the focus model</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1380px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; padding: 32px 40px; display: flex; flex-direction: column; gap: 30px; overflow: hidden">
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 16px; white-space: pre"><span style="color: #bb9af7; font-weight: 700">◆ CLANK</span><span style="font-size: 22px; line-height: 30px; font-weight: 700; color: #c0caf5">Every key a button</span></div>
+<div style="color: #9aa5ce">Each key the console shows becomes a button. Its letter, Enter or Space while it has the focus, and a click all press it, the same way.</div>
+</div>
+
+<div style="display: flex; gap: 24px">
+
+<section style="position: relative; flex: 0 0 760px; box-sizing: border-box; border: 1px solid #3b4261; padding: 18px 14px 12px; display: flex; flex-direction: column; gap: 9px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">What becomes a button</div>
+
+<div style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 20ch; color: #9aa5ce; white-space: pre">the keys bar</span><div style="display: flex; background: #16161e; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #9aa5ce"><span style="color: #7aa2f7">g</span> get everything ready</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #9aa5ce"><span style="color: #7aa2f7">a</span> OpenCode here</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #9aa5ce"><span style="color: #7aa2f7">c</span> in VS Code</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #9aa5ce"><span style="color: #7aa2f7">…</span> 6 more</button></div></div>
+
+<div style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 20ch; color: #9aa5ce; white-space: pre">a panel's actions</span><div style="display: flex; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">a</span> OpenCode in this terminal</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">c</span> VS Code on this folder</button></div></div>
+
+<div style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 20ch; color: #9aa5ce; white-space: pre">a list row's key</span><div style="display: flex; white-space: pre"><span style="padding: 0 1ch">3  Its workspace   <span style="color: #f7768e">✗</span> not opened yet  </span><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">o</span> opens it</button></div></div>
+
+<div style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 20ch; color: #9aa5ce; white-space: pre">the menu's pages</span><div style="display: flex; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">F4</span> This folder</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">1</span> Home</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">2</span> Questions</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">F10</span> Monitor</button></div></div>
+
+<div style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 20ch; color: #9aa5ce; white-space: pre">a question's options</span><div style="display: flex; flex-direction: column; gap: 4px; white-space: pre"><div style="display: flex"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">y</span> Accept</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">n</span> Reject</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">v</span> the question whole</button></div><div style="display: flex"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">1</span> 60 points, as the brief</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">2</span> 240 points</button></div></div></div>
+
+<div style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 20ch; color: #9aa5ce; white-space: pre">the Guide's actions</span><div style="display: flex; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">.</span> stop</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">p</span> pause</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">m</span> note</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">k</span> compact</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">u</span> undo</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">x</span> drop</button></div></div>
+
+<div style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 20ch; color: #9aa5ce; white-space: pre">the Monitor's views</span><div style="display: flex; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5">Flow</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5">Session</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5">Context</button><span style="color: #9aa5ce">   no letter: <span style="color: #7aa2f7">F10</span> steps through them</span></div></div>
+
+<div style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 20ch; color: #9aa5ce; white-space: pre">a window's buttons</span><div style="display: flex; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">Enter</span> do it</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">Esc</span> leave it</button></div></div>
+
+<div style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 20ch; color: #9aa5ce; white-space: pre">stays text</span><span style="color: #9aa5ce">values, logs and the header's states: nothing to press there</span></div>
+
+</section>
+
+<section style="position: relative; flex: 1; min-width: 0; box-sizing: border-box; border: 1px solid #3b4261; padding: 18px 14px 12px; display: flex; flex-direction: column; gap: 7px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">The keys that move and press</div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">Tab</span><span style="flex: 1; min-width: 0">the next group: the menu, a list, a row of buttons, the keys bar; after the last, the first</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">Shift+Tab</span><span style="flex: 1; min-width: 0">the group before</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">← →</span><span style="flex: 1; min-width: 0">in a row of buttons: the next one; it stops at the row's ends</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">↑ ↓</span><span style="flex: 1; min-width: 0">in a list or a column: the next one; it stops at the ends</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">↑ ↓ in a row</span><span style="flex: 1; min-width: 0">into the group above or below</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">← → in a list</span><span style="flex: 1; min-width: 0">into the group at the left or right: between the menu and the page, as today</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">Home End</span><span style="flex: 1; min-width: 0">the group's first or last</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">Enter Space</span><span style="flex: 1; min-width: 0">press the focused button</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">its letter</span><span style="flex: 1; min-width: 0">presses it from anywhere, as today; the focus stays where it is</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">a click</span><span style="flex: 1; min-width: 0">presses it, and the focus moves to it</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">?</span><span style="flex: 1; min-width: 0">explains the focused button; a dimmed one says why it cannot act</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 14ch; color: #7aa2f7; white-space: pre">Esc</span><span style="flex: 1; min-width: 0">back to the page's main list; in a window, leave it</span></div>
+</section>
+
+</div>
+
+<div style="display: flex; gap: 24px">
+
+<section style="position: relative; flex: 0 0 760px; box-sizing: border-box; border: 1px solid #3b4261; padding: 18px 14px 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Its groups, in Tab order: This folder</div>
+
+<div style="position: relative; width: 732px; height: 372px; box-sizing: border-box; border: 1px solid #3b4261; background: #1a1b26; font-size: 12px; line-height: 16px; overflow: hidden">
+<div style="position: absolute; left: 0; top: 0; width: 730px; height: 18px; background: #16161e; padding: 1px 8px; box-sizing: border-box; white-space: pre"><span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>   <span style="color: #e0af68">myproject</span></div>
+<div style="position: absolute; left: 150px; top: 18px; width: 0; height: 316px; border-left: 1px solid #3b4261"></div>
+
+<div style="position: absolute; left: 6px; top: 24px; width: 138px; height: 304px; box-sizing: border-box; border: 1px dashed #e0af68; padding: 4px 6px; display: flex; flex-direction: column; gap: 3px; white-space: pre">
+<div><span style="background: #e0af68; color: #1a1b26; padding: 0 4px">1</span> the menu <span style="color: #7aa2f7">↑↓</span></div>
+<div style="color: #9aa5ce; margin-top: 4px"><span style="color: #7aa2f7">F4</span> This folder</div>
+<div style="color: #9aa5ce"><span style="color: #7aa2f7">1</span>  Home</div>
+<div style="color: #9aa5ce"><span style="color: #7aa2f7">2</span>  Questions</div>
+<div style="color: #9aa5ce">…</div>
+</div>
+
+<div style="position: absolute; left: 160px; top: 30px; width: 564px; height: 128px; box-sizing: border-box; border: 1px solid #3b4261"></div>
+<div style="position: absolute; left: 168px; top: 23px; background: #1a1b26; padding: 0 4px; color: #7aa2f7; font-weight: 700; white-space: pre">Get ready to work here</div>
+<div style="position: absolute; left: 170px; top: 42px; width: 544px; height: 70px; box-sizing: border-box; border: 1px dashed #e0af68; padding: 4px 6px; white-space: pre">
+<div><span style="background: #e0af68; color: #1a1b26; padding: 0 4px">2</span> its list <span style="color: #7aa2f7">↑↓</span>   <span style="color: #9aa5ce">the page's main list: Esc comes back here</span></div>
+<div style="color: #9aa5ce; margin-top: 4px">1 Docker ✓ · 2 This folder ✓ · <span style="color: #c0caf5">3 Its workspace ✗</span> · …</div>
+</div>
+<div style="position: absolute; left: 170px; top: 120px; width: 300px; height: 28px; box-sizing: border-box; border: 1px dashed #e0af68; padding: 5px 6px; white-space: pre"><span style="background: #e0af68; color: #1a1b26; padding: 0 4px">3</span> its buttons <span style="color: #7aa2f7">←→</span>   <span style="color: #7aa2f7">o</span> <span style="color: #7aa2f7">g</span></div>
+
+<div style="position: absolute; left: 160px; top: 172px; width: 360px; height: 100px; box-sizing: border-box; border: 1px solid #3b4261"></div>
+<div style="position: absolute; left: 168px; top: 165px; background: #1a1b26; padding: 0 4px; color: #7aa2f7; font-weight: 700; white-space: pre">Then work</div>
+<div style="position: absolute; left: 170px; top: 184px; width: 340px; height: 44px; box-sizing: border-box; border: 1px dashed #e0af68; padding: 4px 6px; white-space: pre">
+<div><span style="background: #e0af68; color: #1a1b26; padding: 0 4px">4</span> a column <span style="color: #7aa2f7">↑↓</span></div>
+<div style="color: #9aa5ce; margin-top: 2px"><span style="color: #7aa2f7">a</span> OpenCode here · <span style="color: #7aa2f7">c</span> VS Code</div>
+</div>
+<div style="position: absolute; left: 170px; top: 236px; width: 340px; height: 28px; box-sizing: border-box; border: 1px dashed #e0af68; padding: 5px 6px; white-space: pre"><span style="background: #e0af68; color: #1a1b26; padding: 0 4px">5</span> its settings <span style="color: #7aa2f7">←→</span>   <span style="color: #7aa2f7">m p r</span> <span style="color: #565f89">i</span></div>
+
+<div style="position: absolute; left: 532px; top: 172px; width: 192px; height: 100px; box-sizing: border-box; border: 1px solid #3b4261"></div>
+<div style="position: absolute; left: 540px; top: 165px; background: #1a1b26; padding: 0 4px; color: #7aa2f7; font-weight: 700; white-space: pre">What runs</div>
+<div style="position: absolute; left: 542px; top: 184px; width: 172px; height: 80px; box-sizing: border-box; border: 1px dashed #e0af68; padding: 4px 6px; white-space: pre">
+<div><span style="background: #e0af68; color: #1a1b26; padding: 0 4px">6</span> a row <span style="color: #7aa2f7">←→</span></div>
+<div style="color: #9aa5ce; margin-top: 2px"><span style="color: #7aa2f7">F10</span> watch it</div>
+<div style="color: #9aa5ce"><span style="color: #7aa2f7">l</span> its log · <span style="color: #7aa2f7">s</span> stop</div>
+</div>
+
+<div style="position: absolute; left: 160px; top: 284px; width: 564px; height: 42px; box-sizing: border-box; border: 1px solid #3b4261; padding: 12px 8px 0; color: #9aa5ce; white-space: pre">no group: nothing to press while no question waits</div>
+<div style="position: absolute; left: 168px; top: 277px; background: #1a1b26; padding: 0 4px; color: #7aa2f7; font-weight: 700; white-space: pre">Waiting for you</div>
+
+<div style="position: absolute; left: 0; top: 334px; width: 730px; height: 18px; padding: 1px 8px; box-sizing: border-box; color: #9aa5ce; white-space: pre">the message line: what the focused button does, or why it cannot</div>
+<div style="position: absolute; left: 0; top: 352px; width: 730px; height: 18px; background: #16161e"></div>
+<div style="position: absolute; left: 3px; top: 353px; width: 724px; height: 16px; box-sizing: border-box; border: 1px dashed #e0af68; padding: 0 6px; line-height: 14px; white-space: pre"><span style="background: #e0af68; color: #1a1b26; padding: 0 4px">7</span> the keys bar <span style="color: #7aa2f7">←→</span>   <span style="color: #9aa5ce"><span style="color: #7aa2f7">g</span> get everything ready  <span style="color: #7aa2f7">a</span> OpenCode here  <span style="color: #7aa2f7">c</span> in VS Code  …</span></div>
+</div>
+
+<div style="color: #9aa5ce">Tab: <span style="color: #c0caf5">1 → 2 → 3 → 4 → 5 → 6 → 7 → 1</span>; Shift+Tab goes back. The arrows beside each number move inside that group; the other two leave it for its neighbor.</div>
+</section>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+
+<section style="position: relative; box-sizing: border-box; border: 1px solid #3b4261; padding: 18px 14px 12px; display: flex; flex-direction: column; gap: 8px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Where the focus starts</div>
+<div style="display: flex; gap: 10px"><span style="flex: none; color: #7aa2f7">▸</span><span style="flex: 1; min-width: 0">A page that opens: its main list, on the first row that waits for you. On This folder, <span style="color: #ffffff">3 Its workspace</span>.</span></div>
+<div style="display: flex; gap: 10px"><span style="flex: none; color: #7aa2f7">▸</span><span style="flex: 1; min-width: 0">A page without a list: its first row of buttons.</span></div>
+<div style="display: flex; gap: 10px"><span style="flex: none; color: #7aa2f7">▸</span><span style="flex: 1; min-width: 0">A page you come back to: where you left it.</span></div>
+<div style="display: flex; gap: 10px"><span style="flex: none; color: #7aa2f7">▸</span><span style="flex: 1; min-width: 0">The menu: ↑ ↓ open pages as they move, as today; → or Enter goes into the page.</span></div>
+<div style="display: flex; gap: 10px"><span style="flex: none; color: #7aa2f7">▸</span><span style="flex: 1; min-width: 0">A key pressed by its letter leaves the focus where it was.</span></div>
+</section>
+
+<section style="position: relative; box-sizing: border-box; border: 1px solid #3b4261; padding: 18px 14px 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">A window keeps its own focus</div>
+<div style="position: relative; align-self: flex-start; width: 58ch; box-sizing: border-box; border: 1px solid #7aa2f7; padding: 14px 10px 8px; display: flex; flex-direction: column; gap: 2px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Run the flow again from T2?</div>
+<div>T2 and every box after it run again, as new tries.</div>
+<div style="color: #9aa5ce">frontier 262K is loaded: nothing to load first.</div>
+<div style="display: flex; margin-top: 8px; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: #7aa2f7; color: #1a1b26">Enter do it</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">Esc</span> leave it</button></div>
+</div>
+<div style="color: #9aa5ce">It opens with the focus on its first button, so Enter still does it. Tab and the arrows stay inside it (its buttons, and its fields in a form). Esc leaves it, and the focus goes back where it was on the page.</div>
+</section>
+
+</div>
+</div>
+
+<section style="position: relative; box-sizing: border-box; border: 1px solid #3b4261; padding: 18px 14px 14px; display: flex; flex-direction: column; gap: 12px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">What a button looks like</div>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px">
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="color: #c0caf5; font-weight: 700">normal</div>
+<div style="display: flex; background: #16161e; padding: 6px 0; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: transparent; color: #9aa5ce"><span style="color: #7aa2f7">a</span> OpenCode here</button></div>
+<div style="color: #9aa5ce">its key in blue, its words quiet</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="color: #c0caf5; font-weight: 700">hover</div>
+<div style="display: flex; background: #16161e; padding: 6px 0; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: #292e42; color: #c0caf5"><span style="color: #7aa2f7">a</span> OpenCode here</button></div>
+<div style="color: #9aa5ce">a lighter ground under the mouse; the focus does not move</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="color: #c0caf5; font-weight: 700">focused</div>
+<div style="display: flex; background: #16161e; padding: 6px 0; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: #7aa2f7; color: #1a1b26">a OpenCode here</button></div>
+<div style="color: #9aa5ce">inverse: dark words on the key's blue; one on the screen</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="color: #c0caf5; font-weight: 700">pressed</div>
+<div style="display: flex; background: #16161e; padding: 6px 0; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: pointer; background: #bb9af7; color: #1a1b26">a OpenCode here</button></div>
+<div style="color: #9aa5ce">purple for a fifth of a second; the message line says what it did</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="color: #c0caf5; font-weight: 700">disabled</div>
+<div style="display: flex; background: #16161e; padding: 6px 0; white-space: pre"><button type="button" aria-disabled="true" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: default; background: transparent; color: #565f89">i implement a plan</button></div>
+<div style="color: #9aa5ce">dimmed, and still reachable, so ? can say why</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="color: #c0caf5; font-weight: 700">disabled, focused</div>
+<div style="display: flex; background: #16161e; padding: 6px 0; white-space: pre"><button type="button" aria-disabled="true" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; cursor: default; background: #3b4261; color: #9aa5ce">i implement a plan</button></div>
+<div style="color: #9aa5ce">a gray fill; the message line says why it cannot act</div>
+</div>
+
+</div>
+<div style="color: #9aa5ce">Every button keeps a blank cell at each side, and the fill covers it: no state changes a button's width, so nothing on the row moves. The two-space gap between keys today becomes those two cells, so a bar holds as many keys as now.</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1380}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

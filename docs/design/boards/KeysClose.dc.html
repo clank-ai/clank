@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Buttons close up</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button{font:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1240px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; padding: 32px 40px; display: flex; flex-direction: column; gap: 30px; overflow: hidden">
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 16px; white-space: pre"><span style="color: #bb9af7; font-weight: 700">◆ CLANK</span><span style="font-size: 22px; line-height: 30px; font-weight: 700; color: #c0caf5">Buttons close up</span></div>
+<div style="color: #9aa5ce">This folder's keys bar, with the message line above it as in the console, one state per row; then the same bar at three widths; then a question and two windows.</div>
+</div>
+
+<section style="position: relative; flex: none; box-sizing: border-box; border: 1px solid #3b4261; padding: 18px 14px 14px; display: flex; flex-direction: column; gap: 12px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Each state, on the keys bar at 128 columns</div>
+<sc-for list="{{ states }}" as="r" hint-placeholder-count="6">
+<div style="display: flex; gap: 16px; align-items: flex-start">
+<div style="flex: none; width: 28ch; display: flex; flex-direction: column; white-space: pre"><span style="font-weight: 700">{{ r.name }}</span><span style="color: #9aa5ce">{{ r.note }}</span></div>
+<div style="flex: none; width: 128ch; display: flex; flex-direction: column">
+<div style="height: 18px; display: flex; gap: 2ch; padding: 0 1ch; white-space: pre"><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis"><span style="color: #c0caf5">{{ r.lead }}</span><span style="color: #c0caf5">{{ r.label }}</span><span style="color: {{ r.color }}">{{ r.text }}</span></span><span style="flex: none; color: #9aa5ce">{{ r.right }}</span></div>
+<div style="height: 18px; display: flex; background: #16161e; white-space: pre; overflow: hidden">
+<sc-for list="{{ r.bar }}" as="b" hint-placeholder-count="9"><button type="button" aria-disabled="{{ b.ariaDisabled }}" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; {{ b.style }}"><span style="color: {{ b.keyColor }}">{{ b.keyText }}</span> {{ b.words }}</button></sc-for>
+</div>
+</div>
+</div>
+</sc-for>
+</section>
+
+<section style="position: relative; flex: none; box-sizing: border-box; border: 1px solid #3b4261; padding: 18px 14px 14px; display: flex; flex-direction: column; gap: 12px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Three widths: what fits, and … more</div>
+<sc-for list="{{ widths }}" as="r" hint-placeholder-count="3">
+<div style="display: flex; gap: 16px; align-items: flex-start">
+<div style="flex: none; width: 28ch; display: flex; flex-direction: column; white-space: pre"><span style="font-weight: 700">{{ r.name }}</span><span style="color: #9aa5ce">{{ r.note }}</span></div>
+<div style="flex: none; width: {{ r.w }}; height: 18px; display: flex; background: #16161e; box-shadow: inset -2px 0 0 #3b4261; white-space: pre; overflow: hidden">
+<sc-for list="{{ r.bar }}" as="b" hint-placeholder-count="6"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; {{ b.style }}"><span style="color: {{ b.keyColor }}">{{ b.keyText }}</span> {{ b.words }}</button></sc-for>
+</div>
+</div>
+</sc-for>
+<div style="color: #9aa5ce">A page's keys are in the order of what matters most; what does not fit leaves from the right into <span style="color: #7aa2f7">…</span> more, which opens them all. <span style="color: #7aa2f7">?</span> and <span style="color: #7aa2f7">f1</span> always stay. Below 70 columns the words shorten. The bar stays one row: it never wraps, never cuts a word.</div>
+</section>
+
+<div style="flex: none; display: flex; gap: 24px; align-items: flex-start">
+
+<section style="position: relative; flex: 0 0 660px; box-sizing: border-box; border: 1px solid #3b4261; padding: 18px 14px 14px; display: flex; flex-direction: column; gap: 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">A question's options</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="padding: 4px 8px; background: #283457; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; gap: 12px; white-space: pre"><span style="flex: none; width: 66px">q-9c2d05</span><span style="flex: 1; min-width: 0; color: #ffffff; font-weight: 700; overflow: hidden; text-overflow: ellipsis">Install myproject's software?</span><span style="flex: none">asked 12:44:31</span></div>
+<div style="display: flex; padding-left: 70px; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; background: #7aa2f7; color: #1a1b26">y Install it</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">n</span> Not now</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">v</span> the question whole</button></div>
+</div>
+<div style="padding: 4px 8px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; gap: 12px; white-space: pre"><span style="flex: none; width: 66px; color: #9aa5ce">q-d03f6b</span><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis">Stop Docker Desktop?</span><span style="flex: none; color: #9aa5ce">asked 12:46:13</span></div>
+<div style="display: flex; padding-left: 70px; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">y</span> Stop it and Docker</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">n</span> Cancel</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">v</span> the question whole</button></div>
+</div>
+</div>
+<div style="color: #9aa5ce">Letters answer the highlighted one, as today; a click answers any.</div>
+
+<div style="color: #7aa2f7; font-weight: 700; margin-top: 4px">Its options, whole</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<button type="button" style="margin: 0; border: 0; padding: 2px 1ch; display: flex; gap: 10px; width: 100%; text-align: left; background: transparent; color: #c0caf5"><span style="flex: none; width: 2ch; color: #7aa2f7; font-weight: 700">y</span><span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 700">Install it</span><span style="color: #9aa5ce">uv sync, into its home (~/.venv), in a container of its own</span></span></button>
+<button type="button" style="margin: 0; border: 0; padding: 2px 1ch; display: flex; gap: 10px; width: 100%; text-align: left; background: #292e42; color: #c0caf5"><span style="flex: none; width: 2ch; color: #7aa2f7; font-weight: 700">n</span><span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 700">Not now</span><span style="color: #9aa5ce">nothing is installed; the question closes</span></span></button>
+</div>
+
+<div style="color: #7aa2f7; font-weight: 700; margin-top: 4px">Numbered options</div>
+<div style="white-space: pre">OpenCode asks, in myproject: which grid should the sweep use?</div>
+<div style="display: flex; flex-direction: column; align-items: flex-start; white-space: pre">
+<button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">1</span> grid.json · 60 points, as the brief</button>
+<button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">2</span> the first draft · 240 points</button>
+<button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">3</span> another answer: you type it</button>
+</div>
+<div style="color: #9aa5ce">Digits answer once the list has the focus; a click, from anywhere.</div>
+</section>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+
+<section style="position: relative; box-sizing: border-box; border: 1px solid #3b4261; padding: 18px 14px 14px; display: flex; flex-direction: column; gap: 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">A window that asks first</div>
+<div style="position: relative; align-self: flex-start; width: 60ch; box-sizing: border-box; border: 1px solid #7aa2f7; padding: 14px 10px 8px; display: flex; flex-direction: column; gap: 2px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Stop the container myproject?</div>
+<div>OpenCode is writing in it, at step 30: it stops too.</div>
+<div style="color: #9aa5ce">Its files stay; o opens the workspace again.</div>
+<div style="display: flex; margin-top: 8px; white-space: pre"><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; background: #7aa2f7; color: #1a1b26">Enter do it</button><button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">Esc</span> leave it</button></div>
+</div>
+<div style="color: #9aa5ce">The focus starts on its first button, so Enter still does it. ← → or Tab move between the two; Enter presses the one focused. The key that opened the window never presses it.</div>
+</section>
+
+<section style="position: relative; box-sizing: border-box; border: 1px solid #3b4261; padding: 18px 14px 14px; display: flex; flex-direction: column; gap: 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">… 8 more, opened at 60 columns</div>
+<div style="position: relative; align-self: flex-start; width: 44ch; box-sizing: border-box; border: 1px solid #7aa2f7; padding: 14px 10px 8px; display: flex; flex-direction: column">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">This folder's keys</div>
+<div style="display: flex; flex-direction: column; align-items: stretch; white-space: pre">
+<button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; background: #7aa2f7; color: #1a1b26">c   in VS Code</button>
+<button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">f</span>   build a flow</button>
+<button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">p</span>   plan</button>
+<button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">e</span>   its software</button>
+<button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">m</span>   MCP servers</button>
+<button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">f5</span>  machine column</button>
+<button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">q</span>   quit</button>
+<button type="button" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; background: transparent; color: #c0caf5"><span style="color: #7aa2f7">^p</span>  palette</button>
+</div>
+<div style="color: #9aa5ce; margin-top: 6px; padding-left: 1ch; white-space: pre">↑ ↓ move · Enter or the letter · Esc closes</div>
+</div>
+<div style="color: #9aa5ce">The keys that did not fit, one per row; the focus starts on the first of them.</div>
+</section>
+
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const B = '#7aa2f7', INK = '#1a1b26', MUTE = '#9aa5ce', TXT = '#c0caf5', DIM = '#565f89', YEL = '#e0af68';
+    const looks = {
+      normal: ['transparent', MUTE, B],
+      hover: ['#292e42', TXT, B],
+      focused: [B, INK, INK],
+      pressed: ['#bb9af7', INK, INK],
+      disabled: ['transparent', DIM, DIM],
+      disfocus: ['#3b4261', MUTE, MUTE]
+    };
+    const bar = (keys, states) => keys.map((k) => {
+      const st = states[k[0]] || 'normal';
+      const l = looks[st];
+      return {
+        keyText: k[0], words: k[1], keyColor: l[2],
+        ariaDisabled: st === 'disabled' || st === 'disfocus' ? 'true' : 'false',
+        style: 'background: ' + l[0] + '; color: ' + l[1] + '; cursor: ' + (st === 'disabled' || st === 'disfocus' ? 'default' : 'pointer')
+      };
+    });
+    const full = [['g', 'get everything ready'], ['a', 'OpenCode here'], ['c', 'in VS Code'], ['f', 'build a flow'], ['p', 'plan'], ['e', 'its software'], ['…', '4 more'], ['?', 'explain'], ['f1', 'help']];
+    const listMsg = { lead: '', label: '3 · Its workspace (o): ', text: "opens myproject's workspace, its container", color: MUTE, right: 'Enter, Space, o or a click presses it' };
+    const vsMsg = { lead: '', label: 'c · in VS Code: ', text: 'opens VS Code on this folder, OpenCode beside your files', color: MUTE, right: 'Enter, Space, c or a click presses it' };
+    const states = [
+      Object.assign({ name: 'normal', note: "focus in the page's list", bar: bar(full, {}) }, listMsg),
+      Object.assign({ name: 'hover', note: 'the mouse over c', bar: bar(full, { c: 'hover' }) }, listMsg),
+      Object.assign({ name: 'focused', note: 'Tab to the bar, → twice', bar: bar(full, { c: 'focused' }) }, vsMsg),
+      Object.assign({ name: 'pressed', note: 'Enter, Space, c or a click', bar: bar(full, { c: 'pressed' }) }, vsMsg, { lead: '▸ ', color: TXT, right: 'pressed by Enter or Space' }),
+      Object.assign({ name: 'disabled', note: 'f: no model loaded yet', bar: bar(full, { f: 'disabled' }) }, listMsg),
+      { name: 'disabled, focused', note: '→ onto f: it says why', bar: bar(full, { f: 'disfocus' }), lead: '', label: 'f · build a flow: ', text: 'no model is loaded yet; l loads frontier 262K first', color: YEL, right: 'dimmed: ? says why, nothing presses it' }
+    ];
+    const widths = [
+      { name: '128 columns · 125 used', note: '… 4 more: m f5 q ^p', w: '128ch', bar: bar(full, {}) },
+      { name: '88 columns · 85 used', note: '… 7 more: f p e m f5 q ^p', w: '88ch',
+        bar: bar([['g', 'get everything ready'], ['a', 'OpenCode here'], ['c', 'in VS Code'], ['…', '7 more'], ['?', 'explain'], ['f1', 'help']], {}) },
+      { name: '60 columns · 55 used', note: 'short words; … 8 more', w: '60ch',
+        bar: bar([['g', 'get ready'], ['a', 'OpenCode'], ['…', '8 more'], ['?', 'explain'], ['f1', 'help']], {}) }
+    ];
+    return { states: states, widths: widths };
+  }
+}
+</script>
+</body>
+</html>

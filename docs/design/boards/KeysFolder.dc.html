@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>This folder, with buttons</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#7aa2f7}a:hover{color:#bb9af7}
+button{font:inherit}
+</style>
+</helmet>
+<div data-root="1" tabIndex="-1" onKeyDown="{{ rootKeys }}" style="width: 1440px; height: 900px; box-sizing: border-box; background: #1a1b26; color: #c0caf5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; overflow: hidden; outline: none">
+
+<div style="height: 24px; flex: none; display: flex; align-items: center; gap: 18px; padding: 0 10px; background: #16161e; white-space: pre">
+<span style="color: #bb9af7; font-weight: 700">◆ CLANK</span>
+<span style="color: #e0af68">myproject</span>
+<span style="color: #9ece6a">● service up 52m</span>
+<span style="color: #9ece6a">● docker running</span>
+<span style="color: #9ece6a">● frontier 262K</span>
+<span style="color: #9ece6a">● gateway</span>
+<span style="margin-left: auto; color: #9aa5ce">12:47</span>
+</div>
+
+<div style="flex: 1; display: flex; min-height: 0">
+
+<nav role="toolbar" aria-orientation="vertical" aria-label="Pages" onKeyDown="{{ keys.menu }}" style="width: 214px; flex: none; box-sizing: border-box; border-right: 1px solid #3b4261; padding: 4px 0; display: flex; flex-direction: column">
+<sc-for list="{{ menu }}" as="b" hint-placeholder-count="19">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="display: flex; gap: 1ch; width: 100%; box-sizing: border-box; margin: 0; border: 0; padding: 0 10px; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}"><span style="flex: none; width: 3ch; color: {{ b.keyColor }}">{{ b.keyText }}</span><span style="flex: 1; min-width: 0; overflow: hidden">{{ b.words }}</span><span style="flex: none; color: {{ b.tagColor }}">{{ b.tag }}</span></button>
+</sc-for>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 18px 14px 8px; display: flex; flex-direction: column; gap: 20px">
+
+<section style="position: relative; flex: none; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Get ready to work here</div>
+<div style="color: #9aa5ce; margin-bottom: 6px; white-space: pre">Folder  <span style="color: #c0caf5">C:\research\myproject</span></div>
+<div role="toolbar" aria-orientation="vertical" aria-label="Steps" onKeyDown="{{ keys.steps }}" style="display: flex; flex-direction: column">
+<sc-for list="{{ steps }}" as="b" hint-placeholder-count="7">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="display: flex; gap: 12px; width: 100%; box-sizing: border-box; margin: 0; border: 0; padding: 0 1ch 0 0; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}"><span style="flex: none; width: 24px; text-align: right; color: {{ b.nColor }}">{{ b.n }}</span><span style="flex: none; width: 150px">{{ b.words }}</span><span style="flex: none; color: {{ b.markColor }}">{{ b.mark }}</span><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ b.state }}</span><span style="flex: none; color: {{ b.keyColor }}">{{ b.keyText }}</span><span style="flex: none">{{ b.keyWords }}</span></button>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; margin-top: 8px; white-space: pre"><span>Next:  </span>
+<div role="toolbar" aria-label="Next" onKeyDown="{{ keys.next }}" style="display: flex">
+<sc-for list="{{ next }}" as="b" hint-placeholder-count="2">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}"><span style="color: {{ b.keyColor }}">{{ b.keyText }}</span> {{ b.words }}</button>
+</sc-for>
+</div>
+</div>
+</section>
+
+<div style="display: flex; gap: 14px; flex: none">
+
+<section style="position: relative; flex: 1; min-width: 0; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">Then work</div>
+<div role="toolbar" aria-orientation="vertical" aria-label="Then work" onKeyDown="{{ keys.then }}" style="display: flex; flex-direction: column; align-items: flex-start">
+<sc-for list="{{ then }}" as="b" hint-placeholder-count="2">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}"><span style="color: {{ b.keyColor }}">{{ b.keyText }}</span>  {{ b.words }}</button>
+</sc-for>
+</div>
+<div style="color: #9aa5ce; margin-top: 6px; white-space: pre">   OpenCode will use frontier 262K: 262,144 tokens of context, 16,384 out</div>
+<div style="color: #9aa5ce; white-space: pre">   MCP servers: myproject-mcp (10 tools) · mode: <span style="color: #c0caf5">{{ mode }}</span></div>
+<div style="display: flex; margin-top: 6px; white-space: pre"><span>  </span>
+<div role="toolbar" aria-label="Its settings" onKeyDown="{{ keys.set }}" style="display: flex">
+<sc-for list="{{ set }}" as="b" hint-placeholder-count="4">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}"><span style="color: {{ b.keyColor }}">{{ b.keyText }}</span> {{ b.words }}</button>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section style="position: relative; flex: 0 0 38%; min-width: 0; box-sizing: border-box; border: 1px solid #3b4261; padding: 14px 12px 10px">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700; white-space: pre">What runs from here</div>
+<div style="white-space: pre"><span style="color: #9ece6a">●</span> container myproject · 8 CPUs · 778 MB</div>
+<div style="white-space: pre"><span style="color: #ff9e64">●</span> OpenCode · writing, step 30</div>
+<div role="toolbar" aria-label="What runs" onKeyDown="{{ keys.runs }}" style="display: flex; margin-top: 6px; white-space: pre">
+<sc-for list="{{ runs }}" as="b" hint-placeholder-count="3">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}"><span style="color: {{ b.keyColor }}">{{ b.keyText }}</span> {{ b.words }}</button>
+</sc-for>
+</div>
+</section>
+
+</div>
+
+<section style="position: relative; flex: none; border: 1px solid #3b4261; padding: 14px 12px 10px; white-space: pre">
+<div style="position: absolute; top: -10px; left: 10px; background: #1a1b26; padding: 0 6px; color: #7aa2f7; font-weight: 700">Waiting for you</div>
+<div><span style="color: #9ece6a">✓</span> No question waits.</div>
+</section>
+
+<div style="flex: 1"></div>
+</main>
+</div>
+
+<div style="height: 18px; flex: none; display: flex; gap: 24px; padding: 0 10px; white-space: pre">
+<span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis"><span style="color: #c0caf5">{{ msg.lead }}</span><span style="color: #7aa2f7">{{ msg.key }}</span><span style="color: #c0caf5">{{ msg.label }}</span><span style="color: {{ msg.color }}">{{ msg.text }}</span></span>
+<span style="flex: none; color: #9aa5ce">{{ msg.right }}</span>
+</div>
+
+<div role="toolbar" aria-label="Keys" onKeyDown="{{ keys.bar }}" style="height: 22px; flex: none; display: flex; align-items: center; padding: 0 2px; background: #16161e; white-space: pre">
+<sc-for list="{{ bar }}" as="b" hint-placeholder-count="11">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}"><span style="color: {{ b.keyColor }}">{{ b.keyText }}</span> {{ b.words }}</button>
+</sc-for>
+<span style="flex: 1"></span>
+<sc-for list="{{ barRight }}" as="b" hint-placeholder-count="1">
+<button type="button" data-k="{{ b.id }}" tabIndex="{{ b.tab }}" aria-disabled="{{ b.ariaDisabled }}" onClick="{{ b.click }}" onFocus="{{ b.onfocus }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" style="margin: 0; border: 0; padding: 0 1ch; line-height: 18px; white-space: pre; text-align: left; outline: none; {{ b.style }}"><span style="color: {{ b.keyColor }}">{{ b.keyText }}</span> {{ b.words }}</button>
+</sc-for>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      focus: 'then:0', before: 'then:0', hover: 'bar:2', pressed: '', msg: null, mode: 'plan',
+      cur: { menu: 'menu:0', steps: 'steps:2', next: 'next:0', then: 'then:0', set: 'set:0', runs: 'runs:0', bar: 'bar:0' }
+    };
+    this.timer = null;
+  }
+  componentWillUnmount() {
+    if (this.timer) clearTimeout(this.timer);
+  }
+  renderVals() {
+    const s = this.state;
+    const B = '#7aa2f7', INK = '#1a1b26', TXT = '#c0caf5', MUTE = '#9aa5ce', DIM = '#565f89';
+    const GREEN = '#9ece6a', RED = '#f7768e', YEL = '#e0af68', ORANGE = '#ff9e64';
+    const nothing = '; nothing to do on this row';
+    const defs = {
+      menu: [
+        ['F4', 'This folder', '✗ 1', RED, 'the page on screen: Enter or → goes into it'], ['1', 'Home'], ['2', 'Questions'], ['3', 'History'],
+        ['4', 'Docker', '●', GREEN], ['5', 'Machine'], ['6', 'Operations'], ['7', 'Records'], ['8', 'Models', '●', GREEN],
+        ['9', 'Presets'], ['0', 'Providers and models'], ['F1', 'Help'], ['F2', 'Launch options'], ['F3', 'MCP servers'],
+        ['F6', 'Workspaces', '1', TXT], ['F7', 'Sessions'], ['F8', 'CPU models'], ['F9', 'Phone', '●', GREEN], ['F10', 'Monitor', '●', ORANGE]
+      ].map((m, i) => ({ keyText: m[0], words: m[1], tag: m[2] || '', tagColor: m[3] || TXT, current: i === 0,
+        letter: m[0].length === 1 ? m[0] : '', label: m[0] + ' · ' + m[1], says: m[4] || 'opens the page' })),
+      steps: [
+        ['1', 'Docker', '✓', 'running', '', 'Docker is running' + nothing],
+        ['2', 'This folder', '✓', 'ready: it can be a workspace', '', 'it can be a workspace' + nothing],
+        ['3', 'Its workspace', '✗', 'not opened yet', 'o', "opens myproject's workspace: its container, this folder in it"],
+        ['4', 'The sandbox image', '✓', 'built: clank-sandbox:76474ed3bffe', '', 'the image is built' + nothing],
+        ['5', 'Its software', '✓', 'installed in ~/.venv (36 s)', 'e', 'installs its software again: uv sync, in a container of its own'],
+        ['6', 'A model', '✓', 'ready: frontier 262K in the main slot', '', 'frontier 262K is ready' + nothing],
+        ['7', 'The gateway', '✓', 'running on port 18210 · loop guard on', '', 'the gateway runs' + nothing]
+      ].map((r) => ({ n: r[0], words: r[1], mark: r[2], ok: r[2] === '✓', state: r[3], keyText: r[4],
+        keyWords: r[4] === 'o' ? ' opens it' : (r[4] === 'e' ? ' again' : ''), letter: r[4],
+        label: r[0] + ' · ' + r[1] + (r[4] ? ' (' + r[4] + ')' : ''), says: r[5] })),
+      next: [
+        { keyText: 'o', words: 'open the workspace', says: "opens myproject's workspace: its container, this folder in it" },
+        { keyText: 'g', words: 'get everything ready', says: 'does every step that is not done, in order: here, 3 Its workspace' }
+      ],
+      then: [
+        { keyText: 'a', words: 'OpenCode in this terminal; the menu comes back when you leave it', short: 'OpenCode here',
+          says: 'opens OpenCode in this terminal; the menu comes back when you leave it' },
+        { keyText: 'c', words: 'VS Code on this folder, OpenCode beside your files', short: 'in VS Code',
+          says: 'opens VS Code on this folder, OpenCode beside your files' }
+      ],
+      set: [
+        { keyText: 'm', words: 'MCP servers', says: 'chooses the MCP servers the agent gets: now myproject-mcp, 10 tools' },
+        { keyText: 'p', words: 'plan', says: 'OpenCode plans with the Planner: Markdown only, no code, no runs', mode: 'plan' },
+        { keyText: 'r', words: 'review or auto', says: 'review each change the agent asks for (VS Code shows it), or let it work alone', mode: 'review' },
+        { keyText: 'i', words: 'implement a plan', disabled: true, reason: 'no plan in this folder yet: p writes one first' }
+      ],
+      runs: [
+        { keyText: 'F10', words: 'watch it', says: "the Monitor, on OpenCode's session: writing, step 30" },
+        { keyText: 'l', words: "the container's log", says: "the container's log, in a window" },
+        { keyText: 's', words: 'stop it', says: 'stops the container myproject, asked first' }
+      ],
+      bar: [
+        { keyText: 'g', words: 'get everything ready', says: 'does every step that is not done, in order: here, 3 Its workspace' },
+        { keyText: 'a', words: 'OpenCode here', says: 'opens OpenCode in this terminal; the menu comes back when you leave it' },
+        { keyText: 'c', words: 'in VS Code', says: 'opens VS Code on this folder, OpenCode beside your files' },
+        { keyText: 'f', words: 'build a flow', says: 'builds a flow with the model: OpenCode beside this console, the Monitor shows it built' },
+        { keyText: 'p', words: 'plan', says: 'OpenCode plans with the Planner: Markdown only, no code, no runs', mode: 'plan' },
+        { keyText: 'e', words: 'its software', says: 'installs its software again: uv sync, in a container of its own' },
+        { keyText: 'm', words: 'MCP servers', says: 'chooses the MCP servers the agent gets: now myproject-mcp, 10 tools' },
+        { keyText: '?', words: 'explain', says: 'explains what has the focus', isExplain: true },
+        { keyText: 'f1', words: 'help', says: 'every key of this page, and the keys that act anywhere' },
+        { keyText: 'f5', words: 'machine column', says: 'shows or hides the machine column on the right' },
+        { keyText: 'q', words: 'quit', says: 'quits the console; the service and what it runs go on' }
+      ],
+      barRight: [
+        { keyText: '^p', words: 'palette', says: 'every page and action, found by name' }
+      ]
+    };
+    const axis = { menu: 'v', steps: 'v', next: 'h', then: 'v', set: 'h', runs: 'h', bar: 'h' };
+    const near = {
+      menu: { right: 'steps' }, steps: { left: 'menu' }, next: { up: 'steps', down: 'then' },
+      then: { left: 'menu', right: 'runs' }, set: { up: 'then', down: 'bar' }, runs: { up: 'next', down: 'bar' }, bar: { up: 'steps' }
+    };
+    const byId = {};
+    const groups = { menu: [], steps: [], next: [], then: [], set: [], runs: [], bar: [] };
+    const all = [];
+    Object.keys(defs).forEach((name) => {
+      const g = name === 'barRight' ? 'bar' : name;
+      defs[name].forEach((d) => {
+        const b = Object.assign({}, d);
+        b.g = g;
+        b.id = g + ':' + groups[g].length;
+        if (b.letter === undefined) b.letter = b.keyText.length === 1 ? b.keyText : '';
+        if (!b.label) b.label = b.keyText + ' · ' + (b.short || b.words);
+        groups[g].push(b.id);
+        byId[b.id] = b;
+        all.push(b);
+      });
+    });
+    const focusedGroup = byId[s.focus] ? byId[s.focus].g : '';
+    const setFocus = (id) => {
+      const cur = Object.assign({}, this.state.cur);
+      cur[byId[id].g] = id;
+      const before = byId[id].isExplain ? this.state.focus : this.state.before;
+      this.setState({ focus: id, before: before, cur: cur, msg: null });
+    };
+    const press = (b, how) => {
+      if (this.timer) clearTimeout(this.timer);
+      this.timer = null;
+      if (b.isExplain) {
+        this.setState({ msg: { kind: 'explain', id: this.state.before } });
+        return;
+      }
+      if (b.disabled) {
+        this.setState({ msg: { kind: 'why', id: b.id, how: how } });
+        return;
+      }
+      const change = { pressed: b.id, msg: { kind: 'did', id: b.id, how: how } };
+      if (b.mode) change.mode = b.mode;
+      this.setState(change);
+      this.timer = setTimeout(() => {
+        this.timer = null;
+        this.setState({ pressed: '' });
+      }, 220);
+    };
+    const focusEl = (from, id) => {
+      const root = from && from.closest ? from.closest('[data-root]') : null;
+      const el = root ? root.querySelector('[data-k="' + id + '"]') : null;
+      if (el) el.focus();
+      else setFocus(id);
+    };
+    const groupKeys = (g) => (e) => {
+      const k = e.key;
+      const ids = groups[g];
+      const here = e.target && e.target.getAttribute ? e.target.getAttribute('data-k') : null;
+      let i = ids.indexOf(here);
+      if (i < 0) i = Math.max(ids.indexOf(this.state.cur[g]), 0);
+      const along = axis[g] === 'h' ? ['ArrowLeft', 'ArrowRight'] : ['ArrowUp', 'ArrowDown'];
+      const across = axis[g] === 'h' ? { ArrowUp: 'up', ArrowDown: 'down' } : { ArrowLeft: 'left', ArrowRight: 'right' };
+      let to = null;
+      if (k === along[0]) to = ids[Math.max(i - 1, 0)];
+      else if (k === along[1]) to = ids[Math.min(i + 1, ids.length - 1)];
+      else if (k === 'Home') to = ids[0];
+      else if (k === 'End') to = ids[ids.length - 1];
+      else if (across[k]) to = near[g][across[k]] ? this.state.cur[near[g][across[k]]] : ids[i];
+      else if (k === 'Escape') to = this.state.cur.steps;
+      if (!to) return;
+      e.preventDefault();
+      e.stopPropagation();
+      focusEl(e.currentTarget, to);
+    };
+    const rootKeys = (e) => {
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      const k = e.key;
+      if (k === '?') {
+        e.preventDefault();
+        const id = byId[this.state.focus] && byId[this.state.focus].isExplain ? this.state.before : this.state.focus;
+        this.setState({ msg: { kind: 'explain', id: id } });
+        return;
+      }
+      if (k.length !== 1) return;
+      const hits = all.filter((b) => b.letter === k && !b.isExplain);
+      if (!hits.length) return;
+      const b = hits.filter((x) => x.g === focusedGroup)[0] || hits.filter((x) => x.g === 'bar')[0] || hits[0];
+      e.preventDefault();
+      press(b, 'its letter');
+    };
+    const paint = (b, place) => {
+      const f = s.focus === b.id, p = s.pressed === b.id, h = s.hover === b.id;
+      const kept = s.cur[b.g] === b.id && focusedGroup !== b.g;
+      let bg = 'transparent', fg = place === 'bar' ? MUTE : TXT, key = B, sub = '', weight = 400;
+      if (place === 'menu' && b.current) { bg = '#283457'; fg = '#ffffff'; weight = 700; }
+      if (place === 'row' && kept) { bg = '#283457'; fg = '#ffffff'; }
+      if (b.disabled) { fg = DIM; key = DIM; }
+      if (h && !b.disabled && !f && !p && bg === 'transparent') { bg = '#292e42'; fg = TXT; }
+      if (f && b.disabled) { bg = '#3b4261'; fg = MUTE; key = MUTE; sub = MUTE; }
+      else if (f) { bg = B; fg = INK; key = INK; sub = INK; }
+      if (p) { bg = '#bb9af7'; fg = INK; key = INK; sub = INK; }
+      return { style: 'background: ' + bg + '; color: ' + fg + '; font-weight: ' + weight + '; cursor: ' + (b.disabled ? 'default' : 'pointer'), key: key, sub: sub };
+    };
+    const view = (b, place) => {
+      const look = paint(b, place);
+      return Object.assign({}, b, {
+        tab: s.cur[b.g] === b.id ? 0 : -1,
+        ariaDisabled: b.disabled ? 'true' : 'false',
+        style: look.style,
+        keyColor: look.key,
+        tagColor: look.sub || b.tagColor,
+        nColor: look.sub || MUTE,
+        markColor: look.sub || (b.ok ? GREEN : RED),
+        click: (e) => {
+          const how = e && e.detail === 0 ? 'Enter or Space' : 'a click';
+          if (b.g === 'menu' && b.current) {
+            focusEl(e.currentTarget, this.state.cur.steps);
+            return;
+          }
+          press(b, how);
+        },
+        onfocus: () => {
+          if (this.state.focus !== b.id || this.state.msg) setFocus(b.id);
+        },
+        enter: () => this.setState({ hover: b.id }),
+        leave: () => {
+          if (this.state.hover === b.id) this.setState({ hover: '' });
+        }
+      });
+    };
+    const m = s.msg || { kind: 'focus', id: s.focus };
+    const t = byId[m.id] || byId[s.focus];
+    let msg;
+    if (m.kind === 'explain') {
+      msg = { lead: '? ', key: '', label: t.label + ': ', text: t.disabled ? 'cannot act now: ' + t.reason : t.says, color: TXT, right: 'what ? says of the focused button' };
+    } else if (m.kind === 'why') {
+      msg = { lead: '', key: '', label: t.label + ': ', text: t.reason, color: YEL, right: 'pressed by ' + m.how + ': it cannot act now' };
+    } else if (m.kind === 'did') {
+      const text = t.mode ? 'the mode is now ' + t.mode + ': ' + t.says : t.says;
+      msg = { lead: '▸ ', key: '', label: t.label + ': ', text: text, color: TXT, right: 'pressed by ' + m.how };
+    } else if (t.disabled) {
+      msg = { lead: '', key: '', label: t.label + ': ', text: t.reason, color: YEL, right: 'dimmed: ? says why, nothing presses it' };
+    } else {
+      const ways = t.letter ? 'Enter, Space, ' + t.letter + ' or a click presses it' : 'Enter, Space or a click presses it';
+      msg = { lead: '', key: '', label: t.label + ': ', text: t.says, color: MUTE, right: ways };
+    }
+    return {
+      menu: defs.menu.map((d, i) => view(byId['menu:' + i], 'menu')),
+      steps: groups.steps.map((id) => view(byId[id], 'row')),
+      next: groups.next.map((id) => view(byId[id], 'panel')),
+      then: groups.then.map((id) => view(byId[id], 'panel')),
+      set: groups.set.map((id) => view(byId[id], 'panel')),
+      runs: groups.runs.map((id) => view(byId[id], 'panel')),
+      bar: groups.bar.slice(0, defs.bar.length).map((id) => view(byId[id], 'bar')),
+      barRight: groups.bar.slice(defs.bar.length).map((id) => view(byId[id], 'bar')),
+      keys: { menu: groupKeys('menu'), steps: groupKeys('steps'), next: groupKeys('next'), then: groupKeys('then'), set: groupKeys('set'), runs: groupKeys('runs'), bar: groupKeys('bar') },
+      rootKeys: rootKeys,
+      mode: s.mode,
+      msg: msg
+    };
+  }
+}
+</script>
+</body>
+</html>

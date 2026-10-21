@@ -20,7 +20,8 @@ names each board's file. When a board and this design's words differ, the words 
 again (Claude's call, 2026-10-18). Boards A to D and D1 to D4, cited here, are design 0012's and design 0013's, which
 name their files. E1 (Home) and E2 (This folder) are approved in the owner's words above; E3 to E18, one for each
 other page, were drawn the same day at the owner's request and wait for the owner's look; so does E19, the five
-windows (§7), drawn on 2026-10-19 with R2's last task from the windows as built. **Choice** marks what the owner
+windows (§7), drawn on 2026-10-19 with R2's last task from the windows as built. §12, every key a button, was added
+on 2026-10-21 and approved by the owner the same day on board K2. **Choice** marks what the owner
 has not decided, with a recommendation. The Monitor page
 ([design 0012](0012-the-monitor.md)) and flows ([design 0013](0013-flows.md)) are drawn in the same look: they are to
 use this design's style and Panel, adding to the style file any element they need. Once approved, this design changes
@@ -42,6 +43,7 @@ color is a theme variable"): every color becomes a named element of the style.
 | 9 | Narrow windows | Approved 2026-10-18 |
 | 10 | What changes in the tests | Approved 2026-10-18 |
 | 11 | Build steps | Approved 2026-10-18 |
+| 12 | Every key a button | Approved 2026-10-21 (the owner: K2) |
 
 ## 1. What the owner gets
 
@@ -531,6 +533,169 @@ owner's look at their boards.
    than a key of its own, or Enter): the Choice of §5.
 6. **0046**: the keys bar shows the page's own keys first, from one declaration per page, of named actions, that Help
    and `?` read too and M2's `keys.json` can remap (rather than only the keys that act anywhere, as today).
+
+## 12. Every key a button
+
+**Status:** approved 2026-10-21 (the owner, on board K2: "K2 is perfect for the buttons. I want you to go ahead and
+immediately begin implementing this."). The owner's request: "turning each of the letters that we are displaying into
+buttons that we can press, and the ability to navigate between the different buttons with my arrow keys or to click on
+them, and pressing enter will then be the same as clicking the button or pressing the corresponding key." The boards
+are in the canvas's row "Every key a button" and in [boards/](boards/README.md): K1 (what becomes a button and how the
+focus moves: the behavior), K2 (This folder with buttons: the approved look), K3 (the Monitor's Flow view with
+buttons), K4 (each state, three widths, a question, a window). What K1 to K4 draw and these words do not build is listed
+in §12.11, each a **Choice** for the owner. Claude's calls are recorded in decisions
+[0120](../decisions/0120-every-key-is-a-button-of-one-group-widget.md) (one mechanism),
+[0121](../decisions/0121-how-the-focus-moves-between-buttons.md) (how the focus moves) and
+[0122](../decisions/0122-a-buttons-states-are-colors-of-the-style.md) (the look); the owner may change any of them.
+
+### 12.1 What becomes a button
+
+- **The keys bar**: every key it shows, the page's own (or its view's), `?`, `f1`, `f5`, `q` and `^p`, on every page,
+  read from the page's one declaration (`Page.KEYS`, §7): no page writes anything for them.
+- **A panel's actions**: where a panel says what can be done here, the same keys are buttons, chosen from the page's
+  declaration by key (a button's key, action and help are the declaration's; its words may be the panel's longer
+  sentence). This step builds This folder's (board K2): the row under its steps ("Next:" and the keys that do the next
+  step, or "Ready:" and `a` and `c`), the column of ways to work in Then work (`a`, `c`, `f`) and the row of its
+  settings under it (`m`, `p`, `r`, `w`, `i`).
+- **A question's options**: one button for each option and `v` for the question whole, wherever a question shows with
+  its options: the first question waiting under Waiting for you on Home and This folder, and each question on the
+  Questions page. On the Questions page the list keeps the focus and the letters answer its highlighted question, as
+  today; a click on another question's option highlights that question and answers it (K4: "a click answers any").
+- **A window's keys**: a window that asks first (`Enter do it`, `Esc leave it`) and the details window (`Esc close`).
+- **Stays as it is**: the menu and the page's lists (already one row each, clicked and arrowed as today), values, logs
+  and the header's states: nothing to press there.
+
+### 12.2 One group, one cursor
+
+A **group** of buttons is one widget that takes the focus (`Buttons`, `clank/console/buttons.py`): a row or a column,
+with its own cursor, drawn as text. Each button is its key in `key` and its words, with one blank cell at each side;
+two buttons side by side make today's two-space gap with their blank cells, so the keys bar holds the same keys at the
+same columns as before (§7's fitting is unchanged; the last button's blank at the right may fall past the bar's edge).
+A row too wide for its room goes on to the next line between two buttons, never inside one; a button of a column wraps
+its words under themselves. A group may lead with words of its own ("Next:"), which are not a button. A group inside a
+list's row (a question's options on the Questions page) takes no focus: its buttons are clicked, and the list's own
+keys act. Textual's `Button` is not used: it is three rows tall with a border, and each is a stop of its own for Tab
+(decision 0120).
+
+### 12.3 Pressing a button
+
+A button is pressed by **Enter** or **Space** while it has the focus, by **its key** from anywhere on its page, or by
+**a click**, and all three go the same way, so a button can never do what its key does not: a page's key goes to the
+page's `press` through the console's one door (`ClankConsole.press_key`), which the keys typed take too; a key that
+acts anywhere runs its binding's action (`explain`, `page('help')`, `machine`, `quit`, `command_palette`); a window's
+key runs the window's action. Typing a key leaves the focus where it was; a click moves the focus to the button it
+pressed. A button pressed shows `pressed` for a fifth of a second, by its key too, wherever it shows; the message line
+then says what it did, as today. A key of several (`y n …` on the keys bar) is not one button's: pressed, the message
+line says which keys it stands for.
+
+### 12.4 How the focus moves
+
+- **Tab** and **Shift+Tab**: the next and the previous group, in the screen's order (Textual's focus chain): the menu,
+  the page's lists and groups in reading order, the keys bar; after the last, the first.
+- **Along a group** (← → in a row, ↑ ↓ in a column): the next button; it stops at the group's ends. **Home** and
+  **End**: its first and its last.
+- **Across a row** (↑ ↓): the nearest group above or below on the screen, the one nearest the focused button's column
+  first; when there is none, the focus stays. **Across a column** (← →): as today, between the page's lists and groups
+  and the menu (the shell's Right and Left). On the keys bar, ↑ goes back into the page, as Esc does.
+- **Lists keep their own arrows**: the menu, a page's lists, the Flow view's boxes and a form's fields take their keys
+  first, as today; the arrows move between buttons only while a group has the focus. No binding of the groups is a
+  priority binding.
+- **Esc** on a group: back to the page's main list (its first list; a page without one, its first group, or the page
+  itself). In a window, Esc stays the window's: it leaves it.
+- **`?`** with a button focused: the details window says what it does, the keys that press it, or why it cannot act
+  now. On the keys bar's own `?`, it explains what had the focus before the keys bar.
+
+### 12.5 Where the focus starts
+
+- The console starts on the menu, as today: ↑ ↓ open the pages as they move.
+- **→, Tab or Enter** on the menu goes into the page on screen: where the focus was when the page was last left, else
+  its main list. Enter on the menu is new.
+- A key typed leaves the focus where it was.
+- **A window** with buttons opens with the focus on its first: on "do it" in a window that asks first, so Enter keeps
+  its meaning. The key that opened a window never presses its button (the window's `armed` guard, design 0012 §9.1).
+  Tab and the arrows stay inside the window; Esc leaves it, and the focus goes back where it was.
+
+### 12.6 The message line says what the focused button does
+
+While a group has the focus, the message line says what its focused button does and how it is pressed, in `quiet`
+("g get everything ready: get everything ready: every step that is not done, in order · Enter, Space, g or a click"),
+or, for a button that cannot act now, why, in `attention`; it is cut with the style's "…" to its one row. A message of
+an action replaces it, as any later message does; when the focus leaves the groups, it is cleared unless a message came
+since.
+
+### 12.7 A button that cannot act now
+
+A page may say that one of its keys cannot act now, and why (`Page.unable(key)`: "" when it can). Its buttons are drawn
+dimmed (`dim`) and still take the focus, so the message line and `?` can say why; pressed (by Enter, Space, its key or
+a click) the message line says why and the page's `press` is not called. The console's one door checks it, so a key
+typed and its button say the same. This step: This folder's keys that work on the workspace (`e`, `m`, `p`, `r`, `w`,
+`i`) before the workspace is opened, saying the words those keys say today.
+
+### 12.8 The look, in the style
+
+Five colors join the style's colors (§2): `button_hover` (#292e42), the ground under the mouse; `button_focused`
+(#7aa2f7), the focused button's fill, and `button_focused_text` (#1a1b26), its key and words on that fill;
+`button_pressed` (#bb9af7), the fill for the fifth of a second a button is pressed; `button_unable_focused` (#3b4261),
+the fill of a dimmed button that has the focus. A button's states:
+
+| State | Its fill | Its key | Its words |
+| --- | --- | --- | --- |
+| normal | none | `key` | `quiet` on the keys bar, `text` in a panel |
+| hover (the mouse over it) | `button-hover` | `key` | `text` |
+| focused (its group has the focus; one on the screen) | `button-focused` | `button-focused-text` | `button-focused-text` |
+| pressed (a fifth of a second) | `button-pressed` | `button-focused-text` | `button-focused-text` |
+| cannot act now | none | `dim` | `dim` |
+| cannot act now, focused | `button-unable-focused` | `quiet` | `quiet` |
+
+The fill covers the blank cell at each side: no state changes a button's width, so nothing on its row moves. A style
+file may set the five like any color.
+
+### 12.9 Narrow windows
+
+The keys bar keeps §7's rule (the other keys that act anywhere go first, then the page's own from the right; `?` and
+`f1` stay; one row, never wrapped). A row of buttons in a panel goes on to its next line between buttons, a column's
+button wraps its words, and the panel grows (§5): at 128, 88 and 60 columns nothing overlaps or is cut mid-word, and no
+state moves a button, which tests prove on This folder and on the Monitor's Flow view.
+
+### 12.10 Over SSH, and without a window
+
+Clicks and the mouse's hover reach the console through Textual's mouse support, in Windows Terminal, VS Code's
+terminal and over SSH (Windows OpenSSH, a Linux terminal) wherever the terminal reports the mouse (tmux only with its
+`mouse` option on). Nothing here opens a window or starts a program. What only a real terminal can confirm: a click
+over SSH, the hover's ground and the focused button's fill in Windows Terminal and over SSH.
+
+### 12.11 Not in this step (Choices for the owner)
+
+- **"… N more" on the keys bar, and shorter words under 70 columns** (board K4): a button that opens the keys that did
+  not fit, and each key's short words. They change which keys fit, which §7 and this step keep; `f1` lists every key
+  and its letter presses it. Recommendation: build them after the owner's look at K4 in the console.
+- **The Monitor's view tabs as buttons** (K1, K3: Flow, Session, Context, without a letter), the Flow view's `Enter
+  open its session` and `e another preset` in its panels (K3), the Guide's actions as buttons (K1), and the keys named
+  in other panels' sentences (Home's "s stops it"): each needs its page's own panels changed; their keys are buttons on
+  the keys bar meanwhile. Recommendation: with each page's next step.
+- **A list's first row that waits for the owner** as where the focus starts (K1): the lists keep the row they
+  highlight today. Recommendation: with the Questions page's step (R4).
+- **What runs from here's buttons** (K2: `F10 watch it`, `l` its log, `s stop it`): keys This folder does not have
+  (its `l` loads a model and its `s` starts Docker). Recommendation: decide the keys first.
+
+### 12.12 What changes in the tests
+
+- New tests: the button's text and its six states, each the same width; a group's keys (along, across, Home, End,
+  Enter, Space, Esc), its click and hover; the keys bar's buttons at the same columns as before, Tab reaching it, Enter
+  and a click pressing a key through the one door; `?` and the message line on a focused button; a button that cannot
+  act now; This folder's groups at 128, 88 and 60 columns; a question's option buttons; the windows' buttons and their
+  first focus; the five colors in Clank's style and in a style file. The focus is not in a text snapshot: the tests
+  read the cells' colors.
+- **The text snapshots** change where a group replaces text: This folder's (`folder-*`, new), Home's question
+  (`home-question`), the Questions page (`questions`): a button's blank cells for today's separators. Every rewrite is
+  read before it is committed (`CLANK_UPDATE_SNAPSHOTS=1`).
+
+### 12.13 Build steps
+
+One step, in [plan s36](../plans/s36-every-key-a-button.md): the style's five colors; the group (`Buttons`): its
+drawing, keys, click and hover; the console's one door and `Page.unable`; the keys bar as a group; the message line and
+`?`; where the focus goes (Enter on the menu, where the page was left, Esc); This folder's groups; the questions'
+options; the windows' buttons; the narrow frames and the snapshots.
 
 ## Revision log
 

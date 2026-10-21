@@ -127,6 +127,9 @@ and use the template below.
 | [0117](0117-a-new-flow-runs-on-what-the-main-slot-runs.md) | Clank's flow template names no model: a new flow runs on what the main slot runs (supersedes 0095 for the shipped default) | Accepted | 2026-10-21 |
 | [0118](0118-clank-is-licensed-under-the-agpl.md) | Clank is licensed under the AGPL-3.0 | Accepted (the owner's decision) | 2026-10-21 |
 | [0119](0119-sampling-and-gpu-layers-are-launch-options-left-unset.md) | An engine's sampling and its GPU layers are launch options, left unset unless a preset sets them, and shown with the engine's own defaults | Accepted (the owner's request; Claude's call how) | 2026-10-21 |
+| [0120](0120-every-key-is-a-button-of-one-group-widget.md) | Every key the console shows is a button of a group: one widget that takes the focus, pressed through the same door as its key | Accepted (Claude's call) | 2026-10-21 |
+| [0121](0121-how-the-focus-moves-between-buttons.md) | Tab moves between groups, the arrows inside one and stop at its ends, and the lists keep their own keys | Accepted (Claude's calls on board K1) | 2026-10-21 |
+| [0122](0122-a-buttons-states-are-colors-of-the-style.md) | A button's states are drawn in five new colors of the style, its fill covering a blank cell at each side | Accepted (Claude's call) | 2026-10-21 |
 
 ## Template
 

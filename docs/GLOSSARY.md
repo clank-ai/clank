@@ -44,6 +44,10 @@ Words with a special meaning in Clank's documents and code, defined once. Alphab
   by the brief written with the model (design 0013 §15, decisions
   [0097](decisions/0097-a-flow-is-built-by-talking-it-through.md) and
   [0098](decisions/0098-a-built-flow-runs-on-its-own-until-its-final-review.md)).
+- **Button** (of the console): a key the console shows, drawn as its key and its words with a blank cell at each
+  side, pressed by Enter or Space while it has the focus, by its key from anywhere on its page, or by a click, all
+  three the same way; it belongs to a *group* (design 0011 §12, decision
+  [0120](decisions/0120-every-key-is-a-button-of-one-group-widget.md)).
 - **Check**: verifying a configuration without starting anything: validity, memory fit, cost, and what the engine's
   adapter can confirm (program, version, accepted flags, the model file). See also *trial*.
 - **Clank service**: the one process that is Clank's control plane: it holds the settings and the state, makes every
@@ -143,6 +147,10 @@ Words with a special meaning in Clank's documents and code, defined once. Alphab
   [0069](decisions/0069-a-frontier-preset-over-262k-with-retrieval.md)).
 - **Grant**: what an approval creates when it is for longer than once: a permission and its exact target, for a
   session or a workspace, until a set end. It can be revoked at any time (design 0002 §2.6).
+- **Group** (of buttons): one widget of the console that takes the focus and holds buttons in a row or a column, with
+  its own cursor: the keys bar, a panel's actions, a question's options, a window's keys. Tab moves between groups,
+  the arrows inside one, stopping at its ends (design 0011 §12, decision
+  [0121](decisions/0121-how-the-focus-moves-between-buttons.md)).
 - **Guide**: the Monitor's actions on the session it follows, each on its own key: stop now (`.`), a note the model
   reads at its next step (`m`), pause after this step (`p`), undo the last step (`u`: OpenCode's revert at the end of
   the step before, or of the whole turn when the owner's message comes first, its text back in the note window; `u`
