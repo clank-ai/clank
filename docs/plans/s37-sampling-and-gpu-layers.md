@@ -31,7 +31,7 @@ engine's own defaults; the memory estimate follows fewer layers on the GPU.
   `sampling.frequency_penalty`, `sampling.repeat_penalty`, `sampling.seed`, each with KVMem's bounds and its own
   default in words; unset, no flag; set, always the flag, for both modes (`kvmem.py`;
   `tests/components/runtime/test_kvmem_sampling.py`; the contract test finds every flag in the recorded `--help`).
-- [ ] **The estimate with fewer layers:** the catalog's `layers` (66) for the three Qwen3.8 files under KVMem; with
+- [x] **The estimate with fewer layers:** the catalog's `layers` (66) for the three Qwen3.8 files under KVMem; with
   `gpu_layers` below it, that share of the weights on the GPU, the rest named in system memory, the KV cache and the
   buffers kept whole, said to be an estimate; without `layers`, the weights kept whole and said so (`kvmem.py`,
   `clank/catalog/models/*.json`; `tests/components/runtime/test_kvmem_sampling.py`).

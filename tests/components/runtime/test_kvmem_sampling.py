@@ -2,20 +2,27 @@
 flag and keeps its own defaults, which differ by thinking mode, and each option says them in words, as its recorded
 `--help` gives them; set, the flag is always given, even at a value one mode's default has, since it then holds for
 both modes; the GPU layers at the engine's own 99 give nothing. Each value is bounded as KVMem's server bounds it, and
-a value outside is refused in a sentence naming it."""
+a value outside is refused in a sentence naming it. With fewer layers on the GPU than the model has (the catalog's
+`layers`, 66 for the Qwen3.8 files, as KVMem's log counts them), the estimate puts that share of the weights on the GPU
+and names the rest in system memory, the KV cache and the buffers kept whole, and says it is an estimate; a model whose
+catalog entry has no layer count keeps its weights whole and says so."""
 
 import json
 import re
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 from clank.components.runtime.adapters.engine import Launch, OptionValue
 from clank.components.runtime.adapters.kvmem import KvmemLlamacpp
+from clank.components.runtime.catalog import catalog
 from clank.components.runtime.launching import options_view
 
 RECORDING = Path(__file__).resolve().parents[2] / "fixtures" / "kvmem-llamacpp" / "v0.16.0-rc1" / "program.json"
 LAUNCH = Launch(program=("llama-kvmem-server",), model_path="m.gguf", port=18200, facts={"projector": "p.gguf"})
+SIZES = {"gpu_weights_mib": 11160, "attention_layers": 16, "kv_width": 1024, "buffers_mib": 277, "overhead_mib": 424,
+         "mtp_bytes_per_cell": 4096, "compute_bytes_per_cell": 5120, "layers": 66}  # fmt: skip
 SAMPLING = {
     "sampling.temperature": ("--temp", 0.6, "1.0 thinking, 0.7 not thinking"),
     "sampling.top_p": ("--top-p", 0.9, "0.95 thinking, 0.80 not thinking"),
@@ -115,3 +122,42 @@ def test_the_bounds_are_the_ones_its_recorded_help_gives() -> None:
         assert f"[{low:g},{high:g}]" in help_line(flag), key
     assert options["sampling.repeat_penalty"].more_than == 0
     assert "> 0" in help_line("--repeat-penalty")
+
+
+def test_with_fewer_layers_on_the_gpu_the_estimate_puts_that_share_of_the_weights_there() -> None:
+    launch = replace(LAUNCH, sizes=SIZES)
+    whole = engine().plan({}, launch).memory
+    half = engine().plan({"gpu_layers": 33}, launch).memory
+    assert half.weights_mib == 5580  # 33 of 66 layers of 11,160 MiB, layers taken as equal in size
+    assert (half.kv_mib, half.buffers_mib, half.overhead_mib) == (whole.kv_mib, whole.buffers_mib, whole.overhead_mib)
+    assert half.notes[0] == whole.notes[0], "the KV cache's note first, as before"
+    assert half.notes[-1] == (
+        "weights: 33 of 66 layers on the GPU, about 5,580 MiB; the other 33, about 5,580 MiB, in system memory, read "
+        "by the CPU for every token (an estimate: layers taken as equal in size; the KV cache and the buffers counted "
+        "whole on the GPU)"
+    )
+    assert engine().plan({"gpu_layers": 0}, launch).memory.weights_mib == 0
+
+
+def test_every_layer_on_the_gpu_estimates_the_weights_whole_as_before() -> None:
+    launch = replace(LAUNCH, sizes=SIZES)
+    whole = engine().plan({}, launch).memory
+    assert engine().plan({"gpu_layers": 66}, launch).memory == whole
+    assert engine().plan({"gpu_layers": 120}, launch).memory == whole
+
+
+def test_a_model_with_no_layer_count_keeps_its_weights_whole_and_says_so() -> None:
+    sizes = {key: value for key, value in SIZES.items() if key != "layers"}
+    estimate = engine().plan({"gpu_layers": 33}, replace(LAUNCH, sizes=sizes)).memory
+    assert estimate.weights_mib == 11160
+    assert estimate.notes[-1] == (
+        "weights: counted whole on the GPU, since the catalog gives no layer count for this model to split them by"
+    )
+    assert "weights:" not in " ".join(engine().plan({}, replace(LAUNCH, sizes=sizes)).memory.notes)
+
+
+def test_the_qwen3_8_files_have_the_66_layers_kvmems_log_offloads() -> None:
+    startup = json.loads(RECORDING.read_text(encoding="utf-8"))["startup"]
+    assert any("offloaded 66/66 layers to GPU" in line for line in startup)
+    for model in ("qwen3.8-27b", "swift-1.5-qwen3.8-27b", "swift-1.5-qwen3.8-27b-iq3xxs"):
+        assert catalog()[model].sizes("kvmem-llamacpp")["layers"] == 66, model

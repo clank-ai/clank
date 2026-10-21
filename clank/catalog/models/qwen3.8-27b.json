@@ -40,8 +40,8 @@
   ],
   "engines": {
     "kvmem-llamacpp": {
-      "sizes": {"gpu_weights_mib": 11160, "buffers_mib": 277, "overhead_mib": 424, "projector_mib": 600, "mtp_bytes_per_cell": 4096, "compute_bytes_per_cell": 5120},
-      "source": "KVMem v0.16.0-rc1's log on this model (model buffer 11,159.69 MiB, recurrent state 163.20 MiB, compute 374.28 MiB; the MTP head's pool 53,248 cells of 4,096 bytes, 208 MiB, at f16) and the prototype's measurement of 2026-10-06 (1,169 MiB beyond the weights and the KV cache, the buffers and the MTP head's pool included, leaving 424 MiB of overhead); the compute buffers took 594.28 MiB at 98,304 cells on 2026-10-18 (\"frontier 96K\", which took 14,453 MiB in all), so they are 114 MiB plus 5,120 bytes a cell, and buffers_mib holds the recurrent state and that 114"
+      "sizes": {"gpu_weights_mib": 11160, "buffers_mib": 277, "overhead_mib": 424, "projector_mib": 600, "mtp_bytes_per_cell": 4096, "compute_bytes_per_cell": 5120, "layers": 66},
+      "source": "KVMem v0.16.0-rc1's log on this model (model buffer 11,159.69 MiB, recurrent state 163.20 MiB, compute 374.28 MiB; the MTP head's pool 53,248 cells of 4,096 bytes, 208 MiB, at f16) and the prototype's measurement of 2026-10-06 (1,169 MiB beyond the weights and the KV cache, the buffers and the MTP head's pool included, leaving 424 MiB of overhead); the compute buffers took 594.28 MiB at 98,304 cells on 2026-10-18 (\"frontier 96K\", which took 14,453 MiB in all), so they are 114 MiB plus 5,120 bytes a cell, and buffers_mib holds the recurrent state and that 114; layers: the 66 its log offloads (\"offloaded 66/66 layers to GPU\", 2026-10-12), which the estimate splits the weights by when fewer are on the GPU"
     }
   }
 }

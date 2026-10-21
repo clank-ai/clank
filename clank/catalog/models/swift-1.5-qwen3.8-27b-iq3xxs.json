@@ -30,8 +30,8 @@
   ],
   "engines": {
     "kvmem-llamacpp": {
-      "sizes": {"gpu_weights_mib": 9560, "buffers_mib": 277, "overhead_mib": 424, "mtp_bytes_per_cell": 4096, "compute_bytes_per_cell": 5120},
-      "source": "Its tensors read with gguf's reader on 2026-10-18: 9,560.19 MiB beside the 388.38 MiB token embedding, which llama.cpp keeps on the CPU (the same reading of the IQ3_S file gives the 11,159.69 MiB its start logged); the rest as Swift 1.5's IQ3_S, whose layers and pools are the same"
+      "sizes": {"gpu_weights_mib": 9560, "buffers_mib": 277, "overhead_mib": 424, "mtp_bytes_per_cell": 4096, "compute_bytes_per_cell": 5120, "layers": 66},
+      "source": "Its tensors read with gguf's reader on 2026-10-18: 9,560.19 MiB beside the 388.38 MiB token embedding, which llama.cpp keeps on the CPU (the same reading of the IQ3_S file gives the 11,159.69 MiB its start logged); the rest as Swift 1.5's IQ3_S, whose layers and pools are the same; layers: the 66 KVMem's log offloads for Qwen3.8-27B's file, whose layers are the same (\"offloaded 66/66 layers to GPU\", 2026-10-12), which the estimate splits the weights by when fewer are on the GPU"
     }
   }
 }

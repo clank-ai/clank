@@ -30,8 +30,8 @@
   ],
   "engines": {
     "kvmem-llamacpp": {
-      "sizes": {"gpu_weights_mib": 11160, "buffers_mib": 277, "overhead_mib": 424, "mtp_bytes_per_cell": 4096, "compute_bytes_per_cell": 5120},
-      "source": "Qwen3.8-27B's sizes: its file holds the same 866 tensors at the same types and shapes (compared with gguf's reader on 2026-10-18; the files differ by 64 bytes of metadata)"
+      "sizes": {"gpu_weights_mib": 11160, "buffers_mib": 277, "overhead_mib": 424, "mtp_bytes_per_cell": 4096, "compute_bytes_per_cell": 5120, "layers": 66},
+      "source": "Qwen3.8-27B's sizes: its file holds the same 866 tensors at the same types and shapes (compared with gguf's reader on 2026-10-18; the files differ by 64 bytes of metadata); layers: the 66 KVMem's log offloads for Qwen3.8-27B's file, whose layers are the same (\"offloaded 66/66 layers to GPU\", 2026-10-12), which the estimate splits the weights by when fewer are on the GPU"
     }
   }
 }

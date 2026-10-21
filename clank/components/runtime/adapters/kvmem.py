@@ -13,7 +13,10 @@ Its GPU layers (`-ngl`) and its sampling (`--temp` and the rest) have no default
 chosen per request by thinking mode (temperature 1.0 thinking and 0.7 not, top_p 0.95 and 0.80, presence penalty 0 and
 1.5), which each option says in words. Its server gives a request its mode's defaults, then the flags, then the
 request's own fields (`tools/kvmem-chat-sampling.h`), so a flag holds for both modes and is given even at a value one
-mode's default has, and a request's own value wins over it.
+mode's default has, and a request's own value wins over it. With fewer layers on the GPU than the model has (the
+catalog's `layers`: 66 for Qwen3.8-27B, as its log counts them), the estimate puts that share of the weights on the GPU,
+layers taken as equal in size, and names the rest in system memory; it keeps the KV cache and the buffers whole on the
+GPU, the safe side, since how KVMem places the cache of a layer left off the GPU is not measured.
 
 Its KV cache holds `kvmem.budget` plus `kvmem.gen_reserve` cells, each taking, for every attention layer, a key and a
 value of the model's KV width at the cache type's bits per value; the model's facts come from the catalog. With a budget
@@ -74,6 +77,7 @@ FIELDS = {
     "output": "usage.completion_tokens",
     "cached": "usage.prompt_cache_hit_tokens",
 }
+ALL_LAYERS = 99  # its own `-ngl`: every layer of any model it serves
 BOTH = "; set, it holds with thinking on and off"  # said of a sampling option whose default differs by mode
 # Its sampling, unset unless a preset sets it (design 0003 §4.1, decision 0119): its own defaults, Qwen3.8-27B's model
 # card's, thinking and not, in words; the bounds its server checks (`tools/kvmem-chat-sampling.h`).
@@ -275,7 +279,8 @@ class KvmemLlamacpp(EngineAdapter):
         return Plan(command, env, launch.facts.get("folder", ""), launch.port, self.memory(options, launch))
 
     def memory(self, options: Mapping[str, OptionValue], launch: Launch) -> MemoryEstimate:
-        """The GPU memory a launch takes: the model's weights, the KV slot pool, the buffers, the engine's overhead."""
+        """The GPU memory a launch takes: the model's weights (their share on the GPU, with fewer layers there than the
+        catalog's `layers`), the KV slot pool, the buffers, the engine's overhead."""
         values = self.resolved(options)
         sizes = launch.sizes
         budget = int(values["kvmem.budget"])
@@ -289,8 +294,25 @@ class KvmemLlamacpp(EngineAdapter):
         compute = sizes.get("compute_bytes_per_cell", 0)
         if compute:
             notes.append(f"the compute buffers' growth, with the buffers: {cells:,} cells of {compute:,.0f} bytes")
+        weights = sizes.get("gpu_weights_mib", 0)
+        on_gpu, layers = values.get("gpu_layers"), int(sizes.get("layers", 0))
+        if on_gpu is not None and int(on_gpu) < (layers or ALL_LAYERS):
+            if not layers:
+                notes.append(
+                    "weights: counted whole on the GPU, since the catalog gives no layer count for this model to split "
+                    "them by"
+                )
+            else:
+                rest = weights * (layers - int(on_gpu)) / layers
+                weights -= rest
+                notes.append(
+                    f"weights: {on_gpu} of {layers} layers on the GPU, about {weights:,.0f} MiB; the other "
+                    f"{layers - int(on_gpu)}, about {rest:,.0f} MiB, in system memory, read by the CPU for every "
+                    "token (an estimate: layers taken as equal in size; the KV cache and the buffers counted whole on "
+                    "the GPU)"
+                )
         return MemoryEstimate(
-            weights_mib=round(sizes.get("gpu_weights_mib", 0)),
+            weights_mib=round(weights),
             kv_mib=round(cells * per_cell / MIB),
             buffers_mib=round(sizes.get("buffers_mib", 0) + projector + cells * (mtp + compute) / MIB),
             overhead_mib=round(sizes.get("overhead_mib", 0)),
