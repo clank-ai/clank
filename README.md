@@ -123,6 +123,24 @@ console and one set of commands:
 On Windows, in PowerShell:
 
 ```powershell
+irm https://clank-ai.github.io/install.ps1 | iex
+```
+
+On macOS or Linux (an untested beta):
+
+```sh
+curl -fsSL https://clank-ai.github.io/install.sh | sh
+```
+
+The installer installs [uv](https://docs.astral.sh/uv/) if it is missing, checks Git and Docker (on Windows it offers
+to install each with winget, asking first), installs Clank's latest release and runs `clank doctor`. Run it again to
+update. Then open a new terminal and type `clank`: with no model set up, it opens on **Add a model**, where you choose a
+cloud model with an OpenRouter key or a model on your own GPU. Then open a terminal in any project folder and type
+`clank`.
+
+Or by hand, from a clone (Windows, in PowerShell):
+
+```powershell
 winget install --id Git.Git -e
 winget install --id astral-sh.uv -e
 winget install --id Docker.DockerDesktop -e
@@ -134,14 +152,13 @@ uv tool update-shell
 clank
 ```
 
-With no model set up, `clank` opens on **Add a model**: choose a cloud model with an OpenRouter key, or a model on your
-own GPU. Then open a terminal in any project folder and type `clank`. The full guide, with every step, updating and
-troubleshooting: **[docs/getting-started.md](docs/getting-started.md)**.
+The full guide, with every step, updating, uninstalling and troubleshooting:
+**[docs/getting-started.md](docs/getting-started.md)**.
 
 ## Status: public beta
 
-Clank 0.3.0b1 is in daily use on Windows. Not there yet: a one-line installer and an update command, testing on Linux
-and macOS, and the iPhone app. Local models need their engine built by hand for now. What each release brings:
+Clank 0.3.0b1 is in daily use on Windows. Not there yet: an update command (run the installer again to update), testing
+on Linux and macOS, and the iPhone app. Local models need their engine built by hand for now. What each release brings:
 [CHANGELOG.md](CHANGELOG.md); where every part stands: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Documentation

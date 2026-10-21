@@ -18,7 +18,35 @@ path (step 3b). Written for Windows first; macOS and Linux notes are at the end.
 
 ## 2. Install
 
+### The quick way: one line
+
 In PowerShell:
+
+```
+irm https://clank-ai.github.io/install.ps1 | iex
+```
+
+It says each step as it takes it:
+
+1. **uv**: uses the one you have, or installs it with Astral's own installer.
+2. **Git**: Clank is downloaded with it. If it is missing, the installer offers `winget install --id Git.Git -e`
+   and asks first.
+3. **Docker Desktop**: if it is missing, the installer says how to get it and offers
+   `winget install --id Docker.DockerDesktop -e`, asking first (it needs administrator rights and may need a restart).
+   It never installs Docker without your yes; Clank itself installs without it.
+4. **Clank**: its latest release (the installer says which), with `uv tool install`, then `uv tool update-shell`
+   so `clank` is on your path.
+5. **`clank doctor`**, which checks the computer and changes nothing.
+
+It never asks for a key. Set `CLANK_NO_MODIFY_PATH=1` first to leave your path alone, or `CLANK_VERSION` to a
+release tag (or `main`) to install that instead of the latest release. The script is short and readable:
+[install.ps1](https://clank-ai.github.io/install.ps1), and on macOS and Linux
+[install.sh](https://clank-ai.github.io/install.sh). Then open Docker Desktop once if it is new, accept its terms
+and let it finish starting, and open a new PowerShell so `clank` is found.
+
+### Or by hand, from a clone
+
+Install from a clone if you want Clank's VS Code window (step 2b), which is built from the clone. In PowerShell:
 
 ```
 winget install --id Git.Git -e
@@ -50,7 +78,8 @@ It changes nothing; it says what is ready and what is missing (Docker, WSL, a GP
 
 Clank's VS Code window (`c` on **This folder**, or `clank code`) shows the agent beside your files, its changes for
 you to review and figures to mark up. It needs Clank's extension, built once from the clone (and again after an update
-that changes it); until then, `c` says the extension is not built. In PowerShell:
+that changes it); until then, `c` says the extension is not built. It needs Clank installed by hand from a clone
+(step 2, the second way): the one-line installer's Clank does not carry the extension's sources. In PowerShell:
 
 ```
 winget install --id Microsoft.VisualStudioCode -e
@@ -119,10 +148,11 @@ session. [docs/console.md](console.md) explains every page and key.
 
 ## 5. Updating
 
-Clank has no update command yet. To update, in the `clank` folder:
+Clank has no update command yet. If you installed it with the one-line installer, run it again: it installs the
+latest release in place of the one you have. If you installed it by hand, run `git pull` in the `clank` folder. Then
+restart Clank's service, so it runs the new version:
 
 ```
-git pull
 clank stop
 clank serve --background
 clank gateway restart
@@ -152,11 +182,22 @@ uv tool uninstall clank
 ```
 
 Clank's own folder, `%USERPROFILE%\.clank`, keeps your settings, records and keys: delete it to remove those too.
-Workspace containers are removed from **Workspaces** (F6, `d`) before that, or from Docker Desktop.
+Workspace containers are removed from **Workspaces** (F6, `d`) before that, or from Docker Desktop. If the installer
+installed uv and nothing else uses it,
+[uv's guide](https://docs.astral.sh/uv/getting-started/installation/#uninstallation) says how to remove it.
 
 ## macOS and Linux
 
-Clank's console, the cloud path and its commands are the same; install uv, Git and Docker (Docker Desktop on macOS;
-Docker Engine on Linux) the way your system does, then follow step 2 from `git clone`. Neither has been tested yet.
+Clank's console, the cloud path and its commands are the same. The one-line installer:
+
+```
+curl -fsSL https://clank-ai.github.io/install.sh | sh
+```
+
+It installs uv if it is missing, checks Git (and offers your package manager's command for it, asking first) and
+Docker (Docker Desktop on macOS; [Docker Engine](https://docs.docker.com/engine/install/) on Linux, which it never
+installs), installs Clank's latest release and runs `clank doctor`; run it again to update. Or install uv, Git and
+Docker the way your system does, then follow step 2 from `git clone`. Neither system has been tested beyond the
+installer.
 On Linux, the agent's container reaching Clank's gateway through Docker Engine is still being built
 ([design 0014](design/0014-linux-and-small-machines.md)), so the agent may not reach the model there yet.
