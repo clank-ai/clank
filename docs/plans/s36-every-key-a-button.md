@@ -119,16 +119,16 @@ Decisions 0120-0122 record the main ones. Also:
 
 ### Task 9: This folder's groups
 
-- [ ] **Files:** `clank/components/agents/console/folder.py` (the Next row, Then work's column and its settings row,
+- [x] **Files:** `clank/components/agents/console/folder.py` (the Next row, Then work's column and its settings row,
   `unable` for `e`, `m`, `p`, `r`, `w`, `i`).
-- [ ] **Tests first** (`tests/console/test_folder_buttons.py`, design 0011 §12.1, §12.7 and §12.9): the groups and their
+- [x] **Tests first** (`tests/console/test_folder_buttons.py`, design 0011 §12.1, §12.7 and §12.9): the groups and their
   keys, from `KEYS`; a click on `l` in the Next row presses `l`, as its key does; `a` dimmed until every required step
   is done, and the workspace's keys until it is opened, saying why; frames at 128, 88 and 60 columns (`folder-128`, `folder-88`, `folder-60`), nothing overlapping.
 
 ### Task 10: A question's options
 
-- [ ] **Files:** `clank/console/pages/questions.py` (`option_buttons`), `pages/home.py`, `folder.py`.
-- [ ] **Tests first** (`tests/console/test_questions.py`, `test_home.py`, design 0011 §12.1): Home's and This folder's
+- [x] **Files:** `clank/console/pages/questions.py` (`option_buttons`), `pages/home.py`, `folder.py`.
+- [x] **Tests first** (`tests/console/test_questions.py`, `test_home.py`, design 0011 §12.1): Home's and This folder's
   first question's options and `v` are a group that answers it; on the Questions page a click on another question's
   option highlights it and answers it, the list keeping the focus; snapshots `home-question` and `questions`.
 

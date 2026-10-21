@@ -1,5 +1,6 @@
 """Design 0002 §2.5, §2.7 and §3.2: the home page shows what runs, what waits for the user and the latest history.
-An option's key answers the first waiting question as you (console); a question answered in another client leaves the
+An option's key answers the first waiting question as you (console), and so does its button under it (design 0011
+§12.1); a question answered in another client leaves the
 list, and the history says who answered; `s` asks Docker to stop (its question appears, since containers Clank did
 not start run); a call the service refuses is said in a message and the console stays usable; presence is sent on a
 key press, at most once a minute. Design 0016 §11: once a cloud provider is added, Home and the header say the cloud's
@@ -12,6 +13,7 @@ from textual.widgets import Label
 
 from clank.client import Client
 from clank.console.app import ClankConsole
+from clank.console.buttons import Buttons
 from clank.console.details import DetailsScreen
 from clank.console.pages.home import folder_line, gateway_line, gpu_line, now_lines, workspaces_line
 from clank.console.snapshot import render_text
@@ -72,6 +74,26 @@ async def test_an_options_key_answers_the_first_waiting_question_as_you_through_
         await pilot.press("n")
         await settle(pilot, lambda: kernel.questions.get(asked.id).answer is not None)
         await settle(pilot, lambda: "Stop Docker Desktop?" not in waiting(app))
+    answer = kernel.questions.get(asked.id).answer
+    assert answer is not None
+    assert (answer.option, answer.by.via) == ("cancel", "console")
+
+
+async def test_the_first_questions_options_are_buttons_under_it_that_answer_it_as_its_keys_do(
+    client: Client, kernel: Kernel, home: Home
+) -> None:
+    asked = kernel.questions.ask(STOP, asked_by=CLANK)
+    app = make(client, home)
+    async with app.run_test(size=(120, 34)) as pilot:
+        await settle(pilot, lambda: "Stop Docker Desktop?" in waiting(app))
+        options = app.query_one("#waiting-options", Buttons)
+        assert [(each.label, each.said) for each in options.buttons] == [
+            ("y", "Stop them and Docker"),
+            ("n", "Cancel"),
+            ("v", "the question whole"),
+        ]
+        await pilot.click("#waiting-options", offset=(len(" y Stop them and Docker  n"), 0))
+        await settle(pilot, lambda: kernel.questions.get(asked.id).answer is not None)
     answer = kernel.questions.get(asked.id).answer
     assert answer is not None
     assert (answer.option, answer.by.via) == ("cancel", "console")

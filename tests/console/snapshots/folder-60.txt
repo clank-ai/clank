@@ -1,0 +1,60 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ●… 13:54
+F4 This folder   ✗ │ ┌─ Get ready to work here ─────────┐
+1 Home             │ │ Folder: /work/paper              │
+2 Questions        │ │  1  Docker                       │
+3 History          │ │ ✓ running                        │
+4 Docker         ● │ │  2  This folder                  │
+5 Machine          │ │ ✗ refused: /work/paper is not a  │
+6 Operations       │ │ full path                        │
+7 Records          │ │  3  Its workspace                │
+8 Models         ● │ │ ✗ cannot open                    │
+9 Presets          │ │  4  The sandbox image            │
+0 Providers and…   │ │ ✗ not built yet: opening the     │
+F1 Help            │ │ workspace builds it (once)       │
+F2 Launch optio…   │ │ press o to open the workspace    │
+F3 MCP servers     │ │  5  Its software                 │
+F6 Workspaces      │ │ ✗ cannot install: this folder is │
+F7 Requests        │ │ refused                          │
+F8 CPU models      │ │  6  A model                      │
+F9 Phone         ● │ │ ✗ none is loaded (never started) │
+F10 Monitor        │ │ press l to load a model          │
+                   │ │  7  The gateway                  │
+                   │ │ ✗ stopped   press g to start the │
+                   │ │ gateway                          │
+                   │ │ Next:  l load a model            │
+                   │ │        g get everything ready    │
+                   │ └──────────────────────────────────┘
+                   │
+                   │ ┌─ Then work ──────────────────────┐
+                   │ │  a OpenCode in this terminal;    │
+                   │ │    the menu comes back when you  │
+                   │ │    leave it                      │
+                   │ │  c VS Code on this folder,       │
+                   │ │    OpenCode beside your files    │
+                   │ │    (it gets every step above     │
+                   │ │    done first)                   │
+                   │ │  f a flow built with the model,  │
+                   │ │    OpenCode beside this          │
+                   │ │    console: the Flow view shows  │
+                   │ │    it built                      │
+                   │ │    OpenCode will use the model   │
+                   │ │    Clank runs: 24,576 tokens of  │
+                   │ │    context (the engine's 32,768  │
+                   │ │    less 8,192 kept for a step's  │
+                   │ │    tool results), 8,192 out      │
+                   │ │    MCP servers: open the         │
+                   │ │    workspace (o) to choose which │
+                   │ │    its agent gets                │
+                   │ │  m MCP servers  p plan           │
+                   │ │  r review or auto                │
+                   │ │  w one window or several         │
+                   │ │  i implement a plan              │
+                   │ └──────────────────────────────────┘
+                   │
+                   │ ┌─ What runs from here ────────────┐
+                   │ │ Nothing runs from here.          │
+                   │ └──────────────────────────────────┘▆▆
+                   │
+                   │ ┌─ Waiting for you ────────────────┐
+
+ g get everything ready  a OpenCode here  ? explain  f1 help

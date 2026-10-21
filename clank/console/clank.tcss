@@ -114,6 +114,11 @@ Screen.-machine-off #machine {
     width: 1fr;
 }
 
+/* Home's first question's options, buttons (design 0011 §12.1), under its detail: each key in the detail's column. */
+#waiting-options {
+    margin-left: 1;
+}
+
 #pages ListView {
     height: auto;
     background: transparent;

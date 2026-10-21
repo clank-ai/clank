@@ -34,6 +34,7 @@ from clank.components.tools.mcp import Checked, Server, Tool
 from clank.components.workspaces.sandbox import image_tag, names
 from clank.console.app import ClankConsole
 from clank.console.ask import AskScreen
+from clank.console.buttons import Buttons
 from clank.console.confirm import ConfirmScreen
 from clank.console.data import ConsoleData
 from clank.console.form import FormScreen
@@ -94,6 +95,9 @@ def text(app: ClankConsole) -> str:
             labels = [str(label.content) for label in row.query(Label).results(Label)]
             if len(labels) == 2:  # a row being made has no labels yet
                 lines.append(f"{labels[0]:<{rows.width}}{labels[1]}")
+    for group in page.query(Buttons).results(Buttons):  # its keys, buttons (design 0011 §12.1), each line whole
+        if group.display:
+            lines += [line.plain.rstrip() for line in group.lines(1000)[0]]
     return "\n".join(lines)
 
 
@@ -123,8 +127,8 @@ async def test_a_new_folder_shows_what_is_not_ready_each_with_its_key(
     assert " 6  A model            ✗ none is loaded" in shown
     assert "press l to load a model" in shown
     assert " 7  The gateway        ✓ running on port 18210" in shown
-    assert "Next: press o to open the workspace · or g to do every step that is not done." in shown
-    assert " a  OpenCode in this terminal; the menu comes back when you leave it" in shown
+    assert "Next:  o open the workspace  g get everything ready" in shown, "its keys, buttons (design 0011 §12.1)"
+    assert " a OpenCode in this terminal; the menu comes back when you leave it" in shown
     assert (
         "OpenCode will use the model Clank runs: 24,576 tokens of context (the engine's 32,768 less 8,192 kept for a "
         "step's tool results), 8,192 out"
@@ -143,9 +147,9 @@ async def test_r_switches_the_agents_changes_between_review_and_auto(
     )
     app = console(client, kernel, project)
     async with app.run_test(size=(220, 50)) as pilot:
-        await settle(pilot, lambda: " r  review: the agent asks before it changes a file" in text(app))
+        await settle(pilot, lambda: "review: the agent asks before it changes a file" in text(app))
         await pilot.press("r")
-        await settle(pilot, lambda: " r  auto: the agent changes files without asking" in text(app))
+        await settle(pilot, lambda: "auto: the agent changes files without asking" in text(app))
         assert "paper's agent now builds, changing files without asking (the bridge" in message(app)
     assert kernel.settings.get("workspace", "paper").record.model_dump()["changes"] == "auto"
     [switched] = kernel.events.after(0, types=["agents.review_switched"])
@@ -162,12 +166,12 @@ async def test_w_turns_one_opencode_window_at_a_time_off_and_on_again(
     )
     app = console(client, kernel, project)
     async with app.run_test(size=(220, 50)) as pilot:
-        await settle(pilot, lambda: " w  one OpenCode window: opening one closes the one open" in text(app))
+        await settle(pilot, lambda: "one OpenCode window: opening one closes the one open" in text(app))
         await pilot.press("w")
-        await settle(pilot, lambda: " w  several OpenCode windows: opening one adds another" in text(app))
+        await settle(pilot, lambda: "several OpenCode windows: opening one adds another" in text(app))
         assert kernel.settings.get("workspace", "paper").record.model_dump()["one_window"] is False
         await pilot.press("w")
-        await settle(pilot, lambda: " w  one OpenCode window" in text(app))
+        await settle(pilot, lambda: "one OpenCode window: opening one closes" in text(app))
     assert kernel.settings.get("workspace", "paper").record.model_dump()["one_window"] is True
 
 
@@ -187,7 +191,7 @@ async def test_this_folder_says_when_a_flows_box_changed_the_model_its_window_ta
     async with app.run_test(size=(220, 50)) as pilot:
         await settle(pilot, lambda: "model changed:" in text(app))
         shown = text(app)
-    assert "    model changed: The flow Study, for its box T1, switched the main slot to the model Clank runs" in shown
+    assert "model changed: The flow Study, for its box T1, switched the main slot to the model Clank runs" in shown
     assert told["said"].endswith("the next OpenCode started in paper gets it")
 
 
@@ -220,7 +224,7 @@ async def test_e_installs_the_folders_software_and_m_gives_the_agent_the_folders
         await settle(pilot, lambda: "not installed: python3 -m venv" in text(app) and "Ready:" in text(app), seconds=20)
         shown = text(app)
         assert "press e to install the folder's software" in shown
-        assert "Ready: press a to start OpenCode here" in shown
+        assert "Ready:  a start OpenCode here" in shown
         assert "e installs the folder's software first" in shown
         assert "✗ myproject" in shown
         assert "not allowed yet (m allows it)" in shown
@@ -312,7 +316,7 @@ async def test_a_starts_opencode_in_the_folders_container_and_the_console_comes_
     ran: list[list[str]] = []
     app = console(client, kernel, project, terminal=recorder(ran))
     async with app.run_test(size=(220, 50)) as pilot:
-        await settle(pilot, lambda: "Ready: press a to start OpenCode here" in text(app), seconds=20)
+        await settle(pilot, lambda: "Ready:  a start OpenCode here" in text(app), seconds=20)
         await pilot.press("a")
         await settle(pilot, lambda: "OpenCode ended" in message(app), seconds=20)
         assert app.is_running
@@ -339,8 +343,8 @@ async def test_c_opens_the_folder_in_clanks_vs_code_window_with_opencode_beside_
     state = fake_vscode(kernel, tmp_path, monkeypatch)
     app = console(client, kernel, project)
     async with app.run_test(size=(220, 50)) as pilot:
-        await settle(pilot, lambda: "Ready: press a to start OpenCode here" in text(app), seconds=20)
-        assert " c  VS Code on this folder, OpenCode beside your files" in text(app)
+        await settle(pilot, lambda: "Ready:  a start OpenCode here" in text(app), seconds=20)
+        assert " c VS Code on this folder, OpenCode beside your files" in text(app)
         await pilot.press("c")
         await settle(pilot, lambda: "VS Code opens this folder" in message(app), seconds=30)
     assert asked(state)["opened"] == [str(project)]

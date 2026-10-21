@@ -8,8 +8,8 @@ workspace working now (the running one started last, with how many others run; F
 slot, what it runs and its state; 8 opens the Models page), the GPU's memory, the gateway (where it listens, its
 requests in flight and served), the machine (as last detected, and the doctor's last result; `d` runs the doctor), and
 the folder the console was started in (F4 gets it ready). What waits for you: the questions, oldest first, the first one
-answered with its options' keys (`v` shows it whole; the questions page shows them all). The history: the newest events,
-newest last.
+answered with its options' keys, which are buttons under it (design 0011 §12.1; `v` shows it whole; the questions page
+shows them all). The history: the newest events, newest last.
 
 Its panels are board E1's (design 0011 §8): Happening now beside Waiting for you, a third of the row, then What runs,
 then the History. The two stack, Happening now above, when the row is narrower than `STACK_BELOW` columns, or when a
@@ -37,12 +37,13 @@ from textual.app import ComposeResult
 from textual.content import Content
 from textual.widgets import Label
 
+from clank.console.buttons import Buttons
 from clank.console.data import ConsoleData
 from clank.console.gauges import size, spinner
 from clank.console.keys import PageKey
 from clank.console.menu import MenuEntry
 from clank.console.pages import Page
-from clank.console.pages.questions import answer, details, question_lines
+from clank.console.pages.questions import answer, details, option_buttons, question_lines
 from clank.console.panel import Panel, PanelGrid
 from clank.console.style import current, mark
 from clank.console.text import count, duration, painted, time_of, tone
@@ -346,7 +347,14 @@ class HomePage(Page):
         """What happens now beside what waits for you, what runs, the history (board E1)."""
         yield PanelGrid(
             Panel(Label(id="now-text"), title="Happening now", id="now"),
-            Panel(Label(id="waiting-text"), Label(WHERE, id="waiting-where"), title="Waiting for you", id="waiting"),
+            Panel(
+                Label(id="waiting-text"),
+                Buttons(id="waiting-options"),
+                Label(id="waiting-more"),
+                Label(WHERE, id="waiting-where"),
+                title="Waiting for you",
+                id="waiting",
+            ),
             columns=COLUMNS,
             stack_below=STACK_BELOW,
             id="home-top",
@@ -396,7 +404,14 @@ class HomePage(Page):
             self.query_one("#run-cloud", Label).display = shown is not None
             self.query_one("#run-cloud", Label).update(shown or "")
         if every or "questions" in changed:
-            self.query_one("#waiting-text", Label).update(self._waiting(data))
+            first, rest = self._waiting(data)
+            self.query_one("#waiting-text", Label).update(first)
+            options = self.query_one("#waiting-options", Buttons)
+            options.show(option_buttons(data.questions[0], self.KEYS) if data.questions else [])
+            options.display = bool(data.questions)
+            more = self.query_one("#waiting-more", Label)
+            more.update(rest)
+            more.display = bool(rest.plain)
             self.query_one("#waiting-where", Label).display = not data.questions
             asking = asking_below(current().spacing) if data.questions else STACK_BELOW
             self.query_one("#home-top", PanelGrid).stack_below = asking
@@ -465,17 +480,22 @@ class HomePage(Page):
             "Designed in design 0002 §3.2.",
         ]
 
-    def _waiting(self, data: ConsoleData) -> Content:
+    def _waiting(self, data: ConsoleData) -> tuple[Content, Content]:
+        """The first question waiting, but its options (a group of buttons under it, design 0011 §12.1), then the
+        others, whole, and how many more wait."""
         if not data.questions:
-            return Content.assemble((mark("done"), "$clank-good"), " Nothing waits for you.")
-        shown = []
-        for number, question in enumerate(data.questions[:SHOWN_QUESTIONS]):
+            return Content.assemble((mark("done"), "$clank-good"), " Nothing waits for you."), Content()
+        first, *others = data.questions[:SHOWN_QUESTIONS]
+        lines = question_lines(first, self.console.zone)[:-1]
+        shown = ["> " + lines[0], *[f"  {line}" for line in lines[1:]]]
+        rest = []
+        for question in others:
             lines = question_lines(question, self.console.zone)
-            shown += [("> " if number == 0 else "  ") + lines[0], *[f"  {line}" for line in lines[1:]]]
+            rest += ["  " + lines[0], *[f"  {line}" for line in lines[1:]]]
         more = len(data.questions) - SHOWN_QUESTIONS
         if more > 0:
-            shown.append(f"  and {count(more, 'more question')}: the questions page (2) shows them all")
-        return Content("\n".join(shown))
+            rest.append(f"  and {count(more, 'more question')}: the questions page (2) shows them all")
+        return Content("\n".join(shown)), Content("\n".join(rest))
 
     def _draw_now(self, data: ConsoleData, frame: int | None = None) -> None:
         shown = self.console.frame if frame is None else frame

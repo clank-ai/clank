@@ -35,6 +35,14 @@ back from a workspace allowed the cloud (marked local only), and what its sessio
 Its four panels are board E2's (design 0011 §8): "Get ready to work here"; "Then work" beside "What runs from here", two
 fifths of the row, the two stacked when the row is narrower than `STACK_BELOW` columns; and "Waiting for you", which
 says nothing waits with the style's done mark.
+
+Its keys are buttons where its panels say what to do (board K2, design 0011 §12): under the steps a row leads with
+"Next:" and the key of the first step not done, and `g` when more are, or "Ready:" and the ways to start (`next_keys`);
+Then work holds a column of the ways to start working (`WAYS`: `a`, `c`, `f`) above what the agent will be given, and
+the row of its settings under it (`SETTINGS`, and `u` once a cloud provider is added); the first question's options are
+a row under it. Each is one of the page's declared keys (`KEYS`), pressed through the console's one door. `a` cannot act
+until every required step is done, nor the keys that work on the workspace (`WORKSPACE_FIRST`) until it is opened
+(`unable`): their buttons are dimmed, and the key, typed or pressed, says why.
 """
 
 import json
@@ -51,6 +59,7 @@ from clank.client import ClientError, NotRunning
 from clank.components.agents.console.monitor import MonitorPage
 from clank.console import terminal
 from clank.console.ask import AskScreen
+from clank.console.buttons import Buttons, from_keys
 from clank.console.confirm import ConfirmScreen
 from clank.console.data import ConsoleData
 from clank.console.form import Field, FormScreen
@@ -58,7 +67,7 @@ from clank.console.gauges import fit, spinner
 from clank.console.keys import PageKey
 from clank.console.menu import MenuEntry
 from clank.console.pages import Page
-from clank.console.pages.questions import answer, details, question_lines
+from clank.console.pages.questions import answer, details, option_buttons, question_lines
 from clank.console.panel import Panel, PanelGrid
 from clank.console.pick import Choice, PickScreen, preset_choices
 from clank.console.rows import Rows
@@ -214,7 +223,23 @@ def window_line(review: dict[str, Any]) -> Content:
 
 
 STEP_WIDTH = NAME + 5  # a step's number and name, the column its state wraps beside
-WORK_WIDTH = 4  # a way to work's key
+SERVER_INDENT = 4  # the indent `server_lines` writes, which Then work leaves for its own (`WORK_INDENT`)
+WORK_INDENT = 3  # what working here gives the agent stands under the words of the buttons above it
+WAYS = (  # Then work's column of buttons (board K2): its keys, with the panel's own words
+    ("a", "OpenCode in this terminal; the menu comes back when you leave it"),
+    ("c", "VS Code on this folder, OpenCode beside your files (it gets every step above done first)"),
+    ("f", "a flow built with the model, OpenCode beside this console: the Flow view shows it built"),
+)
+SETTINGS = ("m", "p", "r", "w", "i")  # the row of Then work's settings under it (board K2)
+WORKSPACE_FIRST = {  # the keys that work on the folder's workspace, and what each would do there
+    "e": "its software is installed into its home",
+    "m": "its agent's MCP servers are chosen for it",
+    "p": "how the agent works is set for it",
+    "r": "how the agent works is set for it",
+    "w": "its windows are its own",
+    "i": "its plans are handed to its agent",
+    "u": "its bound is its own",
+}
 COLUMNS = "3fr 2fr"  # Then work beside What runs from here, two fifths of the row (board E2: 38%)
 STACK_BELOW = 80  # side by side at 120 and 170 columns (88 and 92 for the row), stacked at 130 and 80 (58 and 56)
 
@@ -267,6 +292,21 @@ def next_line(found: list[tuple[str, str]]) -> Content:
     return Content(f"Next: press {key} to {DOING.get(key, what)}{more}.")
 
 
+def next_keys(found: list[tuple[str, str]]) -> tuple[str, list[str | tuple[str, str]]]:
+    """The row of buttons under the steps (board K2): "Next:" and the key of the first step not done (and `g` when more
+    are), or "Ready:" and the ways to start working; no keys when what is missing cannot be done from here (the line
+    `next_line` says then why)."""
+    if not blocking(found):
+        software = [("e", "install the folder's software first")] if found else []
+        return "Ready:", [("a", "start OpenCode here"), ("c", "open VS Code, OpenCode beside your files"), *software]
+    keys = [key for _, key in found if key]
+    if not keys:
+        return "", []
+    first = keys[0]
+    more = ["g"] if len(keys) > 1 and first != "g" else []
+    return "Next:", [(first, DOING[first]) if first != "g" else "g", *more]
+
+
 def readiness(found: list[tuple[str, str]]) -> str:
     """One line for the message line: ready, or what is not, with each key."""
     found = blocking(found)
@@ -278,6 +318,12 @@ def readiness(found: list[tuple[str, str]]) -> str:
 
 class FolderPage(Page):
     """The folder clank was started in: getting ready to work there, and working."""
+
+    DEFAULT_CSS = f"""
+    #folder-work {{
+        padding-left: {WORK_INDENT};
+    }}
+    """
 
     ENTRY = MenuEntry(
         "folder",
@@ -347,14 +393,22 @@ class FolderPage(Page):
             yield Label(id="folder-path")
             yield Rows(STEP_WIDTH, id="folder-rows")
             yield Label(id="folder-ready")
+            yield Buttons(id="folder-next")
         yield PanelGrid(
-            Panel(Rows(WORK_WIDTH, id="folder-work"), title="Then work", id="folder-work-panel"),
+            Panel(
+                Buttons(from_keys(self.KEYS, *WAYS), column=True, id="folder-ways"),
+                Label(id="folder-work"),
+                Buttons(from_keys(self.KEYS, *SETTINGS), id="folder-settings"),
+                title="Then work",
+                id="folder-work-panel",
+            ),
             Panel(Label(id="folder-progress"), title="What runs from here", id="folder-runs"),
             columns=COLUMNS,
             stack_below=STACK_BELOW,
         )
         with Panel(title="Waiting for you", id="folder-waiting-panel"):
             yield Label(id="folder-waiting")
+            yield Buttons(id="folder-waiting-options")
 
     def on_mount(self) -> None:
         """Draw, read what the console's own data lacks, and read it again every few seconds while on screen."""
@@ -373,11 +427,23 @@ class FolderPage(Page):
             self.query_one("#folder-path", Label).update(Content(f"Folder: {self.console.folder}"))
             self._draw_running(data, self.console.frame)
             found = missing(data, self.view, self.gateway)
-            self.query_one("#folder-ready", Label).update(next_line(found))
-            self.query_one("#folder-work", Rows).show(self._work_rows(data, not found))
-            waiting = question_lines(data.questions[0], self.console.zone) if data.questions else []
+            lead, keys = next_keys(found)
+            group = self.query_one("#folder-next", Buttons)
+            group.show(from_keys(self.KEYS, *keys), lead=lead)
+            group.display = bool(keys)
+            ready = self.query_one("#folder-ready", Label)
+            ready.update(next_line(found))
+            ready.display = not keys
+            self.query_one("#folder-ways", Buttons).recheck()
+            self.query_one("#folder-work", Label).update(self._work_lines(data))
+            cloud = ("u",) if self._cloud_lines(data) else ()  # the workspace's bound, once a provider is added
+            self.query_one("#folder-settings", Buttons).show(from_keys(self.KEYS, *SETTINGS, *cloud))
+            waiting = question_lines(data.questions[0], self.console.zone)[:-1] if data.questions else []
             nothing = Content.assemble((mark("done"), "$clank-good"), " No question waits.")
             self.query_one("#folder-waiting", Label).update(Content("\n".join(waiting)) if waiting else nothing)
+            options = self.query_one("#folder-waiting-options", Buttons)
+            options.show(option_buttons(data.questions[0], self.KEYS) if data.questions else [])
+            options.display = bool(data.questions)
 
     @property
     def busy(self) -> bool:
@@ -403,42 +469,50 @@ class FolderPage(Page):
             shown = Content("Nothing runs from here.")
         self.query_one("#folder-progress", Label).update(shown)
 
-    def _work_rows(self, data: ConsoleData, ready: bool) -> list[tuple[str, Content]]:
-        """How to start working here, a row a key, and what the agent will be given, each wrapping beside the keys."""
-        later = "" if ready else "   (once every step above is done)"
-        rows = [
-            (" a", Content(f"OpenCode in this terminal; the menu comes back when you leave it{later}")),
-            (" c", Content("VS Code on this folder, OpenCode beside your files (it gets every step above done first)")),
-            (" f", Content("a flow built with the model, OpenCode beside this console: the Flow view shows it built")),
-        ]
+    def _work_lines(self, data: ConsoleData) -> Content:
+        """What working here gives the agent, under the ways to start it (buttons, `WAYS`) and above its settings
+        (buttons, `SETTINGS`): how it changes files, its windows, its model and limits, its bound and cost with a cloud
+        provider, its MCP servers; drawn under the buttons' words (`WORK_INDENT`), each line wrapping under itself."""
+        lines: list[Content] = []
         if self.review is not None and self.review.get("workspace"):
-            rows.append((" r", review_line(self.review)))
-            rows.append((" w", window_line(self.review)))
+            lines += [review_line(self.review), window_line(self.review)]
         if self.plan is not None:
             limits = self.plan["limits"]
             kept = limits.get("margin") or 0
             whose = f" (the engine's {limits['window']:,} less {kept:,} kept for a step's tool results)" if kept else ""
             sizes = f"{limits['context']:,} tokens of context{whose}, {limits['output']:,} out"
-            rows.append(("", Content(f"OpenCode will use {self.plan['model']}: {sizes}")))
+            lines.append(Content(f"OpenCode will use {self.plan['model']}: {sizes}"))
         changed = (self.review or {}).get("model_changed")
         if changed:  # a flow's box switched the main slot (design 0013 §7): said until OpenCode next starts here
-            rows.append(("", Content.assemble(("model changed", "$clank-attention"), f": {changed['said']}")))
-        rows += self._cloud_rows(data)
+            lines.append(Content.assemble(("model changed", "$clank-attention"), f": {changed['said']}"))
+        lines += self._cloud_lines(data)
         for line in server_lines(self.servers, self.checked, (self.view or {}).get("workspace")):
-            rows.append(("", line[WORK_WIDTH:] if line.plain.startswith(" " * WORK_WIDTH) else line))
-        return rows
+            lines.append(line[SERVER_INDENT:] if line.plain.startswith(" " * SERVER_INDENT) else line)
+        return Content("\n").join(lines)
 
-    def _cloud_rows(self, data: ConsoleData) -> list[tuple[str, Content]]:
-        """The workspace's bound and what its sessions cost today, in the service's words, once a provider is added."""
+    def unable(self, key: str) -> str:
+        """Why a key cannot act now (design 0011 §12.7): `a` until every required step is done, and the keys that work
+        on the workspace until it is opened, in the words they say when pressed."""
+        if key == "a":
+            found = blocking(missing(self.console.data, self.view, self.gateway))
+            return readiness(found) if found else ""
+        workspace = (self.review or {}).get("workspace") or (self.view or {}).get("workspace")
+        if key in WORKSPACE_FIRST and not workspace:
+            return f"open the workspace first (o): {WORKSPACE_FIRST[key]}"
+        return ""
+
+    def _cloud_lines(self, data: ConsoleData) -> list[Content]:
+        """The workspace's bound and what its sessions cost today, in the service's words, once a provider is added;
+        `u`, which changes the bound, is then a button of the settings' row."""
         workspace = (self.view or {}).get("workspace")
         if not data.endpoints or not workspace or self.view is None or not self.view.get("cloud_said"):
             return []
         key = "keeps it here" if self.view.get("models") == "cloud" else "allows it"
-        rows = [(" u", Content(f"{self.view['cloud_said']} (u {key})"))]
+        lines = [Content(f"{self.view['cloud_said']} (u {key})")]
         own = (self.cost or {}).get("workspace") or {}
         if (own.get("today") or {}).get("requests"):
-            rows.append(("", Content(f"its sessions: {own['today']['said']} (Requests, F7, shows each)")))
-        return rows
+            lines.append(Content(f"its sessions: {own['today']['said']} (Requests, F7, shows each)"))
+        return lines
 
     def _answered(self, data: ConsoleData) -> bool:
         """Whether a workspace's answer came since the page last looked."""
@@ -579,7 +653,7 @@ class FolderPage(Page):
         in a worker."""
         review = self.review or {}
         if not review.get("workspace"):
-            self.console.say("open the workspace first (o): its windows are its own", True)
+            self.console.say(f"open the workspace first (o): {WORKSPACE_FIRST['w']}", True)
             return
         client, workspace = self.console.client, review["workspace"]
 
@@ -603,7 +677,7 @@ class FolderPage(Page):
         """Plan, review or auto, in a worker: the window's agent switched, the change rule set."""
         review = self.review or {}
         if not review.get("workspace"):
-            self.console.say("open the workspace first (o): how the agent works is set for it", True)
+            self.console.say(f"open the workspace first (o): {WORKSPACE_FIRST['p']}", True)
             return
         client, workspace = self.console.client, review["workspace"]
 
@@ -626,7 +700,7 @@ class FolderPage(Page):
         """A plan of the folder to hand to the agent, then review or auto (design 0009 §8)."""
         workspace = (self.review or {}).get("workspace") or (self.view or {}).get("workspace")
         if not workspace:
-            self.console.say("open the workspace first (o): its plans are handed to its agent", True)
+            self.console.say(f"open the workspace first (o): {WORKSPACE_FIRST['i']}", True)
             return
         client = self.console.client
 
@@ -686,7 +760,7 @@ class FolderPage(Page):
         """The command that installs the folder's software, to change or take as it is; Enter installs."""
         view = self.view or {}
         if not view.get("workspace"):
-            self.console.say("open the workspace first (o): its software is installed into its home", True)
+            self.console.say(f"open the workspace first (o): {WORKSPACE_FIRST['e']}", True)
             return
         setup = view.get("setup") or {}
         field = Field(
@@ -710,7 +784,7 @@ class FolderPage(Page):
         """An MCP server to give to the agent, or to take away; one given is checked where the agent will start it."""
         workspace = (self.view or {}).get("workspace")
         if not workspace:
-            self.console.say("open the workspace first (o): its agent's MCP servers are chosen for it", True)
+            self.console.say(f"open the workspace first (o): {WORKSPACE_FIRST['m']}", True)
             return
         if not self.servers:
             self.console.say("no MCP server to give: F3 adds yours; a folder's .mcp.json offers its own", True)
@@ -980,7 +1054,7 @@ class FolderPage(Page):
         """`u`: allow this workspace the cloud model, or keep it on this machine, asked first."""
         workspace = (self.view or {}).get("workspace")
         if not workspace:
-            self.console.say("open the workspace first (o): its bound is its own", True)
+            self.console.say(f"open the workspace first (o): {WORKSPACE_FIRST['u']}", True)
             return
         if not self.console.data.endpoints:
             self.console.say("no cloud provider is added: Add a model (F12) adds one", True)

@@ -1,11 +1,14 @@
 """The questions page: every question waiting for the user (design 0002 §2.5).
 
-Each shows its title, who asked it and when, its detail, and its options with their keys. The highlighted one is
-answered with an option's key (Tab moves into the list; a digit there answers a numbered option instead of opening a
-page), and `v` shows it whole. The answer is recorded as you (console); a question answered anywhere else leaves the
-list as soon as the event stream says so. `question_lines` and `answer` are shared with the home page.
+Each shows its title, who asked it and when, its detail, and its options with their keys, each a button (design 0011
+§12.1, `option_buttons`). The highlighted one is answered with an option's key (Tab moves into the list; a digit there
+answers a numbered option instead of opening a page), and `v` shows it whole; a click on any question's option
+highlights that question and answers it, the list keeping the focus. The answer is recorded as you (console); a
+question answered anywhere else leaves the list as soon as the event stream says so. `question_lines`, `answer` and
+`option_buttons` are shared with Home and This folder.
 """
 
+from collections.abc import Callable, Sequence
 from datetime import tzinfo
 from typing import TYPE_CHECKING, Any
 
@@ -14,6 +17,7 @@ from textual.content import Content
 from textual.widgets import Label, ListItem, ListView
 
 from clank.console import actions
+from clank.console.buttons import Button, Buttons, from_keys
 from clank.console.data import ConsoleData
 from clank.console.details import DetailsScreen
 from clank.console.keys import PageKey
@@ -37,6 +41,16 @@ def question_lines(question: dict[str, Any], zone: tzinfo | None) -> list[str]:
     options = [f"{option['key'] or option['id']} {option['label']}" for option in question["options"]]
     lines.append("   ".join([*options, "v details"]))
     return lines
+
+
+def option_buttons(question: dict[str, Any], declared: Sequence[PageKey]) -> list[Button]:
+    """A question's options as buttons (design 0011 §12.1), each its key (or id) and its label, then the page's `v`
+    for the question whole: pressed, each goes through the console's one door, as its key typed does."""
+    options = [
+        Button(PageKey(option["key"] or option["id"], "answer", option["label"], option["effect"] or option["label"]))
+        for option in question["options"]
+    ]
+    return [*options, *from_keys(declared, "v")]
 
 
 def answer(console: "ClankConsole", question: dict[str, Any], key: str) -> bool:
@@ -135,15 +149,26 @@ class QuestionsPage(Page):
         listed = self.query_one("#questions-list", ListView)
         kept = self._highlighted(data)
         listed.clear()
-        for question in data.questions:
-            lines = question_lines(question, self.console.zone)
-            listed.append(ListItem(*(Label(line) for line in lines)))
+        for row, question in enumerate(data.questions):
+            lines = question_lines(question, self.console.zone)[:-1]  # its options: buttons, clicked (§12.1)
+            options = Buttons(option_buttons(question, self.KEYS), press=self._clicked(row), focusable=False)
+            listed.append(ListItem(*(Label(line) for line in lines), options))
         self.query_one("#questions-none", Label).display = not data.questions
         count = f" · {len(data.questions)}" if data.questions else ""
         self.query_one("#questions-waiting", Panel).title = WAITING + count
         ids = [question["id"] for question in data.questions]
         if kept in ids:
             listed.index = ids.index(kept)
+
+    def _clicked(self, row: int) -> Callable[[Button], None]:
+        """A click on an option of a question's row (design 0011 §12.1, K4: "a click answers any"): that question is
+        highlighted, then the option's key goes through the console's one door, which answers the highlighted one."""
+
+        def clicked(pressed: Button) -> None:
+            self.query_one("#questions-list", ListView).index = row
+            self.console.press_button(pressed)
+
+        return clicked
 
     def press(self, key: str) -> bool:
         """Answer the highlighted question with an option's key, or show it whole (`v`)."""
