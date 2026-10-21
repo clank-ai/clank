@@ -18,7 +18,7 @@ F7 Requests        │ │ Next:  l load a model  g get everything ready        
 F8 CPU models      │ └────────────────────────────────────────────────────────────────┘
 F9 Phone         ● │
 F10 Monitor        │ ┌─ Then work ────────────────────────────────────────────────────┐
-                   │ │  a OpenCode in this terminal; the menu comes back when you     │
+F12 Add a model    │ │  a OpenCode in this terminal; the menu comes back when you     │
                    │ │    leave it                                                    │
                    │ │  c VS Code on this folder, OpenCode beside your files (it      │
                    │ │    gets every step above done first)                           │

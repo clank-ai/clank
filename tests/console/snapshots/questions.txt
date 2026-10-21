@@ -3,9 +3,9 @@ F4 This folder         ✗ 3   │ ┌─ Waiting for your answer · 2 ───
 1 Home                       │ │ q-000000  Stop Docker Desktop?   asked 11:40:00 by Clank                             │
 2 Questions            ● 2   │ │ 2 containers that Clank did not start are running: another-model-relay,              │
 3 History                    │ │ toolbox-sandbox-017.                                                                 │
-4 Docker               ●     │ │ y Stop them and Docker   n Cancel   v details                                        │
+4 Docker               ●     │ │  y Stop them and Docker  n Cancel  v the question whole                              │
 5 Machine                    │ │ q-000000  Which preset?   asked 11:40:00 by Clank                                    │
-6 Operations                 │ │ 1 daily 262K   2 fast 128K   v details                                               │
+6 Operations                 │ │  1 daily 262K  2 fast 128K  v the question whole                                     │
 7 Records                    │ └──────────────────────────────────────────────────────────────────────────────────────┘
 8 Models               ●     │
 9 Presets                    │
