@@ -472,6 +472,41 @@
           "pattern": "^#[0-9a-fA-F]{6}$",
           "title": "Scroll bar's track",
           "type": "string"
+        },
+        "button_hover": {
+          "default": "#292e42",
+          "description": "The ground of a button the mouse is over.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Button under the mouse",
+          "type": "string"
+        },
+        "button_focused": {
+          "default": "#7aa2f7",
+          "description": "The fill of the button that has the focus.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Focused button",
+          "type": "string"
+        },
+        "button_focused_text": {
+          "default": "#1a1b26",
+          "description": "A focused or pressed button's key and words, on its fill.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Focused button's text",
+          "type": "string"
+        },
+        "button_pressed": {
+          "default": "#bb9af7",
+          "description": "A button's fill for the moment it is pressed.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Pressed button",
+          "type": "string"
+        },
+        "button_unable_focused": {
+          "default": "#3b4261",
+          "description": "The fill of a dimmed button that has the focus.",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Focused button that cannot act",
+          "type": "string"
         }
       },
       "title": "StyleColors",

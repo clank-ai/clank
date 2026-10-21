@@ -79,6 +79,15 @@ class StyleColors(Element):
     diff_hunk: Color = _color("#bb9af7", "Diff hunk", "A diff's hunk line; added lines are good, removed failed.")
     scrollbar: Color = _color("#3b4261", "Scroll bar", "A scroll bar's thumb.")
     scrollbar_track: Color = _color("#1f2335", "Scroll bar's track", "A scroll bar's track.")
+    button_hover: Color = _color("#292e42", "Button under the mouse", "The ground of a button the mouse is over.")
+    button_focused: Color = _color("#7aa2f7", "Focused button", "The fill of the button that has the focus.")
+    button_focused_text: Color = _color(
+        "#1a1b26", "Focused button's text", "A focused or pressed button's key and words, on its fill."
+    )
+    button_pressed: Color = _color("#bb9af7", "Pressed button", "A button's fill for the moment it is pressed.")
+    button_unable_focused: Color = _color(
+        "#3b4261", "Focused button that cannot act", "The fill of a dimmed button that has the focus."
+    )
 
 
 class ContextParts(Element):

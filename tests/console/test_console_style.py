@@ -1,6 +1,6 @@
-"""Design 0011 §3 (the style in the console): the console starts in the style its settings pick (`clank` until changed),
-registered as a theme whose variables are the style's elements, before its first frame; an owner's style that changes
-an element shows; a style that is not found, or a file that does not read, leaves the console in Clank's own style and
+"""Design 0011 §3 and §12.8 (the style in the console; a button's colors): the console starts in the style its settings
+pick (`clank` until changed), registered as a theme whose variables are the style's elements, before its first frame,
+a button's five colors among them; an owner's style that changes an element shows; a style that is not found, or a file that does not read, leaves the console in Clank's own style and
 the message line says why (its file, line and field); the console always starts. The marks that say a state, the
 spinner's frames, a bar's cells, a sparkline's steps and the mark of cut text are the style's: a style with plain marks
 draws only those, and a state's mark takes its state's color in any style. Ctrl+P's "Change style" lists the styles
@@ -54,6 +54,30 @@ async def test_the_console_starts_in_the_clank_style_with_its_elements_as_variab
         assert variables["clank-border-focused"].lower() == "#7aa2f7"
         assert variables["clank-box-verify"].lower() == "#bb9af7"
         assert variables["clank-data-1"].lower() == "#7aa2f7"
+
+
+BUTTONS = {
+    "button-hover": "#292e42",
+    "button-focused": "#7aa2f7",
+    "button-focused-text": "#1a1b26",
+    "button-pressed": "#bb9af7",
+    "button-unable-focused": "#3b4261",
+}
+
+
+async def test_the_style_names_a_buttons_five_colors_and_a_style_file_may_set_them(client: Client, home: Home) -> None:
+    app = make(client, home)
+    async with app.run_test(size=(120, 40)):
+        variables = app.get_css_variables()
+        assert {name: variables[f"clank-{name}"].lower() for name in BUTTONS} == BUTTONS
+    (home.config / "styles").mkdir(parents=True, exist_ok=True)
+    owners = {"schema": "style/1", "title": "Mine", "colors": {"button_focused": "#00aa00"}}
+    (home.config / "styles" / "clank.json").write_text(json.dumps(owners), encoding="utf-8")
+    app = make(client, home)
+    async with app.run_test(size=(120, 40)):
+        variables = app.get_css_variables()
+        assert variables["clank-button-focused"].lower() == "#00aa00"
+        assert variables["clank-button-pressed"].lower() == "#bb9af7", "every other element stays Clank's"
 
 
 async def test_an_owners_style_that_changes_an_element_shows(client: Client, home: Home) -> None:

@@ -919,6 +919,16 @@ export interface StyleColors {
   scrollbar: string;
   /** A scroll bar's track. */
   scrollbar_track: string;
+  /** The ground of a button the mouse is over. */
+  button_hover: string;
+  /** The fill of the button that has the focus. */
+  button_focused: string;
+  /** A focused or pressed button's key and words, on its fill. */
+  button_focused_text: string;
+  /** A button's fill for the moment it is pressed. */
+  button_pressed: string;
+  /** The fill of a dimmed button that has the focus. */
+  button_unable_focused: string;
 }
 
 /** The colors the Monitor and flows draw by kind, each by name, so a kind keeps its color. */
