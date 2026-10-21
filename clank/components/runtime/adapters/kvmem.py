@@ -164,7 +164,7 @@ class KvmemLlamacpp(EngineAdapter):
                 "The model's layers on the GPU; the others stay in system memory, read by the CPU for every token.",
                 "integer", None, {ANY: ("-ngl", "{value}")}, minimum=0, unit="layers",
                 memory="the weights of the layers left off the GPU go to system memory (an estimate)",
-                engine_default=99, engine_default_words="99: every layer on the GPU",
+                engine_default=99, engine_default_words="99 (every layer on the GPU)",
             ),
             EngineOption(
                 "kvmem.budget", "Retrieval budget", "Tokens attended to exactly on the GPU; 0 means the whole context.",

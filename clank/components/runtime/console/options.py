@@ -10,6 +10,10 @@ editor the system gives JSON files. Changing a value is M2's (with trials); unti
 Each option is a row (`console/rows.py`): its name, then its value and where it comes from, what the engine receives,
 and what it does, each on a line of its own that wraps under itself, so the page reads well in a narrow window. It is
 one panel, titled with the preset's name as board E12 writes it ("daily 262K: launch options"; design 0011 §8).
+
+An option left unset whose engine default one value cannot say (KVMem's sampling, one default with thinking and one
+without) shows that default in words, and once set, the default it replaces; a line under the options says that a
+request's own sampling wins over the preset's (design 0003 §4.1).
 """
 
 import os
@@ -45,10 +49,12 @@ def open_file(path: str) -> None:
 
 
 def value_text(option: dict[str, Any]) -> str:
-    """An option's value as people read it: 8,192 tokens, on, q4."""
+    """An option's value as people read it: 8,192 tokens, on, q4; unset, the engine's own default in words when the
+    option says it (design 0003 §4.1)."""
     value = option["value"]
     if value is None:
-        return "(none)"
+        words = option.get("engine_default_words")
+        return f"the engine's own: {words}" if words else "(none)"
     if isinstance(value, bool):
         return "on" if value else "off"
     if isinstance(value, int | float):
@@ -58,24 +64,37 @@ def value_text(option: dict[str, Any]) -> str:
 
 
 def option_value(option: dict[str, Any]) -> Content:
-    """An option's value and where it comes from; what the engine receives (or why nothing); what it does."""
+    """An option's value and where it comes from (set, beside the engine's own default it replaces, when the option
+    says that in words); what the engine receives (or why nothing); what it does."""
     gives = " ".join(option["gives"])
+    words = option.get("engine_default_words") or ""
     if gives:
         received = Content.assemble((gives, "$clank-text"))
+    elif option["left_out"]:
+        received = Content.assemble((f"({option['left_out']})", "dim"))
     else:
-        received = Content.assemble((f"({option['left_out']})" if option["left_out"] else "(nothing)", "dim"))
+        received = Content.assemble(("(nothing: the engine keeps its own)" if words else "(nothing)", "dim"))
     source = SOURCES.get(option["source"], option["source"])
     first = Content.assemble((value_text(option), "bold"), ("  ·  ", "dim"), (source, "dim"))
+    if words and option["value"] is not None:
+        first = Content.assemble(first, ("  ·  ", "dim"), (f"in place of the engine's {words}", "dim"))
     return Content("\n").join([first, received, Content.assemble((option["help"], "dim"))])
 
 
+SAMPLING_NOTE = (
+    "sampling: a request's own values win over these for that request; the Requests page (F7) shows what each sent."
+)
+
+
 def plan_rest(plan: dict[str, Any] | None) -> str:
-    """After the options: the command line and the memory, or why the preset cannot be planned."""
+    """After the options: that a request's own sampling wins, when the engine has sampling options (design 0003
+    §4.1); then the command line and the memory, or why the preset cannot be planned."""
     if plan is None:
         return "Being read."
+    note = [SAMPLING_NOTE, ""] if any(str(each["key"]).startswith("sampling.") for each in plan["options"]) else []
     if plan["problem"]:
-        return f"It cannot be planned: {plan['problem']}"
-    lines = ["the command line:", plan["command_line"], "", "memory:", *plan["fit"]["lines"]]
+        return "\n".join([*note, f"It cannot be planned: {plan['problem']}"])
+    lines = [*note, "the command line:", plan["command_line"], "", "memory:", *plan["fit"]["lines"]]
     lines += [f"  {note}" for note in plan["memory"]["notes"]]
     return "\n".join(lines)
 
@@ -158,6 +177,9 @@ class LaunchOptionsPage(Page):
             "Each value comes from the preset when it sets it, else from Clank's default for that engine (the "
             "engine's release profile); the engine receives nothing for a value that is its own default, or for an "
             "option whose requirement the preset does not meet (design 0001 §3.5).",
+            "An option left unset, such as the sampling, shows what the engine does without it: KVMem's sampling has "
+            "one default with thinking and one without, and a value set holds for both. A request's own sampling "
+            "wins over the preset's; the Requests page (F7) shows what each sent (design 0003 §4.1).",
             "The command line is exactly what starts when the preset is loaded, and the memory its estimate beside "
             "the GPU's free memory now.",
             "p picks another preset; e opens the preset's file, where a value is changed until M2 brings editing "

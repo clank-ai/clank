@@ -1,5 +1,6 @@
 """The Presets page (design 0003 §8.2): each preset with its serving setup and model, its fit in the GPU's memory now or
-why it cannot run, and its last start; the highlighted one's settings below the list.
+why it cannot run, and its last start; the highlighted one's settings below the list, with the sampling it gives its
+engine: the values it sets, then the engine's own defaults in words (design 0003 §4.1).
 
 The fit comes from each preset's plan, read off the screen's thread when the page comes on screen and whenever the
 presets, the slots or the launches change (a launch changes what the estimates learned). Enter switches the main slot
@@ -64,9 +65,24 @@ def verdict_in_color(line: str) -> Content:
     return shown
 
 
+def sampling_text(sampling: list[dict[str, Any]]) -> str:
+    """The sampling a preset gives its engine (design 0003 §4.1): the values it sets, then the engine's own defaults
+    in words."""
+    chosen = [f"{short(each)} {each['value']}" for each in sampling if each["value"] is not None]
+    own = [f"{short(each)} {each['engine_default_words']}" for each in sampling if each["value"] is None]
+    parts = [f"set: {' · '.join(chosen)}"] if chosen else []
+    parts += [f"the engine's own: {' · '.join(own)}"] if own else []
+    return "; ".join(parts)
+
+
+def short(option: dict[str, Any]) -> str:
+    """A sampling option's key without its prefix: temperature, top_p."""
+    return str(option["key"]).removeprefix("sampling.")
+
+
 def settings_text(preset: dict[str, Any], plan: dict[str, Any] | None) -> str:
-    """The highlighted preset: where its file is, its settings, and its memory estimate (a cloud preset: its provider
-    and its prices)."""
+    """The highlighted preset: where its file is, its settings, the sampling it gives its engine, and its memory
+    estimate (a cloud preset: its provider and its prices)."""
     if preset.get("endpoint"):
         price = preset.get("price") or {}
         options = " · ".join(f"{key} {value}" for key, value in preset["options"].items())
@@ -95,6 +111,8 @@ def settings_text(preset: dict[str, Any], plan: dict[str, Any] | None) -> str:
         f"slot           {preset['slot']}",
         f"options        {options}",
     ]
+    if preset.get("sampling"):
+        lines.append(f"sampling       {sampling_text(preset['sampling'])}")
     if preset["notes"]:
         lines.append(f"notes          {preset['notes']}")
     if plan is not None and plan["fit"] is not None:

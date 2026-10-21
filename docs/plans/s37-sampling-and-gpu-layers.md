@@ -43,7 +43,7 @@ engine's own defaults; the memory estimate follows fewer layers on the GPU.
   `/runtime/presets/{name}` give each preset's `sampling` (each option's value or its engine's default in words);
   `clank preset show` prints them under "sampling" with a request's own values said to win
   (`service.py`, `cli.py`; `tests/components/runtime/test_presets.py`).
-- [ ] **The Launch options page and the Presets page:** an unset option shows the engine's own default in words, a set
+- [x] **The Launch options page and the Presets page:** an unset option shows the engine's own default in words, a set
   one the default it replaces; a line says a request's own sampling wins; the Presets page's Settings panel lists the
   sampling in effect (`console/options.py`, `console/presets.py`; `tests/components/runtime/test_console_options.py`,
   `tests/components/runtime/test_console_presets.py`).

@@ -25,7 +25,7 @@ SAMPLING = {
     "sampling.presence_penalty": ("--presence-penalty", 0.5, "0.00 (none)"),
     "sampling.frequency_penalty": ("--frequency-penalty", 0.3, "0.00 (none)"),
     "sampling.repeat_penalty": ("--repeat-penalty", 1.1, "1.00 (none), or the model file's own"),
-    "sampling.seed": ("--seed", 7, "-1: random"),
+    "sampling.seed": ("--seed", 7, "-1 (random)"),
 }
 
 

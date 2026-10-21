@@ -190,7 +190,7 @@ ran with a presence penalty of 0 that nothing showed.
   both modes (and over a model file's own). `gpu_layers` at 99 is the engine's own and passes nothing.
 - **Shown with the engine's own default.** An option may say in words what the engine does when it is not given
   (`engine_default_words`), where one value cannot say it: "1.0 thinking, 0.7 not thinking" for KVMem's temperature,
-  "0.80, or the model file's own" for llama.cpp's, "99: every layer on the GPU". The Launch options page (F2) shows
+  "0.80, or the model file's own" for llama.cpp's, "99 (every layer on the GPU)". The Launch options page (F2) shows
   those words for an option left unset, and beside one that is set the default it replaces; a line under the options
   says that a request's own values win. The Presets page and `clank preset show` list the sampling in effect. The
   Requests page (F7) shows the sampling fields a request sent, each beside the preset's.

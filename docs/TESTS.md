@@ -107,7 +107,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | Where engines run: hosts | `tests/components/runtime/test_hosts.py` (3), `tests/components/runtime/test_local_host.py` (10), `tests/components/runtime/test_wsl_host.py` (10), `tests/contract/test_host.py` (3) |
 | 3 | Records | `tests/components/runtime/test_catalog.py` (7), `tests/components/runtime/test_presets.py` (8), `tests/components/runtime/test_state.py` (4) |
 | 4 | Engine adapters: KVMem and NInfer | `tests/components/runtime/test_kvmem.py` (10), `tests/components/runtime/test_options.py` (8), `tests/contract/test_engine.py` (4) |
-| 4.1 | Sampling and the GPU's layers | `tests/components/runtime/test_kvmem_sampling.py` (12), `tests/components/runtime/test_llamacpp_sampling.py` (6), `tests/components/runtime/test_options.py` (8), `tests/components/runtime/test_presets.py` (8), `tests/components/runtime/test_shipped_presets.py` (2) |
+| 4.1 | Sampling and the GPU's layers | `tests/components/runtime/test_console_options.py` (5), `tests/components/runtime/test_console_presets.py` (2), `tests/components/runtime/test_kvmem_sampling.py` (12), `tests/components/runtime/test_llamacpp_sampling.py` (6), `tests/components/runtime/test_options.py` (8), `tests/components/runtime/test_presets.py` (8), `tests/components/runtime/test_shipped_presets.py` (2) |
 | 5 | NInfer on this machine (retired) | none yet |
 | 6 | A slot, and switching it | `tests/components/runtime/test_state.py` (4) |
 | 6.1 | Load, unload, switch | `tests/components/runtime/test_load.py` (9), `tests/components/runtime/test_model_commands.py` (3), `tests/components/runtime/test_switch.py` (7) |
@@ -123,7 +123,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7.5 | Taking a model or an engine off a host | none yet |
 | 8 | The console, VS Code and the commands | `tests/components/runtime/test_runtime_api.py` (6) |
 | 8.1 | The models page (the menu's Models entry, now built) | `tests/components/runtime/test_console_models.py` (2) |
-| 8.2 | Presets, providers and models, launch options | `tests/components/runtime/test_console_options.py` (1), `tests/components/runtime/test_console_presets.py` (1), `tests/components/runtime/test_console_providers.py` (2) |
+| 8.2 | Presets, providers and models, launch options | `tests/components/runtime/test_console_options.py` (5), `tests/components/runtime/test_console_presets.py` (2), `tests/components/runtime/test_console_providers.py` (2) |
 | 8.3 | VS Code | `vscode/test/controller.test.ts` (14) |
 | 8.4 | Commands | `tests/components/runtime/test_engine_commands.py` (3), `tests/components/runtime/test_model_commands.py` (3) |
 | 9 | Testing, and the order of work | `tests/components/runtime/test_fake_engine.py` (3), `tests/real/test_engines.py` (1) |
@@ -237,7 +237,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 5 | Text never spills out of a panel | `tests/console/test_frames.py` (1), `tests/console/test_windows.py` (3) |
 | 6 | No color written in a page | `tests/test_repository.py` (11), `tests/tools/test_check_colors.py` (8) |
 | 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (18), `tests/console/test_windows.py` (3) |
-| 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (1), `tests/components/tools/test_console_servers.py` (1), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (8), `tests/console/test_workspaces_page.py` (3) |
+| 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (5), `tests/components/tools/test_console_servers.py` (1), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (8), `tests/console/test_workspaces_page.py` (3) |
 | 9 | Narrow windows | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_machine_column.py` (14), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5) |
 | 10 | What changes in the tests | none yet |
 | 11 | Build steps | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_keys_bar.py` (10), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_windows.py` (3) |
@@ -2093,15 +2093,20 @@ Design 0003 §8.1 and the M1.5 plan's task 2: the console's Models page shows ea
 
 ### `tests/components/runtime/test_console_options.py`
 
-Design 0003 §8.2 and the M1.5 plan's task 4: the console's Launch options page shows a preset's options, each with its value, where it comes from (the preset, Clank's default), what the engine receives for it or why nothing, and what it does; then the command line and the memory estimate with its fit. It shows the preset `o` chose on the Presets page (else the main slot's, else the first); `p` picks another; `e` opens its file in the editor the system gives JSON files. Design 0011 §8 (board E12): its panel is titled "(preset): launch options" after the preset it shows.
+Design 0003 §8.2 and the M1.5 plan's task 4: the console's Launch options page shows a preset's options, each with its value, where it comes from (the preset, Clank's default), what the engine receives for it or why nothing, and what it does; then the command line and the memory estimate with its fit. It shows the preset `o` chose on the Presets page (else the main slot's, else the first); `p` picks another; `e` opens its file in the editor the system gives JSON files. Design 0011 §8 (board E12): its panel is titled "(preset): launch options" after the preset it shows. Design 0003 §4.1: an option left unset shows the engine's own default in words, an option set the default it replaces, and a line under the options says that a request's own sampling wins.
 
 - each option says its value source and flags and e opens the presets file
+- an option left unset shows the engines own default in words
+- an option set shows the engines default it replaces
+- under options with sampling a line says a requests own values win
+- the page shows a presets sampling set and the engines own beside it
 
 ### `tests/components/runtime/test_console_presets.py`
 
-Design 0003 §8.2 and the M1.5 plan's task 3: the console's Presets page shows each preset with its serving setup and model, its fit in the GPU's memory now or why it cannot run, and its last start; Enter switches the main slot to the highlighted one, `c` checks it in a window, `v` shows its file.
+Design 0003 §8.2 and the M1.5 plan's task 3: the console's Presets page shows each preset with its serving setup and model, its fit in the GPU's memory now or why it cannot run, and its last start; Enter switches the main slot to the highlighted one, `c` checks it in a window, `v` shows its file. Design 0003 §4.1: the highlighted preset's settings list the sampling in effect, the values it sets first, then the engine's own defaults in words.
 
 - each preset shows its fit or why it cannot run and enter switches to it
+- the settings list the sampling in effect the values set first
 
 ### `tests/components/runtime/test_console_providers.py`
 

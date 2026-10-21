@@ -86,7 +86,7 @@ SAMPLING = (
     EngineOption(
         "sampling.seed", "Seed", "The random seed: the same seed and request give the same answer; -1 for random.",
         "integer", None, {ANY: ("--seed", "{value}")}, minimum=-1, maximum=2**32 - 1,
-        engine_default_words="-1: random",
+        engine_default_words="-1 (random)",
     ),
 )  # fmt: skip
 

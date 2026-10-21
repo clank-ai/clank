@@ -85,7 +85,7 @@ def test_each_option_says_kvmems_own_default_as_its_recorded_help_gives_it(key: 
 
 def test_the_gpu_layers_say_the_engines_own_99_is_every_layer() -> None:
     shown = {option["key"]: option for option in options_view(engine(), {})}["gpu_layers"]
-    assert shown["engine_default_words"] == "99: every layer on the GPU"
+    assert shown["engine_default_words"] == "99 (every layer on the GPU)"
     assert "(default 99)" in help_line("-ngl")
 
 
