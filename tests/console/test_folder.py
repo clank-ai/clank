@@ -11,7 +11,8 @@ Design 0016 §9, §10 and §15, decision 0112: with a cloud model loaded, `a` as
 window in the service's words (stronger for a workspace that existed before the cloud was agreed); `y` starts the
 agent, `n` keeps it local and the page says how to allow it; the model's step says the cloud; once a provider is added,
 the workspace's bound shows in the service's words, `u` changes it asked first, the MCP servers the service holds back
-say so, and what its sessions cost today shows."""
+say so, and what its sessions cost today shows. Design 0011 §12.1: `u` is then a button of Then work's settings' row,
+and a click on it does what the key does."""
 
 import contextlib
 from collections.abc import Callable, Sequence
@@ -483,7 +484,7 @@ async def test_with_a_cloud_model_a_asks_the_workspace_first_and_y_starts_the_ag
     ran: list[list[str]] = []
     app = console(client, kernel, project, terminal=recorder(ran))
     async with app.run_test(size=(160, 50)) as pilot:
-        await settle(pilot, lambda: "Ready: press a to start OpenCode here" in text(app), seconds=20)
+        await settle(pilot, lambda: "Ready:  a start OpenCode here" in text(app), seconds=20)
         assert "cloud, at OpenRouter" in text(app)
         assert "not asked yet: paper is asked once before its agent uses the cloud model (u allows it)" in text(app)
         await pilot.press("a")
@@ -504,7 +505,7 @@ async def test_n_keeps_the_workspace_local_and_says_how_to_allow_it(
     ran: list[list[str]] = []
     app = console(client, kernel, project, terminal=recorder(ran))
     async with app.run_test(size=(160, 50)) as pilot:
-        await settle(pilot, lambda: "Ready: press a to start OpenCode here" in text(app), seconds=20)
+        await settle(pilot, lambda: "Ready:  a start OpenCode here" in text(app), seconds=20)
         await pilot.press("a")
         await settle(pilot, lambda: isinstance(app.screen, AskScreen))
         await pilot.press("n")
@@ -516,13 +517,30 @@ async def test_n_keeps_the_workspace_local_and_says_how_to_allow_it(
     assert cloud_api.bound("paper")["cloud_answered"]
 
 
+async def test_with_a_provider_added_u_is_a_button_of_then_works_settings_that_asks_first(
+    kernel: Kernel, client: Client, platform: FakePlatform, gateway: None, project: Path, cloud_api: CloudBench
+) -> None:
+    cloud_ready(kernel, platform, project, cloud_api)
+    app = console(client, kernel, project)
+    async with app.run_test(size=(160, 60)) as pilot:  # the page whole, so no scrollbar comes as the row grows
+        await settle(pilot, lambda: "(u allows it)" in text(app), seconds=20)
+        settings = app.query_one("#folder-settings", Buttons)
+        await settle(pilot, lambda: [each.key.key for each in settings.buttons] == ["m", "p", "r", "w", "i", "u"])
+        assert settings.buttons[-1].said == "cloud or local"
+        await settle(pilot, lambda: settings.size.height == len(settings.lines(settings.size.width)[0]))
+        _, line, start, _ = settings.lines(settings.size.width)[1][-1]
+        await pilot.click("#folder-settings", offset=(start + 1, line))
+        await settle(pilot, lambda: isinstance(app.screen, ConfirmScreen))
+        assert app.screen.heading == "Let paper use the cloud model?"
+
+
 async def test_a_workspace_that_existed_before_the_agreement_is_asked_in_stronger_words(
     kernel: Kernel, client: Client, platform: FakePlatform, gateway: None, project: Path, cloud_api: CloudBench
 ) -> None:
     cloud_ready(kernel, platform, project, cloud_api, older=True)
     app = console(client, kernel, project, terminal=recorder([]))
     async with app.run_test(size=(160, 50)) as pilot:
-        await settle(pilot, lambda: "Ready: press a to start OpenCode here" in text(app), seconds=20)
+        await settle(pilot, lambda: "Ready:  a start OpenCode here" in text(app), seconds=20)
         await pilot.press("a")
         await settle(pilot, lambda: isinstance(app.screen, AskScreen))
         assert (
