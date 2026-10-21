@@ -107,7 +107,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | Where engines run: hosts | `tests/components/runtime/test_hosts.py` (3), `tests/components/runtime/test_local_host.py` (10), `tests/components/runtime/test_wsl_host.py` (10), `tests/contract/test_host.py` (3) |
 | 3 | Records | `tests/components/runtime/test_catalog.py` (7), `tests/components/runtime/test_presets.py` (6), `tests/components/runtime/test_state.py` (4) |
 | 4 | Engine adapters: KVMem and NInfer | `tests/components/runtime/test_kvmem.py` (10), `tests/components/runtime/test_options.py` (8), `tests/contract/test_engine.py` (4) |
-| 4.1 | Sampling and the GPU's layers | `tests/components/runtime/test_options.py` (8), `tests/components/runtime/test_shipped_presets.py` (2) |
+| 4.1 | Sampling and the GPU's layers | `tests/components/runtime/test_kvmem_sampling.py` (8), `tests/components/runtime/test_options.py` (8), `tests/components/runtime/test_shipped_presets.py` (2) |
 | 5 | NInfer on this machine (retired) | none yet |
 | 6 | A slot, and switching it | `tests/components/runtime/test_state.py` (4) |
 | 6.1 | Load, unload, switch | `tests/components/runtime/test_load.py` (9), `tests/components/runtime/test_model_commands.py` (3), `tests/components/runtime/test_switch.py` (7) |
@@ -2281,6 +2281,19 @@ Design 0003 §4 and design 0001 §3.6: the KVMem/llama.cpp adapter gives KVMem e
 - the default frontier 262k is the iq3 s file with 57 344 tokens exact and a 40 960 token reserve
 - frontier 262k lean is the iq3 xxs file with a 73 728 token window in less of the gpu
 - it is one of the serving setups
+
+### `tests/components/runtime/test_kvmem_sampling.py`
+
+Design 0003 §4.1 and decision 0119: KVMem's GPU layers and its sampling are launch options. Left unset, KVMem gets no flag and keeps its own defaults, which differ by thinking mode, and each option says them in words, as its recorded `--help` gives them; set, the flag is always given, even at a value one mode's default has, since it then holds for both modes; the GPU layers at the engine's own 99 give nothing. Each value is bounded as KVMem's server bounds it, and a value outside is refused in a sentence naming it.
+
+- left unset kvmem gets no sampling flag and no gpu layers
+- each sampling option set gives kvmem its flag
+- a value one modes default has is still given since it then holds for both
+- the gpu layers give ngl but not at the engines own 99
+- each option says kvmems own default as its recorded help gives it
+- the gpu layers say the engines own 99 is every layer
+- a value outside kvmems bounds is refused in a sentence naming it
+- the bounds are the ones its recorded help gives
 
 ### `tests/components/runtime/test_llamacpp.py`
 

@@ -26,7 +26,7 @@ engine's own defaults; the memory estimate follows fewer layers on the GPU.
   the option is not given, where one value cannot say it) and `more_than` (a bound the value must pass, for a
   repeat penalty above 0); the options view carries the words (`engine.py`, `launching.options_view`;
   `tests/components/runtime/test_options.py`).
-- [ ] **KVMem's options:** `gpu_layers` (`-ngl`, 0 or more, the engine's own 99 leaving the flag out) and
+- [x] **KVMem's options:** `gpu_layers` (`-ngl`, 0 or more, the engine's own 99 leaving the flag out) and
   `sampling.temperature`, `sampling.top_p`, `sampling.top_k`, `sampling.min_p`, `sampling.presence_penalty`,
   `sampling.frequency_penalty`, `sampling.repeat_penalty`, `sampling.seed`, each with KVMem's bounds and its own
   default in words; unset, no flag; set, always the flag, for both modes (`kvmem.py`;

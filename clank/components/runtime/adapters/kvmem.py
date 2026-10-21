@@ -8,6 +8,13 @@ window, MTP with 3 draft tokens, thinking on with a 4096-token budget; CUDA grap
 2026-10-08 after three crashes on an MTP verify step. It is ready when its log says `listening on`; its log reports
 what each GPU buffer took.
 
+Its GPU layers (`-ngl`) and its sampling (`--temp` and the rest) have no default of Clank's (design 0003 §4.1, decision
+0119): unset, KVMem gets no flag and keeps its own, 99 layers (every one) and Qwen3.8-27B's model card's sampling,
+chosen per request by thinking mode (temperature 1.0 thinking and 0.7 not, top_p 0.95 and 0.80, presence penalty 0 and
+1.5), which each option says in words. Its server gives a request its mode's defaults, then the flags, then the
+request's own fields (`tools/kvmem-chat-sampling.h`), so a flag holds for both modes and is given even at a value one
+mode's default has, and a request's own value wins over it.
+
 Its KV cache holds `kvmem.budget` plus `kvmem.gen_reserve` cells, each taking, for every attention layer, a key and a
 value of the model's KV width at the cache type's bits per value; the model's facts come from the catalog. With a budget
 of 0 it holds the whole context and no more: KVMem caps its pool at the context then (`kvmem_compute_pool` in
@@ -67,6 +74,51 @@ FIELDS = {
     "output": "usage.completion_tokens",
     "cached": "usage.prompt_cache_hit_tokens",
 }
+BOTH = "; set, it holds with thinking on and off"  # said of a sampling option whose default differs by mode
+# Its sampling, unset unless a preset sets it (design 0003 §4.1, decision 0119): its own defaults, Qwen3.8-27B's model
+# card's, thinking and not, in words; the bounds its server checks (`tools/kvmem-chat-sampling.h`).
+SAMPLING = (
+    EngineOption(
+        "sampling.temperature", "Temperature", f"How random each token is: 0 always takes the likeliest{BOTH}.",
+        "number", None, {ANY: ("--temp", "{value}")}, minimum=0, maximum=2,
+        engine_default_words="1.0 thinking, 0.7 not thinking",
+    ),
+    EngineOption(
+        "sampling.top_p", "Top p", f"Tokens are drawn from the likeliest that hold this share of the chance{BOTH}.",
+        "number", None, {ANY: ("--top-p", "{value}")}, minimum=0, maximum=1,
+        engine_default_words="0.95 thinking, 0.80 not thinking",
+    ),
+    EngineOption(
+        "sampling.top_k", "Top k", "Tokens are drawn from at most this many of the likeliest; 0 for no limit.",
+        "integer", None, {ANY: ("--top-k", "{value}")}, minimum=0, maximum=2**31 - 1,
+        engine_default_words="20 (thinking or not)",
+    ),
+    EngineOption(
+        "sampling.min_p", "Min p", "Tokens less likely than this share of the likeliest one's chance are left out.",
+        "number", None, {ANY: ("--min-p", "{value}")}, minimum=0, maximum=1, engine_default_words="0 (none)",
+    ),
+    EngineOption(
+        "sampling.presence_penalty", "Presence penalty",
+        f"Lowers every token already written, so an answer moves on rather than loops{BOTH}.",
+        "number", None, {ANY: ("--presence-penalty", "{value}")}, minimum=-2, maximum=2,
+        engine_default_words="0 thinking, 1.5 not thinking",
+    ),
+    EngineOption(
+        "sampling.frequency_penalty", "Frequency penalty", "Lowers a token the more often it was written.",
+        "number", None, {ANY: ("--frequency-penalty", "{value}")}, minimum=-2, maximum=2,
+        engine_default_words="0 (none)",
+    ),
+    EngineOption(
+        "sampling.repeat_penalty", "Repeat penalty",
+        "Divides the chance of tokens written recently: 1 for none, above 1 against repeats.",
+        "number", None, {ANY: ("--repeat-penalty", "{value}")}, more_than=0, engine_default_words="1 (none)",
+    ),
+    EngineOption(
+        "sampling.seed", "Seed", "The random seed: the same seed and request give the same answer.",
+        "integer", None, {ANY: ("--seed", "{value}")}, minimum=0, maximum=2**32 - 1,
+        engine_default_words="random, for each request",
+    ),
+)  # fmt: skip
 
 
 class KvmemLlamacpp(EngineAdapter):
@@ -102,6 +154,13 @@ class KvmemLlamacpp(EngineAdapter):
             EngineOption(
                 "max_output", "Maximum output", "The most tokens one answer may have, when a request does not say.",
                 "integer", 16384, {ANY: ("-n", "{value}")}, minimum=1, unit="tokens", engine_default=128,
+            ),
+            EngineOption(
+                "gpu_layers", "GPU layers",
+                "The model's layers on the GPU; the others stay in system memory, read by the CPU for every token.",
+                "integer", None, {ANY: ("-ngl", "{value}")}, minimum=0, unit="layers",
+                memory="the weights of the layers left off the GPU go to system memory (an estimate)",
+                engine_default=99, engine_default_words="99: every layer on the GPU",
             ),
             EngineOption(
                 "kvmem.budget", "Retrieval budget", "Tokens attended to exactly on the GPU; 0 means the whole context.",
@@ -157,6 +216,7 @@ class KvmemLlamacpp(EngineAdapter):
                 "integer", 4096, {ANY: ("--reasoning-budget", "{value}")}, minimum=-1, unit="tokens",
                 requires=("thinking",), engine_default=-1,
             ),
+            *SAMPLING,
             EngineOption(
                 "batch", "Batch", "Tokens read per step while reading a prompt.",
                 "integer", 512, {ANY: ("-b", "{value}")}, minimum=32, engine_default=512,
