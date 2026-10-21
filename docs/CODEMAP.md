@@ -241,6 +241,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/console/actions.py` | What the console asks of the service on the user's behalf (design 0002 §2.15): each call runs in a worker thread, |
 | `clank/console/app.py` | The console's shell: the header, the menu, the pages, the machine column and the keys bar (design 0001 §5, design |
 | `clank/console/ask.py` | A question of the service's over the console, answered in a window with its options' keys (design 0002 §2.5; |
+| `clank/console/buttons.py` | Every key the console shows is a button (design 0011 §12, decision 0120): a key and its words, pressed by Enter or |
 | `clank/console/commands.py` | The command palette's commands (design 0001 §5.1: every action has a key and is in the palette, Ctrl+P): every page |
 | `clank/console/confirm.py` | A window that asks before an action is taken (design 0012 §9.1: "a confirmation, Enter, or Esc to leave it"): a |
 | `clank/console/data.py` | What the console shows, and how it stays current (design 0001 §5.1, §5.7; design 0002 §2.15).  The console holds |

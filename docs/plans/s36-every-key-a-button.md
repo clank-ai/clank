@@ -58,22 +58,22 @@ Decisions 0120-0122 record the main ones. Also:
 
 ### Task 1: The style's five button colors
 
-- [ ] **Files:** `clank/kernel/console_kinds.py` (`StyleColors`: `button_hover`, `button_focused`,
+- [x] **Files:** `clank/kernel/console_kinds.py` (`StyleColors`: `button_hover`, `button_focused`,
   `button_focused_text`, `button_pressed`, `button_unable_focused`); the generated schemas.
-- [ ] **Tests first** (`tests/console/test_console_style.py`, design 0011 §12.8): Clank's style has the five with the
+- [x] **Tests first** (`tests/console/test_console_style.py`, design 0011 §12.8): Clank's style has the five with the
   boards' values, each a `$clank-` variable of the theme; a style file may set them.
 
 ### Task 2: A button's text in its six states
 
-- [ ] **Files:** `clank/console/buttons.py` (`Button`, `State`, `button`).
-- [ ] **Tests first** (`tests/console/test_buttons.py`, design 0011 §12.2 and §12.8): a button is its key and its
+- [x] **Files:** `clank/console/buttons.py` (`Button`, `State`, `button`).
+- [x] **Tests first** (`tests/console/test_buttons.py`, design 0011 §12.2 and §12.8): a button is its key and its
   words with a blank cell at each side; normal, hover, focused, pressed, unable and unable-focused draw the same cells
   in the table's elements, the fill covering the blank cells; on the keys bar its words are `quiet`, in a panel `text`.
 
 ### Task 3: A group's lines for a width
 
-- [ ] **Files:** `buttons.py` (`lay_out`: the lines and each button's cells).
-- [ ] **Tests first** (`test_buttons.py`, design 0011 §12.2 and §12.9): a row goes on to its next line between two
+- [x] **Files:** `buttons.py` (`lay_out`: the lines and each button's cells).
+- [x] **Tests first** (`test_buttons.py`, design 0011 §12.2 and §12.9): a row goes on to its next line between two
   buttons, never inside one; a column's button wraps its words under themselves; a lead's words come first and are no
   button; each button's cells are where its text is drawn, for a click.
 
