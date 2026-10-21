@@ -136,7 +136,8 @@ What the preset picker could look like on the machine Clank was first built on:
 and testing a configuration before applying it) added at the
 owner's request and approved (decision [0009](../decisions/0009-test-a-configuration-in-a-trial-run.md)). Revised when
 [design 0002](0002-the-foundation.md) §2 was approved: the example preset names its schema (§3.7), and a trial is an
-operation of the Clank service (§3.8).*
+operation of the Clank service (§3.8). Revised after approval on 2026-10-21, at the owner's request: an engine's own
+sampling defaults are launch options too (§3.2, decision 0119).*
 
 Every value that shapes how a model runs is an **option**. Every option is visible, explained, and changeable both in
 the console and in a file. Nothing is set where the user cannot see it.
@@ -172,6 +173,10 @@ exact request, that they produce.
 - **Request options** are Clank's own: temperature, top_p, top_k, min_p, the repetition, presence and frequency
   penalties, the seed, thinking (on or off) and its token budget, and the maximum output. Each provider declares which
   ones it honors. A value a provider ignores is shown as "not supported by <provider>"; it is never dropped silently.
+- *Revised after approval, 2026-10-21:* an engine's own sampling defaults, which a request's fields override, are also
+  launch options (`sampling.temperature` and the rest), unset unless a preset sets them, each shown with the engine's
+  own default ([design 0003 §4.1](0003-the-runtime.md#41-sampling-and-the-gpus-layers), decision
+  [0119](../decisions/0119-sampling-and-gpu-layers-are-launch-options-left-unset.md)).
 
 ### 3.3 Roles
 
@@ -897,3 +902,4 @@ Every change to an approved section, with its reason. Approvals themselves are i
 | 2026-10-11 | §7.2 | `CLANK_HOME` gained the state database, the local token, the service's address, the spool, `library/`, `artifacts/` and `logs/processes/` | Design 0002 §2 approved (§2.16) |
 | 2026-10-11 | §9.1, §9.3 | The milestones replaced by design 0002 §3's, and §9.3's milestone numbers changed to match | Design 0002 §3 approved |
 | 2026-10-12 | §7.1 | On Windows the service runs on Windows and the engines in WSL distributions, through hosts | Decision 0030 (design 0003 §2) |
+| 2026-10-21 | §3.2 | An engine's own sampling defaults are also launch options, unset unless a preset sets them, shown with the engine's default | The owner: make these settings visible (decision 0119, design 0003 §4.1) |

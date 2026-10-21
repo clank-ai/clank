@@ -126,6 +126,7 @@ and use the template below.
 | [0116](0116-the-public-release-generalizes-personal-and-research-details.md) | The public release generalizes personal and research details in earlier records | Accepted | 2026-10-21 |
 | [0117](0117-a-new-flow-runs-on-what-the-main-slot-runs.md) | Clank's flow template names no model: a new flow runs on what the main slot runs (supersedes 0095 for the shipped default) | Accepted | 2026-10-21 |
 | [0118](0118-clank-is-licensed-under-the-agpl.md) | Clank is licensed under the AGPL-3.0 | Accepted (the owner's decision) | 2026-10-21 |
+| [0119](0119-sampling-and-gpu-layers-are-launch-options-left-unset.md) | An engine's sampling and its GPU layers are launch options, left unset unless a preset sets them, and shown with the engine's own defaults | Accepted (the owner's request; Claude's call how) | 2026-10-21 |
 
 ## Template
 

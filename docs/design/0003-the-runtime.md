@@ -10,7 +10,8 @@ scope. Started 2026-10-12. Decisions it rests on: [0004](../decisions/0004-sampl
 [0009](../decisions/0009-test-a-configuration-in-a-trial-run.md),
 [0010](../decisions/0010-serving-setups-are-plug-and-play.md),
 [0013](../decisions/0013-one-service-control-and-data-planes.md) and the kernel's (0014-0021); it adds
-[0030](../decisions/0030-engines-run-on-hosts.md) and [0031](../decisions/0031-ninfer-follows-the-driver.md).
+[0030](../decisions/0030-engines-run-on-hosts.md) and [0031](../decisions/0031-ninfer-follows-the-driver.md), and
+later [0119](../decisions/0119-sampling-and-gpu-layers-are-launch-options-left-unset.md) (§4.1).
 
 ## Goal
 
@@ -36,6 +37,7 @@ stays as the record of what was built and why, each such part marked.*
 | 2 | Where engines run: hosts | Proposed 2026-10-12; built at the owner's instruction (decision 0030) |
 | 3 | Records | Proposed 2026-10-12; built at the owner's instruction |
 | 4 | Engine adapters: KVMem and NInfer | Proposed 2026-10-12; built at the owner's instruction; NInfer's retired 2026-10-13 (decision 0034) |
+| 4.1 | Sampling and the GPU's layers | Added and approved 2026-10-21 (the owner: make these settings visible; decision 0119) |
 | 5 | NInfer on this machine | Retired 2026-10-13 (decision 0034); built 2026-10-12 (decision 0031) |
 | 6 | A slot, and switching it | Proposed 2026-10-12; built at the owner's instruction |
 | 7 | Installs and models | Proposed 2026-10-12; built at the owner's instruction |
@@ -155,6 +157,53 @@ come from its `--help`: `context` (`--max-context`), `ninfer.kv_capacity` (`--kv
 `ninfer.prefix_checkpoints`, `ninfer.max_concurrency` and its pending queue. It is ready when its log reports its
 startup and `/v1/models` answers; its startup report gives the free memory after startup and the planned slack,
 which the fit check compares with its estimate. *Its adapter was removed on 2026-10-13 (decision 0034).*
+
+### 4.1 Sampling and the GPU's layers
+
+*Added and approved 2026-10-21 (the owner: make these settings visible: "Let's go ahead and fix this gap in Clank so
+that these settings are visible"); decision [0119](../decisions/0119-sampling-and-gpu-layers-are-launch-options-left-unset.md).*
+
+KVMem's server takes more than §4 listed: how many of the model's layers it puts on the GPU (`-ngl`, 99 by default:
+every layer) and the sampling a request gets when it does not say (`--temp`, `--top-p`, `--top-k`, `--min-p`,
+`--presence-penalty`, `--frequency-penalty`, `--repeat-penalty`, `--seed`). Its sampling defaults are Qwen3.8-27B's
+model card's, one set with thinking and one without, chosen per request: temperature 1.0 / 0.7, top_p 0.95 / 0.80,
+presence penalty 0 / 1.5, and top_k 20, min_p 0, frequency penalty 0 and repeat penalty 1 in both. A request gets its
+mode's defaults, then the flags given at launch, then its own fields (its server, `tools/kvmem-chat-sampling.h` and
+`tools/llama-kvmem-server.cpp`), so a flag holds for both modes and a request's own value wins over it. None of this
+was an option, so the sampling in effect was neither seen nor changeable from Clank: on 2026-10-18 a runaway answer
+ran with a presence penalty of 0 that nothing showed.
+
+- **The options.** `gpu_layers` (`-ngl`, 0 or more) and `sampling.temperature` (0 to 2), `sampling.top_p` (0 to 1),
+  `sampling.top_k` (0 or more, 0 for no limit), `sampling.min_p` (0 to 1), `sampling.presence_penalty` and
+  `sampling.frequency_penalty` (-2 to 2), `sampling.repeat_penalty` (more than 0) and `sampling.seed` (0 to
+  4,294,967,295), each with the bounds KVMem's server checks. A value below 0 for `gpu_layers` is refused: the engine
+  would read it as every layer. llama.cpp's adapter (b11588) gets the same sampling keys, read from its `--help`
+  (`--temp` 0.80, `--top-p` 0.95, `--top-k` 40, `--min-p` 0.05, `--repeat-penalty` 1, `--presence-penalty` and
+  `--frequency-penalty` 0, `--seed` -1 for random), bounded as each value's meaning bounds it (a share from 0 to 1, a
+  count or a temperature of 0 or more, a repeat penalty above 0; the presence and frequency penalties, which its help
+  does not bound, unbounded); there a model file may carry
+  its own temperature, top_p, top_k, min_p and repeat penalty (`general.sampling.*`), which a flag overrides. Its CPU
+  build has no GPU, so it gets no `gpu_layers`.
+- **Unset unless a preset sets one.** None of these options has a Clank default. Left unset, the engine receives no
+  flag and keeps its own defaults, per mode (and, for llama.cpp, the model file's), so every preset launches exactly
+  as before. Set, an option is always passed, even at a value one of the engine's defaults has, since it then holds for
+  both modes (and over a model file's own). `gpu_layers` at 99 is the engine's own and passes nothing.
+- **Shown with the engine's own default.** An option may say in words what the engine does when it is not given
+  (`engine_default_words`), where one value cannot say it: "1.0 thinking, 0.7 not thinking" for KVMem's temperature,
+  "0.80, or the model file's own" for llama.cpp's, "99: every layer on the GPU". The Launch options page (F2) shows
+  those words for an option left unset, and beside one that is set the default it replaces; a line under the options
+  says that a request's own values win. The Presets page and `clank preset show` list the sampling in effect. The
+  Requests page (F7) shows the sampling fields a request sent, each beside the preset's.
+- **The memory estimate with fewer layers.** With `gpu_layers` below the layers KVMem offloads (66 for Qwen3.8-27B and
+  the Swift files: its log says "offloaded 66/66 layers to GPU"; the catalog's `layers`), the weights on the GPU are
+  estimated as that share of the catalog's `gpu_weights_mib`, layers taken as equal in size; the rest is said to be in
+  system memory, where the CPU reads it for every token and decoding is much slower. The KV cache and the buffers stay
+  counted whole on the GPU, the safe side: whether KVMem v0.16 keeps a layer's cache on the GPU when the layer is in
+  system memory, and retrieves well then, is not measured. The estimate says it is an estimate; a model whose catalog
+  entry has no `layers` keeps its weights whole and says so.
+- **Left for later.** The per-role sampling of decision 0004, which the gateway would set on each request, is still to
+  build. KVMem logs the sampling each request ran with (`KVMEM_TRACE sampling ...`); reading it, to show what ran
+  rather than what was asked and set, waits for a reason to read the engine's log per request.
 
 ## 5. NInfer on this machine (retired)
 
