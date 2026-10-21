@@ -79,8 +79,8 @@ Decisions 0120-0122 record the main ones. Also:
 
 ### Task 4: The group: its focus, its keys, a click and the hover
 
-- [ ] **Files:** `buttons.py` (`Buttons`).
-- [ ] **Tests first** (`test_buttons.py`, design 0011 §12.3 and §12.4): in a small app of groups, ← → move in a row and
+- [x] **Files:** `buttons.py` (`Buttons`).
+- [x] **Tests first** (`test_buttons.py`, design 0011 §12.3 and §12.4): in a small app of groups, ← → move in a row and
   stop at its ends, ↑ ↓ in a column; Home and End; ↑ ↓ across a row reach the nearest group above or below; Enter and
   Space press the focused button; a click presses it and moves the focus; the hover's ground under the mouse leaves the
   focus where it is; the focused button is drawn focused only while its group has the focus; a group in a list's row
