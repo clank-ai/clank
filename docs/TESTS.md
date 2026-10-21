@@ -30,7 +30,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4.7 | The rest of the computer | `tests/components/machine/test_checks.py` (7) |
 | 4.8 | Every change is recorded | `tests/components/runtime/test_state.py` (4), `tests/console/test_pages.py` (10) |
 | 5 | The console | `tests/console/test_lists.py` (2) |
-| 5.1 | What it is | `tests/console/test_arrows.py` (7), `tests/console/test_data.py` (17), `tests/console/test_one_door.py` (6), `tests/console/test_shell.py` (18) |
+| 5.1 | What it is | `tests/console/test_arrows.py` (8), `tests/console/test_data.py` (17), `tests/console/test_one_door.py` (6), `tests/console/test_shell.py` (18) |
 | 5.2 | The main screen | none yet |
 | 5.3 | The control screens | none yet |
 | 5.4 | Explain anything | `tests/console/test_records.py` (4) |
@@ -246,7 +246,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 12.2 | One group, one cursor | `tests/console/test_button_groups.py` (9), `tests/console/test_buttons.py` (9) |
 | 12.3 | Pressing a button | `tests/console/test_button_groups.py` (9), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_one_door.py` (6) |
 | 12.4 | How the focus moves | `tests/console/test_button_groups.py` (9), `tests/console/test_button_hints.py` (5), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_monitor_flow_buttons.py` (4) |
-| 12.5 | Where the focus starts | `tests/console/test_arrows.py` (7), `tests/console/test_confirm.py` (6) |
+| 12.5 | Where the focus starts | `tests/console/test_arrows.py` (8), `tests/console/test_confirm.py` (6) |
 | 12.6 | The message line says what the focused button does | `tests/console/test_button_hints.py` (5) |
 | 12.7 | A button that cannot act now | `tests/console/test_folder_buttons.py` (5), `tests/console/test_one_door.py` (6) |
 | 12.8 | The look, in the style | `tests/console/test_buttons.py` (9), `tests/console/test_console_style.py` (14) |
@@ -2710,7 +2710,7 @@ Design 0016 §14 and decision 0105: Add a model, the console's guided first step
 
 ### `tests/console/test_arrows.py`
 
-Design 0001 §5.1 and design 0011 §12.5: the console is keyboard-first, so the arrows move the focus between the menu and the page on screen, without the mouse (the owner's request, 2026-10-15). The console starts on the menu. Right, or Enter, goes from the menu into the page: where the focus was when the page was left, else to its first list, or to the page itself when it has none, so that Up and Down scroll it. Right and Left move between a page's lists, and Left from its first list goes back to the menu, where Up and Down open the other pages again. A window's arrows leave the focus behind it alone.
+Design 0001 §5.1 and design 0011 §12.5: the console is keyboard-first, so the arrows move the focus between the menu and the page on screen, without the mouse (the owner's request, 2026-10-15). The console starts on the menu. Right, or Enter, goes from the menu into the page: where the focus was when the page was left, else to its first list, or to the page itself when it has none, so that Up and Down scroll it. Right and Left move between a page's lists, and Left from its first list goes back to the menu, where Up and Down open the other pages again. A window's arrows leave the focus behind it alone. While no page is on screen (as the console quits and its pages are taken down), the focus moving is not remembered for a page and raises nothing.
 
 - right goes from the menu into the pages list and left comes back
 - right and left move between a pages lists and left from the first goes to the menu
@@ -2719,6 +2719,7 @@ Design 0001 §5.1 and design 0011 §12.5: the console is keyboard-first, so the 
 - back into a page the focus goes where it was left
 - the console starts on the menu whose arrows still open the pages
 - the arrows in a window leave the focus behind it alone
+- while no page is on screen the focus moving remembers nothing and raises nothing
 
 ### `tests/console/test_box_chart.py`
 

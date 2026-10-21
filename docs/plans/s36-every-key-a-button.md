@@ -148,6 +148,16 @@ Decisions 0120-0122 record the main ones. Also:
 
 ### Task 13: The documents, and every check
 
-- [ ] **Files:** `docs/console.md` (buttons, the keys that move and press), the generated documents, the roadmap, this
+- [x] **Files:** `docs/console.md` (buttons, the keys that move and press), the generated documents, the roadmap, this
   plan's Built note.
-- [ ] `uv run python -m tools.check` passes whole.
+- [x] `uv run python -m tools.check` passes whole.
+
+*Built (2026-10-21):* every task above, on top of the cloud's console (plans s34 and s35), which came after this plan
+was written: Then work's `u` (the workspace's bound, once a cloud provider is added) joins its settings' row as a
+button, and its words stay a line of the panel; Add a model's keys bar is the keys bar of buttons; `L`, which opens the
+limits while the cloud is paused, still acts anywhere before a page's keys; the focus moving while the console quits
+(its pages already taken down) raises nothing. This folder's and the questions' frames
+were taken again (the header's "no model: Add a model", the menu's F12) and read; at 160, 128, 88 and 60 columns no
+group's line is wider than its room. What §12.11 leaves to the owner is not built; nor are the options of the window
+that asks a workspace's cloud question (`AskScreen`, plan s35), which still answer by their keys only: Enter on its
+first option would let the workspace use the cloud, so where its focus starts is the owner's to decide.

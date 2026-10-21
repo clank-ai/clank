@@ -213,8 +213,8 @@ wherever the terminal sends the mouse (Windows Terminal, VS Code's terminal, Ope
   act now says why in the page's `unable(key)` ("" when it can): its buttons dim, and the key says why.
 - **A window**: a `ModalScreen` whose `compose` yields one `WindowPanel(*lines, Label("Esc closes this.",
   classes="hint"), title=..., id=...)`, its keys its last line (or, as the details window and a window that asks
-  first do, a `Buttons` of its keys with `press=` its own action, so the focus starts on its first), and its screen's name added to the rule that
-  centers the windows in `clank.tcss`. `tests/console/test_windows.py` checks each window.
+  first do, a `Buttons` of its keys with `press=` its own action, so the focus starts on its first), and its screen's
+  name added to the rule that centers the windows in `clank.tcss`. `tests/console/test_windows.py` checks each window.
 - **A topic the console follows**: in `data.py`, its name in `TOPICS`, its path in `PATHS` (or `fetch`), and in
   `touched` the events that change it; a live event becomes an `Update` in `Follower._receive`.
 

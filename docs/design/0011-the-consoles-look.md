@@ -43,7 +43,7 @@ color is a theme variable"): every color becomes a named element of the style.
 | 9 | Narrow windows | Approved 2026-10-18 |
 | 10 | What changes in the tests | Approved 2026-10-18 |
 | 11 | Build steps | Approved 2026-10-18 |
-| 12 | Every key a button | Approved 2026-10-21 (the owner: K2) |
+| 12 | Every key a button | Approved 2026-10-21 (the owner: K2); built 2026-10-21 (plan s36) |
 
 ## 1. What the owner gets
 
