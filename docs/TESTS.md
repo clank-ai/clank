@@ -107,7 +107,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | Where engines run: hosts | `tests/components/runtime/test_hosts.py` (3), `tests/components/runtime/test_local_host.py` (10), `tests/components/runtime/test_wsl_host.py` (10), `tests/contract/test_host.py` (3) |
 | 3 | Records | `tests/components/runtime/test_catalog.py` (7), `tests/components/runtime/test_presets.py` (6), `tests/components/runtime/test_state.py` (4) |
 | 4 | Engine adapters: KVMem and NInfer | `tests/components/runtime/test_kvmem.py` (10), `tests/components/runtime/test_options.py` (8), `tests/contract/test_engine.py` (4) |
-| 4.1 | Sampling and the GPU's layers | `tests/components/runtime/test_kvmem_sampling.py` (12), `tests/components/runtime/test_options.py` (8), `tests/components/runtime/test_shipped_presets.py` (2) |
+| 4.1 | Sampling and the GPU's layers | `tests/components/runtime/test_kvmem_sampling.py` (12), `tests/components/runtime/test_llamacpp_sampling.py` (6), `tests/components/runtime/test_options.py` (8), `tests/components/runtime/test_shipped_presets.py` (2) |
 | 5 | NInfer on this machine (retired) | none yet |
 | 6 | A slot, and switching it | `tests/components/runtime/test_state.py` (4) |
 | 6.1 | Load, unload, switch | `tests/components/runtime/test_load.py` (9), `tests/components/runtime/test_model_commands.py` (3), `tests/components/runtime/test_switch.py` (7) |
@@ -2306,6 +2306,17 @@ Design 0006 §3 and decision 0035: llama.cpp's adapter gives the completion pres
 - the completion preset runs exactly what was measured
 - it estimates the system memory its log reports and none of the gpu
 - the completion preset is valid and its slot listens on a port of its own
+
+### `tests/components/runtime/test_llamacpp_sampling.py`
+
+Design 0003 §4.1 and decision 0119: llama.cpp's sampling (build b11588) is a set of launch options with the keys KVMem's has. Left unset, llama.cpp gets no flag and keeps its own defaults, or the model file's own where the file carries one (`general.sampling.*`, for the temperature, top_p, top_k, min_p and the repeat penalty), which each option says in words, its numbers as its recorded `--help` gives them; set, the flag is always given, over the model file's own. A value outside what it means (a share from 0 to 1, a count or a temperature of 0 or more, a repeat penalty above 0, a seed of -1 for random or more) is refused in a sentence naming it.
+
+- left unset llamacpp gets no sampling flag
+- each sampling option set gives llamacpp its flag
+- a value its help gives as the default is still given over the model files own
+- each option says llamacpps own default as its recorded help gives it
+- a value outside what it means is refused in a sentence naming it
+- its penalties are unbounded as its help leaves them
 
 ### `tests/components/runtime/test_load.py`
 

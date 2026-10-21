@@ -35,10 +35,10 @@ engine's own defaults; the memory estimate follows fewer layers on the GPU.
   `gpu_layers` below it, that share of the weights on the GPU, the rest named in system memory, the KV cache and the
   buffers kept whole, said to be an estimate; without `layers`, the weights kept whole and said so (`kvmem.py`,
   `clank/catalog/models/*.json`; `tests/components/runtime/test_kvmem_sampling.py`).
-- [ ] **llama.cpp's sampling:** the same eight keys from b11588's `--help` (`--temp`, `--top-p`, `--top-k`,
+- [x] **llama.cpp's sampling:** the same eight keys from b11588's `--help` (`--temp`, `--top-p`, `--top-k`,
   `--min-p`, `--presence-penalty`, `--frequency-penalty`, `--repeat-penalty`, `--seed`), their defaults in words with
   the model file's own where it may carry one; unset, no flag (`llamacpp.py`;
-  `tests/components/runtime/test_llamacpp.py`).
+  `tests/components/runtime/test_llamacpp_sampling.py`).
 - [ ] **The preset's sampling in its view and `clank preset show`:** `GET /runtime/presets` and
   `/runtime/presets/{name}` give each preset's `sampling` (each option's value or its engine's default in words);
   `clank preset show` prints them under "sampling" with a request's own values said to win

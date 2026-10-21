@@ -9,6 +9,11 @@ threads at a low priority and without polling, so the owner's programs come firs
 no web page of its own. It is ready when its log says `listening on`; at verbosity 4 its log reports its buffers, all in
 system memory: it takes nothing of the GPU, so the GPU's fit does not hold it back (`MemoryEstimate.on_gpu`).
 
+Its sampling (`--temp` and the rest, the keys KVMem's adapter has) has no default of Clank's (design 0003 §4.1,
+decision 0119): unset, it gets no flag and keeps its own defaults, which its `--help` gives, or the model file's own
+where the file carries one (`general.sampling.temp`, `top_p`, `top_k`, `min_p` and `penalty_repeat`, which its library
+reads); each option says which in words. A flag set wins over the model file's, and a request's own fields over both.
+
 Its context facts (design 0012 §4): it attends its whole window, in system memory; it counts tokens (`/tokenize`); it
 may keep more than one conversation (its slots, and earlier prompts it keeps in system memory), so another's request
 does not surely make it read the next one again. Its answer reports the prompt and the answer in its usage, and the
@@ -43,6 +48,47 @@ FIELDS = {
     "cached": "timings.cache_n",
     "timings": "timings",
 }
+FILE = ", or the model file's own"  # a default a model file may replace (`general.sampling.*`)
+# Its sampling, unset unless a preset sets it (design 0003 §4.1, decision 0119): its own defaults as its `--help` gives
+# them, in words; bounded as each value's meaning bounds it, its penalties not, as its help leaves them.
+SAMPLING = (
+    EngineOption(
+        "sampling.temperature", "Temperature", "How random each token is: 0 always takes the likeliest.",
+        "number", None, {ANY: ("--temp", "{value}")}, minimum=0, engine_default_words=f"0.80{FILE}",
+    ),
+    EngineOption(
+        "sampling.top_p", "Top p", "Tokens are drawn from the likeliest that hold this share of the chance.",
+        "number", None, {ANY: ("--top-p", "{value}")}, minimum=0, maximum=1, engine_default_words=f"0.95{FILE}",
+    ),
+    EngineOption(
+        "sampling.top_k", "Top k", "Tokens are drawn from at most this many of the likeliest; 0 for no limit.",
+        "integer", None, {ANY: ("--top-k", "{value}")}, minimum=0, engine_default_words=f"40{FILE}",
+    ),
+    EngineOption(
+        "sampling.min_p", "Min p", "Tokens less likely than this share of the likeliest one's chance are left out.",
+        "number", None, {ANY: ("--min-p", "{value}")}, minimum=0, maximum=1, engine_default_words=f"0.05{FILE}",
+    ),
+    EngineOption(
+        "sampling.presence_penalty", "Presence penalty",
+        "Lowers every token already written, so an answer moves on rather than loops.",
+        "number", None, {ANY: ("--presence-penalty", "{value}")}, engine_default_words="0.00 (none)",
+    ),
+    EngineOption(
+        "sampling.frequency_penalty", "Frequency penalty", "Lowers a token the more often it was written.",
+        "number", None, {ANY: ("--frequency-penalty", "{value}")}, engine_default_words="0.00 (none)",
+    ),
+    EngineOption(
+        "sampling.repeat_penalty", "Repeat penalty",
+        "Divides the chance of tokens written recently: 1 for none, above 1 against repeats.",
+        "number", None, {ANY: ("--repeat-penalty", "{value}")}, more_than=0,
+        engine_default_words=f"1.00 (none){FILE}",
+    ),
+    EngineOption(
+        "sampling.seed", "Seed", "The random seed: the same seed and request give the same answer; -1 for random.",
+        "integer", None, {ANY: ("--seed", "{value}")}, minimum=-1, maximum=2**32 - 1,
+        engine_default_words="-1: random",
+    ),
+)  # fmt: skip
 
 
 class LlamaCpp(EngineAdapter):
@@ -101,6 +147,7 @@ class LlamaCpp(EngineAdapter):
                 "max_output", "Maximum output", "The most tokens one answer may have, when a request does not say.",
                 "integer", 128, {ANY: ("-n", "{value}")}, minimum=1, unit="tokens", engine_default=-1,
             ),
+            *SAMPLING,
             EngineOption(
                 "priority", "Priority", "Its threads' priority: low lets the computer's other programs go first.",
                 "choice", "low", {"low": ("--prio", "-1"), "normal": ()}, choices=("low", "normal"),
