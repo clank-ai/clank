@@ -523,6 +523,7 @@ async def test_with_a_provider_added_u_is_a_button_of_then_works_settings_that_a
     cloud_ready(kernel, platform, project, cloud_api)
     app = console(client, kernel, project)
     async with app.run_test(size=(160, 60)) as pilot:  # the page whole, so no scrollbar comes as the row grows
+        await settle(pilot, lambda: bool(app.query("#page-folder")))
         await settle(pilot, lambda: "(u allows it)" in text(app), seconds=20)
         settings = app.query_one("#folder-settings", Buttons)
         await settle(pilot, lambda: [each.key.key for each in settings.buttons] == ["m", "p", "r", "w", "i", "u"])
@@ -531,7 +532,9 @@ async def test_with_a_provider_added_u_is_a_button_of_then_works_settings_that_a
         _, line, start, _ = settings.lines(settings.size.width)[1][-1]
         await pilot.click("#folder-settings", offset=(start + 1, line))
         await settle(pilot, lambda: isinstance(app.screen, ConfirmScreen))
-        assert app.screen.heading == "Let paper use the cloud model?"
+        asked = app.screen
+        assert isinstance(asked, ConfirmScreen)
+        assert asked.heading == "Let paper use the cloud model?"
 
 
 async def test_a_workspace_that_existed_before_the_agreement_is_asked_in_stronger_words(
