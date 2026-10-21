@@ -12,12 +12,12 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | Architecture | none yet |
 | 2 | Providers, engines and models | `tests/components/machine/test_detect.py` (5), `tests/components/runtime/test_catalog.py` (7) |
 | 3 | Settings: options, roles, presets, checks before a change | see its subsections |
-| 3.1 | Options | `tests/components/runtime/test_options.py` (6) |
+| 3.1 | Options | `tests/components/runtime/test_options.py` (8) |
 | 3.2 | Launch options and request options | none yet |
 | 3.3 | Roles | none yet |
 | 3.4 | Presets | `tests/components/runtime/test_presets.py` (6) |
 | 3.5 | Where each value comes from | `tests/components/runtime/test_runtime_api.py` (6) |
-| 3.6 | Checking a change before it is applied | `tests/components/runtime/test_catalog.py` (7), `tests/components/runtime/test_check.py` (5), `tests/components/runtime/test_gpu.py` (4), `tests/components/runtime/test_kvmem.py` (10), `tests/components/runtime/test_model_commands.py` (3), `tests/components/runtime/test_options.py` (6) |
+| 3.6 | Checking a change before it is applied | `tests/components/runtime/test_catalog.py` (7), `tests/components/runtime/test_check.py` (5), `tests/components/runtime/test_gpu.py` (4), `tests/components/runtime/test_kvmem.py` (10), `tests/components/runtime/test_model_commands.py` (3), `tests/components/runtime/test_options.py` (8) |
 | 3.7 | Files | `tests/components/runtime/test_presets.py` (6) |
 | 3.8 | Checking and testing a configuration before applying it | `tests/components/runtime/test_check.py` (5) |
 | 4 | Switching, failures and safety | see its subsections |
@@ -106,8 +106,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | What M1 delivers, and what moved | none yet |
 | 2 | Where engines run: hosts | `tests/components/runtime/test_hosts.py` (3), `tests/components/runtime/test_local_host.py` (10), `tests/components/runtime/test_wsl_host.py` (10), `tests/contract/test_host.py` (3) |
 | 3 | Records | `tests/components/runtime/test_catalog.py` (7), `tests/components/runtime/test_presets.py` (6), `tests/components/runtime/test_state.py` (4) |
-| 4 | Engine adapters: KVMem and NInfer | `tests/components/runtime/test_kvmem.py` (10), `tests/components/runtime/test_options.py` (6), `tests/contract/test_engine.py` (4) |
-| 4.1 | Sampling and the GPU's layers | `tests/components/runtime/test_shipped_presets.py` (2) |
+| 4 | Engine adapters: KVMem and NInfer | `tests/components/runtime/test_kvmem.py` (10), `tests/components/runtime/test_options.py` (8), `tests/contract/test_engine.py` (4) |
+| 4.1 | Sampling and the GPU's layers | `tests/components/runtime/test_options.py` (8), `tests/components/runtime/test_shipped_presets.py` (2) |
 | 5 | NInfer on this machine (retired) | none yet |
 | 6 | A slot, and switching it | `tests/components/runtime/test_state.py` (4) |
 | 6.1 | Load, unload, switch | `tests/components/runtime/test_load.py` (9), `tests/components/runtime/test_model_commands.py` (3), `tests/components/runtime/test_switch.py` (7) |
@@ -2348,7 +2348,7 @@ Design 0016 §3, §6 and §8: what the OpenRouter adapter reads of OpenRouter's 
 
 ### `tests/components/runtime/test_options.py`
 
-Design 0001 §3.1 and §3.6, design 0003 §4: an engine adapter checks a preset's options against its version: an option the version does not have, a value outside its range or choices, or an option whose requirement is not met is refused in a sentence naming it; a version no adapter knows is refused naming the known ones; and the command line is made from what each option maps to, leaving out a value that is the engine's own default.
+Design 0001 §3.1 and §3.6, design 0003 §4 and §4.1: an engine adapter checks a preset's options against its version: an option the version does not have, a value outside its range or choices (or not past a bound it must pass), or an option whose requirement is not met is refused in a sentence naming it; a version no adapter knows is refused naming the known ones; and the command line is made from what each option maps to, leaving out a value that is the engine's own default. An option with no default, left unset, gives the engine nothing, and says in words what the engine does then (decision 0119); set, it is given even at a value one of the engine's defaults has.
 
 - a wrong option or value is refused in a sentence naming it
 - a version no adapter knows is refused naming the known ones
@@ -2356,6 +2356,8 @@ Design 0001 §3.1 and §3.6, design 0003 §4: an engine adapter checks a preset'
 - a wrong preset has no plan
 - an option says what it maps to and what its version supports
 - a default whose requirement is not met is left out not refused
+- an option left unset gives nothing and says in words what the engine does then
+- an option set is given even at a value one of the engines defaults has
 
 ### `tests/components/runtime/test_presets.py`
 

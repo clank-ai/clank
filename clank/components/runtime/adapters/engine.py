@@ -7,7 +7,10 @@ requests at once, vision, speculation), since what an engine can do is read for 
 each value, exactly what the engine receives (`EngineOption.maps`): flags on its command line, and environment variables
 written `env:NAME=VALUE`; `{value}` stands for the value and `{name}` for a fact of the launch (the projector's path,
 say). The command line is made from those declarations alone, so what the console shows an option maps to is what runs.
-A flag is left out when the value is the engine's own default (`engine_default`), so a plan reads at a glance.
+A flag is left out when the value is the engine's own default (`engine_default`), so a plan reads at a glance. An
+option with no default of Clank's, left unset, gives the engine nothing; where one value cannot say what the engine
+then does (a default per thinking mode, or one a model file may replace), the option says it in words
+(`engine_default_words`, design 0003 §4.1), and a value set is given even when one of those defaults has it.
 
 `validate` says what is wrong with a preset's options, one sentence each; `plan` gives the exact launch (argv,
 environment, folder, port) and the memory it is expected to take, as a breakdown; `ready` and `memory_report` read the
@@ -63,6 +66,10 @@ class EngineOption:
     requires: tuple[str, ...] = ()
     tested: tuple[OptionValue, ...] = ()
     engine_default: OptionValue | None = None
+    # What the engine does when it is not given the option, in words, where one value cannot say it: a default per
+    # mode ("1.0 thinking, 0.7 not thinking"), or one a model file may replace (design 0003 §4.1, decision 0119).
+    engine_default_words: str = ""
+    more_than: float | None = None  # a bound the value must pass, not reach (a repeat penalty above 0)
 
     def problem(self, value: object) -> str | None:
         """What is wrong with a value for this option, or None."""
@@ -85,6 +92,8 @@ class EngineOption:
             return f"{self.key} is at least {_number(self.minimum)}{_unit(self.unit)}, not {_number(value)}"
         if self.maximum is not None and value > self.maximum:
             return f"{self.key} is at most {_number(self.maximum)}{_unit(self.unit)}, not {_number(value)}"
+        if self.more_than is not None and value <= self.more_than:
+            return f"{self.key} is more than {_number(self.more_than)}{_unit(self.unit)}, not {_number(value)}"
         return None
 
     def mapped(self, value: OptionValue) -> tuple[str, ...]:

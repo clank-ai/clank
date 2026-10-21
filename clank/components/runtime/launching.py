@@ -260,7 +260,8 @@ def check(runtime: "Runtime", name: str) -> list[CheckItem]:
 
 def options_view(engine: EngineAdapter, options: Mapping[str, Any]) -> list[dict[str, Any]]:
     """Each launch option of a preset as clients show it (design 0001 §3.5): its value and where it comes from (the
-    preset, else Clank's default), what the engine receives for it or why nothing, what it maps to and what it does."""
+    preset, else Clank's default, else unset), what the engine receives for it or why nothing, what it maps to and what
+    it does, and what the engine does when it is not given it (design 0003 §4.1)."""
     values = engine.resolved(options)
     shown = []
     for option in engine.options():
@@ -283,6 +284,8 @@ def options_view(engine: EngineAdapter, options: Mapping[str, Any]) -> list[dict
                 "minimum": option.minimum,
                 "maximum": option.maximum,
                 "engine_default": option.engine_default,
+                "engine_default_words": option.engine_default_words,
+                "more_than": option.more_than,
                 "tested": list(option.tested),
             }
         )

@@ -22,7 +22,7 @@ engine's own defaults; the memory estimate follows fewer layers on the GPU.
 - [x] **The shipped presets, held:** each preset in `clank/defaults/presets/` planned with a fixed launch gives exactly
   the command line and environment it gives today (`tests/components/runtime/test_shipped_presets.py`), written before
   any option is added and kept green through the rest.
-- [ ] **What an option says of the engine's default:** `EngineOption.engine_default_words` (what the engine does when
+- [x] **What an option says of the engine's default:** `EngineOption.engine_default_words` (what the engine does when
   the option is not given, where one value cannot say it) and `more_than` (a bound the value must pass, for a
   repeat penalty above 0); the options view carries the words (`engine.py`, `launching.options_view`;
   `tests/components/runtime/test_options.py`).

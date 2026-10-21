@@ -1,7 +1,9 @@
-"""Design 0001 §3.1 and §3.6, design 0003 §4: an engine adapter checks a preset's options against its version: an
-option the version does not have, a value outside its range or choices, or an option whose requirement is not met is
-refused in a sentence naming it; a version no adapter knows is refused naming the known ones; and the command line is
-made from what each option maps to, leaving out a value that is the engine's own default."""
+"""Design 0001 §3.1 and §3.6, design 0003 §4 and §4.1: an engine adapter checks a preset's options against its version:
+an option the version does not have, a value outside its range or choices (or not past a bound it must pass), or an
+option whose requirement is not met is refused in a sentence naming it; a version no adapter knows is refused naming
+the known ones; and the command line is made from what each option maps to, leaving out a value that is the engine's
+own default. An option with no default, left unset, gives the engine nothing, and says in words what the engine does
+then (decision 0119); set, it is given even at a value one of the engine's defaults has."""
 
 from collections.abc import Mapping, Sequence
 
@@ -19,6 +21,7 @@ from clank.components.runtime.adapters.engine import (
     OptionValue,
     Plan,
 )
+from clank.components.runtime.launching import options_view
 
 
 class Toy(EngineAdapter):
@@ -44,6 +47,11 @@ class Toy(EngineAdapter):
                          {"false": ("env:NO_GRAPHS=1",), "true": ()}),
             EngineOption("capacity", "KV capacity", "Tokens of KV.", "integer", "auto", {ANY: ("--cap", "{value}")},
                          choices=("auto",), minimum=1024),
+            EngineOption("sampling.temperature", "Temperature", "How random.", "number", None,
+                         {ANY: ("--temp", "{value}")}, minimum=0, maximum=2,
+                         engine_default_words="1.0 thinking, 0.7 not thinking"),
+            EngineOption("sampling.repeat_penalty", "Repeat penalty", "Against repeats.", "number", None,
+                         {ANY: ("--repeat", "{value}")}, more_than=0, engine_default_words="1 (none)"),
         ]  # fmt: skip
 
     def plan(self, options: Mapping[str, OptionValue], launch: Launch) -> Plan:
@@ -78,6 +86,9 @@ LAUNCH = Launch(program=("/e/toy-server",), model_path="/m/model.gguf", port=182
         ({"cuda_graphs": "yes"}, "cuda_graphs is on or off (true or false), not 'yes'"),
         ({"capacity": "most"}, "capacity is a number or one of auto, not 'most'"),
         ({"vision.max_tokens": 512}, "vision.max_tokens needs vision"),
+        ({"sampling.temperature": 2.5}, "sampling.temperature is at most 2, not 2.5"),
+        ({"sampling.repeat_penalty": 0}, "sampling.repeat_penalty is more than 0, not 0"),
+        ({"sampling.repeat_penalty": -1.5}, "sampling.repeat_penalty is more than 0, not -1.5"),
     ],
 )
 def test_a_wrong_option_or_value_is_refused_in_a_sentence_naming_it(options: dict[str, object], said: str) -> None:
@@ -137,3 +148,25 @@ def test_a_default_whose_requirement_is_not_met_is_left_out_not_refused() -> Non
     assert engine.validate({}) == []
     assert "--image-tokens" not in engine.plan({}, LAUNCH).argv
     assert "--image-tokens" in engine.plan({"vision": "gpu"}, LAUNCH).argv
+
+
+def test_an_option_left_unset_gives_nothing_and_says_in_words_what_the_engine_does_then() -> None:
+    engine = Toy("v1")
+    assert "--temp" not in engine.plan({}, LAUNCH).argv
+    shown = {option["key"]: option for option in options_view(engine, {})}
+    temperature = shown["sampling.temperature"]
+    assert (temperature["value"], temperature["source"], temperature["gives"]) == (None, "unset", [])
+    assert temperature["engine_default_words"] == "1.0 thinking, 0.7 not thinking"
+    assert shown["context"]["engine_default_words"] == "", "an option whose default one value says has no words"
+
+
+def test_an_option_set_is_given_even_at_a_value_one_of_the_engines_defaults_has() -> None:
+    engine = Toy("v1")
+    options: dict[str, OptionValue] = {"sampling.temperature": 1.0, "sampling.repeat_penalty": 1.1}
+    assert engine.validate(options) == []
+    assert engine.plan(options, LAUNCH).argv[-4:] == ("--temp", "1", "--repeat", "1.1")
+    shown = {option["key"]: option for option in options_view(engine, options)}
+    assert (shown["sampling.temperature"]["source"], shown["sampling.temperature"]["gives"]) == (
+        "preset",
+        ["--temp", "1"],
+    )
