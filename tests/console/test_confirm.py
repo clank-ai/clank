@@ -1,6 +1,9 @@
 """Design 0012 §9.1 (§11 step 12's review): a window that asks before an action (`ConfirmScreen`: "a confirmation,
 Enter, or Esc to leave it") takes only an Enter pressed while it is on screen. The Enter that opened it, a page's key
-that pushed it, is never taken as "do it", wherever the window is opened from; the next Enter does it, Esc leaves it."""
+that pushed it, is never taken as "do it", wherever the window is opened from; the next Enter does it, Esc leaves it.
+Design 0011 §12.1 and §12.5: its keys are its last line, a group of buttons, the focus on "do it" when it opens; the
+right arrow reaches "leave it", which Enter then presses; Space presses too, and a click on either does what its key
+does, the same guard kept."""
 
 from typing import Any
 
@@ -9,6 +12,7 @@ from textual import events
 from textual.app import App
 
 from clank.components.agents.console.itemsscreen import ItemsScreen
+from clank.console.buttons import Buttons
 from clank.console.confirm import ConfirmScreen
 from clank.console.style import CLANK, LoadedStyle, theme_of
 from clank.kernel.console_kinds import StyleSettings
@@ -90,3 +94,31 @@ async def test_the_x_that_opens_the_window_of_items_never_drops_one_in_it() -> N
         await pilot.press("x")
         await settle(pilot, lambda: len(app.answers) == 1)
         assert app.answers[0]["node"] == "c03"
+
+
+async def test_it_opens_with_the_focus_on_do_it_and_the_right_arrow_reaches_leave_it() -> None:
+    app = Opener()
+    async with app.run_test() as pilot:
+        await pilot.press("enter")
+        await settle(pilot, lambda: isinstance(app.screen, ConfirmScreen))
+        keys = app.screen.query_one("#confirm-keys", Buttons)
+        await settle(pilot, lambda: app.focused is keys)
+        assert [each.said for each in keys.buttons] == ["do it", "leave it"]
+        assert keys.cursor == 0
+        await pilot.press("right", "enter")
+        await settle(pilot, lambda: app.answers == [False])
+        await pilot.press("enter")
+        await settle(pilot, lambda: isinstance(app.screen, ConfirmScreen))
+        await pilot.pause(0.1)
+        await pilot.press("space")
+        await settle(pilot, lambda: app.answers == [False, True])
+
+
+async def test_a_click_on_a_windows_button_does_what_its_key_does() -> None:
+    app = Opener()
+    async with app.run_test() as pilot:
+        await pilot.press("enter")
+        await settle(pilot, lambda: isinstance(app.screen, ConfirmScreen))
+        await pilot.pause(0.1)
+        await pilot.click("#confirm-keys", offset=(len(" enter do it  e"), 0))
+        await settle(pilot, lambda: app.answers == [False])

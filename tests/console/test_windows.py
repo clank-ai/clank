@@ -1,10 +1,11 @@
-"""Design 0011 §4, §7 and §11 (R2): the windows over the console, the details window (`?`, `v`), the picker, the form,
-an MCP server's tools and a device's traffic, are each one panel (the traffic window two: its list and the highlighted
-exchange), their title in the top border, no longer a bold first line; a window's border is `border-focused`, since it
-has the focus (in the traffic window, the border of the panel that holds it), on the page's `background`; its keys
-("Esc closes this") stay its last line, in `quiet`. A window is never wider than the screen allows: a title too long
-for it is cut in the border with "…" and shown whole as the window's first line (design 0011 §4 and §5, revised
-after approval with decision 0081: nothing cut is lost)."""
+"""Design 0011 §4, §7, §11 and §12.1 (R2; every key a button): the windows over the console, the details window (`?`,
+`v`), the picker, the form, an MCP server's tools and a device's traffic, are each one panel (the traffic window two:
+its list and the highlighted exchange), their title in the top border, no longer a bold first line; a window's border is
+`border-focused`, since it has the focus (in the traffic window, the border of the panel that holds it), on the page's
+`background`; its keys ("Esc closes this") stay its last line, in `quiet`, the details window's a button, `esc close`,
+which has the focus when it opens. A window is never wider than the screen allows: a title too long for it is cut in
+the border with "…" and shown whole as the window's first line (design 0011 §4 and §5, revised after approval with
+decision 0081: nothing cut is lost)."""
 
 from collections.abc import Callable
 from typing import Any
@@ -18,6 +19,7 @@ from clank.client import Client
 from clank.components.remote.console.traffic import TrafficScreen
 from clank.components.tools.console.servers import ToolsScreen
 from clank.console.app import ClankConsole
+from clank.console.buttons import Buttons
 from clank.console.details import DetailsScreen
 from clank.console.form import Field, FormScreen
 from clank.console.panel import Panel
@@ -84,6 +86,11 @@ async def test_a_window_is_one_panel_its_title_in_its_border_its_border_focused_
         assert hex_of(panel.styles.border_top[1]) == STYLE.colors.border_focused
         assert hex_of(panel.styles.background) == STYLE.colors.background
         last = list(panel.children)[-1]
+        if name == "details":  # its key a button (design 0011 §12.1)
+            assert isinstance(last, Buttons), f"{name}: its keys, its last line"
+            assert [(each.label, each.said) for each in last.buttons] == [("esc", "close")]
+            assert app.focused is last, "the window opens with the focus on its button"
+            return
         assert isinstance(last, Label)
         assert str(last.content).endswith("Esc closes this."), f"{name}: its keys, its last line"
         assert hex_of(last.styles.color) == STYLE.colors.quiet

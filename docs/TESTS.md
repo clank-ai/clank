@@ -242,11 +242,11 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 10 | What changes in the tests | none yet |
 | 11 | Build steps | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_keys_bar.py` (10), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_windows.py` (3) |
 | 12 | Every key a button | see its subsections |
-| 12.1 | What becomes a button | `tests/console/test_folder_buttons.py` (5), `tests/console/test_home.py` (14), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_questions.py` (2) |
+| 12.1 | What becomes a button | `tests/console/test_confirm.py` (6), `tests/console/test_folder_buttons.py` (5), `tests/console/test_home.py` (14), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_questions.py` (2), `tests/console/test_windows.py` (3) |
 | 12.2 | One group, one cursor | `tests/console/test_button_groups.py` (9), `tests/console/test_buttons.py` (9) |
 | 12.3 | Pressing a button | `tests/console/test_button_groups.py` (9), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_one_door.py` (6) |
 | 12.4 | How the focus moves | `tests/console/test_button_groups.py` (9), `tests/console/test_button_hints.py` (5), `tests/console/test_keys_bar_buttons.py` (6) |
-| 12.5 | Where the focus starts | `tests/console/test_arrows.py` (7) |
+| 12.5 | Where the focus starts | `tests/console/test_arrows.py` (7), `tests/console/test_confirm.py` (6) |
 | 12.6 | The message line says what the focused button does | `tests/console/test_button_hints.py` (5) |
 | 12.7 | A button that cannot act now | `tests/console/test_folder_buttons.py` (5), `tests/console/test_one_door.py` (6) |
 | 12.8 | The look, in the style | `tests/console/test_buttons.py` (9), `tests/console/test_console_style.py` (14) |
@@ -285,7 +285,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7 | Tool calls and the live text | `tests/components/agents/test_monitor_bridge.py` (11), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_service.py` (6), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_live.py` (2) |
 | 8 | Watch for: rules the owner sets | `tests/components/agents/test_session_flow_pairing.py` (8), `tests/components/agents/test_watch_for_marks.py` (14), `tests/components/agents/test_watch_for_rules.py` (7), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/agents/test_watch_for_settings.py` (4), `tests/components/gateway/test_activity.py` (22), `tests/components/remote/test_phone_marks.py` (4), `tests/console/test_monitor_watch_for.py` (2) |
 | 9 | The Guide | `tests/components/agents/test_monitor_bridge.py` (11), `tests/components/agents/test_monitor_sessions.py` (5) |
-| 9.1 | What every action shows | `tests/components/agents/test_guide.py` (4), `tests/components/agents/test_guide_actions.py` (8), `tests/components/agents/test_guide_undo_actions.py` (12), `tests/components/agents/test_guide_undo_and_drop.py` (6), `tests/components/agents/test_pausing.py` (8), `tests/components/gateway/test_activity.py` (22), `tests/console/test_confirm.py` (4), `tests/console/test_monitor_guide.py` (7), `tests/console/test_monitor_undo_and_drop.py` (5) |
+| 9.1 | What every action shows | `tests/components/agents/test_guide.py` (4), `tests/components/agents/test_guide_actions.py` (8), `tests/components/agents/test_guide_undo_actions.py` (12), `tests/components/agents/test_guide_undo_and_drop.py` (6), `tests/components/agents/test_pausing.py` (8), `tests/components/gateway/test_activity.py` (22), `tests/console/test_confirm.py` (6), `tests/console/test_monitor_guide.py` (7), `tests/console/test_monitor_undo_and_drop.py` (5) |
 | 9.2 | Stop now | `tests/components/agents/test_guide.py` (4), `tests/components/agents/test_guide_actions.py` (8), `tests/console/test_monitor_guide.py` (7) |
 | 9.3 | A note | `tests/components/agents/test_guide.py` (4), `tests/components/agents/test_guide_actions.py` (8), `tests/console/test_monitor_guide.py` (7) |
 | 9.4 | Pause after this step | `tests/components/agents/test_flow_tree.py` (19), `tests/components/agents/test_pausing.py` (8), `tests/components/agents/test_session_flow_pairing.py` (8), `tests/components/agents/test_session_flows_kept.py` (12), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_hold_gateway.py` (14), `tests/components/gateway/test_holds.py` (7), `tests/components/gateway/test_service.py` (6), `tests/console/test_monitor_guide.py` (7) |
@@ -2791,12 +2791,14 @@ Design 0006 §6 (the Completion page, 2026-10-15): F8 says whether completion is
 
 ### `tests/console/test_confirm.py`
 
-Design 0012 §9.1 (§11 step 12's review): a window that asks before an action (`ConfirmScreen`: "a confirmation, Enter, or Esc to leave it") takes only an Enter pressed while it is on screen. The Enter that opened it, a page's key that pushed it, is never taken as "do it", wherever the window is opened from; the next Enter does it, Esc leaves it.
+Design 0012 §9.1 (§11 step 12's review): a window that asks before an action (`ConfirmScreen`: "a confirmation, Enter, or Esc to leave it") takes only an Enter pressed while it is on screen. The Enter that opened it, a page's key that pushed it, is never taken as "do it", wherever the window is opened from; the next Enter does it, Esc leaves it. Design 0011 §12.1 and §12.5: its keys are its last line, a group of buttons, the focus on "do it" when it opens; the right arrow reaches "leave it", which Enter then presses; Space presses too, and a click on either does what its key does, the same guard kept.
 
 - the enter that opens a window that asks first never does it
 - an enter right after the key that opened the window does it
 - a window is armed only once the message it was made in is done
 - the x that opens the window of items never drops one in it
+- it opens with the focus on do it and the right arrow reaches leave it
+- a click on a windows button does what its key does
 
 ### `tests/console/test_console_style.py`
 
@@ -3379,7 +3381,7 @@ Design 0002 §3.2: the console shows a state in color: green when it is as wante
 
 ### `tests/console/test_windows.py`
 
-Design 0011 §4, §7 and §11 (R2): the windows over the console, the details window (`?`, `v`), the picker, the form, an MCP server's tools and a device's traffic, are each one panel (the traffic window two: its list and the highlighted exchange), their title in the top border, no longer a bold first line; a window's border is `border-focused`, since it has the focus (in the traffic window, the border of the panel that holds it), on the page's `background`; its keys ("Esc closes this") stay its last line, in `quiet`. A window is never wider than the screen allows: a title too long for it is cut in the border with "…" and shown whole as the window's first line (design 0011 §4 and §5, revised after approval with decision 0081: nothing cut is lost).
+Design 0011 §4, §7, §11 and §12.1 (R2; every key a button): the windows over the console, the details window (`?`, `v`), the picker, the form, an MCP server's tools and a device's traffic, are each one panel (the traffic window two: its list and the highlighted exchange), their title in the top border, no longer a bold first line; a window's border is `border-focused`, since it has the focus (in the traffic window, the border of the panel that holds it), on the page's `background`; its keys ("Esc closes this") stay its last line, in `quiet`, the details window's a button, `esc close`, which has the focus when it opens. A window is never wider than the screen allows: a title too long for it is cut in the border with "…" and shown whole as the window's first line (design 0011 §4 and §5, revised after approval with decision 0081: nothing cut is lost).
 
 - a window is one panel its title in its border its border focused its keys its last line
 - the traffic window is two panels its list and the highlighted exchange

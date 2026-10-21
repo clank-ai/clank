@@ -134,8 +134,8 @@ Decisions 0120-0122 record the main ones. Also:
 
 ### Task 11: The windows' buttons
 
-- [ ] **Files:** `clank/console/confirm.py`, `clank/console/details.py`.
-- [ ] **Tests first** (`tests/console/test_confirm.py`, `test_windows.py`, design 0011 §12.1 and §12.5): a window that
+- [x] **Files:** `clank/console/confirm.py`, `clank/console/details.py`.
+- [x] **Tests first** (`tests/console/test_confirm.py`, `test_windows.py`, design 0011 §12.1 and §12.5): a window that
   asks first opens with the focus on "do it"; Enter does it once armed, never the Enter that opened it; → reaches
   "leave it", which Enter presses (Tab stays on the window's one group); the details window's "close"; the windows'
   last line is their group.
