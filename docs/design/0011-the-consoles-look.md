@@ -628,8 +628,9 @@ since.
 A page may say that one of its keys cannot act now, and why (`Page.unable(key)`: "" when it can). Its buttons are drawn
 dimmed (`dim`) and still take the focus, so the message line and `?` can say why; pressed (by Enter, Space, its key or
 a click) the message line says why and the page's `press` is not called. The console's one door checks it, so a key
-typed and its button say the same. This step: This folder's keys that work on the workspace (`e`, `m`, `p`, `r`, `w`,
-`i`) before the workspace is opened, saying the words those keys say today.
+typed and its button say the same. This step: This folder's `a` until every required step is done, and its keys that
+work on the workspace (`e`, `m`, `p`, `r`, `w`, `i`) before the workspace is opened, saying the words those keys say
+today.
 
 ### 12.8 The look, in the style
 

@@ -142,7 +142,7 @@ Decisions 0120-0122 record the main ones. Also:
 
 ### Task 12: The Monitor's Flow view at three widths
 
-- [ ] **Tests first** (`tests/console/test_monitor_flow_buttons.py`, design 0011 §12.4 and §12.9): the Flow view's keys
+- [x] **Tests first** (`tests/console/test_monitor_flow_buttons.py`, design 0011 §12.4 and §12.9): the Flow view's keys
   bar at 128, 88 and 60 columns holds its keys as before; Tab from its boxes reaches the bar and back; the boxes keep
   their arrows; Enter on the bar's `enter open` presses the view's Enter once.
 

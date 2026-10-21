@@ -105,7 +105,8 @@ clank flow run <name>                                 # or run it from the comma
 | --- | --- | --- |
 | Header | `clank/console/header.py` | Clank's name, the folder's name, a pill per part that runs (`PILLS`), each in its state's color, a spinner while something runs. |
 | Menu | `clank/console/app.py` (`_menu`), `clank/console/menu.py` (`PLANNED`) | Every page with its key, then the pages later milestones bring, in red. |
-| Keys bar | `clank/console/keys.py` (`KeysBar`, `ANYWHERE`), each page's `KEYS` | The keys of the page on screen, then the keys that act anywhere; when narrow, `f5`, `q` and the palette go first, then the page's keys from the right, and `?` and `f1` always stay. Help (F1) and `?` read the same declarations. |
+| Keys bar | `clank/console/keysbar.py` (`KeysBar`), `clank/console/keys.py` (`ANYWHERE`, `fit_keys`), each page's `KEYS` | The keys of the page on screen, then the keys that act anywhere, each a button; when narrow, `f5`, `q` and the palette go first, then the page's keys from the right, and `?` and `f1` always stay. Help (F1) and `?` read the same declarations. |
+| Buttons | `clank/console/buttons.py` (`Buttons`, `button`, `lay_out`, `from_keys`) | Every key the console shows is a button (design 0011 §12): a group is one widget that takes the focus, a row or a column with its own cursor; a button pressed goes through the console's one door (`ClankConsole.press_button`), as its key typed does. |
 | Pages | `clank/console/pages/`, and each component's `console/` package | One page each; the menu entry is the page's `ENTRY`. A page that reads the service on its own draws what came on the console's redraw ticks (`Page.tick`). |
 | Machine column | `clank/console/machine.py` (`MachineColumn`) | Two panels: "Machine", the machine's meters (`MACHINE`), and "Clank now", what Clank is doing (`NOW`); each meter drawn for the inside of its panel, the blank lines between meters going first when the column is short, then the last meters, whole. |
 | Drawing helpers | `clank/console/gauges.py`, `clank/console/text.py` | Bars, sparklines, sizes, rates, the spinner; times, counts, states in color. |
@@ -122,6 +123,29 @@ where `x` drops the result highlighted through the Guide's Drop. It draws what i
 | The session's flow | `clank/components/agents/console/flowtree.py`, `flowchart.py`, `flowpanel.py` | The flow as a tree (`tree`), laid out in lines for a width (`render`: branches to the right in aligned columns, under their node when narrow), and the Flow panel's widget of lines (`FlowChart`), which lays out again only the lines that changed. |
 | Style | `clank/console/style.py`, `clank/kernel/console_kinds.py`, `clank/defaults/styles/clank.json` | The style's elements (colors, marks, glyphs), read at start and loaded as the console's theme. |
 
+## Buttons: every key you see
+
+Every key the console shows is a button (design 0011 §12, board K2): the keys bar's, This folder's next step, ways to
+work and settings, a question's options, a window's keys. Each is pressed three ways, all the same: **Enter** or
+**Space** while it has the focus, **its key** from anywhere on its page (the focus stays where it is), or **a click**
+(the focus moves to it).
+
+| Key | What it does |
+| --- | --- |
+| Tab, Shift+Tab | The next or previous group: the menu, the page's lists and rows of buttons, the keys bar; after the last, the first |
+| ← → | In a row of buttons (the keys bar too), the next button, stopping at the row's ends; from the menu into the page and back, as before |
+| ↑ ↓ | In a column of buttons, the next one; from a row, the group above or below (from the keys bar, back into the page) |
+| Home, End | A row's first or last button |
+| Enter, Space | Press the focused button; Enter on the menu goes into the page |
+| Esc | From a group, back to the page's main list; in a window, leave it |
+| ? | With a button focused, what it does and the keys that press it, or why it cannot act now |
+
+While a group has the focus, the message line says what its focused button does. A dimmed button cannot act now
+(This folder's `i` before the workspace is opened): it still takes the focus, so the message line and `?` say why,
+and pressing it, or its key, says why instead of acting. A list keeps its own arrows (the menu, a page's list, the
+Flow view's boxes): the arrows move between buttons only while a row of buttons has the focus. Clicks work over SSH
+wherever the terminal sends the mouse (Windows Terminal, VS Code's terminal, OpenSSH; tmux with `set -g mouse on`).
+
 ## Changing the look
 
 - **Colors**: the console's style (design 0011), a settings file whose colors are each named for what they color:
@@ -134,7 +158,8 @@ where `x` drops the result highlighted through the Guide's Drop. It draws what i
   picked there, through the service; the console draws in a style as soon as the service reports a change of
   `console.json` or of the style's file. A style that is not found gives Clank's; a file that does not read leaves the
   style in force (Clank's, at start), and the message line says why, with the file, line and field. Textual's own
-  themes are not offered: the colors are the style's.
+  themes are not offered: the colors are the style's. A button's states have five colors of their own:
+  `button_hover`, `button_focused` and `button_focused_text`, `button_pressed`, `button_unable_focused`.
 - **Marks and glyphs**: the marks that say a state (● ○ ✓ ✗ ?), the header's ◆, the … that ends text Clank cut, the
   spinner's frames, a bar's cells and a sparkline's steps are the style's too (`marks`, `spinner`, `bar`, `sparks`).
   A page draws a mark by its name, `mark("done")` (`clank/console/style.py`), and the drawing helpers read the rest,
@@ -181,9 +206,14 @@ where `x` drops the result highlighted through the Guide's Drop. It draws what i
   column in a narrow window) scrolls sideways to all of it (`Page`, design 0011 §9).
   `tests/console/test_panels_everywhere.py` checks that each page draws the panels it declares, each with its four
   borders and its title whole, and nothing outside them, and that it scrolls sideways to every panel wider than it.
-  `tests/console/test_keys_bar.py` checks every page's `KEYS` and that Help lists them.
+  `tests/console/test_keys_bar.py` checks every page's `KEYS` and that Help lists them. Keys a panel offers are
+  buttons: `Buttons(from_keys(self.KEYS, "o", ("a", "OpenCode in this terminal")))`, its keys chosen from
+  `KEYS` (a longer sentence for the panel when given), `column=True` for a column, `lead="Next:"` for words before
+  them; nothing more is needed, since a button pressed goes to the page's `press` like its key. A key that cannot
+  act now says why in the page's `unable(key)` ("" when it can): its buttons dim, and the key says why.
 - **A window**: a `ModalScreen` whose `compose` yields one `WindowPanel(*lines, Label("Esc closes this.",
-  classes="hint"), title=..., id=...)`, its keys its last line, and its screen's name added to the rule that
+  classes="hint"), title=..., id=...)`, its keys its last line (or, as the details window and a window that asks
+  first do, a `Buttons` of its keys with `press=` its own action, so the focus starts on its first), and its screen's name added to the rule that
   centers the windows in `clank.tcss`. `tests/console/test_windows.py` checks each window.
 - **A topic the console follows**: in `data.py`, its name in `TOPICS`, its path in `PATHS` (or `fetch`), and in
   `touched` the events that change it; a live event becomes an `Update` in `Follower._receive`.

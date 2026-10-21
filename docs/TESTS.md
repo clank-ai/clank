@@ -245,12 +245,12 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 12.1 | What becomes a button | `tests/console/test_confirm.py` (6), `tests/console/test_folder_buttons.py` (5), `tests/console/test_home.py` (14), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_questions.py` (2), `tests/console/test_windows.py` (3) |
 | 12.2 | One group, one cursor | `tests/console/test_button_groups.py` (9), `tests/console/test_buttons.py` (9) |
 | 12.3 | Pressing a button | `tests/console/test_button_groups.py` (9), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_one_door.py` (6) |
-| 12.4 | How the focus moves | `tests/console/test_button_groups.py` (9), `tests/console/test_button_hints.py` (5), `tests/console/test_keys_bar_buttons.py` (6) |
+| 12.4 | How the focus moves | `tests/console/test_button_groups.py` (9), `tests/console/test_button_hints.py` (5), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_monitor_flow_buttons.py` (4) |
 | 12.5 | Where the focus starts | `tests/console/test_arrows.py` (7), `tests/console/test_confirm.py` (6) |
 | 12.6 | The message line says what the focused button does | `tests/console/test_button_hints.py` (5) |
 | 12.7 | A button that cannot act now | `tests/console/test_folder_buttons.py` (5), `tests/console/test_one_door.py` (6) |
 | 12.8 | The look, in the style | `tests/console/test_buttons.py` (9), `tests/console/test_console_style.py` (14) |
-| 12.9 | Narrow windows | `tests/console/test_folder_buttons.py` (5) |
+| 12.9 | Narrow windows | `tests/console/test_folder_buttons.py` (5), `tests/console/test_monitor_flow_buttons.py` (4) |
 | 12.10 | Over SSH, and without a window | none yet |
 | 12.11 | Not in this step (Choices for the owner) | none yet |
 | 12.12 | What changes in the tests | none yet |
@@ -3127,6 +3127,15 @@ Design 0013 §12 and §15 (decisions 0098, 0099 and 0100): a flow built with the
 - n opens a planning beside the console even with no flow yet and shows the flow once built
 - capital n opens clanks vs code window but over ssh says how to attach
 - the console opens on the flow view where n and r act
+
+### `tests/console/test_monitor_flow_buttons.py`
+
+Design 0011 §12.4 and §12.9 (how the focus moves; narrow windows), on the Monitor's Flow view (board K3): its keys bar holds the view's keys at the columns they stood at before they were buttons, at 160, 128, 88 and 60 columns; Tab from the flow's boxes reaches the keys bar, and Shift+Tab goes back into the page; the boxes keep their arrows while they have the focus, and the keys bar its own while it does; Enter on the bar's `enter open` presses the view's Enter once, opening the running box's session.
+
+- the flow views keys bar holds its keys where they stood
+- tab from the boxes reaches the keys bar and shift tab goes back into the page
+- the boxes keep their arrows and the keys bar its own
+- enter on the bars enter open presses the views enter once
 
 ### `tests/console/test_monitor_flow_view.py`
 
