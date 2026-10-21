@@ -47,7 +47,7 @@ engine's own defaults; the memory estimate follows fewer layers on the GPU.
   one the default it replaces; a line says a request's own sampling wins; the Presets page's Settings panel lists the
   sampling in effect (`console/options.py`, `console/presets.py`; `tests/components/runtime/test_console_options.py`,
   `tests/components/runtime/test_console_presets.py`).
-- [ ] **The Requests page:** a kept request's own sampling fields (`records.find`'s `sampling`; none when the request
+- [x] **The Requests page:** a kept request's own sampling fields (`records.find`'s `sampling`; none when the request
   was not kept), shown on the highlighted request beside the preset's values (`gateway/records.py`,
   `gateway/console/requests.py`; `tests/components/gateway/test_recent_requests.py`,
   `tests/console/test_requests_page.py`).

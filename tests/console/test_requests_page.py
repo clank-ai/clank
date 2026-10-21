@@ -8,17 +8,21 @@ and §8 (board E16): how many requests are listed is the note in the top border 
 yet." shows in that panel only while there is none; the live view is one panel, which `v` shows in place of the other
 two, and `v` again
 brings them back. Design 0016 §11: each request's cost ends its line, in the service's words, an estimate marked ≈; the
-highlighted one's details say the cost, how it was known, and its tokens in, cached, out and thinking."""
+highlighted one's details say the cost, how it was known, and its tokens in, cached, out and thinking. Design 0003 §4.1:
+the highlighted request says the sampling it sent of its own beside its preset's (the values the preset sets, else the
+engine's own defaults in words), none sent with the preset's in effect, or that it is not known when the gateway kept no
+copy of the request."""
 
 import json
 import re
 from datetime import UTC, datetime
+from typing import Any
 
 import pytest
 from textual.widgets import Label
 
 from clank.client import Client
-from clank.components.gateway.console.requests import request_line
+from clank.components.gateway.console.requests import request_line, sampling_line
 from clank.console.app import ClankConsole
 from clank.console.panel import Panel
 from clank.console.snapshot import render_text
@@ -179,3 +183,40 @@ async def test_each_requests_cost_shows_in_the_services_words_an_estimate_marked
     assert "cost $0.01, OpenRouter's own figure, from the answer · tokens 20,000 in (19,000 cached), 600 out, 120 " in (
         shown
     )
+
+
+PRESET_SAMPLING: list[dict[str, Any]] = [
+    {"key": "sampling.temperature", "value": None, "engine_default_words": "1.0 thinking, 0.7 not thinking"},
+    {"key": "sampling.top_p", "value": 0.9, "engine_default_words": "0.95 thinking, 0.80 not thinking"},
+    {"key": "sampling.repeat_penalty", "value": None, "engine_default_words": "1 (none)"},
+]
+
+
+def test_the_sampling_a_request_sent_is_shown_beside_its_presets() -> None:
+    sent = {"temperature": 0.55, "top_p": 1, "repetition_penalty": 1.1}
+    assert sampling_line(sent, PRESET_SAMPLING) == (
+        "sampling  sent: temperature 0.55, top_p 1, repetition_penalty 1.1, which win over the preset's: temperature "
+        "1.0 thinking, 0.7 not thinking (the engine's own) · top_p 0.9 · repeat_penalty 1 (none) (the engine's own)"
+    )
+    assert sampling_line({}, PRESET_SAMPLING) == (
+        "sampling  none sent; the preset's: temperature 1.0 thinking, 0.7 not thinking (the engine's own) · top_p 0.9 "
+        "· repeat_penalty 1 (none) (the engine's own)"
+    )
+    assert sampling_line(sent, None) == "sampling  sent: temperature 0.55, top_p 1, repetition_penalty 1.1"
+    assert sampling_line(None, PRESET_SAMPLING) == "sampling  not known: the gateway kept no copy of the request"
+
+
+async def test_f7_shows_the_sampling_a_request_sent_beside_its_presets(kernel: Kernel, client: Client) -> None:
+    folder = kernel.home.logs / "traffic"
+    folder.mkdir(parents=True, exist_ok=True)
+    row = record("r-1", "2026-10-15T01:00:00Z", asked="Explain censoring")
+    row["request"] = {**row["request"], "temperature": 0.55}
+    (folder / "2026-10-15.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+    app = ClankConsole(client, now=lambda: NOW, zone=UTC, home=kernel.home, page="requests")
+    async with app.run_test(size=(200, 50)) as pilot:
+        await settle(pilot, lambda: "which win over the preset's" in text(app), seconds=10)
+        shown = text(app).splitlines()
+    assert (
+        "sampling  sent: temperature 0.55, which win over the preset's: temperature 1.0 thinking, 0.7 not thinking "
+        "(the engine's own)"
+    ) in shown

@@ -3,7 +3,8 @@ days' files and from each file's end, each in brief (who asked, its status, its 
 token, total time and speed, the start of what was asked); one is found by its id with what was asked (the last
 message the user wrote) and what was answered. A line still being written is skipped. Design 0004 §2: a request the
 loop guard stopped says so in brief. Design 0012 §3: a record in brief names its session and its parent, from the
-headers it kept."""
+headers it kept. Design 0003 §4.1: a request found by its id says the sampling it sent of its own (its temperature,
+top_p and the rest), none when it sent none, and not known when the gateway kept no copy of it."""
 
 import json
 from pathlib import Path
@@ -87,3 +88,17 @@ def test_a_record_in_brief_names_its_session_and_its_parent(tmp_path: Path) -> N
     shown = find(tmp_path, "r-2")
     assert shown is not None
     assert (shown["session"], shown["parent"]) == ("ses_child", "ses_root")
+
+
+def test_a_request_found_says_the_sampling_it_sent_of_its_own(tmp_path: Path) -> None:
+    sent = record("r-1", "2026-10-21T01:00:00Z")
+    sent["request"] = {**sent["request"], "temperature": 0.55, "top_p": 1, "repetition_penalty": 1.1, "stream": True}
+    plain = record("r-2", "2026-10-21T01:00:01Z")
+    unkept = {**record("r-3", "2026-10-21T01:00:02Z"), "request": None}
+    write(tmp_path, "2026-10-21", [sent, plain, unkept])
+    found = [find(tmp_path, id) for id in ("r-1", "r-2", "r-3")]
+    assert [each["sampling"] if each else "missing" for each in found] == [
+        {"temperature": 0.55, "top_p": 1, "repetition_penalty": 1.1},
+        {},
+        None,
+    ]

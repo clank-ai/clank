@@ -4,7 +4,8 @@ A line a request: when, who asked (OpenCode, a script) and for which role, its s
 of it the engine had cached, its answer in tokens, how long until its first token and in all, its speed, and a mark
 when the gateway sent it again after its engine broke off, stopped it because it repeated itself (`looped`), or told
 OpenCode the context was full when its engine refused it so (`full`, decision 0090: OpenCode compacts on it). The
-highlighted request shows what was asked (the last message the user wrote) and what was answered. The list is read
+highlighted request shows the sampling it sent of its own beside its preset's (design 0003 §4.1: a request's own
+values win over the preset's), what was asked (the last message the user wrote) and what was answered. The list is read
 again when the gateway has served another request (its activity, which the console follows); `r` reads it now. The
 records are the gateway's own (`logs/traffic`), so a request made while the console was closed is there too.
 
@@ -74,9 +75,38 @@ def cost_line(cost: dict[str, Any]) -> str:
     return f"cost {cost['said']}, {cost.get('how_said', '')} · tokens {counted} · {cost.get('model', '')}"
 
 
-def detail_lines(found: dict[str, Any], zone: Any = None, cost: dict[str, Any] | None = None) -> list[Content]:
-    """A request whole: where it went, its numbers (its cost, as the service knows it), what was asked, what was
-    answered."""
+def sampling_line(sent: dict[str, Any] | None, preset: list[dict[str, Any]] | None) -> str:
+    """The sampling a request sent of its own, which wins over its engine's, beside its preset's for the same fields
+    (each value the preset sets, else the engine's own default in words); none sent, the preset's in effect; not known
+    when the gateway kept no copy of the request (design 0003 §4.1)."""
+    if sent is None:
+        return "sampling  not known: the gateway kept no copy of the request"
+    own = {str(each["key"]).removeprefix("sampling."): each for each in preset or []}
+
+    def in_effect(name: str) -> str:
+        each = own[name]
+        if each["value"] is not None:
+            return f"{name} {each['value']}"
+        return f"{name} {each['engine_default_words']} (the engine's own)"
+
+    if not sent:
+        return "sampling  none sent" + (f"; the preset's: {' · '.join(map(in_effect, own))}" if own else "")
+    asked = f"sampling  sent: {', '.join(f'{name} {value}' for name, value in sent.items())}"
+    names = [name for name in dict.fromkeys(FIELDS.get(name, name) for name in sent) if name in own]
+    return asked + (f", which win over the preset's: {' · '.join(map(in_effect, names))}" if names else "")
+
+
+FIELDS = {"repetition_penalty": "repeat_penalty"}  # a request's field named otherwise than its preset's option
+
+
+def detail_lines(
+    found: dict[str, Any],
+    zone: Any = None,
+    cost: dict[str, Any] | None = None,
+    presets: list[dict[str, Any]] | None = None,
+) -> list[Content]:
+    """A request whole: where it went, its numbers (its cost, as the service knows it), the sampling it sent beside its
+    preset's, what was asked, what was answered."""
     lines = [
         painted(request_line(found, zone, cost), "failed" if found["error"] else "done"),
         Content(
@@ -87,6 +117,9 @@ def detail_lines(found: dict[str, Any], zone: Any = None, cost: dict[str, Any] |
     ]
     if cost:
         lines.append(Content(cost_line(cost)))
+    if "sampling" in found:
+        preset = next((each for each in presets or [] if each["id"] == found["preset"]), None)
+        lines.append(Content(sampling_line(found["sampling"], preset.get("sampling") if preset else None)))
     if found["error"]:
         lines.append(Content.assemble(("error: ", "$clank-failed"), found["error"]))
     if found["notes"]:
@@ -210,7 +243,9 @@ class RequestsPage(Page):
             "'again' marks a request the gateway sent again after its engine broke off; 'looped' one the loop guard "
             "stopped because the answer repeated itself (its error says what repeated); 'full' one its engine refused "
             "because the context was full, which OpenCode was told so that it compacts the session and goes on.",
-            "The highlighted request shows what was asked (the last message the user wrote) and what was answered.",
+            "The highlighted request shows what was asked (the last message the user wrote) and what was answered, and "
+            "the sampling it sent of its own (OpenCode may send its own temperature), which wins over its preset's, "
+            "beside the preset's values: those it sets, else the engine's own defaults (design 0003 §4.1).",
             "v shows the newest request live, as the model writes it: its thinking (dimmed), its answer and its tool "
             "calls (in color), with what it does now and its speed; v again goes back to the list.",
         ]
@@ -315,5 +350,5 @@ class RequestsPage(Page):
         selected = self._selected()
         if selected is None or selected["id"] != id:
             return
-        detail = detail_lines(found, self.console.zone, self.costs.get(id))
+        detail = detail_lines(found, self.console.zone, self.costs.get(id), self.console.data.presets)
         self.query_one("#request-detail", Label).update(Content("\n").join(detail))

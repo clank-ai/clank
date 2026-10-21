@@ -8,7 +8,8 @@ saying how long it was; a header that carries a credential is never kept (its na
 older than the days kept is removed when the first record of a day is written. Writes are serialized, so records from
 requests that end together never interleave. `recent` reads the newest records back, each summed up (who asked, in
 which session, how it went, its tokens and its speed), from the files' ends; `find` reads one with what was asked and
-answered (the console's Requests page).
+answered (the console's Requests page), and the sampling it sent of its own (`sampling`: none when it sent none, `None`
+when its request was not kept; design 0003 §4.1).
 """
 
 import json
@@ -87,7 +88,8 @@ def find(folder: Path, id: str) -> dict[str, Any] | None:
             continue
         record = _parsed(line)
         if record is not None and record.get("id") == id:
-            request = record.get("request") or {}
+            kept = record.get("request")
+            request = kept or {}
             return {
                 **summary(record),
                 "asked": _last_user(request.get("messages") or [])[:SHOWN],
@@ -97,6 +99,7 @@ def find(folder: Path, id: str) -> dict[str, Any] | None:
                 "slot": record.get("slot"),
                 "wait_ms": record.get("wait_ms"),
                 "max_tokens": request.get("max_tokens"),
+                "sampling": {name: request[name] for name in SAMPLING if name in request} if kept else None,
             }
     return None
 
@@ -150,6 +153,9 @@ def _said(error: Any) -> str:
 
 
 SHOWN = 6000  # characters of a request's question and answer a client is given
+# The sampling fields a request may send of its own, which win over its engine's (design 0003 §4.1).
+SAMPLING = ("temperature", "top_p", "top_k", "min_p", "presence_penalty", "frequency_penalty", "repeat_penalty",
+            "repetition_penalty", "seed")  # fmt: skip
 BRIEF = 160
 CHUNK = 1 << 20
 
