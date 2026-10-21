@@ -15,10 +15,10 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 3.1 | Options | `tests/components/runtime/test_options.py` (8) |
 | 3.2 | Launch options and request options | none yet |
 | 3.3 | Roles | none yet |
-| 3.4 | Presets | `tests/components/runtime/test_presets.py` (6) |
+| 3.4 | Presets | `tests/components/runtime/test_presets.py` (8) |
 | 3.5 | Where each value comes from | `tests/components/runtime/test_runtime_api.py` (6) |
 | 3.6 | Checking a change before it is applied | `tests/components/runtime/test_catalog.py` (7), `tests/components/runtime/test_check.py` (5), `tests/components/runtime/test_gpu.py` (4), `tests/components/runtime/test_kvmem.py` (10), `tests/components/runtime/test_model_commands.py` (3), `tests/components/runtime/test_options.py` (8) |
-| 3.7 | Files | `tests/components/runtime/test_presets.py` (6) |
+| 3.7 | Files | `tests/components/runtime/test_presets.py` (8) |
 | 3.8 | Checking and testing a configuration before applying it | `tests/components/runtime/test_check.py` (5) |
 | 4 | Switching, failures and safety | see its subsections |
 | 4.1 | A slot's states | `tests/components/runtime/test_load.py` (9), `tests/components/runtime/test_state.py` (4) |
@@ -105,9 +105,9 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What M1 delivers, and what moved | none yet |
 | 2 | Where engines run: hosts | `tests/components/runtime/test_hosts.py` (3), `tests/components/runtime/test_local_host.py` (10), `tests/components/runtime/test_wsl_host.py` (10), `tests/contract/test_host.py` (3) |
-| 3 | Records | `tests/components/runtime/test_catalog.py` (7), `tests/components/runtime/test_presets.py` (6), `tests/components/runtime/test_state.py` (4) |
+| 3 | Records | `tests/components/runtime/test_catalog.py` (7), `tests/components/runtime/test_presets.py` (8), `tests/components/runtime/test_state.py` (4) |
 | 4 | Engine adapters: KVMem and NInfer | `tests/components/runtime/test_kvmem.py` (10), `tests/components/runtime/test_options.py` (8), `tests/contract/test_engine.py` (4) |
-| 4.1 | Sampling and the GPU's layers | `tests/components/runtime/test_kvmem_sampling.py` (12), `tests/components/runtime/test_llamacpp_sampling.py` (6), `tests/components/runtime/test_options.py` (8), `tests/components/runtime/test_shipped_presets.py` (2) |
+| 4.1 | Sampling and the GPU's layers | `tests/components/runtime/test_kvmem_sampling.py` (12), `tests/components/runtime/test_llamacpp_sampling.py` (6), `tests/components/runtime/test_options.py` (8), `tests/components/runtime/test_presets.py` (8), `tests/components/runtime/test_shipped_presets.py` (2) |
 | 5 | NInfer on this machine (retired) | none yet |
 | 6 | A slot, and switching it | `tests/components/runtime/test_state.py` (4) |
 | 6.1 | Load, unload, switch | `tests/components/runtime/test_load.py` (9), `tests/components/runtime/test_model_commands.py` (3), `tests/components/runtime/test_switch.py` (7) |
@@ -2389,7 +2389,7 @@ Design 0001 §3.1 and §3.6, design 0003 §4 and §4.1: an engine adapter checks
 
 ### `tests/components/runtime/test_presets.py`
 
-Design 0003 §3 and design 0001 §3.4, §3.7: presets are readable files, Clank's own and the user's, each naming its engine, the engine's version, its model and the options that differ from the defaults; the API lists them and the engines, and `clank preset list` and `clank preset show` print them, as JSON with `--json`.
+Design 0003 §3 and design 0001 §3.4, §3.7: presets are readable files, Clank's own and the user's, each naming its engine, the engine's version, its model and the options that differ from the defaults; the API lists them and the engines, and `clank preset list` and `clank preset show` print them, as JSON with `--json`. Design 0003 §4.1: each preset says the sampling it gives its engine, each value it sets or else the engine's own default in words, and `clank preset show` prints it, saying that a request's own values win.
 
 - a preset file is read with its engine model and options
 - a preset with an unknown field is refused naming its line
@@ -2397,6 +2397,8 @@ Design 0003 §3 and design 0001 §3.4, §3.7: presets are readable files, Clank'
 - the preset commands print them and json for scripts
 - each listed preset says what would stop it from running
 - preset show says what would stop a preset from running
+- each preset says its sampling each value set or the engines own default
+- preset show prints the sampling in effect and that a requests own values win
 
 ### `tests/components/runtime/test_recipes.py`
 

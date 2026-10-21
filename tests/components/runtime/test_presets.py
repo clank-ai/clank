@@ -1,6 +1,8 @@
 """Design 0003 §3 and design 0001 §3.4, §3.7: presets are readable files, Clank's own and the user's, each naming its
 engine, the engine's version, its model and the options that differ from the defaults; the API lists them and the
-engines, and `clank preset list` and `clank preset show` print them, as JSON with `--json`."""
+engines, and `clank preset list` and `clank preset show` print them, as JSON with `--json`. Design 0003 §4.1: each
+preset says the sampling it gives its engine, each value it sets or else the engine's own default in words, and
+`clank preset show` prints it, saying that a request's own values win."""
 
 import json
 from collections.abc import Iterator
@@ -125,3 +127,38 @@ def test_preset_show_says_what_would_stop_a_preset_from_running(home: Home, kern
     listed = CliRunner().invoke(main, ["preset", "list"])
     assert "typo" in listed.output
     assert "1 problem" in listed.output
+
+
+def test_each_preset_says_its_sampling_each_value_set_or_the_engines_own_default(
+    home: Home, kernel: Kernel, http: TestClient
+) -> None:
+    write(home.config / "presets" / "cool.json", {**FAST, "title": "cool", "options": {"sampling.temperature": 0.6}})
+    kernel.settings.reload_changed()
+    presets = {preset["id"]: preset for preset in http.get("/api/v1/runtime/presets", headers=AUTH).json()}
+    sampling = {each["key"]: each for each in presets["fast-64k"]["sampling"]}
+    assert len(sampling) == 8
+    temperature = sampling["sampling.temperature"]
+    assert (temperature["value"], temperature["source"]) == (None, "unset")
+    assert temperature["engine_default_words"] == "1.0 thinking, 0.7 not thinking"
+    cool = {each["key"]: each for each in presets["cool"]["sampling"]}
+    assert (cool["sampling.temperature"]["value"], cool["sampling.temperature"]["source"]) == (0.6, "preset")
+    shown = http.get("/api/v1/runtime/presets/cool", headers=AUTH).json()
+    assert [each["key"] for each in shown["sampling"]] == list(cool)
+
+
+def test_preset_show_prints_the_sampling_in_effect_and_that_a_requests_own_values_win(
+    home: Home, kernel: Kernel, http: TestClient
+) -> None:
+    write(home.config / "presets" / "cool.json", {**FAST, "title": "cool", "options": {"sampling.temperature": 0.6}})
+    kernel.settings.reload_changed()
+    shown = CliRunner().invoke(main, ["preset", "show", "cool"])
+    assert shown.exit_code == 0, shown.output
+    lines = shown.output.splitlines()
+    assert "  sampling (a request's own values win over these):" in lines
+    assert any(line.split() == ["temperature", "0.6", "(the", "preset)"] for line in lines)
+    assert any(
+        line.strip().startswith("top_p") and line.endswith("the engine's own: 0.95 thinking, 0.80 not thinking")
+        for line in lines
+    )
+    assert any(line.strip().startswith("seed") and line.endswith("the engine's own: random, for each request")
+               for line in lines)  # fmt: skip

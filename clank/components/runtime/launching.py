@@ -16,12 +16,13 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any, Literal
 
 from clank.components.runtime.adapters import ENGINES
-from clank.components.runtime.adapters.engine import EngineAdapter, Launch, Plan, flags
+from clank.components.runtime.adapters.engine import EngineAdapter, EngineError, Launch, Plan, flags
 from clank.components.runtime.catalog import ModelEntry, ModelFileEntry, catalog, preset_problems
 from clank.components.runtime.gpu import fit
 from clank.components.runtime.hosts.host import EngineHost
 from clank.components.runtime.kinds import ModelFile, Preset
 from clank.components.runtime.state import InstallRecord
+from clank.kernel.adapters import AdapterError
 from clank.kernel.settings import Loaded
 
 if TYPE_CHECKING:
@@ -290,6 +291,25 @@ def options_view(engine: EngineAdapter, options: Mapping[str, Any]) -> list[dict
             }
         )
     return shown
+
+
+SAMPLING = "sampling."  # the keys of an engine's sampling options (design 0003 §4.1)
+
+
+def sampling_view(preset: Preset) -> list[dict[str, Any]]:
+    """The sampling a preset gives its engine (design 0003 §4.1): each sampling option's key and label, its value and
+    where it comes from (the preset, or unset), and what the engine does without it, in words; none for a serving setup
+    or a version no adapter knows."""
+    try:
+        engine = ENGINES.get(preset.engine)(preset.engine_version)
+    except (AdapterError, EngineError):
+        return []
+    shown = ("key", "label", "value", "source", "engine_default_words")
+    return [
+        {name: option[name] for name in shown}
+        for option in options_view(engine, preset.options)
+        if str(option["key"]).startswith(SAMPLING)
+    ]
 
 
 def plan_view(runtime: "Runtime", name: str) -> dict[str, Any]:

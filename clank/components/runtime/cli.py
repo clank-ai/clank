@@ -3,7 +3,8 @@
 list|install|adopt|uninstall`.
 
 Each is a client of the API (design 0002 §2.15): readable text by default, JSON with `--json`. A preset is named by its
-id or its title.
+id or its title; `clank preset show` prints its settings and the sampling it gives its engine, each value it sets or
+else the engine's own default in words (design 0003 §4.1).
 """
 
 import json
@@ -207,6 +208,19 @@ def show(name: str, as_json: bool) -> None:
         click.echo(f"  notes: {found['notes']}")
     for problem in found["problems"]:
         click.echo(f"  cannot run: {problem}")
+    if found.get("sampling"):
+        click.echo("  sampling (a request's own values win over these):")
+        for each in found["sampling"]:
+            click.echo(f"    {each['key'].removeprefix('sampling.'):<18} {sampling_text(each)}")
+
+
+def sampling_text(option: dict[str, Any]) -> str:
+    """A sampling option in effect, as people read it: its value and that the preset sets it, else the engine's own
+    default in words (design 0003 §4.1)."""
+    if option["value"] is not None:
+        return f"{option['value']} (the preset)" if option["source"] == "preset" else f"{option['value']}"
+    words = option["engine_default_words"]
+    return f"the engine's own: {words}" if words else "(not set)"
 
 
 @click.group()

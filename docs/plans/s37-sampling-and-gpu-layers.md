@@ -39,7 +39,7 @@ engine's own defaults; the memory estimate follows fewer layers on the GPU.
   `--min-p`, `--presence-penalty`, `--frequency-penalty`, `--repeat-penalty`, `--seed`), their defaults in words with
   the model file's own where it may carry one; unset, no flag (`llamacpp.py`;
   `tests/components/runtime/test_llamacpp_sampling.py`).
-- [ ] **The preset's sampling in its view and `clank preset show`:** `GET /runtime/presets` and
+- [x] **The preset's sampling in its view and `clank preset show`:** `GET /runtime/presets` and
   `/runtime/presets/{name}` give each preset's `sampling` (each option's value or its engine's default in words);
   `clank preset show` prints them under "sampling" with a request's own values said to win
   (`service.py`, `cli.py`; `tests/components/runtime/test_presets.py`).
