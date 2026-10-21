@@ -3,16 +3,19 @@ and the page on screen, without the mouse (the owner's request, 2026-10-15). The
 Enter, goes from the menu into the page: where the focus was when the page was left, else to its first list, or to the
 page itself when it has none, so that Up and Down scroll it. Right and Left move between a page's lists, and Left from
 its first list goes back to the menu, where Up and Down open the other pages again. A window's arrows leave the focus
-behind it alone."""
+behind it alone. While no page is on screen (as the console quits and its pages are taken down), the focus moving is
+not remembered for a page and raises nothing."""
 
 from typing import Any
 
 import pytest
+from textual import events
 from textual.widgets import ListView
 
 from clank.client import Client
 from clank.console.app import ClankConsole
 from clank.console.details import DetailsScreen
+from clank.console.keysbar import KeysBar
 from clank.kernel.home import Home
 from tests.console.frames import FOLDER, settle
 
@@ -112,3 +115,21 @@ async def test_the_arrows_in_a_window_leave_the_focus_behind_it_alone(client: Cl
         await pilot.press("escape")
         await settle(pilot, lambda: not isinstance(app.screen, DetailsScreen))
         assert focused(app) == "menu"
+
+
+async def test_while_no_page_is_on_screen_the_focus_moving_remembers_nothing_and_raises_nothing(
+    client: Client, home: Home
+) -> None:
+    app = make(client, home, "operations")
+    async with app.run_test(size=(120, 40)) as pilot:
+        await settle(pilot, lambda: focused(app) == "menu")
+        bar = app.query_one("#keys", KeysBar)
+        shown, app._page = app._page, "taken-down"  # as when the console quits: its pages go before the focus moves
+        try:
+            app.on_descendant_focus(events.DescendantFocus(bar))
+            assert "taken-down" not in app._left
+            assert app.unable_button(bar.buttons[0]) == ""
+            app.hint(bar.buttons[0], "")
+            app.unhint()
+        finally:
+            app._page = shown

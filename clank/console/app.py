@@ -409,8 +409,11 @@ class ClankConsole(App[str]):
 
     def hint(self, pressed: Button, reason: str) -> None:
         """While a group has the focus (design 0011 §12.6): what its focused button does and how it is pressed, in
-        `quiet`, or why it cannot act now, in `attention`; cut to the line's one row with the style's mark."""
-        line = self.query_one("#message", Label)
+        `quiet`, or why it cannot act now, in `attention`; cut to the line's one row with the style's mark. Nothing
+        while the console is taken down."""
+        line = next(iter(self.query("#message").results(Label)), None)
+        if line is None:
+            return
         if reason:
             text = f"{pressed.label} {pressed.said}: {reason}"
         else:
@@ -423,19 +426,21 @@ class ClankConsole(App[str]):
 
     def unhint(self) -> None:
         """The focus left the groups: what the message line said of a button goes, unless a message came since."""
-        if self._hinted is None:
+        line = next(iter(self.query("#message").results(Label)), None)
+        if self._hinted is None or line is None:
             return
-        line = self.query_one("#message", Label)
         line.update("")
         line.set_class(False, "error")
         self._hinted = None
 
     def on_descendant_focus(self, event: events.DescendantFocus) -> None:
         """Remember what had the focus before the keys bar, for the keys bar's own `?`, and where the focus was in the
-        page on screen, for when the focus comes back into it."""
+        page on screen, for when the focus comes back into it; none while the pages are taken down, as the console
+        quits."""
         if not isinstance(event.widget, KeysBar):
             self._before_bar = event.widget
-        if self._page and self._current() in event.widget.ancestors:
+        page = self._shown_page()
+        if page is not None and page in event.widget.ancestors:
             self._left[self._page] = event.widget
 
     def action_page(self, id: str) -> None:
@@ -486,9 +491,10 @@ class ClankConsole(App[str]):
     def unable_button(self, pressed: Button) -> str:
         """Why a button cannot act now: its page's word for its key ("" when it can, and for a key that acts anywhere
         or stands for several)."""
-        if pressed.key.key in ACT_ANYWHERE or " " in pressed.key.key:
+        page = self._shown_page()
+        if pressed.key.key in ACT_ANYWHERE or " " in pressed.key.key or page is None:
             return ""
-        return self._current().unable(pressed.key.key)
+        return page.unable(pressed.key.key)
 
     def _flash(self, key: str) -> None:
         """Every group on the screen that shows this key shows it pressed, for a moment; a group in a list's row only
@@ -579,6 +585,11 @@ class ClankConsole(App[str]):
 
     def _current(self) -> Page:
         return self.query_one(f"#page-{self._page}", Page)
+
+    def _shown_page(self) -> Page | None:
+        """The page on screen, or None while the pages are taken down (as the console quits), for what the focus moving
+        then asks of it."""
+        return next(iter(self.query(f"#page-{self._page}").results(Page)), None) if self._page else None
 
     def _stops(self) -> list[Widget]:
         """Where Left and Right move the focus in the page on screen: what in it takes the focus, in order, or the page
