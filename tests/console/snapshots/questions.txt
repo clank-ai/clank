@@ -1,4 +1,4 @@
- ◆ CLANK  Clank   ● service  ● docker  ● no model  ● gateway  ● 2 waiting                                         13:54
+ ◆ CLANK  Clank   ● service up 2h14m  ● docker running  ● no model  ● gateway stopped  ● 2 questions waiting      13:54
 F4 This folder         ✗ 3   │ ┌─ Waiting for your answer · 2 ────────────────────────────────────────────────────────┐
 1 Home                       │ │ q-000000  Stop Docker Desktop?   asked 11:40:00 by Clank                             │
 2 Questions            ● 2   │ │ 2 containers that Clank did not start are running: another-model-relay,              │

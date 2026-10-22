@@ -3,8 +3,8 @@
 [Design 0011](../design/0011-the-consoles-look.md) §13, decisions
 [0125](../decisions/0125-the-console-takes-the-websites-look.md) and
 [0126](../decisions/0126-the-console-records-what-it-draws.md). Asked for by the owner on 2026-10-22, before the first
-long run on the Stabilizer Rank Challenge: the console must look "almost exactly" as the website draws it, the menu
-must be possible to hide, and a run must be recorded as the terminal showed it.
+long unattended run: the console must look "almost exactly" as the website draws it, the menu must be possible to
+hide, and a run must be recorded as the terminal showed it.
 
 ## Tasks
 

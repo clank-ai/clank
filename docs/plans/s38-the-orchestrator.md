@@ -3,7 +3,7 @@
 [Design 0013](../design/0013-flows.md) §16, decisions [0123](../decisions/0123-the-orchestrator-steers-a-run-at-checkpoints.md)
 and [0124](../decisions/0124-the-orchestrators-limits-are-always-set.md); the survey behind it,
 [docs/research/orchestration.md](../research/orchestration.md). Asked for by the owner on 2026-10-22, built the same
-day before the first long run on the Stabilizer Rank Challenge.
+day, before the first long unattended run.
 
 **Goal:** a flow setting that lets a model steer a run on its own: a checkpoint after each box a model ran and at each
 question, a fresh Plan-mode session that decides with `flow_decide`, within limits that are always set, the ledger
@@ -30,4 +30,4 @@ kept by Clank.
 - [x] 5. The planning knows it: `prompts/build.md` lists `orchestrator.*` (and `accept_command`); a draft may turn it on.
 - [x] 6. The console: the Flow view's Orchestrator panel (`flowpanels.orchestrator`, the view's `orchestrator`), `O`
   to turn it on or off, `L` for the ledger (with plan s39, the console as the website shows it).
-- [ ] 7. A live run on the owner's machine (the Stabilizer Rank Challenge's first long run), its ledger read back.
+- [ ] 7. A live run (the first long unattended one), its ledger read back.
