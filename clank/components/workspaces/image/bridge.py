@@ -89,7 +89,7 @@ import urllib.request
 from typing import Any
 
 FIRST, LAST = (int(part) for part in os.environ.get("CLANK_BRIDGE_PORTS", "4096-4127").split("-"))
-TIMEOUT = 10.0
+TIMEOUT = float(os.environ.get("CLANK_BRIDGE_TIMEOUT", "10"))  # seconds a request waits for its answer
 TEXT = 6000  # characters of a part's text kept
 OUTPUT = 1500  # of a tool's output
 INPUT = 400  # of a tool's input
@@ -188,7 +188,9 @@ def implement(port: int, text: str, title: str, agent: str = BUILD, wait: float 
     """A new session whose first message `agent` is sent (`build` unless named), shown in the terminal interface once
     that message is there (a session shown takes its last message's agent, measured on OpenCode 1.19). With `wait`, a
     window still starting is waited for that many seconds, and the session is shown again after `SHOW_AGAIN`'s pauses,
-    since a terminal interface just started may not hear the first (design 0013 §15)."""
+    since a terminal interface just started may not hear the first (design 0013 §15). Each request then waits for its
+    answer as long as the window was waited for: OpenCode readies itself on a new window's first requests, which took
+    longer than `TIMEOUT` on the owner's machine."""
     if not text.strip():
         raise ValueError("an empty message is not sent")
     waited = not listening(port)
@@ -197,11 +199,16 @@ def implement(port: int, text: str, title: str, agent: str = BUILD, wait: float 
         if time.monotonic() >= deadline:
             raise ValueError(f"no OpenCode window answered on port {port} within {wait:g} seconds")
         time.sleep(WINDOW_STEP)
-    session = call(port, "POST", "/session", {"title": title} if title else {})["id"]
-    call(port, "POST", f"/session/{session}/prompt_async", {"agent": agent, "parts": [{"type": "text", "text": text}]})
+    patient = max(TIMEOUT, wait)
+    session = call(port, "POST", "/session", {"title": title} if title else {}, timeout=patient)["id"]
+    asked = {"agent": agent, "parts": [{"type": "text", "text": text}]}
+    call(port, "POST", f"/session/{session}/prompt_async", asked, timeout=patient)
     deadline = time.monotonic() + SHOWN_SECONDS
     while time.monotonic() < deadline:
-        sent = call(port, "GET", f"/session/{session}/message") or []
+        try:
+            sent = call(port, "GET", f"/session/{session}/message", timeout=patient) or []
+        except OSError:  # no answer yet: the message is looked for again until the deadline
+            sent = []
         if any((message.get("info") or {}).get("role") == "user" for message in sent):
             break
         time.sleep(0.2)

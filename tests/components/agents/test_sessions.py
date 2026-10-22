@@ -64,6 +64,7 @@ class OpenCode(BaseHTTPRequestHandler):
     sent: ClassVar[list[tuple[str, Any]]] = []
     mcp: ClassVar[dict[str, dict[str, str]]] = {}
     unshown: ClassVar[bool] = False  # its terminal interface refuses to show a session
+    slow: ClassVar[float] = 0.0  # seconds it takes to answer a new session, as a window just started readies itself
 
     def do_GET(self) -> None:
         answers: dict[str, Any] = {
@@ -88,6 +89,7 @@ class OpenCode(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(length) or b"null")
         OpenCode.sent.append((self.path, body))
         if self.path == "/session":
+            time.sleep(OpenCode.slow)
             self._json({"id": "ses_2"})
         elif self.path == "/mcp":
             OpenCode.mcp[body["name"]] = {"status": "connected"}
@@ -129,13 +131,14 @@ def opencode() -> Iterator[int]:
 
 
 def bridge(
-    port: int, *argv: str, given: dict[str, Any] | None = None, ports: str = "", again: str = ""
+    port: int, *argv: str, given: dict[str, Any] | None = None, ports: str = "", again: str = "", answer: str = ""
 ) -> dict[str, Any]:
     shown_again = {"CLANK_BRIDGE_SHOW_AGAIN": again} if again else {}
+    answered = {"CLANK_BRIDGE_TIMEOUT": answer} if answer else {}  # how long a request waits for its answer
     done = subprocess.run(
         [sys.executable, str(BRIDGE), *argv], input=json.dumps(given) if given is not None else "",
         capture_output=True, text=True, timeout=60, creationflags=background_flags(),
-        env={**__import__("os").environ, "CLANK_BRIDGE_PORTS": ports or f"{port}-{port}", **shown_again},
+        env={**__import__("os").environ, "CLANK_BRIDGE_PORTS": ports or f"{port}-{port}", **shown_again, **answered},
     )  # fmt: skip
     found: dict[str, Any] = json.loads(done.stdout)
     return found
@@ -401,6 +404,23 @@ def test_the_bridge_waits_for_a_window_that_answers_late_sends_to_the_planner_an
     refused = bridge(silent, "implement", str(silent), given={**asked, "wait": 0.5})
     assert not refused["ok"]
     assert f"no OpenCode window answered on port {silent}" in refused["error"]
+
+
+def test_a_planning_session_waits_for_a_new_windows_slow_first_answers_and_starts(opencode: int) -> None:
+    """Design 0013 §15: OpenCode readies itself on a new window's first requests, which took longer than a request's
+    usual wait for its answer on the owner's machine (2026-10-20 and 2026-10-22: the planning failed, "timed out", and
+    no session was started). A planning's session gives each of its requests the whole wait the planning has."""
+    OpenCode.slow = 1.0
+    try:
+        asked = {"text": "Build a flow.", "title": "flow · building the flow", "agent": "planner", "wait": 20}
+        found = bridge(opencode, "implement", str(opencode), given=asked, answer="0.3")
+    finally:
+        OpenCode.slow = 0.0
+    assert found == {"ok": True, "session": "ses_2", "shown": True}
+    assert OpenCode.sent[:2] == [
+        ("/session", {"title": "flow · building the flow"}),
+        ("/session/ses_2/prompt_async", {"agent": "planner", "parts": [{"type": "text", "text": "Build a flow."}]}),
+    ]  # fmt: skip
 
 
 def test_the_bridge_shows_a_session_on_a_window_that_answers_late_and_again() -> None:
