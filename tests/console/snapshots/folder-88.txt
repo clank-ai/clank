@@ -1,8 +1,8 @@
  ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway                      13:54
 F4 This folder   ✗ │ ┌─ Get ready to work here ───────────────────────────────────────┐
-1 Home             │ │ Folder: /work/paper                                            │
+1 Home             │ │ Folder: work/paper                                             │
 2 Questions        │ │  1  Docker             ✓ running                               │
-3 History          │ │  2  This folder        ✗ refused: /work/paper is not a full    │
+3 History          │ │  2  This folder        ✗ refused: work/paper is not a full     │
 4 Docker         ● │ │                        path                                    │
 5 Machine          │ │  3  Its workspace      ✗ cannot open                           │
 6 Operations       │ │  4  The sandbox image  ✗ not built yet: opening the workspace  │

@@ -1,10 +1,10 @@
  ◆ CLANK  paper   ● service  ● docker  ● no model  ●… 13:54
 F4 This folder   ✗ │ ┌─ Get ready to work here ─────────┐
-1 Home             │ │ Folder: /work/paper              │
+1 Home             │ │ Folder: work/paper               │
 2 Questions        │ │  1  Docker                       │
 3 History          │ │ ✓ running                        │
 4 Docker         ● │ │  2  This folder                  │
-5 Machine          │ │ ✗ refused: /work/paper is not a  │
+5 Machine          │ │ ✗ refused: work/paper is not a   │
 6 Operations       │ │ full path                        │
 7 Records          │ │  3  Its workspace                │
 8 Models         ● │ │ ✗ cannot open                    │

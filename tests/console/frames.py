@@ -25,6 +25,19 @@ STAND_INS: list[tuple[re.Pattern[str], str | Callable[[re.Match[str]], str]]] = 
     (re.compile(r"\bq-[0-9a-f]{6}\b"), "q-000000"),
     (re.compile(r"\bop-[0-9a-f]{8}\b"), "op-00000000"),
     (re.compile(r"\bv\d+\.\d+\.\d+[\w.]*"), lambda found: re.sub(r"\d", "0", found.group(0))),
+    # The header names the folder the console started in: when that is this checkout, whatever its letters' case (the
+    # repository is checked out as "clank" on continuous integration), it reads "Clank", of the same width.
+    (
+        re.compile(r"(◆ CLANK  )(\S+)"),
+        lambda found: (
+            found.group(1)
+            + (
+                "Clank"
+                if found.group(2).lower() == Path.cwd().name.lower() and len(found.group(2)) == 5
+                else found.group(2)
+            )
+        ),
+    ),
 ]  # each keeps its line's width (a version's digits each a 0), so a panel's right border stands where it is drawn
 
 

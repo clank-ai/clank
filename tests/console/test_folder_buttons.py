@@ -17,15 +17,16 @@ from clank.console.app import ClankConsole
 from clank.console.buttons import Buttons
 from clank.console.pages import Page
 from clank.kernel.home import Home
-from tests.console.frames import FOLDER, assert_frame, frame_when, settle
+from tests.console.frames import assert_frame, frame_when, settle
 
 pytestmark = pytest.mark.anyio
 NOW = datetime(2026, 10, 11, 13, 54, tzinfo=UTC)
+REFUSED = "work/paper"  # not a full path: every system refuses it in the same words, so the frames match everywhere
 
 
 def make(client: Client, home: Home) -> ClankConsole:
     app = ClankConsole(client, now=lambda: NOW, zone=UTC, home=home, page="folder")
-    app.folder = FOLDER
+    app.folder = REFUSED
     return app
 
 

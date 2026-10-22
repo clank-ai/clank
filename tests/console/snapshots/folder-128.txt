@@ -1,8 +1,8 @@
  ◆ CLANK  paper   ● service up 2h14m  ● docker running  ● no model: Add a model  ● gateway stopped                        13:54
 F4 This folder         ✗ 4   │ ┌─ Get ready to work here ─────────────────────────────────────────────────────────────────────┐
-1 Home                       │ │ Folder: /work/paper                                                                          │
+1 Home                       │ │ Folder: work/paper                                                                           │
 2 Questions                  │ │  1  Docker             ✓ running                                                             │
-3 History                    │ │  2  This folder        ✗ refused: /work/paper is not a full path                             │
+3 History                    │ │  2  This folder        ✗ refused: work/paper is not a full path                              │
 4 Docker               ●     │ │  3  Its workspace      ✗ cannot open                                                         │
 5 Machine                    │ │  4  The sandbox image  ✗ not built yet: opening the workspace builds it (once)   press o to  │
 6 Operations                 │ │                        open the workspace                                                    │

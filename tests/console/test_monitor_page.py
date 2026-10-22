@@ -12,6 +12,7 @@ design 0012 §2: no stutter).
 Its frames: the Session view at 128, 88 and 60 columns (the page beside nothing, beside the machine column, and
 stacked), the Flow and Context views at 128."""
 
+import re
 from datetime import UTC, datetime
 from functools import partial
 from typing import Any
@@ -90,7 +91,8 @@ async def test_the_monitor_is_on_f10_listed_after_f9(client: Client, home: Home)
     app = make(client, home)
     async with app.run_test(size=(120, 40)):
         pages = [str(item.query_one(Label).content) for item in app.query("#menu .page")]
-    assert pages[-3:-1] == ["F9 Phone", "F10 Monitor"], "F12 Add a model after it"
+    names = [re.sub(r"\s{2,}.*$", "", page) for page in pages]  # each page's name, without the status it may show
+    assert names[-3:-1] == ["F9 Phone", "F10 Monitor"], "F12 Add a model after it"
 
 
 async def test_f10_opens_the_monitor_and_f10_again_moves_to_its_next_view_flow_session_context_and_round(
