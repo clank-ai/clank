@@ -37,4 +37,4 @@ Setup guide           M10    │
                              │
                              │
  13:54  the doctor runs: done
- d run the doctor  ? explain  f1 help  f5 machine column  q quit                                             ^p palette
+ d run the doctor  ? explain  f1 help  f5 machine column  q quit  ^b menu                                    ^p palette

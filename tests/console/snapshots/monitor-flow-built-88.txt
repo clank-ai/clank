@@ -1,50 +1,50 @@
  ◆ CLANK  paper   ● service up 9d1h  ● docker running  ● no model: Add a model  ● gateway stopped  ● 1 question waiting                                   12:41
-F4 This folder         ✗ 3   │  Flow   Session   Context                                                                  ┌─ Machine ──────────────────────────┐
-1 Home                       │ flow “A new simulation study” · workspace myproject · not run yet                          │ CPU  ██▉░░░░░░░░░░░░░░░░░░░░░  12% │
-2 Questions            ● 1   │                                                                                            │                                    │
-3 History                    │ ┌─ Flow ─────────────────────────────────────────────────────────────────── 6 waiting ─┐   │ 1s                 ▂       max 12% │
-4 Docker               ●     │ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐       │   │ thr  ▁▃▁▁▁▃▁▁▁▃▁▁▁▃▁▁ 16 threads   │
-5 Machine                    │ │ ┆ YOU                 ○┆┄┄▸┆ PLAN                ○┆┄┄▸┆ VERIFY              ○┆       │   │                                    │
-6 Operations                 │ │ ┆ Your brief           ┆   ┆ Write the plan       ┆   ┆ Check the plan       ┆       │   │ RAM  █████████░░░░░░░░░░░░░░░  38% │
-7 Records                    │ │ ┆ you                  ┆   ┆ main slot's model    ┆   ┆ main slot's model    ┆       │   │      24.0 GB of 64.0 GB            │
-8 Models               ●     │ │ ┆ BRIEF.md             ┆   ┆ PLAN.md              ┆   ┆ a verdict: pass or f…┆       │   │ 1s                 ▄       max 38% │
-9 Presets                    │ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄▴┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┬┘       │   │                                    │
-0 Providers and models       │ │                              ╰┄ fail ⟲ back ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯ ┆        │   │ GPU  ▊░░░░░░░░░░░░░░░░░░░░░░░   3% │
-F1 Help                      │ │             ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯        │   │                                    │
-F2 Launch options            │ │             ▾                                                                        │   │ 1s                 ▁        max 3% │
-F3 MCP servers               │ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐       │   │      RTX 5080 · 34°C · 18 W        │
-F6 Workspaces                │ │ ┆ DECOMPOSE           ○┆┄┄▸┆ INTEGRATE           ○┆┄┄▸┆ GATE                ○┆       │   │ VRAM ███░░░░░░░░░░░░░░░░░░░░░  13% │
-F7 Requests                  │ │ ┆ Break it into tasks  ┆   ┆ Put it together      ┆   ┆ You review the whole ┆       │   │      2.0 GB of 15.9 GB             │
-F8 CPU models                │ │ ┆ main slot's model    ┆   ┆ main slot's model    ┆   ┆ you                  ┆       │   │                                    │
-F9 Phone               ●     │ │ ┆ proposes tasks       ┆   ┆ SUMMARY.md           ┆   ┆ you decide           ┆       │   │ Disk read 12.0 MB/s · write 3.0 M… │
-F10 Monitor                  │ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘       │   │ 1s                 █ max 15.0 MB/s │
-F12 Add a model              │ │             ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯        │   │      C: █████████▍░░░░░░░░░░░  44% │
-─────────────────────────────│ │             ▾                                                                        │   │                                    │
-coming                       │ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                                             │   │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
-Sampling              M3     │ │ ┆ ▸ next flow          ┆                                                             │   │ 1s                 █  max 1.2 MB/s │
-Sessions              M3     │ │ ┆ made when approved   ┆                                                             │   └────────────────────────────────────┘
-Keys                  M3     │ │ ┆ brief from INTEGRATE ┆                                                             │
-Layout                M2     │ │ ┆                      ┆                                                             │   ┌─ Clank now ────────────────────────┐
-Tests and trials      M2     │ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                                             │   │ ● gateway stopped                  │
-Agents                M5     │ │                                                                                      │   └────────────────────────────────────┘
-Modes                 M5     │ │ ✓ done  ● running  ○ waiting  ✗ failed  ┄┄ proposed  ── pass  ── fail ⟲ back         │
-Changes               M6     │ │ ── now  ┄┄ not yet                                                                   │▁▁
-Network access        M7     │ └──────────────────────────────────────────────────────────────────────────────────────┘
-Skills                M8     │
-Files                 M9     │ ┌─ Selected ───────────────────────────────────────────────────────────────────────────┐
-Setup guide           M10    │ │ YOU · ○ waiting                                                                      │
-                             │ │ Your brief                                                                           │
-                             │ │ model   you                                                                          │
-                             │ │ status  ○ waiting                                                                    │
-                             │ │ writes  BRIEF.md                                                                     │
-                             │ │ next    PLAN Write the plan                                                          │
-                             │ └──────────────────────────────────────────────────────────────────────────────────────┘
-                             │
-                             │ ┌─ Models in this flow ────────────────────────────────────────────────────────────────┐
-                             │ │ ○ main slot's model · switches nothing · 4 boxes                                     │
-                             │ │ the other 2 are you                                                                  │
-                             │ │ e on a box picks another preset for it                                               │
-                             │ └──────────────────────────────────────────────────────────────────────────────────────┘
-                             │
+  Flow   Session   Context                                                                                                ┌─ Machine ──────────────────────────┐
+ flow “A new simulation study” · workspace myproject · not run yet                                                        │ CPU  ██▉░░░░░░░░░░░░░░░░░░░░░  12% │
+                                                                                                                          │                                    │
+ ┌─ Flow ───────────────────────────────────────────────────────────────────────────────────────────────── 6 waiting ─┐   │ 1s                 ▂       max 12% │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐      │   │ thr  ▁▃▁▁▁▃▁▁▁▃▁▁▁▃▁▁ 16 threads   │
+ │ ┆ YOU                  ○┆┄┄▸┆ PLAN                 ○┆┄┄▸┆ VERIFY               ○┆┄┄▸┆ DECOMPOSE            ○┆      │   │                                    │
+ │ ┆ Your brief            ┆   ┆ Write the plan        ┆   ┆ Check the plan        ┆   ┆ Break it into tasks   ┆      │   │ RAM  █████████░░░░░░░░░░░░░░░  38% │
+ │ ┆ you                   ┆   ┆ main slot's model     ┆   ┆ main slot's model     ┆   ┆ main slot's model     ┆      │   │      24.0 GB of 64.0 GB            │
+ │ ┆ BRIEF.md              ┆   ┆ PLAN.md               ┆   ┆ a verdict: pass or fi…┆   ┆ proposes tasks        ┆      │   │ 1s                 ▄       max 38% │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄▴┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘      │   │                                    │
+ │                               ╰┄ fail ⟲ back ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯                             ┆       │   │ GPU  ▊░░░░░░░░░░░░░░░░░░░░░░░   3% │
+ │             ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯       │   │                                    │
+ │             ▾                                                                                                      │   │ 1s                 ▁        max 3% │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                  │   │      RTX 5080 · 34°C · 18 W        │
+ │ ┆ INTEGRATE            ○┆┄┄▸┆ GATE                 ○┆┄┄▸┆ ▸ next flow           ┆                                  │   │ VRAM ███░░░░░░░░░░░░░░░░░░░░░  13% │
+ │ ┆ Put it together       ┆   ┆ You review the whole  ┆   ┆ made when approved    ┆                                  │   │      2.0 GB of 15.9 GB             │
+ │ ┆ main slot's model     ┆   ┆ you                   ┆   ┆ brief from INTEGRATE  ┆                                  │   │                                    │
+ │ ┆ SUMMARY.md            ┆   ┆ you decide            ┆   ┆                       ┆                                  │   │ Disk read 12.0 MB/s · write 3.0 M… │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                  │   │ 1s                 █ max 15.0 MB/s │
+ │                                                                                                                    │   │      C: █████████▍░░░░░░░░░░░  44% │
+ │ ✓ done  ● running  ○ waiting  ✗ failed  ┄┄ proposed  ── pass  ── fail ⟲ back  ── now  ┄┄ not yet                   │   │                                    │
+ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘   │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
+                                                                                                                          │ 1s                 █  max 1.2 MB/s │
+ ┌─ Selected ─────────────────────────────────────────────┐  ┌─ Waiting for you ──────────────────────────────────────┐   └────────────────────────────────────┘
+ │ YOU · ○ waiting                                        │  │ ? Built with the model: look, then r to run            │
+ │ Your brief                                             │  │   e changes a box first; r runs it from its brief to   │   ┌─ Clank now ────────────────────────┐
+ │ model   you                                            │  │   your review, asking nothing else on the way          │   │ ● gateway stopped                  │
+ │ status  ○ waiting                                      │  │ The check warns:                                       │   └────────────────────────────────────┘
+ │ writes  BRIEF.md                                       │  │ - plan sees data/grid.csv, which is not in the folder, │
+ │ next    PLAN Write the plan                            │  │   and neither plan nor a box before it writes it       │
+ └────────────────────────────────────────────────────────┘  └────────────────────────────────────────────────────────┘
 
- f10 next view  enter open  p pause  e edit the box  o open in VS Code  r run from here  h run log  n new flow  N new flow in VS Code  ? explain  f1 help
+ ┌─ Orchestrator ─────────────────────────────────── off ─┐  ┌─ Models in this flow ──────────────────────────────────┐
+ │ ○ off                                                  │  │ ○ main slot's model · switches nothing · 4 boxes       │
+ │   O turns it on: a model reads what each box did,      │  │ the other 2 are you                                    │
+ │   changes the boxes ahead or sends work back, and      │  │ e on a box picks another preset for it                 │
+ │   answers the run's questions (a box out of tries, a   │  │                                                        │
+ │   gate) as you would, within limits you set; L shows   │  │                                                        │▄▄
+ │   its ledger.                                          │  │                                                        │
+ └────────────────────────────────────────────────────────┘  └────────────────────────────────────────────────────────┘
+
+ ┌─ The brief, checked ────────────────────────────────────────────────────────────────────────────────── 0 of 2 met ─┐
+ │ ○ about 60 grid points  not checked yet                                                                            │
+ │ ○ at most 48 CPU-hours  not checked yet                                                                            │
+ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Deliverables ─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+
+ f10 next view  enter open  p pause  O orchestrator  L ledger  e edit the box  o open in VS Code  r run from here  h run log  n new flow  ? explain  f1 help

@@ -28,6 +28,6 @@ kept by Clank.
   [--model]`. Tests: `tests/components/gateway/test_flows_forwarding.py`, `tests/components/agents/test_sessions.py`,
   the route's 409 in `test_orchestrator.py`.
 - [x] 5. The planning knows it: `prompts/build.md` lists `orchestrator.*` (and `accept_command`); a draft may turn it on.
-- [ ] 6. The console: the Flow view's Orchestrator panel, `O` to turn it on or off, `l` for the ledger (with plan s39,
-  the console as the website shows it).
+- [x] 6. The console: the Flow view's Orchestrator panel (`flowpanels.orchestrator`, the view's `orchestrator`), `O`
+  to turn it on or off, `L` for the ledger (with plan s39, the console as the website shows it).
 - [ ] 7. A live run on the owner's machine (the Stabilizer Rank Challenge's first long run), its ledger read back.

@@ -266,6 +266,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/console/pages/records.py` | The records page: every record of every kind, through the same routes (design 0002 §2.2). |
 | `clank/console/panel.py` | The panel (design 0011 §4; design 0001 §5.6: the screens are made of panels): every section of every page, the |
 | `clank/console/pick.py` | A list to choose one thing from, over the console: a preset to load, an engine to install (design 0001 §5.1). Each |
+| `clank/console/recording.py` | The console recorded as it draws itself (`clank console --record FOLDER`, decision 0126): every write it sends the |
 | `clank/console/rows.py` | Rows of a name and its value, for the pages that must read well at any width (the owner uses the console in narrow |
 | `clank/console/snapshot.py` | One frame of the console as text (decision 0027; design 0001 §5.8). |
 | `clank/console/style.py` | The console's style (design 0011 §2-§3): read before the first frame, and loaded into a Textual theme. |

@@ -106,9 +106,49 @@ def view(
         "deliverables": _deliverables(shown, run, present),
         "ahead": _ahead(shown, states, resolve, titles, running, took or {}, present),
         "counts": _counts(states),
+        "orchestrator": _orchestrator(made, run),
     }
     found["version"] = hashlib.sha256(json.dumps(found, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
     return found
+
+
+def _orchestrator(made: Flow, run: Run | None) -> dict[str, Any]:
+    """The flow's orchestrator as the Flow view's panel shows it (design 0013 §16): on or off, its limits, and in the
+    latest run the checkpoint at work, the last decision with why and what was done, the limits used, and why the run
+    waits for the owner when it could not act."""
+    settings = made.orchestrator
+    state = run.orchestration if run is not None else None
+    last = state.decisions[-1] if state is not None and state.decisions else None
+    working = state.working if state is not None else None
+    return {
+        "on": settings.on,
+        "model": settings.model,
+        "final_review": settings.final_review,
+        "changes": settings.changes,
+        "stall_limit": settings.stall,
+        "extra_tries": settings.extra_tries,
+        "checkpoints": state.checkpoints if state is not None else 0,
+        "changes_used": state.changes if state is not None else 0,
+        "stall": state.stall if state is not None else 0,
+        "working": {"number": working.number, "kind": working.kind, "box": working.box} if working else None,
+        "last": {
+            "number": last.number,
+            "kind": last.kind,
+            "box": last.box,
+            "choice": last.choice,
+            "why": last.why,
+            "applied": last.applied,
+            "at": to_text(last.at),
+            "progressing": last.progressing,
+            "looping": last.looping,
+            "note": last.note,
+            "unmet": list(last.unmet),
+        }
+        if last is not None
+        else None,
+        "plan": state.plan if state is not None else "",
+        "owner": state.owner if state is not None else "",
+    }
 
 
 def _with_proposals(made: Flow, waiting: Sequence[Batch]) -> Flow:

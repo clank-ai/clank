@@ -412,6 +412,81 @@ def wrapped(
     ]
 
 
+def orchestrator(view: Mapping[str, Any] | None, width: int, frame: int = 0) -> list[Content]:
+    """The Orchestrator panel (design 0013 §16): off, what turning it on does; on, its model, who decides the final
+    review, the limits used, the checkpoint at work, the last decision with why and what was done, the note the next
+    box is told, the plan from here, and why the run waits for you when it could not act."""
+    if not view or not view.get("flow"):
+        return [Content.styled(NO_FLOW, "$clank-quiet")]
+    said = view.get("orchestrator") or {}
+    if not said.get("on"):
+        lines = [_fit(Content.assemble((f"{mark('off')} ", "$clank-quiet"), ("off", "bold")), width)]
+        lines += wrapped(
+            "O turns it on: a model reads what each box did, changes the boxes ahead or sends work back, and answers "
+            "the run's questions (a box out of tries, a gate) as you would, within limits you set; L shows its ledger.",
+            width,
+        )
+        return lines
+    final = (
+        "decides the final review too" if said.get("final_review") == "orchestrator" else "the final review is yours"
+    )
+    model = str(said.get("model") or "the flow's model")
+    lines = [
+        _fit(
+            Content.assemble(
+                (f"{mark('done')} ", "$clank-good"), ("on", "bold"), (f" · {model} · {final}", "$clank-quiet")
+            ),
+            width,
+        ),
+        _fit(
+            Content.styled(
+                f"checkpoints {said.get('checkpoints', 0)} · changes {said.get('changes_used', 0)} of "
+                f"{said.get('changes', 0)} · stall {said.get('stall', 0)} of {said.get('stall_limit', 0)}",
+                "$clank-quiet",
+            ),
+            width,
+        ),
+    ]
+    working = said.get("working")
+    if working:
+        where = f"after {working['box']}" if working["kind"] == "review" else f"at {working['box']}'s question"
+        lines.append(
+            _fit(
+                Content.assemble(
+                    (f"{spark_spin(frame)} ", "$clank-now"),
+                    (f"checkpoint {working['number']}: reads the run {where}", "bold"),
+                ),
+                width,
+            )
+        )
+    last = said.get("last")
+    if last:
+        where = f"after {last['box']}" if last["kind"] == "review" else f"at {last['box']}"
+        tone = "$clank-failed" if last["choice"] == "stop" else "$clank-good"
+        lines.append(_fit(Content.assemble(("last: ", "$clank-quiet"), (f"{last['choice']} ", f"bold {tone}"),
+                                           (where, "$clank-quiet")), width))  # fmt: skip
+        lines += wrapped(str(last.get("why") or ""), width, style="")
+        if last.get("applied"):
+            lines += wrapped(str(last["applied"]), width)
+        if last.get("note"):
+            lines += wrapped(f"told the next box: {last['note']}", width)
+        if not last.get("progressing", True) or last.get("looping"):
+            lines.append(_fit(Content.styled("  no progress at this checkpoint", "$clank-attention"), width))
+    if said.get("owner"):
+        lines += wrapped(str(said["owner"]), width, (f"{mark('asks')} ", "bold $clank-attention"), style="")
+    plan = str(said.get("plan") or "").strip()
+    if plan:
+        lines += wrapped(f"plan: {plan.splitlines()[0]}", width)
+    return lines
+
+
+def spark_spin(frame: int) -> str:
+    """The spinner's glyph at `frame`, as the header draws it."""
+    from clank.console.gauges import spinner
+
+    return spinner(frame)
+
+
 def brief(view: Mapping[str, Any] | None, width: int) -> list[Content]:
     """The brief, checked: each line, met, not met or not checked yet, with its evidence and the check that said so."""
     if not view or not view.get("flow"):

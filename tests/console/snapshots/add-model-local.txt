@@ -41,4 +41,4 @@ F12 Add a model    │ │   install KVMem/llama.cpp v0.00.0-rc1; download Swift
                    │
                    │
 
- enter set it up  esc back  ? explain  f1 help  f5 machine column  q quit    ^p palette
+ enter set it up  esc back  ? explain  f1 help  f5 machine column  q quit  ^b menu

@@ -300,14 +300,15 @@ class FlowViewer:
         self.starting = False  # a planning being started: `n`, `N` and `f` do nothing meanwhile
 
     def compose(self) -> list[Widget]:
-        """Board D1's panels: the flow beside Selected (with its Live box), Models and Waiting; under them The brief,
-        checked, Deliverables and Ahead."""
+        """Board D1's panels, as the website draws them (decision 0125): the flow across the whole width; under it
+        Selected (with its Live box) beside Waiting for you, then the Orchestrator beside Models in this flow; then The
+        brief, checked, Deliverables and Ahead."""
         live = LiveBox(flowpanels.LinesView(id="monitor-flow-live-lines"), id="monitor-flow-live")
         live.border_title = "Live"
         live.display = False
         return [
+            panel(BoxChart(id="monitor-flow-chart-boxes"), "Flow", "monitor-flow-boxes"),
             PanelGrid(
-                panel(BoxChart(id="monitor-flow-chart-boxes"), "Flow", "monitor-flow-boxes"),
                 Panel(
                     flowpanels.LinesView(id="monitor-flow-selected-lines"),
                     live,
@@ -315,12 +316,21 @@ class FlowViewer:
                     id="monitor-flow-selected",
                     classes="view-flow board-d1",
                 ),
+                panel(flowpanels.LinesView(id="monitor-flow-waiting-lines"), "Waiting for you", "monitor-flow-waiting"),
+                columns="1fr 1fr",
+                stack_below=STACK_BELOW,
+                classes="view-flow board-d1",
+            ),
+            PanelGrid(
+                panel(
+                    flowpanels.LinesView(id="monitor-flow-orchestrator-lines"),
+                    "Orchestrator",
+                    "monitor-flow-orchestrator",
+                ),
                 panel(
                     flowpanels.LinesView(id="monitor-flow-models-lines"), "Models in this flow", "monitor-flow-models"
                 ),
-                panel(flowpanels.LinesView(id="monitor-flow-waiting-lines"), "Waiting for you", "monitor-flow-waiting"),
-                columns="2fr 1fr",
-                spans={"monitor-flow-boxes": 3},
+                columns="1fr 1fr",
                 stack_below=STACK_BELOW,
                 classes="view-flow board-d1",
             ),
@@ -902,6 +912,12 @@ class FlowViewer:
         self._draw_box()
         self._lines("#monitor-flow-models-lines", lambda width: flowpanels.models(view, width))
         self._lines("#monitor-flow-waiting-lines", lambda width: flowpanels.waiting(view, width))
+        steering = (view or {}).get("orchestrator") or {}
+        self.page.query_one("#monitor-flow-orchestrator", Panel).note = (
+            ("on" if steering.get("on") else "off") if view and view.get("flow") else ""
+        )
+        frame = self.page.console.frame
+        self._lines("#monitor-flow-orchestrator-lines", lambda width: flowpanels.orchestrator(view, width, frame))
         self._lines("#monitor-flow-brief-lines", lambda width: flowpanels.brief(view, width))
         files = self.page.query_one("#monitor-flow-deliverables-list", flowpanels.DeliverablesList)
         files.show(view if view and view.get("flow") else None)
@@ -1017,10 +1033,10 @@ class FlowViewer:
             self.new_flow("vscode" if key == "N" else "")
             return True
         acts = {"enter": self.open, "h": self.log, "p": self.pause, "r": self.run_from, "e": self.edit,
-                "o": self.open_file}  # fmt: skip
+                "o": self.open_file, "O": self.orchestrator, "L": self.ledger}  # fmt: skip
         if key not in acts or not self.view or not self.view.get("flow"):
             return False
-        if self.view.get("planning") and key != "enter":
+        if self.view.get("planning") and key not in ("enter", "O", "L"):
             self.page.console.say("the flow is being built with the model: r runs it, e edits it, once Clank wrote it",
                                   True)  # fmt: skip
             return True
@@ -1212,6 +1228,37 @@ class FlowViewer:
             console.call_from_thread(console.push_screen, DetailsScreen(heading, lines or ["nothing yet"]))
 
         self.page.run_worker(work, thread=True, group="monitor-flow-log", exit_on_error=False)
+
+    def orchestrator(self) -> None:
+        """`O`: turn the flow's orchestrator on or off (design 0013 §16); a run goes on either way."""
+        steering, console = (self.view or {}).get("orchestrator") or {}, self.page.console
+        turning = not steering.get("on")
+        client, path = console.client, self._path("orchestrator")
+        done = (
+            "the orchestrator is on: it reads what each box did and answers the run's questions, within its limits; "
+            "O turns it off"
+            if turning
+            else "the orchestrator is off: the run waits for you where it would"
+        )
+        actions.call(console, lambda: client.post(path, {"on": turning}), done=done)
+
+    def ledger(self) -> None:
+        """`L`: the orchestrator's ledger of the latest run whole, in a window: its facts and plan, then each
+        decision with why and what was done."""
+        client, console = self.page.console.client, self.page.console
+        asked, title = self._path("orchestrator"), str((self.view or {}).get("title") or "")
+
+        def work() -> None:
+            try:
+                found = client.get(asked)
+                lines = str(found.get("ledger") or "").splitlines()
+                run = found.get("run")
+            except (NotRunning, ClientError) as error:
+                lines, run = [f"the ledger cannot be read: {error}"], None
+            heading = f"The orchestrator's ledger · {title}" + (f", run {run}" if run else "")
+            console.call_from_thread(console.push_screen, DetailsScreen(heading, lines or ["nothing yet"]))
+
+        self.page.run_worker(work, thread=True, group="monitor-flow-ledger", exit_on_error=False)
 
     def pause(self) -> None:
         """`p`: pause the flow (no box starts; the running one goes on), or resume it while paused."""

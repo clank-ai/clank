@@ -81,6 +81,7 @@ from clank.console.pages.planned import PlannedPage
 from clank.console.pages.questions import QuestionsPage
 from clank.console.pages.records import RecordsPage
 from clank.console.pick import Choice, PickScreen
+from clank.console.recording import Recording
 from clank.console.snapshot import render_text
 from clank.console.style import forget_theme, load_style, theme_of, use
 from clank.console.terminal import Terminal
@@ -153,6 +154,7 @@ class ClankConsole(App[str]):
         folder: str | None = None,
         terminal: Terminal | None = None,
         guide: bool = False,
+        record: Path | None = None,
     ) -> None:
         self.home = home or Home.resolve()
         self.folder = str(Path(folder or os.getcwd()).resolve())
@@ -188,6 +190,8 @@ class ClankConsole(App[str]):
         self._hinted: Content | None = None  # what the message line says of the focused button, until a message
         self._before_bar: Widget | None = None  # what had the focus before the keys bar
         self._left: dict[str, Widget] = {}  # where the focus was in each page when it was last in it
+        self._record_to = record  # the folder a recording of what the console draws goes to (decision 0126), if any
+        self.recording: Recording | None = None
 
     def compose(self) -> ComposeResult:
         """The header, the menu beside the pages, and the keys bar."""
@@ -222,10 +226,45 @@ class ClankConsole(App[str]):
                      "Ctrl+P, Change style, picks another")  # fmt: skip
         if self.style.problem:
             self.say(self.style.problem, error=True)
+        if self._record_to is not None and not self._snapshot:
+            self._start_recording(self._record_to)
+
+    def _start_recording(self, folder: Path) -> None:
+        """Record every write the console sends the terminal from here on (decision 0126), the whole screen drawn again
+        first; kept to disk every second, in parts."""
+        driver = self._driver
+        if driver is None:
+            return
+        recording = self.recording = Recording(folder, "console", self.size.width, self.size.height)
+        original = driver.write
+
+        def write(data: str) -> None:
+            recording.output(data)
+            original(data)
+
+        driver.write = write  # type: ignore[method-assign]
+        self.set_interval(1.0, self._keep_recording)
+        self.refresh(repaint=True, layout=True)
+
+    def _keep_recording(self) -> None:
+        recording = self.recording
+        if recording is None:
+            return
+        recording.keep()
+        if recording.due():
+            recording.next_part(self.size.width, self.size.height)
+            self.refresh(repaint=True, layout=True)  # the new part begins with the whole screen
+
+    def on_resize(self, event: events.Resize) -> None:
+        """A recording keeps the terminal's new size (the console draws itself whole again for it)."""
+        if self.recording is not None:
+            self.recording.resized(event.size.width, event.size.height)
 
     def on_unmount(self) -> None:
-        """Stop following the service."""
+        """Stop following the service; close the recording, if one is kept."""
         self._follower.stop()
+        if self.recording is not None:
+            self.recording.close()
 
     def raise_limits(self) -> None:
         """The cloud's cost limits in a form, as they are; sent as typed (`PUT /gateway/cost/limits`), the service
@@ -266,9 +305,12 @@ class ClankConsole(App[str]):
         machine = self.query_one("#machine", MachineColumn)
         hidden = not machine.display
         self.screen.set_class(not self._current().MACHINE_COLUMN, "-no-machine-column")
+        self.screen.set_class(not self._current().MENU_COLUMN, "-no-menu-column")
         if hidden and machine.display:
             self._draw_machine()  # it drew nothing while hidden
         menu = self.query_one("#menu", ListView)
+        if self.focused is menu and self.menu_hidden():
+            self.call_after_refresh(self.action_inward)  # a hidden menu keeps no focus: the page takes it
         index = list(menu.children).index(self.query_one(f"#menu-{id}"))
         if menu.index != index:
             menu.index = index
@@ -298,6 +340,23 @@ class ClankConsole(App[str]):
     def busy(self) -> bool:
         """Whether something runs that a spinner shows: an operation, a model request, or the page's own steps."""
         return busy(self.seen()) or self._current().busy
+
+    def menu_hidden(self) -> bool:
+        """Whether the menu is hidden now: by Ctrl+B, or beside a page that takes the whole width (as its classes say,
+        before the screen is drawn again)."""
+        screen = self.screen
+        if screen.has_class("-menu-off"):
+            return True
+        return not self._current().MENU_COLUMN and not screen.has_class("-menu-on")
+
+    def action_menu(self) -> None:
+        """Ctrl+B: show the menu on the left, or hide it, on any page (decision 0125); a hidden menu's focus goes into
+        the page."""
+        hiding = not self.menu_hidden()
+        self.screen.set_class(hiding, "-menu-off")
+        self.screen.set_class(not hiding, "-menu-on")
+        if hiding and self.focused is self.query_one("#menu", ListView):
+            self.call_after_refresh(self.action_inward)
 
     def action_machine(self) -> None:
         """F5: show the machine column, or hide it, whatever the terminal's width."""

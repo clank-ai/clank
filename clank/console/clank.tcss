@@ -56,6 +56,20 @@ Screen.-small #menu .planned, Screen.-small #menu .divider {
     color: $clank-quiet;
 }
 
+/* Beside a page that takes the whole width (Page.MENU_COLUMN: the Monitor, as the website draws it, decision 0125), the
+   menu is hidden until Ctrl+B shows it; Ctrl+B shows or hides it on any page. The page keys still open every page. */
+Screen.-no-menu-column #menu {
+    display: none;
+}
+
+Screen.-menu-on #menu {
+    display: block;
+}
+
+Screen.-menu-off #menu {
+    display: none;
+}
+
 #pages {
     width: 1fr;
     height: 1fr;

@@ -31,4 +31,4 @@ Modes                 M5   ▅▅│
 Changes               M6     │
 Network access        M7     │
  13:54  asked op-00000000 to stop: canceled by you (console)
- c cancel  r retry  ? explain  f1 help  f5 machine column  q quit                                            ^p palette
+ c cancel  r retry  ? explain  f1 help  f5 machine column  q quit  ^b menu                                   ^p palette

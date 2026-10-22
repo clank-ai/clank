@@ -37,4 +37,4 @@ Setup guide           M10    │
                              │
                              │
 
- l load  w switch  u unload  c check  ? explain  f1 help  f5 machine column  q quit                          ^p palette
+ l load  w switch  u unload  c check  ? explain  f1 help  f5 machine column  q quit  ^b menu                 ^p palette

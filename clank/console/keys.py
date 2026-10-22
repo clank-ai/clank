@@ -4,9 +4,10 @@ cannot disagree. A key's action is its name, which M2's `keys.json` (design 0001
 then a page acts on its keys in its `press`.
 
 The keys bar (`keysbar.KeysBar`, in place of Textual's footer) is one row on `bars`: the page's own keys first, then the
-keys that act anywhere (`ANYWHERE`: `?` explain and `f1` help, which always stay, then `f5` and `q`), and `PALETTE`'s
-`^p palette` at the right, each key in `key` and its words in `quiet`. When the row is too narrow (`fit_keys`), the
-palette, `q` and `f5` go first, then the page's own keys from the right. `MOVES` says what the keys that move do (the
+keys that act anywhere (`ANYWHERE`: `?` explain and `f1` help, which always stay, then `f5`, `q` and `^b`, the menu
+shown or hidden, decision 0125), and `PALETTE`'s `^p palette` at the right, each key in `key` and its words in `quiet`.
+When the row is too narrow (`fit_keys`), the palette, `^b`, `q` and `f5` go first, then the page's own keys from the
+right. `MOVES` says what the keys that move do (the
 digits, Esc, the arrows, Tab, Enter and Space), which are Textual's, the shell's and the groups of buttons', for Help.
 """
 
@@ -37,6 +38,9 @@ ANYWHERE = (
     PageKey("f5", "machine", "machine column",
             "show or hide the machine column on the right (it shows by itself from 130 columns)"),
     PageKey("q", "quit", "quit", "quit; the service and what it runs go on"),
+    PageKey("ctrl+b", "menu", "menu",
+            "show or hide the menu on the left (the Monitor hides it, so the flow has the whole width); every page's "
+            "key still opens it"),
 )  # fmt: skip
 ALWAYS = ANYWHERE[:2]  # on every keys bar, however narrow: `?` and `f1`, which lists every key
 PALETTE = PageKey("ctrl+p", "command_palette", "palette",
@@ -53,7 +57,7 @@ MOVES = (
                      "the page"),
     ("home, end", "a row of buttons' first or last"),
 )  # fmt: skip
-SHOWN = {"question_mark": "?", "slash": "/", "full_stop": ".", "escape": "esc", "ctrl+p": "^p"}
+SHOWN = {"question_mark": "?", "slash": "/", "full_stop": ".", "escape": "esc", "ctrl+p": "^p", "ctrl+b": "^b"}
 
 
 def shown(key: str) -> str:
@@ -73,7 +77,7 @@ def _width(keys: Sequence[PageKey], palette: bool) -> int:
 
 def fit_keys(page: Sequence[PageKey], width: int) -> tuple[list[PageKey], bool]:
     """The keys a bar `width` columns wide shows, in order, and whether the palette's shows at its right: the palette's,
-    `q` and `f5` go first, then the page's own from the right; `?` and `f1` always stay."""
+    `^b`, `q` and `f5` go first, then the page's own from the right; `?` and `f1` always stay."""
     own, others, palette = list(page), list(ANYWHERE[len(ALWAYS) :]), True
     while _width([*own, *ALWAYS, *others], palette) > width:
         if palette:

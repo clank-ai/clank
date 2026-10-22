@@ -31,4 +31,4 @@ F12 Add a model    │
                    │
                    │
  09:14  ! OpenRouter refused the key: it may have been deleted or disabled. Set a new on
- enter check it  esc back  ? explain  f1 help  f5 machine column  q quit     ^p palette
+ enter check it  esc back  ? explain  f1 help  f5 machine column  q quit  ^b menu

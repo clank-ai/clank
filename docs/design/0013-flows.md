@@ -884,7 +884,7 @@ Past a limit the orchestrator cannot act: the question waits for the owner, as w
 **The owner stays in charge.** A question the orchestrator is deciding shows "the orchestrator decides" in Waiting for
 you, and the owner may answer it first (the orchestrator's later answer is then set aside). The Flow view's
 **Orchestrator** panel shows it on or off, its model, its last decision with why, the stall count and the limits used;
-`O` turns it off or on at any moment, the run going on; `l` shows the ledger whole. Every checkpoint and decision is
+`O` turns it off or on at any moment, the run going on; `L` shows the ledger whole. Every checkpoint and decision is
 an event (`flows.orchestrator`) and a line of the run's log; `clank flow orchestrator NAME` prints the ledger.
 
 **Built flows.** The planning's first message tells the model the setting exists, and a draft may turn it on; Clank

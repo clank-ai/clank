@@ -44,6 +44,7 @@ color is a theme variable"): every color becomes a named element of the style.
 | 10 | What changes in the tests | Approved 2026-10-18 |
 | 11 | Build steps | Approved 2026-10-18 |
 | 12 | Every key a button | Approved 2026-10-21 (the owner: K2); built 2026-10-21 (plan s36) |
+| 13 | The console as the website draws it, and its recording | Approved 2026-10-22 (the owner's request); built 2026-10-22 (plan s39; decisions 0125-0126) |
 
 ## 1. What the owner gets
 
@@ -697,6 +698,28 @@ One step, in [plan s36](../plans/s36-every-key-a-button.md): the style's five co
 drawing, keys, click and hover; the console's one door and `Page.unable`; the keys bar as a group; the message line and
 `?`; where the focus goes (Enter on the menu, where the page was left, Esc); This folder's groups; the questions'
 options; the windows' buttons; the narrow frames and the snapshots.
+
+## 13. The console as the website draws it, and its recording
+
+**Status:** approved 2026-10-22 (the owner: "make sure that we are designing Clank to look almost exactly what we have
+envisioned in the website"; "I also don't seem to have the ability to remove the side bar"; "I would really like to
+record almost exactly what I see on the terminal ... watch this back almost like a video in real time"). The website's
+demo (`src/scripts/demo/views.ts` in the site's repository) is the reference; decisions 0125 and 0126 say what was
+chosen and why.
+
+- **The menu column** is a page's: the Monitor leaves it out, so the flow has the whole width; **Ctrl+B** shows or
+  hides it on any page; the page keys open every page as before.
+- **The Flow view's board D1**: the flow across the whole width, at most 60% of the window high; under it Selected
+  (Building it with the model, while a flow is built) beside Waiting for you; then the Orchestrator (design 0013 §16)
+  beside Models in this flow; then The brief, checked, Deliverables and Ahead.
+- **The style's defaults** take the website's colors: titles in the text's color and bold, ◆ CLANK orange, what runs
+  now teal, a lighter quiet and border.
+- **`clank console --record FOLDER`** keeps every write the console sends the terminal, with its time, as asciicast
+  (asciinema's format), in parts of 20 minutes, each beginning with the whole screen; a player shows it again as it
+  happened. A view the console does not have (`--view flow.`) is refused.
+
+Kept for later: a DECOMPOSE's tasks as one stacked box in the flow, as the website draws them (the chart's fan, its
+lines and the arrows' order reworked).
 
 ## Revision log
 

@@ -47,4 +47,4 @@ Setup guide           M10    │
                              │
                              │
 
- c cloud  l local  esc this folder  ? explain  f1 help  f5 machine column  q quit                                    ^p palette
+ c cloud  l local  esc this folder  ? explain  f1 help  f5 machine column  q quit  ^b menu                           ^p palette

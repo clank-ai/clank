@@ -47,4 +47,4 @@ Setup guide           M10    │
                              │
                              │
 
- enter go on  esc back  ? explain  f1 help  f5 machine column  q quit                                                ^p palette
+ enter go on  esc back  ? explain  f1 help  f5 machine column  q quit  ^b menu                                       ^p palette

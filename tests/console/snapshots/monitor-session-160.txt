@@ -1,40 +1,40 @@
- ◆ CLANK  paper   ● service up 2h14m  ● docker running  ● no model: Add a model  ● gateway stopped                                                        13:54
-F4 This folder         ✗ 4   │  Flow   Session   Context
-1 Home                       │ No session yet · this folder has no workspace: This folder (F4) opens one
-2 Questions                  │
-3 History                    │ ┌─ Context window c ───────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-4 Docker               ●     │ │ no session yet                                                                                                               │
-5 Machine                    │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-6 Operations                 │
-7 Records                    │ ┌─ Now n ────────────────────────────────────────┐  ┌─ Flow f ─────────────────────────────────────────────────────────────────┐
-8 Models               ●     │ │ no session yet                                 │  │ no session yet                                                           │
-9 Presets                    │ └────────────────────────────────────────────────┘  │                                                                          │
-0 Providers and models       │                                                     │                                                                          │
-F1 Help                      │ ┌─ Watch for w ──────────────────────────────────┐  │                                                                          │
-F2 Launch options            │ │ no session yet                                 │  │                                                                          │
-F3 MCP servers               │ └────────────────────────────────────────────────┘  │                                                                          │
-F6 Workspaces                │                                                     │                                                                          │
-F7 Requests                  │ ┌─ Guide g ──────────────────────────────────────┐  │                                                                          │
-F8 CPU models                │ │ no session yet                                 │  │                                                                          │
-F9 Phone               ●     │ └────────────────────────────────────────────────┘  └──────────────────────────────────────────────────────────────────────────┘
-F10 Monitor                  │
-F12 Add a model              │ ┌─ Tool calls t ─────────────────────────────────┐  ┌─ Biggest in the context b ───────────────────────────────────────────────┐
-─────────────────────────────│ │ no session yet                                 │  │ no session yet                                                           │
-coming                       │ └────────────────────────────────────────────────┘  └──────────────────────────────────────────────────────────────────────────┘
-Sampling              M3     │
-Sessions              M3     │
-Keys                  M3     │
-Layout                M2     │
-Tests and trials      M2     │
-Agents                M5     │
-Modes                 M5     │
-Changes               M6     │
-Network access        M7     │
-Skills                M8     │
-Files                 M9     │
-Setup guide           M10    │
-                             │
-                             │
-                             │
+ ◆ CLANK  paper   ● service up 2h14m  ● docker running  ● no model: Add a model  ● gateway stopped                          13:54
+  Flow   Session   Context
+ No session yet · this folder has no workspace: This folder (F4) opens one
 
- f10 next view  enter open  esc back  . stop  m note  k compact  p pause  u undo  x drop  l live text  ? explain  f1 help  f5 machine column  q quit
+ ┌─ Context window c ───────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ │ no session yet                                                                                                               │
+ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Now n ────────────────────────────────────────┐  ┌─ Flow f ─────────────────────────────────────────────────────────────────┐
+ │ no session yet                                 │  │ no session yet                                                           │
+ └────────────────────────────────────────────────┘  │                                                                          │
+                                                     │                                                                          │
+ ┌─ Watch for w ──────────────────────────────────┐  │                                                                          │
+ │ no session yet                                 │  │                                                                          │
+ └────────────────────────────────────────────────┘  │                                                                          │
+                                                     │                                                                          │
+ ┌─ Guide g ──────────────────────────────────────┐  │                                                                          │
+ │ no session yet                                 │  │                                                                          │
+ └────────────────────────────────────────────────┘  └──────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Tool calls t ─────────────────────────────────┐  ┌─ Biggest in the context b ───────────────────────────────────────────────┐
+ │ no session yet                                 │  │ no session yet                                                           │
+ └────────────────────────────────────────────────┘  └──────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ f10 next view  enter open  esc back  . stop  m note  k compact  p pause  u undo  x drop  l live text  ? explain  f1 help

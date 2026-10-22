@@ -1,50 +1,50 @@
  ◆ CLANK  paper   ● service up 9d1h  ● docker running  ● no model: Add a model  ● gateway stopped  ● 1 question waiting                                   12:41
-F4 This folder         ✗ 3   │  Flow   Session   Context
-1 Home                       │ flow “A new simulation study” · workspace myproject · not run yet
-2 Questions            ● 1   │
-3 History                    │ ┌─ Flow ───────────────────────────────────────────────────────────── 6 waiting ─┐  ┌─ Selected ─────────────────────────────┐
-4 Docker               ●     │ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐       │  │ YOU · ○ waiting                        │
-5 Machine                    │ │ ┆ YOU               ○┆┄┄▸┆ PLAN              ○┆┄┄▸┆ VERIFY            ○┆       │  │ Your brief                             │
-6 Operations                 │ │ ┆ Your brief         ┆   ┆ Write the plan     ┆   ┆ Check the plan     ┆       │  │ model   you                            │
-7 Records                    │ │ ┆ you                ┆   ┆ main slot's model  ┆   ┆ main slot's model  ┆       │  │ status  ○ waiting                      │
-8 Models               ●     │ │ ┆ BRIEF.md           ┆   ┆ PLAN.md            ┆   ┆ a verdict: pass or…┆       │  │ writes  BRIEF.md                       │
-9 Presets                    │ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄▴┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┬┘       │  │ next    PLAN Write the plan            │
-0 Providers and models       │ │                            ╰┄ fail ⟲ back ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯ ┆        │  └────────────────────────────────────────┘
-F1 Help                      │ │            ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯        │
-F2 Launch options            │ │            ▾                                                                   │  ┌─ Models in this flow ──────────────────┐
-F3 MCP servers               │ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐       │  │ ○ main slot's model · switches nothin… │
-F6 Workspaces                │ │ ┆ DECOMPOSE         ○┆┄┄▸┆ INTEGRATE         ○┆┄┄▸┆ GATE              ○┆       │  │ the other 2 are you                    │
-F7 Requests                  │ │ ┆ Break it into tasks┆   ┆ Put it together    ┆   ┆ You review the who…┆       │  │ e on a box picks another preset for it │
-F8 CPU models                │ │ ┆ main slot's model  ┆   ┆ main slot's model  ┆   ┆ you                ┆       │  └────────────────────────────────────────┘
-F9 Phone               ●     │ │ ┆ proposes tasks     ┆   ┆ SUMMARY.md         ┆   ┆ you decide         ┆       │
-F10 Monitor                  │ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘       │  ┌─ Waiting for you ──────────────────────┐
-F12 Add a model              │ │            ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯        │  │ ? Built with the model: look, then r   │
-─────────────────────────────│ │            ▾                                                                   │  │   to run                               │
-coming                       │ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                                         │  │   e changes a box first; r runs it     │
-Sampling              M3     │ │ ┆ ▸ next flow        ┆                                                         │  │   from its brief to your review,       │
-Sessions              M3     │ │ ┆ made when approved ┆                                                         │  │   asking nothing else on the way       │
-Keys                  M3     │ │ ┆ brief from INTEGRA…┆                                                         │  │ The check warns:                       │
-Layout                M2     │ │ ┆                    ┆                                                         │  │ - plan sees data/grid.csv, which is    │
-Tests and trials      M2     │ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                                       ▆ │  │   not in the folder, and neither plan  │
-Agents                M5     │ │                                                                                │  │   nor a box before it writes it        │
-Modes                 M5     │ └────────────────────────────────────────────────────────────────────────────────┘  └────────────────────────────────────────┘
-Changes               M6     │
-Network access        M7     │ ┌─ The brief, checked ────────────────────────────────────────────────────────────────────────────────────────── 0 of 2 met ─┐
-Skills                M8     │ │ ○ about 60 grid points  not checked yet                                                                                    │
-Files                 M9     │ │ ○ at most 48 CPU-hours  not checked yet                                                                                    │
-Setup guide           M10    │ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-                             │
-                             │ ┌─ Deliverables ─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-                             │ │ nothing written yet                                                                                                        │
-                             │ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-                             │
-                             │ ┌─ Ahead ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-                             │ │ YOU Your brief  done by BRIEF.md, written with the model                                                                   │
-                             │ │ PLAN Write the plan  a fresh prompt                                                                                        │
-                             │ │ VERIFY Check the plan  a fresh prompt                                                                                      │
-                             │ │ DECOMPOSE Break it into tasks  a fresh prompt                                                                              │
-                             │ │ INTEGRATE Put it together  a fresh prompt                                                                                  │
-                             │ │ GATE You review the whole  asks you                                                                                        │
-                             │ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘▇▇
+  Flow   Session   Context
+ flow “A new simulation study” · workspace myproject · not run yet
 
- f10 next view  enter open  p pause  e edit the box  o open in VS Code  r run from here  h run log  n new flow  N new flow in VS Code  ? explain  f1 help
+ ┌─ Flow ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── 6 waiting ─┐
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐      │
+ │ ┆ YOU               ○┆┄┄▸┆ PLAN              ○┆┄┄▸┆ VERIFY            ○┆┄┄▸┆ DECOMPOSE         ○┆┄┄▸┆ INTEGRATE         ○┆┄┄▸┆ GATE              ○┆      │
+ │ ┆ Your brief         ┆   ┆ Write the plan     ┆   ┆ Check the plan     ┆   ┆ Break it into tasks┆   ┆ Put it together    ┆   ┆ You review the who…┆      │
+ │ ┆ you                ┆   ┆ main slot's model  ┆   ┆ main slot's model  ┆   ┆ main slot's model  ┆   ┆ main slot's model  ┆   ┆ you                ┆      │
+ │ ┆ BRIEF.md           ┆   ┆ PLAN.md            ┆   ┆ a verdict: pass or…┆   ┆ proposes tasks     ┆   ┆ SUMMARY.md         ┆   ┆ you decide         ┆      │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄▴┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘      │
+ │                            ╰┄ fail ⟲ back ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯                                                                            ┆       │
+ │            ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯       │
+ │            ▾                                                                                                                                             │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                                                                                                                   │
+ │ ┆ ▸ next flow        ┆                                                                                                                                   │
+ │ ┆ made when approved ┆                                                                                                                                   │
+ │ ┆ brief from INTEGRA…┆                                                                                                                                   │
+ │ ┆                    ┆                                                                                                                                   │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                                                                                                                   │
+ │                                                                                                                                                          │
+ │ ✓ done  ● running  ○ waiting  ✗ failed  ┄┄ proposed  ── pass  ── fail ⟲ back  ── now  ┄┄ not yet                                                         │
+ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Selected ────────────────────────────────────────────────────────────────┐  ┌─ Waiting for you ─────────────────────────────────────────────────────────┐
+ │ YOU · ○ waiting                                                           │  │ ? Built with the model: look, then r to run                               │
+ │ Your brief                                                                │  │   e changes a box first; r runs it from its brief to your review, asking  │
+ │ model   you                                                               │  │   nothing else on the way                                                 │
+ │ status  ○ waiting                                                         │  │ The check warns:                                                          │
+ │ writes  BRIEF.md                                                          │  │ - plan sees data/grid.csv, which is not in the folder, and neither plan   │
+ │ next    PLAN Write the plan                                               │  │   nor a box before it writes it                                           │
+ └───────────────────────────────────────────────────────────────────────────┘  └───────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Orchestrator ────────────────────────────────────────────────────── off ─┐  ┌─ Models in this flow ─────────────────────────────────────────────────────┐
+ │ ○ off                                                                     │  │ ○ main slot's model · switches nothing · 4 boxes                          │
+ │   O turns it on: a model reads what each box did, changes the boxes ahead │  │ the other 2 are you                                                       │
+ │   or sends work back, and answers the run's questions (a box out of       │  │ e on a box picks another preset for it                                    │
+ │   tries, a gate) as you would, within limits you set; L shows its ledger. │  │                                                                           │
+ └───────────────────────────────────────────────────────────────────────────┘  └───────────────────────────────────────────────────────────────────────────┘
+                                                                                                                                                             ▁▁
+ ┌─ The brief, checked ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── 0 of 2 met ─┐
+ │ ○ about 60 grid points  not checked yet                                                                                                                  │
+ │ ○ at most 48 CPU-hours  not checked yet                                                                                                                  │
+ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Deliverables ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ │ nothing written yet                                                                                                                                      │
+ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+ f10 next view  enter open  p pause  O orchestrator  L ledger  e edit the box  o open in VS Code  r run from here  h run log  n new flow  ? explain  f1 help

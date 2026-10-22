@@ -45,6 +45,7 @@ class Page(VerticalScroll):
     PANELS: ClassVar[tuple[str, ...]] = ()  # its panels' ids, in order
     KEYS: ClassVar[tuple[PageKey, ...]] = ()  # its own keys, most used first
     MACHINE_COLUMN: ClassVar[bool] = True  # the machine column beside it by the width; False: hidden until F5
+    MENU_COLUMN: ClassVar[bool] = True  # the menu beside it; False: hidden until Ctrl+B (decision 0125)
     _ready = False
 
     @property

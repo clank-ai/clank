@@ -1,60 +1,60 @@
  ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway                12:41
-F4 This folder   ✗ │  Flow   Session   Context
-1 Home             │ flow “A new simulation study” · building with the model ·…
-2 Questions        │
-3 History          │ ┌─ Flow ────────────────── DRAFT 1 · refused: 1 problem ─┐
-4 Docker         ● │ │ ○ YOU Your brief  BRIEF.md                             │
-5 Machine          │ │ ○ PLAN Write the plan  PLAN.md                         │
-6 Operations       │ │ ○ VERIFY Check the plan  a verdict: pass or findings   │
-7 Records          │ │ ○ DECOMPOSE Break it into tasks  proposes tasks        │
-8 Models         ● │ │ ○ INTEGRATE Put it together  SUMMARY.md                │
-9 Presets          │ │ ○ GATE You review the whole  you decide                │
-0 Providers and…   │ │ ▸ next flow: made when approved                        │
-F1 Help            │ │                                                        │
-F2 Launch optio…   │ │ ✓ done  ● running  ○ waiting  ✗ failed  proposed       │
-F3 MCP servers     │ └────────────────────────────────────────────────────────┘
-F6 Workspaces      │
-F7 Requests        │ ┌─ Building it with the model ───────────────────────────┐
-F8 CPU models      │ │ ✓ started by you (console) · 12:41                     │
-F9 Phone         ● │ │ ● reading the folder: 7 tool calls so far              │
-F10 Monitor        │ │ ✓ BRIEF.md written · 12:44                             │
-F12 Add a model    │ │ ✗ draft 1 · 12:41 · refused: 1 problem                 │
-                   │ │     - boxes.1.when_done: a built flow waits only at    │
-                   │ │       its end: leave plan's when_done out (go on)      │
-                   │ │                                                        │
-                   │ │ ┌─ Live ─────────────────────────────────────────────┐ │
-                   │ │ │ answering · step 4                                 │ │
-                   │ │ │ speed   41 tok/s ▇█                                │ │
-                   │ │ │ context no model runs                              │ │
-                   │ │ │ guard   watching · nothing repeats                 │ │
-                   │ │ │ Enter opens its session: the Session view and its… │ │
-                   │ │ └────────────────────────────────────────────────────┘ │
-                   │ └────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ Models in this flow ──────────────────────────────────┐
-                   │ │ ○ main slot's model · switches nothing · 4 boxes       │
-                   │ │ the other 2 are you                                    │
-                   │ │ e on a box picks another preset for it                 │
-                   │ └────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ Waiting for you ──────────────────────────────────────┐
-                   │ │ ? talk with the model in OpenCode, on “flow · building │
-                   │ │   the flow”                                            │
-                   │ │   Enter opens its session here; once the model's draft │
-                   │ │   is written: look, then r                             │
-                   │ └────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ The brief, checked ────────────────────── 0 of 2 met ─┐
-                   │ │ ○ about 60 grid points  not checked yet                │
-                   │ │ ○ at most 48 CPU-hours  not checked yet                │
-                   │ └────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ Deliverables ─────────────────────────────────────────┐
-                   │ │ nothing written yet                                    │▃▃
-                   │ └────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ Ahead ────────────────────────────────────────────────┐
-                   │ │ YOU Your brief  done by BRIEF.md, written with the mo… │
-                   │ │ PLAN Write the plan  a fresh prompt                    │
+  Flow   Session   Context
+ flow “A new simulation study” · building with the model · DRAFT 1, refused · …
 
- f10 next view  enter open  n new flow  N new flow in VS Code  ? explain  f1 help
+ ┌─ Flow ────────────────────────────────────── DRAFT 1 · refused: 1 problem ─┐
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐            │
+ │ ┆ YOU                       ○┆┄┄▸┆ PLAN                      ○┆            │
+ │ ┆ Your brief                 ┆   ┆ Write the plan             ┆            │
+ │ ┆ you                        ┆   ┆ main slot's model          ┆            │
+ │ ┆ BRIEF.md                   ┆   ┆ PLAN.md                    ┆            │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘            │
+ │                ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯             │
+ │                ▾                                                           │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐            │
+ │ ┆ VERIFY                    ○┆┄┄▸┆ DECOMPOSE                 ○┆            │
+ │ ┆ Check the plan             ┆   ┆ Break it into tasks        ┆            │
+ │ ┆ main slot's model          ┆   ┆ main slot's model          ┆            │
+ │ ┆ a verdict: pass or findings┆   ┆ proposes tasks             ┆            │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘            │
+ │ Check the plan: fail ⟲ back to PLAN                          ┆             │
+ │                ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯             │
+ │                ▾                                                           │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐            │
+ │ ┆ INTEGRATE                 ○┆┄┄▸┆ GATE                      ○┆            │
+ │ ┆ Put it together            ┆   ┆ You review the whole       ┆            │
+ │ ┆ main slot's model          ┆   ┆ you                        ┆            │
+ │ ┆ SUMMARY.md                 ┆   ┆ you decide                 ┆            │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘            │
+ │                ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯             │
+ │                ▾                                                           │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                             │
+ │ ┆ ▸ next flow                ┆                                             │
+ │ ┆ made when approved         ┆                                             │
+ │ ┆ brief from INTEGRATE       ┆                                             │
+ │ ┆                            ┆                                             │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                             │
+ │                                                                            │
+ │ ✓ done  ● running  ○ waiting  ✗ failed  ┄┄ proposed  ── pass             ▇ │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Building it with the model ───────────────────────────────────────────────┐
+ │ ✓ started by you (console) · 12:41                                         │
+ │ ● reading the folder: 7 tool calls so far                                  │
+ │ ✓ BRIEF.md written · 12:44                                                 │
+ │ ✗ draft 1 · 12:41 · refused: 1 problem                                     │
+ │     - boxes.1.when_done: a built flow waits only at its end: leave plan's  │
+ │       when_done out (go on)                                                │
+ │                                                                            │
+ │ ┌─ Live ─────────────────────────────────────────────────────────────────┐ │
+ │ │ answering · step 4                                                     │ │
+ │ │ speed   41 tok/s ▇█                                                    │ │
+ │ │ context no model runs                                                  │ │
+ │ │ guard   watching · nothing repeats                                     │ │
+ │ │ Enter opens its session: the Session view and its Guide                │ │
+ │ └────────────────────────────────────────────────────────────────────────┘ │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Waiting for you ──────────────────────────────────────────────────────────┐
+
+ f10 next view  enter open  O orchestrator  n new flow  ? explain  f1 help

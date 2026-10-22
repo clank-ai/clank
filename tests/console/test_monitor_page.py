@@ -132,10 +132,11 @@ async def test_each_view_draws_its_panels_titled_and_empty_saying_no_session_yet
             boards = [f"board-{name}" for name in page.BOARDS]  # the Flow view's D4, beside its D1
             shown = [panel for panel in page.panels(view) if not any(panel.has_class(each) for each in boards)]
             panels = [panel for panel in shown if panel.id != "monitor-session-live"]
-            assert len(panels) == 7, view
+            count = 8 if view == "flow" else 7  # the Flow view's Orchestrator among them (design 0013 §16)
+            assert len(panels) == count, view
             assert all(panel.region.height for panel in panels), f"{view}: its panels on screen"
             others = [panel for panel in page.query(Panel) if panel not in panels]
-            assert len(others) == len(page.PANELS) - 7, view  # the live text and the boards among them, hidden
+            assert len(others) == len(page.PANELS) - count, view  # the live text and the boards among them, hidden
             assert not app.query_one("#monitor-session-live").display, "the live text, hidden until l"
             assert not any(panel.region.height for panel in others), f"{view}: no other view's panel on screen"
             says = "no flow yet" if view == "flow" else "no session yet"
@@ -240,7 +241,7 @@ async def test_question_mark_says_what_the_monitor_shows_and_what_is_built_so_fa
 
 async def test_question_mark_says_the_heading_line_whole_where_the_page_cuts_it(client: Client, home: Home) -> None:
     app = make(client, home)
-    async with app.run_test(size=(82, 50)) as pilot:
+    async with app.run_test(size=(62, 50)) as pilot:  # the page 60 columns wide, no menu beside it (decision 0125)
         await opened(pilot, app)
         frame = await frame_when(pilot, app, "No session yet")
         await pilot.press("c", "question_mark")
@@ -274,7 +275,7 @@ async def test_the_machine_column_is_hidden_on_the_monitor_at_160_columns_and_ba
         await settle(pilot, lambda: not column.display)
         assert "RTX 5080" not in render_text(app)
         width = app.query_one("#page-monitor").outer_size.width
-        assert width == 160 - 30 - 2, "the page takes the column's room: 128 columns"
+        assert width == 160 - 2, "the page takes the column's room and the menu's (decision 0125): 158 columns"
         meters_arrive(kernel, 3)
         await settle(pilot, lambda: len(app.data.meters) == seconds + 3)
         await pilot.press("1")
@@ -321,11 +322,11 @@ async def test_the_monitor_on_screen_redraws_nothing_while_nothing_it_shows_chan
 @pytest.mark.parametrize(
     ("width", "height", "machine", "page_width", "name"),
     [
-        (160, 40, False, 128, "monitor-session-160"),
-        (160, 40, True, 90, "monitor-session-160-f5"),
-        (82, 50, False, 60, "monitor-session-82"),
+        (130, 40, False, 128, "monitor-session-160"),
+        (130, 40, True, 90, "monitor-session-160-f5"),
+        (62, 50, False, 60, "monitor-session-82"),
     ],
-)
+)  # the page's widths as design 0012 §2 counts them, the terminal 30 columns narrower with no menu (decision 0125)
 async def test_the_session_view_at_128_88_and_60_columns(
     client: Client, home: Home, width: int, height: int, machine: bool, page_width: int, name: str
 ) -> None:

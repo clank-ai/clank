@@ -1,50 +1,50 @@
  ◆ CLANK  paper   ● service up 9d1h  ● docker running  ● daily 262K  ● gateway stopped                                                                    12:41
-F4 This folder         ✗ 2   │  Flow   Session   Context                                                                  ┌─ Machine ──────────────────────────┐
-1 Home                       │ flow “A new simulation study” · workspace myproject · run 1 · started 12:02 · running: …   │ CPU  ██▉░░░░░░░░░░░░░░░░░░░░░  12% │
-2 Questions                  │                                                                                            │                                    │
-3 History                    │ ┌─ Flow ────────────────────────────────────────────── 6 done · 1 running · 4 waiting ─┐   │ 1s                 ▂       max 12% │
-4 Docker               ●     │ │ ┌──────────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐       │   │ thr  ▁▃▁▁▁▃▁▁▁▃▁▁▁▃▁▁ 16 threads   │
-5 Machine                    │ │ │ YOU                 ✓│──▸│ PLAN ⟲2             ✓│──▸│ VERIFY ⟲2           ✓│       │   │                                    │
-6 Operations                 │ │ │ Brief                │   │ Write the study plan │   │ Check the plan       │       │   │ RAM  █████████░░░░░░░░░░░░░░░  38% │
-7 Records                    │ │ │ you                  │   │ daily 262K           │   │ daily 262K           │       │   │      24.0 GB of 64.0 GB            │
-8 Models               ●     │ │ │ BRIEF.md · 12:02     │   │ PLAN.md · 12:18      │   │ pass, try 2 · 12:22  │       │   │ 1s                 ▄       max 38% │
-9 Presets                    │ │ └──────────────────────┘   └─▴────────────────────┘   └───────────────────┬─┬┘       │   │                                    │
-0 Providers and models       │ │                              ╰─ fail ⟲ 3 findings · 2 of 3 tries used ────╯ │        │   │ GPU  ▊░░░░░░░░░░░░░░░░░░░░░░░   3% │
-F1 Help                      │ │             ╭───────────────────────────────────────────────────────────────╯        │   │                                    │
-F2 Launch options            │ │             ▾                                                                        │   │ 1s                 ▁        max 3% │
-F3 MCP servers               │ │ ┌──────────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐       │   │      RTX 5080 · 34°C · 18 W        │
-F6 Workspaces                │ │ │ GATE                ✓│──▸│ DECOMPOSE           ✓│─┬▸│ TASK T1             ✓│┄┐     │   │ VRAM ███░░░░░░░░░░░░░░░░░░░░░  13% │
-F7 Requests                  │ │ │ You approve the plan │   │ Break it into tasks  │ │ │ The parameter grid   │ ┆     │   │      2.0 GB of 15.9 GB             │
-F8 CPU models                │ │ │ you                  │   │ daily 262K           │ │ │ daily 262K           │ ┆     │   │                                    │
-F9 Phone               ●     │ │ │ approved 12:30       │   │ 4 tasks · 12:31      │ │ │ grid.json · 12:33    │ ┆     │   │ Disk read 12.0 MB/s · write 3.0 M… │
-F10 Monitor                  │ │ └──────────────────────┘   └──────────────────────┘ │ └──────────────────────┘ ┆     │   │ 1s                 █ max 15.0 MB/s │
-F12 Add a model              │ │                                                     │                          ┆     │   │      C: █████████▍░░░░░░░░░░░  44% │
-─────────────────────────────│ │                                                     │ ┏━━━━━━━━━━━━━━━━━━━━━━┓ ┆     │   │                                    │
-coming                       │ │                                                     ├▸┃ TASK T2             ●┃┄┤     │   │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
-Sampling              M3     │ │                                                     ┆ ┃ Estimate run times   ┃ ┆     │   │ 1s                 █  max 1.2 MB/s │
-Sessions              M3     │ │                                                     ┆ ┃ daily 262K           ┃ ┆   ▆ │   └────────────────────────────────────┘
-Keys                  M3     │ │                                                     ┆ ┃ runs/estimates.md    ┃ ┆     │▅▅
-Layout                M2     │ │                                                     ┆ ┗━━━━━━━━━━━━━━━━━━━━━━┛ ┆     │   ┌─ Clank now ────────────────────────┐
-Tests and trials      M2     │ │                                                     ┆                          ┆     │   │ ● gateway stopped                  │
-Agents                M5     │ │                                                     ┆ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐ ┆     │   └────────────────────────────────────┘
-Modes                 M5     │ │                                                     ├▸┆ TASK T3             ○┆┄┤     │
-Changes               M6     │ │                                                     ┆ ┆ The sweep script     ┆ ┆     │
-Network access        M7     │ │                                                     ┆ ┆ daily 262K           ┆ ┆     │
-Skills                M8     │ │                                                     ┆ ┆ scripts/sweep.py     ┆ ┆     │
-Files                 M9     │ │                                                     ┆ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘ ┆     │
-Setup guide           M10    │ │                                                     ┆                          ┆     │
-                             │ └──────────────────────────────────────────────────────────────────────────────────────┘
-                             │
-                             │ ┌─ Selected ───────────────────────────────────────────────────────────────────────────┐
-                             │ │ TASK T2 · ● running                                                                  │
-                             │ │ Estimate run times                                                                   │
-                             │ │ model   daily 262K                                                                   │
-                             │ │ status  ● running since 12:35 · 6m · try 1 of 3                                      │
-                             │ │ mode    auto: changes accepted at once                                               │
-                             │ │ sees    PLAN.md, grid.json                                                           │
-                             │ │ prompt  split's draft, edited by you                                                 │
-                             │ │ writes  runs/estimates.md (not yet)                                                  │
-                             │ │ next    TASK T3 The sweep script                                                     │
-                             │ │                                                                                      │
+  Flow   Session   Context                                                                                                ┌─ Machine ──────────────────────────┐
+ flow “A new simulation study” · workspace myproject · run 1 · started 12:02 · running: T2                                │ CPU  ██▉░░░░░░░░░░░░░░░░░░░░░  12% │
+                                                                                                                          │                                    │
+ ┌─ Flow ──────────────────────────────────────────────────────────────────────────── 6 done · 1 running · 4 waiting ─┐   │ 1s                 ▂       max 12% │
+ │ ┌───────────────────────┐   ┌───────────────────────┐   ┌───────────────────────┐   ┌───────────────────────┐      │   │ thr  ▁▃▁▁▁▃▁▁▁▃▁▁▁▃▁▁ 16 threads   │
+ │ │ YOU                  ✓│──▸│ PLAN ⟲2              ✓│──▸│ VERIFY ⟲2            ✓│──▸│ GATE                 ✓│      │   │                                    │
+ │ │ Brief                 │   │ Write the study plan  │   │ Check the plan        │   │ You approve the plan  │      │   │ RAM  █████████░░░░░░░░░░░░░░░  38% │
+ │ │ you                   │   │ daily 262K            │   │ daily 262K            │   │ you                   │      │   │      24.0 GB of 64.0 GB            │
+ │ │ BRIEF.md · 12:02      │   │ PLAN.md · 12:18       │   │ pass, try 2 · 12:22   │   │ approved 12:30        │      │   │ 1s                 ▄       max 38% │
+ │ └───────────────────────┘   └─▴─────────────────────┘   └────────────────────┬──┘   └──────────────────────┬┘      │   │                                    │
+ │                               ╰─ fail ⟲ 3 findings · 2 of 3 tries used ──────╯                             │       │   │ GPU  ▊░░░░░░░░░░░░░░░░░░░░░░░   3% │
+ │             ╭──────────────────────────────────────────────────────────────────────────────────────────────╯       │   │                                    │
+ │             ▾                                                                                                      │   │ 1s                 ▁        max 3% │
+ │ ┌───────────────────────┐   ┌───────────────────────┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐      │   │      RTX 5080 · 34°C · 18 W        │
+ │ │ DECOMPOSE            ✓│─┬▸│ TASK T1              ✓│┄┬▸┆ INTEGRATE            ○┆┄┄▸┆ GATE                 ○┆      │   │ VRAM ███░░░░░░░░░░░░░░░░░░░░░  13% │
+ │ │ Break it into tasks   │ │ │ The parameter grid    │ ┆ ┆ Put it together       ┆   ┆ You review the whole  ┆      │   │      2.0 GB of 15.9 GB             │
+ │ │ daily 262K            │ │ │ daily 262K            │ ┆ ┆ daily 262K            ┆   ┆ you                   ┆      │   │                                    │
+ │ │ 4 tasks · 12:31       │ │ │ grid.json · 12:33     │ ┆ ┆ STUDY-PLAN.md         ┆   ┆ you decide            ┆      │   │ Disk read 12.0 MB/s · write 3.0 M… │
+ │ └───────────────────────┘ │ └───────────────────────┘ ┆ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘      │   │ 1s                 █ max 15.0 MB/s │
+ │                           │                           ┆                                                    ┆       │   │      C: █████████▍░░░░░░░░░░░  44% │
+ │                           │ ┏━━━━━━━━━━━━━━━━━━━━━━━┓ ┆                                                    ┆       │   │                                    │
+ │                           ├▸┃ TASK T2              ●┃┄┤                                                    ┆     ▇ │   │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
+ │                           ┆ ┃ Estimate run times    ┃ ┆                                                    ┆       │   │ 1s                 █  max 1.2 MB/s │
+ │                           ┆ ┃ daily 262K            ┃ ┆                                                    ┆       │   └────────────────────────────────────┘
+ │                           ┆ ┃ runs/estimates.md     ┃ ┆                                                    ┆       │
+ │                           ┆ ┗━━━━━━━━━━━━━━━━━━━━━━━┛ ┆                                                    ┆       │▂▂ ┌─ Clank now ────────────────────────┐
+ │                           ┆                           ┆                                                    ┆       │   │ ● gateway stopped                  │
+ │                           ┆ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐ ┆                                                    ┆       │   └────────────────────────────────────┘
+ │                           ├▸┆ TASK T3              ○┆┄┤                                                    ┆       │
+ │                           ┆ ┆ The sweep script      ┆ ┆                                                    ┆       │
+ │                           ┆ ┆ daily 262K            ┆ ┆                                                    ┆       │
+ │                           ┆ ┆ scripts/sweep.py      ┆ ┆                                                    ┆       │
+ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
- f10 next view  enter open  p pause  e edit the box  o open in VS Code  r run from here  h run log  n new flow  N new flow in VS Code  ? explain  f1 help
+ ┌─ Selected ─────────────────────────────────────────────┐  ┌─ Waiting for you ──────────────────────────────────────┐
+ │ TASK T2 · ● running                                    │  │ ✓ Nothing waits for you.                               │
+ │ Estimate run times                                     │  │ next: GATE You review the whole, after INTEGRATE       │
+ │ model   daily 262K                                     │  │ it asks here and on your phone                         │
+ │ status  ● running since 12:35 · 6m · try 1 of 3        │  │                                                        │
+ │ mode    auto: changes accepted at once                 │  │                                                        │
+ │ sees    PLAN.md, grid.json                             │  │                                                        │
+ │ prompt  split's draft, edited by you                   │  │                                                        │
+ │ writes  runs/estimates.md (not yet)                    │  │                                                        │
+ │ next    TASK T3 The sweep script                       │  │                                                        │
+ │                                                        │  │                                                        │
+ │ ┌─ Live ─────────────────────────────────────────────┐ │  │                                                        │
+ │ │ idle                                               │ │  │                                                        │
+
+ f10 next view  enter open  p pause  O orchestrator  L ledger  e edit the box  o open in VS Code  r run from here  h run log  n new flow  ? explain  f1 help

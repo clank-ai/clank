@@ -1,50 +1,50 @@
  ◆ CLANK  paper   ● service up 9d1h  ● docker running  ● no model: Add a model  ● gateway stopped                                                         12:41
-F4 This folder         ✗ 3   │  Flow   Session   Context
-1 Home                       │ flow “A new simulation study” · workspace myproject · run 1 · started 12:02 · at split
-2 Questions                  │
-3 History                    │ ┌─ The flow so far ────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-4 Docker               ●     │ │ ✓ YOU ▸ ✓ PLAN ▸ ✓ VERIFY ▸ ✓ GATE ▸ ✓ DECOMPOSE ▸ ┄T1?┄ ▸ ┄T2?┄ ▸ ┄T3?┄ ▸ ┄T4?┄ ▸ ○ INTEGRATE ▸ ○ GATE ▸ next flow          │
-5 Machine                    │ │                                                                                                                              │
-6 Operations                 │ │ ✓ done  ○ waiting  ┄┄ proposed: not in the flow until you accept it                                                          │
-7 Records                    │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-8 Models               ●     │
-9 Presets                    │ ┌─ Proposed by DECOMPOSE (12:31) ──────────────────────────────────────── 4 proposed · 0 accepted · 0 rejected · A accept all ─┐
-0 Providers and models       │ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐  ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐  ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐    │
-F1 Help                      │ │ ┆ 1 · TASK T1?                proposed┆  ┆ 2 · TASK T2?                proposed┆  ┆ 3 · TASK T3?                proposed┆    │
-F2 Launch options            │ │ ┆ Task 1 of the plan                  ┆  ┆ Task 2 of the plan                  ┆  ┆ Task 3 of the plan                  ┆    │
-F3 MCP servers               │ │ ┆ model   daily 262K · a switch first ┆  ┆ model   daily 262K · a switch first ┆  ┆ model   daily 262K · a switch first ┆    │
-F6 Workspaces                │ │ ┆ sees    PLAN.md                     ┆  ┆ sees    PLAN.md, T1's out/t1.md     ┆  ┆ sees    PLAN.md, T1's out/t1.md, T2…┆    │
-F7 Requests                  │ │ ┆ writes  out/t1.md                   ┆  ┆ writes  out/t2.md                   ┆  ┆ writes  out/t3.md                   ┆    │
-F8 CPU models                │ │ ┆ accept  out/t1.md answers step 1    ┆  ┆ accept  out/t2.md answers step 2    ┆  ┆ accept  out/t3.md answers step 3    ┆    │
-F9 Phone               ●     │ │ ┆ a accept  e edit  r reject          ┆  ┆ a accept  e edit  r reject          ┆  ┆ a accept  e edit  r reject          ┆    │
-F10 Monitor                  │ │ ┆ runs first                          ┆  ┆ runs after T1                       ┆  ┆ runs after T2                       ┆    │
-F12 Add a model              │ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘  └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘  └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘    │
-─────────────────────────────│ │                                                                                                                              │
-coming                       │ │                                                                                                                              │
-Sampling              M3     │ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                                                                      │
-Sessions              M3     │ │ ┆ 4 · TASK T4?                proposed┆                                                                                      │
-Keys                  M3     │ │ ┆ Task 4 of the plan                  ┆                                                                                      │
-Layout                M2     │ │ ┆ model   daily 262K · a switch first ┆                                                                                      │
-Tests and trials      M2     │ │ ┆ sees    PLAN.md, T1's out/t1.md, T2…┆                                                                                      │
-Agents                M5     │ │ ┆ writes  out/t4.md                   ┆                                                                                      │
-Modes                 M5     │ │ ┆ accept  out/t4.md answers step 4    ┆                                                                                      │
-Changes               M6     │ │ ┆ a accept  e edit  r reject          ┆                                                                                      │
-Network access        M7     │ │ ┆ runs after T3                       ┆                                                                                      │
-Skills                M8     │ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                                                                      │
-Files                 M9     │ │ T1 · drafted prompt: the task session's first message (e edits it)                                                           │
-Setup guide           M10    │ │ Do step 1 of PLAN.md, and write out/t1.md.                                                                                   │
-                             │ │ why: PLAN.md's step 1                                                                                                        │
-                             │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-                             │
-                             │ ┌─ How it proposed them ───────────────────────────────────────────────────────────────────────────────────────────────────────┐
-                             │ │ split's calls to Clank's MCP server, 12:31                                                                                   │
-                             │ │ flow_propose_box(after=split, type=TASK, title=…) → T1 Task 1 of the plan proposed                                           │
-                             │ │ flow_propose_box(after=split, type=TASK, title=…) → T2 Task 2 of the plan proposed                                           │
-                             │ │ flow_propose_box(after=split, type=TASK, title=…) → T3 Task 3 of the plan proposed                                           │
-                             │ │ flow_propose_box(after=split, type=TASK, title=…) → T4 Task 4 of the plan proposed                                           │
-                             │ │ flow_submit(4 boxes) · 4 tasks from PLAN.md                                                                                  │
-                             │ │ The model only proposes; you decide. Auto-accept is off for this flow.                                                       │
-                             │ └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-                             │
+  Flow   Session   Context
+ flow “A new simulation study” · workspace myproject · run 1 · started 12:02 · at split
 
- a accept  e edit  r reject  A accept all  esc back to the flow  ? explain  f1 help  f5 machine column  q quit                                       ^p palette
+ ┌─ The flow so far ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ │ ✓ YOU ▸ ✓ PLAN ▸ ✓ VERIFY ▸ ✓ GATE ▸ ✓ DECOMPOSE ▸ ┄T1?┄ ▸ ┄T2?┄ ▸ ┄T3?┄ ▸ ┄T4?┄ ▸ ○ INTEGRATE ▸ ○ GATE ▸ next flow                                        │
+ │                                                                                                                                                            │
+ │ ✓ done  ○ waiting  ┄┄ proposed: not in the flow until you accept it                                                                                        │
+ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Proposed by DECOMPOSE (12:31) ────────────────────────────────────────────────────────────────────── 4 proposed · 0 accepted · 0 rejected · A accept all ─┐
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐  ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐  ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐  ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐     │
+ │ ┆ 1 · TASK T1?             proposed┆  ┆ 2 · TASK T2?             proposed┆  ┆ 3 · TASK T3?             proposed┆  ┆ 4 · TASK T4?             proposed┆     │
+ │ ┆ Task 1 of the plan               ┆  ┆ Task 2 of the plan               ┆  ┆ Task 3 of the plan               ┆  ┆ Task 4 of the plan               ┆     │
+ │ ┆ model   daily 262K · a switch fi…┆  ┆ model   daily 262K · a switch fi…┆  ┆ model   daily 262K · a switch fi…┆  ┆ model   daily 262K · a switch fi…┆     │
+ │ ┆ sees    PLAN.md                  ┆  ┆ sees    PLAN.md, T1's out/t1.md  ┆  ┆ sees    PLAN.md, T1's out/t1.md,…┆  ┆ sees    PLAN.md, T1's out/t1.md,…┆     │
+ │ ┆ writes  out/t1.md                ┆  ┆ writes  out/t2.md                ┆  ┆ writes  out/t3.md                ┆  ┆ writes  out/t4.md                ┆     │
+ │ ┆ accept  out/t1.md answers step 1 ┆  ┆ accept  out/t2.md answers step 2 ┆  ┆ accept  out/t3.md answers step 3 ┆  ┆ accept  out/t4.md answers step 4 ┆     │
+ │ ┆ a accept  e edit  r reject       ┆  ┆ a accept  e edit  r reject       ┆  ┆ a accept  e edit  r reject       ┆  ┆ a accept  e edit  r reject       ┆     │
+ │ ┆ runs first                       ┆  ┆ runs after T1                    ┆  ┆ runs after T2                    ┆  ┆ runs after T3                    ┆     │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘  └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘  └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘  └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘     │
+ │ T1 · drafted prompt: the task session's first message (e edits it)                                                                                         │
+ │ Do step 1 of PLAN.md, and write out/t1.md.                                                                                                                 │
+ │ why: PLAN.md's step 1                                                                                                                                      │
+ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ How it proposed them ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ │ split's calls to Clank's MCP server, 12:31                                                                                                                 │
+ │ flow_propose_box(after=split, type=TASK, title=…) → T1 Task 1 of the plan proposed                                                                         │
+ │ flow_propose_box(after=split, type=TASK, title=…) → T2 Task 2 of the plan proposed                                                                         │
+ │ flow_propose_box(after=split, type=TASK, title=…) → T3 Task 3 of the plan proposed                                                                         │
+ │ flow_propose_box(after=split, type=TASK, title=…) → T4 Task 4 of the plan proposed                                                                         │
+ │ flow_submit(4 boxes) · 4 tasks from PLAN.md                                                                                                                │
+ │ The model only proposes; you decide. Auto-accept is off for this flow.                                                                                     │
+ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ a accept  e edit  r reject  A accept all  esc back to the flow  ? explain  f1 help  f5 machine column  q quit  ^b menu                              ^p palette

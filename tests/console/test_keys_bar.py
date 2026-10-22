@@ -101,13 +101,14 @@ def test_a_narrow_keys_bar_drops_the_other_keys_that_act_anywhere_first_then_the
         [actions for actions, _ in seen[1:]]
         == [
             ["docker", "doctor", *anywhere],  # the palette went
-            ["docker", "doctor", *anywhere[:-1]],  # then q
-            ["docker", "doctor", *anywhere[:-2]],  # then f5
-            ["docker", *anywhere[:-2]],  # then the page's own, from the right
-            anywhere[:-2],
+            ["docker", "doctor", *anywhere[:-1]],  # then ^b (decision 0125)
+            ["docker", "doctor", *anywhere[:-2]],  # then q
+            ["docker", "doctor", *anywhere[:-3]],  # then f5
+            ["docker", *anywhere[:-3]],  # then the page's own, from the right
+            anywhere[:-3],
         ]
     )
-    assert [key.action for key in ALWAYS] == anywhere[:-2] == ["explain", "page('help')"], "? and f1 always stay"
+    assert [key.action for key in ALWAYS] == anywhere[:-3] == ["explain", "page('help')"], "? and f1 always stay"
     assert fit_keys(page, 5)[0] == list(ALWAYS)
 
 

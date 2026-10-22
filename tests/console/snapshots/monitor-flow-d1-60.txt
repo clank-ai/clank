@@ -1,60 +1,60 @@
  ◆ CLANK  paper   ● service  ● docker  ● daily 262K  ● gateway              12:41
-F4 This folder   ✗ │  Flow   Session   Context
-1 Home             │ flow “A new simulation study” · workspace myproject · run…
-2 Questions        │
-3 History          │ ┌─ Flow ──────────────── 6 done · 1 running · 4 waiting ─┐
-4 Docker         ● │ │ ✓ YOU Brief  BRIEF.md · 12:02                          │
-5 Machine          │ │ ✓ PLAN Write the study plan  PLAN.md · 12:18           │
-6 Operations       │ │ ✓ VERIFY Check the plan  pass, try 2 · 12:22           │
-7 Records          │ │    fail ⟲ back to PLAN with 3 findings · 2 of 3 trie…  │
-8 Models         ● │ │ ✓ GATE You approve the plan  approved 12:30            │
-9 Presets          │ │ ✓ DECOMPOSE Break it into tasks  4 tasks · 12:31       │
-0 Providers and…   │ │    ✓ TASK T1 The parameter grid  grid.json · 12:33     │
-F1 Help            │ │    ● TASK T2 Estimate run times  runs/estimates.md     │
-F2 Launch optio…   │ │    ○ TASK T3 The sweep script  scripts/sweep.py        │
-F3 MCP servers     │ │    ○ TASK T4 The analysis notebook  analysis/figures…  │
-F6 Workspaces      │ │ ○ INTEGRATE Put it together  STUDY-PLAN.md             │
-F7 Requests        │ │ ○ GATE You review the whole  you decide                │
-F8 CPU models      │ │ ▸ next flow: made when approved                        │
-F9 Phone         ● │ │                                                        │
-F10 Monitor        │ │ ✓ done  ● running  ○ waiting  ✗ failed  proposed       │
-F12 Add a model    │ └────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ Selected ─────────────────────────────────────────────┐
-                   │ │ TASK T2 · ● running                                    │
-                   │ │ Estimate run times                                     │
-                   │ │ model   daily 262K                                     │
-                   │ │ status  ● running since 12:35 · 6m · try 1 of 3        │
-                   │ │ mode    auto: changes accepted at once                 │
-                   │ │ sees    PLAN.md, grid.json                             │
-                   │ │ prompt  split's draft, edited by you                   │
-                   │ │ writes  runs/estimates.md (not yet)                    │
-                   │ │ next    TASK T3 The sweep script                       │
-                   │ │                                                        │
-                   │ │ ┌─ Live ─────────────────────────────────────────────┐ │
-                   │ │ │ idle                                               │ │
-                   │ │ │ speed   no speed yet                               │ │
-                   │ │ │ context no step has ended yet                      │ │
-                   │ │ │ guard   watching · nothing repeats                 │ │
-                   │ │ │ Enter opens its session: the Session view and its… │ │
-                   │ │ └────────────────────────────────────────────────────┘ │
-                   │ └────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ Models in this flow ──────────────────────────────────┐
-                   │ │ ● daily 262K · loaded · 8 boxes                        │▂▂
-                   │ │ the other 3 are you                                    │
-                   │ │ e on a box picks another preset for it                 │
-                   │ └────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ Waiting for you ──────────────────────────────────────┐
-                   │ │ ✓ Nothing waits for you.                               │
-                   │ │ next: GATE You review the whole, after INTEGRATE       │
-                   │ │ it asks here and on your phone                         │
-                   │ └────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ The brief, checked ────────────────────── 3 of 7 met ─┐
-                   │ │ ✓ about 60 grid points  60 points in PLAN.md's grid ·… │
-                   │ │ ✓ at most 48 CPU-hours  about 41, by PLAN.md's estima… │
-                   │ │ ○ the grid has about 60 points  not checked yet        │
+  Flow   Session   Context
+ flow “A new simulation study” · workspace myproject · run 1 · started 12:02 ·…
 
- f10 next view  enter open  p pause  e edit the box  ? explain  f1 help
+ ┌─ Flow ──────────────────────────────────── 6 done · 1 running · 4 waiting ─┐
+ │ ┌────────────────────────────┐   ┌────────────────────────────┐            │
+ │ │ YOU                       ✓│──▸│ PLAN ⟲2                   ✓│            │
+ │ │ Brief                      │   │ Write the study plan       │            │
+ │ │ you                        │   │ daily 262K                 │            │
+ │ │ BRIEF.md · 12:02           │   │ PLAN.md · 12:18            │            │
+ │ └────────────────────────────┘   └───────────────────────────┬┘            │
+ │                ╭─────────────────────────────────────────────╯             │
+ │                ▾                                                           │
+ │ ┌────────────────────────────┐   ┌────────────────────────────┐            │
+ │ │ VERIFY ⟲2                 ✓│──▸│ GATE                      ✓│            │
+ │ │ Check the plan             │   │ You approve the plan       │            │
+ │ │ daily 262K                 │   │ you                        │            │
+ │ │ pass, try 2 · 12:22        │   │ approved 12:30             │            │
+ │ └────────────────────────────┘   └───────────────────────────┬┘            │
+ │ Check the plan: fail ⟲ back to PLAN with 3 findings · 2 of … │             │
+ │                ╭─────────────────────────────────────────────╯             │
+ │                ▾                                                           │
+ │ ┌────────────────────────────┐   ┌────────────────────────────┐          ▅ │
+ │ │ DECOMPOSE                 ✓│─┬▸│ TASK T1                   ✓│┄┐          │
+ │ │ Break it into tasks        │ │ │ The parameter grid         │ ┆          │
+ │ │ daily 262K                 │ │ │ daily 262K                 │ ┆          │
+ │ │ 4 tasks · 12:31            │ │ │ grid.json · 12:33          │ ┆          │
+ │ └────────────────────────────┘ │ └────────────────────────────┘ ┆          │
+ │                                │                                ┆          │
+ │                                │ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ ┆          │
+ │                                ├▸┃ TASK T2                   ●┃┄┤          │
+ │                                ┆ ┃ Estimate run times         ┃ ┆          │
+ │                                ┆ ┃ daily 262K                 ┃ ┆          │
+ │                                ┆ ┃ runs/estimates.md          ┃ ┆          │▆▆
+ │                                ┆ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ ┆          │
+ │                                ┆                                ┆          │
+ │                                ┆ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐ ┆          │
+ │                                ├▸┆ TASK T3                   ○┆┄┤          │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Selected ─────────────────────────────────────────────────────────────────┐
+ │ TASK T2 · ● running                                                        │
+ │ Estimate run times                                                         │
+ │ model   daily 262K                                                         │
+ │ status  ● running since 12:35 · 6m · try 1 of 3                            │
+ │ mode    auto: changes accepted at once                                     │
+ │ sees    PLAN.md, grid.json                                                 │
+ │ prompt  split's draft, edited by you                                       │
+ │ writes  runs/estimates.md (not yet)                                        │
+ │ next    TASK T3 The sweep script                                           │
+ │                                                                            │
+ │ ┌─ Live ─────────────────────────────────────────────────────────────────┐ │
+ │ │ idle                                                                   │ │
+ │ │ speed   no speed yet                                                   │ │
+ │ │ context no step has ended yet                                          │ │
+ │ │ guard   watching · nothing repeats                                     │ │
+ │ │ Enter opens its session: the Session view and its Guide                │ │
+ │ └────────────────────────────────────────────────────────────────────────┘ │
+
+ f10 next view  enter open  p pause  O orchestrator  L ledger  ? explain  f1 help

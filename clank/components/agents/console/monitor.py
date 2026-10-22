@@ -280,8 +280,9 @@ class MonitorPage(Page):
     PANELS = (
         "monitor-flow-boxes",
         "monitor-flow-selected",
-        "monitor-flow-models",
         "monitor-flow-waiting",
+        "monitor-flow-orchestrator",
+        "monitor-flow-models",
         "monitor-flow-brief",
         "monitor-flow-deliverables",
         "monitor-flow-ahead",
@@ -340,6 +341,11 @@ class MonitorPage(Page):
                 "result highlighted in a part's items, or in what could be freed (§4.7)"),
         PageKey("l", "live", "live text", "on the Session view: the session's request as it is written, under the "
                 "flow, or hidden again (§7)"),
+        PageKey("O", "orchestrator", "orchestrator", "on the Flow view: turn the flow's orchestrator on or off: a "
+                "model that reads what each box did, changes the boxes ahead and answers the run's questions on its "
+                "own, within its limits (design 0013 §16)"),
+        PageKey("L", "ledger", "ledger", "on the Flow view: the orchestrator's ledger, whole, in a window: its facts "
+                "and plan, then each decision with why (design 0013 §16)"),
         PageKey("e", "edit_box", "edit the box", "on the Flow view: the box chosen's settings, each with its key "
                 "(board D2)"),
         PageKey("o", "open_file", "open in VS Code", "on the Flow view: a deliverable in Clank's VS Code window, the "
@@ -360,15 +366,23 @@ class MonitorPage(Page):
     BOARDS = ("d2", "d3", "d4")  # the Flow view's boards beside D1 (design 0013 §12)
     VIEW_KEYS: ClassVar[dict[str, tuple[str, ...]]] = {
         "session": ("f10", "enter", "escape", "full_stop", "m", "k", "p", "u", "x", "l"),
-        "flow": ("f10", "enter", "e", "o", "p", "r", "h", "n", "N"),
+        "flow": ("f10", "enter", "O", "L", "e", "o", "p", "r", "h", "n", "N"),
         "context": ("f10", "enter", "escape", "k", "x"),
     }  # the keys each view's keys bar shows, from `KEYS`
-    BUILDING_KEYS = ("f10", "enter", "n", "N")  # the Flow view's, while a flow is built with the model (its planning)
+    BUILDING_KEYS = ("f10", "enter", "O", "n", "N")  # the Flow view's, while a flow is built with the model
     MACHINE_COLUMN = False  # its panels take the column's room (design 0012 §2); F5 shows it
+    MENU_COLUMN = (
+        False  # the flow takes the whole width, as the website draws it (decision 0125); Ctrl+B shows the menu
+    )
 
     DEFAULT_CSS = """
     #monitor-tabs {
         height: 1;
+    }
+    /* The flow across the whole width (decision 0125), at most 60% of the window high, so Selected and Waiting for
+       you stand under it on screen; a taller flow scrolls inside its panel. */
+    #monitor-flow-boxes {
+        max-height: 60vh;
     }
     #monitor-heading {
         height: 1;
@@ -397,7 +411,8 @@ class MonitorPage(Page):
         max-height: 24;
     }
     #monitor-flow-chart-boxes {
-        height: 1fr;
+        height: auto;
+        max-height: 56vh;
     }
     MonitorPage.-view-flow .view-flow.board-d2, MonitorPage.-view-flow .view-flow.board-d3,
     MonitorPage.-view-flow .view-flow.board-d4 {

@@ -320,7 +320,7 @@
           "type": "string"
         },
         "border": {
-          "default": "#3b4261",
+          "default": "#414868",
           "description": "Every panel's border, the menu's edge, a divider.",
           "pattern": "^#[0-9a-fA-F]{6}$",
           "title": "Border",
@@ -334,7 +334,7 @@
           "type": "string"
         },
         "title": {
-          "default": "#7aa2f7",
+          "default": "#c0caf5",
           "description": "A panel's title, set in its border.",
           "pattern": "^#[0-9a-fA-F]{6}$",
           "title": "Title",
@@ -348,14 +348,14 @@
           "type": "string"
         },
         "brand": {
-          "default": "#bb9af7",
+          "default": "#ff9e64",
           "description": "The header's ◆ CLANK.",
           "pattern": "^#[0-9a-fA-F]{6}$",
           "title": "Brand",
           "type": "string"
         },
         "name": {
-          "default": "#e0af68",
+          "default": "#9aa5ce",
           "description": "The folder's name in the header, a workspace's in a sentence.",
           "pattern": "^#[0-9a-fA-F]{6}$",
           "title": "Name",
@@ -369,7 +369,7 @@
           "type": "string"
         },
         "quiet": {
-          "default": "#828bb8",
+          "default": "#9aa5ce",
           "description": "What explains: a time, a key's words, a panel's note.",
           "pattern": "^#[0-9a-fA-F]{6}$",
           "title": "Quiet",
@@ -390,7 +390,7 @@
           "type": "string"
         },
         "selected_text": {
-          "default": "#ffffff",
+          "default": "#e0e5ff",
           "description": "The highlighted row's text, in bold.",
           "pattern": "^#[0-9a-fA-F]{6}$",
           "title": "Selected text",
@@ -411,7 +411,7 @@
           "type": "string"
         },
         "now": {
-          "default": "#ff9e64",
+          "default": "#73daca",
           "description": "What runs now; the spinner.",
           "pattern": "^#[0-9a-fA-F]{6}$",
           "title": "Now",

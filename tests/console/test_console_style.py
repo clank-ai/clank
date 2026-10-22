@@ -51,7 +51,7 @@ async def test_the_console_starts_in_the_clank_style_with_its_elements_as_variab
     async with app.run_test(size=(120, 40)):
         assert app.theme == "clank"
         variables = app.get_css_variables()
-        assert variables["clank-quiet"].lower() == "#828bb8"
+        assert variables["clank-quiet"].lower() == "#9aa5ce"
         assert variables["clank-border-focused"].lower() == "#7aa2f7"
         assert variables["clank-box-verify"].lower() == "#bb9af7"
         assert variables["clank-data-1"].lower() == "#7aa2f7"
@@ -89,7 +89,7 @@ async def test_an_owners_style_that_changes_an_element_shows(client: Client, hom
     async with app.run_test(size=(120, 40)):
         variables = app.get_css_variables()
         assert variables["clank-quiet"].lower() == "#999999"
-        assert variables["clank-border"].lower() == "#3b4261", "every other element stays Clank's"
+        assert variables["clank-border"].lower() == "#414868", "every other element stays Clank's"
 
 
 async def test_a_style_that_is_not_found_leaves_clanks_and_says_so(client: Client, home: Home) -> None:

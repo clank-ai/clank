@@ -1,60 +1,60 @@
  ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway  ● 1 waiting   12:41
-F4 This folder   ✗ │  Flow   Session   Context
-1 Home             │ flow “A new simulation study” · workspace myproject · not r…
-2 Questions      ● │
-3 History          │ ┌─ Flow ─────────────────────────────────────── 6 waiting ─┐
-4 Docker         ● │ │ ○ YOU Your brief  BRIEF.md                               │
-5 Machine          │ │ ○ PLAN Write the plan  PLAN.md                           │
-6 Operations       │ │ ○ VERIFY Check the plan  a verdict: pass or findings     │
-7 Records          │ │ ○ DECOMPOSE Break it into tasks  proposes tasks          │
-8 Models         ● │ │ ○ INTEGRATE Put it together  SUMMARY.md                  │
-9 Presets          │ │ ○ GATE You review the whole  you decide                  │
-0 Providers and…   │ │ ▸ next flow: made when approved                          │
-F1 Help            │ │                                                          │
-F2 Launch optio…   │ │ ✓ done  ● running  ○ waiting  ✗ failed  proposed         │
-F3 MCP servers     │ └──────────────────────────────────────────────────────────┘
-F6 Workspaces      │
-F7 Requests        │ ┌─ Selected ───────────────────────────────────────────────┐
-F8 CPU models      │ │ YOU · ○ waiting                                          │
-F9 Phone         ● │ │ Your brief                                               │
-F10 Monitor        │ │ model   you                                              │
-F12 Add a model    │ │ status  ○ waiting                                        │
-                   │ │ writes  BRIEF.md                                         │
-                   │ │ next    PLAN Write the plan                              │
-                   │ └──────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ Models in this flow ────────────────────────────────────┐
-                   │ │ ○ main slot's model · switches nothing · 4 boxes         │
-                   │ │ the other 2 are you                                      │
-                   │ │ e on a box picks another preset for it                   │
-                   │ └──────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ Waiting for you ────────────────────────────────────────┐
-                   │ │ ? Built with the model: look, then r to run              │
-                   │ │   e changes a box first; r runs it from its brief to     │
-                   │ │   your review, asking nothing else on the way            │
-                   │ │ The check warns:                                         │
-                   │ │ - plan sees data/grid.csv, which is not in the folder,   │
-                   │ │   and neither plan nor a box before it writes it         │
-                   │ └──────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ The brief, checked ──────────────────────── 0 of 2 met ─┐
-                   │ │ ○ about 60 grid points  not checked yet                  │
-                   │ │ ○ at most 48 CPU-hours  not checked yet                  │
-                   │ └──────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ Deliverables ───────────────────────────────────────────┐
-                   │ │ nothing written yet                                      │
-                   │ └──────────────────────────────────────────────────────────┘
-                   │
-                   │ ┌─ Ahead ──────────────────────────────────────────────────┐
-                   │ │ YOU Your brief  done by BRIEF.md, written with the model │
-                   │ │ PLAN Write the plan  a fresh prompt                      │
-                   │ │ VERIFY Check the plan  a fresh prompt                    │
-                   │ │ DECOMPOSE Break it into tasks  a fresh prompt            │
-                   │ │ INTEGRATE Put it together  a fresh prompt                │
-                   │ │ GATE You review the whole  asks you                      │
-                   │ └──────────────────────────────────────────────────────────┘
-                   │
+  Flow   Session   Context
+ flow “A new simulation study” · workspace myproject · not run yet
 
- f10 next view  enter open  p pause  e edit the box  ? explain  f1 help
+ ┌─ Flow ───────────────────────────────────────────────────────── 6 waiting ─┐
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐            │
+ │ ┆ YOU                       ○┆┄┄▸┆ PLAN                      ○┆            │
+ │ ┆ Your brief                 ┆   ┆ Write the plan             ┆            │
+ │ ┆ you                        ┆   ┆ main slot's model          ┆            │
+ │ ┆ BRIEF.md                   ┆   ┆ PLAN.md                    ┆            │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘            │
+ │                ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯             │
+ │                ▾                                                           │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐            │
+ │ ┆ VERIFY                    ○┆┄┄▸┆ DECOMPOSE                 ○┆            │
+ │ ┆ Check the plan             ┆   ┆ Break it into tasks        ┆            │
+ │ ┆ main slot's model          ┆   ┆ main slot's model          ┆            │
+ │ ┆ a verdict: pass or findings┆   ┆ proposes tasks             ┆            │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘            │
+ │ Check the plan: fail ⟲ back to PLAN                          ┆             │
+ │                ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯             │
+ │                ▾                                                           │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐            │
+ │ ┆ INTEGRATE                 ○┆┄┄▸┆ GATE                      ○┆            │
+ │ ┆ Put it together            ┆   ┆ You review the whole       ┆            │
+ │ ┆ main slot's model          ┆   ┆ you                        ┆            │
+ │ ┆ SUMMARY.md                 ┆   ┆ you decide                 ┆            │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘            │
+ │                ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯             │
+ │                ▾                                                           │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                             │
+ │ ┆ ▸ next flow                ┆                                             │
+ │ ┆ made when approved         ┆                                             │
+ │ ┆ brief from INTEGRATE       ┆                                             │
+ │ ┆                            ┆                                             │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                             │
+ │                                                                            │
+ │ ✓ done  ● running  ○ waiting  ✗ failed  ┄┄ proposed  ── pass             ▇ │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Selected ─────────────────────────────────────────────────────────────────┐
+ │ YOU · ○ waiting                                                            │
+ │ Your brief                                                                 │
+ │ model   you                                                                │
+ │ status  ○ waiting                                                          │
+ │ writes  BRIEF.md                                                           │
+ │ next    PLAN Write the plan                                                │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Waiting for you ──────────────────────────────────────────────────────────┐
+ │ ? Built with the model: look, then r to run                                │
+ │   e changes a box first; r runs it from its brief to your review, asking   │
+ │   nothing else on the way                                                  │
+ │ The check warns:                                                           │
+ │ - plan sees data/grid.csv, which is not in the folder, and neither plan    │
+ │   nor a box before it writes it                                            │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+
+ f10 next view  enter open  p pause  O orchestrator  L ledger  ? explain  f1 help

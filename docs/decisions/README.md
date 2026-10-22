@@ -132,6 +132,8 @@ and use the template below.
 | [0122](0122-a-buttons-states-are-colors-of-the-style.md) | A button's states are drawn in five new colors of the style, its fill covering a blank cell at each side | Accepted (Claude's call) | 2026-10-21 |
 | [0123](0123-the-orchestrator-steers-a-run-at-checkpoints.md) | The orchestrator steers a run at checkpoints, answering its questions as the owner's answers are given | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
 | [0124](0124-the-orchestrators-limits-are-always-set.md) | The orchestrator's limits are always set, and past one the question waits for the owner | Accepted (Claude's call) | 2026-10-22 |
+| [0125](0125-the-console-takes-the-websites-look.md) | The console takes the website's look: no menu beside the Monitor, the flow across the width, its colors | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
+| [0126](0126-the-console-records-what-it-draws.md) | The console records what it draws, where it writes to the terminal, in asciinema's format | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
 
 ## Template
 

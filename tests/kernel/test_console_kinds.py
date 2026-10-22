@@ -20,13 +20,16 @@ def clanks() -> StyleSettings:
     return StyleSettings.model_validate(data)
 
 
-def test_clanks_own_style_holds_the_boards_values() -> None:
+def test_clanks_own_style_holds_the_websites_values() -> None:
+    """The boards' palette, as the website draws the console (decision 0125): titles in the text's color, ◆ CLANK
+    orange, what runs now teal, a lighter quiet and border."""
     style = clanks()
     assert style.title == "Clank"
-    assert (style.colors.background, style.colors.bars, style.colors.border) == ("#1a1b26", "#16161e", "#3b4261")
-    assert (style.colors.title, style.colors.text, style.colors.quiet) == ("#7aa2f7", "#c0caf5", "#828bb8")
+    assert (style.colors.background, style.colors.bars, style.colors.border) == ("#1a1b26", "#16161e", "#414868")
+    assert (style.colors.title, style.colors.text, style.colors.quiet) == ("#c0caf5", "#c0caf5", "#9aa5ce")
     assert (style.colors.selection, style.colors.good, style.colors.failed) == ("#283457", "#9ece6a", "#f7768e")
-    assert (style.colors.planned, style.colors.border_focused, style.colors.now) == ("#f7768e", "#7aa2f7", "#ff9e64")
+    assert (style.colors.planned, style.colors.border_focused, style.colors.now) == ("#f7768e", "#7aa2f7", "#73daca")
+    assert (style.colors.brand, style.colors.name, style.colors.selected_text) == ("#ff9e64", "#9aa5ce", "#e0e5ff")
     assert style.data == ["#7aa2f7", "#3d59a1", "#bb9af7", "#7dcfff", "#73daca", "#9d7cd8"]
     assert (style.kinds.boxes.verify, style.kinds.parts.results, style.kinds.calls.mcp) == (
         "#bb9af7",

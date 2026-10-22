@@ -4,14 +4,16 @@ The console is a client of the service. When the service is not running, `clank 
 first, as `clank serve --background` does, and says so; with `--no-start` it says how to start it instead.
 `--snapshot` prints one frame as text and exits (design 0001 §5.8), for scripts, bug reports and a model that cannot
 see a screen. `--view` opens a page with views on one of them: `--page monitor --view flow` is the Monitor's Flow view
-(design 0013 §15), for a terminal that keeps F10 for itself, such as one reached over SSH. With no page named, the
-console opens on Add a model while no model is usable (design 0016 §14).
+(design 0013 §15), for a terminal that keeps F10 for itself, such as one reached over SSH; a view it does not have is
+refused, never opened as another. With no page named, the console opens on Add a model while no model is usable (design
+0016 §14). `--record FOLDER` keeps what the console draws, as the terminal gets it, for a player (decision 0126).
 
 Textual's own log file (`TEXTUAL_LOG`) and its devtools are turned off for the console: they would record each key
 pressed and each paste, and the console is where a cloud provider's key is typed (design 0016 §4).
 """
 
 import os
+from pathlib import Path
 
 import click
 
@@ -31,14 +33,31 @@ from clank.kernel.service import ServiceError, start_detached
 @click.option(
     "--view",
     default="",
+    callback=lambda context, parameter, value: _view(value),
     help="The view to open on, for a page with views: the Monitor's flow, session or context (alone, the Monitor's); "
     "`--page monitor --view flow` is the Flow view, for a terminal that keeps F10 for itself.",
 )
 @click.option("--width", default=120, show_default=True, help="The frame's width in columns, with --snapshot.")
 @click.option("--height", default=40, show_default=True, help="The frame's height in rows, with --snapshot.")
 @click.option("--no-start", is_flag=True, help="Do not start the service when it is not running; say how instead.")
+@click.option(
+    "--record",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=None,
+    help="Record what the console draws, as the terminal gets it, into this folder: asciicast files a player shows "
+    "again as it happened, a new part every 20 minutes (decision 0126).",
+)
 @click.option("--opening", default="home", hidden=True, help="The page to open when none is named (a bare clank's).")
-def console(snapshot: bool, page: str | None, view: str, width: int, height: int, no_start: bool, opening: str) -> None:
+def console(
+    snapshot: bool,
+    page: str | None,
+    view: str,
+    width: int,
+    height: int,
+    no_start: bool,
+    record: Path | None,
+    opening: str,
+) -> None:
     """Open Clank's console: what runs, what waits for you, and every page."""
     from clank.console import app as console_app  # Textual loads only when the console opens
 
@@ -47,7 +66,9 @@ def console(snapshot: bool, page: str | None, view: str, width: int, height: int
     client = connect(home, start=not no_start)
     guide = page is None and not view
     page = "monitor" if view and page in (None, "home") else (page or opening)  # a view is the Monitor's
-    app = console_app.ClankConsole(client, page=page, view=view, home=home, snapshot=snapshot, guide=guide)
+    app = console_app.ClankConsole(
+        client, page=page, view=view, home=home, snapshot=snapshot, guide=guide, record=record
+    )
     try:
         if snapshot:
             click.echo(app.run(headless=True, size=(width, height)) or "")
@@ -55,6 +76,16 @@ def console(snapshot: bool, page: str | None, view: str, width: int, height: int
             app.run()
     finally:
         client.close()
+
+
+VIEWS = ("flow", "session", "context")
+
+
+def _view(value: str) -> str:
+    """A view the console has, or none: a mistyped one (`flow.`) is refused, never opened as another."""
+    if value and value not in VIEWS:
+        raise click.BadParameter(f"{value!r} is no view: one of {', '.join(VIEWS)}", param_hint="'--view'")
+    return value
 
 
 def connect(home: Home, start: bool) -> Client:
