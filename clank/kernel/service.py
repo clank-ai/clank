@@ -256,6 +256,7 @@ def start_detached(home: Home, port: int | None = None, timeout: float = 30) -> 
     process = subprocess.Popen(
         arguments,
         env=environment,
+        cwd=str(home.root),  # never the current folder: `python -m clank` would read a checkout of Clank found there
         stdin=subprocess.DEVNULL,
         stdout=output,
         stderr=subprocess.STDOUT,

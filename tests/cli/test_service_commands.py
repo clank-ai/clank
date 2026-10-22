@@ -1,9 +1,11 @@
 """Design 0002 §2.15: `clank status` says whether the service runs and what waits for the user, and how to start it when
 it does not; `clank stop` stops it; `clank serve --background` says when a service already runs and starts none, and a
 start in the background that fails says only what its own service said (the owner's report, 2026-10-18: the error
-quoted another service's log lines)."""
+quoted another service's log lines), and it runs from Clank's home, never the current folder."""
 
 import socket
+from pathlib import Path
+from typing import Any
 
 import pytest
 from click.testing import CliRunner
@@ -48,6 +50,28 @@ def test_serve_in_the_background_says_when_a_service_already_runs_and_starts_no_
         running = read_connection(home)
         assert running is not None
         assert running.pid == connection.pid
+
+
+def test_a_start_in_the_background_runs_from_clanks_home_never_the_current_folder(
+    home: Home, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`python -m clank` reads the current folder first: a service started from a checkout of Clank ran that checkout's
+    code, not the one installed (the owner's switch to the public version, 2026-10-22). It starts from Clank's home."""
+    seen: dict[str, Any] = {}
+
+    class Ended:
+        def poll(self) -> int:
+            return 1
+
+    def popen(arguments: list[str], **options: Any) -> Ended:
+        seen.update(options)
+        return Ended()
+
+    monkeypatch.setattr("clank.kernel.service.subprocess.Popen", popen)
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(ServiceError):
+        start_detached(home, timeout=2)
+    assert seen["cwd"] == str(home.root)
 
 
 def test_a_start_in_the_background_that_fails_says_only_what_its_own_service_said(home: Home) -> None:
