@@ -208,6 +208,29 @@ def rgb(color: Any) -> str:
     return "#{:02x}{:02x}{:02x}".format(*color.get_truecolor())
 
 
+async def test_the_page_on_screen_is_found_without_searching_the_whole_console(
+    client: Client, home: Home, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The keys' buttons ask for the page on screen many times a frame, the menu for every page's badge four times a
+    second: a search of the whole console each time (every page's widgets are in it) made a page switch take a fifth of
+    a second (measured 2026-10-22). A page found once is found again from the console's index."""
+    app = make(client, home)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await frame_when(pilot, app, "f1 help")
+        assert app._shown_page() is not None
+        searched: list[Any] = []
+        original = ClankConsole.query
+
+        def query(self: ClankConsole, selector: Any = None) -> Any:
+            searched.append(selector)
+            return original(self, selector)
+
+        monkeypatch.setattr(ClankConsole, "query", query)
+        for _ in range(50):
+            assert app._shown_page() is not None
+        assert searched == [], "no search of the console for the page on screen"
+
+
 async def test_the_header_is_one_row_on_bars_naming_the_folder_in_name_not_bold_on_every_page(
     client: Client, home: Home
 ) -> None:

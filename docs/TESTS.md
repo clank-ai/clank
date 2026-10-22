@@ -30,13 +30,13 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4.7 | The rest of the computer | `tests/components/machine/test_checks.py` (7) |
 | 4.8 | Every change is recorded | `tests/components/runtime/test_state.py` (4), `tests/console/test_pages.py` (10) |
 | 5 | The console | `tests/console/test_lists.py` (2) |
-| 5.1 | What it is | `tests/console/test_arrows.py` (8), `tests/console/test_data.py` (17), `tests/console/test_one_door.py` (6), `tests/console/test_shell.py` (18) |
+| 5.1 | What it is | `tests/console/test_arrows.py` (8), `tests/console/test_data.py` (17), `tests/console/test_one_door.py` (6), `tests/console/test_shell.py` (19) |
 | 5.2 | The main screen | none yet |
 | 5.3 | The control screens | none yet |
 | 5.4 | Explain anything | `tests/console/test_records.py` (4) |
-| 5.5 | Changing how it looks and what it shows | `tests/console/test_shell.py` (18) |
+| 5.5 | Changing how it looks and what it shows | `tests/console/test_shell.py` (19) |
 | 5.6 | Panels are modules | `tests/console/test_pages.py` (10) |
-| 5.7 | Redraws and load | `tests/console/test_data.py` (17), `tests/console/test_flow_panel.py` (8), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (15), `tests/console/test_panel.py` (12), `tests/console/test_shell.py` (18) |
+| 5.7 | Redraws and load | `tests/console/test_data.py` (17), `tests/console/test_flow_panel.py` (8), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (15), `tests/console/test_panel.py` (12), `tests/console/test_shell.py` (19) |
 | 5.8 | Without a screen | `tests/components/runtime/test_model_commands.py` (3), `tests/console/test_command.py` (4) |
 | 6 | The gateway | `tests/components/gateway/test_recent_requests.py` (6), `tests/console/test_requests_page.py` (10) |
 | 6.1 | The path of a request | `tests/components/gateway/test_server.py` (23) |
@@ -89,13 +89,13 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.12 | Files for the user | none yet |
 | 2.13 | Clank's own traffic | none yet |
 | 2.14 | The API | `tests/kernel/test_api.py` (17), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_apidoc.py` (1), `vscode/test/client.test.ts` (4) |
-| 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (5), `tests/components/workspaces/test_workspace_commands.py` (4), `tests/console/test_command.py` (4), `tests/console/test_data.py` (17), `tests/console/test_shell.py` (18) |
+| 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (5), `tests/components/workspaces/test_workspace_commands.py` (4), `tests/console/test_command.py` (4), `tests/console/test_data.py` (17), `tests/console/test_shell.py` (19) |
 | 2.16 | Where things are | `tests/kernel/test_home.py` (4) |
 | 2.17 | The kernel against every feature asked for | none yet |
 | 2.18 | Choices this section makes | none yet |
 | 3 | The skeleton (M0) and the order of milestones | see its subsections |
 | 3.1 | How the rest is designed and built | none yet |
-| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (3), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (14), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (18), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (6), `tests/tools/test_codemap.py` (8), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (3), `vscode/test/controller.test.ts` (14) |
+| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (3), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (14), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (19), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (6), `tests/tools/test_codemap.py` (8), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (3), `vscode/test/controller.test.ts` (14) |
 | 3.3 | The milestones after M0 | `tests/docker/test_escape.py` (3) |
 | 3.4 | Carried into the later milestones' designs | none yet |
 
@@ -236,7 +236,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | The panel | `tests/components/tools/test_console_servers.py` (1), `tests/console/test_frames.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (10), `tests/console/test_windows.py` (3), `tests/console/test_workspaces_page.py` (3) |
 | 5 | Text never spills out of a panel | `tests/console/test_frames.py` (1), `tests/console/test_windows.py` (3) |
 | 6 | No color written in a page | `tests/test_repository.py` (11), `tests/tools/test_check_colors.py` (8) |
-| 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (18), `tests/console/test_windows.py` (3) |
+| 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (19), `tests/console/test_windows.py` (3) |
 | 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (5), `tests/components/tools/test_console_servers.py` (1), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (10), `tests/console/test_workspaces_page.py` (3) |
 | 9 | Narrow windows | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_machine_column.py` (14), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5) |
 | 10 | What changes in the tests | none yet |
@@ -262,7 +262,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What the owner gets | none yet |
-| 2 | The page: its views, its panels and its keys | `tests/console/test_flow_panel.py` (8), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_flow_view.py` (10), `tests/console/test_monitor_guide.py` (7), `tests/console/test_monitor_live.py` (2), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (15), `tests/console/test_monitor_undo_and_drop.py` (5), `tests/console/test_monitor_watch_for.py` (2), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (18) |
+| 2 | The page: its views, its panels and its keys | `tests/console/test_flow_panel.py` (8), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_flow_view.py` (10), `tests/console/test_monitor_guide.py` (7), `tests/console/test_monitor_live.py` (2), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (15), `tests/console/test_monitor_undo_and_drop.py` (5), `tests/console/test_monitor_watch_for.py` (2), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (19) |
 | 3 | Which session the page follows, and which the Guide acts on | `tests/components/agents/test_monitor_bridge.py` (11), `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_monitor_sessions.py` (5), `tests/components/agents/test_monitor_watch.py` (7), `tests/components/agents/test_pausing.py` (8), `tests/components/agents/test_watch_for_marks.py` (14), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_watch_for.py` (2) |
 | 4 | The context window | `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_service.py` (6), `tests/components/runtime/test_cloud_facts.py` (5), `tests/components/runtime/test_context_facts.py` (10), `tests/components/runtime/test_count_tokens.py` (5) |
 | 4.1 | How full, and how much is left | `tests/components/agents/test_context_margin.py` (5), `tests/components/agents/test_monitor_context.py` (15), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_session_facts.py` (13), `tests/components/runtime/test_context_facts.py` (10), `tests/console/test_monitor_context.py` (15), `tests/console/test_requests_page.py` (10) |
@@ -372,7 +372,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 11 | Cost: each request, session and flow, and the limits | `tests/cli/test_cloud_commands.py` (7), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_cost_limits.py` (8), `tests/components/gateway/test_cost_views.py` (8), `tests/console/test_add_model.py` (25), `tests/console/test_cost_pause.py` (2), `tests/console/test_data.py` (17), `tests/console/test_home.py` (14), `tests/console/test_monitor_cloud.py` (3), `tests/console/test_requests_page.py` (10), `tests/console/test_text.py` (4), `tests/kernel/test_event_attention.py` (3) |
 | 12 | How cost is known and kept | `tests/components/gateway/test_cloud_cost.py` (5), `tests/components/gateway/test_cost_views.py` (8) |
 | 13 | What the Monitor shows of a cloud model | `tests/components/runtime/test_cloud_facts.py` (5), `tests/console/test_monitor_cloud.py` (3) |
-| 14 | The first run: Add a model | `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (16), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (17), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (18) |
+| 14 | The first run: Add a model | `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (16), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (17), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (19) |
 | 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_folder.py` (21), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
 | 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3) |
 | 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (14) |
@@ -3391,6 +3391,7 @@ Design 0001 §5.1, §5.5, §5.7, design 0002 §2.15, §3.2 and design 0011 §7: 
 - animations are off
 - home at 120 and at 80 columns
 - a burst of events is drawn in a few redraws and nothing is lost
+- the page on screen is found without searching the whole console
 - the header is one row on bars naming the folder in name not bold on every page
 - each pill is drawn whole in its states color and the clock in quiet
 - the menus keys are in key and its highlighted entry on selection in selected text bold

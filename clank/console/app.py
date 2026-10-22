@@ -191,6 +191,7 @@ class ClankConsole(App[str]):
         self._before_bar: Widget | None = None  # what had the focus before the keys bar
         self._left: dict[str, Widget] = {}  # where the focus was in each page when it was last in it
         self._record_to = record  # the folder a recording of what the console draws goes to (decision 0126), if any
+        self._pages_found: dict[str, Page] = {}  # each page by its id, as found (`_page_of`)
         self.recording: Recording | None = None
 
     def compose(self) -> ComposeResult:
@@ -296,7 +297,7 @@ class ClankConsole(App[str]):
 
     def show_page(self, id: str) -> None:
         """Bring a page on screen, drawn whole, with its menu entry highlighted."""
-        if not self.query(f"#page-{id}"):
+        if self._page_of(id) is None:
             return
         self._page = id
         self.query_one("#pages", ContentSwitcher).current = f"page-{id}"
@@ -642,13 +643,26 @@ class ClankConsole(App[str]):
         for entry in PLANNED:
             yield PlannedPage(entry)
 
+    def _page_of(self, id: str) -> Page | None:
+        """A page by its id, from an index kept as pages are found: a search of the whole console takes a while (every
+        page's widgets are in it), and the buttons ask for the page on screen many times a frame, the menu for each
+        page's badge four times a second. None while the pages are taken down (as the console quits)."""
+        found = self._pages_found.get(id)
+        if found is not None and found.is_attached:
+            return found
+        found = next(iter(self.query(f"#page-{id}").results(Page)), None)
+        if found is not None:
+            self._pages_found[id] = found
+        return found
+
     def _current(self) -> Page:
-        return self.query_one(f"#page-{self._page}", Page)
+        found = self._page_of(self._page)
+        return found if found is not None else self.query_one(f"#page-{self._page}", Page)
 
     def _shown_page(self) -> Page | None:
         """The page on screen, or None while the pages are taken down (as the console quits), for what the focus moving
         then asks of it."""
-        return next(iter(self.query(f"#page-{self._page}").results(Page)), None) if self._page else None
+        return self._page_of(self._page) if self._page else None
 
     def _stops(self) -> list[Widget]:
         """Where Left and Right move the focus in the page on screen: what in it takes the focus, in order, or the page
@@ -740,7 +754,8 @@ class ClankConsole(App[str]):
         room = SMALL_NAME if self.screen.has_class("-small") else MENU_NAME
         for page in PAGES:
             entry = page.ENTRY
-            badge = self.query_one(f"#page-{entry.id}", Page).badge(self.frame)
+            found = self._page_of(entry.id)
+            badge = found.badge(self.frame) if found is not None else None
             name = menu_name(entry, room)
             shown = Content.assemble(name, " " * (room - name.cell_length + 1), badge) if badge is not None else name
             if self._menu_shown.get(entry.id) != shown.markup:
