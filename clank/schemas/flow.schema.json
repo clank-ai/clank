@@ -74,6 +74,10 @@
       "title": "Next",
       "type": "string"
     },
+    "orchestrator": {
+      "$ref": "#/$defs/Orchestrator",
+      "description": "A model that steers the run at checkpoints while it is on (design 0013 §16)."
+    },
     "built": {
       "anyOf": [
         {
@@ -322,6 +326,28 @@
       "title": "Built",
       "type": "object"
     },
+    "CheckpointLimits": {
+      "additionalProperties": false,
+      "description": "What one checkpoint of the orchestrator may use.",
+      "properties": {
+        "minutes": {
+          "default": 20,
+          "description": "How long one checkpoint may run.",
+          "minimum": 1,
+          "title": "Minutes",
+          "type": "integer"
+        },
+        "tokens": {
+          "default": 60000,
+          "description": "How many tokens one checkpoint may write, its thinking included.",
+          "minimum": 1,
+          "title": "Tokens written",
+          "type": "integer"
+        }
+      },
+      "title": "CheckpointLimits",
+      "type": "object"
+    },
     "FlowDefaults": {
       "additionalProperties": false,
       "description": "What every box takes unless it names its own.",
@@ -505,6 +531,62 @@
         "to"
       ],
       "title": "Line",
+      "type": "object"
+    },
+    "Orchestrator": {
+      "additionalProperties": false,
+      "description": "The model that steers a run at checkpoints while it is on (design 0013 §16, decisions 0123-0124): after each box\na model ran, and at each question the run would ask you.",
+      "properties": {
+        "on": {
+          "default": false,
+          "description": "Steer the run: a checkpoint after each box, and at each question; it decides as you would, within its limits, and you may answer first.",
+          "title": "On",
+          "type": "boolean"
+        },
+        "model": {
+          "default": "",
+          "description": "The preset its checkpoints run on, by its id or title; empty: the flow's.",
+          "title": "Model",
+          "type": "string"
+        },
+        "final_review": {
+          "default": "orchestrator",
+          "description": "Who decides the last gate: orchestrator, or owner (it waits for you).",
+          "enum": [
+            "orchestrator",
+            "owner"
+          ],
+          "title": "Final review",
+          "type": "string"
+        },
+        "changes": {
+          "default": 12,
+          "description": "How many changes it may make in one run: each box changed or added, send back, skip and extra try.",
+          "minimum": 0,
+          "title": "Changes",
+          "type": "integer"
+        },
+        "extra_tries": {
+          "default": 2,
+          "description": "How many tries past its cap it may give a box.",
+          "minimum": 0,
+          "title": "Extra tries",
+          "type": "integer"
+        },
+        "stall": {
+          "default": 3,
+          "description": "Checkpoints in a row without progress after which it may not go on: it changes the plan or stops.",
+          "minimum": 1,
+          "title": "Stall",
+          "type": "integer"
+        },
+        "limits": {
+          "$ref": "#/$defs/CheckpointLimits",
+          "description": "What one checkpoint may use.",
+          "title": "Limits"
+        }
+      },
+      "title": "Orchestrator",
       "type": "object"
     },
     "Proposed": {

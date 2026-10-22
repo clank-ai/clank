@@ -1,5 +1,6 @@
-"""Design 0013 §3, §5, §6, §7, §8, §9 and §11: the `clank flow` commands (list, show, check, prepare, run, pause, stop,
-diff, proposals, accept, reject and next), clients of the API, for scripts and as the Flow view's backup: `list` shows
+"""Design 0013 §3, §5, §6, §7, §8, §9, §11 and §16: the `clank flow` commands (list, show, check, prepare, run, pause,
+stop, diff, proposals, accept, reject, next and orchestrator), clients of the API, for scripts and as the Flow view's
+backup: `orchestrator` says a flow's orchestrator's settings and turns it on or off in the flow's file; `list` shows
 each flow with its workspace, title and boxes, and where flows are kept and Clank's template when there are none; `show`
 names each box with its type, title, files and what comes after it, the workspace being the current folder's, and the
 switches of the main slot a run makes (each preset with how long its last whole switch took, else its engine's last
@@ -86,6 +87,20 @@ def kernel(home: Home, project: Path, monkeypatch: pytest.MonkeyPatch) -> Iterat
 
 def run(*arguments: str) -> Result:
     return CliRunner().invoke(main, ["flow", *arguments])
+
+
+def test_orchestrator_says_its_settings_and_turns_it_on_and_off_in_the_flows_file(kernel: Kernel, home: Home) -> None:
+    shown = run("orchestrator", "new-study")
+    assert shown.exit_code == 0, shown.output
+    assert "The orchestrator of A new simulation study (myproject/new-study) is off" in shown.output
+    on = run("orchestrator", "new-study", "on", "--final", "owner")
+    assert on.exit_code == 0, on.output
+    assert "is on: the last gate is yours; 12 changes a run, 2 extra tries a box, stall at 3" in on.output
+    saved = json.loads((home.config / "flows" / "myproject" / "new-study.json").read_text(encoding="utf-8"))
+    assert (saved["orchestrator"]["on"], saved["orchestrator"]["final_review"]) == (True, "owner")
+    off = run("orchestrator", "new-study", "off")
+    assert off.exit_code == 0, off.output
+    assert "is off" in off.output
 
 
 def test_list_shows_each_flow_with_its_workspace_title_and_boxes(kernel: Kernel) -> None:

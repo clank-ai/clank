@@ -583,6 +583,8 @@ export interface Flow {
   follows: Follows | null;
   /** The flow made after it, from its INTEGRATE's brief: <workspace>/<name>. */
   next: string;
+  /** A model that steers the run at checkpoints while it is on (design 0013 §16). */
+  orchestrator: Orchestrator;
   /** Set when the model drafted it in a planning session and Clank wrote it: that session, when, and the brief written with the model. */
   built: Built | null;
   /** Its boxes; DECOMPOSE's tasks run in this order. */
@@ -687,6 +689,14 @@ export interface CallKinds {
   editing: string;
   /** A call to an MCP server's tool. */
   mcp: string;
+}
+
+/** What one checkpoint of the orchestrator may use. */
+export interface CheckpointLimits {
+  /** How long one checkpoint may run. */
+  minutes: number;
+  /** How many tokens one checkpoint may write, its thinking included. */
+  tokens: number;
 }
 
 /** The colors of the context's parts, as the Monitor draws them (design 0012 §4.2). */
@@ -815,6 +825,24 @@ export interface Option {
   key: string;
   /** What choosing it needs besides (decision 0114): a number, with its bounds and unit, given as the answer's words. */
   asks: Asked | null;
+}
+
+/** The model that steers a run at checkpoints while it is on (design 0013 §16, decisions 0123-0124): after each box a model ran, and at each question the run would ask you. */
+export interface Orchestrator {
+  /** Steer the run: a checkpoint after each box, and at each question; it decides as you would, within its limits, and you may answer first. */
+  on: boolean;
+  /** The preset its checkpoints run on, by its id or title; empty: the flow's. */
+  model: string;
+  /** Who decides the last gate: orchestrator, or owner (it waits for you). */
+  final_review: "orchestrator" | "owner";
+  /** How many changes it may make in one run: each box changed or added, send back, skip and extra try. */
+  changes: number;
+  /** How many tries past its cap it may give a box. */
+  extra_tries: number;
+  /** Checkpoints in a row without progress after which it may not go on: it changes the plan or stops. */
+  stall: number;
+  /** What one checkpoint may use. */
+  limits: CheckpointLimits;
 }
 
 /** Where a box accepted from a proposal came from (design 0013 §9). */

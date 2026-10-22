@@ -61,12 +61,19 @@ boxes[]                   in the order you would read them:
   writes                  the files it must write: its deliverable
   holds                   what those files hold, in words
   accept_when             what makes the deliverable right, one thing per line
+  accept_command          a command run in the container after the box (sh, from /workspace); it passes on exit 0,
+                          and a box whose command fails has failed: the strongest check there is (a test, a verifier)
   checks                  a verify's: the box whose deliverable it checks
   shows                   a gate's: the files it shows the user
   mode                    plan or auto (Clank sets auto on a task that names none)
   model                   a preset of its own
   tries, limits           its own, else the flow's
 lines[]                   {"from": id, "to": id}, a verify's with "when": "pass" or "fail"
+orchestrator.on           true when the user wants a model to steer the run on its own: after each box it reads what
+                          the box did and goes on, changes the boxes ahead or sends work back; it answers the run's
+                          questions (a box out of tries, a gate) as the user would; off unless the user asks
+orchestrator.final_review orchestrator (it decides the last gate too) or owner (the last gate waits for the user)
+orchestrator.changes      how many changes it may make in one run (12); extra_tries, past a box's cap (2)
 ```
 
 ## The models on this machine (the main slot's presets)

@@ -130,6 +130,8 @@ and use the template below.
 | [0120](0120-every-key-is-a-button-of-one-group-widget.md) | Every key the console shows is a button of a group: one widget that takes the focus, pressed through the same door as its key | Accepted (Claude's call) | 2026-10-21 |
 | [0121](0121-how-the-focus-moves-between-buttons.md) | Tab moves between groups, the arrows inside one and stop at its ends, and the lists keep their own keys | Accepted (Claude's calls on board K1) | 2026-10-21 |
 | [0122](0122-a-buttons-states-are-colors-of-the-style.md) | A button's states are drawn in five new colors of the style, its fill covering a blank cell at each side | Accepted (Claude's call) | 2026-10-21 |
+| [0123](0123-the-orchestrator-steers-a-run-at-checkpoints.md) | The orchestrator steers a run at checkpoints, answering its questions as the owner's answers are given | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
+| [0124](0124-the-orchestrators-limits-are-always-set.md) | The orchestrator's limits are always set, and past one the question waits for the owner | Accepted (Claude's call) | 2026-10-22 |
 
 ## Template
 

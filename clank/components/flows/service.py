@@ -265,6 +265,66 @@ class Flows:
         except RunError as error:
             raise ApiError(409, "refused", str(error)) from error
 
+    def orchestrator(
+        self,
+        workspace: str,
+        name: str,
+        *,
+        actor: Actor,
+        on: bool | None = None,
+        final_review: str = "",
+        model: str | None = None,
+    ) -> dict[str, Any]:
+        """A flow's orchestrator (design 0013 §16): turned on or off, its final review or its model changed, written
+        through the settings as any edit; then its settings, the checkpoint at work and the ledger of the flow's latest
+        run. `409 refused`, saying why, when the change breaks a rule."""
+        from clank.components.flows import orchestrating
+        from clank.kernel.settings import SettingsError
+
+        found = self._find(workspace, name)
+        record = self.runner._record(found.id)
+        if record is None:
+            raise ApiError(404, "not_found", f"there is no flow {found.id}")
+        made, revision = record
+        if on is not None or final_review or model is not None:
+            values = made.model_dump(mode="json")
+            steering = dict(values.get("orchestrator") or {})
+            if on is not None:
+                steering["on"] = on
+            if final_review:
+                steering["final_review"] = final_review
+            if model is not None:
+                steering["model"] = model
+            values["orchestrator"] = steering
+            try:
+                self.kernel.settings.write(Flow.KIND, found.id, values, base=revision, actor=actor)
+            except SettingsError as error:
+                raise ApiError(409, "refused", str(error)) from error
+            record = self.runner._record(found.id)
+            assert record is not None
+            made = record[0]
+        latest = self.runner.runs.latest(found.id)
+        state = latest.orchestration if latest is not None else None
+        return {
+            "flow": found.id,
+            "title": made.title,
+            "orchestrator": made.orchestrator.model_dump(mode="json"),
+            "run": latest.number if latest is not None else None,
+            "working": state.working.model_dump(mode="json") if state is not None and state.working else None,
+            "changes": state.changes if state is not None else 0,
+            "stall": state.stall if state is not None else 0,
+            "owner": state.owner if state is not None else "",
+            "ledger": orchestrating.ledger_text(latest) if latest is not None else "",
+        }
+
+    def steer(self, workspace: str, given: dict[str, Any], *, actor: Actor) -> dict[str, Any]:
+        """A checkpoint's decision (design 0013 §16), given to the orchestrator's checkpoint at work in the workspace:
+        what was kept, said for the model; `409 refused`, saying why, when it cannot be."""
+        try:
+            return self.runner.decide(workspace, given, actor=actor)
+        except RunError as error:
+            raise ApiError(409, "refused", str(error)) from error
+
     def read(self, workspace: str, flow: str = "") -> dict[str, Any]:
         """What a box's model reads of its flow (`flow_read`, design 0013 §9); `409 refused`, saying why."""
         return _refused_as_409(lambda: self.runner.proposing.read(workspace, flow))

@@ -60,6 +60,8 @@ def first_message(
     ]
     if number > 1 and last.strip():
         sections.append(f"## Your last try\n\nThis is try {number}. {last.strip()}")
+    elif last.strip():  # a first try told something: the orchestrator's note (design 0013 §16)
+        sections.append(f"## Before you start\n\n{last.strip()}")
     return "\n\n".join(section for section in sections if section) + "\n"
 
 

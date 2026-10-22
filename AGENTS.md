@@ -38,6 +38,7 @@ commit.
 | `docs/decisions/` | Decision records, numbered, never edited away |
 | `docs/design/` | Design documents, sections with review status |
 | `docs/plans/` | Implementation plans, one per milestone step, with their progress |
+| `docs/research/` | Surveys of what others built, each with what Clank takes from it now and what is kept for later design choices (orchestration first) |
 | `docs/models/` | One page per model setup worth building again ("frontier 262K" first): its files, its engine, every setting and why, and how to set it up on a new machine |
 
 ## Commands

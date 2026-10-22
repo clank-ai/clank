@@ -89,6 +89,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/flows/handoff.py` | Handoff notes (design 0013 §5, decision 0086): what a box hands on to the boxes after it, a few lines of its own. |
 | `clank/components/flows/kinds.py` | The flows component's kinds of record (design 0013 §2-§4, §11): a flow, `config/flows/<workspace>/<name>.json`. |
 | `clank/components/flows/models.py` | A model per box (design 0013 §7; decisions 0062 and 0063): the preset each box runs on, and a run's switches. |
+| `clank/components/flows/orchestrating.py` | The orchestrator (design 0013 §16, decisions 0123-0124): what a checkpoint is handed, what it may decide, and the |
 | `clank/components/flows/preparing.py` | Each box prepared (design 0013 §5, decisions 0085-0087): its first message built in one place, and previewed. |
 | `clank/components/flows/proposals.py` | The boxes a model proposes for its flow (design 0013 §9; decision 0064), and how they join the flow's file. |
 | `clank/components/flows/proposing.py` | The proposals of a flow's boxes, in the service (design 0013 §9; decision 0064): staged, submitted, decided. |

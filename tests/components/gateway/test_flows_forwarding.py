@@ -1,7 +1,8 @@
-"""Design 0013 §9 and §15 (decisions 0020, 0064 and 0097): a box's model reaches its flow through the gateway, which
-forwards to the service only what the agent may ask (reading its flow, `GET /flows/read`; proposing a box and submitting
-its proposals, `POST /flows/propose` and `/flows/submit`; a VERIFY's verdict, `POST /flows/verdict`; a planning's draft
-of a whole flow, `POST /flows/draft`, design 0013 §15) as the client `agent`, and refuses everything else under
+"""Design 0013 §9, §15 and §16 (decisions 0020, 0064, 0097 and 0123): a box's model reaches its flow through the
+gateway, which forwards to the service only what the agent may ask (reading its flow, `GET /flows/read`; proposing a box
+and submitting its proposals, `POST /flows/propose` and `/flows/submit`; a VERIFY's verdict, `POST /flows/verdict`; a
+planning's draft of a whole flow, `POST /flows/draft`, design 0013 §15; an orchestrator's decision, `POST
+/flows/decide`, §16) as the client `agent`, and refuses everything else under
 `/flows/` (403), forwarding none of it: running, pausing or stopping a flow, its runs, checking it, changing it,
 deciding proposals, and opening a planning. A refusal of the service comes back with its words, and a service that does
 not answer is said so. End to end, a verdict given through the gateway is kept as the agent's session's, a criterion not
@@ -30,6 +31,7 @@ FORWARDED = [
     ("POST", "/flows/propose", {"workspace": "myproject", "after": "split", "type": "task"}, "propose"),
     ("POST", "/flows/submit", {"workspace": "myproject", "summary": "Four tasks."}, "submit"),
     ("POST", "/flows/draft", {"workspace": "myproject", "flow": {"title": "A study"}}, "draft"),
+    ("POST", "/flows/decide", {"workspace": "myproject", "choice": "go on", "why": "PLAN.md passed"}, "decide"),
 ]
 REFUSED = [
     ("GET", "/flows/"),
@@ -79,7 +81,8 @@ def test_the_agents_verdict_is_forwarded_and_nothing_else_under_flows() -> None:
             if answer.status_code == 403:
                 said = answer.json()["error"]["message"]
                 assert (
-                    "reads its flow, proposes boxes, gives a VERIFY's verdict and drafts a flow; nothing else" in said
+                    "reads its flow, proposes boxes, gives a VERIFY's verdict, drafts a flow and gives an "
+                    "orchestrator's decision; nothing else" in said
                 )
         assert http.post("/flows/myproject/study/run", json={}).status_code == 403
         assert len(asked) == count, "nothing refused was forwarded"

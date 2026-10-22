@@ -76,7 +76,7 @@ import anyio.to_thread
 from anyio.streams.memory import MemoryObjectSendStream
 
 from clank.components.agents.service import BUILD, PLANNER, SESSION_MODEL, AgentError, SessionError
-from clank.components.flows import accepting, handoff, preparing
+from clank.components.flows import accepting, handoff, orchestrating, preparing
 from clank.components.flows.deliverables import fingerprint, written
 from clank.components.flows.diffs import LARGEST_SHOWN, compare, text_of
 from clank.components.flows.first import came_from
@@ -114,6 +114,7 @@ RUNNER = Actor(kind="clank", via="flow runner")
 TICK = 0.25  # seconds between looks at a working box's limits, and at what the owner asked
 WAIT = 1.0  # seconds between looks at what a switch of the main slot waits for (design 0013 §7)
 BOX = "flows.box"
+ORCHESTRATE = "flows.orchestrate"  # a checkpoint of the orchestrator (design 0013 §16)
 SWITCH = "runtime.switch"
 CHANGING = ("runtime.load", "runtime.switch", "runtime.unload", "runtime.restart")  # what changes a slot
 ROLE = "agent"  # the gateway's role a box's requests come as: its slot is the main slot
@@ -124,6 +125,14 @@ STEPS = (
     StepSpec("work"),
     StepSpec("collect"),
 )
+CHECKPOINT_STEPS = (
+    StepSpec("model"),
+    StepSpec("server"),
+    StepSpec("session", repeatable=False),
+    StepSpec("work"),
+    StepSpec("apply"),
+)
+MODEL_TYPES = ("plan", "verify", "decompose", "task", "integrate")  # the boxes a model runs, which a checkpoint follows
 ACTIVE = ("queued", "running")
 AT_WORK = ("status", "message", "part", "delta", "todo", "compacted", "error")  # the watch's lines of a session's run
 FLOW_DATA = {"flow": "The flow, <workspace>/<name>.", "run": "The run's number."}
@@ -221,6 +230,20 @@ EVENT_TYPES = [
         "A run of a flow ended: done, or stopped (by you, or because its flow is gone).",
         {**FLOW_DATA, "outcome": "done or stopped.", "reason": "Why it stopped, if it did."},
     ),
+    EventType(
+        "flows.orchestrator",
+        "The orchestrator steered a run (design 0013 §16): a checkpoint started, decided (what, and why), was applied "
+        "or set aside, or left a question to you.",
+        {
+            **FLOW_DATA,
+            "checkpoint": "The checkpoint's number in the run.",
+            "kind": "review (after a box) or question.",
+            "box": "The box it followed, or the question was about.",
+            "action": "started, decided, applied, set aside, or yours.",
+            "choice": "What it chose, once decided.",
+            "why": "Why, in its words, or why it could not act.",
+        },
+    ),
 ]
 
 
@@ -295,11 +318,20 @@ class Runner:
         return gateway
 
     def operation_types(self) -> list[OperationType]:
-        """`flows.box`: a model box's try, its five steps."""
+        """`flows.box`: a model box's try, its five steps; `flows.orchestrate`: a checkpoint of the orchestrator."""
         return [
             OperationType(
                 BOX, "A flow's box", STEPS, self._box, reconcile=self._reconcile, cancelable=True, owner="flows"
-            )
+            ),
+            OperationType(
+                ORCHESTRATE,
+                "A flow's orchestrator",
+                CHECKPOINT_STEPS,
+                self._orchestrate,
+                reconcile=self._reconcile_checkpoint,
+                cancelable=True,
+                owner="flows",
+            ),
         ]
 
     # The owner's controls.
@@ -558,6 +590,50 @@ class Runner:
             "ends.",
         }
 
+    def decide(self, workspace: str, given: dict[str, Any], *, actor: Actor) -> dict[str, Any]:
+        """A checkpoint's decision (design 0013 §16), given with `flow_decide` while it works in the workspace: checked
+        (`orchestrating.decided`) and kept on the checkpoint, the newest counting, then applied once its session ends.
+        `RunError`, saying why, when no checkpoint works there or the decision cannot be kept as sent."""
+        with self._lock:
+            run = next(
+                (
+                    each
+                    for each in self.runs.all()
+                    if each.workspace == workspace and each.status in ACTIVE and each.orchestration.working is not None
+                ),
+                None,
+            )
+            if run is None or run.orchestration.working is None:
+                raise RunError(f"no checkpoint of an orchestrator works in {workspace} now: only a checkpoint decides")
+            record = self._record(run.flow)
+            if record is None:
+                raise RunError(f"{run.flow} is gone: nothing to decide")
+            checkpoint = run.orchestration.working
+            try:
+                kept = orchestrating.decided(
+                    checkpoint, record[0], run, given, limits=record[0].orchestrator, at=self.kernel.clock.now()
+                )
+            except orchestrating.DecisionRefused as error:
+                raise RunError(str(error)) from error
+
+            def keep(each: Run) -> None:
+                if each.orchestration.working is not None and each.orchestration.working.number == kept.number:
+                    each.orchestration.working.decision = kept
+
+            run = self._change(run, keep)
+        self._record_event(
+            "flows.orchestrator", run, f"the orchestrator of {run.title} chose {kept.choice} at checkpoint "
+            f"{kept.number}: {kept.why}", actor, checkpoint=kept.number, kind=kept.kind, box=kept.box,
+            action="decided", choice=kept.choice, why=kept.why,
+        )  # fmt: skip
+        return {
+            "flow": run.flow,
+            "run": run.number,
+            "checkpoint": kept.number,
+            "choice": kept.choice,
+            "said": f"Your decision is kept: {kept.choice}. Stop now: Clank applies it when your session ends.",
+        }
+
     def _at_work(self, workspace: str, why: str) -> tuple[Run, Flow, Box]:
         """The run whose box works in the workspace now (one box at a time, §6), its flow and that box; `RunError`,
         saying `why` a box must be at work, when none is."""
@@ -675,6 +751,8 @@ class Runner:
             if run.waiting is not None:
                 asked = self.kernel.questions.get(run.waiting.question)
                 if asked.status == "waiting":
+                    if self._steers(run, flow, run.waiting):
+                        await self._checkpoint(run, flow, "question", run.waiting.box, asked)
                     return
                 await self._settle(run, flow, asked)
                 continue
@@ -686,6 +764,9 @@ class Runner:
             if state.state in ("done", "skipped", "stale"):  # stale: it ran, and a box before it changed since
                 if state.state != "skipped" and await anyio.to_thread.run_sync(self.proposing.hold, run, box):
                     return  # its proposals wait for the owner: the tasks accepted come next (§9)
+                if state.state == "done" and self._reviews(run, flow, box):
+                    await self._checkpoint(run, flow, "review", box.id, None)
+                    return  # the orchestrator reads what it did first (§16)
                 if state.state != "skipped" and self._waits(flow, box):
                     self._ask(run, flow, box, "done")
                     return
@@ -973,7 +1054,7 @@ class Runner:
             urgency="high",
         )
 
-    def _loop_back(self, run: Run, flow: Flow, box: Box, note: str = "") -> None:
+    def _loop_back(self, run: Run, flow: Flow, box: Box, note: str = "", steer: str = "") -> None:
         """A VERIFY's fail line (design 0013 §3): the box it checks runs its next try, handed the findings (and the
         owner's note), and every box after it up to the VERIFY runs again, the boxes before taken as they stand; the
         VERIFY's own next try is handed its findings, to check how each was answered."""
@@ -990,6 +1071,7 @@ class Runner:
         def back(each: Run) -> None:
             _again(each, flow, checked, told, now)
             each.box(checked).findings, each.box(checked).note = list(verdict.findings), note
+            each.box(checked).steer = steer  # the orchestrator's words, when it gave the try (§16)
             mine = each.box(box.id)
             mine.findings = list(verdict.findings)
             mine.again = (
@@ -1076,16 +1158,21 @@ class Runner:
             if target is None:
                 self._ask(run, flow, box, "gate", detail="There is no box before it to send back to.")
                 return
-            note = words or f"you sent it back at {box.title}"
+            steered = by == orchestrating.ORCHESTRATOR  # the orchestrator decided the gate (§16): its words, so said
+            who = "the orchestrator" if steered else "the user"
+            note = words or f"{'it' if steered else 'you'} sent it back at {box.title}"
             now = self._standing(run, flow, target)
 
             def back(each: Run) -> None:
                 told = (
-                    f"the user sent it back at {box.title}",
-                    f"the user sent {target}, a box before this one, back at {box.title}",
+                    f"{who} sent it back at {box.title}",
+                    f"{who} sent {target}, a box before this one, back at {box.title}",
                 )
                 _again(each, flow, target, told, now)
-                each.box(target).note = note
+                if steered:
+                    each.box(target).steer = note
+                else:
+                    each.box(target).note = note
                 each.at = target
 
             self._change(run, back)
@@ -1115,14 +1202,18 @@ class Runner:
     async def _settle_failed(self, run: Run, flow: Flow, box: Box, option: str, words: str, by: Actor) -> None:
         tries = len(run.box(box.id).tries)
         loop = box.type == "verify" and _found_wrong(run.box(box.id))
-        if option == "retry" and loop:
-            self._loop_back(run, flow, box, note=words)  # one more try of the box it checks, past its cap
+        steered = by == orchestrating.ORCHESTRATOR  # the orchestrator's words go to its own note (§16)
+        if option == "retry" and loop:  # one more try of the box it checks, past its cap
+            self._loop_back(run, flow, box, note="" if steered else words, steer=words if steered else "")
             return
         if option == "retry":
 
             def again(each: Run) -> None:
                 each.box(box.id).state = "waiting"
-                each.box(box.id).note = words
+                if steered:
+                    each.box(box.id).steer = words
+                else:
+                    each.box(box.id).note = words
 
             self._change(run, again)
             return
@@ -1212,6 +1303,346 @@ class Runner:
         finally:
             self._finished(flow_id, number, working)
 
+    # The orchestrator's checkpoints (design 0013 §16, decisions 0123-0124).
+
+    def _steers(self, run: Run, flow: Flow, waiting: Waiting) -> bool:
+        """Whether the orchestrator decides the question the run waits for: while it is on and no checkpoint works, a
+        gate, a failed box or a box whose *when done* waits, not decided before; the last gate only when it is its."""
+        steering = flow.orchestrator
+        if not steering.on or run.orchestration.working is not None or waiting.question in run.orchestration.decided:
+            return False
+        if waiting.kind not in ("gate", "failed", "done"):
+            return False
+        return not (waiting.kind == "gate" and steering.final_review == "owner" and not after(flow, waiting.box))
+
+    def _reviews(self, run: Run, flow: Flow, box: Box) -> bool:
+        """Whether the orchestrator reads what a box did before the run goes on: a box a model ran, not read since its
+        last try."""
+        if not flow.orchestrator.on or box.type not in MODEL_TYPES or run.orchestration.working is not None:
+            return False
+        return run.orchestration.reviewed.get(box.id) != len(run.box(box.id).tries)
+
+    async def _checkpoint(
+        self, run: Run, flow: Flow, kind: orchestrating.Kind, box: str, asked: Question | None
+    ) -> None:
+        """Start a checkpoint: kept on the run first (after a box, holding the run as a box's operation does), then
+        its operation started."""
+        number = run.orchestration.checkpoints + 1
+        options = [option.id for option in asked.options] if asked is not None else []
+        checkpoint = orchestrating.Checkpoint(
+            number=number, kind=kind, box=box, question=asked.id if asked is not None else "", options=options,
+            started=self.kernel.clock.now(),
+        )  # fmt: skip
+
+        def begun(each: Run) -> None:
+            each.orchestration.checkpoints = number
+            each.orchestration.working = checkpoint
+            each.orchestration.owner = ""
+            if asked is not None:
+                each.orchestration.decided.append(asked.id)
+            if kind == "review":
+                each.operation = f"checkpoint-{number}"  # held until the checkpoint is applied or let go
+
+        run = self._change(run, begun)
+        operation = await self.kernel.operations.start(
+            ORCHESTRATE, {"flow": run.flow, "run": run.number, "checkpoint": number}, actor=RUNNER
+        )
+
+        def started(each: Run) -> None:
+            if each.orchestration.working is not None and each.orchestration.working.number == number:
+                each.orchestration.working.operation = operation.id
+                if kind == "review":
+                    each.operation = operation.id
+
+        self._change(run, started)
+        where = f"after {box}" if kind == "review" else f"at {box}'s question"
+        self._record_event(
+            "flows.orchestrator", run, f"the orchestrator of {run.title} reads the run {where} (checkpoint {number})",
+            RUNNER, checkpoint=number, kind=kind, box=box, action="started", choice="", why="",
+        )  # fmt: skip
+
+    async def _orchestrate(self, context: OperationContext) -> dict[str, Any]:
+        """A checkpoint's operation: the model, the flow's server (no box's try kept on it), a fresh Plan-mode session
+        handed `_checkpoint_message`, followed to its end within the checkpoint's limits, then its decision applied."""
+        flow_id, number, cp = str(context.params["flow"]), int(context.params["run"]), int(context.params["checkpoint"])
+        working: Working | None = None
+        run = self.runs.load(flow_id, number)
+        try:
+            with anyio.fail_after(10):  # the checkpoint is kept on the run just before its operation starts
+                while (found := self.runs.load(flow_id, number).orchestration.working) is None or found.number != cp:
+                    await anyio.sleep(0.02)
+            record = self._record(flow_id)
+            if record is None:
+                raise RunError(f"{flow_id} is gone")
+            flow, checkpoint = record[0], found
+            box = self._orchestrator_box(flow)
+            async with context.step("model"):
+                await self._load(context, run, flow, box)
+            async with context.step("server"):
+                port = await self._serve(context, run, box, keep=False)
+            async with context.step("session"):
+                folder = self._folder(run)
+                fresh = self.runs.load(flow_id, number)
+                text = await context.run_blocking(self._checkpoint_message, fresh, flow, checkpoint, folder)
+                kept = self.runs.run_folder(run) / "orchestrator" / f"checkpoint-{cp}" / "first-message.md"
+                kept.parent.mkdir(parents=True, exist_ok=True)
+                kept.write_bytes(text.encode("utf-8"))
+                sessions = self._agents.sessions
+                title = f"{run.title} · orchestrator · {cp}"
+                session = await context.run_blocking(
+                    functools.partial(sessions.new, run.workspace, port, title, actor=RUNNER)
+                )
+                working = self._watch(run.workspace, session, port)
+
+                def opened(each: Run) -> None:
+                    if each.orchestration.working is not None and each.orchestration.working.number == cp:
+                        each.orchestration.working.session = session
+
+                self._change(run, opened)
+                await context.run_blocking(
+                    functools.partial(
+                        sessions.send, run.workspace, port, session, text, actor=RUNNER, agent=PLANNER,
+                        model=SESSION_MODEL,
+                    )
+                )  # fmt: skip
+                working.sent = True
+            async with context.step("work"):
+                await self._checkpoint_work(context, run, flow, checkpoint, working)
+            async with context.step("apply"):
+                await context.run_blocking(self._apply, flow_id, number, cp)
+        except anyio.get_cancelled_exc_class():  # spelling: keep (AnyIO's own name)
+            self._forget(working)
+            raise  # the service stops: after its restart, the checkpoint is let go (`_recover`)
+        except Canceled:
+            await self._stop_session(working, RUNNER)
+            self._let_go(self.runs.load(flow_id, number), "it was canceled from the Operations page")
+            raise
+        except Exception as error:
+            await self._stop_session(working, RUNNER)
+            self._let_go(self.runs.load(flow_id, number), f"it failed: {error or type(error).__name__}")
+            raise
+        finally:
+            self._forget(working)
+            self.nudge()
+        return {"checkpoint": cp}
+
+    def _orchestrator_box(self, flow: Flow) -> Box:
+        """What a checkpoint runs as, for the model and server steps: a Plan-mode box of the orchestrator's preset (the
+        flow's when it names none), with the workspace's MCP servers; never a box of the flow."""
+        return Box.model_construct(
+            id="orchestrator", type="plan", title="The orchestrator", model=flow.orchestrator.model, mcp_servers=None
+        )
+
+    def _checkpoint_message(self, run: Run, flow: Flow, checkpoint: orchestrating.Checkpoint, folder: Path) -> str:
+        """A checkpoint's first message: the box's report with its handoff note, the question with its answers, the
+        run, the brief, the ledger and the budget (`orchestrating.message`)."""
+        box = _box_of(flow, checkpoint.box)
+        note_file = folder.joinpath(*handoff.path(run.flow, checkpoint.box).split("/"))
+        note = (
+            note_file.read_text(encoding="utf-8", errors="replace") if box is not None and note_file.is_file() else ""
+        )
+        report = orchestrating.report(flow, run, box, folder, note) if box is not None else ""
+        question = ""
+        if checkpoint.question:
+            try:
+                asked = self.kernel.questions.get(checkpoint.question)
+            except QuestionError:
+                asked = None
+            if asked is not None:
+                answers = [f"- `{option.id}`: {option.label}. {option.effect}".rstrip() for option in asked.options]
+                question = "\n".join([f"**{asked.title}**", "", asked.detail or "", "", "Its answers:", *answers])
+        minutes = max(0, int((self.kernel.clock.now() - run.created).total_seconds() // 60))
+        elapsed = f"{minutes // 60} h {minutes % 60} min" if minutes >= 60 else f"{minutes} min"
+        return orchestrating.message(
+            flow, run, checkpoint, limits=flow.orchestrator, folder=folder, report=report, question=question,
+            elapsed=elapsed,
+        )  # fmt: skip
+
+    async def _checkpoint_work(
+        self,
+        context: OperationContext,
+        run: Run,
+        flow: Flow,
+        checkpoint: orchestrating.Checkpoint,
+        working: Working,
+    ) -> None:
+        """Follow the checkpoint's session to its end: idle, gone, past its limits, its run stopped, or its question
+        answered by the owner meanwhile (its session then stopped)."""
+        limits = flow.orchestrator.limits
+        deadline = self.kernel.clock.now() + timedelta(minutes=limits.minutes)
+        while True:
+            context.check_canceled()
+            fresh = self.runs.load(run.flow, run.number)
+            with self._lock:
+                stopper = self._stopping.get(run.name)
+            answered = False
+            if checkpoint.question:
+                with contextlib.suppress(QuestionError):
+                    answered = self.kernel.questions.get(checkpoint.question).status != "waiting"
+            if stopper is not None or fresh.status not in ACTIVE or answered:
+                await self._stop_session(working, stopper or RUNNER)
+                return
+            if working.gone or working.idle:
+                return
+            if working.tokens() > limits.tokens or self.kernel.clock.now() >= deadline:
+                await self._stop_session(working, RUNNER)
+                return
+            wake = working.wake
+            with anyio.move_on_after(TICK):
+                await wake.wait()
+            if wake.is_set():
+                working.wake = anyio.Event()
+
+    def _apply(self, flow_id: str, number: int, cp: int) -> None:
+        """A checkpoint's decision, applied once its session ended: a question answered through the questions API by
+        the orchestrator (set aside when the owner answered first); after a box, a note for the next box, changes to the
+        boxes not yet run (through the settings, as any edit), the work sent back, or the run stopped. The ledger keeps
+        it, with what was done."""
+        run = self.runs.load(flow_id, number)
+        checkpoint = run.orchestration.working
+        if checkpoint is None or checkpoint.number != cp:
+            return
+        decision = checkpoint.decision
+        if run.status not in ACTIVE:
+            self._let_go(run, "its run ended")
+            return
+        if decision is None:
+            self._let_go(run, "it ended without deciding")
+            return
+        record = self._record(flow_id)
+        if record is None:
+            self._let_go(run, "its flow is gone")
+            return
+        flow, revision = record
+        cost, extra, applied, stop = 0, False, "", False
+        if decision.kind == "question":
+            try:
+                asked: Question | None = self.kernel.questions.get(decision.question)
+            except QuestionError:
+                asked = None
+            if asked is None or asked.status != "waiting":
+                applied = "set aside: the question was answered first"
+            else:
+                cost = 1 if decision.choice in orchestrating.COSTLY else 0
+                extra = decision.choice == "retry" and orchestrating.past_cap(flow, run, decision.box)
+                applied = f"answered: {decision.choice}"
+        elif decision.choice == "stop":
+            applied, stop = "stopped the run", True
+        elif decision.choice == "back":
+            target = decision.back_to
+            now = self._standing(run, flow, target)
+
+            def back(each: Run) -> None:
+                told = ("the orchestrator sent it back", f"the orchestrator sent {target}, a box before this one, back")
+                _again(each, flow, target, told, now)
+                each.box(target).steer = decision.note
+                each.at = target
+
+            self._change(run, back)
+            cost, applied = 1, f"sent the work back to {target}"
+        else:
+            if decision.choice == "change":
+                try:
+                    made = orchestrating.changed(flow, decision.changes)
+                    self.kernel.settings.write(
+                        Flow.KIND,
+                        flow_id,
+                        made.model_dump(mode="json"),
+                        base=revision,
+                        actor=orchestrating.ORCHESTRATOR,
+                    )
+                    flow = made
+                    cost = len(decision.changes)
+                    applied = f"changed {', '.join(change.box for change in decision.changes)}"
+                except Exception as error:  # a rule broken, or the flow changed meanwhile: said, never lost
+                    applied = f"its changes could not be made: {error}"
+            following = self._next_model_box(flow, decision.box)
+            if decision.note and following:
+                self._change(run, lambda each: setattr(each.box(following), "steer", decision.note))
+            applied = applied or "went on" + (f"; {following} is told its note" if decision.note and following else "")
+
+        def keep(each: Run) -> None:
+            state = each.orchestration
+            state.stall = orchestrating.stalled_after(state, decision)
+            state.facts = decision.facts or state.facts
+            state.plan = decision.plan or state.plan
+            state.changes += cost
+            if extra:
+                state.extra[decision.box] = state.extra.get(decision.box, 0) + 1
+            if decision.kind == "review":
+                state.reviewed[decision.box] = len(each.box(decision.box).tries)
+            state.decisions.append(decision.model_copy(update={"applied": applied}))
+            if each.operation == checkpoint.operation or each.operation == f"checkpoint-{cp}":
+                each.operation = ""
+            state.working = None
+
+        run = self._change(run, keep)
+        self._write_ledger(run)
+        self._record_event(
+            "flows.orchestrator", run, f"the orchestrator of {run.title}, checkpoint {cp}: {applied}",
+            orchestrating.ORCHESTRATOR, checkpoint=cp, kind=decision.kind, box=decision.box,
+            action="set aside" if applied.startswith("set aside") else "applied", choice=decision.choice,
+            why=decision.why,
+        )  # fmt: skip
+        if decision.kind == "question" and applied.startswith("answered"):
+            with contextlib.suppress(QuestionError):  # the owner may answer in the same moment: theirs then counts
+                self.kernel.questions.answer(
+                    decision.question, by=orchestrating.ORCHESTRATOR, option=decision.choice, text=decision.note
+                )
+        if stop:
+            self._end(run, "stopped", orchestrating.ORCHESTRATOR, f"stopped by the orchestrator: {decision.why}")
+        self.nudge()
+
+    def _let_go(self, run: Run, why: str) -> None:
+        """A checkpoint that cannot decide: after a box, the run goes on as its flow says; at a question, the question
+        waits for the owner; said in the ledger and an event."""
+        checkpoint = run.orchestration.working
+        if checkpoint is None:
+            return
+        yours = (
+            f"checkpoint {checkpoint.number} {why}: the question waits for you"
+            if checkpoint.kind == "question"
+            else f"checkpoint {checkpoint.number} {why}: the run went on as its flow says"
+        )
+
+        def go(each: Run) -> None:
+            state = each.orchestration
+            if state.working is None or state.working.number != checkpoint.number:
+                return
+            if checkpoint.kind == "review":
+                state.reviewed[checkpoint.box] = len(each.box(checkpoint.box).tries)
+            state.owner = yours
+            if each.operation in (checkpoint.operation, f"checkpoint-{checkpoint.number}") and each.operation:
+                each.operation = ""
+            state.working = None
+
+        run = self._change(run, go)
+        self._write_ledger(run)
+        self._record_event(
+            "flows.orchestrator", run, f"the orchestrator of {run.title}: {yours}", RUNNER,
+            checkpoint=checkpoint.number, kind=checkpoint.kind, box=checkpoint.box, action="yours", choice="", why=why,
+        )  # fmt: skip
+        self.nudge()
+
+    async def _reconcile_checkpoint(self, operation: Operation) -> Reconciliation:
+        """A checkpoint a restart interrupted: let go by `_recover` (no session is started again on its own)."""
+        return Reconciliation("a checkpoint the service's stop interrupted: it is let go, the run going on without it")
+
+    def _next_model_box(self, flow: Flow, box: str) -> str:
+        """The next box after `box` that a model runs, which a review's note is told; "" when none."""
+        for name in after(flow, box):
+            found = _box_of(flow, name)
+            if found is not None and found.type in MODEL_TYPES:
+                return name
+        return ""
+
+    def _write_ledger(self, run: Run) -> None:
+        """The run's ledger, `orchestrator.md` beside its file, for the owner to read."""
+        path = self.runs.run_folder(run) / "orchestrator.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        text = f"# The orchestrator of {run.title} ({run.name})\n\n" + orchestrating.ledger_text(run) + "\n"
+        path.write_bytes(text.encode("utf-8"))
+
     async def _begin(self, context: OperationContext, run: Run, flow: Flow, box: Box) -> Working:
         """The steps model, server and session: the box's session started, its first message sent."""
         state = run.box(box.id)
@@ -1225,7 +1656,7 @@ class Runner:
         def begun(each: Run) -> None:
             each.box(box.id).tries.append(attempt)
             each.box(box.id).state = "running"
-            each.box(box.id).note = each.box(box.id).again = ""
+            each.box(box.id).note = each.box(box.id).again = each.box(box.id).steer = ""
             each.box(box.id).findings = []
             each.operation = context.id
 
@@ -1738,7 +2169,7 @@ class Runner:
             self._working.pop((working.workspace, working.session), None)
         self._agents.review.session_mode(working.workspace, working.session, None)
 
-    async def _serve(self, context: OperationContext, run: Run, box: Box) -> int:
+    async def _serve(self, context: OperationContext, run: Run, box: Box, *, keep: bool = True) -> int:
         """The step server (design 0013 §4, §5): the run's own OpenCode server, without a terminal, with the box's
         limits (the model the main slot runs for it, `_limits`): reused while it runs with them; else started with
         Clank's configuration, written for the slot as it runs now, after the server it replaces is ended once no
@@ -1786,7 +2217,8 @@ class Runner:
                 images=limits.images, replaced=replaced, action="started" if replaced is None else "started again",
                 why=said,
             )  # fmt: skip
-        self._change(run, lambda each: _on_server(each, box.id, port))
+        if keep:  # a checkpoint's server is the flow's own, and no box's try keeps it (§16)
+            self._change(run, lambda each: _on_server(each, box.id, port))
         try:
             tools = await context.run_blocking(self._agents.box_tools, workspace, port, box.mcp_servers)
         except AgentError as error:
@@ -1799,7 +2231,8 @@ class Runner:
             context.log(f"its MCP server {name} did not connect: {why}")
         for name, why in tools["kept"].items():
             context.log(f"its MCP server {name} stays connected, as it did not disconnect: {why}")
-        self._change(run, lambda each: setattr(each.box(box.id).tries[-1], "tools", list(tools["connected"])))
+        if keep:
+            self._change(run, lambda each: setattr(each.box(box.id).tries[-1], "tools", list(tools["connected"])))
         return port
 
     def _limits(self) -> ServerLimits:
@@ -1925,8 +2358,18 @@ class Runner:
 
     async def _recover(self) -> None:
         """Each run whose box a restart interrupted: its session followed again, or its box failed at a gate; in a run
-        stopped meanwhile, its session stopped and its try ended stopped."""
+        stopped meanwhile, its session stopped and its try ended stopped. A checkpoint a restart interrupted is let go
+        (§16): after a box, the run goes on as its flow says; at a question, the question waits for the owner."""
         for run in self.runs.all():
+            working = run.orchestration.working
+            if working is not None:
+                try:
+                    found_operation = self.kernel.operations.get(working.operation) if working.operation else None
+                except OperationError:
+                    found_operation = None
+                if found_operation is None or found_operation.status not in UNFINISHED:
+                    self._let_go(run, "the service stopped while it worked")
+                    run = self.runs.load(run.flow, run.number)
             if not run.operation:
                 continue
             try:
@@ -2157,6 +2600,8 @@ def _told(state: Any) -> str:
         said += [f"{number}. {finding}" for number, finding in enumerate(state.findings, start=1)]
     if state.note.strip():
         said.append(f"The user's note: {state.note.strip()}")
+    if state.steer.strip():
+        said.append(f"The orchestrator's note: {state.steer.strip()}")
     return "\n".join(said)
 
 

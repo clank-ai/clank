@@ -229,6 +229,55 @@ class Built(Part):
     )
 
 
+class CheckpointLimits(Part):
+    """What one checkpoint of the orchestrator may use."""
+
+    minutes: int = Field(20, ge=1, title="Minutes", description="How long one checkpoint may run.")
+    tokens: int = Field(
+        60_000,
+        ge=1,
+        title="Tokens written",
+        description="How many tokens one checkpoint may write, its thinking included.",
+    )
+
+
+class Orchestrator(Part):
+    """The model that steers a run at checkpoints while it is on (design 0013 §16, decisions 0123-0124): after each box
+    a model ran, and at each question the run would ask you."""
+
+    on: bool = Field(
+        False,
+        title="On",
+        description="Steer the run: a checkpoint after each box, and at each question; it decides as you would, "
+        "within its limits, and you may answer first.",
+    )
+    model: str = Field(
+        "", title="Model", description="The preset its checkpoints run on, by its id or title; empty: the flow's."
+    )
+    final_review: Literal["orchestrator", "owner"] = Field(
+        "orchestrator",
+        title="Final review",
+        description="Who decides the last gate: orchestrator, or owner (it waits for you).",
+    )
+    changes: int = Field(
+        12,
+        ge=0,
+        title="Changes",
+        description="How many changes it may make in one run: each box changed or added, send back, skip and extra "
+        "try.",
+    )
+    extra_tries: int = Field(2, ge=0, title="Extra tries", description="How many tries past its cap it may give a box.")
+    stall: int = Field(
+        3,
+        ge=1,
+        title="Stall",
+        description="Checkpoints in a row without progress after which it may not go on: it changes the plan or stops.",
+    )
+    limits: CheckpointLimits = Field(
+        default_factory=CheckpointLimits, title="Limits", description="What one checkpoint may use."
+    )
+
+
 class Flow(Settings):
     """A flow: boxes joined by lines, kept by workspace."""
 
@@ -273,6 +322,11 @@ class Flow(Settings):
     )
     next: str = Field(
         "", title="Next", description="The flow made after it, from its INTEGRATE's brief: <workspace>/<name>."
+    )
+    orchestrator: Orchestrator = Field(
+        default_factory=Orchestrator,
+        title="Orchestrator",
+        description="A model that steers the run at checkpoints while it is on (design 0013 §16).",
     )
     built: Built | None = Field(
         None,

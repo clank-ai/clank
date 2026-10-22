@@ -51,9 +51,10 @@ The agent's way to Notion (design 0010 §3) is here too, since the gateway is al
 new entry, a change, a removal, submitting the batch; an answer to the owner's comment) to the service as the client
 `agent`, and refuses every other (commenting, sending back, approving and rejecting are the owner's, never the
 agent's). So is a box's way to its flow (design 0013 §9): `/flows/...` forwards what the agent may ask of a flow
-(`FLOWS`: reading it, proposing a box, submitting its proposals, a VERIFY's verdict, and a planning's draft of a whole
-flow, design 0013 §15) the same way, and refuses everything else under `/flows/`: running, pausing, stopping and
-changing a flow, deciding proposals, and opening a planning, are the owner's.
+(`FLOWS`: reading it, proposing a box, submitting its proposals, a VERIFY's verdict, a planning's draft of a whole
+flow, design 0013 §15, and an orchestrator's decision, §16) the same way, and refuses everything else under
+`/flows/`: running, pausing, stopping and changing a flow, deciding proposals, and opening a planning, are the
+owner's.
 
 Run as its own process (`python -m clank.components.gateway.server`), supervised by the service (`service.py`), so a
 restart of the service or of the console cuts no request in flight. It reads its settings from `config/gateway.json`
@@ -119,10 +120,11 @@ NOTION = {
 }  # fmt: skip
 NOT_THE_AGENTS = "the agent reads Notion and proposes changes; nothing else (the owner approves them, in VS Code)"
 # What the agent may ask of its flow through the gateway: (method, path under /flows/) (design 0013 §9).
-FLOWS = {("GET", "read"), ("POST", "propose"), ("POST", "submit"), ("POST", "verdict"), ("POST", "draft")}
+FLOWS = {("GET", "read"), ("POST", "propose"), ("POST", "submit"), ("POST", "verdict"), ("POST", "draft"),
+         ("POST", "decide")}  # fmt: skip
 NOT_THE_AGENTS_FLOW = (
-    "the agent reads its flow, proposes boxes, gives a VERIFY's verdict and drafts a flow; nothing else (the owner "
-    "runs, changes and decides flows, and opens a planning)"
+    "the agent reads its flow, proposes boxes, gives a VERIFY's verdict, drafts a flow and gives an orchestrator's "
+    "decision; nothing else (the owner runs, changes and decides flows, and opens a planning)"
 )
 Forward = Callable[[str, str, Any, dict[str, str]], Awaitable[tuple[int, Any]]]
 

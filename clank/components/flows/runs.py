@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from clank.components.flows.accepting import Commanded
+from clank.components.flows.orchestrating import Orchestration
 from clank.components.flows.verdicts import Verdict
 from clank.kernel.events import Actor
 
@@ -108,6 +109,9 @@ class BoxRun(Part):
     why: str = Field("", description="Why it failed, or why it is stale.")
     changed: str = Field("", description="Why a finished box is changed: its settings, or its deliverable.")
     note: str = Field("", description="What its next try's first message is told: the owner's note.")
+    steer: str = Field(
+        "", description="What its next try's first message is told by the orchestrator (design 0013 §16)."
+    )
     again: str = Field(
         "",
         description="Why it runs again after a try that was done: sent back at a gate, run again from a box, or found "
@@ -170,6 +174,10 @@ class Run(BaseModel):
     created: datetime = Field(description="When it was started.")
     ended: datetime | None = Field(None, description="When it ended.")
     boxes: dict[str, BoxRun] = Field(default_factory=dict, description="Each box's state, by its id.")
+    orchestration: Orchestration = Field(
+        default_factory=Orchestration,
+        description="What its orchestrator did (design 0013 §16): the ledger, the limits used, the checkpoint at work.",
+    )
 
     @property
     def name(self) -> str:

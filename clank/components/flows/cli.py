@@ -185,6 +185,47 @@ def pause(workspace: str, as_json: bool, name: str) -> None:
 @flow.command()
 @WORKSPACE
 @AS_JSON
+@click.option("--final", "final_review", type=click.Choice(["orchestrator", "owner"]), default=None,
+              help="Who decides the last gate: the orchestrator, or you.")  # fmt: skip
+@click.option("--model", default=None, help="The preset its checkpoints run on; empty: the flow's.")
+@click.argument("name")
+@click.argument("state", required=False, type=click.Choice(["on", "off"]))
+def orchestrator(
+    workspace: str, as_json: bool, final_review: str | None, model: str | None, name: str, state: str | None
+) -> None:
+    """A flow's orchestrator (design 0013 §16): a model that steers the run on its own, after each box and at each
+    question. Alone, its settings and the latest run's ledger; `on` or `off` turns it on or off, the run going on."""
+    client = common.call(common.connect)
+    group, own = _named(client, name, workspace)
+    path = f"flows/{quote(group, safe='')}/{quote(own, safe='')}/orchestrator"
+    if state is None and final_review is None and model is None:
+        found = common.call(lambda: client.get(path))
+    else:
+        body: dict[str, Any] = {}
+        if state is not None:
+            body["on"] = state == "on"
+        if final_review is not None:
+            body["final_review"] = final_review
+        if model is not None:
+            body["model"] = model
+        found = common.call(lambda: client.post(path, body))
+    if as_json:
+        click.echo(json.dumps(found, indent=2))
+        return
+    settings = found["orchestrator"]
+    final = "it decides the last gate too" if settings["final_review"] == "orchestrator" else "the last gate is yours"
+    click.echo(
+        f"The orchestrator of {found['title']} ({found['flow']}) is {'on' if settings['on'] else 'off'}: {final}; "
+        f"{settings['changes']} changes a run, {settings['extra_tries']} extra tries a box, stall at "
+        f"{settings['stall']}; model {settings['model'] or "the flow's"}."
+    )
+    if found["ledger"]:
+        click.echo(f"\nThe ledger of run {found['run']}:\n\n{found['ledger']}")
+
+
+@flow.command()
+@WORKSPACE
+@AS_JSON
 @click.argument("name")
 def stop(workspace: str, as_json: bool, name: str) -> None:
     """Stop a flow's run: its running box's session is stopped, and the run ends."""

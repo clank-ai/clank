@@ -62,6 +62,7 @@ these words differ, the words are the rule, and the board is drawn again (Claude
 | 13 | What flows do not cover | Approved 2026-10-18 |
 | 14 | Build steps | Approved 2026-10-18; revised 2026-10-20 at the owner's request (each box prepared: decisions 0085-0087): step 8; revised 2026-10-20 (the next flow: decision 0091): step 9; revised 2026-10-20 at the owner's request (a flow built with the model, §15): step 10 |
 | 15 | A flow built with the model | Approved 2026-10-20 (the owner's three answers); Claude's calls listed in it (decisions 0097-0099); revised after approval 2026-10-20 (the owner: OpenCode beside the console, watch it built, start from the Monitor and This folder; two SSH windows): **Beside the console** (decisions 0100-0101); revised 2026-10-21: the template names no model (decision 0117) |
+| 16 | The orchestrator: a model that steers the run | Approved 2026-10-22 (the owner's request: a toggle, research the best configurations, implement what is useful); Claude's calls listed in it (decisions 0123-0124) |
 
 ## 1. What the owner gets
 
@@ -823,6 +824,82 @@ window running `clank flow attach`.
     attach` tries a planning that failed again, and leaves one whose session is still starting to its window, saying
     to wait, so the owner is never stuck (decisions 0100, 0101).
 
+## 16. The orchestrator: a model that steers the run
+
+The owner (2026-10-22): "we need to have the ability to have a full orchestration agent that acts as the guider for
+the Flows in the case where the user, like myself, wants to let the entire flow run autonomously and let the main
+orchestration model really be the one to help let the flow evolve and will look at the reports that are created after
+steps are completed and determine how the flow should be built and if anything needs to change at any moment and will
+make informed decisions at any of the Gate sections." And: "do some research online on the best configurations that
+are similar to what I am doing here and just implement anything that is really useful"; "a pretty major point of this
+work is to really orchestrate extremely nicely." What the survey found, and what it keeps for later, is
+[docs/research/orchestration.md](../research/orchestration.md).
+
+**What it is.** The **orchestrator** is a flow setting, off unless the owner turns it on (the Flow view's `O`, `clank
+flow orchestrator NAME on`, or the planning's draft). While it is on, a run steers itself at **checkpoints**: after
+each box ends, and whenever the run would wait for the owner. A checkpoint is a fresh session (§5), in Plan mode, on
+the flow's own server and model (its own preset if named), handed: the brief, the flow's map, what the box just did
+(its outcome, its deliverables, its handoff note, a VERIFY's findings, its accept command's result), the run so far
+(each box's state, tries, time and tokens), the question when there is one with its answers, the budget left, and the
+**ledger**. It decides with one tool, `flow_decide`, and its session ends.
+
+**The ledger** (Magentic-One's two ledgers): the run's own file, kept by Clank beside the run (`orchestrator.md`),
+never by the model's hand. Its **facts and plan**, what is known now and the plan from here, are rewritten by each
+decision; its **progress**, one entry per checkpoint, holds the five answers every decision gives: is the brief met
+(line by line), is the run looping, is it progressing, what happens next, and the note the next box is told. Every
+checkpoint reads the ledger whole, so each starts fresh yet knows the run; none relies on a long context (the local
+model's window is the limit that matters).
+
+**What it decides.** At a question, one of the question's own answers, with the owner's words for a note: at a gate,
+*approve*, *send back* (with what must change) or *stop*; at a box that failed or used its tries, *one more try*,
+*take it as it is*, *skip the box* or *stop*. The answer is given as the owner's would be (§10), by the orchestrator,
+and the run goes on exactly as it would have. After a box that is done: *go on*, *change* (the boxes ahead), *send
+back* to an earlier box with a note, or *stop*. A **change** edits a box not yet run (its prompt, what it sees, what
+accepts it, its limits, its tries, its model) or adds one (a TASK or a VERIFY, with the full contract of §4: prompt,
+files seen and written, what accepts it); it never touches a box that ran, `BRIEF.md`, or the folder, and it is
+checked by the rules of §11 like any edit. A **note** goes to the next box's first message ("The orchestrator's note:
+..."), as the owner's note does.
+
+**How it decides** (its prompt, `prompts/orchestrator.md`, from the survey):
+- *Machine checks first.* An accept command that passed or failed (a verifier, a test) outranks a VERIFY's verdict,
+  which outranks the orchestrator's own reading (AlphaEvolve, FunSearch: the evaluator decides).
+- *No claims of its own.* It reports what the checks confirmed; it never calls a result new or important (the AI
+  Scientist's papers overclaimed novelty); the owner judges.
+- *A failure's class decides the remedy* (the Stabilizer Rank Challenge's research loop): a failure outside the work
+  (the session gone, the server, a model switch) is tried again as it was; a time or token limit reached by work that
+  was progressing gets more of it; a result that failed its check gets a changed approach (a sharper prompt, a smaller
+  step, a different method), never the same try again.
+- *Effort follows the budget* (Anthropic's research system): the budget left is in every message; with little left it
+  wraps up (the tasks that can finish, then INTEGRATE) rather than starting new work.
+- *Stalls are named.* A **stall count** rises at each checkpoint that answers "not progressing" or "looping", and
+  returns to 0 at progress; at the flow's stall limit (3) the next decision may not be *go on*: it changes the plan
+  (sends the work back to the PLAN with what must change, or changes the boxes ahead) or stops (Magentic-One's reset).
+
+**Its limits**, a flow setting, always set (Magentic-One's framework leaves them unlimited by default, and must be
+told): `changes` per run (12: each change, send back, skip and extra try counts one), `extra_tries` per box past its
+cap (2), `stall` (3), a checkpoint's own limits (20 minutes, 60,000 tokens written), and `final_review`:
+`orchestrator` (it decides the last gate too, as the owner asked) or `owner` (the last gate waits for the owner).
+Past a limit the orchestrator cannot act: the question waits for the owner, as without it, saying why.
+
+**The owner stays in charge.** A question the orchestrator is deciding shows "the orchestrator decides" in Waiting for
+you, and the owner may answer it first (the orchestrator's later answer is then set aside). The Flow view's
+**Orchestrator** panel shows it on or off, its model, its last decision with why, the stall count and the limits used;
+`O` turns it off or on at any moment, the run going on; `l` shows the ledger whole. Every checkpoint and decision is
+an event (`flows.orchestrator`) and a line of the run's log; `clank flow orchestrator NAME` prints the ledger.
+
+**Built flows.** The planning's first message tells the model the setting exists, and a draft may turn it on; Clank
+writes it off unless the draft or the owner says otherwise, and the owner may turn it on in the Flow view before `r`.
+
+Claude's calls, the owner to check: checkpoints after every box (not only at questions), since the owner asked it to
+"look at the reports that are created after steps are completed"; the final review decided by the orchestrator by
+default when it is on, since the owner asked for "informed decisions at any of the Gate sections", with `owner` one
+key away; the limits' numbers; its tool answers the question through the questions API rather than a path of its own,
+so a gate means the same thing whoever answers it.
+
+**Kept for later** (the survey's other ideas): a SEARCH box (a program evolved against an evaluator, with a database of
+candidates: AlphaEvolve), a tree of tries (alternatives branched from a failed try: the AI Scientist v2), a tournament
+of plans (Google's co-scientist), and parallel workers where the machine has room for them.
+
 ## Decisions to record
 
 - 0057: A flow is a chain of boxes; only a VERIFY's fail line points back, and every loop ends at a gate once its
@@ -871,6 +948,12 @@ window running `clank flow attach`.
   approval; the owner's choice of two SSH windows, built as Claude's call).
 - 0101: The Flow view shows the planning while it is open: its steps, the latest draft drawn and marked DRAFT (kept in
   Clank's state), its session live, Enter on it (§15, revised after approval; Claude's call).
+
+- 0123: The orchestrator steers a run at checkpoints (after each box, and at each question): a fresh Plan-mode session
+  handed the run and a ledger Clank keeps, deciding with `flow_decide`; its answer to a question is given through the
+  questions API as the owner's would be; off unless turned on (§16; the owner's request, built as Claude's call).
+- 0124: The orchestrator's limits are always set (changes, extra tries, stall, its own time and tokens, who decides
+  the final review); past one, the question waits for the owner (§16; Claude's call).
 
 ## Revision log
 

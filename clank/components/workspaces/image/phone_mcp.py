@@ -21,8 +21,9 @@ the service's refusal names the one to fix; `flow_submit(summary)`, the proposal
 `flow_verdict(result, findings, criteria)`, a VERIFY box's verdict on the deliverable it checks: pass, or fail with
 numbered findings, and each line of the brief and of what done means that it checked, met or not, with its evidence.
 `flow_draft(flow)` (design 0013 §15) is a planning session's: the whole flow it drafted with the owner, which the
-service checks and writes, or refuses naming each field to fix. None writes anything in the folder, so the planner may
-use them.
+service checks and writes, or refuses naming each field to fix. `flow_decide(choice, why, ...)` (§16) is an
+orchestrator's checkpoint's one decision, which the service checks, keeps and applies when the checkpoint ends. None
+writes anything in the folder, so the planner may use them.
 
 It speaks MCP (revision 2025-06-18) over its standard input and output, one JSON message a line, with Python's standard
 library only, so it runs in any workspace's container.
@@ -249,6 +250,35 @@ FLOW_TOOLS = [
         ["result", "findings"], False,
     ),
     _tool(
+        "flow_decide",
+        "Only as a flow's orchestrator, at a checkpoint Clank opened: give your one decision, then stop. choice is one "
+        "of the choices your checkpoint lists (after a box: go on, change, back or stop; at a question: one of its "
+        "answers). Rewrite the ledger's facts and plan, judge each line of the brief met or not, say whether the run "
+        "is progressing or looping, and give the next box a note when it needs one. Returns that your decision is "
+        "kept, or what to fix and send again.",
+        {"choice": {"type": "string", "description": "What you decide: one of the choices your checkpoint lists."},
+         "why": {"type": "string", "description": "Why, citing the evidence (a check's output, a figure, a file)."},
+         "met": {**FILES, "description": "The brief's lines that are met, quoted."},
+         "unmet": {**FILES, "description": "The brief's lines not met yet, quoted."},
+         "progressing": {"type": "boolean", "description": "Whether the run made progress since the last checkpoint."},
+         "looping": {"type": "boolean", "description": "Whether the same failure came back for the same reason."},
+         "facts": {"type": "string", "description": "What is known now, rewritten whole."},
+         "plan": {"type": "string", "description": "The plan from here, in a few lines."},
+         "note": {"type": "string", "description": "What the next box is told, or your words with an answer."},
+         "back_to": {"type": "string", "description": "For back: the box to do again."},
+         "changes": {"type": "array", "description": "For change: each an edit of a box not run, or a box added.",
+                     "items": {"type": "object", "required": ["box"], "properties": {
+                         "box": {"type": "string", "description": "The box edited, or the new box's id."},
+                         "after": {"type": "string", "description": "A new box: the box it comes after."},
+                         "type": {"type": "string", "description": "A new box's type: task or verify."},
+                         "title": {"type": "string"}, "prompt": {"type": "string"},
+                         "sees": FILES, "writes": FILES, "accept_when": FILES,
+                         "accept_command": {"type": "string"}, "model": {"type": "string"},
+                         "tries": {"type": "integer"}, "minutes": {"type": "integer"},
+                         "tokens": {"type": "integer"}}}}},
+        ["choice", "why", "progressing", "looping", "facts", "plan"], False,
+    ),
+    _tool(
         "flow_draft",
         "Only in a planning session Clank opened to build a flow with the user: send the whole flow you drafted, "
         "once BRIEF.md is written with them. Clank checks it; while it breaks a rule, nothing is written and you get "
@@ -283,6 +313,8 @@ def flow(name: str, arguments: dict[str, Any]) -> str:
         found = _gateway("POST", "flows/submit", body, "a flow")
     elif name == "flow_draft":  # as the model gave it: the service names each field to fix
         found = _gateway("POST", "flows/draft", {"workspace": WORKSPACE_NAME, "flow": arguments.get("flow")}, "a flow")
+    elif name == "flow_decide":  # as the model gave it: the service says what to fix
+        found = _gateway("POST", "flows/decide", {"workspace": WORKSPACE_NAME, **arguments}, "a flow")
     else:
         criteria = arguments.get("criteria") or []
         body = {
