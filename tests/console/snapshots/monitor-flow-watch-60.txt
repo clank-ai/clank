@@ -27,8 +27,8 @@
  │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐      │
  │ ┆ INTEGRATE                    ○┆┄┄▸┆ GATE                         ○┆      │
  │ ┆ Put it together               ┆   ┆ You review the whole          ┆      │
- │ ┆                               ┆   ┆                               ┆      │
- │ ┆ main slot's model             ┆   ┆ you                           ┆      │▁▁
+ │ ┆                               ┆   ┆                               ┆      │▄▄
+ │ ┆ main slot's model             ┆   ┆ you                           ┆      │
  │ ┆ SUMMARY.md                    ┆   ┆ you decide                    ┆      │
  │ ┆ up to 3 tries · 30 min each   ┆   ┆                               ┆      │
  │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘      │

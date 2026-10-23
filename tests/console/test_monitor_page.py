@@ -132,8 +132,8 @@ async def test_each_view_draws_its_panels_titled_and_empty_saying_no_session_yet
             boards = [f"board-{name}" for name in page.BOARDS]  # the Flow view's D4, beside its D1
             shown = [panel for panel in page.panels(view) if not any(panel.has_class(each) for each in boards)]
             panels = [panel for panel in shown if panel.id != "monitor-session-live"]
-            count = 11 if view == "flow" else 7  # the Flow view's Orchestrator among them (design 0013 §16), and
-            # Thinking, Tool calls and Context window, the running box's session's (decision 0131)
+            count = 12 if view == "flow" else 7  # the Flow view's Orchestrator (design 0013 §16), Side work (§17),
+            # and Thinking, Tool calls and Context window, the running box's session's (decision 0131)
             assert len(panels) == count, view
             assert all(panel.region.height for panel in panels), f"{view}: its panels on screen"
             others = [panel for panel in page.query(Panel) if panel not in panels]

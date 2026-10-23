@@ -345,9 +345,10 @@ async def test_under_the_flow_the_running_boxs_thinking_calls_and_context_then_t
     async with app.run_test(size=(160, 60)) as pilot:
         page = await flow_view(pilot, app)
         order = [panel.id for panel in page.query(Panel).results(Panel) if panel.has_class("board-d1")]
-        assert order[:8] == [
+        assert order[:9] == [
             "monitor-flow-boxes", "monitor-flow-selected", "monitor-flow-thinking", "monitor-flow-calls",
-            "monitor-flow-context", "monitor-flow-orchestrator", "monitor-flow-waiting", "monitor-flow-models",
+            "monitor-flow-context", "monitor-flow-orchestrator", "monitor-flow-waiting", "monitor-flow-side",
+            "monitor-flow-models",
         ]  # fmt: skip
         await settle(pilot, lambda: page.flows.box_seen is not None)
         seen = page.flows.box_seen

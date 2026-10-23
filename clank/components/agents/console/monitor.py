@@ -285,6 +285,7 @@ class MonitorPage(Page):
         "monitor-flow-context",
         "monitor-flow-orchestrator",
         "monitor-flow-waiting",
+        "monitor-flow-side",
         "monitor-flow-models",
         "monitor-flow-brief",
         "monitor-flow-deliverables",

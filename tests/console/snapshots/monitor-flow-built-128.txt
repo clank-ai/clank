@@ -27,9 +27,9 @@
  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
  ┌─ Selected ────────────────────────────────────────────────────────────────┐  ┌─ Thinking ────────────────────────────────────────────────────────────────┐
- │ YOU · ○ waiting                                                           │  │                                                                           │
- │ Your brief                                                                │  │ no request of this session yet: the session's next model request shows he │
- │ model   you                                                               │  │ re as it is written                                                       │▅▅
+ │ YOU · ○ waiting                                                           │  │ no box at work: the running box's session shows here                      │▅▅
+ │ Your brief                                                                │  │                                                                           │
+ │ model   you                                                               │  │                                                                           │
  │ status  ○ waiting                                                         │  │                                                                           │
  │ writes  BRIEF.md                                                          │  │                                                                           │
  │ next    PLAN Write the plan                                               │  │                                                                           │

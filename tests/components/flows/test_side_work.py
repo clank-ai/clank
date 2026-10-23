@@ -113,6 +113,15 @@ async def test_side_tasks_run_one_after_another_each_writing_its_note_into_the_c
     assert "corpus/1-1-prior-bounds.md: The best bound is 5." in index
     assert "corpus/1-2-the-next-fit.md: fit.py fits the grid." in index
     assert [each.state for each in rig.run().orchestration.sides] == ["done", "done"]
+    shown = rig.kernel.parts["flows"].view(str(rig.folder))
+    [job] = next(each for each in shown["boxes"] if each["id"] == "T1")["tries"][-1]["jobs"]
+    assert (job["title"], job["said"]) == ("The annealing seeds", "exited 127"), "the fake has no answer for it"
+    listed = shown["orchestrator"]["sides"]
+    assert [(each["title"], each["state"], each["note"]) for each in listed] == [
+        ("Prior bounds", "done", "corpus/1-1-prior-bounds.md"),
+        ("The next fit", "done", "corpus/1-2-the-next-fit.md"),
+    ]
+    assert shown["orchestrator"]["side_budget"] == 180
 
 
 async def test_the_job_ending_while_a_side_task_works_starts_no_other_and_the_box_waits_for_it(rig: Rig) -> None:

@@ -22,8 +22,8 @@
  │ ┆ proposes tasks                 ┆   ┆ SUMMARY.md                     ┆   ┆ you decide                     ┆       │   │                                    │
  │ ┆ up to 3 tries · 30 min each    ┆   ┆ up to 3 tries · 30 min each    ┆   ┆                                ┆       │   │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
  │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘       │   │ 1s                 █  max 1.2 MB/s │
- │                  ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯        │   └────────────────────────────────────┘
- │                  ▾                                                                                                 │▃▃
+ │                  ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯        │▅▅ └────────────────────────────────────┘
+ │                  ▾                                                                                                 │
  │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                                                                 │   ┌─ Clank now ────────────────────────┐
  │ ┆ ▸ next flow                    ┆                                                                                 │   │ ● gateway stopped                  │
  │ ┆ made when approved             ┆                                                                                 │   └────────────────────────────────────┘
@@ -35,9 +35,9 @@
 
  ┌─ Building it with the model ───────────────────────────┐  ┌─ Thinking ────────────────────────────── the planning ─┐
  │ ✓ started by you (console) · 12:41                     │  │ answering · step 4                                     │
- │ ● reading the folder: 7 tool calls so far              │  │ no request of this session yet: the gateway does not … │
- │ ✓ BRIEF.md written · 12:44                             │  │ (nothing written yet)                                  │
- │ ✗ draft 1 · 12:41 · refused: 1 problem                 │  │                                                        │
+ │ ● reading the folder: 7 tool calls so far              │  │ no request of this session yet: the gateway does not r │
+ │ ✓ BRIEF.md written · 12:44                             │  │ un                                                     │
+ │ ✗ draft 1 · 12:41 · refused: 1 problem                 │  │ (nothing written yet)                                  │
  │     - boxes.1.when_done: a built flow waits only at    │  │                                                        │
  │       its end: leave plan's when_done out (go on)      │  │                                                        │
  │                                                        │  │                                                        │

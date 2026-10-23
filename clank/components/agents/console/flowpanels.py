@@ -150,7 +150,70 @@ def _rows(
         rows.append(("next", _tagged(following[0])))
     elif following:
         rows.append(("next", ", ".join(each["id"] for each in following) + " (one after another)"))
-    return rows
+    return rows + _job_rows(box, now)
+
+
+def _job_rows(box: Mapping[str, Any], now: datetime | None) -> list[tuple[str, Content | str]]:
+    """The last job of the box's try (design 0013 §17): its title and how long it has run of its minutes, or how it
+    ended; its command's first line; its log."""
+    tries = box.get("tries") or []
+    jobs = (tries[-1].get("jobs") or []) if tries else []
+    if not jobs:
+        return []
+    job = jobs[-1]
+    name = job.get("title") or f"job {job['number']}"
+    if job.get("ended"):
+        said: Content | str = f"{name} · {job.get('said') or 'ended'}"
+    else:
+        ran = int((now - parse(job["started"])).total_seconds() // 60) if now is not None else None
+        so_far = f"{ran} of {job['minutes']} min" if ran is not None else f"at most {job['minutes']} min"
+        said = Content.assemble((f"{name} · {so_far}", "$clank-now"))
+    command = str(job.get("command") or "").strip().splitlines()
+    return [("job", said), ("command", command[0] if command else ""), ("log", f"{job['folder']}/log")]
+
+
+def sides(
+    view: Mapping[str, Any] | None, width: int, zone: tzinfo | None, now: datetime | None = None
+) -> list[Content]:
+    """The Side work panel (design 0013 §17): the run's side work used of its budget, then each side task: its number,
+    state and title, its time and tokens, its note, and why it failed or was dropped."""
+    if not view or not view.get("flow"):
+        return [Content.styled(NO_FLOW, "$clank-quiet")]
+    said = view.get("orchestrator") or {}
+    used = f"{said.get('side_minutes', 0)} of {said.get('side_budget', 0)} min of side work used"
+    lines = [_fit(Content.styled(used, "$clank-quiet"), width)]
+    listed = said.get("sides") or []
+    if not listed:
+        return [*lines, Content.styled("No side work in this run.", "$clank-quiet")]
+    tones = {"done": "$clank-good", "running": "$clank-now", "failed": "$clank-failed", "stopped": "$clank-attention"}
+    for each in listed:
+        state = str(each.get("state") or "")
+        start, end = each.get("started"), each.get("ended")
+        seconds = (
+            (parse(end) - parse(start)).total_seconds()
+            if start and end
+            else (now - parse(start)).total_seconds()
+            if start and now is not None and state == "running"
+            else None
+        )
+        extra = f" · {int(seconds // 60)} min" if seconds is not None else ""
+        extra += f" · {each['tokens']:,} tokens" if each.get("tokens") else ""
+        lines.append(
+            _fit(
+                Content.assemble(
+                    (f"{each['number']} ", "$clank-quiet"),
+                    (f"{state} ", tones.get(state, "$clank-quiet")),
+                    (str(each.get("title") or ""), "bold"),
+                    (extra, "$clank-quiet"),
+                ),
+                width,
+            )
+        )
+        if each.get("note") and state in ("done", "running"):
+            lines.append(_fit(Content.styled(f"  {each['note']}", "$clank-quiet"), width))
+        if each.get("reason"):
+            lines.append(_fit(Content.styled(f"  {each['reason']}", "$clank-attention"), width))
+    return lines
 
 
 def after(boxes: Mapping[str, Mapping[str, Any]], box: Mapping[str, Any]) -> list[Mapping[str, Any]]:

@@ -290,6 +290,10 @@ def running_session(view: dict[str, Any] | None) -> tuple[str, str, int] | None:
     planned = ((view or {}).get("planning") or {}).get("session")
     if planned and planned.get("session"):
         return str(planned["workspace"]), str(planned["session"]), int(planned.get("port") or 0)
+    for side in ((view or {}).get("orchestrator") or {}).get("sides") or []:  # a side task works while a job runs
+        session = side.get("session") or {}
+        if side.get("state") == "running" and session.get("session"):
+            return str(session["workspace"]), str(session["session"]), int(session.get("port") or 0)
     for box in (view or {}).get("boxes") or []:
         if box["state"] == "running" and box["type"] not in OWNERS and box["tries"]:
             session = box["tries"][-1].get("session") or {}
@@ -333,8 +337,8 @@ class FlowViewer:
     def compose(self) -> list[Widget]:
         """Board D1's panels, as the website draws them (decision 0125): the flow across the whole width; under it
         Selected (with its Live box) beside Thinking, then Tool calls beside Context window, the running box's session's
-        (decision 0131); then the Orchestrator beside Waiting for you, Models in this flow, The brief, checked,
-        Deliverables and Ahead."""
+        (decision 0131); then the Orchestrator beside Waiting for you, Side work (design 0013 §17), Models in this
+        flow, The brief, checked, Deliverables and Ahead."""
         live = LiveBox(flowpanels.LinesView(id="monitor-flow-live-lines"), id="monitor-flow-live")
         live.border_title = "Live"
         live.display = False
@@ -385,6 +389,7 @@ class FlowViewer:
                 stack_below=STACK_BELOW,
                 classes="view-flow board-d1",
             ),
+            panel(flowpanels.LinesView(id="monitor-flow-side-lines"), "Side work", "monitor-flow-side"),
             panel(flowpanels.LinesView(id="monitor-flow-models-lines"), "Models in this flow", "monitor-flow-models"),
             panel(flowpanels.LinesView(id="monitor-flow-brief-lines"), "The brief, checked", "monitor-flow-brief"),
             Panel(
@@ -986,6 +991,8 @@ class FlowViewer:
         )
         frame = self.page.console.frame
         self._lines("#monitor-flow-orchestrator-lines", lambda width: flowpanels.orchestrator(view, width, frame))
+        zone, at = self.page.console.zone, self.page.console.now()
+        self._lines("#monitor-flow-side-lines", lambda width: flowpanels.sides(view, width, zone, at))
         self._lines("#monitor-flow-brief-lines", lambda width: flowpanels.brief(view, width))
         files = self.page.query_one("#monitor-flow-deliverables-list", flowpanels.DeliverablesList)
         files.show(view if view and view.get("flow") else None)

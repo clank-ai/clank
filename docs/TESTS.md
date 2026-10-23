@@ -317,7 +317,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 14 | Build steps | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_runs.py` (7), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_view.py` (12), `tests/kernel/test_settings_checks.py` (3), `vscode/test/gates.test.ts` (16) |
 | 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/agents/test_flow_tools.py` (9), `tests/components/agents/test_sessions.py` (13), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (21), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (7) |
 | 16 | The orchestrator: a model that steers the run | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/flows/test_orchestrator.py` (18), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_orchestrator_panel.py` (6) |
-| 17 | Jobs, and the work done while one runs | `tests/components/flows/test_box_jobs.py` (8), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_jobs.py` (9), `tests/components/flows/test_side_work.py` (6) |
+| 17 | Jobs, and the work done while one runs | `tests/components/flows/test_box_jobs.py` (8), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_jobs.py` (9), `tests/components/flows/test_side_work.py` (6), `tests/console/test_side_work_panel.py` (3) |
 
 ## Design 0014: Linux without Docker Desktop, and small machines
 
@@ -3480,6 +3480,14 @@ Design 0001 §5.1, §5.5, §5.7, design 0002 §2.15, §3.2 and design 0011 §7: 
 - with a model ready clank opens on this folder
 - a page named on the command line opens as asked the header saying no model
 - a bare clank and clank console open the guide and a page named does not
+
+### `tests/console/test_side_work_panel.py`
+
+Design 0013 §17 (decision 0132): the Flow view shows a box's job and the run's side work. A box waiting on its job says so on its tag line (`job 1`); Selected says the job (its title, how long it has run of its minutes, or how it ended), its command and its log; the Side work panel lists each side task with its state, its time and tokens, its note and why it failed or was dropped; and the session the view follows (Thinking, Tool calls, the context window) is a side task's while one works, else the box's.
+
+- a box waiting on its job says so on its tag line and selected says the job
+- the side work panel lists each task with its state time tokens note and why
+- the view follows a side tasks session while one works else the boxs
 
 ### `tests/console/test_terminal.py`
 

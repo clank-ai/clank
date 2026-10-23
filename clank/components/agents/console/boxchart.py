@@ -282,11 +282,22 @@ def tag(box: Mapping[str, Any]) -> str:
     return said + ("?" if box["state"] == "proposed" else "")
 
 
+def running_job(box: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    """The job a box's last try waits on, if any (design 0013 §17)."""
+    tries = box.get("tries") or []
+    jobs = (tries[-1].get("jobs") or []) if tries else []
+    return next((each for each in jobs if not each.get("ended")), None)
+
+
 def state_mark(box: Mapping[str, Any], live: Mapping[str, Any]) -> tuple[str, str]:
-    """What a box's tag line says at its right: its state's mark (and a running box's step), and its color."""
+    """What a box's tag line says at its right: its state's mark (and a running box's step, or the job it waits on),
+    and its color."""
     state = box["state"]
     if state == "running" and box["type"] in ("you", "gate"):
         return mark("on"), "$clank-attention"
+    job = running_job(box) if state == "running" else None
+    if job is not None:
+        return f"{mark('on')} job {job['number']}", "$clank-now"
     if state == "running":
         step = live.get("step")
         return (f"{mark('on')} step {step}" if step else mark("on")), "$clank-now"

@@ -29,7 +29,7 @@
  │ ┆ Put it together               ┆   ┆ You review the whole          ┆      │
  │ ┆                               ┆   ┆                               ┆      │
  │ ┆ main slot's model             ┆   ┆ you                           ┆      │
- │ ┆ SUMMARY.md                    ┆   ┆ you decide                    ┆      │
+ │ ┆ SUMMARY.md                    ┆   ┆ you decide                    ┆      │▅▅
  │ ┆ up to 3 tries · 30 min each   ┆   ┆                               ┆      │
  │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘      │
  │                 ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯       │
@@ -48,13 +48,13 @@
  └────────────────────────────────────────────────────────────────────────────┘
 
  ┌─ Thinking ─────────────────────────────────────────────────────────────────┐
- │                                                                            │
- │ no request of this session yet: the session's next model request shows her │
- │ e as it is written                                                         │
- │                                                                            │
+ │ no box at work: the running box's session shows here                       │
  └────────────────────────────────────────────────────────────────────────────┘
 
  ┌─ Tool calls ───────────────────────────────────────────────────────────────┐
  │ no box at work: the running box's session shows here                       │
+ └────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Context window ───────────────────────────────────────────────────────────┐
 
  f10 next view  enter open  p pause  O orchestrator  ? explain  f1 help

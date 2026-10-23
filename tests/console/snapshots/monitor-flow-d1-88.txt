@@ -19,8 +19,8 @@
  │ │ You approve the plan           │   │ Break it into tasks            │ │ │ The parameter grid             │ ┆   ▃ │   │ Disk read 12.0 MB/s · write 3.0 M… │
  │ │                                │   │                                │ │ │                                │ ┆     │   │ 1s                 █ max 15.0 MB/s │
  │ │ you                            │   │ daily 262K                     │ │ │ daily 262K                     │ ┆     │   │      C: █████████▍░░░░░░░░░░░  44% │
- │ │ approved 12:30                 │   │ 4 tasks · 12:31                │ │ │ grid.json · 12:33              │ ┆     │   │                                    │
- │ │                                │   │ try 1 of 3 · 1 min · 0 tokens  │ │ │ try 1 of 3 · 1 min · 0 tokens  │ ┆     │▂▂ │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
+ │ │ approved 12:30                 │   │ 4 tasks · 12:31                │ │ │ grid.json · 12:33              │ ┆     │▂▂ │                                    │
+ │ │                                │   │ try 1 of 3 · 1 min · 0 tokens  │ │ │ try 1 of 3 · 1 min · 0 tokens  │ ┆     │   │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
  │ └────────────────────────────────┘   └────────────────────────────────┘ │ └────────────────────────────────┘ ┆     │   │ 1s                 █  max 1.2 MB/s │
  │                                                                         │                                    ┆     │   └────────────────────────────────────┘
  │                                                                         │ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ ┆     │

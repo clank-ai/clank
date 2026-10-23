@@ -20,7 +20,7 @@ reviews the run and may set side tasks going, whose notes build the flow's corpu
   Tests: `tests/components/flows/test_side_work.py`.
 - [x] 5. The corpus: `corpus/CORPUS.md` kept by Clank; handed to every box's first message and every checkpoint.
   Tests: `test_first_message.py`, `test_side_work.py`.
-- [ ] 6. The instructions: a box's (start any command expected to run more than two minutes as a job), the
+- [x] 6. The instructions: a box's (start any command expected to run more than two minutes as a job), the
   orchestrator's (what to do while a job runs). The view and the Flow view: the job on its box, in Selected, the Side
   work panel; Thinking follows the session at work. Tests: the console's.
 - [ ] 7. A long run with jobs, conducted by Claude.

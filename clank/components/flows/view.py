@@ -24,6 +24,8 @@ since a gate and a YOU box keep no try). It gives:
   every box's *accept when*, each with the newest verdict's criterion on it: met, not met, or not checked yet),
   **Deliverables** (each file written, with its box, its try and whether its check passed) and **Ahead** (each box
   still to run with what it costs: a switch of the main slot, a fresh prompt, or that it asks the owner);
+- **jobs and side work** (design 0013 §17): each try's jobs (what each runs, its minutes, how it ended) and the
+  run's side tasks (their state, note and session while one works);
 - **counts** of the boxes by state, and a **version**, the fingerprint of all of it, so a client draws nothing when it
   did not change.
 """
@@ -150,6 +152,27 @@ def _orchestrator(made: Flow, run: Run | None) -> dict[str, Any]:
         else None,
         "plan": state.plan if state is not None else "",
         "owner": state.owner if state is not None else "",
+        "sides": [_side(each, run) for each in state.sides] if state is not None and run is not None else [],
+        "side_minutes": state.side_seconds // 60 if state is not None else 0,
+        "side_budget": settings.side.budget,
+    }
+
+
+def _side(side: Any, run: Run) -> dict[str, Any]:
+    """A side task as the Side work panel shows it (design 0013 §17)."""
+    return {
+        "number": side.number,
+        "job": side.job,
+        "title": side.title,
+        "state": side.state,
+        "note": side.note,
+        "started": to_text(side.started) if side.started else None,
+        "ended": to_text(side.ended) if side.ended else None,
+        "tokens": side.tokens,
+        "reason": side.reason,
+        "session": {"workspace": run.workspace, "port": run.server, "session": side.session}
+        if side.session and side.state == "running"
+        else None,
     }
 
 
@@ -297,6 +320,8 @@ def _try(made: Try, run: Run | None) -> dict[str, Any]:
         if verdict is not None
         else None,
         "command": made.command.model_dump(mode="json") if made.command is not None else None,
+        "jobs": [job.model_dump(mode="json") for job in made.jobs],
+        "waited": made.waited,
     }
 
 
