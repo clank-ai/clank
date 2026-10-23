@@ -18,7 +18,7 @@ reviews the run and may set side tasks going, whose notes build the flow's corpu
 - [x] 4. The `job` checkpoint: `wait`, `side` (1-3 tasks), `change`, `tell_user`; side tasks run one after another
   while the job runs, each a session on the flow's server in Auto mode writing one note; limits per task and per run.
   Tests: `tests/components/flows/test_side_work.py`.
-- [ ] 5. The corpus: `corpus/CORPUS.md` kept by Clank; handed to every box's first message and every checkpoint.
+- [x] 5. The corpus: `corpus/CORPUS.md` kept by Clank; handed to every box's first message and every checkpoint.
   Tests: `test_first_message.py`, `test_side_work.py`.
 - [ ] 6. The instructions: a box's (start any command expected to run more than two minutes as a job), the
   orchestrator's (what to do while a job runs). The view and the Flow view: the job on its box, in Selected, the Side

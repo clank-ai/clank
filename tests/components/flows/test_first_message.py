@@ -2,7 +2,8 @@
 instructions, the flow's brief, its prompt, the files it sees (a text file whole up to a size, a setting; a larger or
 binary one by its path and size), what the boxes before it delivered (an INTEGRATE: every deliverable before it, by the
 box that wrote it; a DECOMPOSE's task: those of the tasks before it), its deliverable and *accept when*, and on a later
-try what happened to the last one; each file says the box it came from."""
+try what happened to the last one; each file says the box it came from. Design 0013 §17: the corpus's notes, each by
+its path and first line, when side tasks wrote any."""
 
 from pathlib import Path
 from typing import Any
@@ -177,3 +178,20 @@ def test_a_deliverable_already_in_the_folder_is_named_and_must_be_written_again(
     (tmp_path / "PLAN.md").unlink()
     fresh = first_message(flow(), flow().boxes[1], tmp_path, number=1)
     assert "from before" not in fresh
+
+
+def test_the_corpuss_notes_are_listed_by_path_and_first_line_when_there_are_any(tmp_path: Path) -> None:
+    made = flow()
+    box = made.boxes[2]
+    assert "## The corpus" not in first_message(made, box, folder(tmp_path), number=1)
+    (tmp_path / "corpus").mkdir()
+    (tmp_path / "corpus" / "1-2-the-next-fit.md").write_text("fit.py fits the grid.\n", encoding="utf-8")
+    (tmp_path / "corpus" / "1-1-prior-bounds.md").write_text("# The best bound is 5.\n\nFrom A.\n", encoding="utf-8")
+    (tmp_path / "corpus" / "scratch.txt").write_text("not a note\n", encoding="utf-8")
+    said = first_message(made, box, tmp_path, number=1)
+    section = said[said.index("## The corpus") :]
+    assert (
+        "- corpus/1-1-prior-bounds.md: The best bound is 5.\n- corpus/1-2-the-next-fit.md: fit.py fits the grid."
+        in section
+    )
+    assert "scratch.txt" not in said

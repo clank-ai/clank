@@ -21,7 +21,7 @@ from collections.abc import Sequence
 from importlib import resources
 from pathlib import Path
 
-from clank.components.flows import handoff
+from clank.components.flows import corpus, handoff
 from clank.components.flows.handoff import Note, writes_note
 from clank.components.flows.kinds import Box, Flow
 from clank.components.flows.runs import Run, order
@@ -54,6 +54,7 @@ def first_message(
         _brief(flow, box, folder),
         _task(box),
         _notes(flow, box, notes),
+        _corpus(flow, folder),
         _handed(flow, box, folder),
         _delivered(flow, box, folder),
         _deliverable(flow, box, name, folder),
@@ -175,6 +176,18 @@ def _brief(flow: Flow, box: Box, folder: Path) -> str:
     whole, named = _files(flow, box, folder, paths)
     lead = "The goal and the limits of the whole flow, as the user wrote them: keep every limit."
     return "\n\n".join(["## The brief", lead, *whole, *(["\n".join(named)] if named else [])])
+
+
+def _corpus(flow: Flow, folder: Path) -> str:
+    """The corpus's notes, each by its path and first line (design 0013 §17): side work done while jobs ran, read by
+    the box as it needs; nothing when there is none."""
+    found = corpus.index_text(corpus.entries(folder, flow.orchestrator.side.corpus))
+    if not found:
+        return ""
+    return (
+        "## The corpus\n\nSide notes written for this flow while its jobs ran, each by its path and first line. Read "
+        "those your task needs; they are notes, not results: check what you rely on.\n\n" + found
+    )
 
 
 def _notes(flow: Flow, box: Box, notes: Sequence[Note]) -> str:
