@@ -54,6 +54,7 @@ WATCH_SECONDS = 5.0
 DUE_SECONDS = 0.25  # how soon a change of a slot or a key reaches the gateway's keys
 SPEND_SECONDS = 2.0  # how often the gateway's spool of cloud requests is taken (design 0016 §12)
 STOP_SECONDS = 5.0
+FORGET_WAITS = (0.02, 0.05, 0.1, 0.2, 0.3, 0.3, None)  # seconds between tries to delete its state file, held open
 ASK_SECONDS = 2.0  # how long the gateway is given to say what it does
 LOOK_SECONDS = 300.0  # the vision model may be loaded first (design 0008 §7)
 ROLES = {"agent": "main", "completion": "fast", "vision": "vision"}
@@ -542,8 +543,21 @@ class Gateway:
             if kept is None:
                 return "gone"
             ended = self._host().stop(_identity(kept), STOP_SECONDS)
-            self._file().unlink(missing_ok=True)
+            self._forget()
             return ended
+
+    def _forget(self) -> None:
+        """Delete the gateway's state file, again for a moment while another reader holds it open (Windows refuses
+        the delete then); still held, it is left, naming a process that has ended."""
+        for wait in FORGET_WAITS:
+            try:
+                self._file().unlink(missing_ok=True)
+                return
+            except PermissionError:
+                if wait is None:
+                    log.warning("the gateway's state file %s is held open: left as it is", self._file())
+                    return
+                time.sleep(wait)
 
     def activity(self, session: str = "", subagents: bool = False, ended: bool = False) -> dict[str, Any]:
         """What the gateway does now: whether it runs, its requests in flight and the last that ended (its

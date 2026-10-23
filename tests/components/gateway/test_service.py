@@ -7,11 +7,14 @@ gateway's process, and after a restart of the service it adopts the one still ru
 Design 0012 §7: `GET /gateway/activity` and `GET /gateway/live` follow the session they are asked for, and its
 subagents too when `subagents` asks for them. Design 0012 §9.4 (§11 step 11): the service pauses and resumes a session
 in the gateway with its local token, and `GET /gateway/holds` says what is paused and held; a gateway from before
-pausing, still running, is never taken for one that paused."""
+pausing, still running, is never taken for one that paused. A stop forgets the gateway's process though its state file
+is held open a moment by another reader (Windows refuses to delete it then: `clank gateway restart` answered 500 on
+2026-10-23)."""
 
 import json
 from collections.abc import Iterator
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import anyio
@@ -212,3 +215,24 @@ def test_a_gateway_from_before_pausing_is_never_taken_for_one_that_paused(
     with pytest.raises(HoldError, match="clank gateway restart"):
         gateway.release("ses_a", "2026-10-20T12:22:00.000Z")
     assert "clank gateway restart" in gateway.holds()["problem"]
+
+
+def test_a_stop_forgets_the_gateway_though_its_file_is_held_open_a_moment(
+    rig: Rig, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    gateway: Gateway = rig.kernel.parts["gateway"]
+    kept = rig.kernel.home.state / "gateway.json"
+    kept.parent.mkdir(parents=True, exist_ok=True)
+    kept.write_text(json.dumps({"host": "local", "pid": 1, "started": "0", "command": "x", "port": 1}) + "\n")
+    monkeypatch.setattr(gateway, "_host", lambda: SimpleNamespace(stop=lambda identity, seconds: "stopped"))
+    real, held = Path.unlink, [2]
+
+    def unlink(self: Path, missing_ok: bool = False) -> None:
+        if self == kept and held[0]:
+            held[0] -= 1
+            raise PermissionError(32, "The process cannot access the file because it is being used by another process")
+        real(self, missing_ok=missing_ok)
+
+    monkeypatch.setattr(Path, "unlink", unlink)
+    assert gateway.stop() == "stopped"
+    assert not kept.exists()
