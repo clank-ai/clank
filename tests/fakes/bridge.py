@@ -18,7 +18,8 @@ folder, and kept in `ran`; held by `hold` (by its words) until the test lets it 
 (`accepting.END`, kept in `ended`: it then answers 143, as a command sent `TERM`). A job (`jobs.START`, design 0013
 §17) writes its files in the folder as the container's would: its command and process id at once; its log (the
 answer `commands` gives) and exit once `effects` ran, and once `hold` lets it go on; `jobs.END` ends it with 143 (kept
-in `jobs_ended`), and `jobs.ALIVE` says whether it still runs. Nothing runs in a container, and no OpenCode runs.
+in `jobs_ended`), and `jobs.ALIVE` says whether it still runs; a job in `vanish` ends without an exit, as a process
+killed with its container would. Nothing runs in a container, and no OpenCode runs.
 """
 
 import json
@@ -91,6 +92,8 @@ class FakeBridge:
         self._running: dict[str, str] = {}  # each command running, by its pid file
         self.jobs: list[str] = []  # each job started, by its command's words
         self.jobs_ended: list[str] = []  # each job ended by Clank, by its folder in the workspace
+        self.looked: list[str] = []  # each look at whether a job runs (jobs.ALIVE), by its folder in the container
+        self.vanish: set[str] = set()  # a job, by its command's words, whose process ends without writing its exit
         self._jobs: dict[str, threading.Thread] = {}  # each job's work, by its folder in the container
         self._made = 0
         self._lock = threading.RLock()
@@ -154,6 +157,7 @@ class FakeBridge:
         inside = argv[4]
         folder = self.folder.joinpath(*inside.removeprefix("/workspace/").split("/"))
         if argv[2] == jobs.ALIVE:
+            self.looked.append(inside)
             thread = self._jobs.get(inside)
             return Answer(0 if thread is not None and thread.is_alive() else 1, "", "")
         if argv[2] == jobs.END:
@@ -179,7 +183,7 @@ class FakeBridge:
                 self.effects[command]()
             if command in self.hold:
                 self.hold[command].wait(10)
-            if (folder / "exit").exists():  # ended meanwhile
+            if (folder / "exit").exists() or command in self.vanish:  # ended meanwhile, or gone without a word
                 return
             answer = self.commands.get(command, Answer(127, "", f"sh: 1: {command}: not found\n"))
             (folder / "log").write_text(answer.output + answer.errors, encoding="utf-8")

@@ -13,7 +13,7 @@ reviews the run and may set side tasks going, whose notes build the flow's corpu
   minutes or when the run stops. Tests: `tests/components/flows/test_jobs.py`, against the fake platform.
 - [x] 2. The way in: `flow_job` in Clank's MCP server, `POST /flows/job` (the gateway's flows allowlist), the runner's
   `job` (only the box at work, one job at a time, at most its minutes). Tests: the forwarding test, `test_jobs.py`.
-- [ ] 3. The box waits on its job: its turn ended with a job running is not its end; its clock stopped; the job's end
+- [x] 3. The box waits on its job: its turn ended with a job running is not its end; its clock stopped; the job's end
   sent to the same session (exit code, time, log's tail, files written, side notes). Tests: `test_jobs.py`.
 - [ ] 4. The `job` checkpoint: `wait`, `side` (1-3 tasks), `change`, `tell_user`; side tasks run one after another
   while the job runs, each a session on the flow's server in Auto mode writing one note; limits per task and per run.

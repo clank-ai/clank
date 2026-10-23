@@ -66,7 +66,7 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -2103,7 +2103,7 @@ class Runner:
         minutes = box.limits.minutes or flow.defaults.limits.minutes
         tokens = box.limits.tokens or flow.defaults.limits.tokens
         last = self.runs.load(run.flow, run.number).box(box.id).tries[-1]
-        deadline = (last.sent or last.started) + timedelta(minutes=minutes)
+        deadline = (last.sent or last.started) + timedelta(minutes=minutes, seconds=last.waited)
         saved = last.tokens
         looked = time.monotonic()
         async with context.step("work"):
@@ -2121,6 +2121,13 @@ class Runner:
                     return "stopped", working.stop
                 if working.gone:
                     return "failed", "its session is gone: its OpenCode server stopped"
+                job = self._running_job(run, box) if working.idle or self.kernel.clock.now() >= deadline else None
+                if working.idle and job is not None:  # its turn ended while its job runs: it waits on it (§17)
+                    outcome, reason, waited = await self._wait_on_job(context, run, box, working, job)
+                    if outcome:
+                        return outcome, reason
+                    deadline += timedelta(seconds=waited)
+                    continue
                 if working.idle:
                     return "ended", ""
                 if working.tokens() > tokens:
@@ -2130,7 +2137,7 @@ class Runner:
                         f"it wrote {working.tokens():,} tokens, past its limit of {tokens:,}: Clank "
                         "stopped its session",
                     )
-                if self.kernel.clock.now() >= deadline:
+                if self.kernel.clock.now() >= deadline and job is None:
                     await self._stop_session(working, RUNNER)
                     span = f"{minutes} minute" + ("" if minutes == 1 else "s")
                     return "failed", f"it ran past its limit of {span}: Clank stopped its session"
@@ -2143,6 +2150,82 @@ class Runner:
                     await wake.wait()
                 if wake.is_set():
                     working.wake = anyio.Event()
+
+    def _running_job(self, run: Run, box: Box) -> Job | None:
+        """The job the box's try started that has not ended, if any (design 0013 §17)."""
+        tries = self.runs.load(run.flow, run.number).box(box.id).tries
+        return next((each for each in tries[-1].jobs if each.ended is None), None) if tries else None
+
+    async def _wait_on_job(
+        self, context: OperationContext, run: Run, box: Box, working: Working, job: Job
+    ) -> tuple[str, str, float]:
+        """The box waits on its job (design 0013 §17), its clock stopped: until its exit is written, Clank ends it past
+        its minutes, or its process is gone; the run stopped ends it. Its end is kept on the try and sent to the same
+        session, which works again; the try's outcome ("" while it goes on), why, and the seconds waited."""
+        workspace = self._workspaces
+        folder = Path(workspace.folder_of(run.workspace)).joinpath(*job.folder.split("/"))
+        began = self.kernel.clock.now()
+        ending = job.started + timedelta(minutes=job.minutes, seconds=accepting.KILL_AFTER + jobs.GRACE)
+        looked = time.monotonic()
+        stopped = ""
+        while True:
+            context.check_canceled()
+            with self._lock:
+                stopper = self._stopping.get(run.name)
+            if stopper is not None and not working.stop:
+                working.stop, working.stopped_by = f"stopped by {stopper.describe()}", stopper
+            state = jobs.read_state(folder)
+            if state.ended:
+                status, said = state.status, jobs.ended_words(state.status, minutes=job.minutes)
+                break
+            if working.stop or self.kernel.clock.now() >= ending:
+                await anyio.to_thread.run_sync(jobs.end, workspace, run.workspace, job.folder)
+                status = jobs.TERMINATED
+                if working.stop:
+                    stopped, said = working.stop, f"was ended by Clank: its run was {working.stop}"
+                else:
+                    said = f"was ended by Clank: it ran past its {jobs.span(job.minutes * 60)}"
+                break
+            if time.monotonic() - looked >= LOOK:
+                looked = time.monotonic()
+                alive = await anyio.to_thread.run_sync(jobs.alive, workspace, run.workspace, job.folder)
+                if alive is False and not jobs.read_state(folder).ended:
+                    status, said = None, jobs.ended_words(None, minutes=job.minutes)
+                    break
+            await anyio.sleep(TICK)
+        now = self.kernel.clock.now()
+        waited = (now - began).total_seconds()
+        run = self._change(run, functools.partial(_end_job, box=box.id, number=job.number, at=now, status=status,
+                                                  said=said, waited=waited))  # fmt: skip
+        last = run.box(box.id).tries[-1]
+        self._record_event(
+            "flows.job", run, f"{box.title}'s job {job.number} {said}", RUNNER, box=box.id, job=job.number,
+            action="ended", minutes=job.minutes, status=status, **{"try": last.number},
+        )  # fmt: skip
+        if stopped:
+            await self._stop_session(working, working.stopped_by or RUNNER)
+            return "stopped", stopped, waited
+        end = jobs.tail(folder)
+        since = (folder / "pid").stat().st_mtime if (folder / "pid").exists() else 0.0
+        files = await anyio.to_thread.run_sync(
+            jobs.written, Path(workspace.folder_of(run.workspace)), since, job.folder
+        )
+        seconds = (now - job.started).total_seconds()
+        text = jobs.told(job.number, job.title or job.command, said, seconds, job.folder, end, files)
+        if working.port is None:
+            return "failed", "its session's OpenCode server is not known: its job's end could not be sent", waited
+        with self._lock:
+            working.idle = working.seen = False  # an idle before its answer began is not its end
+        try:
+            await context.run_blocking(
+                functools.partial(
+                    self._agents.sessions.send, run.workspace, working.port, working.session, text,
+                    actor=RUNNER, agent=last.agent or BUILD, model=SESSION_MODEL,
+                )
+            )  # fmt: skip
+        except (SessionError, AgentError) as error:
+            return "failed", f"its job's end could not be sent to its session: {error}", waited
+        return "", "", waited
 
     async def _accept(
         self, context: OperationContext, run: Run, flow: Flow, box: Box
@@ -2965,6 +3048,14 @@ def _loop_files(run: Run, flow: Flow, box: str) -> list[str]:
 
 def _add_job(run: Run, *, box: str, job: Job) -> None:
     run.box(box).tries[-1].jobs.append(job)
+
+
+def _end_job(run: Run, *, box: str, number: int, at: datetime, status: int | None, said: str, waited: float) -> None:
+    last = run.box(box).tries[-1]
+    for each in last.jobs:
+        if each.number == number:
+            each.ended, each.status, each.said = at, status, said
+    last.waited += round(waited)
 
 
 def _set_verdict(run: Run, *, box: str, verdict: Verdict) -> None:

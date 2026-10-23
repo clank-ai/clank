@@ -4,6 +4,7 @@ process id, its log and, once it ends, its exit code, so the service reads its s
 minutes or when its run stops. The scripts run in the container's shell: tried for real on Linux, and through the fake
 platform elsewhere."""
 
+import os
 import shutil
 import subprocess
 import sys
@@ -103,3 +104,23 @@ def test_a_job_whose_workspace_does_not_run_does_not_start(
     with pytest.raises(jobs.JobError, match="could not start"):
         jobs.start(rig.kernel.parts["workspaces"], WORKSPACE, "x", "true", minutes=1)
     assert jobs.alive(rig.kernel.parts["workspaces"], WORKSPACE, "x") is None
+
+
+def test_its_time_is_said_in_words() -> None:
+    assert [jobs.span(each) for each in (40, 60, 3000, 3660, 7200)] == [
+        "40 seconds",
+        "1 minute",
+        "50 minutes",
+        "1 hour 1 minute",
+        "2 hours",
+    ]
+
+
+def test_the_files_it_wrote_are_the_folders_newer_ones_but_its_own_and_gits(tmp_path: Path) -> None:
+    for path in ("old.txt", "runs/seed-1.json", ".git/index", ".clank/jobs/flow/1/search-1/log"):
+        (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / path).write_text("x", encoding="utf-8")
+    since = time.time() + 5
+    for path in ("runs/seed-1.json", ".git/index", ".clank/jobs/flow/1/search-1/log"):
+        os.utime(tmp_path / path, (since + 1, since + 1))
+    assert jobs.written(tmp_path, since, ".clank/jobs/flow/1/search-1") == ["runs/seed-1.json"]

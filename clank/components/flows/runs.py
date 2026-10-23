@@ -112,6 +112,7 @@ class Try(Part):
     verdict: Verdict | None = Field(None, description="A VERIFY's: the newest verdict it gave during this try.")
     command: Commanded | None = Field(None, description="Its accept command, as it ran after the try.")
     jobs: list[Job] = Field(default_factory=list, description="The jobs it started, oldest first; one runs at a time.")
+    waited: int = Field(0, description="Seconds it waited on its jobs, which its time limit does not count.")
 
 
 class BoxRun(Part):

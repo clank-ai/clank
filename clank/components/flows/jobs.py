@@ -11,6 +11,7 @@ whether any process of the session runs, for a job whose `exit` never came (the 
 """
 
 import contextlib
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -25,6 +26,10 @@ ROOT = ".clank/jobs"  # in the workspace's folder
 TERMINATED = 143  # a job Clank ended
 TAIL_LINES = 60
 TAIL_CHARACTERS = 6_000
+GRACE = 60  # seconds past a job's minutes (and `timeout`'s kill) before Clank ends it itself
+WRITTEN_SHOWN = 20  # the files a job wrote, said to its box: at most these, newest first
+WRITTEN_LOOKED = 50_000  # the entries of the folder looked at for them, at most
+PASSED = {".git", ".clank", "node_modules", "__pycache__", ".venv", ".mypy_cache", ".pytest_cache"}
 ANSWER_SECONDS = 30  # how long the container may take to answer a start, an end or a look
 # `sh -c START sh <folder> <seconds> <command> <cwd>`: the command detached, in a session of its own, its files written
 START = (
@@ -94,6 +99,57 @@ def ended_words(status: int | None, *, minutes: int) -> str:
     if status == KILLED:
         return "was killed: it did not end when asked, or ran out of memory"
     return f"exited {status}"
+
+
+def span(seconds: float) -> str:
+    """A length of time in words: 40 seconds, 50 minutes, 2 hours 5 minutes."""
+    whole = max(0, round(seconds))
+    hours, rest = divmod(whole, 3600)
+    minutes, rest = divmod(rest, 60)
+
+    def unit(number: int, word: str) -> str:
+        return f"{number} {word}{'' if number == 1 else 's'}"
+
+    if hours:
+        return unit(hours, "hour") + (f" {unit(minutes, 'minute')}" if minutes else "")
+    return unit(minutes, "minute") if minutes else unit(rest, "second")
+
+
+def written(folder: Path, since: float, job: str) -> list[str]:
+    """The files of the workspace's folder (on this machine) written since `since` (seconds since the epoch), newest
+    first, `/`-separated, the job's own folder and the folders no work is in (`PASSED`) left out; at most
+    `WRITTEN_SHOWN`, of at most `WRITTEN_LOOKED` entries looked at."""
+    found: list[tuple[float, str]] = []
+    looked = 0
+    own = job.rstrip("/") + "/"
+    for top, folders, files in os.walk(folder):
+        folders[:] = [each for each in folders if each not in PASSED]
+        for name in files:
+            looked += 1
+            path = Path(top) / name
+            with contextlib.suppress(OSError):
+                modified = path.stat().st_mtime
+                relative = path.relative_to(folder).as_posix()
+                if modified >= since and not relative.startswith(own):
+                    found.append((modified, relative))
+        if looked >= WRITTEN_LOOKED:
+            break
+    return [path for _, path in sorted(found, reverse=True)[:WRITTEN_SHOWN]]
+
+
+def told(number: int, title: str, said: str, seconds: float, folder: str, end: str, files: list[str]) -> str:
+    """What the box waiting on a job is sent when it ends (design 0013 §17): how it ended and after how long, its log's
+    last lines (`end`), the files it wrote, and that it goes on from there."""
+    log = f"The last lines of its log, {folder}/log:\n```\n{end}\n```" if end else f"Its log, {folder}/log, is empty."
+    wrote = (
+        "Files written in the folder while it ran, newest first: " + ", ".join(files) + "."
+        if files
+        else "No file of the folder was written while it ran, besides its log."
+    )
+    return (
+        f"Job {number} ({title}) {said} after {span(seconds)}. {log}\n{wrote}\n"
+        "Go on with your task from here: read what you need of its output, then finish as your task says."
+    )
 
 
 def start(workspaces: "Workspaces", workspace: str, folder: str, command: str, minutes: int) -> None:

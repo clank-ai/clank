@@ -317,7 +317,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 14 | Build steps | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_runs.py` (7), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_view.py` (12), `tests/kernel/test_settings_checks.py` (3), `vscode/test/gates.test.ts` (16) |
 | 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/agents/test_flow_tools.py` (9), `tests/components/agents/test_sessions.py` (13), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (21), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (7) |
 | 16 | The orchestrator: a model that steers the run | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/flows/test_orchestrator.py` (18), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_orchestrator_panel.py` (6) |
-| 17 | Jobs, and the work done while one runs | `tests/components/flows/test_box_jobs.py` (4), `tests/components/flows/test_jobs.py` (7) |
+| 17 | Jobs, and the work done while one runs | `tests/components/flows/test_box_jobs.py` (8), `tests/components/flows/test_jobs.py` (9) |
 
 ## Design 0014: Linux without Docker Desktop, and small machines
 
@@ -1051,12 +1051,16 @@ Design 0013 §4 and §5: a box's *accept when* may also be a command, which the 
 
 ### `tests/components/flows/test_box_jobs.py`
 
-Design 0013 §17 (decision 0132): the box at work starts a long computation as a job with `flow_job`, one at a time, within its box's minutes; Clank starts it in the workspace's container and keeps it on the box's try, and says how its end comes back. A job asked for while no box works, a second while one runs, or one longer than its box may run is refused, saying why; the route answers 409 with those words.
+Design 0013 §17 (decision 0132): the box at work starts a long computation as a job with `flow_job`, one at a time, within its box's minutes; Clank starts it in the workspace's container and keeps it on the box's try, and says how its end comes back. A job asked for while no box works, a second while one runs, or one longer than its box may run is refused, saying why; the route answers 409 with those words. A box whose turn ends while its job runs waits on it, its clock stopped: when the job ends (its exit written, Clank ending it past its minutes, or its process gone) the same session is sent how it ended, its time and its log's last lines, and the box goes on to its end. Stopping the run ends its job.
 
 - the box at work starts a job kept on its try and is told to end its turn
 - a second job while one runs is refused
 - a job longer than its box may run is refused
 - a job while no box works is refused and the route says why
+- a box whose turn ends while its job runs waits and is sent its end in the same session
+- a job past its minutes is ended by clank and the box told
+- a job whose process is gone without an exit is said so
+- stopping the run ends its job
 
 ### `tests/components/flows/test_box_server.py`
 
@@ -1272,6 +1276,8 @@ Design 0013 §17 (decision 0132): a job, a long computation a box starts with `f
 - the start and end scripts run a command detached and end it with its group
 - a job started in the workspace writes its files and is ended by clank
 - a job whose workspace does not run does not start
+- its time is said in words
+- the files it wrote are the folders newer ones but its own and gits
 
 ### `tests/components/flows/test_model_per_box.py`
 
