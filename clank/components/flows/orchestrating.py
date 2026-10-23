@@ -25,9 +25,12 @@ if TYPE_CHECKING:
     from clank.components.flows.runs import Run
 
 ORCHESTRATOR = Actor(kind="clank", via="orchestrator")  # who answers a question the orchestrator decided
-Kind = Literal["review", "question"]
+Kind = Literal["review", "question", "job"]
 REVIEW_CHOICES = ("go on", "change", "back", "pause", "stop")
 WATCH_CHOICES = ("go on", "pause")  # after a box, while it only watches (its role `watch`)
+JOB_CHOICES = ("wait", "side", "change")  # while a box waits on its job (design 0013 §17)
+SideState = Literal["waiting", "running", "done", "failed", "stopped", "dropped"]
+NUMBERS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five"}
 LEAVE = "leave"  # at a question: left to the user, who is told why
 TOLD = ("pause", LEAVE)  # the choices that must tell the user why
 EDITABLE = ("title", "prompt", "sees", "writes", "holds", "accept_when", "accept_command", "model", "tries")
@@ -67,6 +70,32 @@ class Change(Part):
     tokens: int | None = Field(None, ge=1)
 
 
+class SideAsked(Part):
+    """A side task as a job's checkpoint gives it (design 0013 §17)."""
+
+    title: str = Field(description="What it is about, in a few words; its note is named after it.")
+    prompt: str = Field(description="Everything its model must know: it starts afresh.")
+    reads: list[str] = Field(default_factory=list, description="The files and folders it reads.")
+
+
+class Side(Part):
+    """A side task of the run: one session, writing one note into the corpus while a box waits on its job."""
+
+    number: int = Field(ge=1, description="Its number in the run, from 1.")
+    checkpoint: int = Field(ge=1, description="The checkpoint that set it going.")
+    job: str = Field(description="The job it ran beside: <box>-<n>.")
+    title: str
+    prompt: str
+    reads: list[str] = Field(default_factory=list)
+    note: str = Field(description="The note it writes, in the workspace's folder.")
+    state: SideState = "waiting"
+    session: str = ""
+    started: datetime | None = None
+    ended: datetime | None = None
+    tokens: int = 0
+    reason: str = Field("", description="Why it failed, stopped or was dropped.")
+
+
 class Decision(Part):
     """One checkpoint's decision, as kept in the ledger."""
 
@@ -86,6 +115,7 @@ class Decision(Part):
     back_to: str = Field("", description="A review's *back*: the box the work goes back to.")
     changes: list[Change] = Field(default_factory=list)
     tell_user: str = Field("", description="What the user should know now: asked at once, the run not waiting.")
+    side: list[SideAsked] = Field(default_factory=list, description="A job's checkpoint's side tasks.")
     at: datetime
     applied: str = Field("", description="What Clank did with it.")
 
@@ -121,6 +151,8 @@ class Orchestration(Part):
         "", description="Why the run waits for the owner, when the orchestrator could not act or left it."
     )
     told: list[str] = Field(default_factory=list, description="The questions that told the owner its words, by id.")
+    sides: list[Side] = Field(default_factory=list, description="The side tasks set going, oldest first (§17).")
+    side_seconds: int = Field(0, description="Seconds of side work so far in the run, against its side budget.")
 
 
 def instructions() -> str:
@@ -141,10 +173,18 @@ def failure_class(reason: str) -> str:
     return "its result"
 
 
-def choices(checkpoint: Checkpoint, role: str = "steer") -> list[str]:
+def side_left(state: Orchestration, limits: Any) -> bool:
+    """Whether the run's side budget has minutes left."""
+    return bool(state.side_seconds < limits.side.budget * 60)
+
+
+def choices(checkpoint: Checkpoint, role: str = "steer", side: bool = True) -> list[str]:
     """What this checkpoint may choose: at a question, its answers, sending the work back when a failed box asks it
     (its answers can only try the box again, take it, skip it or stop), or leaving it to the user; after a box, as its
-    role allows."""
+    role allows; while a box waits on its job, wait, side tasks while the run's side budget lasts (`side`), or a
+    change."""
+    if checkpoint.kind == "job":
+        return [each for each in JOB_CHOICES if side or each != "side"]
     if checkpoint.kind == "question":
         back = ["back"] if "retry" in checkpoint.options and "back" not in checkpoint.options else []
         return [*checkpoint.options, *back, LEAVE]
@@ -157,7 +197,7 @@ def decided(
     """The decision as it is kept; `DecisionRefused`, saying what to fix, when it cannot be."""
     state = run.orchestration
     choice = str(given.get("choice") or "").strip().lower()
-    allowed = choices(checkpoint, limits.role)
+    allowed = choices(checkpoint, limits.role, side_left(state, limits))
     if choice not in allowed:
         raise DecisionRefused(f"choose one of: {', '.join(allowed)} (you sent {given.get('choice')!r})")
     why = str(given.get("why") or "").strip()
@@ -173,6 +213,7 @@ def decided(
         raise DecisionRefused(f"a change's {'.'.join(str(part) for part in first['loc'])}: {first['msg']}") from error
     if choice == "change" and not changes:
         raise DecisionRefused("a change lists its changes: each a box not run yet and what changes in it")
+    side = _side_asked(given.get("side"), limits.side.per_job) if choice == "side" else []
     if choice != "change" and changes and checkpoint.kind == "question":
         raise DecisionRefused("at a question, answer it; changes are made after a box, with the choice change")
     left = limits.changes - state.changes
@@ -208,8 +249,30 @@ def decided(
         number=checkpoint.number, kind=checkpoint.kind, box=checkpoint.box, question=checkpoint.question,
         choice=choice, why=why, met=_lines(given.get("met")), unmet=_lines(given.get("unmet")), looping=looping,
         progressing=progressing, facts=str(given.get("facts") or "").strip(), plan=str(given.get("plan") or "").strip(),
-        note=str(given.get("note") or "").strip(), back_to=back_to, changes=changes, tell_user=tell_user, at=at,
+        note=str(given.get("note") or "").strip(), back_to=back_to, changes=changes, tell_user=tell_user, side=side,
+        at=at,
     )  # fmt: skip
+
+
+def _side_asked(value: Any, most: int) -> list[SideAsked]:
+    """A side decision's tasks, checked: one to `most`, each with a title and a prompt."""
+    tasks = value if isinstance(value, list) else []
+    if not 1 <= len(tasks) <= most:
+        raise DecisionRefused(
+            f"a side decision gives one to {NUMBERS.get(most, str(most))} side tasks in side, each a title, a prompt "
+            f"and the files it reads (you sent {len(tasks)})"
+        )
+    found: list[SideAsked] = []
+    for number, task in enumerate(tasks, 1):
+        task = task if isinstance(task, dict) else {}
+        if not str(task.get("prompt") or "").strip():
+            raise DecisionRefused(
+                f"side task {number}: a side task's prompt says everything its model must know (it starts afresh)"
+            )
+        title = str(task.get("title") or "").strip() or f"Side task {number}"
+        reads = [str(each) for each in task.get("reads") or [] if str(each).strip()]
+        found.append(SideAsked(title=title, prompt=str(task["prompt"]).strip(), reads=reads))
+    return found
 
 
 def changed(flow: Flow, changes: list[Change]) -> Flow:
@@ -261,6 +324,7 @@ def message(
     report: str,
     question: str,
     elapsed: str,
+    corpus: str = "",
 ) -> str:
     """A checkpoint's first message."""
     state = run.orchestration
@@ -272,6 +336,8 @@ def message(
                  "tell_user saying why); you change nothing and decide no question.", ""]  # fmt: skip
     if checkpoint.kind == "review":
         said += [f"The box {checkpoint.box} has ended. Its report:", "", report, ""]
+    elif checkpoint.kind == "job":
+        said += [report, ""]
     else:
         said += [f"The run asks a question about {checkpoint.box}; you answer it for the user.", "", question, ""]
         if report:
@@ -279,6 +345,9 @@ def message(
     said += ["## The run so far", "", run_table(flow, run), "", f"The run has worked {elapsed}.", ""]
     said += ["## The brief", "", _brief(flow, folder), ""]
     said += ["## The ledger", "", ledger_text(run, limit=LEDGER_SHOWN), ""]
+    if corpus:
+        said += ["## The corpus", "", "Side notes written for this flow, each by its path and first line:", "", corpus,
+                 ""]  # fmt: skip
     said += [
         "## The budget",
         "",
@@ -292,15 +361,66 @@ def message(
         "",
         "## Your decision",
         "",
-        f"Call `flow_decide` once, with `choice` one of: {', '.join(choices(checkpoint, limits.role))}; then stop.",
+        f"Call `flow_decide` once, with `choice` one of: "
+        f"{', '.join(choices(checkpoint, limits.role, side_left(state, limits)))}; then stop.",
         "If the user should know something now (a surprise, a result against the plan, a failure that keeps coming "
         "back, a risk to their time, machine or money), say it in `tell_user`: it reaches them at once, and the run "
         "does not wait for it."
         + (" `pause` and `leave` need it." if checkpoint.kind == "review" else " `leave` needs it."),
     ]
+    if checkpoint.kind == "job":
+        left_minutes = max(0, limits.side.budget - state.side_seconds // 60)
+        said += [
+            "",
+            "While the job runs, you have the model. `wait`: nothing more while it runs (a short job, or nothing worth "
+            "doing). "
+            + (
+                f"`side`: one to {NUMBERS.get(limits.side.per_job, limits.side.per_job)} side tasks in `side`, run one "
+                "after another while the job runs, each a session of its own that writes one note into the corpus and "
+                "nothing else: research toward what the run will need next (the folder's papers and notes read for "
+                "what the next box needs, the calculation after this one prepared and its script written, the job's "
+                "partial output examined). Give each a `title`, a `prompt` with everything its model must know (it "
+                f"starts afresh), and `reads`, the files it reads. Side work left in this run: {left_minutes} minutes; "
+                f"each task {limits.side.minutes} minutes and {limits.side.tokens:,} tokens written. "
+                if side_left(state, limits)
+                else "The run's side work is spent: no side task. "
+            )
+            + "`change`: change the boxes ahead (as after a box), such as a box after this one that tries another "
+            "method should this one fail.",
+        ]
     if stalled and checkpoint.kind == "review":
         said.append("The run is stalled: change the plan (back to the box to do again, or change the boxes ahead), or "
                     "stop.")  # fmt: skip
+    return "\n".join(said) + "\n"
+
+
+def side_message(flow: Flow, run: "Run", side: Side, *, limits: Any, folder: Path, corpus: str, job: str) -> str:
+    """A side task's first message (design 0013 §17): its prompt, what it reads, the one note it writes, its limits,
+    the corpus so far and the brief."""
+    reads = ", ".join(f"`{each}`" for each in side.reads) or "what your task names"
+    said = [
+        f"You do side work for the flow {run.title} while one of its boxes waits on a job ({job}). The run's "
+        "orchestrator set you this task:",
+        "",
+        side.prompt,
+        "",
+        f"Read: {reads}.",
+        "",
+        f"Write one note, and only it: `{side.note}`. Its first line is a one-line summary of what it holds (Clank "
+        "lists it in the corpus's index, which later boxes read); then what you found, with where each thing comes "
+        "from (a file and its line, a paper and its section, a command and its output). Write nothing else in the "
+        "folder: not the job's files, not any box's deliverables, not the corpus's index. Claim only what you checked.",
+        "",
+        f"You have {limits.minutes} minutes and {limits.tokens:,} tokens written. When the note is written, stop.",
+        "",
+        "## The corpus so far",
+        "",
+        corpus or "No note yet.",
+        "",
+        "## The brief",
+        "",
+        _brief(flow, folder),
+    ]
     return "\n".join(said) + "\n"
 
 

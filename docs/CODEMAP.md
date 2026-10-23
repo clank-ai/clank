@@ -82,6 +82,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/flows/building.py` | A flow built with the model (design 0013 §15; decisions 0097-0099): the owner talks the work through with the model |
 | `clank/components/flows/cli.py` | The flows component's commands (design 0013 §5-§9): `clank flow`, a flow listed, checked, prepared, run, decided. |
 | `clank/components/flows/component.py` | The flows component's declaration (design 0013; decisions 0057-0066). |
+| `clank/components/flows/corpus.py` | The corpus (design 0013 §17, decision 0132): the flow's folder of side notes, `corpus/` in the workspace's folder |
 | `clank/components/flows/deliverables.py` | A box's deliverables as Clank sees them (design 0013 §8): their fingerprints, and a plan's progress kept apart. |
 | `clank/components/flows/diffs.py` | Two tries of a box compared (design 0013 §8, §10): what changed in a deliverable from one try to another. |
 | `clank/components/flows/first.py` | A box's first message (design 0013 §5; decisions 0060, 0085, 0086): everything its fresh session is handed. |

@@ -71,6 +71,7 @@ class Job(Part):
     ended: datetime | None = Field(None, description="When Clank saw it end.")
     status: int | None = Field(None, description="Its exit status; empty while it runs, or when its process is gone.")
     said: str = Field("", description="How it ended, in words.")
+    checkpoint: int = Field(0, description="The orchestrator's checkpoint started while the box waited on it; 0: none.")
 
 
 class Try(Part):

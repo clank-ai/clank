@@ -594,6 +594,11 @@
           "$ref": "#/$defs/CheckpointLimits",
           "description": "What one checkpoint may use.",
           "title": "Limits"
+        },
+        "side": {
+          "$ref": "#/$defs/SideLimits",
+          "description": "What side tasks may use while a box waits on its job, and where their notes go.",
+          "title": "Side work"
         }
       },
       "title": "Orchestrator",
@@ -630,6 +635,48 @@
         "by"
       ],
       "title": "Proposed",
+      "type": "object"
+    },
+    "SideLimits": {
+      "additionalProperties": false,
+      "description": "What side work may use while a box waits on its job (design 0013 §17, decision 0132).",
+      "properties": {
+        "minutes": {
+          "default": 20,
+          "description": "How long one side task may run.",
+          "minimum": 1,
+          "title": "Minutes",
+          "type": "integer"
+        },
+        "tokens": {
+          "default": 60000,
+          "description": "How many tokens one side task may write, its thinking included.",
+          "minimum": 1,
+          "title": "Tokens written",
+          "type": "integer"
+        },
+        "per_job": {
+          "default": 3,
+          "description": "How many side tasks one job's checkpoint may set going.",
+          "minimum": 1,
+          "title": "Per job",
+          "type": "integer"
+        },
+        "budget": {
+          "default": 180,
+          "description": "Minutes of side work in one run; past them a job's checkpoint may only wait or change.",
+          "minimum": 0,
+          "title": "Budget",
+          "type": "integer"
+        },
+        "corpus": {
+          "default": "corpus",
+          "description": "The folder, in the workspace's, where side tasks write their notes.",
+          "title": "Corpus",
+          "type": "string"
+        }
+      },
+      "title": "SideLimits",
       "type": "object"
     }
   }

@@ -847,6 +847,8 @@ export interface Orchestrator {
   stall: number;
   /** What one checkpoint may use. */
   limits: CheckpointLimits;
+  /** What side tasks may use while a box waits on its job, and where their notes go. */
+  side: SideLimits;
 }
 
 /** Where a box accepted from a proposal came from (design 0013 §9). */
@@ -865,6 +867,20 @@ export interface RuleSettings {
   do: ("mark" | "pause" | "tell the phone" | "tell the model")[];
   /** What the model is told when the rule tells it, sent as a message of yours; {why} is replaced by what the mark rests on. */
   note: string;
+}
+
+/** What side work may use while a box waits on its job (design 0013 §17, decision 0132). */
+export interface SideLimits {
+  /** How long one side task may run. */
+  minutes: number;
+  /** How many tokens one side task may write, its thinking included. */
+  tokens: number;
+  /** How many side tasks one job's checkpoint may set going. */
+  per_job: number;
+  /** Minutes of side work in one run; past them a job's checkpoint may only wait or change. */
+  budget: number;
+  /** The folder, in the workspace's, where side tasks write their notes. */
+  corpus: string;
 }
 
 /** One step of an operation, as it ran. */

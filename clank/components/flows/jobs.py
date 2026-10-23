@@ -137,17 +137,21 @@ def written(folder: Path, since: float, job: str) -> list[str]:
     return [path for _, path in sorted(found, reverse=True)[:WRITTEN_SHOWN]]
 
 
-def told(number: int, title: str, said: str, seconds: float, folder: str, end: str, files: list[str]) -> str:
+def told(
+    number: int, title: str, said: str, seconds: float, folder: str, end: str, files: list[str], notes: str = ""
+) -> str:
     """What the box waiting on a job is sent when it ends (design 0013 §17): how it ended and after how long, its log's
-    last lines (`end`), the files it wrote, and that it goes on from there."""
+    last lines (`end`), the files it wrote, the corpus's notes written meanwhile (`notes`, the index's lines), and that
+    it goes on from there."""
     log = f"The last lines of its log, {folder}/log:\n```\n{end}\n```" if end else f"Its log, {folder}/log, is empty."
     wrote = (
         "Files written in the folder while it ran, newest first: " + ", ".join(files) + "."
         if files
         else "No file of the folder was written while it ran, besides its log."
     )
+    learned = f"Side notes written for the corpus while it ran (read those that help):\n{notes}\n" if notes else ""
     return (
-        f"Job {number} ({title}) {said} after {span(seconds)}. {log}\n{wrote}\n"
+        f"Job {number} ({title}) {said} after {span(seconds)}. {log}\n{wrote}\n{learned}"
         "Go on with your task from here: read what you need of its output, then finish as your task says."
     )
 

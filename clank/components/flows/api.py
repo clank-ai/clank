@@ -87,6 +87,7 @@ class DecisionGiven(BaseModel):
     note: str = Field("", description="What the next box is told, or the words of a question's answer.")
     back_to: str = Field("", description="A review's back: the box to do again.")
     changes: Any = Field(default_factory=list, description="A change's list: edits of boxes not run, or boxes added.")
+    side: Any = Field(default_factory=list, description="A job's checkpoint's side tasks: title, prompt, reads.")
     tell_user: str = Field("", description="What the user should know now: it reaches them at once.")
 
 

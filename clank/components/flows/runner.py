@@ -77,7 +77,7 @@ import anyio.to_thread
 from anyio.streams.memory import MemoryObjectSendStream
 
 from clank.components.agents.service import BUILD, PLANNER, SESSION_MODEL, AgentError, SessionError
-from clank.components.flows import accepting, handoff, jobs, orchestrating, preparing
+from clank.components.flows import accepting, corpus, handoff, jobs, orchestrating, preparing
 from clank.components.flows.deliverables import fingerprint, written
 from clank.components.flows.diffs import LARGEST_SHOWN, compare, text_of
 from clank.components.flows.first import came_from
@@ -239,6 +239,20 @@ EVENT_TYPES = [
             "action": "started or ended.",
             "minutes": "How long it may run.",
             "status": "Its exit status, once ended; empty when its process was gone.",
+        },
+    ),
+    EventType(
+        "flows.side",
+        "A side task (design 0013 §17): a session the orchestrator set going while a box waits on its job, writing one "
+        "note into the flow's corpus; started, or ended (done, failed, stopped), and why.",
+        {
+            **FLOW_DATA,
+            "side": "Its number in the run.",
+            "job": "The job it ran beside: <box>-<n>.",
+            "action": "started or ended.",
+            "state": "done, failed or stopped, once ended.",
+            "note": "The note it writes.",
+            "reason": "Why it failed or stopped.",
         },
     ),
     EventType(
@@ -1423,7 +1437,7 @@ class Runner:
                     each.operation = operation.id
 
         self._change(run, started)
-        where = f"after {box}" if kind == "review" else f"at {box}'s question"
+        where = {"review": f"after {box}", "job": f"while {box} waits on its job"}.get(kind, f"at {box}'s question")
         self._record_event(
             "flows.orchestrator", run, f"the orchestrator of {run.title} reads the run {where} (checkpoint {number})",
             RUNNER, checkpoint=number, kind=kind, box=box, action="started", choice="", why="",
@@ -1519,12 +1533,31 @@ class Runner:
             if asked is not None:
                 answers = [f"- `{option.id}`: {option.label}. {option.effect}".rstrip() for option in asked.options]
                 question = "\n".join([f"**{asked.title}**", "", asked.detail or "", "", "Its answers:", *answers])
+        if checkpoint.kind == "job":
+            report = self._job_report(run, checkpoint.box, folder)
         minutes = max(0, int((self.kernel.clock.now() - run.created).total_seconds() // 60))
         elapsed = f"{minutes // 60} h {minutes % 60} min" if minutes >= 60 else f"{minutes} min"
+        found = corpus.index_text(corpus.entries(folder, flow.orchestrator.side.corpus))
         return orchestrating.message(
             flow, run, checkpoint, limits=flow.orchestrator, folder=folder, report=report, question=question,
-            elapsed=elapsed,
+            elapsed=elapsed, corpus=found,
         )  # fmt: skip
+
+    def _job_report(self, run: Run, box: str, folder: Path) -> str:
+        """What a job's checkpoint is handed of the job its box waits on: its title, command, minutes, time so far and
+        log so far."""
+        tries = run.box(box).tries
+        job = next((each for each in tries[-1].jobs if each.ended is None), None) if tries else None
+        if job is None:
+            return f"{box} started a job, which has ended since."
+        so_far = (self.kernel.clock.now() - job.started).total_seconds()
+        end = jobs.tail(folder.joinpath(*job.folder.split("/")), lines=30)
+        log = f"```\n{end}\n```" if end else "(nothing yet)"
+        return (
+            f"{box} started a job and waits on it: job {job.number}, {job.title or 'untitled'}. Its command:\n\n"
+            f"```\n{job.command}\n```\n\nIt may run {jobs.span(job.minutes * 60)}; it has run {jobs.span(so_far)}. "
+            f"The last lines of its log so far, {job.folder}/log:\n\n{log}"
+        )
 
     async def _checkpoint_work(
         self,
@@ -1638,6 +1671,25 @@ class Runner:
                 cost = 1 if decision.choice in orchestrating.COSTLY else 0
                 extra = decision.choice == "retry" and orchestrating.past_cap(flow, run, decision.box)
                 applied = f"answered: {decision.choice}"
+        elif decision.kind == "job" and decision.choice == "wait":
+            applied = "waited for the job"
+        elif decision.kind == "job" and decision.choice == "side":
+            tries = run.box(decision.box).tries
+            if not (tries and any(each.ended is None for each in tries[-1].jobs)):
+                applied = "set aside: the job had ended"
+            else:
+                key = f"{decision.box}-{next(each.number for each in tries[-1].jobs if each.ended is None)}"
+                first = len(run.orchestration.sides) + 1
+                sides = [
+                    orchestrating.Side(
+                        number=first + offset, checkpoint=cp, job=key, title=asked.title, prompt=asked.prompt,
+                        reads=asked.reads, note=corpus.note_path(flow.orchestrator.side.corpus, run.number,
+                                                                 first + offset, asked.title),
+                    )
+                    for offset, asked in enumerate(decision.side)
+                ]  # fmt: skip
+                self._change(run, lambda each: each.orchestration.sides.extend(sides))
+                applied = f"set {_count(len(sides), 'side task')} going: " + "; ".join(each.title for each in sides)
         elif decision.choice == "stop":
             applied, stop = "stopped the run", True
         elif decision.choice == "pause":
@@ -2168,12 +2220,27 @@ class Runner:
         ending = job.started + timedelta(minutes=job.minutes, seconds=accepting.KILL_AFTER + jobs.GRACE)
         looked = time.monotonic()
         stopped = ""
+        key = f"{box.id}-{job.number}"
+        record = self._record(run.flow)
+        flow = record[0] if record is not None else None
+        self._change(run, functools.partial(_sides_left, job=key, state="stopped", why="the service restarted"))
+        if flow is not None and self._job_steered(run, flow, box, job):
+            await self._checkpoint(run, flow, "job", box.id, None)  # the orchestrator has the model meanwhile (§17)
+            self._change(run, functools.partial(_set_job_checkpoint, box=box.id, number=job.number))
         while True:
             context.check_canceled()
             with self._lock:
                 stopper = self._stopping.get(run.name)
             if stopper is not None and not working.stop:
                 working.stop, working.stopped_by = f"stopped by {stopper.describe()}", stopper
+            fresh = self.runs.load(run.flow, run.number)
+            waiting = next(
+                (each for each in fresh.orchestration.sides if each.job == key and each.state == "waiting"), None
+            )
+            free = fresh.orchestration.working is None and not working.stop
+            if waiting is not None and flow is not None and free and not jobs.read_state(folder).ended:
+                await self._side(context, run, flow, waiting, working)
+                continue
             state = jobs.read_state(folder)
             if state.ended:
                 status, said = state.status, jobs.ended_words(state.status, minutes=job.minutes)
@@ -2193,6 +2260,11 @@ class Runner:
                     status, said = None, jobs.ended_words(None, minutes=job.minutes)
                     break
             await anyio.sleep(TICK)
+        dropped = "the run stopped first" if working.stop else "its job ended first"
+        self._change(run, functools.partial(_sides_left, job=key, state="dropped", why=dropped))
+        while not working.stop and self._job_checkpoint_works(run, box):  # the model takes its requests in turn
+            context.check_canceled()
+            await anyio.sleep(TICK)
         now = self.kernel.clock.now()
         waited = (now - began).total_seconds()
         run = self._change(run, functools.partial(_end_job, box=box.id, number=job.number, at=now, status=status,
@@ -2211,7 +2283,12 @@ class Runner:
             jobs.written, Path(workspace.folder_of(run.workspace)), since, job.folder
         )
         seconds = (now - job.started).total_seconds()
-        text = jobs.told(job.number, job.title or job.command, said, seconds, job.folder, end, files)
+        written = {each.note for each in run.orchestration.sides if each.job == key and each.state == "done"}
+        found = [
+            each for each in corpus.entries(self._folder(run), flow.orchestrator.side.corpus if flow else "corpus")
+        ]
+        notes = corpus.index_text([each for each in found if each[0] in written])
+        text = jobs.told(job.number, job.title or job.command, said, seconds, job.folder, end, files, notes)
         if working.port is None:
             return "failed", "its session's OpenCode server is not known: its job's end could not be sent", waited
         with self._lock:
@@ -2226,6 +2303,114 @@ class Runner:
         except (SessionError, AgentError) as error:
             return "failed", f"its job's end could not be sent to its session: {error}", waited
         return "", "", waited
+
+    def _job_steered(self, run: Run, flow: Flow, box: Box, job: Job) -> bool:
+        """Whether a job's checkpoint starts as its box waits on it: the orchestrator on and steering, no checkpoint at
+        work, and none started for this job yet (a restart waits on it again)."""
+        fresh = self.runs.load(run.flow, run.number)
+        steering = flow.orchestrator.on and flow.orchestrator.role == "steer"
+        return steering and fresh.orchestration.working is None and not job.checkpoint and fresh.status == "running"
+
+    def _job_checkpoint_works(self, run: Run, box: Box) -> bool:
+        """Whether a job's checkpoint about the box is at work."""
+        working = self.runs.load(run.flow, run.number).orchestration.working
+        return working is not None and working.kind == "job" and working.box == box.id
+
+    async def _side(
+        self, context: OperationContext, run: Run, flow: Flow, side: orchestrating.Side, box_working: Working
+    ) -> None:
+        """A side task (design 0013 §17), while its box waits on its job: a session of its own on the flow's server, in
+        Auto mode, handed `orchestrating.side_message`, followed to its end within its limits or the run's stop; done
+        when its note was written, else failed. The corpus's index is written again after it, and its time counted
+        against the run's side budget."""
+        limits = flow.orchestrator.side
+        folder = self._folder(run)
+        note = folder.joinpath(*side.note.split("/"))
+        before = note.stat().st_mtime_ns if note.is_file() else None
+        fresh = self.runs.load(run.flow, run.number)
+        port = fresh.server
+        began = self.kernel.clock.now()
+        if port is None:
+            failed = functools.partial(
+                _side_ended, number=side.number, state="failed", at=began, tokens=0,
+                reason="the flow's OpenCode server does not run", seconds=0,
+            )  # fmt: skip
+            self._change(run, failed)
+            return
+        index = corpus.index_text(corpus.entries(folder, limits.corpus))
+        text = orchestrating.side_message(flow, fresh, side, limits=limits, folder=folder, corpus=index, job=side.job)
+        kept = self.runs.run_folder(run) / "orchestrator" / f"side-{side.number}" / "first-message.md"
+        kept.parent.mkdir(parents=True, exist_ok=True)
+        kept.write_bytes(text.encode("utf-8"))
+        sessions = self._agents.sessions
+        session = await context.run_blocking(
+            functools.partial(sessions.new, run.workspace, port, f"{run.title} · side · {side.number}", actor=RUNNER)
+        )
+        working = self._watch(run.workspace, session, port)
+        state, reason = "done", ""
+        try:
+            self._agents.review.session_mode(run.workspace, session, "auto")
+            self._change(run, functools.partial(_side_started, number=side.number, session=session, at=began))
+            self._record_event(
+                "flows.side", run, f"side task {side.number} started: {side.title}", RUNNER, side=side.number,
+                job=side.job, action="started", state="", note=side.note, reason="",
+            )  # fmt: skip
+            await context.run_blocking(
+                functools.partial(
+                    sessions.send, run.workspace, port, session, text, actor=RUNNER, agent=BUILD, model=SESSION_MODEL
+                )
+            )
+            working.sent = True
+            deadline = began + timedelta(minutes=limits.minutes)
+            looked = time.monotonic()
+            while True:
+                context.check_canceled()
+                with self._lock:
+                    stopper = self._stopping.get(run.name)
+                if stopper is not None or box_working.stop:
+                    await self._stop_session(working, stopper or RUNNER)
+                    state, reason = "stopped", "its run was stopped"
+                    break
+                if working.gone:
+                    state, reason = "failed", "its session is gone: its OpenCode server stopped"
+                    break
+                if working.idle:
+                    break
+                if working.tokens() > limits.tokens or self.kernel.clock.now() >= deadline:
+                    await self._stop_session(working, RUNNER)
+                    state = "failed"
+                    reason = (
+                        f"it wrote {working.tokens():,} tokens, past its limit of {limits.tokens:,}"
+                        if working.tokens() > limits.tokens
+                        else f"it ran past its limit of {limits.minutes} minutes"
+                    )
+                    break
+                if time.monotonic() - looked >= LOOK:
+                    looked = time.monotonic()
+                    await self._look(working)
+                    continue
+                wake = working.wake
+                with anyio.move_on_after(TICK):
+                    await wake.wait()
+                if wake.is_set():
+                    working.wake = anyio.Event()
+        except (SessionError, AgentError) as error:
+            state, reason = "failed", f"its session could not be started: {error}"
+        finally:
+            self._forget(working)
+        if state == "done" and not (note.is_file() and note.stat().st_mtime_ns != before):
+            state, reason = "failed", f"it wrote no note at {side.note}"
+        corpus.write_index(folder, limits.corpus)
+        now = self.kernel.clock.now()
+        ended = functools.partial(
+            _side_ended, number=side.number, state=state, at=now, tokens=working.tokens(), reason=reason,
+            seconds=(now - began).total_seconds(),
+        )  # fmt: skip
+        self._change(run, ended)
+        self._record_event(
+            "flows.side", run, f"side task {side.number} {state}" + (f": {reason}" if reason else ""), RUNNER,
+            side=side.number, job=side.job, action="ended", state=state, note=side.note, reason=reason,
+        )  # fmt: skip
 
     async def _accept(
         self, context: OperationContext, run: Run, flow: Flow, box: Box
@@ -3048,6 +3233,34 @@ def _loop_files(run: Run, flow: Flow, box: str) -> list[str]:
 
 def _add_job(run: Run, *, box: str, job: Job) -> None:
     run.box(box).tries[-1].jobs.append(job)
+
+
+def _set_job_checkpoint(run: Run, *, box: str, number: int) -> None:
+    working = run.orchestration.working
+    for each in run.box(box).tries[-1].jobs:
+        if each.number == number and working is not None:
+            each.checkpoint = working.number
+
+
+def _sides_left(run: Run, *, job: str, state: str, why: str) -> None:
+    """The side tasks of a job not done: those waiting dropped (`state` dropped), or those left running by a restart
+    stopped (`state` stopped)."""
+    for each in run.orchestration.sides:
+        if each.job == job and each.state == ("waiting" if state == "dropped" else "running"):
+            each.state, each.reason = state, why  # type: ignore[assignment]
+
+
+def _side_started(run: Run, *, number: int, session: str, at: datetime) -> None:
+    for each in run.orchestration.sides:
+        if each.number == number:
+            each.state, each.session, each.started = "running", session, at
+
+
+def _side_ended(run: Run, *, number: int, state: str, at: datetime, tokens: int, reason: str, seconds: float) -> None:
+    for each in run.orchestration.sides:
+        if each.number == number:
+            each.state, each.ended, each.tokens, each.reason = state, at, tokens, reason  # type: ignore[assignment]
+    run.orchestration.side_seconds += round(seconds)
 
 
 def _end_job(run: Run, *, box: str, number: int, at: datetime, status: int | None, said: str, waited: float) -> None:

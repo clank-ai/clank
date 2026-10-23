@@ -241,6 +241,30 @@ class CheckpointLimits(Part):
     )
 
 
+class SideLimits(Part):
+    """What side work may use while a box waits on its job (design 0013 §17, decision 0132)."""
+
+    minutes: int = Field(20, ge=1, title="Minutes", description="How long one side task may run.")
+    tokens: int = Field(
+        60_000,
+        ge=1,
+        title="Tokens written",
+        description="How many tokens one side task may write, its thinking included.",
+    )
+    per_job: int = Field(
+        3, ge=1, title="Per job", description="How many side tasks one job's checkpoint may set going."
+    )
+    budget: int = Field(
+        180,
+        ge=0,
+        title="Budget",
+        description="Minutes of side work in one run; past them a job's checkpoint may only wait or change.",
+    )
+    corpus: str = Field(
+        "corpus", title="Corpus", description="The folder, in the workspace's, where side tasks write their notes."
+    )
+
+
 class Orchestrator(Part):
     """The model that steers a run at checkpoints while it is on (design 0013 §16, decisions 0123-0124): after each box
     a model ran, and at each question the run would ask you."""
@@ -282,6 +306,11 @@ class Orchestrator(Part):
     )
     limits: CheckpointLimits = Field(
         default_factory=CheckpointLimits, title="Limits", description="What one checkpoint may use."
+    )
+    side: SideLimits = Field(
+        default_factory=SideLimits,
+        title="Side work",
+        description="What side tasks may use while a box waits on its job, and where their notes go.",
     )
 
 

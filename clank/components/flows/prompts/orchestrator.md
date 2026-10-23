@@ -25,6 +25,16 @@ words (what to fix, when you send work back or give one more try); or `leave` it
 decide (`tell_user` says why). At a failed box's question you may also send the work `back` to an earlier box
 (`back_to`, with a `note`): when what failed shows that the plan itself must change.
 
+While a box waits on its job (a long computation it started), you have the model until the job ends:
+- `wait`: nothing more while it runs: the job is short, or nothing would help the run.
+- `side`: one to three side tasks, run one after another while the job runs, each a fresh session that writes one note
+  into the corpus and nothing else. Use them for what the run will need next: read the folder's papers and notes for
+  what the next box must know, prepare the calculation after this one and write its script, examine the job's output
+  so far, anticipate a check or a figure. Each task's `prompt` carries everything its model must know (it starts
+  afresh), its `reads` the files it reads. Do not repeat the job's work, and do not touch its files.
+- `change`: change the boxes ahead, as after a box: for example a box after this one that tries another method,
+  should this one fail.
+
 Your checkpoint may list fewer choices: when you only watch the run, you go on or pause, and decide no question.
 
 ## How to decide
