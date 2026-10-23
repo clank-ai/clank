@@ -139,6 +139,7 @@ and use the template below.
 | [0129](0129-esc-goes-back-to-the-menu.md) | Esc goes back to the menu from anywhere in a page; a step back inside a page is Backspace | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
 | [0130](0130-the-flows-boxes-come-in-three-sizes.md) | The Flow view's boxes come in three sizes, medium unless set; the Monitor opens on the Flow view | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
 | [0131](0131-the-flow-view-shows-the-running-boxs-session.md) | The Flow view shows the running box's session: its thinking, its tool calls and its context window | Accepted (the owner's request, built as Claude's call) | 2026-10-23 |
+| [0132](0132-a-box-runs-a-long-computation-as-a-job.md) | A box runs a long computation as a job; while it runs, the orchestrator has the model | Accepted (the owner's two choices) | 2026-10-23 |
 
 ## Template
 

@@ -63,6 +63,7 @@ these words differ, the words are the rule, and the board is drawn again (Claude
 | 14 | Build steps | Approved 2026-10-18; revised 2026-10-20 at the owner's request (each box prepared: decisions 0085-0087): step 8; revised 2026-10-20 (the next flow: decision 0091): step 9; revised 2026-10-20 at the owner's request (a flow built with the model, §15): step 10 |
 | 15 | A flow built with the model | Approved 2026-10-20 (the owner's three answers); Claude's calls listed in it (decisions 0097-0099); revised after approval 2026-10-20 (the owner: OpenCode beside the console, watch it built, start from the Monitor and This folder; two SSH windows): **Beside the console** (decisions 0100-0101); revised 2026-10-21: the template names no model (decision 0117) |
 | 16 | The orchestrator: a model that steers the run | Approved 2026-10-22 (the owner's request: a toggle, research the best configurations, implement what is useful); Claude's calls listed in it (decisions 0123-0124) |
+| 17 | Jobs, and the work done while one runs | Approved 2026-10-23 (the owner's two choices: the box asks for a job; the orchestrator decides what is done while it runs); Claude's calls listed in it (decision 0132) |
 
 ## 1. What the owner gets
 
@@ -919,6 +920,66 @@ so a gate means the same thing whoever answers it.
 candidates: AlphaEvolve), a tree of tries (alternatives branched from a failed try: the AI Scientist v2), a tournament
 of plans (Google's co-scientist), and parallel workers where the machine has room for them.
 
+## 17. Jobs, and the work done while one runs
+
+**Approved 2026-10-23** (the owner's two choices, below).
+
+The owner (2026-10-23, watching the second long run): "while the model is waiting on something like running the
+annealing seeds, it should still be working on something else, or end its session while the run is going and give the
+orchestrator access to the LLM again so that the orchestrator can examine what has been done up to this point and how to
+continue guiding the process ... including diverging paths in the flow if required, or coming up
+with some tasks for doing some research on the side with another agent in order to continue building up its corpus of
+knowledge ... we can anticipate calculations or observations that may be required down the road."
+
+What the run showed: its search box ran its campaign as blocking `bash` calls of about five minutes each, eight in a
+row; OpenCode's call waits for its command, so the local model, the machine's one, wrote nothing for nine tenths of the
+box's time.
+
+**A job** is a long computation a box starts with the tool `flow_job` (`command`, `title`, `minutes`: what it expects,
+at most the box's limit), in place of a blocking call; the box's instructions say to start any command expected to run
+more than two minutes as a job (the owner's choice: the box asks for it, Clank detaches nothing on its own). Clank
+starts it detached in the workspace's container, in the folder, its output in a log of its own, and keeps it on the
+box's try: `.clank/jobs/<flow>/<run>/<box>-<n>/` in the folder holds its command, its log, its process id and, once it
+ends, its exit code, so the service reads its state without asking the container. A box has one job at a time. After
+starting it, the box ends its session's turn, saying what it expects; its try **waits on its job**: not ended, not
+judged, its clock stopped (a try's time limit counts the box's own work, and a job is limited by its `minutes`, past
+which Clank ends it). When the job ends (its exit code written, or its process gone), Clank sends the same session a
+message: the job's exit code, its time, the last lines of its log, the files it wrote, and what was learned meanwhile
+(below); the box goes on from there and ends as any box does.
+
+**While a job runs, the orchestrator has the model** (the owner's choice: the orchestrator decides). With the
+orchestrator on, a checkpoint starts as the box's turn ends (kind `job`): handed what a review is handed, the job's
+command and the last lines of its log so far, and the corpus's index. It decides once:
+- `wait`: nothing more while the job runs (a short job, or nothing worth doing).
+- `side`: one to three **side tasks**, each a prompt with the contract of §4 (everything its model must know, the files
+  it reads, the note it writes), run one after another while the job runs: research toward what the run will need next
+  (the folder's papers and notes read for what the next step needs, the calculation after this one prepared and its
+  script written, the job's partial outputs examined, a figure anticipated). A side task writes its note into the
+  **corpus** and nothing else; it never touches the job's files or the boxes' deliverables.
+- `change`: change the boxes ahead (§16), a **diverging path** among them: a box added after the waiting one that tries
+  another method should this one fail, its lines as a change's are (§16).
+Each with `tell_user` as at any checkpoint. A side task is a session of its own on the flow's server, in Auto mode,
+titled `<flow> · side · <n>`, with its own limits (`orchestrator.side`: 20 minutes, 60,000 tokens written), counted
+against the run's side budget (`orchestrator.side.budget`: three hours of side work a run). When the job ends, no new side
+task starts; the one at work goes on to its end (the model takes the box's and its requests in turn).
+
+**The corpus** is the flow's folder of side notes, `corpus/` in the folder (`orchestrator.side.corpus`), each note
+`<run>-<n>-<slug>.md` with a one-line summary as its first line; Clank keeps its index, `corpus/CORPUS.md`, never the
+model. Every box's first message and every checkpoint's hand over the index (each note's path and summary), so a box
+reads what it needs; the box a job waited for is told the notes written while it waited.
+
+**Shown**: the box waiting on its job says so in the flow ("job · 12 min"), Selected says the job's command, its time
+and its log's last lines, and the Flow view's **Side work** panel lists the side tasks with their state and notes;
+Thinking follows the session at work: the side task's while a job runs. Events: `flows.job` (started, ended), and the
+orchestrator's as at any checkpoint.
+
+**Limits** always set: the job's minutes (at most its box's), side tasks per job (3), a side task's own limits, and the
+run's side budget; past it, a `job` checkpoint may only `wait` or `change`.
+
+Claude's calls, the owner to check: the job's files in the folder (so the service and the owner read them as files);
+the same session resumed when its job ends (its context is the box's work so far; a fresh session would read it all
+again); the side tasks in Auto mode (they write only their notes); the numbers.
+
 ## Decisions to record
 
 - 0057: A flow is a chain of boxes; only a VERIFY's fail line points back, and every loop ends at a gate once its
@@ -973,6 +1034,8 @@ of plans (Google's co-scientist), and parallel workers where the machine has roo
   questions API as the owner's would be; off unless turned on (§16; the owner's request, built as Claude's call).
 - 0124: The orchestrator's limits are always set (changes, extra tries, stall, its own time and tokens, who decides
   the final review); past one, the question waits for the owner (§16; Claude's call).
+- 0132: A box runs a long computation as a job; while it runs the orchestrator has the model, for side tasks
+  whose notes build the corpus, or a change of the boxes ahead (§17; the owner's two choices, 2026-10-23).
 
 ## Revision log
 
