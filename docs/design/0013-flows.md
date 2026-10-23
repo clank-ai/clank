@@ -1105,3 +1105,6 @@ again); the side tasks in Auto mode (they write only their notes); the numbers.
   'Models in this flow' boxes down so that we can include boxes for the thinking and the tool calls/context viewer".
   Board D1 under the flow: Selected beside Thinking, Tool calls beside Context window (the running box's session's),
   then the Orchestrator beside Waiting for you, then Models in this flow.
+- **2026-10-23, §9 revised after approval, Claude's call while conducting the third long run:** a VERIFY that ends
+  without calling `flow_verdict` is reminded once, in the same session, before its try fails (a local model wrote its
+  verdict as text and ended), as a checkpoint that ends without `flow_decide` is (§16).

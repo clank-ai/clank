@@ -122,6 +122,11 @@ REMINDER = (
     "writing it in your answer does nothing. Call `flow_decide` now, once, with the decision you made (its choice, "
     "why, and the other fields), then stop."
 )  # sent once to a checkpoint that ended without deciding
+VERDICT_REMINDER = (
+    "Clank has not received your verdict. A verdict counts only when it is given with the tool `flow_verdict`: "
+    "writing it in your answer does nothing. Call `flow_verdict` now, once, with the verdict you reached (pass, or "
+    "fail with your findings, and the criteria you checked), then stop."
+)  # sent once to a VERIFY that ended without its verdict (a local model wrote it as text on 2026-10-23)
 SWITCH = "runtime.switch"
 CHANGING = ("runtime.load", "runtime.switch", "runtime.unload", "runtime.restart")  # what changes a slot
 ROLE = "agent"  # the gateway's role a box's requests come as: its slot is the main slot
@@ -2158,6 +2163,7 @@ class Runner:
         deadline = (last.sent or last.started) + timedelta(minutes=minutes, seconds=last.waited)
         saved = last.tokens
         looked = time.monotonic()
+        reminded = False
         async with context.step("work"):
             while True:
                 context.check_canceled()
@@ -2180,6 +2186,18 @@ class Runner:
                         return outcome, reason
                     deadline += timedelta(seconds=waited)
                     continue
+                if working.idle and box.type == "verify" and not reminded and working.port is not None:
+                    reminded = True  # a VERIFY that ended without its verdict is reminded once, in its session
+                    if self.runs.load(run.flow, run.number).box(box.id).tries[-1].verdict is None:
+                        with self._lock:
+                            working.idle = working.seen = False  # an idle before its answer began is not its end
+                        await context.run_blocking(
+                            functools.partial(
+                                self._agents.sessions.send, run.workspace, working.port, working.session,
+                                VERDICT_REMINDER, actor=RUNNER, agent=last.agent or PLANNER, model=SESSION_MODEL,
+                            )
+                        )  # fmt: skip
+                        continue
                 if working.idle:
                     return "ended", ""
                 if working.tokens() > tokens:

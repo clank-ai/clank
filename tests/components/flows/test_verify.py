@@ -1,8 +1,8 @@
 """Design 0013 §2, §8 and §9: a VERIFY ends by calling `flow_verdict`, which the service gives to the VERIFY box at work
 in the workspace: *pass*, or *fail* with numbered findings, and `criteria`, each line of the brief's limits and of what
 done means that the check touched, met or not, with its evidence. The verdict is kept on the VERIFY's try and as
-`verdict.md` in the try's folder; a pass goes on along the VERIFY's pass line; a VERIFY that ends without a verdict is a
-failed box, never a pass, and waits at a gate. A verdict is refused, saying why, while no VERIFY works in the workspace,
+`verdict.md` in the try's folder; a pass goes on along the VERIFY's pass line; a VERIFY that ends without a verdict is
+reminded once in its session, then is a failed box, never a pass, and waits at a gate. A verdict is refused, saying why, while no VERIFY works in the workspace,
 before its try began or after it ended, and a fail without findings is refused, as is a criterion not as
 `flow_verdict` takes it, naming the criterion and its field; the newest verdict of a try counts, and each is an event
 with its actor. Run against the fake bridge and a synthetic folder."""
@@ -80,9 +80,19 @@ async def test_a_verifys_pass_is_kept_on_its_try_and_as_its_verdict_file_and_the
     assert "- met: about 60 grid points: PLAN.md's grid: 8 x 8 = 64 points" in text
 
 
-async def test_a_verify_that_ends_without_a_verdict_fails_and_waits_at_a_gate(rig: Rig) -> None:
+def sent_to(rig: Rig, session: str) -> list[str]:
+    return [each.text for each in rig.bridge.prompts if each.session == session]
+
+
+async def test_a_verify_that_ends_without_a_verdict_is_reminded_once_then_fails_and_waits_at_a_gate(rig: Rig) -> None:
+    """A local model wrote its verdict as text and ended (2026-10-23): it is reminded once, in the same session, to
+    give it with `flow_verdict`; still none, the try fails."""
     async with running(rig.kernel):
         check = await to_the_check(rig)
+        rig.bridge.finish(check.session)
+        await until(lambda: len(sent_to(rig, check.session)) == 2)
+        assert "flow_verdict" in sent_to(rig, check.session)[-1]
+        assert rig.run().box("check").tries[-1].outcome is None, "not failed before its reminder"
         rig.bridge.finish(check.session)
         failed = await until(lambda: question(rig, "Check the plan failed"))
         assert "it ended without a verdict" in failed.title
@@ -90,6 +100,17 @@ async def test_a_verify_that_ends_without_a_verdict_fails_and_waits_at_a_gate(ri
         await anyio.sleep(0.2)
         assert question(rig, "You approve the plan") is None, "never taken for a pass"
     assert rig.run().box("check").state == "failed"
+
+
+async def test_a_verify_reminded_that_then_gives_its_verdict_goes_on_along_its_pass_line(rig: Rig) -> None:
+    async with running(rig.kernel):
+        check = await to_the_check(rig)
+        rig.bridge.finish(check.session)
+        await until(lambda: len(sent_to(rig, check.session)) == 2)
+        rig.runner.verdict(WORKSPACE, "pass", [], [SIXTY], actor=AGENT)
+        rig.bridge.finish(check.session)
+        await until(lambda: question(rig, "You approve the plan"))
+    assert rig.run().box("check").state == "done"
 
 
 async def test_a_verdict_while_no_verify_works_in_the_workspace_or_after_its_try_ended_is_refused_saying_why(
@@ -109,6 +130,8 @@ async def test_a_verdict_while_no_verify_works_in_the_workspace_or_after_its_try
             rig.runner.verdict("elsewhere", "pass", [], [], actor=AGENT)
         rig.bridge.finish(plan.session, {"PLAN.md": "# The plan\n"})
         check = await until(lambda: rig.bridge.prompted("Study · check · try 1"))
+        rig.bridge.finish(check.session)
+        await until(lambda: len(sent_to(rig, check.session)) == 2)  # reminded once
         rig.bridge.finish(check.session)
         await until(lambda: question(rig, "Check the plan failed"))
         with pytest.raises(RunError, match="no box of a flow works in myproject now"):
