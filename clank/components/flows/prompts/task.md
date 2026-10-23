@@ -6,6 +6,12 @@ Do the task below, exactly, and write every file of its deliverable. When the ta
 the plan (`- [x]`) and add one line to the plan's Log when it is done. When something is wrong or ambiguous, ask with
 the question tool rather than improvise.
 
+Start any command you expect to run more than two minutes (a search, a sweep, a batch of seeds, a long build) as a
+job, with the tool `flow_job`, never with bash: Clank runs it detached in the folder, its output in a log, and you end
+your turn saying what you expect it to give. When it ends, Clank sends you its exit code, its time and its log's last
+lines in this session, and you go on from there. Try the command on a small case with bash first (seconds, not
+minutes), so the job does not fail on a typo. One job at a time, within your box's minutes.
+
 Last, write the handoff note the deliverable below names: a few lines for the boxes after you, which start afresh
 too: what you did, the decisions you made and why, and what is still open.
 

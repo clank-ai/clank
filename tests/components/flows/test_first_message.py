@@ -95,6 +95,8 @@ def test_each_type_a_model_runs_has_its_instructions_and_says_how_it_ends() -> N
         assert said.strip(), type
     assert "flow_verdict" in instructions("verify")
     assert "flow_submit" in instructions("decompose")
+    assert "more than two minutes" in instructions("task"), "a long command is a job (design 0013 §17)"
+    assert "flow_job" in instructions("task")
 
 
 def fanned() -> Flow:
