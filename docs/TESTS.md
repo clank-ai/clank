@@ -246,7 +246,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 12.2 | One group, one cursor | `tests/console/test_button_groups.py` (9), `tests/console/test_buttons.py` (9) |
 | 12.3 | Pressing a button | `tests/console/test_button_groups.py` (9), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_one_door.py` (6) |
 | 12.4 | How the focus moves | `tests/console/test_button_groups.py` (9), `tests/console/test_button_hints.py` (5), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_monitor_flow_buttons.py` (4) |
-| 12.5 | Where the focus starts | `tests/console/test_arrows.py` (8), `tests/console/test_confirm.py` (6) |
+| 12.5 | Where the focus starts | `tests/console/test_arrows.py` (8), `tests/console/test_confirm.py` (6), `tests/console/test_esc_to_menu.py` (6) |
 | 12.6 | The message line says what the focused button does | `tests/console/test_button_hints.py` (5) |
 | 12.7 | A button that cannot act now | `tests/console/test_folder_buttons.py` (5), `tests/console/test_one_door.py` (6) |
 | 12.8 | The look, in the style | `tests/console/test_buttons.py` (9), `tests/console/test_console_style.py` (14) |
@@ -302,21 +302,21 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What the owner gets | none yet |
-| 2 | The kinds of box | `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_first_message.py` (8), `tests/components/flows/test_first_prepared.py` (17), `tests/components/flows/test_flow_file.py` (18), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_verify.py` (7), `tests/components/flows/test_waiting.py` (9) |
-| 3 | Lines, and loops that end | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_first_message.py` (8), `tests/components/flows/test_flow_file.py` (18), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_proposals_join.py` (12), `tests/components/flows/test_verify_loop.py` (6), `tests/console/test_box_chart.py` (9) |
+| 2 | The kinds of box | `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_first_message.py` (9), `tests/components/flows/test_first_prepared.py` (17), `tests/components/flows/test_flow_file.py` (18), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_verify.py` (7), `tests/components/flows/test_waiting.py` (9) |
+| 3 | Lines, and loops that end | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_first_message.py` (9), `tests/components/flows/test_flow_file.py` (18), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_proposals_join.py` (12), `tests/components/flows/test_verify_loop.py` (6), `tests/console/test_box_chart.py` (9) |
 | 4 | A box's settings | `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_session_modes.py` (7), `tests/components/flows/test_accept_command.py` (10), `tests/components/flows/test_box_server.py` (7), `tests/components/flows/test_flow_file.py` (18), `tests/components/flows/test_runner_controls.py` (10) |
-| 5 | Running a box: a fresh session | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_monitor_bridge.py` (11), `tests/components/agents/test_monitor_sessions.py` (5), `tests/components/agents/test_monitor_watch.py` (10), `tests/components/agents/test_session_modes.py` (7), `tests/components/flows/test_accept_command.py` (10), `tests/components/flows/test_box_server.py` (7), `tests/components/flows/test_first_message.py` (8), `tests/components/flows/test_first_prepared.py` (17), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_prepare.py` (8), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_controls.py` (10), `tests/components/flows/test_verify_loop.py` (6), `tests/components/runtime/test_count_tokens.py` (5) |
+| 5 | Running a box: a fresh session | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_monitor_bridge.py` (11), `tests/components/agents/test_monitor_sessions.py` (5), `tests/components/agents/test_monitor_watch.py` (10), `tests/components/agents/test_session_modes.py` (7), `tests/components/flows/test_accept_command.py` (10), `tests/components/flows/test_box_server.py` (7), `tests/components/flows/test_first_message.py` (9), `tests/components/flows/test_first_prepared.py` (17), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_prepare.py` (8), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_controls.py` (10), `tests/components/flows/test_verify_loop.py` (6), `tests/components/runtime/test_count_tokens.py` (5) |
 | 6 | The runner, an operation of the service | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_prepare.py` (8), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_restart.py` (6), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_controls.py` (10), `tests/components/flows/test_runner_routes.py` (2), `tests/components/flows/test_runs.py` (7) |
 | 7 | A model per box, and what a switch costs | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_model_changed.py` (4), `tests/components/agents/test_monitor_bridge.py` (11), `tests/components/agents/test_monitor_watch.py` (10), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_model_per_box.py` (13), `tests/components/flows/test_models.py` (4), `tests/components/flows/test_prepare.py` (8), `tests/console/test_data.py` (17), `vscode/test/controller.test.ts` (14) |
 | 8 | Deliverables, tries and stale boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_deliverables.py` (3), `tests/components/flows/test_diffs.py` (5), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_runs.py` (7), `tests/components/flows/test_stale.py` (9), `tests/components/flows/test_verify.py` (7), `tests/components/flows/test_waiting.py` (9) |
-| 9 | The model proposes boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_tools.py` (8), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_first_message.py` (8), `tests/components/flows/test_proposals.py` (8), `tests/components/flows/test_proposals_again.py` (6), `tests/components/flows/test_proposals_auto.py` (3), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_proposals_join.py` (12), `tests/components/flows/test_proposals_routes.py` (2), `tests/components/flows/test_verify.py` (7), `tests/components/flows/test_waiting.py` (9), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12) |
+| 9 | The model proposes boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_tools.py` (8), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_first_message.py` (9), `tests/components/flows/test_proposals.py` (8), `tests/components/flows/test_proposals_again.py` (6), `tests/components/flows/test_proposals_auto.py` (3), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_proposals_join.py` (12), `tests/components/flows/test_proposals_routes.py` (2), `tests/components/flows/test_verify.py` (7), `tests/components/flows/test_waiting.py` (9), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12) |
 | 10 | Gates | `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_diffs.py` (5), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_routes.py` (2), `tests/components/flows/test_runs.py` (7), `tests/components/flows/test_verify_loop.py` (6), `tests/components/flows/test_waiting.py` (9), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12), `vscode/test/gates.test.ts` (16) |
 | 11 | Where a flow lives, and its file | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_flow_file.py` (18), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_next_flow.py` (11), `tests/kernel/test_grouped_settings.py` (5) |
 | 12 | The Flow view in the Monitor | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_planning_view.py` (4), `tests/console/test_box_chart.py` (9), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_view.py` (10), `tests/console/test_monitor_flow_watch.py` (12), `tests/console/test_monitor_page.py` (15) |
 | 13 | What flows do not cover | none yet |
 | 14 | Build steps | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_runs.py` (7), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_box_chart.py` (9), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_view.py` (10), `tests/kernel/test_settings_checks.py` (3), `vscode/test/gates.test.ts` (16) |
 | 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/agents/test_flow_tools.py` (8), `tests/components/agents/test_sessions.py` (13), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (21), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (7) |
-| 16 | The orchestrator: a model that steers the run | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/flows/test_orchestrator.py` (17), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_orchestrator_panel.py` (3) |
+| 16 | The orchestrator: a model that steers the run | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/flows/test_orchestrator.py` (18), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_orchestrator_panel.py` (3) |
 
 ## Design 0014: Linux without Docker Desktop, and small machines
 
@@ -1145,6 +1145,7 @@ Design 0013 §2, §3, §5 and §9 (decisions 0060 and 0085): a box's first messa
 - integrates first message names every deliverable before it with the box that wrote it
 - a decomposes task is named what the tasks before it delivered
 - a decomposes first message says to propose each task after its own box
+- a deliverable already in the folder is named and must be written again
 
 ### `tests/components/flows/test_first_prepared.py`
 
@@ -1310,6 +1311,7 @@ Design 0013 §16 (decisions 0123-0124): the orchestrator. While a flow's orchest
 - after a box it may pause the run telling the owner why
 - at a question it may leave it to the owner telling them why
 - watching it reads each box and leaves every question to the owner
+- at a failed boxs question it may send the work back to an earlier box with a note
 - a decision while no checkpoint works is refused
 - the decide route refuses with 409 saying why
 - a failures class says whether to try again as it was
@@ -2711,12 +2713,12 @@ Design 0004 §1, §3 and §6: opening a folder makes it a workspace (a record na
 
 ### `tests/console/test_add_model.py`
 
-Design 0016 §14 and decision 0105: Add a model, the console's guided first step, one panel at a time, Esc back one screen. Its first screen asks how Clank should run its model: Cloud (`c`), or Local (`l`) with this machine's GPU and memory. Cloud names OpenRouter and where to get a key; the agreement says what goes to OpenRouter, where, what never goes (the MCP servers marked local, each already added marked, Space unmarking one), that each workspace asks once, and that each request costs money; `o` changes the data policy, `n` and Esc go back writing nothing, and `y` writes the record with the servers marked as shown (none named when none is listed), and Esc from the key then skips the agreement done; an agreement whose words were not read cannot be agreed to. A provider already added starts at its key, or at the model once its key is set. Every screen fits at 128, 88 and 60 columns, its keys bar at 60 keeping the keys the step needs.
+Design 0016 §14 and decision 0105: Add a model, the console's guided first step, one panel at a time, Backspace back one screen and Esc to the menu (decision 0129). Its first screen asks how Clank should run its model: Cloud (`c`), or Local (`l`) with this machine's GPU and memory. Cloud names OpenRouter and where to get a key; the agreement says what goes to OpenRouter, where, what never goes (the MCP servers marked local, each already added marked, Space unmarking one), that each workspace asks once, and that each request costs money; `o` changes the data policy, `n` and Backspace go back writing nothing, and `y` writes the record with the servers marked as shown (none named when none is listed), and Backspace from the key then skips the agreement done; an agreement whose words were not read cannot be agreed to. A provider already added starts at its key, or at the model once its key is set. Every screen fits at 128, 88 and 60 columns, its keys bar at 60 keeping the keys the step needs. Design 0016 §11 and §14, screens 4 to 6: the key typed into the hidden field is sent once; accepted, the next screen says its account (its label, its own limit and what is left); refused, the service's words, the field cleared; no frame holds the key either way. The model list is OpenRouter's (a model without tool calls is never offered): `/` searches, `s` sorts, `f` shows the free ones with their limits; Enter on a model fills its settings, and Enter there writes the preset and a limit changed; a setting out of range is said, and nothing is written. Design 0016 §14, screens 7 and 8, and Local: from an empty main slot the preset is loaded, and Ready shows its answer, time and cost; with a local model running, the provider's short test comes first, then "load it now?", `n` keeping the local model and `y` switching; each failure says what to do, `b` back to the model and `k` back to the key. Local lists Clank's presets for the main slot with what each needs here, and Enter asks before its first step. Every word the steps say is the service's (its guide, its models' and its account's words): the page works out none of them.
 
 - the first screen asks cloud or local with this machines gpu and memory
 - cloud names openrouter and where to get a key
 - the agreement says what goes where and what never goes each server marked local
-- n and esc go back and write nothing
+- n and backspace go back esc goes to the menu and nothing is written
 - y writes the record with the servers marked as shown and the policy chosen
 - an added provider starts at its key
 - the first three screens fit at 128 and 60 columns
@@ -2736,7 +2738,7 @@ Design 0016 §14 and decision 0105: Add a model, the console's guided first step
 - the test ready and local fit at 60 columns
 - an agreement not read cannot be agreed to
 - with no server listed the agreement leaves the servers to the service
-- once agreed esc from the key skips the agreement done
+- once agreed backspace from the key skips the agreement done
 - at 60 columns the keys bar keeps the keys each step needs
 
 ### `tests/console/test_arrows.py`
@@ -2880,6 +2882,17 @@ Design 0001 §5.1 and §5.7, design 0002 §2.15: the console loads what it shows
 - a key set brings the fresh providers and whether a model is usable
 - a limit reached brings the fresh cost
 
+### `tests/console/test_esc_to_menu.py`
+
+Design 0011 §12.5 (revised 2026-10-22, decision 0129): Esc goes back to the menu, from anywhere in a page (the owner: "Unless otherwise stated (like when I am confirming something), the esc key should always bring me back to the Clank menu"). A window open closes first, as Esc always did; a row of buttons, a page's list or the page itself all go back to the menu, the page staying as it was. Beside a page that hides the menu (the Monitor), Esc shows it while it has the focus, the arrows pass the Monitor without hiding it, and going back into the page hides it again. A step back inside a page (the Monitor's view before, the Flow view's board D1, Add a model's step before) is Backspace.
+
+- esc is a key that acts anywhere and says menu
+- esc from a pages list goes back to the menu the page staying
+- esc from a row of buttons goes back to the menu
+- esc closes a window first then goes to the menu
+- beside the monitor esc shows the menu and going back in hides it
+- the menus arrows pass the monitor without hiding the menu
+
 ### `tests/console/test_flow_chart.py`
 
 Design 0012 §6.3 and §11 step 6, board A: the session's flow laid out in lines. Time runs down and the branches open to the right of their node, joined by box-drawing lines whose junctions stand in one column; under 70 columns, or where the room to the right is short, a node's children stand under it. Snapshots of board A's flow and of a session with every kind of node (calls made at once, subagents within a subagent, a dead end, a compaction band, a note), at 128, 88 and 60 columns: the Session view's page without the machine column, beside it, and stacked. Every junction lines up with the branches it joins; nothing spills out of a node or the panel at any width (a node's words cut with "…"); the current node alone is highlighted; a folded node says what it holds.
@@ -3006,13 +3019,13 @@ Design 0011 §4, §7 and §11 (R2): each page declares its keys once, as named a
 
 ### `tests/console/test_keys_bar_buttons.py`
 
-Design 0011 §7, §12.1, §12.3 and §12.4 (the keys bar; what becomes a button; pressing it; how the focus moves): every key on the keys bar is a button, standing at the column its key stood at before buttons, as §7 fits them; Tab reaches the bar, last in the screen's order, and goes on to the menu; → and ← move along it and stop at its ends; Enter, Space and a click press a key through the console's one door; ↑ and Esc go back into the page; the focused key is drawn on `button-focused`, its blank cells too.
+Design 0011 §7, §12.1, §12.3 and §12.4 (the keys bar; what becomes a button; pressing it; how the focus moves): every key on the keys bar is a button, standing at the column its key stood at before buttons, as §7 fits them; Tab reaches the bar, last in the screen's order, and goes on to the menu; → and ← move along it and stop at its ends; Enter, Space and a click press a key through the console's one door; ↑ goes back into the page and Esc to the menu; the focused key is drawn on `button-focused`, its blank cells too.
 
 - each key stands at the column it stood at before buttons
 - tab reaches the keys bar last and goes on to the menu
 - the arrows move along the keys bar and stop at its ends
 - enter space and a click press a key of the bar through the one door
-- up and esc on the keys bar go back into the page
+- up on the keys bar goes back into the page and esc to the menu
 - the focused key is drawn on button focused its blank cells too
 
 ### `tests/console/test_lists.py`
@@ -3179,7 +3192,7 @@ Design 0013 §12 and §14 step 6 (board D1), with design 0012 §2 (the page, its
 - without a flow the view says why
 - nothing redraws while nothing changes
 - a running box redraws at most four times a second and only its rows
-- enter on a running box opens the session view on its session and esc comes back to the box
+- enter on a running box opens the session view on its session and backspace comes back to the box
 - enter on a finished box shows its deliverable and h the run log
 - p pauses the flow and r runs it again from the box once confirmed
 - enter on a deliverable shows it and o opens it in clanks vs code window
@@ -3199,7 +3212,7 @@ Design 0013 §12 and §15 (decisions 0100 and 0101): building a flow with the mo
 - waiting for you says to wait while the planning session starts on its window
 - waiting for you says a vs code planning talks in clanks vs code window
 - building it says how to try a planning that failed again where a stacked page shows it
-- enter opens the session view on the planning session and esc comes back
+- enter opens the session view on the planning session and backspace comes back
 - help says n starts the planning beside the console
 
 ### `tests/console/test_monitor_guide.py`
@@ -3243,7 +3256,7 @@ Design 0012 §2 and §11 step 1, decision 0047: the Monitor, a page of the conso
 - f10 opens the monitor and f10 again moves to its next view flow session context and round
 - each view draws its panels titled and empty saying no session yet or no flow yet
 - the monitor opens on the view last shown
-- enter on the context window panel opens the context view and esc goes back to it
+- enter on the context window panel opens the context view and backspace goes back to it
 - in the session view a panels letter and tab move the focus from panel to panel
 - question mark says what the monitor shows and what is built so far
 - question mark says the heading line whole where the page cuts it

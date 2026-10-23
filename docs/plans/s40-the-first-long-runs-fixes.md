@@ -38,5 +38,9 @@ owner, and Claude conducting the next long run, fixing what it finds.
 - [x] 7. The way in: `flow_decide`'s `tell_user`, the routes' `role`, `clank flow orchestrator --role`, the panel's
   role, model and last word, `O` cycling steer, watch, off. Tests: `tests/cli/test_flow_commands.py`,
   `tests/console/test_orchestrator_panel.py`.
+- [x] 9. From the second run: at a failed box's question the orchestrator may send the work `back` (with `back_to` and
+  a note), the question withdrawn; its instructions on stopping with budget left, on claims, and on good news; a box's
+  first message names its deliverables already in the folder. Tests: `tests/components/flows/test_orchestrator.py`,
+  `tests/components/flows/test_first_message.py`.
 - [ ] 8. The next long run, conducted by Claude: the workspace's image built again (the bridge and Clank's MCP server
   are in it), the service restarted, the run started with the orchestrator steering, watched and fixed as it goes.

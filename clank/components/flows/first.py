@@ -56,7 +56,7 @@ def first_message(
         _notes(flow, box, notes),
         _handed(flow, box, folder),
         _delivered(flow, box, folder),
-        _deliverable(flow, box, name),
+        _deliverable(flow, box, name, folder),
     ]
     if number > 1 and last.strip():
         sections.append(f"## Your last try\n\nThis is try {number}. {last.strip()}")
@@ -296,10 +296,18 @@ def fenced(text: str) -> str:
     return f"{fence}\n{text.rstrip(chr(10))}\n{fence}"
 
 
-def _deliverable(flow: Flow, box: Box, name: str) -> str:
+def _deliverable(flow: Flow, box: Box, name: str, folder: Path) -> str:
     parts = ["## Your deliverable"]
     if box.writes:
         parts.append("Write these files in the folder:\n" + "\n".join(f"- {path}" for path in box.writes))
+    if there := [path for path in box.writes if folder.joinpath(*path.split("/")).is_file()]:
+        one = len(there) == 1
+        it, them, each = ("it", "it", "it") if one else ("they", "them", "each")
+        parts.append(
+            f"{listed(there)} {'is' if one else 'are'} in the folder already, from before: read {them} if it helps, "
+            f"but write {each} again during this session, even where you keep what {it} says. A file left as it was "
+            "fails your box."
+        )
     if box.holds.strip():
         parts.append(f"They hold: {box.holds.strip()}")
     accepted = list(box.accept_when)

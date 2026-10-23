@@ -333,6 +333,30 @@ async def test_watching_it_reads_each_box_and_leaves_every_question_to_the_owner
         rig.kernel.close()
 
 
+async def test_at_a_failed_boxs_question_it_may_send_the_work_back_to_an_earlier_box_with_a_note(rig: Rig) -> None:
+    """The first long runs (2026-10-22): a search that failed its check left the orchestrator only retry, take, skip or
+    stop, and it stopped with most of the budget left. It may send the work back, the question withdrawn."""
+    async with running(rig.kernel):
+        first = await to_the_first_checkpoint(rig)
+        rig.runner.decide(WORKSPACE, decision("go on"), actor=ORCHESTRATOR)
+        rig.bridge.finish(first.session)
+        second = await until(lambda: rig.bridge.prompted("Study · orchestrator · 2"))
+        rig.runner.decide(WORKSPACE, decision("approve"), actor=ORCHESTRATOR)
+        rig.bridge.finish(second.session)
+        t1 = await at_work(rig, "T1")
+        rig.bridge.finish(t1.session)  # it wrote no grid.json: it failed
+        third = await until(lambda: rig.bridge.prompted("Study · orchestrator · 3"))
+        assert "`back`" in third.text, "a failed box's question offers back too"
+        with pytest.raises(RunError, match="back_to names the box to do again"):
+            rig.runner.decide(WORKSPACE, decision("back"), actor=ORCHESTRATOR)
+        rig.runner.decide(WORKSPACE, decision("back", back_to="plan", note="Plan a smaller grid."), actor=ORCHESTRATOR)
+        rig.bridge.finish(third.session)
+        again = await at_work(rig, "plan", 2)
+        assert "Plan a smaller grid." in again.text
+        assert question(rig, "The grid failed") is None, "the failed box's question is withdrawn"
+    assert rig.run().orchestration.decisions[-1].applied == "sent the work back to plan"
+
+
 def test_a_decision_while_no_checkpoint_works_is_refused(rig: Rig) -> None:
     with pytest.raises(RunError, match="no checkpoint of an orchestrator works in myproject now"):
         rig.runner.decide(WORKSPACE, decision("go on"), actor=ORCHESTRATOR)

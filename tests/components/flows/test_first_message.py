@@ -166,3 +166,14 @@ def test_a_decomposes_first_message_says_to_propose_each_task_after_its_own_box(
     assert "propose each task with `flow_propose_box`, `after` set to `split`, in the order they should run" in text
     assert "then call `flow_submit`" in text
     assert "flow_read" in instructions("decompose"), "it may read the flow first"
+
+
+def test_a_deliverable_already_in_the_folder_is_named_and_must_be_written_again(tmp_path: Path) -> None:
+    """A PLAN that found its PLAN.md from an earlier run kept it unwritten, and its box failed (2026-10-22): its first
+    message says which of its files are there already, and that each must be written again during this session."""
+    there = first_message(flow(), flow().boxes[1], folder(tmp_path), number=1)
+    assert "PLAN.md is in the folder already, from before" in there
+    assert "write it again during this session" in there
+    (tmp_path / "PLAN.md").unlink()
+    fresh = first_message(flow(), flow().boxes[1], tmp_path, number=1)
+    assert "from before" not in fresh

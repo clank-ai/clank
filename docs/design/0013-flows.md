@@ -902,7 +902,12 @@ the run*. After a box it may also choose `pause`, and at a question `leave` it t
 Its **role** is `steer` (all of the above) or `watch`: after each box it goes on or pauses and tells the owner what
 they should know, and every question stays the owner's. `O` turns it on steering, then watching, then off. A
 checkpoint that ends without calling `flow_decide` is reminded once in its session before the question is left to the
-owner (a local model wrote its decision as text in the first long run).
+owner (a local model wrote its decision as text in the first long run). At a failed box's question it may also send
+the work `back` to an earlier box with a note, the question withdrawn (the second long run stopped at a failed search
+with most of its budget left, having no other way to change the plan); its instructions say a failure proves nothing,
+and that it stops only when the budget is spent or no change could meet the brief. A box's first message names its
+deliverables already in the folder, to be written again (the second run's PLAN kept the first run's PLAN.md, and
+failed).
 
 Claude's calls, the owner to check: checkpoints after every box (not only at questions), since the owner asked it to
 "look at the reports that are created after steps are completed"; the final review decided by the orchestrator by

@@ -1547,7 +1547,7 @@ class Runner:
             self._let_go(run, "its flow is gone")
             return
         flow, revision = record
-        cost, extra, applied, stop, pause, left = 0, False, "", False, False, ""
+        cost, extra, applied, stop, pause, left, withdraw = 0, False, "", False, False, "", False
         if decision.kind == "question":
             try:
                 asked: Question | None = self.kernel.questions.get(decision.question)
@@ -1558,6 +1558,21 @@ class Runner:
             elif decision.choice == orchestrating.LEAVE:
                 applied = "left it to you"
                 left = f"checkpoint {cp} left it to you: {decision.tell_user}"
+            elif decision.choice == "back" and asked.option("back") is None:  # a failed box's: back to an earlier one
+                target = decision.back_to
+                standing = self._standing(run, flow, target)
+
+                def back_from(each: Run) -> None:
+                    told = (
+                        "the orchestrator sent it back",
+                        f"the orchestrator sent {target}, a box before this one, back",
+                    )
+                    _again(each, flow, target, told, standing)
+                    each.box(target).steer = decision.note
+                    each.at, each.waiting = target, None
+
+                self._change(run, back_from)
+                cost, applied, withdraw = 1, f"sent the work back to {target}", True
             else:
                 cost = 1 if decision.choice in orchestrating.COSTLY else 0
                 extra = decision.choice == "retry" and orchestrating.past_cap(flow, run, decision.box)
@@ -1617,6 +1632,8 @@ class Runner:
             state.working = None
 
         run = self._change(run, keep)
+        if withdraw:
+            self._withdraw(decision.question, f"the orchestrator sent the work back to {decision.back_to}", RUNNER)
         if decision.tell_user:
             run = self._tell(run, decision)
         self._write_ledger(run)

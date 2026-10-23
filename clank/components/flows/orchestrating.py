@@ -142,10 +142,12 @@ def failure_class(reason: str) -> str:
 
 
 def choices(checkpoint: Checkpoint, role: str = "steer") -> list[str]:
-    """What this checkpoint may choose: at a question, its answers or leaving it to the user; after a box, as its role
-    allows."""
+    """What this checkpoint may choose: at a question, its answers, sending the work back when a failed box asks it
+    (its answers can only try the box again, take it, skip it or stop), or leaving it to the user; after a box, as its
+    role allows."""
     if checkpoint.kind == "question":
-        return [*checkpoint.options, LEAVE]
+        back = ["back"] if "retry" in checkpoint.options and "back" not in checkpoint.options else []
+        return [*checkpoint.options, *back, LEAVE]
     return list(WATCH_CHOICES if role == "watch" else REVIEW_CHOICES)
 
 
@@ -196,8 +198,8 @@ def decided(
         )
         raise DecisionRefused(f"the run made no progress at {_count(state.stall, 'checkpoint')} in a row: {remedy}")
     back_to = str(given.get("back_to") or "").strip()
-    if checkpoint.kind == "review" and choice == "back":
-        _ran(flow, run, back_to)
+    if choice == "back" and (checkpoint.kind == "review" or "back" not in checkpoint.options):
+        _ran(flow, run, back_to)  # a gate's own back goes where the gate says
     for change in changes:
         _check_change(flow, run, change)
     if changes:
