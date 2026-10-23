@@ -62,7 +62,8 @@ the RTX 5080. Only work released from 1 August 2026 on is used, as the owner ask
 
 ## What Clank takes
 
-The redesign is drawn as an interactive diagram (the owner's artifact "The Campaign Flow"); its stages, each with what
+The redesign is [design 0017](../design/0017-campaigns.md), proposed; it was first drawn as an interactive diagram (the
+owner's artifact "The Campaign Flow"); its stages, each with what
 it does, why, what motivated it and what was rejected: the campaign; the brief and ruler with a gain floor; a survey;
 a portfolio of two to four approaches kept as recoverable states; the evolve box, starting as the record-breaking loop;
 jobs (design 0013 §17, approved); the orchestrator's job checkpoint, side tasks and re-anchoring; the corpus; campaign
