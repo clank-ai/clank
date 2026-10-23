@@ -11,7 +11,7 @@ reviews the run and may set side tasks going, whose notes build the flow's corpu
 - [x] 1. Jobs in the container (`clank/components/flows/jobs.py`): start detached (`setsid`, `timeout`), its folder
   `.clank/jobs/<flow>/<run>/<box>-<n>/` (command, log, pid, exit), its state read as files, ended by Clank past its
   minutes or when the run stops. Tests: `tests/components/flows/test_jobs.py`, against the fake platform.
-- [ ] 2. The way in: `flow_job` in Clank's MCP server, `POST /flows/job` (the gateway's flows allowlist), the runner's
+- [x] 2. The way in: `flow_job` in Clank's MCP server, `POST /flows/job` (the gateway's flows allowlist), the runner's
   `job` (only the box at work, one job at a time, at most its minutes). Tests: the forwarding test, `test_jobs.py`.
 - [ ] 3. The box waits on its job: its turn ended with a job running is not its end; its clock stopped; the job's end
   sent to the same session (exit code, time, log's tail, files written, side notes). Tests: `test_jobs.py`.

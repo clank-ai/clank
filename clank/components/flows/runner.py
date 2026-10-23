@@ -77,14 +77,14 @@ import anyio.to_thread
 from anyio.streams.memory import MemoryObjectSendStream
 
 from clank.components.agents.service import BUILD, PLANNER, SESSION_MODEL, AgentError, SessionError
-from clank.components.flows import accepting, handoff, orchestrating, preparing
+from clank.components.flows import accepting, handoff, jobs, orchestrating, preparing
 from clank.components.flows.deliverables import fingerprint, written
 from clank.components.flows.diffs import LARGEST_SHOWN, compare, text_of
 from clank.components.flows.first import came_from
 from clank.components.flows.kinds import Box, Flow
 from clank.components.flows.models import named
 from clank.components.flows.rules import effective_mode
-from clank.components.flows.runs import Kept, Run, Runs, ServerLimits, Try, Waiting, WaitingFor, after, order
+from clank.components.flows.runs import Job, Kept, Run, Runs, ServerLimits, Try, Waiting, WaitingFor, after, order
 from clank.components.flows.verdicts import Verdict, VerdictRefused, given
 from clank.components.flows.verdicts import text as verdict_text
 from clank.components.workspaces.service import WorkspaceUnavailable
@@ -226,6 +226,20 @@ EVENT_TYPES = [
         "A finished box changed (its settings, or its deliverable in the folder), so the boxes after it that ran are "
         "stale; nothing runs again on its own (design 0013 §8).",
         {**FLOW_DATA, "box": "The box that changed.", "boxes": "The boxes now stale.", "why": "What changed."},
+    ),
+    EventType(
+        "flows.job",
+        "A box's job (design 0013 §17): a long computation it started with flow_job, run detached in the workspace's "
+        "container; started, or ended (how, in words).",
+        {
+            **FLOW_DATA,
+            "box": "The box that started it.",
+            "try": "Its try.",
+            "job": "The job's number among the box's jobs in the run.",
+            "action": "started or ended.",
+            "minutes": "How long it may run.",
+            "status": "Its exit status, once ended; empty when its process was gone.",
+        },
     ),
     EventType(
         "flows.run_steered",
@@ -595,6 +609,53 @@ class Runner:
             "findings": len(kept.findings),
             "said": f"Your verdict on {on} is kept: {kept.result}{many}. Stop now: the flow goes on when your session "
             "ends.",
+        }
+
+    def job(self, workspace: str, command: str, title: str, minutes: int, *, actor: Actor) -> dict[str, Any]:
+        """A job (design 0013 §17), started with `flow_job` by the box at work in the workspace while its try runs: one
+        at a time, within the box's minutes, started detached in the container and kept on the try; what was started,
+        said for the model. `RunError`, saying why, when it cannot be started."""
+        run, flow, box = self._at_work(workspace, "a job is started by a box, while it works")
+        limit = box.limits.minutes or flow.defaults.limits.minutes
+        if not command.strip():
+            raise RunError("a job needs a command to run: give flow_job the command, as you would run it in bash")
+        if not 1 <= minutes <= limit:
+            raise RunError(f"a job runs at least 1 minute and at most its box's {limit} minutes: give minutes again")
+        with self._lock:
+            state = self.runs.load(run.flow, run.number).box(box.id)
+            last = state.tries[-1] if state.tries else None
+            if last is None or last.sent is None or last.outcome is not None:
+                raise RunError(f"{box.id}'s try has not begun, or has ended: no job starts for it")
+            running = next((each for each in last.jobs if each.ended is None), None)
+            if running is not None:
+                raise RunError(
+                    f"job {running.number} ({running.title or running.command}) still runs: one job at a time; end "
+                    "your turn and wait for its end, which Clank sends you"
+                )
+            number = sum(len(each.jobs) for each in state.tries) + 1
+        folder = jobs.folder_of(run.flow, run.number, box.id, number)
+        try:
+            jobs.start(self.kernel.parts["workspaces"], workspace, folder, command, minutes)
+        except jobs.JobError as error:
+            raise RunError(str(error)) from error
+        job = Job(
+            number=number, title=title.strip(), command=command, minutes=minutes, folder=folder,
+            started=self.kernel.clock.now(),
+        )  # fmt: skip
+        run = self._change(run, functools.partial(_add_job, box=box.id, job=job))
+        self._record_event(
+            "flows.job", run, f"{box.title} started job {number}: {job.title or command}", actor, box=box.id,
+            job=number, action="started", minutes=minutes, **{"try": last.number},
+        )  # fmt: skip
+        return {
+            "flow": run.flow,
+            "run": run.number,
+            "box": box.id,
+            "job": number,
+            "folder": folder,
+            "said": f"Job {number} started: {job.title or command}. It runs in the folder, its output in {folder}/log, "
+            f"for at most {minutes} minutes. End your turn now, saying what you expect it to give: Clank sends its end "
+            "to this session (its exit code, its time, its log's last lines), and you go on from there.",
         }
 
     def decide(self, workspace: str, given: dict[str, Any], *, actor: Actor) -> dict[str, Any]:
@@ -2900,6 +2961,10 @@ def _loop_files(run: Run, flow: Flow, box: str) -> list[str]:
         return []
     checked = _box_of(flow, found.checks)
     return list(checked.writes) if checked is not None else []
+
+
+def _add_job(run: Run, *, box: str, job: Job) -> None:
+    run.box(box).tries[-1].jobs.append(job)
 
 
 def _set_verdict(run: Run, *, box: str, verdict: Verdict) -> None:

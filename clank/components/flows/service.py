@@ -321,6 +321,11 @@ class Flows:
             "ledger": orchestrating.ledger_text(latest) if latest is not None else "",
         }
 
+    def job(self, workspace: str, command: str, title: str, minutes: int, *, actor: Actor) -> dict[str, Any]:
+        """A job started by the box at work in the workspace (design 0013 §17): what was started, said for the model;
+        `409 refused`, saying why, when it cannot be."""
+        return _refused_as_409(lambda: self.runner.job(workspace, command, title, minutes, actor=actor))
+
     def steer(self, workspace: str, given: dict[str, Any], *, actor: Actor) -> dict[str, Any]:
         """A checkpoint's decision (design 0013 §16), given to the orchestrator's checkpoint at work in the workspace:
         what was kept, said for the model; `409 refused`, saying why, when it cannot be."""

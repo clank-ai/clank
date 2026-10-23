@@ -59,6 +59,20 @@ class Kept(Part):
     copied: bool = Field(False, description="Whether a copy is kept in the try's folder (else its fingerprint only).")
 
 
+class Job(Part):
+    """A long computation the box started with `flow_job` during a try (design 0013 §17): its files in the folder."""
+
+    number: int = Field(ge=1, description="Its number among its box's jobs in the run, from 1.")
+    title: str = Field("", description="What it computes, in the box's words.")
+    command: str = Field(description="Its command, run in the folder.")
+    minutes: int = Field(ge=1, description="How long it may run; Clank ends it past them.")
+    folder: str = Field(description="Its folder in the workspace's: its command, pid, log and exit.")
+    started: datetime = Field(description="When Clank started it.")
+    ended: datetime | None = Field(None, description="When Clank saw it end.")
+    status: int | None = Field(None, description="Its exit status; empty while it runs, or when its process is gone.")
+    said: str = Field("", description="How it ended, in words.")
+
+
 class Try(Part):
     """One try of a box: its session, when it ran, how it ended."""
 
@@ -97,6 +111,7 @@ class Try(Part):
     )
     verdict: Verdict | None = Field(None, description="A VERIFY's: the newest verdict it gave during this try.")
     command: Commanded | None = Field(None, description="Its accept command, as it ran after the try.")
+    jobs: list[Job] = Field(default_factory=list, description="The jobs it started, oldest first; one runs at a time.")
 
 
 class BoxRun(Part):

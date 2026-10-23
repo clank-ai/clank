@@ -121,10 +121,10 @@ NOTION = {
 NOT_THE_AGENTS = "the agent reads Notion and proposes changes; nothing else (the owner approves them, in VS Code)"
 # What the agent may ask of its flow through the gateway: (method, path under /flows/) (design 0013 §9).
 FLOWS = {("GET", "read"), ("POST", "propose"), ("POST", "submit"), ("POST", "verdict"), ("POST", "draft"),
-         ("POST", "decide")}  # fmt: skip
+         ("POST", "decide"), ("POST", "job")}  # fmt: skip
 NOT_THE_AGENTS_FLOW = (
-    "the agent reads its flow, proposes boxes, gives a VERIFY's verdict, drafts a flow and gives an orchestrator's "
-    "decision; nothing else (the owner runs, changes and decides flows, and opens a planning)"
+    "the agent reads its flow, proposes boxes, gives a VERIFY's verdict, drafts a flow, gives an orchestrator's "
+    "decision and starts a box's job; nothing else (the owner runs, changes and decides flows, and opens a planning)"
 )
 Forward = Callable[[str, str, Any, dict[str, str]], Awaitable[tuple[int, Any]]]
 

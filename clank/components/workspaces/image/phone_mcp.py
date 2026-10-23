@@ -23,7 +23,8 @@ numbered findings, and each line of the brief and of what done means that it che
 `flow_draft(flow)` (design 0013 §15) is a planning session's: the whole flow it drafted with the owner, which the
 service checks and writes, or refuses naming each field to fix. `flow_decide(choice, why, ...)` (§16) is an
 orchestrator's checkpoint's one decision, which the service checks, keeps and applies when the checkpoint ends. None
-writes anything in the folder, so the planner may use them.
+writes anything in the folder, so the planner may use them, but `flow_job(command, title, minutes)` (§17): a box's
+long computation, which Clank runs detached in the container while the box's turn ends and waits for it.
 
 It speaks MCP (revision 2025-06-18) over its standard input and output, one JSON message a line, with Python's standard
 library only, so it runs in any workspace's container.
@@ -282,6 +283,18 @@ FLOW_TOOLS = [
         ["choice", "why", "progressing", "looping", "facts", "plan"], False,
     ),
     _tool(
+        "flow_job",
+        "Start a long computation as a job: any command you expect to run more than two minutes (a search, a sweep, "
+        "a batch of seeds), in place of running it with bash. Clank runs it in the folder, detached, its output in a "
+        "log, for at most minutes (at most your box's). Then end your turn, saying what you expect it to give: Clank "
+        "sends its end to this session (its exit code, its time, the last lines of its log) and you go on from there. "
+        "One job at a time. Returns where its log is, or why it did not start.",
+        {"command": {"type": "string", "description": "The command, as you would run it in bash, in the folder."},
+         "title": {"type": "string", "description": "What it computes, in a few words."},
+         "minutes": {"type": "integer", "description": "How long it may run before Clank ends it."}},
+        ["command", "title", "minutes"], False,
+    ),
+    _tool(
         "flow_draft",
         "Only in a planning session Clank opened to build a flow with the user: send the whole flow you drafted, "
         "once BRIEF.md is written with them. Clank checks it; while it breaks a rule, nothing is written and you get "
@@ -318,6 +331,10 @@ def flow(name: str, arguments: dict[str, Any]) -> str:
         found = _gateway("POST", "flows/draft", {"workspace": WORKSPACE_NAME, "flow": arguments.get("flow")}, "a flow")
     elif name == "flow_decide":  # as the model gave it: the service says what to fix
         found = _gateway("POST", "flows/decide", {"workspace": WORKSPACE_NAME, **arguments}, "a flow")
+    elif name == "flow_job":
+        body = {"workspace": WORKSPACE_NAME, "command": str(arguments.get("command") or ""),
+                "title": str(arguments.get("title") or ""), "minutes": arguments.get("minutes") or 0}  # fmt: skip
+        found = _gateway("POST", "flows/job", body, "a flow")
     else:
         criteria = arguments.get("criteria") or []
         body = {

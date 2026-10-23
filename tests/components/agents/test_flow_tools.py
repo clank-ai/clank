@@ -3,9 +3,10 @@ to the gateway's `/flows/` routes naming the workspace the server serves: `flow_
 result, its findings and `criteria`, each line of the brief and of what done means that the check touched, met or not,
 with its evidence); `flow_read`, the flow as the service tells it, marked read-only; `flow_propose_box`, a box proposed
 after a box of the flow, its arguments sent as the model gave them; `flow_submit`, the proposals ready for the owner;
-and `flow_draft` (design 0013 §15), a whole flow drafted in a planning session, sent as the model gave it. Each answer
-is what the service said; a refusal is the tool's error, in the service's words; a server that does not know its
-workspace asks nothing. None writes anything in the folder."""
+`flow_draft` (design 0013 §15), a whole flow drafted in a planning session, sent as the model gave it; and `flow_job`
+(§17), a box's long computation, its command, title and minutes. Each answer is what the service said; a refusal is the
+tool's error, in the service's words; a server that does not know its workspace asks nothing. None writes anything in
+the folder."""
 
 import json
 import subprocess
@@ -47,6 +48,8 @@ class Gateway(BaseHTTPRequestHandler):
             self._json({"error": {"code": "refused", "message": message}}, 409)
         elif self.path == "/flows/draft":
             self._json({"flow": "myproject/flow", "said": "Written as myproject/flow."})
+        elif self.path == "/flows/job":
+            self._json({"job": 1, "said": "Job 1 started: The seeds. End your turn now."})
         elif self.path == "/flows/submit":
             self._json({"waiting": ["T1"], "said": "Submitted 1 proposal (T1): it waits for the user."})
         else:
@@ -212,3 +215,18 @@ def test_flow_draft_sends_the_whole_flow_as_the_model_gave_it_naming_its_workspa
     assert refused["result"]["isError"] is True
     assert refused["result"]["content"][0]["text"].startswith("Not written. Fix each")
     assert list(tmp_path.iterdir()) == [], "it writes nothing in the folder"
+
+
+def test_flow_job_sends_its_command_title_and_minutes_naming_its_workspace(tmp_path: Path, gateway: str) -> None:
+    [listed] = session(tmp_path, gateway, [{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}])
+    tool = next(tool for tool in listed["result"]["tools"] if tool["name"] == "flow_job")
+    assert tool["inputSchema"]["required"] == ["command", "title", "minutes"]
+    assert tool["annotations"]["readOnlyHint"] is False, "it runs a command"
+    assert "more than two minutes" in tool["description"]
+    [reply] = session(tmp_path, gateway, [called("flow_job", {"command": "python3 anneal.py", "title": "The seeds",
+                                                              "minutes": 30})])  # fmt: skip
+    assert Gateway.asked == [
+        ("POST", "/flows/job", {"workspace": "myproject", "command": "python3 anneal.py", "title": "The seeds",
+                                "minutes": 30}),
+    ]  # fmt: skip
+    assert reply["result"]["content"][0]["text"] == "Job 1 started: The seeds. End your turn now."

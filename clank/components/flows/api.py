@@ -63,6 +63,15 @@ class OrchestratorGiven(BaseModel):
     role: str = Field("", description="steer (it decides the questions too) or watch (it checks each box only).")
 
 
+class JobGiven(BaseModel):
+    """A job, as `flow_job` sends it (design 0013 §17)."""
+
+    workspace: str = Field(description="The workspace whose box at work starts it (its MCP server's).")
+    command: str = Field("", description="The command, run in the folder.")
+    title: str = Field("", description="What it computes, in a few words.")
+    minutes: int = Field(0, description="How long it may run, at most the box's minutes.")
+
+
 class DecisionGiven(BaseModel):
     """A checkpoint's decision, as `flow_decide` sends it: read by the service, whose refusal says what to fix."""
 
@@ -328,6 +337,16 @@ def router(flows: "Flows") -> APIRouter:
                 model=given.model,
                 role=given.role,
             )
+        )
+        return found
+
+    @routes.post("/flows/job")
+    async def job(given: JobGiven, request: Request) -> dict[str, Any]:
+        """A job started by the box at work in the workspace (design 0013 §17): run detached in its container, kept on
+        its try; refused (409, saying why) while no box works there, while its job runs, or past its box's minutes."""
+        actor = _actor(request)
+        found: dict[str, Any] = await anyio.to_thread.run_sync(
+            lambda: flows.job(given.workspace, given.command, given.title, given.minutes, actor=actor)
         )
         return found
 
