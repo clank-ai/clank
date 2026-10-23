@@ -37,9 +37,11 @@ stabilizer ranks: a verifier any result must pass, cells whose bounds are known,
 | 12 | The verification ladder | Proposed 2026-10-23 |
 | 13 | Running unattended | Proposed 2026-10-23 |
 | 14 | The benchmark, and tuning the flow and the model | Proposed 2026-10-23 |
-| 15 | The owner's choices | Proposed 2026-10-23: six questions for the owner |
+| 15 | The owner's choices | Proposed 2026-10-23: six questions for the owner; 2 and 3 answered the same day |
 | 16 | Build order | Proposed 2026-10-23 |
 | 17 | What this design does not cover | Proposed 2026-10-23 |
+| 18 | The second model, chosen by measurement | Proposed 2026-10-23, at the owner's answer to §15 question 2 |
+| 19 | Publishing: the blog on the website | Proposed 2026-10-23, at the owner's answer to §15 question 3 |
 
 ## 1. What the long runs showed
 
@@ -78,9 +80,9 @@ on the local model, a 27B model on one 16 GB GPU, with the orchestrator steering
    way), while confidence at the end separates outcomes well (0.85), so decisions belong at step ends
    (arXiv:2608.29685, abstract; EMNLP 2026).
 3. **A simple loop first; machinery only when measured.** A seed solver, a scoreboard, a history of ideas, an
-   independent verifier, keep or drop, and plateau detection broke 10 circle-packing records for $27.72 (arXiv:2609.05093); single
-   runs and single budgets mislead, and the best split between seeds and iterations depends on the task
-   (*Evolution or Illusion?*, arXiv:2609.19799).
+   independent verifier, keep or drop, and plateau detection broke 10 circle-packing records for $27.72
+   (arXiv:2609.05093); single runs and single budgets mislead, and the best split between seeds and iterations
+   depends on the task (*Evolution or Illusion?*, arXiv:2609.19799).
 4. **One writer of memory, proposals audited.** Removing the single memory writer cut recall from 57.8 to 44.7, and
    removing the auditor that treats "end" as a proposal cut it to 52.1, on gpt-oss-20b and Qwen3.5-27B (Harness-Search,
    arXiv:2610.05382).
@@ -301,22 +303,27 @@ What is measured on it, each adopted only on a held-out win over several seeds:
   (HarnessOpt-Bench, arXiv:2608.06301, abstract). For small models the large gains came from optimizing harness and
   weights together, and in mathematics harness search helped only after a weight update (WHALE, Qwen3.5-2B and 4B,
   arXiv:2609.00196, abstract), so prompt tuning alone is expected to give modest gains.
-- **The model's settings**: the speculative draft length, thinking on or off per box type, sampling per role, and a
-  faster second model for side tasks; community figures (95 to 101 tokens a second for this model on a 16 GB card
-  with a draft length of 2 and thinking off) are measured here before they decide anything.
+- **The model's settings**: the speculative draft length, thinking on or off per box type, and sampling per role;
+  community figures (95 to 101 tokens a second for this model on a 16 GB card with a draft length of 2 and thinking
+  off) are measured here before they decide anything. The second model is chosen by its own protocol (§18).
 
 - **Rejected**: tuning on open cells (it chases noise in the cells that matter); adopting any figure unmeasured.
 - **Done when** `clank bench` writes the comparison table overnight, unattended.
 
 ## 15. The owner's choices
 
-*Proposed 2026-10-23.* Questions whose answers change what is built; Claude's recommendation first.
+*Proposed 2026-10-23; questions 2 and 3 answered by the owner the same day.* Questions whose answers change what is
+built; Claude's recommendation first.
 
 1. **The benchmark before the evolve box?** Recommended: yes, so the evolve box is measured from its first version.
-2. **A second, faster model for side tasks and the auditor** (one that fits beside the main model)? Recommended:
-   measured on the benchmark first, then decided.
-3. **The benchmark's results public** (in the repository's docs, without the owner's machine details)? Recommended:
-   yes for tiers A and B; tier C results stay local until verified (§12).
+2. **A second, faster model for side tasks and the auditor?** *Answered:* "I am open to using a second, faster model for
+   the side tasks, but we should really carefully curate this second model and make sure that we are finding one that
+   is both extremely fast as well as extremely useful for the task we will give it." How it is chosen: §18.
+3. **The benchmark's results public?** *Answered:* "Yes, I am fine with benchmark results made public, let's include
+   this as a bit of a personal blog portion on the clank-ai website. I want us to be as public as possible with the way
+   that we are configuring things, especially with the way that we have frankensteined together the kvmem setup with
+   the swift 1.5 qwen3.8-27b model." What is published, and how: §19. Results on open cells are published once
+   verified (§12), as any result.
 4. **A machine cap** for flows: the share of memory and CPU threads jobs and side tasks may use? Recommended: 75% of
    memory and all threads but two, changeable per workspace.
 5. **A box's questions while the orchestrator steers**: to the orchestrator, or still to the owner? Recommended: to the
@@ -333,6 +340,9 @@ What is measured on it, each adopted only on a held-out win over several seeds:
 4. The stop audit (§11) and the verification ladder (§12).
 5. The survey and the portfolio (§5, §6), context packs and the event log (§10), the campaign record (§3).
 
+The second model's trial (§18) runs on the benchmark once step 1 is built; the blog (§19) starts with the setup's
+post, which needs nothing new, and gains the benchmark's results as they come.
+
 ## 17. What this design does not cover
 
 *Proposed 2026-10-23.*
@@ -341,6 +351,72 @@ Training or fine-tuning the model's weights (WHALE suggests it matters for small
 needs more GPU than this machine has); several GPUs or machines running a campaign at once; cloud models as searchers
 (a campaign may name one as any flow may, under design 0016's rules); making a verified result public (always the
 owner's act).
+
+## 18. The second model, chosen by measurement
+
+*Proposed 2026-10-23, at the owner's answer to §15 question 2.*
+
+A second model runs side tasks (§8), and may run the stop audit (§11), only if it is measured, on this machine, to be
+both much faster at that work and as useful as the main model. Where it runs matters as much as which model it is:
+
+- **This machine**: the main model fills the GPU (15.3 of 16 GB in use while it runs); the CPU has 16 cores and 32
+  threads with 64 GB of DDR5-4800; and side tasks run exactly while a job is using up to 16 of those threads.
+- **On the CPU, beside the main model.** Mixture-of-experts models with about 3B active parameters decode at usable
+  speed on this CPU: gpt-oss-20b, measured on the same processor model with llama.cpp's CPU backend, generated 27
+  tokens a second but read a prompt at about 145 tokens a second
+  ([OpenBenchmarking, 2025](https://openbenchmarking.org/result/2509087-NE-9950X3DLL86)). An agent's session sends
+  15,000 to 30,000 tokens of prompt, so each turn would wait minutes for its prompt, and the job would lose cores to it.
+- **On the GPU, in turns with the main model.** While a box waits on its job, the main model is idle: Clank could switch
+  the main slot to a faster model for the side tasks and back before the box resumes. The cost is two switches per job
+  and the main model's prompt cache, which the box's resumed session then reads again.
+- **Beside a smaller main context.** A preset of the main model with less context frees GPU memory for a small second
+  model at once; the cost is the main model's context.
+- **The main model itself, faster.** The baseline every candidate must beat: the same model with thinking off and its
+  speculative draft tuned, which needs no second model and no switch.
+
+**Usefulness is measured on side tasks with checks**, drawn from the long runs: shortlist next targets from the attempt
+log and the board (each claim checked against the files); write a script a later box needs (run against a test the
+benchmark keeps); examine a job's partial output (its figures checked against the log); summarize a paper's method
+(each citation found in its source). Each candidate's notes are scored by those checks and compared blind with the
+main model's notes on the same tasks; malformed tool calls are counted, since a side task is an agent session.
+
+**Speed is measured end to end** on the same tasks: time from a side task's start to its note, including prompt
+reading and any switch of the main slot, while a benchmark job runs, and the job's own slowdown.
+
+**Adopted** only when, over several seeds of the side-task suite, a candidate (in one placement) is no worse than the
+main model on the checks, finishes the suite in at most half its time, and slows the job by at most 10%; otherwise the
+main model keeps the side tasks. The comparison, every candidate's numbers and the reasons for the choice go on the
+blog (§19).
+
+**Candidates to start**, each released before the trial and chosen for few active parameters and native tool calling:
+gpt-oss-20b (about 3.6B active; its 4-bit file fits the GPU alone), the Qwen3.6-35B-A3B mixture of experts (3B
+active), a Gemma 4 mixture of experts with about 4B active, and Qwen3-Coder-30B-A3B for script writing; the list is
+read again when the trial starts, for anything newer.
+
+- **Rejected**: choosing by public leaderboards (they score other tasks, on other hardware); a second model on the CPU
+  without measuring prompt reading (the figure that decides an agent's speed there).
+
+## 19. Publishing: the blog on the website
+
+*Proposed 2026-10-23, at the owner's answer to §15 question 3.*
+
+The website gains a blog, written for the owner and in their voice, which says openly how Clank is configured on their
+machine and what it measured: as public as possible about the configuration, including the parts that were pieced
+together.
+
+- **The setup's post first**: the main model as it runs (Swift 1.5, Qwen3.8-27B retrained, in its IQ3_S file with the
+  MTP head, on KVMem with 262K of context and system memory), why each piece was chosen and what was tried and dropped,
+  the exact files with their checksums and the engine's flags, the measured speeds, and what broke along the way (a
+  graphics driver that crashed the engine, the decode speed that halved). It builds on
+  [docs/models/frontier-262k.md](../models/frontier-262k.md), which already holds most of it.
+- **Benchmark posts**: each run of the benchmark (§14) with its table, its seeds and its process measures, and each
+  change adopted or rejected with its numbers; the second model's trial (§18) in full.
+- **Campaign posts**: what a campaign tried and why it ended, nulls included; a verified result only once it has
+  climbed the ladder (§12) and the owner has made it public.
+- **Never published**: anything that identifies the machine or the owner beyond what they choose (user names, paths,
+  host names, GPU identifiers, keys), and the owner's research outside the benchmark.
+- **How**: Claude drafts each post from Clank's own files (the benchmark's tables, the run records, the measurement
+  pages), the owner reads and edits it, and only the owner's approval publishes it on the site.
 
 ## Sources
 
@@ -376,4 +452,6 @@ an outcome (§13); the benchmark as the measure of every change to a flow or a s
 
 ## Revision log
 
-None yet.
+- **2026-10-23**: the owner answered §15's questions 2 (a second model, carefully chosen) and 3 (results public, on a
+  blog on the website, as public as possible about the configuration); §18 and §19 added, §14 and §16 changed to
+  point to them.
