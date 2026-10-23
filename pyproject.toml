@@ -72,4 +72,5 @@ markers = [
     "real: starts the engines installed on this machine (run with -m real; skipped otherwise)",
     "docker: uses this machine's Docker and builds Clank's sandbox image if needed (run with -m docker; else skipped)",
     "openrouter: asks OpenRouter itself with the owner's key (CLANK_TEST_OPENROUTER_KEY for the run; else skipped)",
+    "flow_first: the console's Monitor opens on the Flow view, as it does (the other console tests open it on Session)",
 ]

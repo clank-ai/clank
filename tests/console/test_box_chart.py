@@ -13,7 +13,7 @@ from datetime import UTC
 
 import pytest
 
-from clank.components.agents.console.boxchart import BOX_ROWS, LIST_BELOW, render, stages
+from clank.components.agents.console.boxchart import BOX_ROWS, LIST_BELOW, SIZES, fitting, render, stages
 from clank.console.style import current
 from tests.console.frames import assert_frame
 from tests.support.flowshapes import d1_view, generated, shapes, touching
@@ -130,3 +130,33 @@ def test_a_boxs_type_and_tries_are_kept_whole_its_step_shortened_or_left_out_fir
         line = chart.lines[rect.y + 1].plain[rect.x : rect.x + rect.w]
         assert words in line, f"{name} at {width}: {line!r}"
         assert current().marks.cut not in line, f"{name} at {width}: nothing of its type or tries cut: {line!r}"
+
+
+@pytest.mark.parametrize("size", ["medium", "large"])
+@pytest.mark.parametrize("width", [WIDE, NARROW, 110, 160, 230])
+def test_larger_boxes_keep_every_generated_flow_apart_and_inside_its_panel(size: str, width: int) -> None:
+    for name, shown in shapes():
+        chart = render(shown, width, selected="T1", live={"step": 3, "speed": 51.5}, zone=UTC, size=size)
+        assert touching(chart) == [], f"{name} at {width} columns, {size}"
+        assert {rect.h for rect in chart.boxes.values()} == {fitting(size, width).rows}, f"{name}: one size"
+    assert fitting("large", WIDE) == SIZES["medium"], "too narrow for two large boxes: the largest that keeps two"
+
+
+def test_a_larger_box_wraps_its_title_and_says_its_tries_time_and_tokens() -> None:
+    """The owner (2026-10-22, the console full screen over SSH): "the individual blocks in the Flow chart are not easy
+    to read and I should have the ability to make this larger so that each of the individual boxes are a bit more
+    fleshed out"."""
+    shown = d1_view()
+    small = render(shown, 230, zone=UTC, size="small")
+    medium = render(shown, 230, zone=UTC, size="medium")
+    large = render(shown, 230, zone=UTC, size="large")
+    assert small.boxes["T1"].w < medium.boxes["T1"].w < large.boxes["T1"].w
+    assert (small.boxes["T1"].h, medium.boxes["T1"].h, large.boxes["T1"].h) == (6, 8, 10)
+    rect = medium.boxes["T1"]
+    inside = "\n".join(medium.lines[row].plain[rect.x : rect.x + rect.w] for row in range(rect.y, rect.y + rect.h))
+    assert "try 1 of" in inside, inside
+    assert "tokens" in inside, inside
+    rect = large.boxes["T1"]
+    inside = "\n".join(large.lines[row].plain[rect.x : rect.x + rect.w] for row in range(rect.y, rect.y + rect.h))
+    assert "writes" in inside, inside
+    assert render(shown, 230, zone=UTC).boxes["T1"].h == BOX_ROWS == 6, "small unless asked"

@@ -34,6 +34,7 @@ from textual.visual import Visual
 
 from clank.components.agents.console.boxchart import Chart, Rect, listed, render
 from clank.components.agents.console.flowboards import cards
+from clank.console.style import console_settings
 
 SCROLL_BAR = 1  # the vertical scroll bar's columns, kept free
 NO_FLOW = "no flow yet"
@@ -169,6 +170,13 @@ class BoxChart(ChartView):
         self.key = ""  # the flow shown: another starts afresh, following
         self.now = ""  # the box the flow is at
         self.following = True
+        self.box_size = "medium"  # its boxes' size (`boxchart.SIZES`), from the console's settings once mounted
+
+    def on_mount(self) -> None:
+        """Its boxes' size as the console's settings say (`flow_boxes`)."""
+        home = getattr(self.app, "home", None)
+        if home is not None:
+            self.box_size = console_settings(home).flow_boxes
 
     def show(self, view: dict[str, Any] | None, now: str, live: dict[str, Any] | None = None) -> None:
         """Show a flow (None for none), `now` the box it is at, `live` the running box's step and speed."""
@@ -184,7 +192,7 @@ class BoxChart(ChartView):
 
     def lay_out(self, width: int) -> Chart:
         """The flow, as `boxchart.render` lays it out."""
-        return render(self.view, width, self.selected, self.live, self.zone)
+        return render(self.view, width, self.selected, self.live, self.zone, size=self.box_size)
 
     def moved(self) -> None:
         """The owner moved the selection: the flow is no longer followed."""

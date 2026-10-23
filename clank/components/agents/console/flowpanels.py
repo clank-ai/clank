@@ -20,6 +20,7 @@ nothing spills (decision 0045); the whole of each is one key away (`?`, Enter).
 counts its draws for the tests.
 """
 
+import json
 import textwrap
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, tzinfo
@@ -220,6 +221,90 @@ def _tries(view: Mapping[str, Any], box: Mapping[str, Any], width: int, zone: tz
     return lines
 
 
+WRITING = ("slot", "reading", "thinking", "answering", "writing", "again")  # the model at work on a request
+COMMAND_LINES = 14  # a running command's lines shown
+OUTPUT_LINES = 10  # the last lines of its output shown
+SAID_LINES = 6  # of what the model said before it
+
+
+def generating(now: Mapping[str, Any] | None) -> bool:
+    """Whether the model works on a request now (reading its prompt, thinking, writing), so its text as it is written
+    is what Thinking shows; else a tool at work, a question, or nothing."""
+    return str((now or {}).get("state") or "") in WRITING
+
+
+def doing(now: Mapping[str, Any] | None, view: Mapping[str, Any] | None, width: int) -> list[Content]:
+    """What the running box does now, first in Thinking (decision 0131): its phase, step and time; while a tool runs,
+    its command line by line and its output so far; and what the model said last, before it."""
+    if now is None:
+        return [Content.styled("reading what it does", "$clank-quiet")]
+    lines = [_fit(head(dict(now)), width)]
+    nodes = list((view or {}).get("nodes") or [])
+    call = next((each for each in reversed(nodes) if each.get("kind") == "call" and each.get("status") == "running"),
+                None)  # fmt: skip
+    if now.get("state") == "tool":
+        given = (call or {}).get("input") or ((now.get("call") or {}).get("input") or "")
+        command = _command(given)
+        if command:
+            lines.append(Content.styled(f"its {(now.get('call') or {}).get('tool') or 'call'}:", "$clank-quiet"))
+            for line in command.splitlines()[:COMMAND_LINES]:
+                lines.append(_fit(Content(f"  {line}"), width))
+        output = str((call or {}).get("output") or "").rstrip()
+        if output:
+            lines.append(Content.styled("its output so far:", "$clank-quiet"))
+            lines += [_fit(Content(f"  {line}"), width) for line in output.splitlines()[-OUTPUT_LINES:]]
+        elif call is not None:
+            lines.append(Content.styled("no output yet (a command may write to files instead)", "$clank-quiet"))
+    elif now.get("state") == "idle":
+        lines.append(Content.styled("the session waits for nothing: its run ended", "$clank-quiet"))
+    step = next((each for each in reversed(nodes) if each.get("kind") == "step"), None)
+    said = str((step or {}).get("text") or "").strip()
+    if said and not generating(now):
+        lines.append(Content.styled("what the model said last:", "$clank-quiet"))
+        lines += wrapped(said, width)[:SAID_LINES]
+    return lines
+
+
+def _command(given: Any) -> str:
+    """A call's input as its command, else as it was given."""
+    if isinstance(given, dict):
+        found = given
+    else:
+        try:
+            found = json.loads(str(given))
+        except ValueError:
+            return _cut_command(str(given))
+    if isinstance(found, dict):
+        command = found.get("command")
+        return str(command) if command else json.dumps(found, ensure_ascii=False)
+    return str(given)
+
+
+def _cut_command(given: str) -> str:
+    """The command of a call's input the watch cut short (`{"command": "cd ...…`): its string read as far as it goes,
+    an escape cut in half left out; the input as it was given when it holds no command."""
+    start = given.find('"command"')
+    quote = given.find('"', given.find(":", start) + 1) if start >= 0 else -1
+    if quote < 0:
+        return given
+    rest = given[quote + 1 :].rstrip("…")
+    end = next((index for index in range(len(rest)) if rest[index] == '"' and not _escaped(rest, index)), len(rest))
+    rest = rest[:end]
+    for trim in range(6):  # an escape sequence cut in half at the end
+        try:
+            return str(json.loads(f'"{rest[: len(rest) - trim]}"'))
+        except ValueError:
+            continue
+    return rest
+
+
+def _escaped(text: str, index: int) -> bool:
+    backslashes = 0
+    while index - backslashes - 1 >= 0 and text[index - backslashes - 1] == "\\":
+        backslashes += 1
+    return backslashes % 2 == 1
+
+
 def live(
     box: Mapping[str, Any] | None, now: Mapping[str, Any] | None, context: Mapping[str, Any] | None, width: int
 ) -> list[Content]:
@@ -234,6 +319,8 @@ def live(
     steps = [float(each) for each in speed.get("steps") or []]
     current_speed = speed.get("now")
     said = f"{current_speed:.0f} tok/s" if current_speed else "no speed yet"
+    if current_speed and not generating(now):
+        said += " at its last step"  # a tool at work, or a question: nothing is written now
     shown = Content.assemble(("speed   ", "$clank-quiet"), said)
     if steps and width - shown.cell_length > 4:
         shown = Content.assemble(shown, " ", spark(steps, min(len(steps), width - shown.cell_length - 1),

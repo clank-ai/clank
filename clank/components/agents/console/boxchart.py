@@ -47,9 +47,28 @@ from clank.console.text import clock, parse
 
 LIST_BELOW = 70  # columns: narrower, the flow is a list (design 0013 §12)
 GAP = 3  # columns between two stages: the line, its junction, its arrow
-BOX_LEAST = 22  # columns a box keeps at least; a row holds as many as keep it
-BOX_MOST = 30  # columns a box takes at most
-BOX_ROWS = 6  # a box's rows: its border, its tag, title, model and last result
+BOX_LEAST = 22  # columns a small box keeps at least; a row holds as many as keep it
+BOX_MOST = 30  # columns a small box takes at most
+BOX_ROWS = 6  # a small box's rows: its border, its tag, title, model and last result
+
+
+@dataclass(frozen=True)
+class Size:
+    """A size of box: the columns it keeps at least (a row holds as many as keep it) and takes at most, its rows, its
+    title's lines, and what it says besides (`tries`: its tries, time and tokens; `writes`: the files it writes)."""
+
+    least: int
+    most: int
+    rows: int
+    title_lines: int
+    details: tuple[str, ...] = ()
+
+
+SIZES = {  # the owner's request (2026-10-22): boxes "a bit more fleshed out" on a wide screen; `+` and `-` pick one
+    "small": Size(BOX_LEAST, BOX_MOST, BOX_ROWS, 1),
+    "medium": Size(32, 44, 8, 2, ("tries",)),
+    "large": Size(44, 64, 10, 3, ("tries", "writes")),
+}
 FAN_GAP = 1  # rows between two tasks of a fan
 TAGS = {"you": "YOU", "plan": "PLAN", "verify": "VERIFY", "decompose": "DECOMPOSE", "task": "TASK",
         "integrate": "INTEGRATE", "gate": "GATE"}  # fmt: skip
@@ -173,15 +192,26 @@ def render(
     selected: str = "",
     live: Mapping[str, Any] | None = None,
     zone: tzinfo | None = None,
+    size: str = "small",
 ) -> Chart:
     """The flow laid out in lines no wider than `width`, the box `selected` lit, `live` (the running box's `step` and
-    `speed`) in the running box; the list below `LIST_BELOW` columns."""
+    `speed`) in the running box, its boxes of a `size` of `SIZES`; the list below `LIST_BELOW` columns."""
     chart = Chart(width=max(width, 1))
     if not view or not view.get("boxes") or width < 1:
         return chart
     if width < LIST_BELOW:
         return _Listed(view, chart, selected, live or {}, zone).draw()
-    return _Laid(view, chart, selected, live or {}, zone).draw()
+    return _Laid(view, chart, selected, live or {}, zone, fitting(size, chart.width)).draw()
+
+
+def fitting(size: str, width: int) -> Size:
+    """The size asked for, or the largest smaller one that keeps two boxes to a row at this width (a DECOMPOSE and its
+    tasks stand side by side); small at the least."""
+    names = list(SIZES)
+    index = names.index(size) if size in names else 0
+    while index > 0 and width // (SIZES[names[index]].least + GAP) < 2:
+        index -= 1
+    return SIZES[names[index]]
 
 
 def listed(
@@ -320,18 +350,79 @@ def model_said(box: Mapping[str, Any], live: Mapping[str, Any]) -> str:
     return said
 
 
+def wrapped_title(title: str, width: int, count: int) -> list[str]:
+    """A box's title over `count` lines of `width` cells, the last cut with the style's "…" when it does not fit; as
+    many lines as it takes, so a short title leaves the rest empty."""
+    words, lines = title.split(), list[str]()
+    while words and len(lines) < count - 1:
+        line = ""
+        while words and cell_len(f"{line} {words[0]}".strip()) <= width:
+            line = f"{line} {words.pop(0)}".strip()
+        if not line:  # a word longer than the line: cut on the last line
+            break
+        lines.append(line)
+    if words:
+        lines.append(cut(" ".join(words), width))
+    while len(lines) < count:
+        lines.append("")
+    return lines
+
+
+def details(box: Mapping[str, Any], wanted: Sequence[str], zone: tzinfo | None) -> list[str]:
+    """What a larger box says besides: its tries, time and tokens (or what one try may use, before it ran); the files
+    it writes, or the box a VERIFY checks."""
+    said = []
+    for each in wanted:
+        if each == "tries":
+            said.append(tries_said(box, zone))
+        elif each == "writes":
+            if box["type"] == "verify" and box.get("checks"):
+                said.append(f"checks {box['checks']}")
+            else:
+                said.append(f"writes {', '.join(box['writes'])}" if box["writes"] else "")
+    return said
+
+
+def tries_said(box: Mapping[str, Any], zone: tzinfo | None) -> str:
+    """A box's tries, time and tokens: "try 1 of 3 · 26 min · 48.3K tokens", "try 2 of 3 · since 23:45 · 12K tokens";
+    before it ran, what one try may use; nothing for a box of yours."""
+    if box["type"] in ("you", "gate"):
+        return ""
+    tries, cap, limits = box["tries"], box.get("cap"), box.get("limits") or {}
+    if not tries:
+        return f"up to {cap} {'try' if cap == 1 else 'tries'} · {limits.get('minutes', '?')} min each" if cap else ""
+    last = tries[-1]
+    started = parse(last["started"]) if last.get("started") else None
+    ended = parse(last["ended"]) if last.get("ended") else None
+    if started is not None and ended is not None:
+        when = f"{max(int((ended - started).total_seconds() // 60), 0)} min"
+    else:
+        when = f"since {clock(started, zone)}" if started is not None else ""
+    tokens = int(last.get("tokens") or 0)
+    count = f"{tokens / 1000:.1f}K tokens" if tokens >= 1000 else f"{tokens} tokens"
+    return " · ".join(part for part in (f"try {last['number']} of {cap}" if cap else "", when, count) if part)
+
+
 class _Laid:
     """Lays a flow out in rows of stages."""
 
     def __init__(
-        self, view: Mapping[str, Any], chart: Chart, selected: str, live: Mapping[str, Any], zone: tzinfo | None
+        self,
+        view: Mapping[str, Any],
+        chart: Chart,
+        selected: str,
+        live: Mapping[str, Any],
+        zone: tzinfo | None,
+        size: Size,
     ) -> None:
         self.view, self.chart, self.selected, self.live, self.zone = view, chart, selected, live, zone
         self.canvas = Canvas(chart.width)
         self.boxes = {box["id"]: box for box in view["boxes"]}
         self.lines = {(line["from"], line["to"]): line for line in view.get("lines") or []}
-        self.per_row = max(1, chart.width // (BOX_LEAST + GAP))
-        self.box_w = min(BOX_MOST, (chart.width - self.per_row * GAP) // self.per_row)
+        self.size, self.rows = size, size.rows
+        chart.box_rows = size.rows
+        self.per_row = max(1, chart.width // (size.least + GAP))
+        self.box_w = min(size.most, (chart.width - self.per_row * GAP) // self.per_row)
         self.stages = stages(view)
         if view.get("next_flow"):
             self.stages.append([NEXT])
@@ -373,11 +464,11 @@ class _Laid:
         return str(self.boxes[name]["type"]) if name in self.boxes else ""
 
     def _height(self, stage: list[str]) -> int:
-        return len(stage) * BOX_ROWS + (len(stage) - 1) * FAN_GAP
+        return len(stage) * self.rows + (len(stage) - 1) * FAN_GAP
 
     def _stage(self, stage: list[str], x: int, top: int) -> None:
         for index, name in enumerate(stage):
-            self._box(name, Rect(x, top + index * (BOX_ROWS + FAN_GAP), self.box_w, BOX_ROWS))
+            self._box(name, Rect(x, top + index * (self.rows + FAN_GAP), self.box_w, self.rows))
 
     def _box(self, name: str, rect: Rect) -> None:
         self.chart.boxes[name] = rect
@@ -409,9 +500,10 @@ class _Laid:
         title_tone = "bold $clank-selected-text" if lit else ("$clank-quiet" if quiet else "$clank-text")
         lines = [
             [(left, f"bold {tone}"), (pad, ""), (right, right_tone)],
-            [(cut(box["title"], inner), title_tone)],
+            *([(line, title_tone)] for line in wrapped_title(box["title"], inner, self.size.title_lines)),
             [(cut(model_said(box, self.live), inner), "$clank-quiet")],
             [(cut(last_said(box, self.view, self.zone), inner), "$clank-quiet")],
+            *([(cut(said, inner), "$clank-quiet")] for said in details(box, self.size.details, self.zone)),
         ]
         self._frame(rect, _border(box), lines, lit=lit)
 
@@ -444,7 +536,7 @@ class _Laid:
 
     def _ports(self, top: int, count: int) -> list[int]:
         """The lines a stage's boxes are joined at: each box's tag line."""
-        return [top + index * (BOX_ROWS + FAN_GAP) + 1 for index in range(count)]
+        return [top + index * (self.rows + FAN_GAP) + 1 for index in range(count)]
 
     def _join(self, before: list[str], stage: list[str], x: int, top: int) -> None:
         """The lines from one stage to the next in the row: across, a fan's split, or its join."""
@@ -523,7 +615,7 @@ class _Laid:
                 alone.append(line)
                 continue
             drawn.append((line, into, out))
-        canvas, bottom = self.canvas, top + BOX_ROWS - 1
+        canvas, bottom = self.canvas, top + self.rows - 1
         for band, (line, into, out) in enumerate(drawn, start=y):
             state = str(line.get("state") or "not yet")
             style, glyphs = _line_style(state), _glyphs(state == "not yet")
@@ -565,7 +657,7 @@ class _Laid:
             x = (len(row) - 1) * (self.box_w + GAP)
             self._trunk(x + self.box_w, self._ports(top, len(last)), [each for each, _ in found], "down", down_to=y)
         else:
-            bottom = top + BOX_ROWS - 1
+            bottom = top + self.rows - 1
             canvas.put(out, bottom, "┬", style)
             for row_ in range(bottom + 1, y):
                 canvas.put(out, row_, glyphs["down"], style)

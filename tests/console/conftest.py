@@ -87,6 +87,14 @@ def clanks_style() -> Iterator[None]:
     use(LoadedStyle(CLANK, StyleSettings()))
 
 
+@pytest.fixture(autouse=True)
+def monitor_first_on_session(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Monitor's tests were written while it opened on the Session view (board A), and press on from there; it opens
+    on the Flow view now (decision 0130), which a test marked `flow_first` holds."""
+    if "flow_first" not in request.keywords:
+        monkeypatch.setattr(monitor, "FIRST_VIEW", "session")
+
+
 @pytest.fixture
 def still_spinner(monkeypatch: pytest.MonkeyPatch) -> None:
     """The console's spinner held still, and the Monitor's Now panel's: where a session the Monitor follows works, its

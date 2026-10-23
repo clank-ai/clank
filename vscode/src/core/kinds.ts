@@ -19,6 +19,8 @@ export interface ConsoleSettings {
   title: string;
   /** The style the console draws in, by its file's name. */
   style: string;
+  /** The size of the Flow view's boxes: small, medium or large (+ and - on the Flow view change it); a panel too narrow for two of them draws the largest that fits two. */
+  flow_boxes: "small" | "medium" | "large";
 }
 
 /** A style of the console: every element of its look, by name (design 0011 §2). */

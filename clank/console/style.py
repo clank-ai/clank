@@ -66,6 +66,12 @@ def mark(name: str) -> str:
     return str(getattr(_current.marks, name))
 
 
+def console_settings(home: Home) -> ConsoleSettings:
+    """The console's settings as its file says them; the defaults when there is none, or it does not read."""
+    found = _read(ConsoleSettings, home.config / "console.json") if (home.config / "console.json").is_file() else None
+    return found if isinstance(found, ConsoleSettings) else ConsoleSettings()
+
+
 def load_style(home: Home, last: LoadedStyle | None = None) -> LoadedStyle:
     """The style the console's settings pick, read from its file. A file that does not read leaves `last` in force
     (Clank's own at start), a style that is not found gives Clank's own; `problem` says why."""

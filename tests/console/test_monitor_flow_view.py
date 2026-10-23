@@ -311,3 +311,47 @@ def test_the_live_box_says_its_context_is_not_read_yet_before_it_is_never_that_n
     assert any(line.startswith("context no model runs") for line in nothing)
     waiting = [line.plain for line in flowpanels.live(box, None, {"window": 262_144, "used": None}, 60)]
     assert any(line.startswith("context no step has ended yet") for line in waiting)
+
+
+async def test_plus_and_minus_make_the_flows_boxes_larger_or_smaller_kept_in_the_consoles_settings(
+    kernel: Kernel, client: Client, home: Home, clock: FakeClock, folder: Path
+) -> None:
+    """The owner (2026-10-22, the console full screen over SSH): the boxes should be larger and "a bit more fleshed
+    out". They are medium unless the console's settings say otherwise; + and - pick another size, kept there."""
+    d1(kernel, clock, folder)
+    app = make(client, home, folder)
+    async with app.run_test(size=(200, 60)) as pilot:
+        await flow_view(pilot, app)
+        await settle(pilot, lambda: "T2" in chart(app).chart.boxes)
+        assert chart(app).box_size == "medium"
+        assert chart(app).chart.boxes["T2"].h == 8
+        await pilot.press("plus")
+        await settle(pilot, lambda: chart(app).chart.boxes["T2"].h == 10)
+        await settle(pilot, lambda: '"flow_boxes": "large"' in (home.config / "console.json").read_text("utf-8")
+                     if (home.config / "console.json").is_file() else False)  # fmt: skip
+        await pilot.press("minus", "minus")
+        await settle(pilot, lambda: chart(app).chart.boxes["T2"].h == 6)
+
+
+async def test_under_the_flow_the_running_boxs_thinking_calls_and_context_then_the_orchestrator_and_waiting(
+    kernel: Kernel, client: Client, home: Home, clock: FakeClock, folder: Path
+) -> None:
+    """The owner (2026-10-23, watching a run): "move the 'waiting for you' and 'Models in this flow' boxes down so that
+    we can include boxes for the thinking and the tool calls/context viewer". Under the flow: Selected beside Thinking
+    (the running box's model as it writes), Tool calls beside Context window (its session's), then the Orchestrator
+    beside Waiting for you, then Models in this flow."""
+    d1(kernel, clock, folder)
+    app = make(client, home, folder)
+    async with app.run_test(size=(160, 60)) as pilot:
+        page = await flow_view(pilot, app)
+        order = [panel.id for panel in page.query(Panel).results(Panel) if panel.has_class("board-d1")]
+        assert order[:8] == [
+            "monitor-flow-boxes", "monitor-flow-selected", "monitor-flow-thinking", "monitor-flow-calls",
+            "monitor-flow-context", "monitor-flow-orchestrator", "monitor-flow-waiting", "monitor-flow-models",
+        ]  # fmt: skip
+        await settle(pilot, lambda: page.flows.box_seen is not None)
+        seen = page.flows.box_seen
+        assert seen is not None
+        assert (seen.head or {}).get("session") == T2_SESSION, "the running box's session"
+        for id in ("monitor-flow-thinking", "monitor-flow-calls", "monitor-flow-context"):
+            assert "T2" in page.query_one(f"#{id}", Panel).note, f"{id} names the box it shows"

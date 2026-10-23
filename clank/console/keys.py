@@ -69,6 +69,8 @@ SHOWN = {
     "full_stop": ".",
     "escape": "esc",
     "backspace": "bksp",
+    "plus": "+",
+    "minus": "-",
     "ctrl+p": "^p",
     "ctrl+b": "^b",
 }

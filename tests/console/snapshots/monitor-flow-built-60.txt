@@ -3,39 +3,39 @@
  flow “A new simulation study” · workspace myproject · not run yet
 
  ┌─ Flow ───────────────────────────────────────────────────────── 6 waiting ─┐
- │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐            │
- │ ┆ YOU                       ○┆┄┄▸┆ PLAN                      ○┆            │
- │ ┆ Your brief                 ┆   ┆ Write the plan             ┆            │
- │ ┆ you                        ┆   ┆ main slot's model          ┆            │
- │ ┆ BRIEF.md                   ┆   ┆ PLAN.md                    ┆            │
- │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘            │
- │                ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯             │
- │                ▾                                                           │
- │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐            │
- │ ┆ VERIFY                    ○┆┄┄▸┆ DECOMPOSE                 ○┆            │
- │ ┆ Check the plan             ┆   ┆ Break it into tasks        ┆            │
- │ ┆ main slot's model          ┆   ┆ main slot's model          ┆            │
- │ ┆ a verdict: pass or findings┆   ┆ proposes tasks             ┆            │
- │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘            │
- │ Check the plan: fail ⟲ back to PLAN                          ┆             │
- │                ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯             │
- │                ▾                                                           │
- │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐            │
- │ ┆ INTEGRATE                 ○┆┄┄▸┆ GATE                      ○┆            │
- │ ┆ Put it together            ┆   ┆ You review the whole       ┆            │
- │ ┆ main slot's model          ┆   ┆ you                        ┆            │
- │ ┆ SUMMARY.md                 ┆   ┆ you decide                 ┆            │
- │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘            │
- │                ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯             │
- │                ▾                                                           │
- │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                             │
- │ ┆ ▸ next flow                ┆                                             │
- │ ┆ made when approved         ┆                                             │
- │ ┆ brief from INTEGRATE       ┆                                             │
- │ ┆                            ┆                                             │
- │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                             │
- │                                                                            │
- │ ✓ done  ● running  ○ waiting  ✗ failed  ┄┄ proposed  ── pass             ▇ │▇▇
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐      │
+ │ ┆ YOU                          ○┆┄┄▸┆ PLAN                         ○┆      │
+ │ ┆ Your brief                    ┆   ┆ Write the plan                ┆      │
+ │ ┆                               ┆   ┆                               ┆      │
+ │ ┆ you                           ┆   ┆ main slot's model             ┆      │
+ │ ┆ BRIEF.md                      ┆   ┆ PLAN.md                       ┆      │
+ │ ┆                               ┆   ┆ up to 3 tries · 30 min each   ┆      │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘      │
+ │                 ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯       │
+ │                 ▾                                                          │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐      │
+ │ ┆ VERIFY                       ○┆┄┄▸┆ DECOMPOSE                    ○┆      │
+ │ ┆ Check the plan                ┆   ┆ Break it into tasks           ┆      │
+ │ ┆                               ┆   ┆                               ┆      │
+ │ ┆ main slot's model             ┆   ┆ main slot's model             ┆      │
+ │ ┆ a verdict: pass or findings   ┆   ┆ proposes tasks                ┆      │
+ │ ┆ up to 3 tries · 30 min each   ┆   ┆ up to 3 tries · 30 min each   ┆      │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘      │
+ │ Check the plan: fail ⟲ back to PLAN                                ┆       │
+ │                 ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯       │
+ │                 ▾                                                          │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐      │
+ │ ┆ INTEGRATE                    ○┆┄┄▸┆ GATE                         ○┆      │
+ │ ┆ Put it together               ┆   ┆ You review the whole          ┆      │
+ │ ┆                               ┆   ┆                               ┆      │
+ │ ┆ main slot's model             ┆   ┆ you                           ┆      │
+ │ ┆ SUMMARY.md                    ┆   ┆ you decide                    ┆      │
+ │ ┆ up to 3 tries · 30 min each   ┆   ┆                               ┆      │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘      │
+ │                 ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯       │
+ │                 ▾                                                          │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                          │
+ │ ┆ ▸ next flow                   ┆                                          │
  └────────────────────────────────────────────────────────────────────────────┘
 
  ┌─ Selected ─────────────────────────────────────────────────────────────────┐
@@ -47,14 +47,14 @@
  │ next    PLAN Write the plan                                                │
  └────────────────────────────────────────────────────────────────────────────┘
 
- ┌─ Waiting for you ──────────────────────────────────────────────────────────┐
- │ ? Built with the model: look, then r to run                                │
- │   e changes a box first; r runs it from its brief to your review, asking   │
- │   nothing else on the way                                                  │
- │ The check warns:                                                           │
- │ - plan sees data/grid.csv, which is not in the folder, and neither plan    │
- │   nor a box before it writes it                                            │
+ ┌─ Thinking ─────────────────────────────────────────────────────────────────┐
+ │                                                                            │
+ │ no request of this session yet: the session's next model request shows her │
+ │ e as it is written                                                         │
+ │                                                                            │
  └────────────────────────────────────────────────────────────────────────────┘
 
+ ┌─ Tool calls ───────────────────────────────────────────────────────────────┐
+ │ no box at work: the running box's session shows here                       │
 
- f10 next view  enter open  p pause  O orchestrator  L ledger  ? explain  f1 help
+ f10 next view  enter open  p pause  O orchestrator  ? explain  f1 help

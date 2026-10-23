@@ -3,40 +3,40 @@
  flow “A new simulation study” · workspace myproject · run 1 · started 12:02 · running: T2
 
  ┌─ Flow ────────────────────────────────────────────────────────────────────────────────────────────────────────────────── 6 done · 1 running · 4 waiting ─┐
- │ ┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐      │
- │ │ YOU               ✓│──▸│ PLAN ⟲2           ✓│──▸│ VERIFY ⟲2         ✓│──▸│ GATE              ✓│──▸│ DECOMPOSE         ✓│─┬▸│ TASK T1           ✓│┄┐    │
- │ │ Brief              │   │ Write the study pl…│   │ Check the plan     │   │ You approve the pl…│   │ Break it into tasks│ │ │ The parameter grid │ ┆    │
- │ │ you                │   │ daily 262K         │   │ daily 262K         │   │ you                │   │ daily 262K         │ │ │ daily 262K         │ ┆    │
- │ │ BRIEF.md · 12:02   │   │ PLAN.md · 12:18    │   │ pass, try 2 · 12:22│   │ approved 12:30     │   │ 4 tasks · 12:31    │ │ │ grid.json · 12:33  │ ┆    │
- │ └────────────────────┘   └─▴──────────────────┘   └─────────────────┬──┘   └────────────────────┘   └────────────────────┘ │ └────────────────────┘ ┆    │
- │                            │                                        │                                                      │                        ┆    │
- │                            │                                        │                                                      │ ┏━━━━━━━━━━━━━━━━━━━━┓ ┆    │
- │                            │                                        │                                                      ├▸┃ TASK T2           ●┃┄┤    │
- │                            │                                        │                                                      ┆ ┃ Estimate run times ┃ ┆    │
- │                            │                                        │                                                      ┆ ┃ daily 262K         ┃ ┆    │
- │                            │                                        │                                                      ┆ ┃ runs/estimates.md  ┃ ┆    │
- │                            │                                        │                                                      ┆ ┗━━━━━━━━━━━━━━━━━━━━┛ ┆    │
- │                            │                                        │                                                      ┆                        ┆    │
- │                            │                                        │                                                      ┆ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐ ┆    │
- │                            │                                        │                                                      ├▸┆ TASK T3           ○┆┄┤    │
- │                            │                                        │                                                      ┆ ┆ The sweep script   ┆ ┆    │
- │                            │                                        │                                                      ┆ ┆ daily 262K         ┆ ┆    │
- │                            │                                        │                                                      ┆ ┆ scripts/sweep.py   ┆ ┆    │
- │                            │                                        │                                                      ┆ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘ ┆    │
- │                            │                                        │                                                      ┆                        ┆  ▂ │
- │                            │                                        │                                                      ┆ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐ ┆    │▂▂
- │                            │                                        │                                                      └▸┆ TASK T4           ○┆┄┤    │
- │                            │                                        │                                                        ┆ The analysis noteb…┆ ┆    │
- │                            │                                        │                                                        ┆ daily 262K         ┆ ┆    │
- │                            │                                        │                                                        ┆ analysis/figures.i…┆ ┆    │
- │                            │                                        │                                                        └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘ ┆    │
- │                            ╰─ fail ⟲ 3 findings · 2 of 3 tries use…─╯                                                                               ┆    │
+ │ ┌────────────────────────────────┐   ┌────────────────────────────────┐   ┌────────────────────────────────┐   ┌────────────────────────────────┐        │
+ │ │ YOU                           ✓│──▸│ PLAN ⟲2                       ✓│──▸│ VERIFY ⟲2                     ✓│──▸│ GATE                          ✓│        │
+ │ │ Brief                          │   │ Write the study plan           │   │ Check the plan                 │   │ You approve the plan           │        │
+ │ │                                │   │                                │   │                                │   │                                │        │
+ │ │ you                            │   │ daily 262K                     │   │ daily 262K                     │   │ you                            │        │
+ │ │ BRIEF.md · 12:02               │   │ PLAN.md · 12:18                │   │ pass, try 2 · 12:22            │   │ approved 12:30                 │        │
+ │ │                                │   │ try 2 of 3 · 7 min · 0 tokens  │   │ try 2 of 3 · 4 min · 0 tokens  │   │                                │        │
+ │ └────────────────────────────────┘   └─▴──────────────────────────────┘   └─────────────────────────────┬──┘   └───────────────────────────────┬┘        │
+ │                                        ╰─ fail ⟲ 3 findings · 2 of 3 tries used ────────────────────────╯                                      │         │
+ │                  ╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯         │
+ │                  ▾                                                                                                                                       │
+ │ ┌────────────────────────────────┐   ┌────────────────────────────────┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐        │
+ │ │ DECOMPOSE                     ✓│─┬▸│ TASK T1                       ✓│┄┬▸┆ INTEGRATE                     ○┆┄┄▸┆ GATE                          ○┆        │
+ │ │ Break it into tasks            │ │ │ The parameter grid             │ ┆ ┆ Put it together                ┆   ┆ You review the whole           ┆      ▃ │
+ │ │                                │ │ │                                │ ┆ ┆                                ┆   ┆                                ┆        │
+ │ │ daily 262K                     │ │ │ daily 262K                     │ ┆ ┆ daily 262K                     ┆   ┆ you                            ┆        │
+ │ │ 4 tasks · 12:31                │ │ │ grid.json · 12:33              │ ┆ ┆ STUDY-PLAN.md                  ┆   ┆ you decide                     ┆        │
+ │ │ try 1 of 3 · 1 min · 0 tokens  │ │ │ try 1 of 3 · 1 min · 0 tokens  │ ┆ ┆ up to 3 tries · 30 min each    ┆   ┆                                ┆        │
+ │ └────────────────────────────────┘ │ └────────────────────────────────┘ ┆ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘        │▇▇
+ │                                    │                                    ┆                                                                      ┆         │
+ │                                    │ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ ┆                                                                      ┆         │
+ │                                    ├▸┃ TASK T2                       ●┃┄┤                                                                      ┆         │
+ │                                    ┆ ┃ Estimate run times             ┃ ┆                                                                      ┆         │
+ │                                    ┆ ┃                                ┃ ┆                                                                      ┆         │
+ │                                    ┆ ┃ daily 262K                     ┃ ┆                                                                      ┆         │
+ │                                    ┆ ┃ runs/estimates.md              ┃ ┆                                                                      ┆         │
+ │                                    ┆ ┃ try 1 of 3 · since 12:35 · 8.4…┃ ┆                                                                      ┆         │
+ │                                    ┆ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ ┆                                                                      ┆         │
  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
- ┌─ Selected ────────────────────────────────────────────────────────────────┐  ┌─ Waiting for you ─────────────────────────────────────────────────────────┐
- │ TASK T2 · ● running                                                       │  │ ✓ Nothing waits for you.                                                  │
- │ Estimate run times                                                        │  │ next: GATE You review the whole, after INTEGRATE                          │
- │ model   daily 262K                                                        │  │ it asks here and on your phone                                            │
+ ┌─ Selected ────────────────────────────────────────────────────────────────┐  ┌─ Thinking ────────────────────────────────────────────── TASK T2 · try 1 ─┐
+ │ TASK T2 · ● running                                                       │  │ idle                                                                      │
+ │ Estimate run times                                                        │  │ the session waits for nothing: its run ended                              │
+ │ model   daily 262K                                                        │  │                                                                           │
  │ status  ● running since 12:35 · 6m · try 1 of 3                           │  │                                                                           │
  │ mode    auto: changes accepted at once                                    │  │                                                                           │
  │ sees    PLAN.md, grid.json                                                │  │                                                                           │
@@ -47,4 +47,4 @@
  │ ┌─ Live ────────────────────────────────────────────────────────────────┐ │  │                                                                           │
  │ │ idle                                                                  │ │  │                                                                           │
 
- f10 next view  enter open  p pause  O orchestrator  L ledger  e edit the box  o open in VS Code  r run from here  h run log  n new flow  ? explain  f1 help
+ f10 next view  enter open  p pause  O orchestrator  + bigger boxes  - smaller boxes  L ledger  e edit the box  o open in VS Code  ? explain  f1 help

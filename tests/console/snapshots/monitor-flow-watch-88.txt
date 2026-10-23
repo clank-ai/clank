@@ -3,48 +3,48 @@
  flow “A new simulation study” · building with the model · DRAFT 1, refused · workspace myproject                         │ CPU  ██▉░░░░░░░░░░░░░░░░░░░░░  12% │
                                                                                                                           │                                    │
  ┌─ Flow ────────────────────────────────────────────────────────────────────────────── DRAFT 1 · refused: 1 problem ─┐   │ 1s                 ▂       max 12% │
- │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐      │   │ thr  ▁▃▁▁▁▃▁▁▁▃▁▁▁▃▁▁ 16 threads   │
- │ ┆ YOU                  ○┆┄┄▸┆ PLAN                 ○┆┄┄▸┆ VERIFY               ○┆┄┄▸┆ DECOMPOSE            ○┆      │   │                                    │
- │ ┆ Your brief            ┆   ┆ Write the plan        ┆   ┆ Check the plan        ┆   ┆ Break it into tasks   ┆      │   │ RAM  █████████░░░░░░░░░░░░░░░  38% │
- │ ┆ you                   ┆   ┆ main slot's model     ┆   ┆ main slot's model     ┆   ┆ main slot's model     ┆      │   │      24.0 GB of 64.0 GB            │
- │ ┆ BRIEF.md              ┆   ┆ PLAN.md               ┆   ┆ a verdict: pass or fi…┆   ┆ proposes tasks        ┆      │   │ 1s                 ▄       max 38% │
- │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄▴┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘      │   │                                    │
- │                               ╰┄ fail ⟲ back ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯                             ┆       │   │ GPU  ▊░░░░░░░░░░░░░░░░░░░░░░░   3% │
- │             ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯       │   │                                    │
- │             ▾                                                                                                      │   │ 1s                 ▁        max 3% │
- │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                  │   │      RTX 5080 · 34°C · 18 W        │
- │ ┆ INTEGRATE            ○┆┄┄▸┆ GATE                 ○┆┄┄▸┆ ▸ next flow           ┆                                  │   │ VRAM ███░░░░░░░░░░░░░░░░░░░░░  13% │
- │ ┆ Put it together       ┆   ┆ You review the whole  ┆   ┆ made when approved    ┆                                  │   │      2.0 GB of 15.9 GB             │
- │ ┆ main slot's model     ┆   ┆ you                   ┆   ┆ brief from INTEGRATE  ┆                                  │   │                                    │
- │ ┆ SUMMARY.md            ┆   ┆ you decide            ┆   ┆                       ┆                                  │   │ Disk read 12.0 MB/s · write 3.0 M… │
- │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                  │   │ 1s                 █ max 15.0 MB/s │
- │                                                                                                                    │   │      C: █████████▍░░░░░░░░░░░  44% │
- │ ✓ done  ● running  ○ waiting  ✗ failed  ┄┄ proposed  ── pass  ── fail ⟲ back  ── now  ┄┄ not yet                   │   │                                    │
- └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘   │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
-                                                                                                                          │ 1s                 █  max 1.2 MB/s │
- ┌─ Building it with the model ───────────────────────────┐  ┌─ Waiting for you ──────────────────────────────────────┐   └────────────────────────────────────┘
- │ ✓ started by you (console) · 12:41                     │  │ ? talk with the model in OpenCode, on “flow · building │
- │ ● reading the folder: 7 tool calls so far              │  │   the flow”                                            │   ┌─ Clank now ────────────────────────┐
- │ ✓ BRIEF.md written · 12:44                             │  │   Enter opens its session here; once the model's draft │   │ ● gateway stopped                  │
- │ ✗ draft 1 · 12:41 · refused: 1 problem                 │  │   is written: look, then r                             │   └────────────────────────────────────┘
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐       │   │ thr  ▁▃▁▁▁▃▁▁▁▃▁▁▁▃▁▁ 16 threads   │
+ │ ┆ YOU                           ○┆┄┄▸┆ PLAN                          ○┆┄┄▸┆ VERIFY                        ○┆       │   │                                    │
+ │ ┆ Your brief                     ┆   ┆ Write the plan                 ┆   ┆ Check the plan                 ┆       │   │ RAM  █████████░░░░░░░░░░░░░░░  38% │
+ │ ┆                                ┆   ┆                                ┆   ┆                                ┆       │   │      24.0 GB of 64.0 GB            │
+ │ ┆ you                            ┆   ┆ main slot's model              ┆   ┆ main slot's model              ┆       │   │ 1s                 ▄       max 38% │
+ │ ┆ BRIEF.md                       ┆   ┆ PLAN.md                        ┆   ┆ a verdict: pass or findings    ┆       │   │                                    │
+ │ ┆                                ┆   ┆ up to 3 tries · 30 min each    ┆   ┆ up to 3 tries · 30 min each    ┆       │   │ GPU  ▊░░░░░░░░░░░░░░░░░░░░░░░   3% │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄▴┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┬┘       │   │                                    │
+ │                                        ╰┄ fail ⟲ back ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯ ┆        │   │ 1s                 ▁        max 3% │
+ │                  ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯        │   │      RTX 5080 · 34°C · 18 W        │
+ │                  ▾                                                                                                 │   │ VRAM ███░░░░░░░░░░░░░░░░░░░░░  13% │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐       │   │      2.0 GB of 15.9 GB             │
+ │ ┆ DECOMPOSE                     ○┆┄┄▸┆ INTEGRATE                     ○┆┄┄▸┆ GATE                          ○┆       │   │                                    │
+ │ ┆ Break it into tasks            ┆   ┆ Put it together                ┆   ┆ You review the whole           ┆       │   │ Disk read 12.0 MB/s · write 3.0 M… │
+ │ ┆                                ┆   ┆                                ┆   ┆                                ┆       │   │ 1s                 █ max 15.0 MB/s │
+ │ ┆ main slot's model              ┆   ┆ main slot's model              ┆   ┆ you                            ┆       │   │      C: █████████▍░░░░░░░░░░░  44% │
+ │ ┆ proposes tasks                 ┆   ┆ SUMMARY.md                     ┆   ┆ you decide                     ┆       │   │                                    │
+ │ ┆ up to 3 tries · 30 min each    ┆   ┆ up to 3 tries · 30 min each    ┆   ┆                                ┆       │   │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘       │   │ 1s                 █  max 1.2 MB/s │
+ │                  ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯        │   └────────────────────────────────────┘
+ │                  ▾                                                                                                 │▃▃
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                                                                 │   ┌─ Clank now ────────────────────────┐
+ │ ┆ ▸ next flow                    ┆                                                                                 │   │ ● gateway stopped                  │
+ │ ┆ made when approved             ┆                                                                                 │   └────────────────────────────────────┘
+ │ ┆ brief from INTEGRATE           ┆                                                                                 │
+ │ ┆                                ┆                                                                               ▅ │
+ │ ┆                                ┆                                                                                 │
+ │ ┆                                ┆                                                                                 │
+ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+ ┌─ Building it with the model ───────────────────────────┐  ┌─ Thinking ────────────────────────────── the planning ─┐
+ │ ✓ started by you (console) · 12:41                     │  │ answering · step 4                                     │
+ │ ● reading the folder: 7 tool calls so far              │  │ no request of this session yet: the gateway does not … │
+ │ ✓ BRIEF.md written · 12:44                             │  │ (nothing written yet)                                  │
+ │ ✗ draft 1 · 12:41 · refused: 1 problem                 │  │                                                        │
  │     - boxes.1.when_done: a built flow waits only at    │  │                                                        │
  │       its end: leave plan's when_done out (go on)      │  │                                                        │
  │                                                        │  │                                                        │
  │ ┌─ Live ─────────────────────────────────────────────┐ │  │                                                        │
- │ │ answering · step 4                                 │ │  │                                                        │▇▇
+ │ │ answering · step 4                                 │ │  │                                                        │
  │ │ speed   41 tok/s ▇█                                │ │  │                                                        │
  │ │ context no model runs                              │ │  │                                                        │
  │ │ guard   watching · nothing repeats                 │ │  │                                                        │
- │ │ Enter opens its session: the Session view and its… │ │  │                                                        │
- │ └────────────────────────────────────────────────────┘ │  │                                                        │
- └────────────────────────────────────────────────────────┘  └────────────────────────────────────────────────────────┘
-
- ┌─ Orchestrator ─────────────────────────────────── off ─┐  ┌─ Models in this flow ──────────────────────────────────┐
- │ ○ off                                                  │  │ ○ main slot's model · switches nothing · 4 boxes       │
- │   O turns it on: after each box a model (the flow's,   │  │ the other 2 are you                                    │
- │   on this machine unless it names another) checks the  │  │ e on a box picks another preset for it                 │
- │   run is on track and tells you at once what you       │  │                                                        │
- │   should know; steering, it also changes the boxes     │  │                                                        │
- │   ahead, sends work back and answers the run's         │  │                                                        │
 
  f10 next view  enter open  O orchestrator  n new flow  N new flow in VS Code  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu      ^p palette

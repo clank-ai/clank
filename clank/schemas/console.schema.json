@@ -20,6 +20,17 @@
       "description": "The style the console draws in, by its file's name.",
       "title": "Style",
       "type": "string"
+    },
+    "flow_boxes": {
+      "default": "medium",
+      "description": "The size of the Flow view's boxes: small, medium or large (+ and - on the Flow view change it); a panel too narrow for two of them draws the largest that fits two.",
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "title": "Flow boxes",
+      "type": "string"
     }
   },
   "required": [

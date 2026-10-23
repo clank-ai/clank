@@ -32,12 +32,16 @@ from urllib.parse import quote
 from textual.containers import Vertical
 from textual.content import Content
 from textual.widget import Widget
+from textual.widgets import Label
 
 from clank.client import ClientError, NotRunning
 from clank.components.agents.console import boxchart, boxpanel, flowboards, flowpanels
-from clank.components.agents.console.boxchart import tag
+from clank.components.agents.console.boxchart import SIZES, tag
 from clank.components.agents.console.boxpanel import BoxChart, CardsView, FlowList
-from clank.components.agents.console.following import FlowReading, Watching
+from clank.components.agents.console.callspanel import CallsList
+from clank.components.agents.console.contextpanel import ContextWindow
+from clank.components.agents.console.following import FlowReading, Following, Seen, Watching
+from clank.components.agents.console.livepanel import LiveView
 from clank.console import actions
 from clank.console.confirm import ConfirmScreen
 from clank.console.details import DetailsScreen
@@ -194,6 +198,10 @@ class LiveBox(Vertical):
     """
 
 
+NO_BOX_AT_WORK = "no box at work: the running box's session shows here"
+NO_CALL_YET = "no tool call yet"
+
+
 def panel(widget: Widget, title: str, id: str, board: str = "d1") -> Panel:
     """A panel of the Flow view's board."""
     return Panel(widget, title=title, id=id, classes=f"view-flow board-{board}")
@@ -298,6 +306,13 @@ class FlowViewer:
         self.view: dict[str, Any] | None = None  # the flow as last drawn
         self.now: dict[str, Any] | None = None  # what the running box's session does now, as last read
         self.context: dict[str, Any] | None = None  # its context window, as last read
+        self.box_seen: Seen | None = None  # its session as Thinking, Tool calls and Context window show it (0131)
+        self._box_following: Following | None = None  # that session, read as the Session view reads its own
+        self._seen_came: Seen | None = None
+        self._live_came: tuple[str, str, dict[str, Any]] | None = None  # its live text: session, request, what came
+        self._live_reading = False
+        self._live_at = 0.0
+        self._live_said: tuple[Any, ...] = ()  # what the last live reading said of its request
         self.redraws = 0  # ticks on which the view drew something: a test counts them
         self._reading: FlowReading | None = None
         self._watching: Watching | None = None
@@ -317,11 +332,14 @@ class FlowViewer:
 
     def compose(self) -> list[Widget]:
         """Board D1's panels, as the website draws them (decision 0125): the flow across the whole width; under it
-        Selected (with its Live box) beside Waiting for you, then the Orchestrator beside Models in this flow; then The
-        brief, checked, Deliverables and Ahead."""
+        Selected (with its Live box) beside Thinking, then Tool calls beside Context window, the running box's session's
+        (decision 0131); then the Orchestrator beside Waiting for you, Models in this flow, The brief, checked,
+        Deliverables and Ahead."""
         live = LiveBox(flowpanels.LinesView(id="monitor-flow-live-lines"), id="monitor-flow-live")
         live.border_title = "Live"
         live.display = False
+        calls = CallsList(id="monitor-flow-calls-list")
+        calls.display = False
         return [
             panel(BoxChart(id="monitor-flow-chart-boxes"), "Flow", "monitor-flow-boxes"),
             PanelGrid(
@@ -332,7 +350,26 @@ class FlowViewer:
                     id="monitor-flow-selected",
                     classes="view-flow board-d1",
                 ),
-                panel(flowpanels.LinesView(id="monitor-flow-waiting-lines"), "Waiting for you", "monitor-flow-waiting"),
+                Panel(
+                    flowpanels.LinesView(id="monitor-flow-doing-lines"),
+                    LiveView(id="monitor-flow-thinking-view"),
+                    title="Thinking",
+                    id="monitor-flow-thinking",
+                    classes="view-flow board-d1",
+                ),
+                columns="1fr 1fr",
+                stack_below=STACK_BELOW,
+                classes="view-flow board-d1",
+            ),
+            PanelGrid(
+                Panel(
+                    Label(NO_BOX_AT_WORK, id="monitor-flow-calls-empty", classes="quiet"),
+                    calls,
+                    title="Tool calls",
+                    id="monitor-flow-calls",
+                    classes="view-flow board-d1",
+                ),
+                panel(ContextWindow(id="monitor-flow-context-window"), "Context window", "monitor-flow-context"),
                 columns="1fr 1fr",
                 stack_below=STACK_BELOW,
                 classes="view-flow board-d1",
@@ -343,13 +380,12 @@ class FlowViewer:
                     "Orchestrator",
                     "monitor-flow-orchestrator",
                 ),
-                panel(
-                    flowpanels.LinesView(id="monitor-flow-models-lines"), "Models in this flow", "monitor-flow-models"
-                ),
+                panel(flowpanels.LinesView(id="monitor-flow-waiting-lines"), "Waiting for you", "monitor-flow-waiting"),
                 columns="1fr 1fr",
                 stack_below=STACK_BELOW,
                 classes="view-flow board-d1",
             ),
+            panel(flowpanels.LinesView(id="monitor-flow-models-lines"), "Models in this flow", "monitor-flow-models"),
             panel(flowpanels.LinesView(id="monitor-flow-brief-lines"), "The brief, checked", "monitor-flow-brief"),
             Panel(
                 flowpanels.LinesView(id="monitor-flow-deliverables-lines"),
@@ -894,12 +930,24 @@ class FlowViewer:
             if running is not None and session == running[1]:
                 self.now = found
                 self._draw_box()
+                self._draw_doing()
                 drew = True
         if self._context_came is not None:
             (session, found), self._context_came = self._context_came, None
             if running is not None and session == running[1]:
                 self.context = found
                 self._draw_selected()
+                drew = True
+        if self._seen_came is not None:
+            seen, self._seen_came = self._seen_came, None
+            if running is not None and (seen.head or {}).get("session") == running[1]:
+                self.box_seen = seen
+                self._draw_session()
+                drew = True
+        if self._live_came is not None:
+            (session, asked, found), self._live_came = self._live_came, None
+            if running is not None and session == running[1]:
+                self.page.query_one("#monitor-flow-thinking-view", LiveView).take(found, asked)
                 drew = True
         if drew:
             self.redraws += 1
@@ -911,6 +959,8 @@ class FlowViewer:
         working = bool((self.now or {}).get("working"))
         if running is not None and (working or moment - self._now_at >= READ_SECONDS):
             self._read_now(running)
+        if running is not None and not self._live_reading and (working or moment - self._live_at >= READ_SECONDS):
+            self._read_live(running)
 
     def _draw(self, view: dict[str, Any] | None) -> None:
         """The flow and every panel of board D1, each drawn again only where it changed."""
@@ -919,9 +969,11 @@ class FlowViewer:
         if bool((view or {}).get("planning")) != building:
             self.page.draw_keys()  # while a flow is built, only the keys that act then
         if running_session(view) != before:
-            self.now = self.context = None
+            self.now = self.context = self.box_seen = None
             if self._watching is not None:
                 self._watching.forget()
+            self.page.query_one("#monitor-flow-thinking-view", LiveView).forget()
+            self._draw_session()
         self.page.query_one("#monitor-flow-boxes", Panel).note = counts(view) if view and view.get("flow") else ""
         self.chart.empty = DRAFTING if (view or {}).get("planning") else boxpanel.NO_FLOW
         self.page.query_one("#monitor-flow-brief", Panel).note = flowpanels.brief_note(view) if view else ""
@@ -941,6 +993,7 @@ class FlowViewer:
         said.display = not files.files
         self._lines("#monitor-flow-deliverables-lines", lambda width: flowpanels.deliverables(view, width))
         self._lines("#monitor-flow-ahead-lines", lambda width: flowpanels.ahead(view, width))
+        self._draw_session()
         self.page.draw_heading()
         if self.board != "d1":
             self._draw_board()
@@ -981,6 +1034,39 @@ class FlowViewer:
             now, context = self.now, self.context
             self._lines("#monitor-flow-live-lines", lambda width: flowpanels.live(box, now, context, width))
 
+    def _draw_doing(self) -> None:
+        """Thinking's first lines: what the running box does now (`flowpanels.doing`); its text as it is written only
+        while the model works on a request, so a tool at work is never shown as an ended answer."""
+        now, seen = self.now, self.box_seen
+        running = running_session(self.view) is not None
+        idle = NO_BOX_AT_WORK if (self.view or {}).get("flow") else boxpanel.NO_FLOW
+        self._lines("#monitor-flow-doing-lines",
+                    lambda width: flowpanels.doing(now, seen.view if seen is not None else None, width) if running
+                    else [Content.styled(idle, "$clank-quiet")])  # fmt: skip
+        self.page.query_one("#monitor-flow-thinking-view", LiveView).display = running and flowpanels.generating(now)
+
+    def _draw_session(self) -> None:
+        """Thinking, Tool calls and Context window: the running box's session as last read, each panel naming the box
+        (decision 0131); "no box at work" while none is."""
+        seen, zone = self.box_seen, self.page.console.zone
+        box = next((each for each in (self.view or {}).get("boxes") or [] if each["id"] == now_box(self.view)), None)
+        named = ""
+        if box is not None and box["state"] == "running" and box["tries"]:
+            named = f"{tag(box)} · try {len(box['tries'])}"
+        elif (self.view or {}).get("planning"):
+            named = "the planning"
+        for id in ("monitor-flow-thinking", "monitor-flow-calls", "monitor-flow-context"):
+            self.page.query_one(f"#{id}", Panel).note = named
+        calls = self.page.query_one("#monitor-flow-calls-list", CallsList)
+        calls.show(seen.view if seen is not None else None, zone)
+        empty = self.page.query_one("#monitor-flow-calls-empty", Label)
+        idle = NO_BOX_AT_WORK if (self.view or {}).get("flow") else boxpanel.NO_FLOW
+        empty.update(NO_CALL_YET if seen is not None else idle)
+        empty.display = not calls.shown
+        context = self.page.query_one("#monitor-flow-context-window", ContextWindow)
+        context.show(seen.context if seen is not None else None, zone, seen.view if seen is not None else None)
+        self._draw_doing()
+
     def chosen(self) -> None:
         """The arrows chose another box: Selected shows it."""
         self._draw_selected()
@@ -999,6 +1085,13 @@ class FlowViewer:
         reading, client = self._reading, self.page.console.client
         running = running_session(self.view)
         console = self.page.console
+        following = None
+        if running is not None:  # its session, read as the Session view reads its own (decision 0131)
+            if self._box_following is None:
+                self._box_following = Following(client, console.folder)
+            if self._box_following.pinned is None or self._box_following.pinned[1] != running[1]:
+                self._box_following.pin(running[0], running[1], now_box(self.view) or "the planning")
+            following = self._box_following
 
         def work() -> None:
             try:
@@ -1015,6 +1108,13 @@ class FlowViewer:
                     context = {"session": session, "unavailable": str(error)}
                 if context != self.context:
                     console.call_from_thread(setattr, self, "_context_came", (session, context))
+            if following is not None:
+                try:
+                    seen = following.read()
+                except (NotRunning, ClientError):
+                    seen = None
+                if seen is not None:
+                    console.call_from_thread(setattr, self, "_seen_came", seen)
 
         self.page.run_worker(work, thread=True, group="monitor-flow-read", exit_on_error=False)
 
@@ -1036,6 +1136,38 @@ class FlowViewer:
 
         self.page.run_worker(work, thread=True, group="monitor-flow-now", exit_on_error=False)
 
+    def _read_live(self, running: tuple[str, str, int]) -> None:
+        """Read the running box's live text from the offset held, off the screen's thread; drawn on the next tick, the
+        next reading only once this one is in (as the Session view's)."""
+        self._live_at, self._live_reading = time.monotonic(), True
+        if self._watching is None:
+            self._watching = Watching(self.page.console.client)
+        view = self.page.query_one("#monitor-flow-thinking-view", LiveView)
+        watching, session, console = self._watching, running[1], self.page.console
+        after, asked = view.length, view.request
+
+        def work() -> None:
+            found: dict[str, Any] | None = None
+            try:
+                found = watching.text(session, after, asked)
+            except (NotRunning, ClientError):
+                pass  # the next reading tries again
+            finally:
+                console.call_from_thread(self._live_read, session, asked, found)
+
+        self.page.run_worker(work, thread=True, group="monitor-flow-live", exit_on_error=False)
+
+    def _live_read(self, session: str, asked: str, found: dict[str, Any] | None) -> None:
+        """A reading of the live text answered: kept for the next tick only when it brought something (new text,
+        another request, or the request's end), so the view draws nothing while nothing changes."""
+        self._live_reading = False
+        if found is None:
+            return
+        said = (found.get("id"), found.get("newest"), found.get("flying"), found.get("length"))
+        if found.get("parts") or said != self._live_said:
+            self._live_said = said
+            self._live_came = (session, asked, found)
+
     def press(self, key: str) -> bool:
         """Board D1's keys: Enter opens what the box chosen holds, `h` the run log, `p` pauses the flow or resumes
         it, `r` runs it again from the box chosen (a flow not run yet, from its start), once confirmed; `n` builds a
@@ -1047,6 +1179,9 @@ class FlowViewer:
             return False  # a window over the page (a confirmation, a form) takes its own keys: Enter is its
         if key in ("n", "N"):
             self.new_flow("vscode" if key == "N" else "")
+            return True
+        if key in ("plus", "equals_sign", "minus"):
+            self.resize(-1 if key == "minus" else 1)
             return True
         acts = {"enter": self.open, "h": self.log, "p": self.pause, "r": self.run_from, "e": self.edit,
                 "o": self.open_file, "O": self.orchestrator, "L": self.ledger}  # fmt: skip
@@ -1252,6 +1387,26 @@ class FlowViewer:
         body, done = turned((self.view or {}).get("orchestrator") or {})
         client, path = console.client, self._path("orchestrator")
         actions.call(console, lambda: client.post(path, body), done=done)
+
+    def resize(self, step: int) -> None:
+        """`+` and `-`: the flow's boxes larger or smaller (small, medium, large), drawn again at once and kept in the
+        console's settings (`flow_boxes`), so the console opens with them next time."""
+        names, chart, console = list(SIZES), self.chart, self.page.console
+        index = min(max(names.index(chart.box_size) + step if chart.box_size in names else 1, 0), len(names) - 1)
+        if names[index] == chart.box_size:
+            console.say(f"the boxes are {chart.box_size} already: {'-' if step > 0 else '+'} makes them "
+                        f"{'smaller' if step > 0 else 'larger'}")  # fmt: skip
+            return
+        chart.box_size = names[index]
+        chart._draw()
+        client, size = console.client, chart.box_size
+
+        def keep() -> Any:
+            found = client.get("records/console/console")
+            values = {**found["values"], "flow_boxes": size}
+            return client.put("records/console/console", {"values": values, "base": found["revision"]})
+
+        actions.call(console, keep, done=f"the flow's boxes are {size} now: + and - change them")
 
     def ledger(self) -> None:
         """`L`: the orchestrator's ledger of the latest run whole, in a window: its facts and plan, then each

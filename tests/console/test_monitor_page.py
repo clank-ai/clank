@@ -132,7 +132,8 @@ async def test_each_view_draws_its_panels_titled_and_empty_saying_no_session_yet
             boards = [f"board-{name}" for name in page.BOARDS]  # the Flow view's D4, beside its D1
             shown = [panel for panel in page.panels(view) if not any(panel.has_class(each) for each in boards)]
             panels = [panel for panel in shown if panel.id != "monitor-session-live"]
-            count = 8 if view == "flow" else 7  # the Flow view's Orchestrator among them (design 0013 §16)
+            count = 11 if view == "flow" else 7  # the Flow view's Orchestrator among them (design 0013 §16), and
+            # Thinking, Tool calls and Context window, the running box's session's (decision 0131)
             assert len(panels) == count, view
             assert all(panel.region.height for panel in panels), f"{view}: its panels on screen"
             others = [panel for panel in page.query(Panel) if panel not in panels]
@@ -144,6 +145,10 @@ async def test_each_view_draws_its_panels_titled_and_empty_saying_no_session_yet
                 assert f"┌─ {panel.title}" in frame, (view, panel.title)
                 if panel.id == "monitor-flow-boxes":  # a flow's boxes, drawn by their own widget (plan s28)
                     assert [line.plain for line in panel.query_one(BoxChart).chart.lines] == [says]
+                elif panel.id == "monitor-flow-calls":  # the running box's calls, said empty by its label (0131)
+                    assert str(panel.query_one("#monitor-flow-calls-empty", Label).content) == says
+                elif panel.id == "monitor-flow-context":  # its totals, by the Session view's own widget (0131)
+                    assert str(panel.query_one(ContextWindow).content) == "no session yet"
                 elif view == "flow":  # the Flow view's other panels, each its own lines (plan s28)
                     assert str(panel.query_one(LinesView).content) == says, panel.id
                 elif panel.id == "monitor-session-flow":  # the session's flow, drawn by its own widget (plan s16)
@@ -162,6 +167,19 @@ async def test_each_view_draws_its_panels_titled_and_empty_saying_no_session_yet
             region = app.query_one("#monitor-heading").region
             heading = render_text(app).splitlines()[region.y][region.x : region.right]
             assert heading.startswith("No flow yet" if view == "flow" else "No session yet"), heading
+
+
+@pytest.mark.flow_first
+async def test_the_monitor_opens_on_the_flow_view_the_first_time(client: Client, home: Home) -> None:
+    """Decision 0130: the website's look; the owner found the Session view first, over SSH, where F10 is the
+    terminal's."""
+    app = make(client, home)
+    async with app.run_test(size=(160, 40)) as pilot:
+        await pilot.press("f10")
+        page = app.query_one("#page-monitor", MonitorPage)
+        await settle(pilot, lambda: page.display)
+        assert page.view == "flow"
+        assert page.has_class("-view-flow")
 
 
 async def test_the_monitor_opens_on_the_view_last_shown(client: Client, home: Home) -> None:

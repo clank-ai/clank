@@ -3,48 +3,48 @@
  flow “A new simulation study” · workspace myproject · not run yet
 
  ┌─ Flow ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── 6 waiting ─┐
- │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐      │
- │ ┆ YOU               ○┆┄┄▸┆ PLAN              ○┆┄┄▸┆ VERIFY            ○┆┄┄▸┆ DECOMPOSE         ○┆┄┄▸┆ INTEGRATE         ○┆┄┄▸┆ GATE              ○┆      │
- │ ┆ Your brief         ┆   ┆ Write the plan     ┆   ┆ Check the plan     ┆   ┆ Break it into tasks┆   ┆ Put it together    ┆   ┆ You review the who…┆      │
- │ ┆ you                ┆   ┆ main slot's model  ┆   ┆ main slot's model  ┆   ┆ main slot's model  ┆   ┆ main slot's model  ┆   ┆ you                ┆      │
- │ ┆ BRIEF.md           ┆   ┆ PLAN.md            ┆   ┆ a verdict: pass or…┆   ┆ proposes tasks     ┆   ┆ SUMMARY.md         ┆   ┆ you decide         ┆      │
- │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄▴┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘      │
- │                            ╰┄ fail ⟲ back ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯                                                                            ┆       │
- │            ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯       │
- │            ▾                                                                                                                                             │
- │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                                                                                                                   │
- │ ┆ ▸ next flow        ┆                                                                                                                                   │
- │ ┆ made when approved ┆                                                                                                                                   │
- │ ┆ brief from INTEGRA…┆                                                                                                                                   │
- │ ┆                    ┆                                                                                                                                   │
- │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                                                                                                                   │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐        │
+ │ ┆ YOU                           ○┆┄┄▸┆ PLAN                          ○┆┄┄▸┆ VERIFY                        ○┆┄┄▸┆ DECOMPOSE                     ○┆        │
+ │ ┆ Your brief                     ┆   ┆ Write the plan                 ┆   ┆ Check the plan                 ┆   ┆ Break it into tasks            ┆        │
+ │ ┆                                ┆   ┆                                ┆   ┆                                ┆   ┆                                ┆        │
+ │ ┆ you                            ┆   ┆ main slot's model              ┆   ┆ main slot's model              ┆   ┆ main slot's model              ┆        │
+ │ ┆ BRIEF.md                       ┆   ┆ PLAN.md                        ┆   ┆ a verdict: pass or findings    ┆   ┆ proposes tasks                 ┆        │
+ │ ┆                                ┆   ┆ up to 3 tries · 30 min each    ┆   ┆ up to 3 tries · 30 min each    ┆   ┆ up to 3 tries · 30 min each    ┆        │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄▴┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘        │
+ │                                        ╰┄ fail ⟲ back ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯                                      ┆         │
+ │                  ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯         │
+ │                  ▾                                                                                                                                       │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                             │
+ │ ┆ INTEGRATE                     ○┆┄┄▸┆ GATE                          ○┆┄┄▸┆ ▸ next flow                    ┆                                             │
+ │ ┆ Put it together                ┆   ┆ You review the whole           ┆   ┆ made when approved             ┆                                             │
+ │ ┆                                ┆   ┆                                ┆   ┆ brief from INTEGRATE           ┆                                             │
+ │ ┆ main slot's model              ┆   ┆ you                            ┆   ┆                                ┆                                             │
+ │ ┆ SUMMARY.md                     ┆   ┆ you decide                     ┆   ┆                                ┆                                             │
+ │ ┆ up to 3 tries · 30 min each    ┆   ┆                                ┆   ┆                                ┆                                             │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                             │
  │                                                                                                                                                          │
  │ ✓ done  ● running  ○ waiting  ✗ failed  ┄┄ proposed  ── pass  ── fail ⟲ back  ── now  ┄┄ not yet                                                         │
  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
- ┌─ Selected ────────────────────────────────────────────────────────────────┐  ┌─ Waiting for you ─────────────────────────────────────────────────────────┐
- │ YOU · ○ waiting                                                           │  │ ? Built with the model: look, then r to run                               │
- │ Your brief                                                                │  │   e changes a box first; r runs it from its brief to your review, asking  │
- │ model   you                                                               │  │   nothing else on the way                                                 │
- │ status  ○ waiting                                                         │  │ The check warns:                                                          │
- │ writes  BRIEF.md                                                          │  │ - plan sees data/grid.csv, which is not in the folder, and neither plan   │
- │ next    PLAN Write the plan                                               │  │   nor a box before it writes it                                           │
+ ┌─ Selected ────────────────────────────────────────────────────────────────┐  ┌─ Thinking ────────────────────────────────────────────────────────────────┐
+ │ YOU · ○ waiting                                                           │  │                                                                           │
+ │ Your brief                                                                │  │ no request of this session yet: the session's next model request shows he │
+ │ model   you                                                               │  │ re as it is written                                                       │▅▅
+ │ status  ○ waiting                                                         │  │                                                                           │
+ │ writes  BRIEF.md                                                          │  │                                                                           │
+ │ next    PLAN Write the plan                                               │  │                                                                           │
  └───────────────────────────────────────────────────────────────────────────┘  └───────────────────────────────────────────────────────────────────────────┘
 
- ┌─ Orchestrator ────────────────────────────────────────────────────── off ─┐  ┌─ Models in this flow ─────────────────────────────────────────────────────┐
- │ ○ off                                                                     │  │ ○ main slot's model · switches nothing · 4 boxes                          │
- │   O turns it on: after each box a model (the flow's, on this machine      │  │ the other 2 are you                                                       │
- │   unless it names another) checks the run is on track and tells you at    │  │ e on a box picks another preset for it                                    │
- │   once what you should know; steering, it also changes the boxes ahead,   │  │                                                                           │
- │   sends work back and answers the run's questions as you would, within    │  │                                                                           │▄▄
- │   limits you set. O again: it only watches. L shows its ledger.           │  │                                                                           │
+ ┌─ Tool calls ──────────────────────────────────────────────────────────────┐  ┌─ Context window ──────────────────────────────────────────────────────────┐
+ │ no box at work: the running box's session shows here                      │  │ no session yet                                                            │
  └───────────────────────────────────────────────────────────────────────────┘  └───────────────────────────────────────────────────────────────────────────┘
 
- ┌─ The brief, checked ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── 0 of 2 met ─┐
- │ ○ about 60 grid points  not checked yet                                                                                                                  │
- │ ○ at most 48 CPU-hours  not checked yet                                                                                                                  │
- └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ ┌─ Orchestrator ────────────────────────────────────────────────────── off ─┐  ┌─ Waiting for you ─────────────────────────────────────────────────────────┐
+ │ ○ off                                                                     │  │ ? Built with the model: look, then r to run                               │
+ │   O turns it on: after each box a model (the flow's, on this machine      │  │   e changes a box first; r runs it from its brief to your review, asking  │
+ │   unless it names another) checks the run is on track and tells you at    │  │   nothing else on the way                                                 │
+ │   once what you should know; steering, it also changes the boxes ahead,   │  │ The check warns:                                                          │
+ │   sends work back and answers the run's questions as you would, within    │  │ - plan sees data/grid.csv, which is not in the folder, and neither plan   │
+ │   limits you set. O again: it only watches. L shows its ledger.           │  │   nor a box before it writes it                                           │
 
- ┌─ Deliverables ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-
- f10 next view  enter open  p pause  O orchestrator  L ledger  e edit the box  o open in VS Code  r run from here  h run log  n new flow  ? explain  f1 help
+ f10 next view  enter open  p pause  O orchestrator  + bigger boxes  - smaller boxes  L ledger  e edit the box  o open in VS Code  ? explain  f1 help

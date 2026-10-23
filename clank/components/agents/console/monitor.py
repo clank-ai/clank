@@ -100,7 +100,7 @@ from clank.console.style import mark
 
 VIEWS = ("flow", "session", "context")  # the tabs, in board D1's order; F10 moves to the next
 TITLES = {"flow": "Flow", "session": "Session", "context": "Context"}
-FIRST_VIEW = "session"  # board A, the owner's pick
+FIRST_VIEW = "flow"  # the website's look (decision 0125); board A was the first pick, before the website
 NO_FLOW = "no flow yet"
 HEADINGS = {
     "flow": ("No flow yet", "reading this folder's flows"),
@@ -280,8 +280,11 @@ class MonitorPage(Page):
     PANELS = (
         "monitor-flow-boxes",
         "monitor-flow-selected",
-        "monitor-flow-waiting",
+        "monitor-flow-thinking",
+        "monitor-flow-calls",
+        "monitor-flow-context",
         "monitor-flow-orchestrator",
+        "monitor-flow-waiting",
         "monitor-flow-models",
         "monitor-flow-brief",
         "monitor-flow-deliverables",
@@ -345,6 +348,9 @@ class MonitorPage(Page):
                 "watching, then off: a model that checks each box and tells you at once what you should know; "
                 "steering, it also changes the boxes ahead and answers the run's questions, within its limits "
                 "(design 0013 §16)"),
+        PageKey("plus", "bigger_boxes", "bigger boxes", "on the Flow view: the flow's boxes larger (small, medium, "
+                "large), kept in the console's settings"),
+        PageKey("minus", "smaller_boxes", "smaller boxes", "on the Flow view: the flow's boxes smaller"),
         PageKey("L", "ledger", "ledger", "on the Flow view: the orchestrator's ledger, whole, in a window: its facts "
                 "and plan, then each decision with why (design 0013 §16)"),
         PageKey("e", "edit_box", "edit the box", "on the Flow view: the box chosen's settings, each with its key "
@@ -367,7 +373,7 @@ class MonitorPage(Page):
     BOARDS = ("d2", "d3", "d4")  # the Flow view's boards beside D1 (design 0013 §12)
     VIEW_KEYS: ClassVar[dict[str, tuple[str, ...]]] = {
         "session": ("f10", "enter", "backspace", "full_stop", "m", "k", "p", "u", "x", "l"),
-        "flow": ("f10", "enter", "O", "L", "e", "o", "p", "r", "h", "n", "N"),
+        "flow": ("f10", "enter", "O", "L", "e", "o", "p", "r", "h", "n", "N", "plus", "minus"),
         "context": ("f10", "enter", "backspace", "k", "x"),
     }  # the keys each view's keys bar shows, from `KEYS`
     BUILDING_KEYS = ("f10", "enter", "O", "n", "N")  # the Flow view's, while a flow is built with the model

@@ -81,8 +81,9 @@ draw it, and the count of marks not yet seen (§8). The header gets a pill for t
 "monitor: answering").
 
 **Three views**, named in a row of tabs at the page's top (board D1): **Flow**, **Session**, **Context**. The page
-opens on the view last shown. Esc goes back from a window to its view, from the Context view to the Session view, and
-from a session opened from the Flow view to its box ([design 0013](0013-flows.md) §12).
+opens on the view last shown, the Flow view the first time (revised 2026-10-22, decision 0130). Esc closes a window;
+Backspace goes back from the Context view to the Session view, and from a session opened from the Flow view to its box
+([design 0013](0013-flows.md) §12; revised 2026-10-22, decision 0129: Esc goes to the menu).
 
 **Choice** (how the views are reached): (a) F10 again, on the Monitor, moves to the next view; Enter on the Context
 window panel opens the Context view; Enter on a box of the Flow view opens its session (board D1); (b) the capitals
@@ -1043,3 +1044,5 @@ Numbered in this document's order, 0047 to 0056: after design 0011's 0041 to 004
   (decision 0067); an uncalibrated model counts every part alike, said so; the census's cost was measured; an item's
   step is the flow's, never a guess; and §4.6's earlier reads of a file read again are counted as the earlier results
   of any call made again with the same arguments.
+- **2026-10-22, the views revised after approval, at the owner's requests** (decisions 0129-0130): Esc goes to the
+  menu, Backspace back from a view to the one before; the page opens on the Flow view the first time.

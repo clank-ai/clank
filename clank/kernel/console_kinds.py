@@ -240,3 +240,9 @@ class ConsoleSettings(Settings):
     SINGLE = True
 
     style: str = Field("clank", title="Style", description="The style the console draws in, by its file's name.")
+    flow_boxes: Literal["small", "medium", "large"] = Field(
+        "medium",
+        title="Flow boxes",
+        description="The size of the Flow view's boxes: small, medium or large (+ and - on the Flow view change it); "
+        "a panel too narrow for two of them draws the largest that fits two.",
+    )

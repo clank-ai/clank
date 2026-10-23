@@ -1034,3 +1034,11 @@ of plans (Google's co-scientist), and parallel workers where the machine has roo
   s40](../plans/s40-the-first-long-runs-fixes.md)): a session's end is read by the runner itself should the watcher not
   say it, and the watcher opens a stream again after its instance ended; the orchestrator's word for the owner, `pause`,
   `leave` and the role `watch`, at the owner's request.
+- **2026-10-22, §12 revised after approval, at the owner's request** (decision 0130, [plan
+  s42](../plans/s42-larger-flow-boxes.md)): "the individual blocks in the Flow chart are not easy to read and I should
+  have the ability to make this larger". The flow's boxes are small, medium (the default) or large, `+` and `-` on the
+  Flow view picking one, kept in the console's settings; the Monitor opens on the Flow view.
+- **2026-10-23, §12 revised after approval, at the owner's request** (decision 0131): "move the 'waiting for you' and
+  'Models in this flow' boxes down so that we can include boxes for the thinking and the tool calls/context viewer".
+  Board D1 under the flow: Selected beside Thinking, Tool calls beside Context window (the running box's session's),
+  then the Orchestrator beside Waiting for you, then Models in this flow.

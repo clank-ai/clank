@@ -3,29 +3,33 @@
  flow “A new simulation study” · building with the model · DRAFT 1, refused · workspace myproject
 
  ┌─ Flow ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────── DRAFT 1 · refused: 1 problem ─┐
- │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐      │
- │ ┆ YOU               ○┆┄┄▸┆ PLAN              ○┆┄┄▸┆ VERIFY            ○┆┄┄▸┆ DECOMPOSE         ○┆┄┄▸┆ INTEGRATE         ○┆┄┄▸┆ GATE              ○┆      │
- │ ┆ Your brief         ┆   ┆ Write the plan     ┆   ┆ Check the plan     ┆   ┆ Break it into tasks┆   ┆ Put it together    ┆   ┆ You review the who…┆      │
- │ ┆ you                ┆   ┆ main slot's model  ┆   ┆ main slot's model  ┆   ┆ main slot's model  ┆   ┆ main slot's model  ┆   ┆ you                ┆      │
- │ ┆ BRIEF.md           ┆   ┆ PLAN.md            ┆   ┆ a verdict: pass or…┆   ┆ proposes tasks     ┆   ┆ SUMMARY.md         ┆   ┆ you decide         ┆      │
- │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄▴┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘      │
- │                            ╰┄ fail ⟲ back ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯                                                                            ┆       │
- │            ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯       │
- │            ▾                                                                                                                                             │
- │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                                                                                                                   │
- │ ┆ ▸ next flow        ┆                                                                                                                                   │
- │ ┆ made when approved ┆                                                                                                                                   │
- │ ┆ brief from INTEGRA…┆                                                                                                                                   │
- │ ┆                    ┆                                                                                                                                   │
- │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                                                                                                                   │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐        │
+ │ ┆ YOU                           ○┆┄┄▸┆ PLAN                          ○┆┄┄▸┆ VERIFY                        ○┆┄┄▸┆ DECOMPOSE                     ○┆        │
+ │ ┆ Your brief                     ┆   ┆ Write the plan                 ┆   ┆ Check the plan                 ┆   ┆ Break it into tasks            ┆        │
+ │ ┆                                ┆   ┆                                ┆   ┆                                ┆   ┆                                ┆        │
+ │ ┆ you                            ┆   ┆ main slot's model              ┆   ┆ main slot's model              ┆   ┆ main slot's model              ┆        │
+ │ ┆ BRIEF.md                       ┆   ┆ PLAN.md                        ┆   ┆ a verdict: pass or findings    ┆   ┆ proposes tasks                 ┆        │
+ │ ┆                                ┆   ┆ up to 3 tries · 30 min each    ┆   ┆ up to 3 tries · 30 min each    ┆   ┆ up to 3 tries · 30 min each    ┆        │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄▴┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┬┘        │
+ │                                        ╰┄ fail ⟲ back ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯                                      ┆         │
+ │                  ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯         │
+ │                  ▾                                                                                                                                       │
+ │ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐                                             │
+ │ ┆ INTEGRATE                     ○┆┄┄▸┆ GATE                          ○┆┄┄▸┆ ▸ next flow                    ┆                                             │
+ │ ┆ Put it together                ┆   ┆ You review the whole           ┆   ┆ made when approved             ┆                                             │
+ │ ┆                                ┆   ┆                                ┆   ┆ brief from INTEGRATE           ┆                                             │
+ │ ┆ main slot's model              ┆   ┆ you                            ┆   ┆                                ┆                                             │
+ │ ┆ SUMMARY.md                     ┆   ┆ you decide                     ┆   ┆                                ┆                                             │
+ │ ┆ up to 3 tries · 30 min each    ┆   ┆                                ┆   ┆                                ┆                                             │
+ │ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘                                             │
  │                                                                                                                                                          │
  │ ✓ done  ● running  ○ waiting  ✗ failed  ┄┄ proposed  ── pass  ── fail ⟲ back  ── now  ┄┄ not yet                                                         │
  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
- ┌─ Building it with the model ──────────────────────────────────────────────┐  ┌─ Waiting for you ─────────────────────────────────────────────────────────┐
- │ ✓ started by you (console) · 12:41                                        │  │ ? talk with the model in OpenCode, on “flow · building the flow”          │
- │ ● reading the folder: 7 tool calls so far                                 │  │   Enter opens its session here; once the model's draft is written: look,  │
- │ ✓ BRIEF.md written · 12:44                                                │  │   then r                                                                  │
+ ┌─ Building it with the model ──────────────────────────────────────────────┐  ┌─ Thinking ───────────────────────────────────────────────── the planning ─┐▅▅
+ │ ✓ started by you (console) · 12:41                                        │  │ answering · step 4                                                        │
+ │ ● reading the folder: 7 tool calls so far                                 │  │ no request of this session yet: the gateway does not run                  │
+ │ ✓ BRIEF.md written · 12:44                                                │  │ (nothing written yet)                                                     │
  │ ✗ draft 1 · 12:41 · refused: 1 problem                                    │  │                                                                           │
  │     - boxes.1.when_done: a built flow waits only at its end: leave plan's │  │                                                                           │
  │       when_done out (go on)                                               │  │                                                                           │
@@ -39,12 +43,8 @@
  │ └───────────────────────────────────────────────────────────────────────┘ │  │                                                                           │
  └───────────────────────────────────────────────────────────────────────────┘  └───────────────────────────────────────────────────────────────────────────┘
 
- ┌─ Orchestrator ────────────────────────────────────────────────────── off ─┐  ┌─ Models in this flow ─────────────────────────────────────────────────────┐
- │ ○ off                                                                     │  │ ○ main slot's model · switches nothing · 4 boxes                          │
- │   O turns it on: after each box a model (the flow's, on this machine      │  │ the other 2 are you                                                       │
- │   unless it names another) checks the run is on track and tells you at    │  │ e on a box picks another preset for it                                    │
- │   once what you should know; steering, it also changes the boxes ahead,   │  │                                                                           │
- │   sends work back and answers the run's questions as you would, within    │  │                                                                           │
- │   limits you set. O again: it only watches. L shows its ledger.           │  │                                                                           │
+ ┌─ Tool calls ─────────────────────────────────────────────── the planning ─┐  ┌─ Context window ─────────────────────────────────────────── the planning ─┐
+ │ no tool call yet                                                          │  │ no model runs in the main slot                                            │
+ └───────────────────────────────────────────────────────────────────────────┘  └───────────────────────────────────────────────────────────────────────────┘
 
  f10 next view  enter open  O orchestrator  n new flow  N new flow in VS Code  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu      ^p palette
