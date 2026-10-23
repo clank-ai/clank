@@ -8,7 +8,7 @@ reviews the run and may set side tasks going, whose notes build the flow's corpu
 
 ## Tasks
 
-- [ ] 1. Jobs in the container (`clank/components/flows/jobs.py`): start detached (`setsid`, `timeout`), its folder
+- [x] 1. Jobs in the container (`clank/components/flows/jobs.py`): start detached (`setsid`, `timeout`), its folder
   `.clank/jobs/<flow>/<run>/<box>-<n>/` (command, log, pid, exit), its state read as files, ended by Clank past its
   minutes or when the run stops. Tests: `tests/components/flows/test_jobs.py`, against the fake platform.
 - [ ] 2. The way in: `flow_job` in Clank's MCP server, `POST /flows/job` (the gateway's flows allowlist), the runner's

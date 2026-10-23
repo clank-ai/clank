@@ -15,8 +15,10 @@ tokens, a server gone. `finish` is the scripted agent at work: it writes files i
 (`finish_unheard`: the same, its watcher saying nothing). A command the runner runs in the container (a box's accept
 command, run under `timeout` by `accepting.RUN`) is answered from `commands`, after what `effects` says it does in the
 folder, and kept in `ran`; held by `hold` (by its words) until the test lets it go on, or until the runner ends it
-(`accepting.END`, kept in `ended`: it then answers 143, as a command sent `TERM`). Nothing runs in a container, and no
-OpenCode runs.
+(`accepting.END`, kept in `ended`: it then answers 143, as a command sent `TERM`). A job (`jobs.START`, design 0013
+§17) writes its files in the folder as the container's would: its command and process id at once; its log (the
+answer `commands` gives) and exit once `effects` ran, and once `hold` lets it go on; `jobs.END` ends it with 143 (kept
+in `jobs_ended`), and `jobs.ALIVE` says whether it still runs. Nothing runs in a container, and no OpenCode runs.
 """
 
 import json
@@ -28,7 +30,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from clank.components.flows import accepting
+from clank.components.flows import accepting, jobs
 from clank.kernel.processes import Answer
 
 Heard = Callable[[str, dict[str, Any]], None]
@@ -87,6 +89,9 @@ class FakeBridge:
         self.shown: list[tuple[int, str]] = []  # each session shown in a window: its port and its id
         self.show = True  # whether a window shows a session it is asked to (False: it would not, as a TUI may)
         self._running: dict[str, str] = {}  # each command running, by its pid file
+        self.jobs: list[str] = []  # each job started, by its command's words
+        self.jobs_ended: list[str] = []  # each job ended by Clank, by its folder in the workspace
+        self._jobs: dict[str, threading.Thread] = {}  # each job's work, by its folder in the container
         self._made = 0
         self._lock = threading.RLock()
 
@@ -101,6 +106,8 @@ class FakeBridge:
             if command in self.hold:
                 self.hold[command].set()
             return Answer(0, "", "")
+        if argv[:3] in (["sh", "-c", jobs.START], ["sh", "-c", jobs.END], ["sh", "-c", jobs.ALIVE]):
+            return self._job(argv)
         if argv[0] in ("pkill", "pgrep") and "-f" in argv:
             return self._processes(argv)
         if len(argv) < 3 or not argv[1].endswith("bridge.py"):
@@ -140,6 +147,47 @@ class FakeBridge:
             if pid in self.ended:
                 return Answer(143, "", "Terminated\n")
             return self.commands.get(command, Answer(127, "", f"sh: 1: {command}: not found\n"))
+
+    def _job(self, argv: list[str]) -> Answer:
+        """A job started (`sh -c START sh <folder> <seconds> <command> <cwd>`), ended or looked at, its folder in the
+        container (under `/workspace`) the test's folder."""
+        inside = argv[4]
+        folder = self.folder.joinpath(*inside.removeprefix("/workspace/").split("/"))
+        if argv[2] == jobs.ALIVE:
+            thread = self._jobs.get(inside)
+            return Answer(0 if thread is not None and thread.is_alive() else 1, "", "")
+        if argv[2] == jobs.END:
+            with self._lock:
+                self.jobs_ended.append(inside.removeprefix("/workspace/"))
+            if not (folder / "exit").exists():
+                (folder / "exit").write_text(f"{jobs.TERMINATED}\n", encoding="utf-8")
+            command = (folder / "command").read_text(encoding="utf-8").strip() if (folder / "command").exists() else ""
+            if command in self.hold:
+                self.hold[command].set()
+            return Answer(0, "", "")
+        command = argv[6]
+        folder.mkdir(parents=True, exist_ok=True)
+        for name in ("exit", "pid"):
+            (folder / name).unlink(missing_ok=True)
+        (folder / "command").write_text(command + "\n", encoding="utf-8")
+        (folder / "pid").write_text(f"{2000 + len(self.jobs)}\n", encoding="utf-8")
+        with self._lock:
+            self.jobs.append(command)
+
+        def work() -> None:
+            if command in self.effects:
+                self.effects[command]()
+            if command in self.hold:
+                self.hold[command].wait(10)
+            if (folder / "exit").exists():  # ended meanwhile
+                return
+            answer = self.commands.get(command, Answer(127, "", f"sh: 1: {command}: not found\n"))
+            (folder / "log").write_text(answer.output + answer.errors, encoding="utf-8")
+            (folder / "exit").write_text(f"{answer.status}\n", encoding="utf-8")
+
+        self._jobs[inside] = threading.Thread(target=work, daemon=True)
+        self._jobs[inside].start()
+        return Answer(0, "", "")
 
     def _processes(self, argv: list[str]) -> Answer:
         """`pgrep -f PATTERN` (the matching servers' made-up pids) and `pkill -SIGNAL -f PATTERN` (the matching servers

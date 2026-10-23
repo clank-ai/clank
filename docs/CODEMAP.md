@@ -87,6 +87,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/flows/first.py` | A box's first message (design 0013 §5; decisions 0060, 0085, 0086): everything its fresh session is handed. |
 | `clank/components/flows/following.py` | The next flow (design 0013 §3, §10, §11; decisions 0058 and 0091): made once a flow's last gate is approved. |
 | `clank/components/flows/handoff.py` | Handoff notes (design 0013 §5, decision 0086): what a box hands on to the boxes after it, a few lines of its own. |
+| `clank/components/flows/jobs.py` | Jobs (design 0013 §17, decision 0132): a long computation a box starts with `flow_job`, run detached in the |
 | `clank/components/flows/kinds.py` | The flows component's kinds of record (design 0013 §2-§4, §11): a flow, `config/flows/<workspace>/<name>.json`. |
 | `clank/components/flows/models.py` | A model per box (design 0013 §7; decisions 0062 and 0063): the preset each box runs on, and a run's switches. |
 | `clank/components/flows/orchestrating.py` | The orchestrator (design 0013 §16, decisions 0123-0124): what a checkpoint is handed, what it may decide, and the |
