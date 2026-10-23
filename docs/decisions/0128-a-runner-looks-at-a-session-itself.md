@@ -5,7 +5,7 @@
 - Decided by: Claude, after the run's sessions ended unheard
 
 ## Context
-- In the first long run (stabrank/flow#1), the PLAN wrote its plan and ended after 25 minutes; the runner waited for
+- In the first long run, the PLAN wrote its plan and ended after 25 minutes; the runner waited for
   its limit of 30 and failed it. The orchestrator's checkpoint ended after 91 seconds; the runner waited for its 20.
   The run's sessions counted 0 tokens written: the runner heard nothing of them.
 - Measured the same day on the flow's own OpenCode server (1.19.0): after `server.instance.disposed`, OpenCode keeps

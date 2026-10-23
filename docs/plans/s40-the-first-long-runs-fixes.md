@@ -2,8 +2,8 @@
 
 [Design 0013](../design/0013-flows.md) §5 and §16, decisions
 [0127](../decisions/0127-the-orchestrator-tells-the-owner-at-once.md) and
-[0128](../decisions/0128-a-runner-looks-at-a-session-itself.md). From the first long unattended run (2026-10-22,
-stabrank/flow#1), stopped by the owner, and the owner's request that followed: the orchestrator on the local model,
+[0128](../decisions/0128-a-runner-looks-at-a-session-itself.md). From the first long unattended run (2026-10-22),
+stopped by the owner, and the owner's request that followed: the orchestrator on the local model,
 "after each completed step just to make sure things are on track and to get my attention if there is anything that I
 need to be aware of out of nowhere."
 

@@ -2,7 +2,7 @@
 
 - Status: Accepted (the owner's request of 2026-10-22, built as Claude's call); adds to 0123
 - Date: 2026-10-22
-- Decided by: Claude, after the first long run with the orchestrator on (stabrank/flow#1)
+- Decided by: Claude, after the first long run with the orchestrator on
 
 ## Context
 - The owner (2026-10-22, after stopping the first long run): "we should include the ability to have the orchestrator
