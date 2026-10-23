@@ -230,7 +230,9 @@ Board D2 shows them, each with its key; the flow's own settings give the default
   OpenCode, on the phone and in the Monitor.
 - **It ends** when the session goes idle. The runner hears it from the workspace's watcher (design 0007 §4), which
   must then say when a session's status changes: today it says asks, replies, edits and each message's agent
-  (`bridge.py`); the Monitor needs the same widening. Nothing polls. The box is **done** when every deliverable was
+  (`bridge.py`); the Monitor needs the same widening. Should the watcher not say it, the runner reads the session's
+  status itself every minute (revised 2026-10-22, decision 0128: OpenCode keeps a stream open after its instance ended
+  but sends nothing more on it, and the first long run waited out its limits). The box is **done** when every deliverable was
   written during this try (and VERIFY gave its verdict, DECOMPOSE submitted). Otherwise it **failed**, and the run says
   why: a deliverable missing; a limit reached (the runner stops the session, design 0005 §2); the loop guard or the
   engine cutting an answer (OpenCode then leaves the run idle and the cut answer out of its context, design 0004 §2);
@@ -890,6 +892,17 @@ an event (`flows.orchestrator`) and a line of the run's log; `clank flow orchest
 **Built flows.** The planning's first message tells the model the setting exists, and a draft may turn it on; Clank
 writes it off unless the draft or the owner says otherwise, and the owner may turn it on in the Flow view before `r`.
 
+**Its word for the owner, and its role** (revised 2026-10-22 at the owner's request, decision 0127): "the orchestration
+occurs after each completed step just to make sure things are on track and to get my attention if there is anything
+that I need to be aware of out of nowhere." It runs on the flow's model (the local model, unless the flow or the
+setting names another preset). Each decision may carry `tell_user`, what the owner should know now: a question of
+high urgency (it reaches the phone at once) that the run does not wait for, answered *Seen*, *Pause the run* or *Stop
+the run*. After a box it may also choose `pause`, and at a question `leave` it to the owner, each telling them why.
+Its **role** is `steer` (all of the above) or `watch`: after each box it goes on or pauses and tells the owner what
+they should know, and every question stays the owner's. `O` turns it on steering, then watching, then off. A
+checkpoint that ends without calling `flow_decide` is reminded once in its session before the question is left to the
+owner (a local model wrote its decision as text in the first long run).
+
 Claude's calls, the owner to check: checkpoints after every box (not only at questions), since the owner asked it to
 "look at the reports that are created after steps are completed"; the final review decided by the orchestrator by
 default when it is on, since the owner asked for "informed decisions at any of the Gate sections", with `owner` one
@@ -1011,3 +1024,7 @@ of plans (Google's co-scientist), and parallel workers where the machine has roo
 - **2026-10-21, §15 revised after approval, for the first public beta:** Clank's template names no model, so a flow
   built with the model runs on what the main slot runs unless the user names a preset (decision 0117, superseding
   0095 for the shipped default); the planning's message speaks of "the user" and quotes no one.
+- **2026-10-22, §5 and §16 revised after approval, after the first long run** (decisions 0127-0128, [plan
+  s40](../plans/s40-the-first-long-runs-fixes.md)): a session's end is read by the runner itself should the watcher not
+  say it, and the watcher opens a stream again after its instance ended; the orchestrator's word for the owner, `pause`,
+  `leave` and the role `watch`, at the owner's request.

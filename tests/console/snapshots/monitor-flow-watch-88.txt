@@ -31,7 +31,7 @@
  │       its end: leave plan's when_done out (go on)      │  │                                                        │
  │                                                        │  │                                                        │
  │ ┌─ Live ─────────────────────────────────────────────┐ │  │                                                        │
- │ │ answering · step 4                                 │ │  │                                                        │
+ │ │ answering · step 4                                 │ │  │                                                        │▇▇
  │ │ speed   41 tok/s ▇█                                │ │  │                                                        │
  │ │ context no model runs                              │ │  │                                                        │
  │ │ guard   watching · nothing repeats                 │ │  │                                                        │
@@ -41,10 +41,10 @@
 
  ┌─ Orchestrator ─────────────────────────────────── off ─┐  ┌─ Models in this flow ──────────────────────────────────┐
  │ ○ off                                                  │  │ ○ main slot's model · switches nothing · 4 boxes       │
- │   O turns it on: a model reads what each box did,      │  │ the other 2 are you                                    │
- │   changes the boxes ahead or sends work back, and      │  │ e on a box picks another preset for it                 │
- │   answers the run's questions (a box out of tries, a   │  │                                                        │
- │   gate) as you would, within limits you set; L shows   │  │                                                        │
- │   its ledger.                                          │  │                                                        │
+ │   O turns it on: after each box a model (the flow's,   │  │ the other 2 are you                                    │
+ │   on this machine unless it names another) checks the  │  │ e on a box picks another preset for it                 │
+ │   run is on track and tells you at once what you       │  │                                                        │
+ │   should know; steering, it also changes the boxes     │  │                                                        │
+ │   ahead, sends work back and answers the run's         │  │                                                        │
 
  f10 next view  enter open  O orchestrator  n new flow  N new flow in VS Code  ? explain  f1 help  f5 machine column  q quit  ^b menu                ^p palette

@@ -65,9 +65,10 @@ only), or without a terminal (`serve`). Actions:
                                      followed too), `session` (created, updated or deleted; a subagent's with its
                                      parent), `message`, `part`, `removed`, `todo`, `compacted`, `error`, `question`
                                      and `answered` (a question asked, replied or rejected), `disposed` (OpenCode's
-                                     instance ended), and `delta` (the text as it is written) for the sessions shown
-                                     only: a line {"shown": [SESSION, ...]} on standard input names them, answered
-                                     `shown`. What a burst changes many times is said once, with its last state
+                                     instance ended: its stream is opened again), and `delta` (the text as it is
+                                     written) for the sessions shown only: a line {"shown": [SESSION, ...]} on standard
+                                     input names them, answered `shown`. What a burst changes many times is said once,
+                                     with its last state
 
 It uses Python's standard library only, so it runs in any workspace's container, whatever the folder installs.
 """
@@ -846,8 +847,9 @@ class Watch:
 
     def _server(self, port: int, ready: threading.Event) -> None:
         """One server's event stream: once it is open, the permissions and questions waiting and the sessions it runs
-        (busy, or retrying), then each event as it comes; followed again when it ends while the server still listens
-        (its instance restarted), `gone` when it no longer does."""
+        (busy, or retrying), then each event as it comes; followed again when it ends while the server still listens,
+        or when its instance ended (OpenCode 1.19 keeps that stream open but sends nothing more on it), `gone` when the
+        server no longer listens."""
         while not self.stopped.is_set():
             try:
                 with urllib.request.urlopen(f"http://127.0.0.1:{port}/event", timeout=None) as stream:
@@ -862,7 +864,8 @@ class Watch:
                         self._status(port, session, status)
                     ready.set()
                     for raw in stream:
-                        self._heard(port, raw)
+                        if self._heard(port, raw) == "disposed":
+                            break  # its instance ended: this stream hears nothing more, a new one does
             except (OSError, ValueError, AttributeError, urllib.error.URLError):
                 pass
             ready.set()
@@ -873,16 +876,17 @@ class Watch:
                 return
             time.sleep(1.0)
 
-    def _heard(self, port: int, raw: bytes) -> None:
+    def _heard(self, port: int, raw: bytes) -> str:
+        """One line of a server's stream said as the service needs it; the event's type when it was one."""
         line = raw.decode("utf-8", errors="replace").strip()
         if not line.startswith("data:"):
-            return
+            return ""
         try:
             event = json.loads(line[5:])
         except ValueError:
-            return
+            return ""
         if not isinstance(event, dict):
-            return
+            return ""
         kind, properties = event.get("type"), event.get("properties") or {}
         session = properties.get("sessionID")
         if kind == "permission.asked":
@@ -942,6 +946,8 @@ class Watch:
             })  # fmt: skip
         elif kind == "server.instance.disposed":
             self.say({"type": "disposed", "port": port})
+            return "disposed"
+        return str(kind or "")
 
     def _status(self, port: int, session: Any, status: dict[str, Any]) -> None:
         """A session's status, held for the burst; the sessions said running on each port are kept, so a stream opened

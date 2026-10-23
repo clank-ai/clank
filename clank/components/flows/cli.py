@@ -188,20 +188,31 @@ def pause(workspace: str, as_json: bool, name: str) -> None:
 @click.option("--final", "final_review", type=click.Choice(["orchestrator", "owner"]), default=None,
               help="Who decides the last gate: the orchestrator, or you.")  # fmt: skip
 @click.option("--model", default=None, help="The preset its checkpoints run on; empty: the flow's.")
+@click.option("--role", type=click.Choice(["steer", "watch"]), default=None,
+              help="steer: it decides the questions too; watch: it checks each box only (turns it on).")  # fmt: skip
 @click.argument("name")
 @click.argument("state", required=False, type=click.Choice(["on", "off"]))
 def orchestrator(
-    workspace: str, as_json: bool, final_review: str | None, model: str | None, name: str, state: str | None
+    workspace: str,
+    as_json: bool,
+    final_review: str | None,
+    model: str | None,
+    role: str | None,
+    name: str,
+    state: str | None,
 ) -> None:
-    """A flow's orchestrator (design 0013 §16): a model that steers the run on its own, after each box and at each
-    question. Alone, its settings and the latest run's ledger; `on` or `off` turns it on or off, the run going on."""
+    """A flow's orchestrator (design 0013 §16): a model that checks the run after each box and tells you what you
+    should know at once; steering, it decides each question too. Alone, its settings and the latest run's ledger; `on`
+    or `off` turns it on or off, `--role` sets how far it goes, the run going on."""
     client = common.call(common.connect)
     group, own = _named(client, name, workspace)
     path = f"flows/{quote(group, safe='')}/{quote(own, safe='')}/orchestrator"
-    if state is None and final_review is None and model is None:
+    if state is None and final_review is None and model is None and role is None:
         found = common.call(lambda: client.get(path))
     else:
         body: dict[str, Any] = {}
+        if role is not None:
+            body["role"] = role
         if state is not None:
             body["on"] = state == "on"
         if final_review is not None:
@@ -213,11 +224,24 @@ def orchestrator(
         click.echo(json.dumps(found, indent=2))
         return
     settings = found["orchestrator"]
-    final = "it decides the last gate too" if settings["final_review"] == "orchestrator" else "the last gate is yours"
+    model_said = f"the preset {settings['model']}" if settings["model"] else "the flow's model"
+    if not settings["on"]:
+        state_said = "off"
+    elif settings.get("role") == "watch":
+        state_said = (
+            "on, watching: it checks each box is on track, pauses the run or tells you, and decides no question"
+        )
+    else:
+        final = (
+            "it decides the last gate too" if settings["final_review"] == "orchestrator" else "the last gate is yours"
+        )
+        state_said = (
+            f"on, steering: {final}; {settings['changes']} changes a run, {settings['extra_tries']} extra tries a box, "
+            f"stall at {settings['stall']}"
+        )
     click.echo(
-        f"The orchestrator of {found['title']} ({found['flow']}) is {'on' if settings['on'] else 'off'}: {final}; "
-        f"{settings['changes']} changes a run, {settings['extra_tries']} extra tries a box, stall at "
-        f"{settings['stall']}; model {settings['model'] or "the flow's"}."
+        f"The orchestrator of {found['title']} ({found['flow']}) is {state_said}; it runs on {model_said} "
+        "(the main slot's, unless the flow names another), and tells you at once what you should know."
     )
     if found["ledger"]:
         click.echo(f"\nThe ledger of run {found['run']}:\n\n{found['ledger']}")

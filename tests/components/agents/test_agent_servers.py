@@ -5,7 +5,8 @@ address is not given (the container reaches nothing but the model). The agent's 
 gets, each a local command run in the container with its environment (secrets included); the agent runs with as many
 threads as its container's CPUs. A workspace's server is checked where it runs: in the workspace's container, through
 `docker exec` without a terminal. Design 0009 §3: the planner gets the tools a server's last check marks read-only.
-Design 0013 §15: it gets `flow_draft` too, since the planning session that drafts a flow is the planner's."""
+Design 0013 §15: it gets `flow_draft` too, since the planning session that drafts a flow is the planner's; and
+design 0013 §16: `flow_decide`, since an orchestrator's checkpoint is a Plan-mode session."""
 
 import json
 import sys
@@ -145,11 +146,13 @@ async def test_the_planner_gets_the_tools_a_servers_last_check_marks_read_only_a
         "clank_*": "deny", "clank_notion_databases": "allow", "clank_notion_page": "allow",
         "clank_notion_query": "allow", "clank_notion_search": "allow", "clank_flow_read": "allow",
         "clank_flow_propose_box": "allow", "clank_flow_submit": "allow", "clank_flow_verdict": "allow",
-        "clank_flow_draft": "allow",
+        "clank_flow_draft": "allow", "clank_flow_decide": "allow",
     }, (
         "Clank's own server gives the planner its reading of Notion, never its proposals (design 0010 §4), and its "
         "flow's tools, which write nothing in the folder (design 0013 §9), a planning's draft of a flow included "
-        "(design 0013 §15: the planning session is the planner's)"
+        "(design 0013 §15: the planning session is the planner's), and the orchestrator's decision (design 0013 "
+        "§16: a checkpoint is a Plan-mode session; without it the orchestrator could only write its decision as text, "
+        "as it did on 2026-10-22)"
     )  # fmt: skip
 
 

@@ -24,7 +24,7 @@ not run starts it from its first box, once confirmed.
 import os
 import sys
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import tzinfo
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
@@ -161,6 +161,22 @@ def form_values(field: str, answer: dict[str, str]) -> dict[str, Any]:
         name = next(iter(answer))
         return {name: _split(answer[name])}
     return {field: answer.get(field, "")}
+
+
+def turned(steering: Mapping[str, Any]) -> tuple[dict[str, Any], str]:
+    """`O`'s next setting of the orchestrator (design 0013 §16), from what it is now: off, then on steering, then on
+    watching, then off; and the words that say what it does then."""
+    if not steering.get("on"):
+        return {"on": True, "role": "steer"}, (
+            "the orchestrator is on, steering: after each box it checks the run, tells you what you should know, and "
+            "answers the run's questions within its limits; O again: it only watches"
+        )
+    if steering.get("role", "steer") == "steer":
+        return {"on": True, "role": "watch"}, (
+            "the orchestrator is on, watching: after each box it checks the run is on track, tells you what you should "
+            "know or pauses the run; every question is yours; O again: off"
+        )
+    return {"on": False}, "the orchestrator is off: the run waits for you where it would"
 
 
 class LiveBox(Vertical):
@@ -1230,17 +1246,12 @@ class FlowViewer:
         self.page.run_worker(work, thread=True, group="monitor-flow-log", exit_on_error=False)
 
     def orchestrator(self) -> None:
-        """`O`: turn the flow's orchestrator on or off (design 0013 §16); a run goes on either way."""
-        steering, console = (self.view or {}).get("orchestrator") or {}, self.page.console
-        turning = not steering.get("on")
+        """`O`: the flow's orchestrator on steering, then watching, then off (design 0013 §16); a run goes on either
+        way."""
+        console = self.page.console
+        body, done = turned((self.view or {}).get("orchestrator") or {})
         client, path = console.client, self._path("orchestrator")
-        done = (
-            "the orchestrator is on: it reads what each box did and answers the run's questions, within its limits; "
-            "O turns it off"
-            if turning
-            else "the orchestrator is off: the run waits for you where it would"
-        )
-        actions.call(console, lambda: client.post(path, {"on": turning}), done=done)
+        actions.call(console, lambda: client.post(path, body), done=done)
 
     def ledger(self) -> None:
         """`L`: the orchestrator's ledger of the latest run whole, in a window: its facts and plan, then each

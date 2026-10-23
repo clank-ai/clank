@@ -254,6 +254,13 @@ class Orchestrator(Part):
     model: str = Field(
         "", title="Model", description="The preset its checkpoints run on, by its id or title; empty: the flow's."
     )
+    role: Literal["steer", "watch"] = Field(
+        "steer",
+        title="Role",
+        description="steer: it decides the run's questions and may change the boxes ahead; watch: it checks each box "
+        "is on track, goes on or pauses the run, and leaves every question to you. In both it tells you at once what "
+        "you should know.",
+    )
     final_review: Literal["orchestrator", "owner"] = Field(
         "orchestrator",
         title="Final review",

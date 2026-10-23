@@ -26,7 +26,10 @@ if TYPE_CHECKING:
 
 ORCHESTRATOR = Actor(kind="clank", via="orchestrator")  # who answers a question the orchestrator decided
 Kind = Literal["review", "question"]
-REVIEW_CHOICES = ("go on", "change", "back", "stop")
+REVIEW_CHOICES = ("go on", "change", "back", "pause", "stop")
+WATCH_CHOICES = ("go on", "pause")  # after a box, while it only watches (its role `watch`)
+LEAVE = "leave"  # at a question: left to the user, who is told why
+TOLD = ("pause", LEAVE)  # the choices that must tell the user why
 EDITABLE = ("title", "prompt", "sees", "writes", "holds", "accept_when", "accept_command", "model", "tries")
 ADDABLE = ("task", "verify")
 WHOLE = 40_000  # characters of the brief and of a box's handoff note handed whole
@@ -82,6 +85,7 @@ class Decision(Part):
     note: str = Field("", description="What the next box is told.")
     back_to: str = Field("", description="A review's *back*: the box the work goes back to.")
     changes: list[Change] = Field(default_factory=list)
+    tell_user: str = Field("", description="What the user should know now: asked at once, the run not waiting.")
     at: datetime
     applied: str = Field("", description="What Clank did with it.")
 
@@ -113,7 +117,10 @@ class Orchestration(Part):
     facts: str = ""
     plan: str = ""
     decisions: list[Decision] = Field(default_factory=list)
-    owner: str = Field("", description="Why the run waits for the owner, when the orchestrator could not act.")
+    owner: str = Field(
+        "", description="Why the run waits for the owner, when the orchestrator could not act or left it."
+    )
+    told: list[str] = Field(default_factory=list, description="The questions that told the owner its words, by id.")
 
 
 def instructions() -> str:
@@ -134,9 +141,12 @@ def failure_class(reason: str) -> str:
     return "its result"
 
 
-def choices(checkpoint: Checkpoint) -> list[str]:
-    """What this checkpoint may choose."""
-    return list(checkpoint.options) if checkpoint.kind == "question" else list(REVIEW_CHOICES)
+def choices(checkpoint: Checkpoint, role: str = "steer") -> list[str]:
+    """What this checkpoint may choose: at a question, its answers or leaving it to the user; after a box, as its role
+    allows."""
+    if checkpoint.kind == "question":
+        return [*checkpoint.options, LEAVE]
+    return list(WATCH_CHOICES if role == "watch" else REVIEW_CHOICES)
 
 
 def decided(
@@ -145,12 +155,15 @@ def decided(
     """The decision as it is kept; `DecisionRefused`, saying what to fix, when it cannot be."""
     state = run.orchestration
     choice = str(given.get("choice") or "").strip().lower()
-    allowed = choices(checkpoint)
+    allowed = choices(checkpoint, limits.role)
     if choice not in allowed:
         raise DecisionRefused(f"choose one of: {', '.join(allowed)} (you sent {given.get('choice')!r})")
     why = str(given.get("why") or "").strip()
     if not why:
         raise DecisionRefused("say why, in a sentence or two: the user reads it")
+    tell_user = str(given.get("tell_user") or "").strip()
+    if choice in TOLD and not tell_user:
+        raise DecisionRefused(f"{choice} hands the run to the user: say in tell_user what they must know, and why")
     try:
         changes = [Change.model_validate(each) for each in given.get("changes") or []]
     except ValidationError as error:
@@ -175,10 +188,13 @@ def decided(
     progressing = _yes(given.get("progressing"), True)
     looping = _yes(given.get("looping"), False)
     if checkpoint.kind == "review" and choice == "go on" and state.stall >= limits.stall:
-        raise DecisionRefused(
-            f"the run made no progress at {_count(state.stall, 'checkpoint')} in a row: change the plan (back to "
-            "the box to do again, or change the boxes ahead) or stop"
+        remedy = (
+            "pause it for the user, saying why in tell_user"
+            if limits.role == "watch"
+            else "change the plan (back to the box to do again, or change the boxes ahead), pause it for the user, or "
+            "stop"
         )
+        raise DecisionRefused(f"the run made no progress at {_count(state.stall, 'checkpoint')} in a row: {remedy}")
     back_to = str(given.get("back_to") or "").strip()
     if checkpoint.kind == "review" and choice == "back":
         _ran(flow, run, back_to)
@@ -190,7 +206,7 @@ def decided(
         number=checkpoint.number, kind=checkpoint.kind, box=checkpoint.box, question=checkpoint.question,
         choice=choice, why=why, met=_lines(given.get("met")), unmet=_lines(given.get("unmet")), looping=looping,
         progressing=progressing, facts=str(given.get("facts") or "").strip(), plan=str(given.get("plan") or "").strip(),
-        note=str(given.get("note") or "").strip(), back_to=back_to, changes=changes, at=at,
+        note=str(given.get("note") or "").strip(), back_to=back_to, changes=changes, tell_user=tell_user, at=at,
     )  # fmt: skip
 
 
@@ -249,6 +265,9 @@ def message(
     left = limits.changes - state.changes
     stalled = state.stall >= limits.stall
     said = [instructions().strip(), "", f"# Checkpoint {checkpoint.number} of the run {run.name} ({run.title})", ""]
+    if limits.role == "watch":
+        said += ["Your role here: watch. You check that the run is on track: go on, or pause it for the user (with "
+                 "tell_user saying why); you change nothing and decide no question.", ""]  # fmt: skip
     if checkpoint.kind == "review":
         said += [f"The box {checkpoint.box} has ended. Its report:", "", report, ""]
     else:
@@ -271,7 +290,11 @@ def message(
         "",
         "## Your decision",
         "",
-        f"Call `flow_decide` once, with `choice` one of: {', '.join(choices(checkpoint))}; then stop.",
+        f"Call `flow_decide` once, with `choice` one of: {', '.join(choices(checkpoint, limits.role))}; then stop.",
+        "If the user should know something now (a surprise, a result against the plan, a failure that keeps coming "
+        "back, a risk to their time, machine or money), say it in `tell_user`: it reaches them at once, and the run "
+        "does not wait for it."
+        + (" `pause` and `leave` need it." if checkpoint.kind == "review" else " `leave` needs it."),
     ]
     if stalled and checkpoint.kind == "review":
         said.append("The run is stalled: change the plan (back to the box to do again, or change the boxes ahead), or "
@@ -352,6 +375,8 @@ def ledger_text(run: "Run", *, limit: int = 0) -> str:
             said.append(f"   not met yet: {'; '.join(each.unmet)}")
         if each.note:
             said.append(f"   told the next box: {each.note}")
+        if each.tell_user:
+            said.append(f"   told you: {each.tell_user}")
         for change in each.changes:
             said.append(f"   changed {change.box}" + (f" (added after {change.after})" if change.after else ""))
         if each.applied:

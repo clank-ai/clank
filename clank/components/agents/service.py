@@ -125,9 +125,10 @@ NOTION_PREFIX = "clank_notion_"  # Clank's Notion tools, as OpenCode names them:
 LOCAL_ONLY = "held back: local only, it never goes to the cloud model"
 # Its tools that only read, which the planner may use (design 0010 §4): Notion's reading, never its proposals.
 CLANK_READ_ONLY = ("notion_databases", "notion_page", "notion_query", "notion_search")
-# Its tools of a box's flow, which write nothing in the folder, so the planner may use them too (design 0013 §9); and a
-# planning's draft of a whole flow, which the planner sends (design 0013 §15).
-CLANK_FLOW_TOOLS = ("flow_read", "flow_propose_box", "flow_submit", "flow_verdict", "flow_draft")
+# Its tools of a box's flow, which write nothing in the folder, so the planner may use them too (design 0013 §9); a
+# planning's draft of a whole flow, which the planner sends (design 0013 §15); and an orchestrator's decision, which a
+# checkpoint, a Plan-mode session, gives (design 0013 §16).
+CLANK_FLOW_TOOLS = ("flow_read", "flow_propose_box", "flow_submit", "flow_verdict", "flow_draft", "flow_decide")
 STATES = {  # OpenCode's word for an MCP server's state, as the MCP servers page says it
     "connected": "running", "disabled": "stopped", "failed": "failed", "needs_auth": "needs sign-in",
     "needs_client_registration": "needs sign-in",

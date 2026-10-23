@@ -274,10 +274,11 @@ class Flows:
         on: bool | None = None,
         final_review: str = "",
         model: str | None = None,
+        role: str = "",
     ) -> dict[str, Any]:
-        """A flow's orchestrator (design 0013 §16): turned on or off, its final review or its model changed, written
-        through the settings as any edit; then its settings, the checkpoint at work and the ledger of the flow's latest
-        run. `409 refused`, saying why, when the change breaks a rule."""
+        """A flow's orchestrator (design 0013 §16): turned on or off, its role, its final review or its model changed
+        (a role given turns it on), written through the settings as any edit; then its settings, the checkpoint at
+        work and the ledger of the flow's latest run. `409 refused`, saying why, when the change breaks a rule."""
         from clank.components.flows import orchestrating
         from clank.kernel.settings import SettingsError
 
@@ -286,9 +287,12 @@ class Flows:
         if record is None:
             raise ApiError(404, "not_found", f"there is no flow {found.id}")
         made, revision = record
-        if on is not None or final_review or model is not None:
+        if on is not None or final_review or model is not None or role:
             values = made.model_dump(mode="json")
             steering = dict(values.get("orchestrator") or {})
+            if role:
+                steering["role"] = role
+                steering["on"] = True
             if on is not None:
                 steering["on"] = on
             if final_review:

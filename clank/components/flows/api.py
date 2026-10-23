@@ -60,13 +60,14 @@ class OrchestratorGiven(BaseModel):
     on: bool | None = Field(None, description="true turns it on, false off.")
     final_review: str = Field("", description="orchestrator or owner: who decides the last gate.")
     model: str | None = Field(None, description="The preset its checkpoints run on; empty: the flow's.")
+    role: str = Field("", description="steer (it decides the questions too) or watch (it checks each box only).")
 
 
 class DecisionGiven(BaseModel):
     """A checkpoint's decision, as `flow_decide` sends it: read by the service, whose refusal says what to fix."""
 
     workspace: str = Field(description="The workspace whose checkpoint decides (its MCP server's).")
-    choice: str = Field("", description="go on, change, back or stop; or the question's answer.")
+    choice: str = Field("", description="go on, change, back, pause or stop; or the question's answer, or leave.")
     why: str = Field("", description="Why, citing the evidence.")
     met: Any = Field(default_factory=list, description="The brief's lines judged met.")
     unmet: Any = Field(default_factory=list, description="The brief's lines not met yet.")
@@ -77,6 +78,7 @@ class DecisionGiven(BaseModel):
     note: str = Field("", description="What the next box is told, or the words of a question's answer.")
     back_to: str = Field("", description="A review's back: the box to do again.")
     changes: Any = Field(default_factory=list, description="A change's list: edits of boxes not run, or boxes added.")
+    tell_user: str = Field("", description="What the user should know now: it reaches them at once.")
 
 
 class ProposalGiven(BaseModel):
@@ -312,12 +314,19 @@ def router(flows: "Flows") -> APIRouter:
 
     @routes.post("/flows/{workspace}/{name}/orchestrator")
     async def steer_with(workspace: str, name: str, given: OrchestratorGiven, request: Request) -> dict[str, Any]:
-        """Turn a flow's orchestrator on or off, or change who decides its final review or its model (design 0013
-        §16): written through the settings as any edit, and recorded with the client that asked; the run goes on."""
+        """Turn a flow's orchestrator on or off, or change its role, who decides its final review or its model (design
+        0013 §16): written through the settings as any edit, and recorded with the client that asked; the run goes
+        on."""
         actor = client_actor(request.headers.get(CLIENT_HEADER))
         found: dict[str, Any] = await anyio.to_thread.run_sync(
             lambda: flows.orchestrator(
-                workspace, name, actor=actor, on=given.on, final_review=given.final_review, model=given.model
+                workspace,
+                name,
+                actor=actor,
+                on=given.on,
+                final_review=given.final_review,
+                model=given.model,
+                role=given.role,
             )
         )
         return found

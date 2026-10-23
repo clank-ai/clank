@@ -833,6 +833,8 @@ export interface Orchestrator {
   on: boolean;
   /** The preset its checkpoints run on, by its id or title; empty: the flow's. */
   model: string;
+  /** steer: it decides the run's questions and may change the boxes ahead; watch: it checks each box is on track, goes on or pauses the run, and leaves every question to you. In both it tells you at once what you should know. */
+  role: "steer" | "watch";
   /** Who decides the last gate: orchestrator, or owner (it waits for you). */
   final_review: "orchestrator" | "owner";
   /** How many changes it may make in one run: each box changed or added, send back, skip and extra try. */

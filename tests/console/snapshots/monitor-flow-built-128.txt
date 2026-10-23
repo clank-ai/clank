@@ -33,18 +33,18 @@
 
  ┌─ Orchestrator ────────────────────────────────────────────────────── off ─┐  ┌─ Models in this flow ─────────────────────────────────────────────────────┐
  │ ○ off                                                                     │  │ ○ main slot's model · switches nothing · 4 boxes                          │
- │   O turns it on: a model reads what each box did, changes the boxes ahead │  │ the other 2 are you                                                       │
- │   or sends work back, and answers the run's questions (a box out of       │  │ e on a box picks another preset for it                                    │
- │   tries, a gate) as you would, within limits you set; L shows its ledger. │  │                                                                           │
+ │   O turns it on: after each box a model (the flow's, on this machine      │  │ the other 2 are you                                                       │
+ │   unless it names another) checks the run is on track and tells you at    │  │ e on a box picks another preset for it                                    │
+ │   once what you should know; steering, it also changes the boxes ahead,   │  │                                                                           │
+ │   sends work back and answers the run's questions as you would, within    │  │                                                                           │▄▄
+ │   limits you set. O again: it only watches. L shows its ledger.           │  │                                                                           │
  └───────────────────────────────────────────────────────────────────────────┘  └───────────────────────────────────────────────────────────────────────────┘
-                                                                                                                                                             ▁▁
+
  ┌─ The brief, checked ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── 0 of 2 met ─┐
  │ ○ about 60 grid points  not checked yet                                                                                                                  │
  │ ○ at most 48 CPU-hours  not checked yet                                                                                                                  │
  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
  ┌─ Deliverables ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
- │ nothing written yet                                                                                                                                      │
- └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
  f10 next view  enter open  p pause  O orchestrator  L ledger  e edit the box  o open in VS Code  r run from here  h run log  n new flow  ? explain  f1 help

@@ -11,11 +11,12 @@ then). `pkill -f` and `pgrep -f` match each server's command line, `opencode ser
 --port N`, and an OpenCode ended is gone (its watcher says so).
 What OpenCode would then do is the test's
 to say, through the watcher's lines (`say`, handed to the service as its watcher would): a session's status, a step's
-tokens, a server gone. `finish` is the scripted agent at work: it writes files in the folder, then the session goes
-idle. A command the runner runs in the container (a box's accept command, run under `timeout` by `accepting.RUN`) is
-answered from `commands`, after what `effects` says it does in the folder, and kept in `ran`; held by `hold` (by its
-words) until the test lets it go on, or until the runner ends it (`accepting.END`, kept in `ended`: it then answers
-143, as a command sent `TERM`). Nothing runs in a container, and no OpenCode runs.
+tokens, a server gone. `finish` is the scripted agent at work: it writes files in the folder, then the session goes idle
+(`finish_unheard`: the same, its watcher saying nothing). A command the runner runs in the container (a box's accept
+command, run under `timeout` by `accepting.RUN`) is answered from `commands`, after what `effects` says it does in the
+folder, and kept in `ran`; held by `hold` (by its words) until the test lets it go on, or until the runner ends it
+(`accepting.END`, kept in `ended`: it then answers 143, as a command sent `TERM`). Nothing runs in a container, and no
+OpenCode runs.
 """
 
 import json
@@ -197,6 +198,17 @@ class FakeBridge:
         if tokens:
             self.step(session, tokens)
         self.status(session, "idle")
+
+    def finish_unheard(self, session: str, files: dict[str, str] | None = None) -> None:
+        """The scripted agent's work ended while its watcher heard nothing of it, as when OpenCode's stream went silent
+        (2026-10-22): the files written and the session idle on its server, and no line said."""
+        for path, text in (files or {}).items():
+            target = self.folder.joinpath(*path.split("/"))
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(text.encode("utf-8"))
+        port = self.port_of(session)
+        with self._lock:
+            self.servers[port].sessions[session]["status"] = "idle"
 
     def step(self, session: str, tokens: int, reasoning: int = 0) -> None:
         """A step of the session finished, with the tokens its model wrote."""

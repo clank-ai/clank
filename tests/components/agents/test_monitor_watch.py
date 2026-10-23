@@ -227,6 +227,29 @@ def test_a_stream_opened_again_says_idle_for_a_session_that_no_longer_runs() -> 
             assert watching.end() == 0
 
 
+def test_a_stream_still_open_after_its_instance_ended_is_opened_again_and_hears_what_follows() -> None:
+    """Design 0012 §3 and design 0013 §7: OpenCode 1.19 keeps a stream open after its instance ended but sends nothing
+    more on it (measured 2026-10-22: a flow's server went silent to the watch for a whole run, so the runner waited for
+    each box's time limit after the box had ended). The watch opens the stream again: a run that ended meanwhile is
+    said idle, and what the new instance does is heard."""
+    with FakeOpenCode() as fake:
+        fake.status = {"ses_plan": {"type": "busy"}}
+        watching = Watching(f"{fake.port}-{fake.port}")
+        try:
+            watching.until("synced")
+            fake.status = {}
+            fake.dispose()
+            watching.until("disposed")
+            lines = watching.burst()
+            assert {line["session"]: line["status"] for line in lines if line["type"] == "status"} == {
+                "ses_plan": "idle"
+            }, "the stream opened again finds the run ended"
+            fake.replay("a question")
+            assert watching.until("question")[-1]["type"] == "question", "the new instance's events are heard"
+        finally:
+            assert watching.end() == 0
+
+
 def test_a_server_first_followed_says_its_busy_sessions_and_its_waiting_questions() -> None:
     """Design 0012 §3: the service knows which server runs each session from the moment its watch starts."""
     servers = FakeOpenCode.several(2)

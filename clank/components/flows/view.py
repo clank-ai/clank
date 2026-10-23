@@ -114,14 +114,15 @@ def view(
 
 def _orchestrator(made: Flow, run: Run | None) -> dict[str, Any]:
     """The flow's orchestrator as the Flow view's panel shows it (design 0013 §16): on or off, its limits, and in the
-    latest run the checkpoint at work, the last decision with why and what was done, the limits used, and why the run
-    waits for the owner when it could not act."""
+    latest run the checkpoint at work, the last decision with why, what was done and its word for the owner, the limits
+    used, and why the run waits for the owner when it could not act or left it to them."""
     settings = made.orchestrator
     state = run.orchestration if run is not None else None
     last = state.decisions[-1] if state is not None and state.decisions else None
     working = state.working if state is not None else None
     return {
         "on": settings.on,
+        "role": settings.role,
         "model": settings.model,
         "final_review": settings.final_review,
         "changes": settings.changes,
@@ -142,6 +143,7 @@ def _orchestrator(made: Flow, run: Run | None) -> dict[str, Any]:
             "progressing": last.progressing,
             "looping": last.looping,
             "note": last.note,
+            "tell_user": last.tell_user,
             "unmet": list(last.unmet),
         }
         if last is not None

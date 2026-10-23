@@ -252,10 +252,11 @@ FLOW_TOOLS = [
     _tool(
         "flow_decide",
         "Only as a flow's orchestrator, at a checkpoint Clank opened: give your one decision, then stop. choice is one "
-        "of the choices your checkpoint lists (after a box: go on, change, back or stop; at a question: one of its "
-        "answers). Rewrite the ledger's facts and plan, judge each line of the brief met or not, say whether the run "
-        "is progressing or looping, and give the next box a note when it needs one. Returns that your decision is "
-        "kept, or what to fix and send again.",
+        "of the choices your checkpoint lists (after a box: go on, change, back, pause or stop; at a question: one of "
+        "its answers, or leave). Rewrite the ledger's facts and plan, judge each line of the brief met or not, say "
+        "whether the run is progressing or looping, give the next box a note when it needs one, and tell the user "
+        "at once what they should know (tell_user; pause and leave need it). Returns that your decision is kept, or "
+        "what to fix and send again.",
         {"choice": {"type": "string", "description": "What you decide: one of the choices your checkpoint lists."},
          "why": {"type": "string", "description": "Why, citing the evidence (a check's output, a figure, a file)."},
          "met": {**FILES, "description": "The brief's lines that are met, quoted."},
@@ -266,6 +267,8 @@ FLOW_TOOLS = [
          "plan": {"type": "string", "description": "The plan from here, in a few lines."},
          "note": {"type": "string", "description": "What the next box is told, or your words with an answer."},
          "back_to": {"type": "string", "description": "For back: the box to do again."},
+         "tell_user": {"type": "string", "description": "What the user should know now, in a few sentences: it reaches "
+                       "them at once, and the run does not wait for it. Needed for pause and leave."},
          "changes": {"type": "array", "description": "For change: each an edit of a box not run, or a box added.",
                      "items": {"type": "object", "required": ["box"], "properties": {
                          "box": {"type": "string", "description": "The box edited, or the new box's id."},

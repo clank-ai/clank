@@ -134,6 +134,8 @@ and use the template below.
 | [0124](0124-the-orchestrators-limits-are-always-set.md) | The orchestrator's limits are always set, and past one the question waits for the owner | Accepted (Claude's call) | 2026-10-22 |
 | [0125](0125-the-console-takes-the-websites-look.md) | The console takes the website's look: no menu beside the Monitor, the flow across the width, its colors | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
 | [0126](0126-the-console-records-what-it-draws.md) | The console records what it draws, where it writes to the terminal, in asciinema's format | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
+| [0127](0127-the-orchestrator-tells-the-owner-at-once.md) | The orchestrator tells the owner at once, may pause the run or leave a question to them, and may only watch | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
+| [0128](0128-a-runner-looks-at-a-session-itself.md) | A flow's runner reads a session's status itself every minute, and the watch opens a stream again after its instance ended | Accepted (Claude's call) | 2026-10-22 |
 
 ## Template
 

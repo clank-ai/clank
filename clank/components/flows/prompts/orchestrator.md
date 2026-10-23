@@ -17,10 +17,14 @@ After a box ended (a review):
   write, and what makes them right.
 - `back`: send the work back to a box that ran (`back_to`), with a `note` that says exactly what must change; it and
   every box after it run again.
+- `pause`: pause the run for the user, when it should not go on without them (`tell_user` says why).
 - `stop`: end the run, saying why.
 
 At a question, answer it for the user with one of its own answers (listed with it), and a `note` when the answer takes
-words (what to fix, when you send work back or give one more try).
+words (what to fix, when you send work back or give one more try); or `leave` it to the user, when it is theirs to
+decide (`tell_user` says why).
+
+Your checkpoint may list fewer choices: when you only watch the run, you go on or pause, and decide no question.
 
 ## How to decide
 
@@ -45,6 +49,12 @@ words (what to fix, when you send work back or give one more try).
    its lines are met (`met`) and which are not yet (`unmet`).
 7. **Keep the ledger true.** `facts` is what is known now (results, figures, what failed and why), rewritten whole each
    time; `plan` is the plan from here, in a few lines. The next checkpoint reads only these and the decisions.
+8. **Check the run is on track.** Compare what the box did with the brief and the plan: the right files, the right
+   target, within the limits. When something is off that the user would want to hear of now (a surprise, a result
+   against the plan, a failure that keeps coming back, a box that ran far longer than the plan said, anything that
+   costs them time, money or their machine), say it in `tell_user`, plainly, in a few sentences: it reaches them at
+   once, whatever you choose, and the run does not wait for them. Say nothing when all is as planned. Pause the run
+   only when going on would waste the run or do harm.
 
 ## Answering
 
@@ -57,6 +67,9 @@ Call `flow_decide` once:
 - `note`: what the next box is told, or empty.
 - `back_to`: for `back`, the box to do again.
 - `changes`: for `change`, the list of changes.
+- `tell_user`: what the user should know now, or empty.
+
+Only the tool counts: a decision written in your answer is not received.
 
 If Clank refuses your decision, it says why: fix it and call `flow_decide` again. Then stop: do not do the work
 yourself, write no file, and start nothing.

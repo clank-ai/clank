@@ -413,28 +413,36 @@ def wrapped(
 
 
 def orchestrator(view: Mapping[str, Any] | None, width: int, frame: int = 0) -> list[Content]:
-    """The Orchestrator panel (design 0013 §16): off, what turning it on does; on, its model, who decides the final
-    review, the limits used, the checkpoint at work, the last decision with why and what was done, the note the next
-    box is told, the plan from here, and why the run waits for you when it could not act."""
+    """The Orchestrator panel (design 0013 §16): off, what turning it on does; on, its role, its model, who decides the
+    final review, the limits used, the checkpoint at work, the last decision with why and what was done, the note the
+    next box is told, its word for you, the plan from here, and why the run waits for you when it could not act."""
     if not view or not view.get("flow"):
         return [Content.styled(NO_FLOW, "$clank-quiet")]
     said = view.get("orchestrator") or {}
     if not said.get("on"):
         lines = [_fit(Content.assemble((f"{mark('off')} ", "$clank-quiet"), ("off", "bold")), width)]
         lines += wrapped(
-            "O turns it on: a model reads what each box did, changes the boxes ahead or sends work back, and answers "
-            "the run's questions (a box out of tries, a gate) as you would, within limits you set; L shows its ledger.",
+            "O turns it on: after each box a model (the flow's, on this machine unless it names another) checks the "
+            "run is on track and tells you at once what you should know; steering, it also changes the boxes ahead, "
+            "sends work back and answers the run's questions as you would, within limits you set. O again: it only "
+            "watches. L shows its ledger.",
             width,
         )
         return lines
+    watching = said.get("role") == "watch"
     final = (
-        "decides the final review too" if said.get("final_review") == "orchestrator" else "the final review is yours"
+        "decides no question"
+        if watching
+        else "decides the final review too"
+        if said.get("final_review") == "orchestrator"
+        else "the final review is yours"
     )
     model = str(said.get("model") or "the flow's model")
+    role = "watching" if watching else "steering"
     lines = [
         _fit(
             Content.assemble(
-                (f"{mark('done')} ", "$clank-good"), ("on", "bold"), (f" · {model} · {final}", "$clank-quiet")
+                (f"{mark('done')} ", "$clank-good"), ("on", "bold"), (f" · {role} · {model} · {final}", "$clank-quiet")
             ),
             width,
         ),
@@ -470,6 +478,8 @@ def orchestrator(view: Mapping[str, Any] | None, width: int, frame: int = 0) -> 
             lines += wrapped(str(last["applied"]), width)
         if last.get("note"):
             lines += wrapped(f"told the next box: {last['note']}", width)
+        if last.get("tell_user"):
+            lines += wrapped(f"told you: {last['tell_user']}", width, style="$clank-attention")
         if not last.get("progressing", True) or last.get("looping"):
             lines.append(_fit(Content.styled("  no progress at this checkpoint", "$clank-attention"), width))
     if said.get("owner"):

@@ -1,5 +1,6 @@
 """Design 0013 §4, §5 and §6 (decisions 0059 and 0061): a box over its time limit, or past the tokens it may write, has
-its session stopped and fails; a box in Auto has its session's changes accepted while the workspace stays in Review; and
+its session stopped and fails; a box whose session ended while its watcher said nothing is found ended by the runner's
+own look at its status; a box in Auto has its session's changes accepted while the workspace stays in Review; and
 the owner's controls: pause lets the running box finish and starts no other until the run goes on; stop stops the
 running box's session and ends the run; run from here runs the box and every box after it again, as new tries, each
 first message saying why it runs again; and a second flow's run waits behind the first. A nudge of the runner from
@@ -15,6 +16,7 @@ from typing import Any
 import anyio
 import pytest
 
+from clank.components.flows import runner as runner_module
 from clank.components.flows.runner import RunError
 from clank.kernel.clock import FakeClock
 from clank.kernel.home import Home
@@ -67,6 +69,19 @@ async def test_a_box_past_the_tokens_it_may_write_has_its_session_stopped_and_fa
         assert rig.bridge.done("abort") == [[str(plan.port), plan.session]]
     attempt = rig.run().box("plan").tries[0]
     assert (attempt.outcome, attempt.tokens) == ("failed", 1100)
+
+
+async def test_a_box_that_ended_unheard_is_found_ended_by_the_runners_own_look(
+    rig: Rig, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Its watcher said nothing (OpenCode's stream went silent, 2026-10-22: the PLAN ended after 25 minutes and the run
+    waited for its limit of 30); the runner reads the session's status itself now and then, and goes on."""
+    monkeypatch.setattr(runner_module, "LOOK", 0.2)
+    async with running(rig.kernel):
+        plan = await to_the_plan(rig)
+        rig.bridge.finish_unheard(plan.session, {"PLAN.md": "The plan.\n"})
+        await until(lambda: rig.run().box("plan").tries[0].outcome == "done", seconds=5)
+    assert rig.bridge.done("abort") == [], "its session ended on its own: nothing stopped it"
 
 
 async def test_a_box_in_auto_has_its_changes_accepted_while_the_workspace_stays_in_review(rig: Rig) -> None:

@@ -6,8 +6,12 @@ on as it would for the owner's; after a box it may go on with a note for the nex
 stop. Clank keeps the ledger beside the run (`orchestrator.md`): the facts and plan, then each decision. A decision is
 refused, saying why, when no checkpoint works in the workspace, when its choice is not one it may make, when it needs
 more changes than are left, and when the run has stalled and it would go on. The owner may answer a question first;
-the last gate is the owner's when the flow says so; a checkpoint that ends without deciding leaves the question to the
-owner. Run against the fake bridge and a synthetic folder."""
+the last gate is the owner's when the flow says so; a checkpoint that ends without deciding is reminded once, in its
+session, to call `flow_decide`, and leaves the question to the owner when it still does not. Its word for the owner
+(`tell_user`) is a question of high urgency the run does not wait for, whose answers let the owner pause or stop the
+run; after a box it may pause the run, and at a question leave it to the owner, each telling the owner why; and in its
+role `watch` it reads each box, goes on or pauses, and decides no question. Run against the fake bridge and a
+synthetic folder."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -136,7 +140,7 @@ async def test_a_change_to_a_box_that_ran_or_past_the_limit_is_refused_saying_wh
             two = [{"box": "T1", "prompt": "a"}, {"box": "T1", "title": "b"}]
             with pytest.raises(RunError, match="1 change left"):
                 rig.runner.decide(WORKSPACE, decision("change", changes=two), actor=ORCHESTRATOR)
-            with pytest.raises(RunError, match="choose one of: go on, change, back, stop"):
+            with pytest.raises(RunError, match="choose one of: go on, change, back, pause, stop"):
                 rig.runner.decide(WORKSPACE, decision("approve"), actor=ORCHESTRATOR)
     finally:
         rig.kernel.close()
@@ -201,15 +205,132 @@ async def test_the_last_gate_is_the_owners_when_the_flow_says_so(
         rig.kernel.close()
 
 
-async def test_a_checkpoint_that_ends_without_deciding_leaves_the_question_to_the_owner(rig: Rig) -> None:
+async def reminded(rig: Rig, first: Any) -> Any:
+    """The message the checkpoint's session was sent after its first: Clank's reminder."""
+    return await until(
+        lambda: (sent := rig.bridge.prompted(first.title)) is not None and sent.text != first.text and sent
+    )
+
+
+async def test_a_checkpoint_that_ends_without_deciding_is_reminded_once_and_its_decision_then_counts(rig: Rig) -> None:
+    """A local model wrote its decision as text, never calling the tool (2026-10-22): one reminder, in the same
+    session, names the tool and asks for the decision it made."""
+    async with running(rig.kernel):
+        first = await to_the_first_checkpoint(rig)
+        rig.runner.decide(WORKSPACE, decision("go on"), actor=ORCHESTRATOR)
+        rig.bridge.finish(first.session)
+        second = await until(lambda: rig.bridge.prompted("Study · orchestrator · 2"))
+        rig.bridge.finish(second.session)  # it wrote its decision as text
+        again = await reminded(rig, second)
+        assert (again.session, again.agent) == (second.session, "planner")
+        assert "flow_decide" in again.text
+        rig.runner.decide(WORKSPACE, decision("approve"), actor=ORCHESTRATOR)
+        rig.bridge.finish(second.session)
+        await at_work(rig, "T1")
+    assert rig.run().orchestration.decisions[-1].choice == "approve"
+
+
+async def test_a_checkpoint_that_ends_without_deciding_when_reminded_leaves_the_question_to_the_owner(
+    rig: Rig,
+) -> None:
     async with running(rig.kernel):
         first = await to_the_first_checkpoint(rig)
         rig.runner.decide(WORKSPACE, decision("go on"), actor=ORCHESTRATOR)
         rig.bridge.finish(first.session)
         second = await until(lambda: rig.bridge.prompted("Study · orchestrator · 2"))
         rig.bridge.finish(second.session)  # it never called flow_decide
+        await reminded(rig, second)
+        rig.bridge.finish(second.session)  # nor when reminded
         await until(lambda: "ended without deciding" in (rig.run().orchestration.owner or ""))
         assert question(rig, "You approve the plan") is not None
+        assert len([each for each in rig.bridge.prompts if each.session == second.session]) == 2, "reminded once only"
+
+
+async def test_its_word_for_the_owner_reaches_them_at_once_and_the_run_goes_on(rig: Rig) -> None:
+    """The owner (2026-10-22): the orchestrator is "to get my attention if there is anything that I need to be aware
+    of". Its word is a question of high urgency (it reaches the phone at once) that the run does not wait for."""
+    async with running(rig.kernel):
+        first = await to_the_first_checkpoint(rig)
+        word = "The plan needs 41.5 CPU-hours, close to the brief's limit of 48."
+        rig.runner.decide(WORKSPACE, decision("go on", tell_user=word), actor=ORCHESTRATOR)
+        rig.bridge.finish(first.session)
+        await until(lambda: rig.bridge.prompted("Study · orchestrator · 2"))  # the run went on to the gate
+        alert = await until(lambda: question(rig, "The orchestrator of Study"))
+        assert alert.urgency == "high"
+        assert word in alert.title + alert.detail
+        assert [option.id for option in alert.options] == ["seen", "pause", "stop"]
+        rig.kernel.questions.answer(alert.id, by=OWNER, option="seen")
+        assert not rig.run().paused
+    ledger = (rig.runner.runs.run_folder(rig.run()) / "orchestrator.md").read_text(encoding="utf-8")
+    assert f"told you: {word}" in ledger
+
+
+async def test_answering_its_word_with_pause_pauses_the_run_and_with_stop_stops_it(rig: Rig) -> None:
+    async with running(rig.kernel):
+        first = await to_the_first_checkpoint(rig)
+        rig.runner.decide(WORKSPACE, decision("go on", tell_user="A surprise."), actor=ORCHESTRATOR)
+        rig.bridge.finish(first.session)
+        alert = await until(lambda: question(rig, "The orchestrator of Study"))
+        rig.kernel.questions.answer(alert.id, by=OWNER, option="pause")
+        await until(lambda: rig.run().paused)
+        rig.runner.resume(FLOW, actor=OWNER)
+        second = await until(lambda: rig.bridge.prompted("Study · orchestrator · 2"))
+        rig.runner.decide(WORKSPACE, decision("approve", tell_user="Another."), actor=ORCHESTRATOR)
+        rig.bridge.finish(second.session)
+        again = await until(lambda: question(rig, "The orchestrator of Study: Another."))
+        rig.kernel.questions.answer(again.id, by=OWNER, option="stop")
+        await until(lambda: rig.run().status == "stopped")
+
+
+async def test_after_a_box_it_may_pause_the_run_telling_the_owner_why(rig: Rig) -> None:
+    async with running(rig.kernel):
+        first = await to_the_first_checkpoint(rig)
+        assert "pause" in first.text
+        with pytest.raises(RunError, match="tell_user"):
+            rig.runner.decide(WORKSPACE, decision("pause"), actor=ORCHESTRATOR)
+        rig.runner.decide(WORKSPACE, decision("pause", tell_user="The plan reads the wrong data."), actor=ORCHESTRATOR)
+        rig.bridge.finish(first.session)
+        await until(lambda: question(rig, "The orchestrator of Study: The plan reads the wrong data."))
+        await until(lambda: rig.run().paused)
+        assert rig.run().orchestration.decisions[-1].applied == "paused the run for you"
+
+
+async def test_at_a_question_it_may_leave_it_to_the_owner_telling_them_why(rig: Rig) -> None:
+    async with running(rig.kernel):
+        first = await to_the_first_checkpoint(rig)
+        rig.runner.decide(WORKSPACE, decision("go on"), actor=ORCHESTRATOR)
+        rig.bridge.finish(first.session)
+        second = await until(lambda: rig.bridge.prompted("Study · orchestrator · 2"))
+        assert "`leave`" in second.text
+        word = "Approving costs most of the budget: yours to decide."
+        rig.runner.decide(WORKSPACE, decision("leave", tell_user=word), actor=ORCHESTRATOR)
+        rig.bridge.finish(second.session)
+        await until(lambda: "left it to you" in (rig.run().orchestration.owner or ""))
+        gate = question(rig, "You approve the plan")
+        assert gate is not None
+        assert gate.status == "waiting", "the question waits for the owner"
+        assert question(rig, f"The orchestrator of Study: {word}") is not None
+
+
+async def test_watching_it_reads_each_box_and_leaves_every_question_to_the_owner(
+    home: Home, clock: FakeClock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The owner (2026-10-22): the orchestrator "after each completed step just to make sure things are on track and
+    to get my attention": its role `watch` goes on or pauses after each box, and decides no question."""
+    rig = make_rig(home, clock, tmp_path, monkeypatch, steered(role="watch"))
+    try:
+        async with running(rig.kernel):
+            first = await to_the_first_checkpoint(rig)
+            assert "go on, pause" in first.text
+            with pytest.raises(RunError, match="choose one of: go on, pause"):
+                rig.runner.decide(WORKSPACE, decision("change", changes=[{"box": "T1", "prompt": "x"}]),
+                                  actor=ORCHESTRATOR)  # fmt: skip
+            rig.runner.decide(WORKSPACE, decision("go on"), actor=ORCHESTRATOR)
+            rig.bridge.finish(first.session)
+            await until(lambda: question(rig, "You approve the plan"))
+            assert rig.bridge.prompted("Study · orchestrator · 2") is None, "the gate waits for the owner"
+    finally:
+        rig.kernel.close()
 
 
 def test_a_decision_while_no_checkpoint_works_is_refused(rig: Rig) -> None:

@@ -63,6 +63,7 @@ import logging
 import math
 import shutil
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -113,8 +114,14 @@ log = logging.getLogger(__name__)
 RUNNER = Actor(kind="clank", via="flow runner")
 TICK = 0.25  # seconds between looks at a working box's limits, and at what the owner asked
 WAIT = 1.0  # seconds between looks at what a switch of the main slot waits for (design 0013 §7)
+LOOK = 60.0  # seconds between the runner's own looks at a session's status, should its watcher not say it ended
 BOX = "flows.box"
 ORCHESTRATE = "flows.orchestrate"  # a checkpoint of the orchestrator (design 0013 §16)
+REMINDER = (
+    "Clank has not received your decision. A decision counts only when it is given with the tool `flow_decide`: "
+    "writing it in your answer does nothing. Call `flow_decide` now, once, with the decision you made (its choice, "
+    "why, and the other fields), then stop."
+)  # sent once to a checkpoint that ended without deciding
 SWITCH = "runtime.switch"
 CHANGING = ("runtime.load", "runtime.switch", "runtime.unload", "runtime.restart")  # what changes a slot
 ROLE = "agent"  # the gateway's role a box's requests come as: its slot is the main slot
@@ -769,24 +776,22 @@ class Runner:
                     return  # the orchestrator reads what it did first (§16)
                 if state.state != "skipped" and self._waits(flow, box):
                     self._ask(run, flow, box, "done")
-                    return
+                    continue  # the next pass finds it waiting: the orchestrator may decide it (§16)
                 self._move_on(run, flow, RUNNER)
                 continue
             if state.state == "failed":
                 if box.type == "verify" and _found_wrong(state) and self._tries_left(run, flow, box.checks):
                     self._loop_back(run, flow, box)  # its fail line, back to the box it checks (§3)
                     continue
-                if not await self._ask_showing(run, flow, box, "failed"):  # a failed box, or a loop at its cap (§10)
-                    continue
-                return
+                await self._ask_showing(run, flow, box, "failed")  # a failed box, or a loop at its cap (§10)
+                continue  # asked, or the run changed meanwhile: the next pass looks again
             if state.state == "running" or run.paused:
                 return  # a box whose operation a restart interrupted waits for `_recover`; a paused run starts none
             if box.type == "you" and self._briefed(run, flow, box):
                 continue  # a built flow's brief, written with the model (decision 0098)
             if box.type in ("you", "gate"):
-                if not await self._ask_showing(run, flow, box, "you" if box.type == "you" else "gate"):
-                    continue
-                return
+                await self._ask_showing(run, flow, box, "you" if box.type == "you" else "gate")
+                continue  # asked, or the run changed meanwhile: the next pass looks again
             operation = await self.kernel.operations.start(
                 BOX, {"flow": run.flow, "run": run.number, "box": box.id}, actor=RUNNER
             )
@@ -1309,6 +1314,8 @@ class Runner:
         """Whether the orchestrator decides the question the run waits for: while it is on and no checkpoint works, a
         gate, a failed box or a box whose *when done* waits, not decided before; the last gate only when it is its."""
         steering = flow.orchestrator
+        if steering.role == "watch":  # it decides no question
+            return False
         if not steering.on or run.orchestration.working is not None or waiting.question in run.orchestration.decided:
             return False
         if waiting.kind not in ("gate", "failed", "done"):
@@ -1467,9 +1474,13 @@ class Runner:
         working: Working,
     ) -> None:
         """Follow the checkpoint's session to its end: idle, gone, past its limits, its run stopped, or its question
-        answered by the owner meanwhile (its session then stopped)."""
+        answered by the owner meanwhile (its session then stopped). A session that ends without deciding is reminded
+        once, in the same session, to give its decision with `flow_decide` (a local model wrote its decision as text
+        on 2026-10-22), and followed again."""
         limits = flow.orchestrator.limits
         deadline = self.kernel.clock.now() + timedelta(minutes=limits.minutes)
+        looked = time.monotonic()
+        reminded = False
         while True:
             context.check_canceled()
             fresh = self.runs.load(run.flow, run.number)
@@ -1482,16 +1493,38 @@ class Runner:
             if stopper is not None or fresh.status not in ACTIVE or answered:
                 await self._stop_session(working, stopper or RUNNER)
                 return
-            if working.gone or working.idle:
+            if working.gone:
                 return
+            if working.idle:
+                if reminded or working.port is None or self._decided(run, checkpoint.number):
+                    return
+                reminded, looked = True, time.monotonic()
+                with self._lock:
+                    working.idle = working.seen = False  # an idle before the reminder's answer began is not its end
+                await context.run_blocking(
+                    functools.partial(
+                        self._agents.sessions.send, working.workspace, working.port, working.session, REMINDER,
+                        actor=RUNNER, agent=PLANNER, model=SESSION_MODEL,
+                    )
+                )  # fmt: skip
+                continue
             if working.tokens() > limits.tokens or self.kernel.clock.now() >= deadline:
                 await self._stop_session(working, RUNNER)
                 return
+            if time.monotonic() - looked >= LOOK:
+                looked = time.monotonic()
+                await self._look(working)
+                continue
             wake = working.wake
             with anyio.move_on_after(TICK):
                 await wake.wait()
             if wake.is_set():
                 working.wake = anyio.Event()
+
+    def _decided(self, run: Run, number: int) -> bool:
+        """Whether the checkpoint `number` of the run has given its decision."""
+        working = self.runs.load(run.flow, run.number).orchestration.working
+        return working is not None and working.number == number and working.decision is not None
 
     def _apply(self, flow_id: str, number: int, cp: int) -> None:
         """A checkpoint's decision, applied once its session ended: a question answered through the questions API by
@@ -1514,7 +1547,7 @@ class Runner:
             self._let_go(run, "its flow is gone")
             return
         flow, revision = record
-        cost, extra, applied, stop = 0, False, "", False
+        cost, extra, applied, stop, pause, left = 0, False, "", False, False, ""
         if decision.kind == "question":
             try:
                 asked: Question | None = self.kernel.questions.get(decision.question)
@@ -1522,12 +1555,17 @@ class Runner:
                 asked = None
             if asked is None or asked.status != "waiting":
                 applied = "set aside: the question was answered first"
+            elif decision.choice == orchestrating.LEAVE:
+                applied = "left it to you"
+                left = f"checkpoint {cp} left it to you: {decision.tell_user}"
             else:
                 cost = 1 if decision.choice in orchestrating.COSTLY else 0
                 extra = decision.choice == "retry" and orchestrating.past_cap(flow, run, decision.box)
                 applied = f"answered: {decision.choice}"
         elif decision.choice == "stop":
             applied, stop = "stopped the run", True
+        elif decision.choice == "pause":
+            applied, pause = "paused the run for you", True
         elif decision.choice == "back":
             target = decision.back_to
             now = self._standing(run, flow, target)
@@ -1572,11 +1610,15 @@ class Runner:
             if decision.kind == "review":
                 state.reviewed[decision.box] = len(each.box(decision.box).tries)
             state.decisions.append(decision.model_copy(update={"applied": applied}))
+            if left:
+                state.owner = left
             if each.operation == checkpoint.operation or each.operation == f"checkpoint-{cp}":
                 each.operation = ""
             state.working = None
 
         run = self._change(run, keep)
+        if decision.tell_user:
+            run = self._tell(run, decision)
         self._write_ledger(run)
         self._record_event(
             "flows.orchestrator", run, f"the orchestrator of {run.title}, checkpoint {cp}: {applied}",
@@ -1591,7 +1633,51 @@ class Runner:
                 )
         if stop:
             self._end(run, "stopped", orchestrating.ORCHESTRATOR, f"stopped by the orchestrator: {decision.why}")
+        if pause:
+            with contextlib.suppress(RunError):  # it ended meanwhile: nothing to pause
+                self.pause(run.flow, actor=orchestrating.ORCHESTRATOR)
         self.nudge()
+
+    def _tell(self, run: Run, decision: orchestrating.Decision) -> Run:
+        """The orchestrator's word for the owner (design 0013 §16): a question of high urgency, so it reaches the phone
+        at once, which the run does not wait for; its answers pause or stop the run (`_told`)."""
+        where = f"after {decision.box}" if decision.kind == "review" else f"at {decision.box}'s question"
+        first = decision.tell_user.splitlines()[0].strip()
+        asked = self.kernel.questions.ask(
+            QuestionDraft(
+                type="choice",
+                title=f"The orchestrator of {run.title}: {first if len(first) <= 160 else first[:157] + '...'}",
+                detail=f"{decision.tell_user}\n\nCheckpoint {decision.number}, {where}: {decision.choice}. "
+                f"{decision.why}",
+                options=[
+                    Option(id="seen", label="Seen", effect="The run goes on.", key="y"),
+                    Option(
+                        id="pause",
+                        label="Pause the run",
+                        effect="The box at work finishes; nothing new starts until you go on.",
+                        key="p",
+                    ),
+                    Option(id="stop", label="Stop the run", effect="The run ends here.", key="s"),
+                ],
+                urgency="high",
+                about=Subject(kind="flow", id=run.flow),
+            ),
+            asked_by=orchestrating.ORCHESTRATOR,
+        )
+        return self._change(run, lambda each: each.orchestration.told.append(asked.id))
+
+    def _told(self, question: Question) -> None:
+        """The owner's answer to the orchestrator's word: pause or stop its run (one that ended meanwhile is left)."""
+        if question.status != "answered" or question.answer is None or question.answer.option not in ("pause", "stop"):
+            return
+        run = next((each for each in self.runs.all() if question.id in each.orchestration.told), None)
+        if run is None or run.status not in ACTIVE:
+            return
+        with contextlib.suppress(RunError):
+            if question.answer.option == "pause":
+                self.pause(run.flow, actor=question.answer.by)
+            else:
+                self.stop(run.flow, actor=question.answer.by)
 
     def _let_go(self, run: Run, why: str) -> None:
         """A checkpoint that cannot decide: after a box, the run goes on as its flow says; at a question, the question
@@ -1941,6 +2027,7 @@ class Runner:
         last = self.runs.load(run.flow, run.number).box(box.id).tries[-1]
         deadline = (last.sent or last.started) + timedelta(minutes=minutes)
         saved = last.tokens
+        looked = time.monotonic()
         async with context.step("work"):
             while True:
                 context.check_canceled()
@@ -1969,6 +2056,10 @@ class Runner:
                     await self._stop_session(working, RUNNER)
                     span = f"{minutes} minute" + ("" if minutes == 1 else "s")
                     return "failed", f"it ran past its limit of {span}: Clank stopped its session"
+                if time.monotonic() - looked >= LOOK:
+                    looked = time.monotonic()
+                    await self._look(working)
+                    continue
                 wake = working.wake
                 with anyio.move_on_after(TICK):
                     await wake.wait()
@@ -2291,6 +2382,19 @@ class Runner:
         except SessionError as error:
             log.warning("stopping %s's session %s failed: %s", working.workspace, working.session, error)
 
+    async def _look(self, working: Working) -> None:
+        """The session's status read through the bridge, every `LOOK` seconds while it works: its end is taken from
+        there should its watcher not say it (OpenCode's stream went silent on 2026-10-22, and a run waited out each
+        box's time limit after the box had ended). Only an end is taken; a server gone is the watcher's to say."""
+        try:
+            status = await anyio.to_thread.run_sync(self._status, working.workspace, working.port, working.session)
+        except Exception:  # a bridge's answer not as expected: the next look, or the watcher, says what follows
+            log.exception("reading %s's session %s failed", working.workspace, working.session)
+            return
+        if status == "ended":
+            with self._lock:
+                working.idle = True
+
     def _status(self, workspace: str, port: int | None, session: str) -> str:
         """A session's status through the bridge: working, ended, or gone (its server, or the container, stopped)."""
         try:
@@ -2490,6 +2594,10 @@ class Runner:
             self.proposing.answered(question)
         except Exception:  # the driver takes the answer when it holds the run, so nothing is lost
             log.exception("taking the answer to %s failed", question.id)
+        try:
+            self._told(question)
+        except Exception:
+            log.exception("taking the answer to the orchestrator's word %s failed", question.id)
         self.nudge()
 
     def _event(self, event: Any) -> None:

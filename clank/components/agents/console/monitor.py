@@ -341,9 +341,10 @@ class MonitorPage(Page):
                 "result highlighted in a part's items, or in what could be freed (§4.7)"),
         PageKey("l", "live", "live text", "on the Session view: the session's request as it is written, under the "
                 "flow, or hidden again (§7)"),
-        PageKey("O", "orchestrator", "orchestrator", "on the Flow view: turn the flow's orchestrator on or off: a "
-                "model that reads what each box did, changes the boxes ahead and answers the run's questions on its "
-                "own, within its limits (design 0013 §16)"),
+        PageKey("O", "orchestrator", "orchestrator", "on the Flow view: the flow's orchestrator on steering, then "
+                "watching, then off: a model that checks each box and tells you at once what you should know; "
+                "steering, it also changes the boxes ahead and answers the run's questions, within its limits "
+                "(design 0013 §16)"),
         PageKey("L", "ledger", "ledger", "on the Flow view: the orchestrator's ledger, whole, in a window: its facts "
                 "and plan, then each decision with why (design 0013 §16)"),
         PageKey("e", "edit_box", "edit the box", "on the Flow view: the box chosen's settings, each with its key "

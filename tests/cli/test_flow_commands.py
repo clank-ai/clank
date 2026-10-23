@@ -95,9 +95,15 @@ def test_orchestrator_says_its_settings_and_turns_it_on_and_off_in_the_flows_fil
     assert "The orchestrator of A new simulation study (myproject/new-study) is off" in shown.output
     on = run("orchestrator", "new-study", "on", "--final", "owner")
     assert on.exit_code == 0, on.output
-    assert "is on: the last gate is yours; 12 changes a run, 2 extra tries a box, stall at 3" in on.output
+    assert "is on, steering: the last gate is yours; 12 changes a run, 2 extra tries a box, stall at 3" in on.output
+    assert "it runs on the flow's model" in on.output
     saved = json.loads((home.config / "flows" / "myproject" / "new-study.json").read_text(encoding="utf-8"))
     assert (saved["orchestrator"]["on"], saved["orchestrator"]["final_review"]) == (True, "owner")
+    watching = run("orchestrator", "new-study", "--role", "watch")
+    assert watching.exit_code == 0, watching.output
+    assert "is on, watching: it checks each box is on track, pauses the run or tells you" in watching.output
+    saved = json.loads((home.config / "flows" / "myproject" / "new-study.json").read_text(encoding="utf-8"))
+    assert saved["orchestrator"]["role"] == "watch"
     off = run("orchestrator", "new-study", "off")
     assert off.exit_code == 0, off.output
     assert "is off" in off.output

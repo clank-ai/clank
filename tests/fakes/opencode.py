@@ -8,7 +8,8 @@ of what was read from it (`read`). A store starts from a synthetic session writt
 (`tests/fixtures/opencode/1.19.0/session.json`); `feed` and `replay` write events on the stream in one burst, as
 OpenCode's come while the model writes, a stream sending every event fed once it said it is connected (its thread can be
 made to wait just then, `connected_pause`, as a busy machine's does); `restart` ends the streams while the server still
-listens, as OpenCode's instance starting again does.
+listens; `dispose` ends its instance as OpenCode 1.19's does (measured 2026-10-22): the streams open then say so, stay
+open and carry nothing more, and only a stream opened after hears what follows.
 
 What it does as OpenCode does, as far as the bridge can tell (read in OpenCode 1.18.31's program, 2026-10-19): a message
 that names no agent goes to `build`; messages page newest first by `limit` and `before`, an opaque cursor in
@@ -78,8 +79,9 @@ class FakeOpenCode:
         self.release = threading.Event()  # lets `summarize` answer
         self.closing = threading.Event()
         self.connected_pause = 0.0  # seconds each stream's thread waits once it said it is connected: a busy machine
-        self._bursts: list[list[dict[str, Any]]] = []
+        self._bursts: list[tuple[int, list[dict[str, Any]]]] = []  # each burst with the instance it was fed to
         self._restarts = 0
+        self._instance = 0  # the instance a stream opened now hears
         self._fed = threading.Condition()
         handler = type("Handler", (_Handler,), {"fake": self})
         self.server = ThreadingHTTPServer(("127.0.0.1", port or free_port()), handler)
@@ -117,7 +119,7 @@ class FakeOpenCode:
     def feed(self, *events: dict[str, Any]) -> None:
         """Events on the stream, written at once: one burst."""
         with self._fed:
-            self._bursts.append(list(events))
+            self._bursts.append((self._instance, list(events)))
             self._fed.notify_all()
 
     def replay(self, name: str) -> None:
@@ -128,6 +130,15 @@ class FakeOpenCode:
         """End the event streams open now while the server still listens, as OpenCode's instance starting again does."""
         with self._fed:
             self._restarts += 1
+            self._fed.notify_all()
+
+    def dispose(self) -> None:
+        """Its instance ended and a new one began, as OpenCode 1.19's does when its configuration changes: the streams
+        open now say `server.instance.disposed`, then stay open and carry nothing more; a stream opened after hears
+        the new instance."""
+        with self._fed:
+            self._bursts.append((self._instance, list(self.store.bursts["disposed"])))
+            self._instance += 1
             self._fed.notify_all()
 
     def sent_to(self, path: str) -> list[Any]:
@@ -356,7 +367,7 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/event-stream")
         self.end_headers()
         with fake._fed:  # what is fed from here on is sent, as OpenCode's stream sends every event once connected
-            seen, begun = len(fake._bursts), fake._restarts
+            seen, begun, instance = len(fake._bursts), fake._restarts, fake._instance
         self.wfile.write(b'data: {"type":"server.connected","properties":{}}\n\n')
         self.wfile.flush()
         time.sleep(fake.connected_pause)
@@ -365,7 +376,9 @@ class _Handler(BaseHTTPRequestHandler):
                 with fake._fed:
                     fake._fed.wait(0.1)
                     fresh, seen = fake._bursts[seen:], len(fake._bursts)
-                for burst in fresh:  # a burst in one write
+                for fed_to, burst in fresh:  # a burst in one write, to the streams of its instance only
+                    if fed_to != instance:
+                        continue
                     self.wfile.write(b"".join(f"data: {json.dumps(event)}\n\n".encode() for event in burst))
                     self.wfile.flush()
         except OSError:
