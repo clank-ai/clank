@@ -87,6 +87,28 @@ async def test_a_box_waiting_on_its_job_hands_the_model_to_a_job_checkpoint_whos
     assert rig.bridge.prompted("Study · side") is None
 
 
+async def test_a_second_job_in_the_same_try_gets_a_checkpoint_numbered_after_the_first(rig: Rig) -> None:
+    """The fourth long run numbered both of a try's job checkpoints 5: the box's run, read as it started, was handed
+    to the second (2026-10-23)."""
+    rig.bridge.hold["python3 fit.py"] = threading.Event()
+    async with running(rig.kernel):
+        grid, checkpoint = await to_the_job(rig)
+        rig.runner.decide(WORKSPACE, decision("wait"), actor=ORCHESTRATOR)
+        rig.bridge.finish(checkpoint.session)
+        await until(lambda: rig.run().orchestration.working is None)
+        rig.bridge.hold[SEARCH].set()
+        await until(lambda: len(sent_to(rig, grid.session)) == 2)
+        rig.runner.job(WORKSPACE, "python3 fit.py", "The fit", 10, actor=AGENT)
+        rig.bridge.finish(grid.session)
+        fourth = await until(lambda: rig.bridge.prompted("Study · orchestrator · 4"))
+        rig.runner.decide(WORKSPACE, decision("wait"), actor=ORCHESTRATOR)
+        rig.bridge.finish(fourth.session)
+        await until(lambda: rig.run().orchestration.working is None)
+        rig.bridge.hold["python3 fit.py"].set()
+    assert [each.number for each in rig.run().orchestration.decisions] == [1, 2, 3, 4]
+    assert rig.run().orchestration.checkpoints == 4
+
+
 async def test_side_tasks_run_one_after_another_each_writing_its_note_into_the_corpus_and_the_box_is_told(
     rig: Rig,
 ) -> None:

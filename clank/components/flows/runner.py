@@ -1414,7 +1414,8 @@ class Runner:
     ) -> None:
         """Start a checkpoint: kept on the run first (after a box, holding the run as a box's operation does), then
         its operation started."""
-        number = run.orchestration.checkpoints + 1
+        number = self.runs.load(run.flow, run.number).orchestration.checkpoints + 1  # as the run is now: a job's box
+        # hands the run it read as it started
         options = [option.id for option in asked.options] if asked is not None else []
         checkpoint = orchestrating.Checkpoint(
             number=number, kind=kind, box=box, question=asked.id if asked is not None else "", options=options,
