@@ -2,10 +2,10 @@
 in the workspace: *pass*, or *fail* with numbered findings, and `criteria`, each line of the brief's limits and of what
 done means that the check touched, met or not, with its evidence. The verdict is kept on the VERIFY's try and as
 `verdict.md` in the try's folder; a pass goes on along the VERIFY's pass line; a VERIFY that ends without a verdict is
-reminded once in its session, then is a failed box, never a pass, and waits at a gate. A verdict is refused, saying why, while no VERIFY works in the workspace,
-before its try began or after it ended, and a fail without findings is refused, as is a criterion not as
-`flow_verdict` takes it, naming the criterion and its field; the newest verdict of a try counts, and each is an event
-with its actor. Run against the fake bridge and a synthetic folder."""
+reminded once in its session, then is a failed box, never a pass, and waits at a gate. A verdict is refused, saying
+why, while no VERIFY works in the workspace, before its try began or after it ended, and a fail without findings is
+refused, as is a criterion not as `flow_verdict` takes it, naming the criterion and its field; the newest verdict of a
+try counts, and each is an event with its actor. Run against the fake bridge and a synthetic folder."""
 
 import threading
 from collections.abc import Iterator
