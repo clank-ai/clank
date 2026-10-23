@@ -100,6 +100,8 @@ DIFF = 20000  # of a permission's diff
 SERVE_SECONDS = 30.0
 CONNECT_SECONDS = 90.0  # a server's start, which OpenCode waits for
 SCAN_SECONDS = 2.0  # how often `watch` looks for servers that started
+QUIET = float(os.environ.get("CLANK_BRIDGE_QUIET", "120"))  # seconds a server's stream may say nothing before it is
+# opened again: OpenCode 1.19's can go silent for good without a word (measured 2026-10-22)
 ALIVE_SECONDS = 15.0  # how often `watch` says it still runs
 CHANGE_INPUT = 2_000_000  # characters of a change's tool call `watch` passes on (its old and new text, or content)
 WATCHER = os.path.join(tempfile.gettempdir(), "clank-watch.pid")
@@ -849,10 +851,14 @@ class Watch:
         """One server's event stream: once it is open, the permissions and questions waiting and the sessions it runs
         (busy, or retrying), then each event as it comes; followed again when it ends while the server still listens,
         or when its instance ended (OpenCode 1.19 keeps that stream open but sends nothing more on it), `gone` when the
-        server no longer listens."""
+        server no longer listens. A stream must say it is connected within `TIMEOUT` (one opened while OpenCode starts
+        never says anything), and is opened again after `QUIET` seconds without a line."""
         while not self.stopped.is_set():
             try:
-                with urllib.request.urlopen(f"http://127.0.0.1:{port}/event", timeout=None) as stream:
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/event", timeout=TIMEOUT) as stream:
+                    if b"server.connected" not in stream.readline():
+                        raise OSError("the stream did not say it is connected")
+                    wait_at_most(stream, QUIET)
                     for request in call(port, "GET", "/permission") or []:
                         self.say(self._asked(port, request))
                     for request in read(port, "/question", []):
@@ -991,6 +997,14 @@ class Watch:
                 found = None
         given = found if isinstance(found, dict) and len(json.dumps(found)) <= CHANGE_INPUT else None
         return {"type": "asked", "port": port, "request": request, "input": given}
+
+
+def wait_at_most(stream: Any, seconds: float) -> None:
+    """A stream's reads from now on time out after `seconds` (urlopen's timeout is every read's); left as it is when its
+    socket cannot be reached."""
+    sock = getattr(getattr(getattr(stream, "fp", None), "raw", None), "_sock", None)
+    if sock is not None:
+        sock.settimeout(seconds)
 
 
 def read(port: int, path: str, empty: Any) -> Any:

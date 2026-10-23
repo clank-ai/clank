@@ -23,7 +23,8 @@ owner, and Claude conducting the next long run, fixing what it finds.
 ## Tasks
 
 - [x] 1. The watch opens a server's stream again after `server.instance.disposed` (the fake OpenCode's `dispose` as
-  OpenCode 1.19's, measured). Test: `tests/components/agents/test_monitor_watch.py`.
+  OpenCode 1.19's, measured), when it does not say it is connected (one opened as OpenCode starts never does: found in
+  the second run), and after two minutes of silence. Test: `tests/components/agents/test_monitor_watch.py`.
 - [x] 2. The runner reads a box's and a checkpoint's session status itself every minute (`LOOK`). Test:
   `tests/components/flows/test_runner_controls.py` (a box that ended unheard), the fake bridge's `finish_unheard`.
 - [x] 3. The planner gets `flow_decide` (`CLANK_FLOW_TOOLS`). Test: `tests/components/agents/test_agent_servers.py`.

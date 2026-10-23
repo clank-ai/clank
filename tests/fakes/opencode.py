@@ -9,7 +9,8 @@ of what was read from it (`read`). A store starts from a synthetic session writt
 OpenCode's come while the model writes, a stream sending every event fed once it said it is connected (its thread can be
 made to wait just then, `connected_pause`, as a busy machine's does); `restart` ends the streams while the server still
 listens; `dispose` ends its instance as OpenCode 1.19's does (measured 2026-10-22): the streams open then say so, stay
-open and carry nothing more, and only a stream opened after hears what follows.
+open and carry nothing more, and only a stream opened after hears what follows; `deaf` streams opened next say
+nothing at all, not even that they are connected, as one opened while OpenCode 1.19 starts (measured 2026-10-22).
 
 What it does as OpenCode does, as far as the bridge can tell (read in OpenCode 1.18.31's program, 2026-10-19): a message
 that names no agent goes to `build`; messages page newest first by `limit` and `before`, an opaque cursor in
@@ -82,6 +83,7 @@ class FakeOpenCode:
         self._bursts: list[tuple[int, list[dict[str, Any]]]] = []  # each burst with the instance it was fed to
         self._restarts = 0
         self._instance = 0  # the instance a stream opened now hears
+        self.deaf = 0  # how many of the streams opened next say nothing at all, as one opened while OpenCode starts
         self._fed = threading.Condition()
         handler = type("Handler", (_Handler,), {"fake": self})
         self.server = ThreadingHTTPServer(("127.0.0.1", port or free_port()), handler)
@@ -138,6 +140,13 @@ class FakeOpenCode:
         the new instance."""
         with self._fed:
             self._bursts.append((self._instance, list(self.store.bursts["disposed"])))
+            self._instance += 1
+            self._fed.notify_all()
+
+    def dispose_silently(self) -> None:
+        """Its instance changed without a word: the streams open now carry nothing more, and a stream opened after hears
+        the new instance."""
+        with self._fed:
             self._instance += 1
             self._fed.notify_all()
 
@@ -366,6 +375,12 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self.end_headers()
+        with fake._fed:
+            deaf = fake.deaf > 0
+            fake.deaf -= 1 if deaf else 0
+        if deaf:  # open, and silent until the server closes
+            fake.closing.wait()
+            return
         with fake._fed:  # what is fed from here on is sent, as OpenCode's stream sends every event once connected
             seen, begun, instance = len(fake._bursts), fake._restarts, fake._instance
         self.wfile.write(b'data: {"type":"server.connected","properties":{}}\n\n')

@@ -232,7 +232,8 @@ Board D2 shows them, each with its key; the flow's own settings give the default
   must then say when a session's status changes: today it says asks, replies, edits and each message's agent
   (`bridge.py`); the Monitor needs the same widening. Should the watcher not say it, the runner reads the session's
   status itself every minute (revised 2026-10-22, decision 0128: OpenCode keeps a stream open after its instance ended
-  but sends nothing more on it, and the first long run waited out its limits). The box is **done** when every deliverable was
+  but sends nothing more on it, and one opened as it starts says nothing at all; the first long run waited out its
+  limits). The watcher opens a stream again when it does not say it is connected, and after two minutes of silence. The box is **done** when every deliverable was
   written during this try (and VERIFY gave its verdict, DECOMPOSE submitted). Otherwise it **failed**, and the run says
   why: a deliverable missing; a limit reached (the runner stops the session, design 0005 §2); the loop guard or the
   engine cutting an answer (OpenCode then leaves the run idle and the cut answer out of its context, design 0004 §2);

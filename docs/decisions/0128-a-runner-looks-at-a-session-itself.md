@@ -28,3 +28,12 @@
 - A box whose end the watch misses ends within a minute of its session, not at its limit.
 - The tokens a box writes are still counted from the watch only; a silent watch leaves its token limit unchecked
   until the stream is open again.
+
+## Addendum (2026-10-22, the second long run)
+- The second run's watch heard nothing either, with no `server.instance.disposed` said. Measured on a spare OpenCode
+  server in the same container: a stream opened the moment OpenCode starts listening never says anything, not even
+  `server.connected`; one opened seconds later hears everything. The watch follows a flow's new server within two
+  seconds of it listening.
+- So a stream must say it is connected within the bridge's `TIMEOUT` or it is opened again, and a stream silent for
+  `QUIET` seconds (120) is opened again, its sessions' status read anew. A long tool call reopens it every two minutes,
+  at the cost of one request.

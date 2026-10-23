@@ -31,11 +31,12 @@ BURST = "0.5,5"  # quiet for half a second, at most five: a busy machine does no
 class Watching:
     """The bridge's `watch`, run on this machine; the lines it writes, read as they come."""
 
-    def __init__(self, ports: str, burst: str = BURST) -> None:
+    def __init__(self, ports: str, burst: str = BURST, timeout: str = "10", quiet: str = "120") -> None:
         self.process = subprocess.Popen(
             [sys.executable, str(BRIDGE), "watch"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL, creationflags=background_flags(),
-            env={**os.environ, "CLANK_BRIDGE_PORTS": ports, "CLANK_BRIDGE_BURST": burst},
+            env={**os.environ, "CLANK_BRIDGE_PORTS": ports, "CLANK_BRIDGE_BURST": burst,
+                 "CLANK_BRIDGE_TIMEOUT": timeout, "CLANK_BRIDGE_QUIET": quiet},
         )  # fmt: skip
         self.lines: queue.Queue[dict[str, Any]] = queue.Queue()
         self.reader = threading.Thread(target=self._read, daemon=True)
@@ -246,6 +247,45 @@ def test_a_stream_still_open_after_its_instance_ended_is_opened_again_and_hears_
             }, "the stream opened again finds the run ended"
             fake.replay("a question")
             assert watching.until("question")[-1]["type"] == "question", "the new instance's events are heard"
+        finally:
+            assert watching.end() == 0
+
+
+def test_a_stream_that_never_says_it_is_connected_is_opened_again() -> None:
+    """Design 0012 §3 and design 0013 §7: a stream opened while OpenCode 1.19 starts says nothing at all, ever (measured
+    2026-10-22: the watch follows a flow's new server within two seconds of it listening, and heard none of the run).
+    The watch waits a moment for the stream to say it is connected, and opens it again when it does not."""
+    with FakeOpenCode() as fake:
+        fake.deaf = 1
+        fake.status = {"ses_plan": {"type": "busy"}}
+        watching = Watching(f"{fake.port}-{fake.port}", timeout="1")
+        try:
+            lines = watching.until("synced")
+            if not any(line["type"] == "status" for line in lines):
+                lines += watching.until("status")  # said once the stream opened again
+            assert {line["session"]: line["status"] for line in lines if line["type"] == "status"} == {
+                "ses_plan": "busy"
+            }
+            fake.replay("a question")
+            assert watching.until("question")[-1]["type"] == "question", "the stream opened again hears it"
+        finally:
+            assert watching.end() == 0
+
+
+def test_a_stream_quiet_for_a_while_is_opened_again_and_says_what_ended_meanwhile() -> None:
+    """A stream that went silent some other way: the watch opens it again after `CLANK_BRIDGE_QUIET` seconds without a
+    line, and a run that ended meanwhile is said idle."""
+    with FakeOpenCode() as fake:
+        fake.status = {"ses_plan": {"type": "busy"}}
+        watching = Watching(f"{fake.port}-{fake.port}", quiet="2")
+        try:
+            watching.until("synced")
+            fake.status = {}
+            fake.dispose_silently()
+            lines = watching.burst(quiet=6)
+            assert {line["session"]: line["status"] for line in lines if line["type"] == "status"} == {
+                "ses_plan": "idle"
+            }
         finally:
             assert watching.end() == 0
 
