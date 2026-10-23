@@ -193,7 +193,7 @@ async def test_a_running_box_redraws_at_most_four_times_a_second_and_only_its_ro
         assert set(refreshed) <= set(range(rect.y, rect.y + rect.h)), "only the running box's lines"
 
 
-async def test_enter_on_a_running_box_opens_the_session_view_on_its_session_and_esc_comes_back_to_the_box(
+async def test_enter_on_a_running_box_opens_the_session_view_on_its_session_and_backspace_comes_back_to_the_box(
     kernel: Kernel, client: Client, home: Home, clock: FakeClock, folder: Path
 ) -> None:
     d1(kernel, clock, folder)
@@ -206,13 +206,13 @@ async def test_enter_on_a_running_box_opens_the_session_view_on_its_session_and_
         await settle(pilot, lambda: page.view == "session")
         await settle(pilot, lambda: page.seen is not None and (page.seen.head or {}).get("session") == T2_SESSION)
         said = heading("session", page.seen, UTC).plain
-        assert said.endswith("the flow's box A new simulation study · T2 · try 1 (Esc goes back to it)"), said
+        assert said.endswith("the flow's box A new simulation study · T2 · try 1 (Backspace goes back to it)"), said
         moved = d1_run()  # meanwhile the flow moves on: T2 done, T3 at work
         moved.at, moved.boxes["T2"].state = "T3", "done"
         moved.boxes["T2"].tries[0].ended = moved.boxes["T2"].tries[0].started
         moved.boxes["T3"] = BoxRun(state="running", tries=[Try(number=1, started=NOW, session="ses_t3", port=4097)])
         write_run(kernel.parts["flows"].runner.runs, moved)
-        await pilot.press("escape")
+        await pilot.press("backspace")
         await settle(pilot, lambda: page.view == "flow")
         await settle(pilot, lambda: chart(app).now == "T3")  # the flow read again: at T3 now
         await pilot.pause(0.3)

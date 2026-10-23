@@ -283,7 +283,7 @@ class Buttons(Widget, can_focus=True):
             self._hint()
 
     def on_key(self, event: events.Key) -> None:
-        """Its keys: along it, Home and End, across a row, Enter and Space, Esc; the others go on."""
+        """Its keys: along it, Home and End, across a row, Enter and Space; the others go on (Esc to the menu)."""
         back, forth = ALONG[self.column]
         key = event.key
         if key in (back, forth):
@@ -294,8 +294,6 @@ class Buttons(Widget, can_focus=True):
             self.press(self.cursor)
         elif key in ("up", "down") and not self.column:
             self.across(key == "up")
-        elif key == "escape" and not self.screen.is_modal and hasattr(self.app, "to_main"):
-            self.app.to_main()
         else:
             return
         event.stop()

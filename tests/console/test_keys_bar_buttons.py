@@ -1,8 +1,8 @@
 """Design 0011 §7, §12.1, §12.3 and §12.4 (the keys bar; what becomes a button; pressing it; how the focus moves): every
 key on the keys bar is a button, standing at the column its key stood at before buttons, as §7 fits them; Tab reaches
 the bar, last in the screen's order, and goes on to the menu; → and ← move along it and stop at its ends; Enter, Space
-and a click press a key through the console's one door; ↑ and Esc go back into the page; the focused key is drawn on
-`button-focused`, its blank cells too."""
+and a click press a key through the console's one door; ↑ goes back into the page and Esc to the menu; the focused key
+is drawn on `button-focused`, its blank cells too."""
 
 from typing import Any
 
@@ -113,18 +113,18 @@ async def test_enter_space_and_a_click_press_a_key_of_the_bar_through_the_one_do
         assert bar.cursor == 0, "a click moves the cursor to the key clicked"
 
 
-async def test_up_and_esc_on_the_keys_bar_go_back_into_the_page(client: Client, home: Home) -> None:
+async def test_up_on_the_keys_bar_goes_back_into_the_page_and_esc_to_the_menu(client: Client, home: Home) -> None:
     app = make(client, home, "records")
     async with app.run_test(size=(120, 30)) as pilot:
         await frame_when(pilot, app, "Kinds")
         bar = app.query_one(KeysBar)
-        for key in ("up", "escape"):
+        for key, wanted in (("up", "records-kinds"), ("escape", "menu")):
             bar.focus()
             await pilot.pause()
             await pilot.press(key)
             await settle(pilot, lambda: app.focused is not bar)
             assert app.focused is not None
-            assert app.focused.id == "records-kinds", key
+            assert app.focused.id == wanted, key
 
 
 async def test_the_focused_key_is_drawn_on_button_focused_its_blank_cells_too(client: Client, home: Home) -> None:

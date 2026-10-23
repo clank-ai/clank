@@ -105,7 +105,7 @@ async def test_d4_shows_each_proposal_as_a_card_in_the_order_they_will_run(
         assert_frame(frame, "monitor-flow-d4-128")
         await pilot.press("right")
         await settle(pilot, lambda: "Do step 2 of PLAN.md" in render_text(app))  # the highlighted card's prompt
-        await pilot.press("escape")
+        await pilot.press("backspace")
         await settle(pilot, lambda: not page.has_class("-board-d4"))
         assert app.query_one("#monitor-flow-boxes").display
 

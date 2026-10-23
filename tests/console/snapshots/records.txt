@@ -37,4 +37,4 @@ Setup guide           M10    │
                              │
                              │
 
- ? explain  f1 help  f5 machine column  q quit  ^b menu                                                      ^p palette
+ ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu                                            ^p palette

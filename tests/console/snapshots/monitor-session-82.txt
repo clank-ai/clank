@@ -47,4 +47,4 @@
 
 
 
- f10 next view  enter open  esc back  ? explain  f1 help
+ f10 next view  enter open  bksp back  ? explain  f1 help

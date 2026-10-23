@@ -31,4 +31,4 @@ Modes                 M5   ▅▅│
 Changes               M6     │
 Network access        M7     │
 
- / filter by what you type  esc leave the filter  ? explain  f1 help  f5 machine column  q quit  ^b menu     ^p palette
+ / filter by what you type  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu                 ^p palette

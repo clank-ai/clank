@@ -82,7 +82,7 @@ async def test_the_keys_bar_is_one_row_on_bars_each_key_in_key_and_its_words_in_
         app.show_page("docker")
         await settle(pilot, lambda: keys_line(app).startswith(" s start or stop Docker"))
         line = keys_line(app)
-        assert "f1 help  f5 machine column  q quit  " in line
+        assert "f1 help  esc menu  f5 machine column  q quit  " in line
         assert line.endswith("^p palette "), "the palette's key at the right, while there is room"
 
 
@@ -92,7 +92,7 @@ def test_a_narrow_keys_bar_drops_the_other_keys_that_act_anywhere_first_then_the
     assert [key.action for key in every] == ["docker", "doctor", *(key.action for key in ANYWHERE)]
     assert palette
     narrower = []
-    for width in range(110, 0, -1):
+    for width in range(130, 0, -1):
         kept, palette = fit_keys(page, width)
         narrower.append(([key.action for key in kept], palette))
     seen = [narrower[0]] + [each for before, each in itertools.pairwise(narrower) if each != before]
@@ -104,11 +104,12 @@ def test_a_narrow_keys_bar_drops_the_other_keys_that_act_anywhere_first_then_the
             ["docker", "doctor", *anywhere[:-1]],  # then ^b (decision 0125)
             ["docker", "doctor", *anywhere[:-2]],  # then q
             ["docker", "doctor", *anywhere[:-3]],  # then f5
-            ["docker", *anywhere[:-3]],  # then the page's own, from the right
-            anywhere[:-3],
+            ["docker", "doctor", *anywhere[:-4]],  # then esc (decision 0129)
+            ["docker", *anywhere[:-4]],  # then the page's own, from the right
+            anywhere[:-4],
         ]
     )
-    assert [key.action for key in ALWAYS] == anywhere[:-3] == ["explain", "page('help')"], "? and f1 always stay"
+    assert [key.action for key in ALWAYS] == anywhere[:-4] == ["explain", "page('help')"], "? and f1 always stay"
     assert fit_keys(page, 5)[0] == list(ALWAYS)
 
 

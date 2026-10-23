@@ -31,4 +31,4 @@ Modes                 M5   ▅▅│
 Changes               M6     │
 Network access        M7     │
 
- y n … answer it with an option's key  v the question whole  ? explain  f1 help  f5 machine column  q quit  ^b menu
+ y n … answer it with an option's key  v the question whole  ? explain  f1 help  esc menu  f5 machine column  q quit

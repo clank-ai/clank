@@ -47,4 +47,4 @@
  │   should know; steering, it also changes the boxes     │  │                                                        │
  │   ahead, sends work back and answers the run's         │  │                                                        │
 
- f10 next view  enter open  O orchestrator  n new flow  N new flow in VS Code  ? explain  f1 help  f5 machine column  q quit  ^b menu                ^p palette
+ f10 next view  enter open  O orchestrator  n new flow  N new flow in VS Code  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu      ^p palette

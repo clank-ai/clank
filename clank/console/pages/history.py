@@ -34,8 +34,7 @@ class HistoryPage(Page):
     PANELS = ("history-filter-panel", "history-events")
     KEYS = (
         PageKey("slash", "filter", "filter by what you type"),
-        PageKey("escape", "leave_filter", "leave the filter"),
-    )
+    )  # Esc leaves the filter for the menu, as it leaves any page (decision 0129)
 
     def compose(self) -> ComposeResult:
         """The filter, then the events."""
@@ -63,7 +62,7 @@ class HistoryPage(Page):
         if key == "escape" and typing.has_focus:
             typing.display = bool(typing.value.strip())
             hint.display = not typing.display
-            self.console.query_one("#menu").focus()
+            self.console.action_to_menu()
             return True
         return False
 

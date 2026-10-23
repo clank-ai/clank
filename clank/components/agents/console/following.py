@@ -4,7 +4,7 @@ The page follows design 0012 §3's choice (a): the newest active root session of
 sessions the service keeps a flow of, newest heard first; active: busy or retrying), else the newest root session
 heard (`pick`). Picking another (`s`, which pins it) comes with a later step; so does a session idle since the service
 started, of which the service keeps no flow until something happens in it (plan s15, "For step 6"). Enter on a flow's
-running box pins the page to that box's session (`pin`, design 0013 §12) until Esc goes back to the box (`unpin`).
+running box pins the page to that box's session (`pin`, design 0013 §12) until Backspace goes back to the box (`unpin`).
 
 `Following.read` runs off the screen's thread, once a second while the page is on screen: it reads the folder's
 workspace now and then (`WORKSPACE_EVERY` readings: the route asks Docker), the flows kept of it (their heads and

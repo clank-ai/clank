@@ -37,4 +37,4 @@ F12 Add a model    │
                    │
                    │
  09:14  cloud: Example Coder is written: now its test
- y load it now  n keep it  ? explain  f1 help  f5 machine column  q quit  ^b menu
+ y load it now  n keep it  ? explain  f1 help  esc menu  f5 machine column  q quit

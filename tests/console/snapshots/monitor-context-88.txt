@@ -47,4 +47,4 @@
  │ user message; it does not count tokens                                                                             │
  │ the model: Qwen3.8-27B: thinking before your last message left out; tool calls written as XML; thinking between    │
 
- f10 next view  enter open  esc back  k compact  x drop  ? explain  f1 help  f5 machine column  q quit  ^b menu                                      ^p palette
+ f10 next view  enter open  bksp back  k compact  x drop  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu                           ^p palette

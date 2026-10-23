@@ -4,11 +4,11 @@ cannot disagree. A key's action is its name, which M2's `keys.json` (design 0001
 then a page acts on its keys in its `press`.
 
 The keys bar (`keysbar.KeysBar`, in place of Textual's footer) is one row on `bars`: the page's own keys first, then the
-keys that act anywhere (`ANYWHERE`: `?` explain and `f1` help, which always stay, then `f5`, `q` and `^b`, the menu
-shown or hidden, decision 0125), and `PALETTE`'s `^p palette` at the right, each key in `key` and its words in `quiet`.
-When the row is too narrow (`fit_keys`), the palette, `^b`, `q` and `f5` go first, then the page's own keys from the
-right. `MOVES` says what the keys that move do (the
-digits, Esc, the arrows, Tab, Enter and Space), which are Textual's, the shell's and the groups of buttons', for Help.
+keys that act anywhere (`ANYWHERE`: `?` explain and `f1` help, which always stay, `esc` back to the menu, decision
+0129, then `f5`, `q` and `^b`, the menu shown or hidden, decision 0125), and `PALETTE`'s `^p palette` at the right,
+each key in `key` and its words in `quiet`. When the row is too narrow (`fit_keys`), the palette, `^b`, `q`, `f5` and
+`esc` go first, then the page's own keys from the right. `MOVES` says what the keys that move do (the digits,
+Backspace, the arrows, Tab, Enter and Space), which are Textual's, the shell's and the groups of buttons', for Help.
 """
 
 from collections.abc import Sequence
@@ -35,6 +35,9 @@ ANYWHERE = (
     PageKey("question_mark", "explain", "explain",
             "explain what has the focus: a value, a question, an operation, a menu entry, the page, and its keys"),
     PageKey("f1", "page('help')", "help", "this help"),
+    PageKey("escape", "to_menu", "menu",
+            "back to the menu on the left, from anywhere in a page, the page staying as it was; a window open closes "
+            "first, and a field you type in is left first"),
     PageKey("f5", "machine", "machine column",
             "show or hide the machine column on the right (it shows by itself from 130 columns)"),
     PageKey("q", "quit", "quit", "quit; the service and what it runs go on"),
@@ -42,12 +45,15 @@ ANYWHERE = (
             "show or hide the menu on the left (the Monitor hides it, so the flow has the whole width); every page's "
             "key still opens it"),
 )  # fmt: skip
-ALWAYS = ANYWHERE[:2]  # on every keys bar, however narrow: `?` and `f1`, which lists every key
+ALWAYS = ANYWHERE[:2]  # on every keys bar, however narrow: `?` and `f1`, which lists every key; `esc` goes last of
+# the others, before the page's own keys
 PALETTE = PageKey("ctrl+p", "command_palette", "palette",
                   "the commands: every page and action, found by name; Change style picks the style")  # fmt: skip
 MOVES = (
     ("0 to 9", "open a page (the menu shows each page's key beside its name)"),
-    ("esc", "close a window; on a row of buttons, back to the page's main list"),
+    ("esc", "back to the menu, from anywhere in a page; a window open closes first"),
+    ("backspace", "back one step inside a page: the Monitor's view before, the Flow view's flow, Add a model's step "
+                  "before"),
     ("up, down", "move in the menu (the page under the highlight opens), or in the page's list; a page without one "
                  "scrolls; in a column of buttons, the next one; from a row of buttons, the group above or below"),
     ("right, left", "from the menu into the page and back; in a page, from one of its lists to the next and back; in "
@@ -57,7 +63,15 @@ MOVES = (
                      "the page"),
     ("home, end", "a row of buttons' first or last"),
 )  # fmt: skip
-SHOWN = {"question_mark": "?", "slash": "/", "full_stop": ".", "escape": "esc", "ctrl+p": "^p", "ctrl+b": "^b"}
+SHOWN = {
+    "question_mark": "?",
+    "slash": "/",
+    "full_stop": ".",
+    "escape": "esc",
+    "backspace": "bksp",
+    "ctrl+p": "^p",
+    "ctrl+b": "^b",
+}
 
 
 def shown(key: str) -> str:
@@ -77,7 +91,7 @@ def _width(keys: Sequence[PageKey], palette: bool) -> int:
 
 def fit_keys(page: Sequence[PageKey], width: int) -> tuple[list[PageKey], bool]:
     """The keys a bar `width` columns wide shows, in order, and whether the palette's shows at its right: the palette's,
-    `^b`, `q` and `f5` go first, then the page's own from the right; `?` and `f1` always stay."""
+    `^b`, `q`, `f5` and `esc` go first, then the page's own from the right; `?` and `f1` always stay."""
     own, others, palette = list(page), list(ANYWHERE[len(ALWAYS) :]), True
     while _width([*own, *ALWAYS, *others], palette) > width:
         if palette:

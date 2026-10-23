@@ -47,4 +47,4 @@ F12 Add a model    │
                    │
                    │
  09:14  cloud: Example Coder is written: now its test
- enter this folder  ? explain  f1 help  f5 machine column
+ enter this folder  ? explain  f1 help  esc menu

@@ -31,4 +31,4 @@ F12 Add a model    │
                    │
                    │
 
- c cloud  l local  esc this folder  ? explain  f1 help  f5 machine column  q quit
+ c cloud  l local  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu

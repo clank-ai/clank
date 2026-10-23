@@ -47,4 +47,4 @@ F12 Add a model    │ │ Its thinking effort (one of        │
                    │
                    │
  09:14  OpenRouter took the key; Clank keeps it (ends …-key)
- enter take  tab next  esc back  ? explain  f1 help
+ enter take  tab next  bksp back  ? explain  f1 help

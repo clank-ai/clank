@@ -47,4 +47,4 @@ F12 Add a model    │ │ once its engine is installed       │
                    │
                    │
  09:14  cloud: Example Coder is written: now its test
- enter set it up  esc back  ? explain  f1 help
+ enter set it up  bksp back  ? explain  f1 help  esc menu

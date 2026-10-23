@@ -601,14 +601,19 @@ line says which keys it stands for.
 - **Lists keep their own arrows**: the menu, a page's lists, the Flow view's boxes and a form's fields take their keys
   first, as today; the arrows move between buttons only while a group has the focus. No binding of the groups is a
   priority binding.
-- **Esc** on a group: back to the page's main list (its first list; a page without one, its first group, or the page
-  itself). In a window, Esc stays the window's: it leaves it.
+- **Esc**, anywhere in a page (a group, a list, the page itself): back to the menu, the page staying as it was
+  (revised 2026-10-22, decision 0129). In a window, Esc stays the window's: it leaves it; in a field being typed in, it
+  leaves the field first. A step back inside a page (the Monitor's view before, the Flow view's board D1, Add a model's
+  step before) is **Backspace**.
 - **`?`** with a button focused: the details window says what it does, the keys that press it, or why it cannot act
   now. On the keys bar's own `?`, it explains what had the focus before the keys bar.
 
 ### 12.5 Where the focus starts
 
 - The console starts on the menu, as today: ↑ ↓ open the pages as they move.
+- **Esc** puts the focus on the menu from anywhere in a page. Beside a page that hides the menu (the Monitor, §13), the
+  menu shows while it has the focus, and ↑ ↓ pass the Monitor's entry without hiding it; going into the page hides it
+  again (decision 0129).
 - **→, Tab or Enter** on the menu goes into the page on screen: where the focus was when the page was last left, else
   its main list. Enter on the menu is new.
 - A key typed leaves the focus where it was.
@@ -731,3 +736,8 @@ lines and the arrows' order reworked).
   and its title is never cut. The approved words had said no panel cuts its title, the windows among them, which a
   long title on a narrow screen cannot keep without pushing the window past the screen's edges. §7 also names board
   E19, drawn with R2's last task.
+- **2026-10-22, §12.4 and §12.5 revised after approval, at the owner's request** (decision 0129): "Unless otherwise
+  stated (like when I am confirming something), the esc key should always bring me back to the Clank menu." Esc goes
+  to the menu from anywhere in a page, the page staying as it was, and shows the menu beside the Monitor while it has
+  the focus; it is on every keys bar, beside `?` and `f1`. A window keeps its Esc; a field being typed in is left
+  first. The steps back that Esc took inside a page are Backspace's.

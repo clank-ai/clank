@@ -47,4 +47,4 @@ F12 Add a model    │
                    │
                    │
 
- enter go on  esc back  ? explain  f1 help
+ enter go on  bksp back  ? explain  f1 help  esc menu

@@ -1,24 +1,22 @@
-"""Design 0016 §14 and decision 0105: Add a model, the console's guided first step, one panel at a time, Esc back one
-screen. Its first screen asks how Clank should run its model: Cloud (`c`), or Local (`l`) with this machine's GPU and
-memory. Cloud names OpenRouter and where to get a key; the agreement says what goes to OpenRouter, where, what never
-goes (the MCP servers marked local, each already added marked, Space unmarking one), that each workspace asks once, and
-that each request costs money; `o` changes the data policy, `n` and Esc go back writing nothing, and `y` writes the
-record with the servers marked as shown (none named when none is listed), and Esc from the key then skips the
-agreement done; an agreement whose words were not read cannot be agreed to. A provider already added starts at its key,
-or at the model once its key is set. Every screen fits at 128, 88 and 60 columns, its keys bar at 60 keeping the keys
-the step needs.
-
-Design 0016 §11 and §14, screens 4 to 6: the key typed into the hidden field is sent once; accepted, the next screen
-says its account (its label, its own limit and what is left); refused, the service's words, the field cleared; no frame
-holds the key either way. The model list is OpenRouter's (a model without tool calls is never offered): `/` searches,
-`s` sorts, `f` shows the free ones with their limits; Enter on a model fills its settings, and Enter there writes the
-preset and a limit changed; a setting out of range is said, and nothing is written.
-
-Design 0016 §14, screens 7 and 8, and Local: from an empty main slot the preset is loaded, and Ready shows its answer,
-time and cost; with a local model running, the provider's short test comes first, then "load it now?", `n` keeping the
-local model and `y` switching; each failure says what to do, `b` back to the model and `k` back to the key. Local lists
-Clank's presets for the main slot with what each needs here, and Enter asks before its first step. Every word the
-steps say is the service's (its guide, its models' and its account's words): the page works out none of them."""
+"""Design 0016 §14 and decision 0105: Add a model, the console's guided first step, one panel at a time, Backspace back
+one screen and Esc to the menu (decision 0129). Its first screen asks how Clank should run its model: Cloud (`c`), or
+Local (`l`) with this machine's GPU and memory. Cloud names OpenRouter and where to get a key; the agreement says what
+goes to OpenRouter, where, what never goes (the MCP servers marked local, each already added marked, Space unmarking
+one), that each workspace asks once, and that each request costs money; `o` changes the data policy, `n` and Backspace
+go back writing nothing, and `y` writes the record with the servers marked as shown (none named when none is listed),
+and Backspace from the key then skips the agreement done; an agreement whose words were not read cannot be agreed to. A
+provider already added starts at its key, or at the model once its key is set. Every screen fits at 128, 88 and 60
+columns, its keys bar at 60 keeping the keys the step needs. Design 0016 §11 and §14, screens 4 to 6: the key typed into
+the hidden field is sent once; accepted, the next screen says its account (its label, its own limit and what is left);
+refused, the service's words, the field cleared; no frame holds the key either way. The model list is OpenRouter's (a
+model without tool calls is never offered): `/` searches, `s` sorts, `f` shows the free ones with their limits; Enter on
+a model fills its settings, and Enter there writes the preset and a limit changed; a setting out of range is said, and
+nothing is written. Design 0016 §14, screens 7 and 8, and Local: from an empty main slot the preset is loaded, and Ready
+shows its answer, time and cost; with a local model running, the provider's short test comes first, then "load it now?",
+`n` keeping the local model and `y` switching; each failure says what to do, `b` back to the model and `k` back to the
+key. Local lists Clank's presets for the main slot with what each needs here, and Enter asks before its first step.
+Every word the steps say is the service's (its guide, its models' and its account's words): the page works out none of
+them."""
 
 from datetime import UTC, datetime
 from typing import Any
@@ -121,7 +119,9 @@ async def test_the_agreement_says_what_goes_where_and_what_never_goes_each_serve
         assert_frame(frame, "add-model-agreement")
 
 
-async def test_n_and_esc_go_back_and_write_nothing(client: Client, home: Home, cloud_api: CloudBench) -> None:
+async def test_n_and_backspace_go_back_esc_goes_to_the_menu_and_nothing_is_written(
+    client: Client, home: Home, cloud_api: CloudBench
+) -> None:
     app = make(client, home)
     async with app.run_test(size=(88, 34)) as pilot:
         await on_screen(pilot, app, CHOICE)
@@ -132,12 +132,13 @@ async def test_n_and_esc_go_back_and_write_nothing(client: Client, home: Home, c
         assert AGREEMENT not in render_text(app)
         await pilot.press("enter")
         await on_screen(pilot, app, AGREEMENT)
-        await pilot.press("escape")
+        await pilot.press("backspace")
         await on_screen(pilot, app, "openrouter.ai")
-        await pilot.press("escape")
+        await pilot.press("backspace")
         await on_screen(pilot, app, CHOICE)
         await pilot.press("escape")
-        await settle(pilot, lambda: app.query_one("#pages").current == "page-folder")  # type: ignore[attr-defined]
+        await settle(pilot, lambda: app.focused is not None and app.focused.id == "menu")
+        assert page_of(app).screen_name == "choice", "the page stays as it was"
     assert cloud_api.endpoint is None
     assert cloud_api.calls == []
 
@@ -172,7 +173,7 @@ async def test_an_added_provider_starts_at_its_key(client: Client, home: Home, c
         await on_screen(pilot, app, CHOICE)
         await pilot.press("c")
         await on_screen(pilot, app, KEY_SCREEN)
-        await pilot.press("escape")
+        await pilot.press("backspace")  # the field is empty: a step back
         await on_screen(pilot, app, CHOICE)
     assert cloud_api.calls == []
 
@@ -495,7 +496,7 @@ async def test_with_no_server_listed_the_agreement_leaves_the_servers_to_the_ser
                                                                  "agree": True})  # fmt: skip
 
 
-async def test_once_agreed_esc_from_the_key_skips_the_agreement_done(
+async def test_once_agreed_backspace_from_the_key_skips_the_agreement_done(
     client: Client, home: Home, cloud_api: CloudBench
 ) -> None:
     app = make(client, home)
@@ -505,7 +506,7 @@ async def test_once_agreed_esc_from_the_key_skips_the_agreement_done(
         await on_screen(pilot, app, AGREEMENT)
         await pilot.press("y")
         await settle(pilot, lambda: page_of(app).screen_name == "key")
-        await pilot.press("escape")
+        await pilot.press("backspace")
         await settle(pilot, lambda: page_of(app).screen_name == "choice")
 
 
@@ -526,8 +527,8 @@ async def test_at_60_columns_the_keys_bar_keeps_the_keys_each_step_needs(
         page_of(app).start("model")
         await on_screen(pilot, app, "Example Coder")
         bar = render_text(app).splitlines()[-1]
-        assert all(key in bar for key in ("/ search", "s sort", "f free", "esc back")), bar
+        assert all(key in bar for key in ("/ search", "s sort", "f free", "bksp back")), bar
         await pilot.press("enter")
         await on_screen(pilot, app, "Its settings")
         bar = render_text(app).splitlines()[-1]
-        assert all(key in bar for key in ("enter take", "tab next", "esc back")), bar
+        assert all(key in bar for key in ("enter take", "tab next", "bksp back")), bar

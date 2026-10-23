@@ -70,6 +70,12 @@ Screen.-menu-off #menu {
     display: none;
 }
 
+/* Esc, or Left from the page's first list, puts the focus on the menu: it shows while it has the focus, beside any page,
+   and the arrows in it pass the Monitor without hiding it (decision 0129). */
+Screen.-menu-focus #menu {
+    display: block;
+}
+
 #pages {
     width: 1fr;
     height: 1fr;

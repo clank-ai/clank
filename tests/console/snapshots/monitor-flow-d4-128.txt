@@ -47,4 +47,4 @@
 
 
 
- a accept  e edit  r reject  A accept all  esc back to the flow  ? explain  f1 help  f5 machine column  q quit  ^b menu                              ^p palette
+ a accept  e edit  r reject  A accept all  bksp back to the flow  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu                   ^p palette

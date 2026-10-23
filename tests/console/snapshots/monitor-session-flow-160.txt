@@ -37,4 +37,4 @@
  └────────────────────────────────────────────────────────────┘  └────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
- f10 next view  enter open  esc back  . stop  m note  k compact  p pause  u undo  x drop  l live text  ? explain  f1 help  f5 machine column  q quit  ^b menu
+ f10 next view  enter open  bksp back  . stop  m note  k compact  p pause  u undo  x drop  l live text  ? explain  f1 help  esc menu  f5 machine column  q quit

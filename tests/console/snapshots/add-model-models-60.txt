@@ -47,4 +47,4 @@ F12 Add a model    │ │ example-vendor/example-coder: A    │
                    │
                    │
  09:14  OpenRouter took the key; Clank keeps it (ends …-key)
- / search  s sort  f free  esc back  ? explain  f1 help
+ / search  s sort  f free  bksp back  ? explain  f1 help

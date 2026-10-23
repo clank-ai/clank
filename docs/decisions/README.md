@@ -136,6 +136,7 @@ and use the template below.
 | [0126](0126-the-console-records-what-it-draws.md) | The console records what it draws, where it writes to the terminal, in asciinema's format | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
 | [0127](0127-the-orchestrator-tells-the-owner-at-once.md) | The orchestrator tells the owner at once, may pause the run or leave a question to them, and may only watch | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
 | [0128](0128-a-runner-looks-at-a-session-itself.md) | A flow's runner reads a session's status itself every minute, and the watch opens a stream again after its instance ended | Accepted (Claude's call) | 2026-10-22 |
+| [0129](0129-esc-goes-back-to-the-menu.md) | Esc goes back to the menu from anywhere in a page; a step back inside a page is Backspace | Accepted (the owner's request, built as Claude's call) | 2026-10-22 |
 
 ## Template
 

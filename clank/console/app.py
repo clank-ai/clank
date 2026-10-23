@@ -123,7 +123,7 @@ def _bindings() -> list[BindingType]:
         entry = page.ENTRY
         action = f"key('{entry.key}')" if entry.key in DIGITS else f"page('{entry.id}')"
         keys.append(Binding(entry.key.lower(), action, entry.label.lower(), show=False))
-    bound = {binding.key for binding in keys}
+    bound = {binding.key for binding in keys} | {"escape"}  # Esc is `on_key`'s, after a page's field took its own
     keys += [Binding(key.key, key.action, key.words, show=False) for key in ANYWHERE if key.key not in bound]
     return [
         *keys,
@@ -346,6 +346,8 @@ class ClankConsole(App[str]):
         """Whether the menu is hidden now: by Ctrl+B, or beside a page that takes the whole width (as its classes say,
         before the screen is drawn again)."""
         screen = self.screen
+        if screen.has_class("-menu-focus"):
+            return False
         if screen.has_class("-menu-off"):
             return True
         return not self._current().MENU_COLUMN and not screen.has_class("-menu-on")
@@ -358,6 +360,14 @@ class ClankConsole(App[str]):
         self.screen.set_class(not hiding, "-menu-on")
         if hiding and self.focused is self.query_one("#menu", ListView):
             self.call_after_refresh(self.action_inward)
+
+    def action_to_menu(self) -> None:
+        """Esc: back to the menu, from anywhere in a page, the page staying as it was (decision 0129); the menu shows
+        while it has the focus, beside a page that hides it too."""
+        self._present()
+        menu = self.query_one("#menu", ListView)
+        self.screen.set_class(True, "-menu-focus")
+        menu.focus()
 
     def action_machine(self) -> None:
         """F5: show the machine column, or hide it, whatever the terminal's width."""
@@ -499,6 +509,9 @@ class ClankConsole(App[str]):
         quits."""
         if not isinstance(event.widget, KeysBar):
             self._before_bar = event.widget
+        screen = self.screen  # the menu Esc showed hides again once the focus is elsewhere (as it is now)
+        if not screen.is_modal and (screen.focused is None or screen.focused.id != "menu"):
+            screen.remove_class("-menu-focus")
         page = self._shown_page()
         if page is not None and page in event.widget.ancestors:
             self._left[self._page] = event.widget
@@ -583,7 +596,10 @@ class ClankConsole(App[str]):
             return
         stops = self._stops()
         index = stops.index(self.focused) if self.focused in stops else 0
-        (stops[index - 1] if index > 0 else self.query_one("#menu", ListView)).focus()
+        if index > 0:
+            stops[index - 1].focus()
+        else:
+            self.action_to_menu()
 
     def main(self) -> Widget:
         """The page's main list (design 0011 §12.4): the first of its stops that is not a group of buttons, else its
@@ -609,6 +625,11 @@ class ClankConsole(App[str]):
             self.raise_limits()
             return
         if event.key in DIGITS:
+            return
+        if event.key == "escape" and not self.screen.is_modal:
+            event.stop()  # a page's field takes it first (History's filter, Add a model's search); else the menu
+            if not self.press_page_key("escape"):
+                self.action_to_menu()
             return
         window = self._details()
         if self.press_page_key(event.key):
