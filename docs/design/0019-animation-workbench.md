@@ -5,7 +5,7 @@ Part of Clank Code ([design 0018](0018-clank-code.md)); it builds on the figure 
 owner's request: "manim animations that we can make together, in fact this is actually the very first thing that I
 would like you to design fully and then build when I approve the design so that I can test this out myself." Drawn in
 the owner's design canvas "Clank in VS Code": the boards "Animation workbench" and "Animation: sketch of the opening",
-and the row "Animation workbench, in depth" (ten boards, one per part below). Every section is proposed; nothing is
+and the row "Animation workbench, in depth" (twelve boards, one per part below). Every section is proposed; nothing is
 built until the owner approves it.
 
 ## Sections
@@ -30,9 +30,12 @@ built until the owner approves it.
 | 16 | When a render fails | Proposed 2026-10-23 |
 | 17 | Export and provenance | Proposed 2026-10-23 |
 | 18 | Limits | Proposed 2026-10-23 |
-| 19 | Later | Proposed 2026-10-23 |
-| 20 | Tests | Proposed 2026-10-23 |
-| 21 | Build steps | Proposed 2026-10-23 |
+| 19 | Slides | Proposed 2026-10-23 |
+| 20 | Narration | Proposed 2026-10-23 |
+| 21 | In a Beamer PDF | Proposed 2026-10-23 |
+| 22 | Later | Proposed 2026-10-23 |
+| 23 | Tests | Proposed 2026-10-23 |
+| 24 | Build steps | Proposed 2026-10-23 |
 
 ## 1. What the owner gets
 
@@ -54,6 +57,11 @@ versions in step. Final renders export as video, GIF and frames, each with a rec
   way for me to annotate different frames" (§8).
 - The figure loop's spirit holds here: "a simple annotation setup that will let me draw, add comments, and so on", with
   the user experience "prioritized alongside the usability and reliability of the implementation".
+- **One fix round before the owner looks** when the layout checks find a serious problem (§7).
+- **Direct marks always go through the agent**: a move or resize is an exact request, never an edit by Clank (§10).
+- **Slides, narration and a Beamer PDF in the first build** (§19 to §21; packages in decision 0133).
+- **The owner's test scene: a mix of all three first uses**: an equation built term by term, a curve from data, and a
+  parameter sweep, in one short scene (§24).
 
 ## 3. What other work teaches
 
@@ -72,16 +80,17 @@ versions in step. Final renders export as video, GIF and frames, each with a rec
   the section; this saves tokens and time (§16).
 - **Timings belong on the timeline.** Motion Canvas lets the author drag a time event in its editor instead of editing
   delays in code, with later events moving along unless Shift is held (§11).
-- **Talks and narration have tools already.** Manim Slides turns sections into click-to-advance slides (HTML or
-  PowerPoint); manim-voiceover syncs a voice track to the scene by bookmarks (§19).
+- **Talks and narration have tools already.** Manim Slides turns a scene into click-to-advance slides (HTML or
+  PowerPoint); manim-voiceover syncs a voice track to the scene by bookmarks (§19, §20).
 
 ## 4. Manim in the container
 
 Manim comes as a second image layer on Clank's sandbox image (design 0004 §3's "a second image layer per kind of work,
 added when first needed"): `clank image add manim`, offered the first time a workspace opens the workbench. The layer
 holds Manim Community pinned at 0.22.0 (released 2026-10-08; it needs Python 3.11 or newer, and the image has 3.12),
-and what it needs to render text and formulas: Cairo and Pango, FFmpeg, and a TeX Live set for `MathTex` (LaTeX and
-`dvisvgm`). The exact packages are fixed when the layer is built and checked by rendering Manim's own example scenes;
+and what it needs to render text and formulas: Cairo and Pango, FFmpeg, and a TeX Live set for `MathTex` (LaTeX,
+`dvisvgm`, and the `animate` package); and for §19 and §20, Manim Slides, manim-voiceover and the Kokoro voice
+(decision 0133). The exact packages are fixed when the layer is built and checked by rendering Manim's own example scenes;
 its size and time are measured then (expected 1 to 2 GB, a few minutes). A workspace that never uses Manim does not
 carry it. Rendering uses the CPU; the GPU stays the model's. Moving to a newer Manim is a decision with its own record,
 since §7's API check is written against one version.
@@ -251,8 +260,9 @@ stays on screen.
 ## 17. Export and provenance
 
 Export renders from the version's own source: MP4 at 1080p60 or 4K, WebM, MOV with transparency, the whole scene or
-each section as a clip; a GIF (720p, 15 frames a second, looping) for a README or a slide; PNG frames at 3840×2160,
-the last frame of each section or the frame in the player, named by section. Every exported file gets an
+each section as a clip, with the narration's voice when there is one; captions (.srt) from the narration's text and
+times; a GIF (720p, 15 frames a second, looping) for a README or a slide; PNG frames at 3840×2160, the last frame of
+each section or the frame in the player, named by section; slides (§19) and Beamer frames (§21). Every exported file gets an
 `export.json` beside it: the scene, the version, the source's checksum, the Manim version, each data file's checksum
 and the command, so a video in a talk traces back to the code and data that made it. A final render that does not
 exist yet runs as a job first.
@@ -265,30 +275,63 @@ limit on CPU threads (4 by default) so the model and other jobs keep running. A 
 an older one still running. Versions beyond the last 20 of a scene are removed unless kept. The status bar shows a
 running render (`▶ v6 6/7`) and a failed one.
 
-## 19. Later
+## 19. Slides
 
-Not built in the first round; each needs its own approval and, for a new dependency, a decision record (all would live
-in the Manim layer, not in Clank):
+A scene made for slides uses Manim Slides' `Slide` as its base class; each `self.next_slide()` is a slide break, and
+`self.next_slide(loop=True)` makes the next slide loop until a click. Breaks show on the timeline as lines; "Slide
+break at the playhead" inserts one, and Clank inserts or removes a break itself, as a change to review (it is a fixed
+line, like §11's literals). The workbench lists the slides with their last frames and lengths, and its presenter
+preview plays a slide, waits for a click, and shows the next slide and the slide's notes (from the narration, or the
+beats). Export converts the slides with Manim Slides into one HTML page (reveal.js, the videos beside it, offline) or
+a PowerPoint file, one slide per slide.
 
-- **Slides**: each section a click-to-advance slide with Manim Slides, as an HTML page or a PowerPoint file.
-- **Narration**: a voice track from a script with a local voice, its bookmarks setting the waits (manim-voiceover).
-- **Beamer**: the scene's frames for LaTeX's animate package, to play inside a PDF.
-- **A vision model** for marks, once one runs beside the main model (design 0017 §18).
+## 20. Narration
 
-## 20. Tests
+A narrated scene uses manim-voiceover: its words are `with self.voiceover(text=...)` blocks, and the animations inside
+a block take their times from its audio (`tracker.duration`, `tracker.time_until_bookmark`), with
+`<bookmark mark='...'/>` inside the text and `self.wait_until_bookmark` in the code. The voice is Kokoro, on the CPU,
+through Clank's speech service (`clank_voice()`, in the Manim layer): it speaks a block piece by piece, cut at its
+bookmarks, so each bookmark's time is the length of the audio before it, with no transcription model (decision 0133).
+Audio is cached by text, voice and speed, so changing one sentence speaks only that block again.
+
+The workbench adds a voice lane under the timeline: each block with its words and its waveform, bookmarks as pins
+linked to the animations they start. The script view shows the narration as text, block by block, with bookmarks as
+chips; editing a sentence there changes the string in the code (Clank, as a change to review; §11) and speaks it
+again. A pronunciation list in `style.py` says how to read symbols and numbers ("1e-1" as "one tenth"). The voice,
+its speed and the list are the style's. The agent writes the first script from the beats; marks can point at a voice
+block ("shorter", "say this after the curve appears"), and §12's message carries the script with the timeline.
+Whether a narrated scene can also be a `Slide` is checked in build step 1; if not, slides of a narrated scene are cut
+at its sections instead.
+
+## 21. In a Beamer PDF
+
+Export writes a scene's frames at a chosen rate and size (15 frames a second, 1280×720 by default; the size is shown
+before export) and a LaTeX snippet for the `animate` package (`\animategraphics` with controls, looping, and the last
+frame as its poster), so the animation plays inside the PDF in viewers that run it (Acrobat Reader among them) and
+shows its last frame elsewhere. The frames are in the export's folder with their provenance (§17).
+
+## 22. Later
+
+Not in the first build: a vision model for marks, once one runs beside the main model (design 0017 §18), which would
+also get the marked frames.
+
+## 23. Tests
 
 Tests come first, as for every part (design 0001 §8.6). Unit tests: the recorder's timeline and objects from a scene
 run against a small fake of Manim's `Scene` and `Mobject`; names from locals, attributes and groups; each layout check,
-including what counts as intended; the API check's table; marks in words; literal timing edits; thread matching across
-versions; versions and going back; export's provenance. The extension's core (the timeline, mark geometry, the grid)
+including what counts as intended; the API check's table; marks in words; literal timing edits and slide breaks;
+thread matching across versions; versions and going back; the speech service's bookmark times and its cache, against a
+fake voice; captions; the Beamer snippet; export's provenance. The extension's core (the timeline, mark geometry, the grid)
 with Node's test runner, as the rest of the extension. Tests marked `manim` run real scenes in the image (dry runs,
-sketches, a preview, a cached re-render), on demand and before each release; they also measure §21 step 1's times. The
+sketches, a preview, a cached re-render, a voiced block, a slide export), on demand and before each release; they also
+measure §24 step 1's times. The
 owner's own test is the last step.
 
-## 21. Build steps
+## 24. Build steps
 
-1. The Manim layer: Manim 0.22 and its LaTeX; Manim's examples render; times measured (dry run, sketch, preview,
-   final).
+1. The Manim layer: Manim 0.22 and its LaTeX, Manim Slides, manim-voiceover and the Kokoro voice; Manim's examples
+   render; a voiced block, a slide export and a narrated slide are tried; times measured (dry run, sketch, preview,
+   final, a sentence spoken).
 2. The recorder: the timeline, objects and names, data files, the stills of a sketch.
 3. The checks: the API table and the layout checks.
 4. Runs and renders as jobs; versions.
@@ -299,4 +342,8 @@ owner's own test is the last step.
 9. Mark threads; compare, keep, back and branches.
 10. Data plots: the two starting scenes and the data checks.
 11. Failed renders; export and provenance.
-12. The owner's test.
+12. Slides: breaks, the presenter preview, HTML and PowerPoint.
+13. Narration: the speech service, the voice lane, the script view, captions.
+14. Beamer: frames and the snippet.
+15. The owner's test: one short scene with an equation built term by term, a curve from data, and a parameter sweep;
+    narrated, made into slides, and exported for Beamer.
