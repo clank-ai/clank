@@ -1,0 +1,85 @@
+# Design 0018: Clank Code, Clank inside VS Code
+
+Roadmap part 6 (VS Code), extending the extension of decision 0028 and designs 0006-0010. Started 2026-10-23 at the
+owner's request: "a complete integration of Clank into VS code ... make VS code dramatically easier to use with a local
+LLM and ... a harness for opencode running the LLM". Its layouts are drawn in the owner's design canvas "Clank in VS
+Code". Every section is proposed. Its first part to be built is the animation workbench,
+[design 0019](0019-animation-workbench.md), at the owner's request.
+
+## Sections
+
+| § | Section | Status |
+| --- | --- | --- |
+| 1 | An extension, not a fork | Proposed 2026-10-23; the direction approved by the owner the same day ("A clank code extension sounds good") |
+| 2 | The owner's answers | Recorded 2026-10-23 |
+| 3 | The layouts | Proposed 2026-10-23 |
+| 4 | Trust: what a claim's marks mean | Proposed 2026-10-23, from the critic's review |
+| 5 | What the extension API allows, and what it does not | Proposed 2026-10-23 |
+| 6 | Order of work | Proposed 2026-10-23 |
+
+## 1. An extension, not a fork
+
+Clank Code is Clank's VS Code extension grown to cover the whole window, in stock VS Code, plus later an optional
+VSCodium-based build with the extension built in, its layout set, telemetry off and proposed APIs on (no patches to VS
+Code's code). A full fork is rejected for now:
+
+- Forks lose Microsoft's Remote-SSH, WSL, Dev Containers, Pylance and C/C++ extensions, which are licensed for VS Code
+  only; the owner's next tests run over SSH and in WSL.
+- Keeping a patched copy in step with VS Code's monthly releases takes a funded team; Void, the open-source Cursor
+  alternative, was archived in June 2026.
+- Almost everything Clank needs is reachable from an extension, including its models in VS Code's own Chat and agent
+  mode through the Language Model Chat Provider API (stable since VS Code 1.104).
+
+Triggers to reconsider: a part of the window Clank must own that no API reaches; an API Clank depends on removed or
+blocked; enough maintainers to merge upstream monthly.
+
+## 2. The owner's answers
+
+- Research to support first: LaTeX papers, experiments and jobs, literature. (Lean 4 later.)
+- The agent: both Clank's own panel (OpenCode) and VS Code's Chat with Clank's models.
+- Productivity: review per change and rewind, fast-model editing, hooks and specs; parallel sessions dropped ("Drop the
+  parallel sessions if we need to"): one session at a time, earlier ones resumable.
+- Figures: a simple annotation loop for figures the model makes (matplotlib, pgfplots and TikZ), "making sure that
+  the user experience is prioritized alongside the usability and reliability of the implementation"; and Manim
+  animations made together, the first part to design fully and build (design 0019).
+- While the model works: the status bar only; the Monitor on demand.
+- LaTeX builds on the LaTeX Workshop extension (its build, PDF viewer and SyncTeX).
+- Literature tools may search outside the folder automatically (arXiv, Semantic Scholar, zbMATH): queries leave the
+  computer, files and code never do.
+- Long experiments run on this computer and on the HPC (Slurm over SSH), tracked in one list.
+
+## 3. The layouts
+
+Drawn in the canvas: the working layout (Clank's side bar with the session, flows, jobs, memory and the model; the
+editor with per-change review; the agent panel; the Monitor opened from the status bar; a status bar with the model,
+its speed, the context used, the mode and questions waiting), the research layout (a library of the folder's papers,
+a PDF beside the LaTeX source, the claim states and the verification ladder in the agent panel, jobs including the
+HPC's), the figure loop and the animation workbench (design 0019).
+
+## 4. Trust: what a claim's marks mean
+
+From the critic's review (a fresh agent, 2026-10-23, 5 of 10 for research): a check mark must never mean more than
+was checked. Each claim the model makes shows three states: **source found** (the cited place exists), **conditions
+match** (the source's assumptions cover this use) and **inference checked** (by a computation, Lean, or the owner);
+only the last is shown as checked. Novelty is never "new": it is "not found in N sources (listed) as of a date", and
+an unread candidate keeps it open. Each rung of the verification ladder names its claim, its evidence (file, commit,
+seed, command, log) and who checked it; a review by the same model in a fresh session says so. Text the model writes
+into a paper before its claim is checked is marked `% UNVERIFIED`. Memory entries link to the run or message they came
+from and can be retracted.
+
+## 5. What the extension API allows, and what it does not
+
+An extension cannot place its views in the secondary side bar itself (the owner drags the agent panel there once, or
+the Clank Code build sets it); the accept and reject actions on a change are CodeLens lines or comment threads, not
+buttons drawn between lines; next-edit completion and the Agent Sessions view use proposed APIs, which Marketplace
+extensions may not use (so they wait for the Clank Code build or the API's release). Videos play in a webview as
+WebM, since VS Code's webviews may lack H.264.
+
+## 6. Order of work
+
+1. The animation workbench (design 0019): the owner's first test.
+2. The figure loop for matplotlib, pgfplots and TikZ (design 0008 extended).
+3. The agent panel, per-change review with rewind, the status bar and the Monitor on demand.
+4. Research: the library with citation states and outside search, LaTeX with LaTeX Workshop, the job list with the HPC.
+5. Clank's models in VS Code's Chat; hooks and specs; fast-model inline edit.
+6. The Clank Code build, when a proposed API is worth it.
