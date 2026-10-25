@@ -64,3 +64,10 @@ def _no_test_finds_vs_code(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("clank.kernel.where.which", lambda name: None)
     for name in ("SSH_CONNECTION", "SSH_CLIENT", "SSH_TTY", "VSCODE_IPC_HOOK_CLI"):
         monkeypatch.delenv(name, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _colors_whatever_the_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The console draws its colors in the tests whatever the terminal that runs them asks: with NO_COLOR set there,
+    Textual drew gray, and the tests of the console's colors failed (2026-10-25); a test of NO_COLOR sets it."""
+    monkeypatch.delenv("NO_COLOR", raising=False)
