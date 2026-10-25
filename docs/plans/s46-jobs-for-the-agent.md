@@ -27,4 +27,8 @@ task starts with a failing test; each ends with a commit pushed to `main`.
 
 ## Progress
 
-Written 2026-10-25.
+Written 2026-10-25. Tasks 1-4 built the same day. Live on the local model (frontier 262K), in a throwaway folder: asked
+to run a two-minute synthetic simulation as a job and add its results to an artifact when told it ended, the model
+started it with `run_job` (job 1), ended its turn, was told by Clank when the job exited 0 after 2 minutes, and made the
+artifact's version 3 with the simulated series 17 seconds later; VS Code said the job's end in the window of its
+folder.
