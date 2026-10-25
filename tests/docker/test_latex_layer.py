@@ -91,3 +91,21 @@ def test_a_pdfs_pages_and_words_and_synctex_give_back_the_line_of_a_point(folder
     )
     [place] = said["places"]
     assert place == {"input": "/workspace/results.tex", "line": 2}
+
+
+def test_latex_workshops_build_keeps_the_pdf_log_and_synctex_beside_the_document_with_this_machines_paths(
+    folder: Path,
+) -> None:
+    asked = {"mode": "build", "root": "main.tex", "file": "main.tex", "text": None, "engine": "pdf", "seconds": 120,
+             "keep": "", "synctex_root": "D:/research/paper", "log": True}  # fmt: skip
+    said = helper(folder, asked)
+    assert said["built"] is True, said
+    assert said["kept"] == {"pdf": "main.pdf"}
+    assert (folder / "main.pdf").read_bytes().startswith(b"%PDF"), "the owner's own build replaced, as a build does"
+    assert (folder / "main.log").is_file()
+    import gzip
+
+    with gzip.open(folder / "main.synctex.gz", "rt", encoding="utf-8") as read:
+        synctex = read.read()
+    assert "D:/research/paper/" in synctex
+    assert "/tmp/clank-latex-" not in synctex

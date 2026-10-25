@@ -54,6 +54,10 @@ EVENT_TYPES = [
 ]  # fmt: skip
 
 
+class BuildError(Exception):
+    """A document that cannot be built, and why."""
+
+
 def kind_of(relative: str) -> str | None:
     """Which LaTeX file a path is: tex, bib or style; None for any other file."""
     return KINDS.get(PurePosixPath(relative).suffix.lower())
@@ -234,6 +238,38 @@ class LatexChecks:
                         texts[path.relative_to(folder).as_posix()] = text
         texts[relative] = after
         return texts
+
+    def build_file(self, file: str) -> dict[str, Any]:
+        """Build the document a `.tex` file of a workspace belongs to, in its container, its PDF, log and SyncTeX file
+        kept beside its root's `.tex` (LaTeX Workshop's build, design 0020 §3): whether it built, the PDF on this
+        machine, its errors and its warnings."""
+        path = Path(file)
+        if path.suffix.lower() != ".tex":
+            raise BuildError(f"{file} is not a .tex file")
+        workspace, folder = self._workspace_of(path)
+        relative = path.resolve().relative_to(folder.resolve()).as_posix()
+        texts = self._texts(folder, relative, _read(path) or "")
+        root = root_of(relative, texts) or relative
+        built = self.builder.output(workspace, root, engine_of(texts.get(root, "")), folder.as_posix())
+        if built.unbuilt:
+            raise BuildError(built.unbuilt)
+        warnings = [f"undefined reference {each}" for each in sorted(built.log.references)]
+        warnings += [f"undefined citation {each}" for each in sorted(built.log.citations)]
+        warnings += [f"label defined twice {each}" for each in sorted(built.log.labels)]
+        pdf = str(folder.joinpath(*built.pdf.split("/"))) if built.pdf else ""
+        return {"workspace": workspace, "root": root, "built": built.built, "pdf": pdf, "seconds": built.seconds,
+                "errors": built.log.errors, "warnings": warnings}  # fmt: skip
+
+    def _workspace_of(self, path: Path) -> tuple[str, Path]:
+        """The workspace whose folder holds a file, and its folder."""
+        for record in self.kernel.parts["workspaces"].records():
+            folder = Path(record["path"])
+            try:
+                path.resolve().relative_to(folder.resolve())
+            except ValueError:
+                continue
+            return str(record["name"]), folder
+        raise BuildError(f"{path} is in no Clank workspace: run `clank` in its folder first")
 
     def marked(self, change: dict[str, Any]) -> None:
         """Build the PDF of a change asked about (§9) and say where it is (`agents.latex_diff`); nothing when its

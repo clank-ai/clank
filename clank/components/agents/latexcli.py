@@ -1,4 +1,7 @@
-"""`clank latex` (design 0020): LaTeX with the agent. `clank latex setup [FOLDER]` gives the folder's workspace the TeX
+"""`clank latex` (design 0020): LaTeX with the agent. `clank latex build FILE` builds the document a `.tex` file belongs
+to in its workspace's container (§3: the recipe Clank's VS Code window gives LaTeX Workshop), its PDF, log and SyncTeX
+file kept beside the document, and says where the PDF is and what the log warns of; it fails, saying the error, when
+the document does not build. `clank latex setup [FOLDER]` gives the folder's workspace the TeX
 layer (§3): the workspace is opened with it (made the first time), which adds it to its record and builds its image on
 Clank's sandbox image (asked first unless `--yes`). A container already running keeps
 its image until it is made again; `--restart` stops it and opens it again on the new image at once, which ends the
@@ -46,6 +49,24 @@ def setup(folder: str | None, yes: bool, restart: bool) -> None:
         )
     else:
         click.echo("its container runs it: TeX is ready")
+
+
+@latex.command()
+@click.argument("file", type=click.Path(exists=True, dir_okay=False))
+def build(file: str) -> None:
+    """Build the document FILE belongs to in its workspace's container."""
+    client = common.call(common.connect)
+    found = common.call(lambda: client.post("agents/latex/build", {"file": str(Path(file).resolve())}))
+    root = Path(found["root"]).name
+    if not found["built"]:
+        first = found["errors"][0] if found["errors"] else "its log says no more"
+        click.echo(f"{root} did not build: {first}")
+        for line in found["errors"][1:5]:
+            click.echo(f"  {line}")
+        raise click.exceptions.Exit(1)
+    click.echo(f"Built {root} in {found['seconds']:g} s: {found['pdf']}")
+    for line in found["warnings"]:
+        click.echo(f"  {line}")
 
 
 def _open(client: Client, path: str, yes: bool) -> dict[str, Any]:

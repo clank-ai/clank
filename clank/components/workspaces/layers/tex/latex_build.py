@@ -5,8 +5,9 @@ only.
 - `build` {root, file, text, engine, seconds, keep}: the document `root` (from the folder) built with latexmk, the file
   `file` as `text` (null: as it is), in a scratch tree that never writes into the folder (`placed`: LaTeX's sources
   copied, what TeX only reads linked, what a build writes left out, so no build writes through a link). Answers whether
-  it built, latexmk's status, the log and BibTeX's or biber's, and the time; with `keep` (a folder under `.clank/`),
-  the PDF and its SyncTeX file are kept there, SyncTeX's paths made the folder's (`/workspace/...`).
+  it built, latexmk's status, the log and BibTeX's or biber's, and the time; with `keep` (a folder of the folder), the
+  PDF and its SyncTeX file are kept there (and its log, with `log`), SyncTeX's paths made the folder's
+  (`/workspace/...`), or, with `synctex_root`, the folder's on the machine (for LaTeX Workshop).
 - `diff` {root, file, before, after, engine, seconds, keep}: the document with `file` as `before` and as `after`,
   marked by latexdiff (`--flatten`, so `\\input` files are followed), built, and its PDF kept in `keep` as `diff.pdf`.
 - `pages` {pdf, keep, dpi}: a PDF of the folder's pages as PNG images (`pdftoppm`) in `keep`, and each page's words
@@ -118,8 +119,8 @@ def build(asked: dict[str, Any]) -> dict[str, object]:
     try:
         farm(scratch, {file: text} if isinstance(text, str) else {})
         done = latexmk(scratch, root, str(asked.get("engine") or "pdf"), float(asked.get("seconds") or 120))
-        if done.get("built") and asked.get("keep"):
-            done["kept"] = keep(scratch, root, str(asked["keep"]))
+        if done.get("built") and asked.get("keep") is not None:  # "": the folder itself
+            done["kept"] = keep(scratch, root, str(asked["keep"]), asked.get("synctex_root"), bool(asked.get("log")))
         return done
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
@@ -250,8 +251,14 @@ def latexmk(scratch: str, root: str, engine: str, seconds: float) -> dict[str, o
             "output": done.stdout[-5000:], "seconds": round(time.monotonic() - started, 2)}  # fmt: skip
 
 
-def keep(scratch: str, root: str, kept: str) -> dict[str, object]:
-    """The built PDF and its SyncTeX file, copied into `kept` (under `.clank/`), SyncTeX's paths made the folder's."""
+def rewritten(text: str, scratch: str, prefix: str) -> str:
+    """A SyncTeX file's text with the scratch tree's paths made `prefix`'s."""
+    return text.replace(scratch.rstrip("/") + "/", prefix.rstrip("/") + "/")
+
+
+def keep(scratch: str, root: str, kept: str, synctex_root: object = None, log: bool = False) -> dict[str, object]:
+    """The built PDF and its SyncTeX file (and its log, with `log`) copied into `kept`, a folder of the folder;
+    SyncTeX's paths made the folder's in the container, or `synctex_root`'s (the folder on the machine)."""
     folder, name = os.path.split(root)
     stem = os.path.splitext(name)[0]
     out = os.path.join(WORKSPACE, kept)
@@ -263,10 +270,12 @@ def keep(scratch: str, root: str, kept: str) -> dict[str, object]:
         import gzip
 
         with gzip.open(synctex, "rt", encoding="utf-8", errors="replace") as read:
-            text = read.read().replace(scratch.rstrip("/") + "/", WORKSPACE.rstrip("/") + "/")
+            text = rewritten(read.read(), scratch, str(synctex_root or WORKSPACE))
         with gzip.open(os.path.join(out, f"{stem}.synctex.gz"), "wt", encoding="utf-8") as written:
             written.write(text)
-    return {"pdf": f"{kept}/{stem}.pdf"}
+    if log and os.path.isfile(os.path.join(scratch, folder, f"{stem}.log")):
+        shutil.copyfile(os.path.join(scratch, folder, f"{stem}.log"), os.path.join(out, f"{stem}.log"))
+    return {"pdf": f"{kept}/{stem}.pdf" if kept else f"{stem}.pdf"}
 
 
 def _ignore(out: str) -> None:

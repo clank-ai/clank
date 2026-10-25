@@ -56,12 +56,14 @@ class BuildLog:
 
 @dataclass
 class Built:
-    """A build in the container: whether it built, its log read, and why it could not be made at all (`unbuilt`)."""
+    """A build in the container: whether it built, its log read, and why it could not be made at all (`unbuilt`); the
+    PDF kept, from the folder, when it was asked to be."""
 
     built: bool
     log: BuildLog
     unbuilt: str = ""
     seconds: float = 0.0
+    pdf: str = ""
 
 
 def root_of(relative: str, texts: dict[str, str]) -> str | None:
@@ -165,6 +167,14 @@ class Builder:
                  "seconds": self.seconds}  # fmt: skip
         return self._built(workspace, asked)
 
+    def output(self, workspace: str, root: str, engine: str, synctex_root: str) -> Built:
+        """The document built as it is, its PDF, log and SyncTeX file kept beside its root's `.tex`, SyncTeX's paths
+        made `synctex_root`'s (the folder on this machine): LaTeX Workshop's build (design 0020 §3)."""
+        here = str(PurePosixPath(root).parent)
+        asked = {"mode": "build", "root": root, "file": root, "text": None, "engine": engine, "seconds": self.seconds,
+                 "keep": "" if here == "." else here, "synctex_root": synctex_root, "log": True}  # fmt: skip
+        return self._built(workspace, asked)
+
     def marked(
         self, workspace: str, root: str, file: str, before: str | None, after: str, engine: str, keep: str
     ) -> tuple[str, str]:
@@ -196,7 +206,8 @@ class Builder:
         if said.get("unbuilt"):
             return Built(False, BuildLog(), unbuilt=str(said["unbuilt"]))
         log = parse_log(str(said.get("log") or ""), str(said.get("blg") or ""))
-        return Built(bool(said.get("built")), log, seconds=float(said.get("seconds") or 0.0))
+        pdf = str((said.get("kept") or {}).get("pdf") or "")
+        return Built(bool(said.get("built")), log, seconds=float(said.get("seconds") or 0.0), pdf=pdf)
 
     def _said(self, workspace: str, asked: dict[str, Any]) -> dict[str, Any]:
         """The helper's answer to a request; `unbuilt` saying why when there is none to read."""

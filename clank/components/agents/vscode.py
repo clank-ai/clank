@@ -108,9 +108,20 @@ def find_program(
     )
 
 
-def settings_text(existing: str | None) -> str | None:
-    """The instance's user settings with Clank's added where missing; None when there is nothing to write (each is
-    there already, or the file is not plain JSON, so it is left as the owner wrote it)."""
+def latex_settings(clank: str) -> dict[str, Any]:
+    """LaTeX Workshop builds with Clank, in the workspace's container (design 0020 §3): `clank latex build` on the
+    document's root, the recipe first."""
+    tool = {"name": "clank", "command": clank, "args": ["latex", "build", "%DOC_EXT%"], "env": {}}
+    return {
+        "latex-workshop.latex.tools": [tool],
+        "latex-workshop.latex.recipes": [{"name": "Clank: in the container", "tools": ["clank"]}],
+    }
+
+
+def settings_text(existing: str | None, clank: str = "clank") -> str | None:
+    """The instance's user settings with Clank's added where missing (LaTeX Workshop's recipe running `clank`, this
+    command); None when there is nothing to write (each is there already, or the file is not plain JSON, so it is left
+    as the owner wrote it)."""
     values: Any = {}
     if existing is not None and existing.strip():
         try:
@@ -119,7 +130,8 @@ def settings_text(existing: str | None) -> str | None:
             return None
     if not isinstance(values, dict):
         return None
-    missing = {key: value for key, value in SETTINGS.items() if key not in values}
+    wanted = {**SETTINGS, **latex_settings(clank)}
+    missing = {key: value for key, value in wanted.items() if key not in values}
     if existing is not None and existing.strip() and not missing:
         return None
     return json.dumps({**values, **missing}, indent=2, ensure_ascii=False) + "\n"
@@ -207,7 +219,8 @@ class Window:
 
     def _write_settings(self, context: OperationContext) -> None:
         file = self.folder / "data" / "User" / "settings.json"
-        text = settings_text(file.read_text(encoding="utf-8") if file.is_file() else None)
+        clank = which("clank") or "clank"  # LaTeX Workshop's recipe runs it (design 0020 §3)
+        text = settings_text(file.read_text(encoding="utf-8") if file.is_file() else None, clank)
         if text is None:
             return
         file.parent.mkdir(parents=True, exist_ok=True)

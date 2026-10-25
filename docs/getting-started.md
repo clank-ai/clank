@@ -96,11 +96,11 @@ cd ..
 uv run --no-dev python -m tools.vsix
 ```
 
-The last command writes `vscode\clank-0.9.1.vsix` (the version is the extension's own). Clank's VS Code window
+The last command writes `vscode\clank-0.9.2.vsix` (the version is the extension's own). Clank's VS Code window
 installs it by itself; to have it in your usual VS Code too:
 
 ```
-code --install-extension vscode\clank-0.9.1.vsix
+code --install-extension vscode\clank-0.9.2.vsix
 ```
 
 ## 3a. Add a cloud model (OpenRouter)

@@ -15,7 +15,8 @@ wait, and what its window was told of its model's last change, design 0013 §7),
 `GET /agents/changes` (the newest changes, without the files) and `GET /agents/changes/{id}` (one, with the file
 before, after, and as written). `POST /agents/annotations` sends a figure the owner marked up (design 0008), or a
 page of a PDF; `POST /agents/latex/pages` renders a PDF of a folder as page images to mark up (design 0020 §10),
-and `POST /agents/latex/comments` sends the owner's comments on lines of LaTeX files to the agent (§11). `POST
+`POST /agents/latex/comments` sends the owner's comments on lines of LaTeX files to the agent (§11), and `POST
+/agents/latex/build` builds a document in its workspace's container for LaTeX Workshop (§3). `POST
 /agents/show` opens files of a workspace's folder in the owner's VS Code window (design 0018 §7): the agent's, through
 the gateway, refused (409) while no VS Code window follows the service. The
 Monitor's flows (design 0012 §6.1): `GET /agents/flow/{workspace}` (the flows kept,
@@ -122,6 +123,12 @@ class CommentsRequest(BaseModel):
     folder: str
     comments: list[dict[str, Any]]
     message: str = ""
+
+
+class BuildRequest(BaseModel):
+    """A `.tex` file on this machine, whose document is built in its workspace's container."""
+
+    file: str
 
 
 class PagesRequest(BaseModel):
@@ -524,6 +531,18 @@ def router(agents: "Agents") -> APIRouter:
                 lambda: agents.pages.render(workspace, Path(root), wanted.pdf)
             )
         except (AnnotationError, PageError, WorkspaceUnavailable) as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
+
+    @routes.post("/agents/latex/build")
+    async def latex_build(wanted: BuildRequest) -> dict[str, Any]:
+        """Build the document a `.tex` file belongs to in its workspace's container, its PDF, log and SyncTeX file kept
+        beside its root (design 0020 §3): whether it built, the PDF, its errors and warnings."""
+        from clank.components.agents.latex.checks import BuildError
+
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(lambda: agents.review.latex.build_file(wanted.file))
+        except (BuildError, WorkspaceUnavailable) as error:
             raise ApiError(409, "refused", str(error)) from error
         return found
 

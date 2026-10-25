@@ -456,12 +456,12 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner gets | none yet |
 | 2 | The owner's choices | none yet |
-| 3 | TeX in the container | `tests/cli/test_latex_commands.py` (2), `tests/components/workspaces/test_image_layers.py` (5) |
+| 3 | TeX in the container | `tests/cli/test_latex_commands.py` (3), `tests/components/agents/test_latex_build.py` (3), `tests/components/workspaces/test_image_layers.py` (5) |
 | 4 | Which files the model may write | `tests/components/agents/test_latex_review.py` (6) |
 | 5 | The checks on every change | `tests/components/agents/test_latex_review.py` (6) |
 | 6 | Citations and the bibliography | `tests/components/agents/test_latex_citations.py` (6) |
 | 7 | Claims and their sources | `tests/components/agents/test_latex_sources.py` (6) |
-| 8 | Compiling clean | `tests/components/agents/test_latex_building.py` (6), `tests/components/workspaces/test_latex_helper.py` (3), `tests/docker/test_latex_layer.py` (3) |
+| 8 | Compiling clean | `tests/components/agents/test_latex_building.py` (6), `tests/components/workspaces/test_latex_helper.py` (3), `tests/docker/test_latex_layer.py` (4) |
 | 9 | Seeing a change | `tests/components/agents/test_latex_review.py` (6), `vscode/test/show.test.ts` (4) |
 | 10 | Annotating the PDF | `tests/components/agents/test_latex_pages.py` (3), `tests/components/agents/test_latex_pages_service.py` (2), `vscode/test/marks.test.ts` (10), `vscode/test/pdf.test.ts` (2) |
 | 11 | Annotating the source | `tests/components/agents/test_latex_comments.py` (5), `vscode/test/comments.test.ts` (2) |
@@ -558,10 +558,11 @@ Design 0013 §3, §5, §6, §7, §8, §9, §11 and §16: the `clank flow` comman
 
 ### `tests/cli/test_latex_commands.py`
 
-Design 0020 §3: `clank latex setup [FOLDER]` gives a folder's workspace the TeX layer: the workspace is opened (made the first time), the layer added to its record, its image built on the sandbox image (asked first unless `--yes`). A container already running the image before keeps running it, and the command says how to move it; with `--restart` it is stopped and opened again on the new image.
+Design 0020 §3: `clank latex setup [FOLDER]` gives a folder's workspace the TeX layer: the workspace is opened (made the first time), the layer added to its record, its image built on the sandbox image (asked first unless `--yes`). A container already running the image before keeps running it, and the command says how to move it; with `--restart` it is stopped and opened again on the new image. `clank latex build FILE` builds the document a `.tex` file belongs to in its workspace's container (LaTeX Workshop's recipe in Clank's window), says where its PDF is and what its log warns of, and fails, saying the error, when it did not build.
 
 - setup opens the workspace adds the tex layer and builds its image
 - a running container keeps its image until restart moves it
+- build builds the document in the container and says what its log says
 
 ### `tests/cli/test_mcp_commands.py`
 
@@ -770,6 +771,14 @@ Design 0012 §9.1, §9.5 and §9.7 (§11 step 10), decision 0056: what the Guide
 - undo waits for the session to stop and redo follows until your next message
 - drop is refused for the step in progress and says what it frees and costs
 - undo and drop states are read from the flow
+
+### `tests/components/agents/test_latex_build.py`
+
+Design 0020 §3: LaTeX Workshop builds in the container. `POST /agents/latex/build` builds the document a `.tex` file of a workspace belongs to (its root) in the workspace's container, and keeps its PDF, its log and its SyncTeX file beside the root's `.tex`, SyncTeX's paths made this machine's (so LaTeX Workshop goes from the PDF to the source and back); it answers whether it built, where the PDF is, its errors and its undefined references, citations and labels defined twice. A file in no workspace, or no `.tex`, is refused. Clank's VS Code window gets a LaTeX Workshop recipe that runs `clank latex build` on the root, first, unless the owner has recipes of their own.
+
+- a tex file builds its document in the container kept beside it
+- the helper makes synctexs paths this machines
+- the window builds latex with clank unless the owner has recipes of their own
 
 ### `tests/components/agents/test_latex_building.py`
 
@@ -3809,6 +3818,7 @@ Design 0020 §8-§10, run in the TeX layer's image on this machine's Docker (`-m
 - a build of a change answers its log and writes nothing in the folder
 - a changes marked up pdf is kept under clank
 - a pdfs pages and words and synctex give back the line of a point
+- latex workshops build keeps the pdf log and synctex beside the document with this machines paths
 
 ### `tests/fakes/test_recorded.py`
 
