@@ -134,10 +134,12 @@ def test_a_slow_reading_answers_within_the_tools_time_limit_and_is_given_when_as
         env={"CLANK_WORKSPACE": str(folder), "CLANK_GATEWAY": gateway, "CLANK_LOOK_ANSWER_SECONDS": "1",
              "SYSTEMROOT": "C:\\Windows", "PATH": ""},
     )  # fmt: skip
-    assert server.stdin is not None and server.stdout is not None
+    assert server.stdin is not None
+    assert server.stdout is not None
 
     def ask(id: int) -> str:
-        assert server.stdin is not None and server.stdout is not None
+        assert server.stdin is not None
+        assert server.stdout is not None
         server.stdin.write(json.dumps({"jsonrpc": "2.0", "id": id, "method": "tools/call", "params": look}) + "\n")
         server.stdin.flush()
         reply = json.loads(server.stdout.readline())
