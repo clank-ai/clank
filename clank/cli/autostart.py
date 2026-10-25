@@ -4,11 +4,12 @@ Docker's sign-in needs the owner's session).
 
 `on` writes the entry Windows runs at sign-in, the value `Clank` of the current user's Run key
 (`HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run`), which Task Manager's Startup apps lists like any other:
-Python's windowless program (`pythonw.exe`, beside the Python Clank runs on) running `clank autostart run`, with
-`--home` when CLANK_HOME is set; `off` removes it; `status` says whether it is there and what it runs. `run` starts the
-service in the background when it does not run, then asks it to start Docker (an operation, followed until it ends);
-with no console to write to, it writes what it did to `logs/autostart.log`. The service keeps the gateway running
-itself. On another system, `on` says it is not supported there yet (Linux: design 0014).
+Python's windowless program (`pythonw.exe`, beside the Python Clank runs on) running `clank autostart run` (with `-P`,
+so a `clank` folder of the folder it starts in is never taken for Clank), with `--home` when CLANK_HOME is set; `off`
+removes it; `status` says whether it is there and what it runs. `run` starts the service in the background when it does
+not run, then asks it to start Docker (an operation, followed until it ends); with no console to write to, it writes
+what it did to `logs/autostart.log`. The service keeps the gateway running itself. On another system, `on` says it is
+not supported there yet (Linux: design 0014).
 """
 
 import os
@@ -81,7 +82,8 @@ def on() -> None:
     if not WINDOWS:
         raise click.ClickException("starting at sign-in is Windows only for now")
     home = os.environ.get("CLANK_HOME", "")
-    command = f'"{windowless()}" -m clank autostart run' + (f' --home "{home}"' if home else "")
+    # -P: Python never takes a `clank` folder of the one Windows starts it in for Clank
+    command = f'"{windowless()}" -P -m clank autostart run' + (f' --home "{home}"' if home else "")
     write_entry(command)
     click.echo(
         "Clank now starts Clank's service and Docker when you sign in to Windows. Task Manager's Startup apps lists it "

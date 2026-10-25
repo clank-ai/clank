@@ -46,7 +46,7 @@ def test_on_writes_the_sign_in_entry_off_removes_it_and_status_says_which(
     assert "is off" in clank("status").output
     done = clank("on")
     assert done.exit_code == 0, done.output
-    assert run_key.values["Clank"] == '"D:/tools/clank/Scripts/pythonw.exe" -m clank autostart run'
+    assert run_key.values["Clank"] == '"D:/tools/clank/Scripts/pythonw.exe" -P -m clank autostart run'
     assert "starts Clank's service and Docker when you sign in" in done.output
     assert "Task Manager" in done.output
     assert "is on" in clank("status").output
