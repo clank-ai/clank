@@ -4,7 +4,8 @@ messages and documents alike (AGENTS.md).
 The list holds the British forms most likely to slip in, each with the American form that the finding suggests. A
 line that must keep a British form, such as a quotation or a name someone else owns, carries the marker
 `spelling: keep` and says why. Code blocks in Markdown are skipped, because they copy code and screens whose own files
-are checked; this file is skipped, because it holds the list.
+are checked; this file is skipped, because it holds the list; and so are the artifact libraries other authors wrote
+(decision 0135).
 """
 
 import re
@@ -16,6 +17,7 @@ from tools.files import read_text, repository_files
 from tools.markdown import prose_lines
 
 SELF = "tools/check_spelling.py"
+VENDORED = "clank/components/artifacts/lib/"  # other authors' libraries, kept as they are (decision 0135)
 KEEP = "spelling: keep"
 AMERICAN = {
     "aeroplane": "airplane",
@@ -164,10 +166,11 @@ def scan_text(path: str, text: str) -> list[Finding]:
 
 
 def scan(root: Path, files: list[Path]) -> list[Finding]:
-    """The British spellings in every text file of the list, except this one."""
+    """The British spellings in every text file of the list, except this one and the vendored libraries (decision
+    0135: their words are their authors')."""
     findings: list[Finding] = []
     for file in files:
-        if file.as_posix() == SELF:
+        if file.as_posix() == SELF or file.as_posix().startswith(VENDORED):
             continue
         text = read_text(root / file)
         if text is not None:

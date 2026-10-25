@@ -323,6 +323,7 @@ it is for. The module's docstring says why it is built the way it is.
 | --- | --- |
 | `tools/__init__.py` | Tools for working on Clank: the generated code map and tests page, and the repository's own checks. |
 | `tools/apidoc.py` | Write `docs/API.md`: every route of the Clank API, with its method, path, access level and what it does. |
+| `tools/artifact_libs.py` | The artifact libraries (decision 0135): fetch them into `clank/components/artifacts/lib/`, or check the copy there. |
 | `tools/capture_endpoint.py` | Record what OpenRouter answers Clank's fixed made-up requests (design 0016 §18, design 0015 §14), with the owner's |
 | `tools/check.py` | Run every check that continuous integration runs, in one command: formatting, lint, types, the VS Code extension |
 | `tools/check_colors.py` | Refuse a color or a state's mark written in the console's code, where only the style's elements may be named |

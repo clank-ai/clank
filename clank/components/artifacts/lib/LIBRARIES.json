@@ -1,0 +1,232 @@
+{
+  "libraries": {
+    "Plotly": {
+      "version": "2.35.2",
+      "license": "MIT"
+    },
+    "KaTeX": {
+      "version": "0.16.11",
+      "license": "MIT"
+    },
+    "marked": {
+      "version": "14.1.3",
+      "license": "MIT"
+    },
+    "Mermaid": {
+      "version": "11.4.0",
+      "license": "MIT"
+    }
+  },
+  "files": [
+    {
+      "file": "plotly.min.js",
+      "library": "Plotly",
+      "version": "2.35.2",
+      "source": "https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js",
+      "sha256": "6d21266ce1bd7d9e5ab4e115989c70c20de0382fd973a8f26ab58619eba4d603"
+    },
+    {
+      "file": "licenses/Plotly.txt",
+      "library": "Plotly",
+      "version": "2.35.2",
+      "source": "https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/LICENSE",
+      "sha256": "67a26cf80f03ff388f26945dfc1f6caed1a0746ff43871190339b3aee49b94bb"
+    },
+    {
+      "file": "katex.min.js",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
+      "sha256": "e6bfe5deebd4c7ccd272055bab63bd3ab2c73b907b6e6a22d352740a81381fd4"
+    },
+    {
+      "file": "katex.min.css",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+      "sha256": "717bc9ae7853b61f0f76455dddf0ecd4f527a783f42de2ac24684899c1c46258"
+    },
+    {
+      "file": "auto-render.min.js",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
+      "sha256": "7b57d427ac6270677daf8d8380ded2cc73336f9149a167b8e1fe0d6ef66604ae"
+    },
+    {
+      "file": "licenses/KaTeX.txt",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/LICENSE",
+      "sha256": "766ccc1f306c885aa45542a9846bbd0a505b27a0374f146778171c2254ce18e3"
+    },
+    {
+      "file": "fonts/KaTeX_AMS-Regular.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_AMS-Regular.woff2",
+      "sha256": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308"
+    },
+    {
+      "file": "fonts/KaTeX_Caligraphic-Bold.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Caligraphic-Bold.woff2",
+      "sha256": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c"
+    },
+    {
+      "file": "fonts/KaTeX_Caligraphic-Regular.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Caligraphic-Regular.woff2",
+      "sha256": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b"
+    },
+    {
+      "file": "fonts/KaTeX_Fraktur-Bold.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Fraktur-Bold.woff2",
+      "sha256": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f"
+    },
+    {
+      "file": "fonts/KaTeX_Fraktur-Regular.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Fraktur-Regular.woff2",
+      "sha256": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc"
+    },
+    {
+      "file": "fonts/KaTeX_Main-Bold.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Bold.woff2",
+      "sha256": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021"
+    },
+    {
+      "file": "fonts/KaTeX_Main-BoldItalic.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-BoldItalic.woff2",
+      "sha256": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b"
+    },
+    {
+      "file": "fonts/KaTeX_Main-Italic.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Italic.woff2",
+      "sha256": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267"
+    },
+    {
+      "file": "fonts/KaTeX_Main-Regular.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Regular.woff2",
+      "sha256": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866"
+    },
+    {
+      "file": "fonts/KaTeX_Math-BoldItalic.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Math-BoldItalic.woff2",
+      "sha256": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1"
+    },
+    {
+      "file": "fonts/KaTeX_Math-Italic.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Math-Italic.woff2",
+      "sha256": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264"
+    },
+    {
+      "file": "fonts/KaTeX_SansSerif-Bold.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_SansSerif-Bold.woff2",
+      "sha256": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62"
+    },
+    {
+      "file": "fonts/KaTeX_SansSerif-Italic.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_SansSerif-Italic.woff2",
+      "sha256": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a"
+    },
+    {
+      "file": "fonts/KaTeX_SansSerif-Regular.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_SansSerif-Regular.woff2",
+      "sha256": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342"
+    },
+    {
+      "file": "fonts/KaTeX_Script-Regular.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Script-Regular.woff2",
+      "sha256": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b"
+    },
+    {
+      "file": "fonts/KaTeX_Size1-Regular.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size1-Regular.woff2",
+      "sha256": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe"
+    },
+    {
+      "file": "fonts/KaTeX_Size2-Regular.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size2-Regular.woff2",
+      "sha256": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd"
+    },
+    {
+      "file": "fonts/KaTeX_Size3-Regular.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size3-Regular.woff2",
+      "sha256": "73d591271b1604960cb10bb90fee021670af7297017e0e98480b332d11f51995"
+    },
+    {
+      "file": "fonts/KaTeX_Size4-Regular.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size4-Regular.woff2",
+      "sha256": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0"
+    },
+    {
+      "file": "fonts/KaTeX_Typewriter-Regular.woff2",
+      "library": "KaTeX",
+      "version": "0.16.11",
+      "source": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Typewriter-Regular.woff2",
+      "sha256": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b"
+    },
+    {
+      "file": "marked.min.js",
+      "library": "marked",
+      "version": "14.1.3",
+      "source": "https://cdn.jsdelivr.net/npm/marked@14.1.3/marked.min.js",
+      "sha256": "1092c3ce33dd737edd02e780263f1476bf18278d81817af6403df6840f8034ab"
+    },
+    {
+      "file": "licenses/marked.txt",
+      "library": "marked",
+      "version": "14.1.3",
+      "source": "https://cdn.jsdelivr.net/npm/marked@14.1.3/LICENSE.md",
+      "sha256": "8e3a3f82f59a60958f56ca08f445647c32a4733dc7ca6c2c46f6eb898471ab9c"
+    },
+    {
+      "file": "mermaid.min.js",
+      "library": "Mermaid",
+      "version": "11.4.0",
+      "source": "https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js",
+      "sha256": "1bca2e3c09f0e33ccc6e701e9c79d5cfa87d5e929b35d3a4aea4e1ec069dc87b"
+    },
+    {
+      "file": "licenses/Mermaid.txt",
+      "library": "Mermaid",
+      "version": "11.4.0",
+      "source": "https://cdn.jsdelivr.net/npm/mermaid@11.4.0/LICENSE",
+      "sha256": "ec9fb67dcb25eccc416ed56e1aab819222c805a2a4bfe4cb19e7556bf2ffde80"
+    }
+  ]
+}

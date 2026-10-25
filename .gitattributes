@@ -3,3 +3,5 @@
 * text=auto eol=lf
 *.cmd text eol=crlf
 *.bat text eol=crlf
+# Other authors' libraries are kept exactly as fetched, so their checksums hold (decision 0135).
+clank/components/artifacts/lib/** -text

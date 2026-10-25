@@ -2,7 +2,8 @@
 
 A `.vsix` is a zip: `extension.vsixmanifest` (who the extension is, its version and the VS Code it needs),
 `[Content_Types].xml`, and `extension/` with the extension's `package.json`, its README, its compiled files and its
-`media/` (the pages its webviews show, design 0008). Its
+`media/` (the pages its webviews show, design 0008), with the artifact libraries copied from Clank's folder into
+`media/lib/` (decision 0135). Its
 tests and its tools (`node_modules`) stay out. It is written from the compiled extension, so it is refused before
 `npm run build` (or `tools.check`) has run. `uv run python -m tools.vsix` writes `vscode/clank-<version>.vsix`.
 """
@@ -15,6 +16,7 @@ from typing import Any
 from xml.sax.saxutils import escape, quoteattr
 
 FOLDER = Path(__file__).resolve().parents[1] / "vscode"
+LIBRARIES = Path(__file__).resolve().parents[1] / "clank" / "components" / "artifacts" / "lib"  # decision 0135
 CONTENT_TYPES = """<?xml version="1.0" encoding="utf-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension=".json" ContentType="application/json" />
@@ -22,6 +24,8 @@ CONTENT_TYPES = """<?xml version="1.0" encoding="utf-8"?>
   <Default Extension=".html" ContentType="text/html" />
   <Default Extension=".css" ContentType="text/css" />
   <Default Extension=".md" ContentType="text/markdown" />
+  <Default Extension=".txt" ContentType="text/plain" />
+  <Default Extension=".woff2" ContentType="font/woff2" />
   <Default Extension=".vsixmanifest" ContentType="text/xml" />
 </Types>
 """
@@ -95,6 +99,9 @@ def build_vsix(folder: Path = FOLDER, output: Path | None = None) -> Path:
         for path in sorted((folder / "media").rglob("*")) if (folder / "media").is_dir() else []:
             if path.is_file():
                 written.write(path, f"extension/{path.relative_to(folder).as_posix()}")
+        for path in sorted(LIBRARIES.rglob("*")) if LIBRARIES.is_dir() else []:  # decision 0135: one copy, Clank's
+            if path.is_file():
+                written.write(path, f"extension/media/lib/{path.relative_to(LIBRARIES).as_posix()}")
     return output
 
 

@@ -142,6 +142,7 @@ and use the template below.
 | [0132](0132-a-box-runs-a-long-computation-as-a-job.md) | A box runs a long computation as a job; while it runs, the orchestrator has the model | Accepted (the owner's two choices) | 2026-10-23 |
 | [0133](0133-the-manim-layer-and-its-packages.md) | The Manim layer and its packages: Manim, Manim Slides, manim-voiceover and a local Kokoro voice | Proposed (with design 0019) | 2026-10-23 |
 | [0134](0134-the-tex-layer.md) | The TeX layer: TeX Live from Ubuntu's packages, in an image layer on the sandbox image | Accepted (with design 0020) | 2026-10-25 |
+| [0135](0135-the-artifact-libraries.md) | The artifact libraries: Plotly, KaTeX, marked and Mermaid, pinned, kept in Clank | Accepted (with design 0021) | 2026-10-25 |
 
 ## Template
 

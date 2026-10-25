@@ -1,7 +1,7 @@
 """Design 0002 §3.2 (decision 0028): the VS Code extension is packaged as a `.vsix` by Clank's own tool: the manifest
 naming the extension, its version, its publisher and the VS Code it needs, the content types, and the extension's
 manifest, its README and its compiled files; nothing of its tests or its tools; and nothing at all before it is
-compiled."""
+compiled. Decision 0135: the artifact libraries go with it under `media/lib/`, copied from Clank's folder."""
 
 import json
 import zipfile
@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from tools import vsix
 from tools.vsix import VsixError, build_vsix
 
 PACKAGE = {
@@ -39,8 +40,11 @@ def extension(tmp_path: Path, compiled: bool = True) -> Path:
     return folder
 
 
-def test_the_package_holds_the_manifests_the_compiled_extension_and_its_media_only(tmp_path: Path) -> None:
+def test_the_package_holds_the_manifests_the_compiled_extension_and_its_media_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Design 0008 §6: the annotator's page, style and scripts go with it (`media/`)."""
+    monkeypatch.setattr(vsix, "LIBRARIES", tmp_path / "no-libraries")
     built = build_vsix(extension(tmp_path), tmp_path / "clank.vsix")
     with zipfile.ZipFile(built) as package:
         names = sorted(package.namelist())
@@ -72,3 +76,15 @@ def test_the_manifest_names_the_extension_its_version_and_the_vs_code_it_needs(t
 def test_a_package_is_refused_before_the_extension_is_compiled(tmp_path: Path) -> None:
     with pytest.raises(VsixError, match="npm run build"):
         build_vsix(extension(tmp_path, compiled=False), tmp_path / "clank.vsix")
+
+
+def test_the_artifact_libraries_go_with_it_under_media_lib(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    libraries = tmp_path / "lib"
+    (libraries / "fonts").mkdir(parents=True)
+    (libraries / "plotly.min.js").write_text("/* plotly */", encoding="utf-8")
+    (libraries / "fonts" / "KaTeX_Main-Regular.woff2").write_bytes(b"wOF2")
+    monkeypatch.setattr(vsix, "LIBRARIES", libraries)
+    built = build_vsix(extension(tmp_path), tmp_path / "clank.vsix")
+    with zipfile.ZipFile(built) as package:
+        names = set(package.namelist())
+    assert {"extension/media/lib/plotly.min.js", "extension/media/lib/fonts/KaTeX_Main-Regular.woff2"} <= names
