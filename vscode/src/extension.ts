@@ -14,9 +14,13 @@
 // approve what is checked or reject it. A flow's gate (design 0013 §10, `core/gates.ts`): a notification with its
 // answers, Open (the file in the editor group of the files; its save tells the gates) and Diff (two tries' copies as
 // `clank-flow:` documents in VS Code's diff, closed when the gate is settled), an answer's words asked in an input box.
+// The files the agent opens for the owner (design 0018 §7, `core/show.ts`) open in the editor group of the files, the
+// keyboard left with the agent, each as VS Code opens its kind (a figure in the annotator); a path the agent prints
+// under `/workspace/` is a link in its terminal, opened the same way.
 // Everything else is in `core/`, which is tested without VS Code. What the status bar shows is returned from
 // `activate`, for the suite that runs inside VS Code (decision 0029).
 
+import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 
 import * as vscode from "vscode";
@@ -33,6 +37,7 @@ import { FIGURE_EDITOR, FigureEditor } from "./figures";
 import { implement, type ImplementMode, type ImplementPresenter, lenses, planPath, relativePlan } from "./core/plans";
 import { NotionReviews, type TreeNode } from "./core/notion";
 import { type ChangeView, type ReviewPresenter, Reviews } from "./core/review";
+import { containerLinks, sameFolder, type Shown } from "./core/show";
 import { NOTION_VIEW, type NotionActions, NotionPage, NotionTree, VsCodeNotionPresenter } from "./notion";
 
 const AGENT_TERMINAL = "OpenCode · "; // the names of the agent's terminals start with this (core/agent.ts)
@@ -116,6 +121,60 @@ class VsCodePresenter implements Presenter {
 
   warn(text: string): void {
     void vscode.window.showWarningMessage(`Clank: ${text}`);
+  }
+
+  async showFiles(found: Shown): Promise<void> {
+    const windows = process.platform === "win32";
+    const folder = vscode.workspace.workspaceFolders?.find((each) => sameFolder(each.uri.fsPath, found.folder, windows));
+    if (!folder) {
+      return; // another window's folder
+    }
+    for (const file of found.files) {
+      await openBeside(vscode.Uri.joinPath(folder.uri, ...file.split("/")), (text) => this.warn(text));
+    }
+    const what = found.files.join(", ");
+    vscode.window.setStatusBarMessage(`$(eye) The agent opened ${what}${found.why ? `: ${found.why}` : ""}`, 15_000);
+  }
+}
+
+/** A file opened for the owner to look at: in the editor group of the files, in its own tab, the keyboard left where it
+ * was (with the agent), as VS Code opens its kind (a figure in Clank's annotator, a PDF in the PDF viewer). */
+async function openBeside(file: vscode.Uri, warn: (text: string) => void): Promise<void> {
+  try {
+    await vscode.commands.executeCommand("vscode.open", file, {
+      viewColumn: filesColumn(),
+      preserveFocus: true,
+      preview: false,
+    });
+  } catch (error) {
+    warn(`${file.fsPath} did not open: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/** A path under `/workspace/` the agent printed, as a link to the folder's file (design 0018 §7.3). */
+interface ContainerPath extends vscode.TerminalLink {
+  file: vscode.Uri;
+}
+
+/** The links in the agent's terminal to the files it names as its container sees them. */
+class ContainerPaths implements vscode.TerminalLinkProvider<ContainerPath> {
+  constructor(private readonly presenter: VsCodePresenter) {}
+
+  provideTerminalLinks(context: vscode.TerminalLinkContext): ContainerPath[] {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder || !context.terminal.name.startsWith(AGENT_TERMINAL)) {
+      return [];
+    }
+    return containerLinks(context.line).flatMap((link) => {
+      const file = vscode.Uri.joinPath(folder.uri, ...link.relative.split("/"));
+      return existsSync(file.fsPath)
+        ? [{ startIndex: link.start, length: link.length, tooltip: `Open ${link.relative} beside the agent`, file }]
+        : [];
+    });
+  }
+
+  handleTerminalLink(link: ContainerPath): void {
+    void openBeside(link.file, (text) => this.presenter.warn(text));
   }
 }
 
@@ -596,6 +655,7 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
       inlineProvider(completer),
     ),
     completionItem,
+    vscode.window.registerTerminalLinkProvider(new ContainerPaths(presenter)),
     vscode.workspace.registerTextDocumentContentProvider(REVIEW, texts),
     vscode.workspace.registerTextDocumentContentProvider(CHANGED, texts),
     vscode.workspace.registerTextDocumentContentProvider(FLOW, texts),

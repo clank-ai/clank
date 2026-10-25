@@ -357,10 +357,14 @@ def test_send_to_phone_puts_a_file_of_the_folder_in_its_outbox_with_its_caption(
     )  # fmt: skip
     assert hello["result"]["serverInfo"]["name"] == "clank"
     assert [tool["name"] for tool in listed["result"]["tools"]] == [
-        "send_to_phone", "look_at_figure", "notion_databases", "notion_query", "notion_page", "notion_search",
-        "notion_propose_entry", "notion_propose_change", "notion_propose_removal", "notion_submit", "notion_reply",
-        "flow_read", "flow_propose_box", "flow_submit", "flow_verdict", "flow_decide", "flow_job", "flow_draft",
-    ], "the Notion tools (design 0010 §4-§7), a flow's (design 0013 §9, §16, §17) and its draft (§15)"  # fmt: skip
+        "send_to_phone", "look_at_figure", "show_files", "notion_databases", "notion_query", "notion_page",
+        "notion_search", "notion_propose_entry", "notion_propose_change", "notion_propose_removal", "notion_submit",
+        "notion_reply", "flow_read", "flow_propose_box", "flow_submit", "flow_verdict", "flow_decide", "flow_job",
+        "flow_draft",
+    ], (
+        "showing files (design 0018 §7), the Notion tools (design 0010 §4-§7), a flow's (design 0013 §9, §16, §17) "
+        "and its draft (§15)"
+    )  # fmt: skip
     assert sent["result"]["isError"] is False
     outbox = tmp_path / ".clank" / "outbox"
     [image] = [path for path in outbox.iterdir() if path.suffix == ".png"]

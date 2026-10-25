@@ -27,7 +27,8 @@ every running workspace and asks the owner about each change, or answers at once
 lines it keeps a flow for every session they see (design 0012 §6.1, `sessionflow/`), for the Monitor, runs the
 Monitor's Watch for rules over each as it changes (design 0012 §8, `watchfor/`), and gives a session's context totals
 (`context`, design 0012 §4.1: `context.py`) from the gateway's figures and the loaded slot's facts. A figure the owner
-marked up is sent to the agent with each mark in words (design 0008, `annotations.py`).
+marked up is sent to the agent with each mark in words (design 0008, `annotations.py`); the files the agent opens for
+the owner open in Clank's VS Code window (design 0018 §7, `showing.py`).
 
 When a flow's box switched the main slot (design 0013 §7, decision 0062), the owner's window in the workspace is told
 its model changed (`model_changed`): the event `agents.model_changed`, which VS Code shows, and a notice the review's
@@ -81,6 +82,9 @@ from clank.components.agents.sessionflow.kept import SessionFlows, gateway_asker
 from clank.components.agents.sessions import EVENT_TYPES as SESSION_EVENTS
 from clank.components.agents.sessions import SessionError as SessionError  # for the components that use this one
 from clank.components.agents.sessions import Sessions
+from clank.components.agents.showing import EVENT_TYPES as SHOWING_EVENTS
+from clank.components.agents.showing import ShowError as ShowError  # for the routes
+from clank.components.agents.showing import Showing
 from clank.components.agents.watchfor.marks import EVENT_TYPES as WATCH_EVENTS
 from clank.components.agents.watchfor.marks import Marks, slot_facts
 from clank.kernel.adapters import AdapterError
@@ -115,7 +119,15 @@ MODEL_EVENTS = [
         },
     )
 ]
-EVENT_TYPES = [*SESSION_EVENTS, *REVIEW_EVENTS, *MODE_EVENTS, *ANNOTATION_EVENTS, *WATCH_EVENTS, *MODEL_EVENTS]
+EVENT_TYPES = [
+    *SESSION_EVENTS,
+    *REVIEW_EVENTS,
+    *MODE_EVENTS,
+    *ANNOTATION_EVENTS,
+    *SHOWING_EVENTS,
+    *WATCH_EVENTS,
+    *MODEL_EVENTS,
+]
 ROLE = "agent"
 SESSION_MODEL = {"providerID": PROVIDER, "modelID": ROLE}  # the model a message names: the gateway's role
 FALLBACK = (32768, 8192)  # context and output, in tokens, when no model runs to say its own
@@ -123,8 +135,9 @@ log = logging.getLogger(__name__)
 CLANK_SERVER = "clank"  # Clank's own MCP server, given to every agent: send_to_phone (design 0005 §3)
 NOTION_PREFIX = "clank_notion_"  # Clank's Notion tools, as OpenCode names them: never to the cloud (design 0016 §10)
 LOCAL_ONLY = "held back: local only, it never goes to the cloud model"
-# Its tools that only read, which the planner may use (design 0010 §4): Notion's reading, never its proposals.
-CLANK_READ_ONLY = ("notion_databases", "notion_page", "notion_query", "notion_search")
+# Its tools that only read, which the planner may use (design 0010 §4): Notion's reading, never its proposals; and
+# opening files for the owner to see (design 0018 §7).
+CLANK_READ_ONLY = ("notion_databases", "notion_page", "notion_query", "notion_search", "show_files")
 # Its tools of a box's flow, which write nothing in the folder, so the planner may use them too (design 0013 §9); a
 # planning's draft of a whole flow, which the planner sends (design 0013 §15); and an orchestrator's decision, which a
 # checkpoint, a Plan-mode session, gives (design 0013 §16).
@@ -160,6 +173,7 @@ class Agents:
         self.modes = Modes(kernel, self.sessions, self.review)
         self.review.modes = self.modes
         self.annotations = Annotations(kernel, self.sessions, self.reads_images, self._read_image)
+        self.showing = Showing(kernel)  # files opened for the owner (design 0018 §7)
         self.flows = SessionFlows(self.sessions, gateway_asker(kernel), plan_reader(kernel))
         self.pausing = Pausing(kernel, self.sessions)  # the Guide's pause (design 0012 §9.4)
         now = lambda: to_text(kernel.clock.now())  # noqa: E731

@@ -1,8 +1,9 @@
 // What the controller asks of VS Code, and nothing more: the two status bar items, a question shown with its options,
-// a pick from a list, and a message. `extension.ts` implements it with VS Code's API; the tests with a fake, so the
+// a pick from a list, a message, and the files the agent opened for the owner (design 0018 §7). `extension.ts` implements it with VS Code's API; the tests with a fake, so the
 // controller is tested without VS Code.
 
 import type { Question } from "./kinds";
+import type { Shown } from "./show";
 
 /** One item of a pick: what it shows, and what choosing it gives. */
 export interface Choice<T> {
@@ -25,4 +26,6 @@ export interface Presenter {
   info(text: string): void;
   /** Say something went wrong, in the service's own words when it refused. */
   warn(text: string): void;
+  /** Open the files the agent opened for the owner, when this window is on their folder (design 0018 §7.2). */
+  showFiles?(shown: Shown): Promise<void>;
 }

@@ -9,7 +9,8 @@
 // slot, the window is told its model changed, once, as a notification in the service's words. Design 0016 §17: with a
 // cloud model in the main slot, the Clank item says "cloud" and its tooltip today's and this month's spending in the
 // service's words, and the pause; Switch model lists a cloud preset as its provider and model, with its price as the
-// service says it.
+// service says it. Design 0018 §7.2: the files the agent opened for the owner (`agents.shown`) go to the presenter,
+// which opens them in a window on that folder.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -19,6 +20,7 @@ import { Controller, type Api } from "../src/core/controller";
 import type { ServerEvent } from "../src/core/events";
 import type { Question, SlotRecord } from "../src/core/kinds";
 import type { Presenter } from "../src/core/presenter";
+import type { Shown } from "../src/core/show";
 import type { PresetView } from "../src/core/state";
 
 const SERVICE = { version: "0.1.0", url: "http://127.0.0.1:7720", started: "2026-10-11T11:40:00.000Z", clients: [] };
@@ -185,6 +187,12 @@ class FakePresenter implements Presenter {
 
   warn(text: string): void {
     this.told.push(`! ${text}`);
+  }
+
+  opened: Shown[] = [];
+
+  async showFiles(found: Shown): Promise<void> {
+    this.opened.push(found);
   }
 }
 
@@ -420,6 +428,30 @@ test("a window told its model changed shows it once, in the service's words", as
   }
 });
 
+test("the files the agent opened for the owner go to the presenter, with their folder and why", async () => {
+  const api = new FakeApi();
+  const presenter = new FakePresenter();
+  const running = controller(api, presenter);
+  running.start();
+  try {
+    await until(() => presenter.clankText.includes("Clank"));
+    const data = {
+      id: 45,
+      type: "agents.shown",
+      summary: "the agent opened plots/residual.png in paper's VS Code window",
+      subject: { kind: "workspace", id: "paper" },
+      data: { workspace: "paper", folder: "C:/Research/paper", files: ["plots/residual.png"], why: "asked for" },
+    };
+    api.send({ name: "agents.shown", id: 45, data });
+    await until(() => presenter.opened.length === 1);
+    assert.deepEqual(presenter.opened, [
+      { workspace: "paper", folder: "C:/Research/paper", files: ["plots/residual.png"], why: "asked for" },
+    ]);
+    assert.deepEqual(presenter.told, [], "no notification: the files are what the owner sees");
+  } finally {
+    running.stop();
+  }
+});
 
 function cloudPreset(): PresetView {
   return {

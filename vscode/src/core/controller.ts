@@ -14,7 +14,8 @@
 // box switched the main slot, the window is told its model changed, in the service's words (design 0013 §7). With a
 // cloud model in the main slot (design 0016 §17), the Clank item says "cloud", its tooltip the cloud's spending today
 // and this month and a pause, all in the service's words; Switch model lists a cloud preset as its provider and model
-// with its price as the service says it. A service without the cloud's routes shows none of it.
+// with its price as the service says it. A service without the cloud's routes shows none of it. The files the agent opened
+// for the owner (`agents.shown`, design 0018 §7) go to the presenter, which opens them in a window on their folder.
 
 import { type Annotation, annotate } from "./annotate";
 import { ClankError, NotRunning } from "./client";
@@ -24,6 +25,7 @@ import { aboutFlow, type Gates } from "./gates";
 import type { Question, SlotRecord } from "./kinds";
 import type { NotionReviews } from "./notion";
 import type { Presenter } from "./presenter";
+import { shown } from "./show";
 import { aboutChange, type Reviews } from "./review";
 import { type CostView, type DockerInfo, type PresetView, type ServiceInfo, State, touched } from "./state";
 
@@ -358,6 +360,10 @@ export class Controller {
       }
       if (message.name === "agents.model_changed" && data.summary) {
         this.presenter.info(data.summary); // a flow's box switched the main slot: the window is told (design 0013 §7)
+      }
+      const opened = shown(message);
+      if (opened) {
+        await this.presenter.showFiles?.(opened); // the agent opened files for the owner (design 0018 §7)
       }
       if (message.name === "question.asked" && data.subject?.id) {
         const asked = this.state.questions.find((question) => question.id === data.subject?.id);

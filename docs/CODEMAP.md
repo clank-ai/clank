@@ -71,6 +71,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/sessionflow/text.py` | How a session's flow keeps text (design 0012 §6.3: nothing spills out of a node): on one line, cut with "…"; the |
 | `clank/components/agents/sessionflow/todos.py` | The todo list's items across its revisions (design 0012 §6.2, decision 0050), the branches of a session that carries |
 | `clank/components/agents/sessions.py` | The session bridge (design 0005 §2): the service's way to the OpenCode servers running in a workspace's container. |
+| `clank/components/agents/showing.py` | Showing files to the owner (design 0018 §7.1): the agent names files of a workspace's folder, and Clank's VS Code |
 | `clank/components/agents/vscode.py` | Clank's VS Code window (design 0004 §5): a separate instance of the VS Code program on this machine, its settings and |
 | `clank/components/agents/watch.py` | The watchers (design 0007 §4): one for each running workspace container, the bridge's `watch` kept open with `docker |
 | `clank/components/agents/watchfor/__init__.py` | The Monitor's Watch for (design 0012 §8, decision 0053): rules over each session's flow, their marks, and what each |
@@ -341,6 +342,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/core/plans.ts` | Plans in the editor (design 0009 §7, §8): a Markdown file whose header says `kind: plan` gets buttons that hand it to |
 | `vscode/src/core/presenter.ts` | What the controller asks of VS Code, and nothing more: the two status bar items, a question shown with its options, |
 | `vscode/src/core/review.ts` | Reviewing the agent's changes in VS Code (design 0007 §6). A question about a change in the window's folder opens as |
+| `vscode/src/core/show.ts` | The files the agent opens for the owner (design 0018 §7): the service's event `agents.shown` names a workspace's |
 | `vscode/src/core/state.ts` | What the extension shows, as last read: the service, Docker, the questions waiting, and the runtime's slots and |
 | `vscode/src/extension.ts` | The Clank extension's entry point: the thin glue between VS Code and the controller (design 0002 §3.2, M0.6). It |
 | `vscode/src/figures.ts` | Clank's figure annotator in VS Code (design 0008 §6): a custom editor for PNG and JPEG files that shows the |
@@ -361,4 +363,5 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/notion.test.ts` | Design 0010 §6: the Notion changes view lists each batch waiting with its databases and their entries (marked new, |
 | `vscode/test/plans.test.ts` | Design 0009 §7, §8: a Markdown file whose header says `kind: plan` (the same cases as Clank's own `is_plan` and |
 | `vscode/test/review.test.ts` | Design 0007 §6: a change the agent asks for, in the window's folder, opens as a diff beside the files instead of a |
+| `vscode/test/show.test.ts` | Design 0018 §7.2 and §7.3: the files the agent opened (the event `agents.shown`) are read from the event with their |
 | `vscode/test/state.test.ts` | Design 0002 §1 and §2.3: what the extension shows is read from the API and kept current by events: a question's |

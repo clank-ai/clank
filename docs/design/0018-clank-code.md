@@ -16,6 +16,7 @@ Code". Every section is proposed. Its first part to be built is the animation wo
 | 4 | Trust: what a claim's marks mean | Proposed 2026-10-23, from the critic's review |
 | 5 | What the extension API allows, and what it does not | Proposed 2026-10-23 |
 | 6 | Order of work | Proposed 2026-10-23 |
+| 7 | Showing files to the owner | Approved 2026-10-25 (the owner: "Yes") |
 
 ## 1. An extension, not a fork
 
@@ -83,3 +84,46 @@ WebM, since VS Code's webviews may lack H.264.
 4. Research: the library with citation states and outside search, LaTeX with LaTeX Workshop, the job list with the HPC.
 5. Clank's models in VS Code's Chat; hooks and specs; fast-model inline edit.
 6. The Clank Code build, when a proposed API is worth it.
+
+## 7. Showing files to the owner
+
+In Clank's VS Code window (opened from the Clank menu, design 0004 §5), OpenCode runs in a terminal on the right and
+the files on the left. The owner asks the agent to find a figure or a file and put it in front of them: "if I ask the
+model to go ahead and pull up a figure then I want to be the one to visually inspect it and in that case there is no
+reason for the model to inspect it."
+
+### 7.1 The agent opens files
+
+The agent's tool `show_files(paths, why)` (Clank's MCP server in the container) opens files of the folder in the
+window: figures, PDFs, LaTeX, code, notes, any file, up to 12 at once, named from the folder or under `/workspace`. It
+asks the gateway (`POST /agents/show`, the only route under `/agents/` the agent may ask), which forwards it to the
+service as the client `agent`. The service checks that each path is a file of the workspace's folder (none outside it,
+none missing: the answer names each), then records the event `agents.shown` (the workspace, its folder, the files,
+the why). Its answer tells the model what was opened, and that the owner looks at it themselves. With no VS Code
+window following the service, nothing is opened and the answer says so, so the model gives the owner the paths
+instead.
+
+The tool's description is an order: when the owner asks to see, open, show or pull up something, find it, call
+`show_files`, say in a line what was opened, and stop; do not read, describe or check what was opened (no
+`look_at_figure`) unless the owner asks for that too.
+
+### 7.2 The window opens them on the left
+
+Clank's extension follows the events; on `agents.shown` for a folder open in its window, it opens each file in the
+files' group (never the agent's), without taking the keyboard from OpenCode, each in its own tab (not a preview tab
+the next replaces), as VS Code opens that kind of file: a PNG or JPEG in Clank's figure annotator (design 0008 §6), so
+the owner can mark it up and send it back as from any figure they open themselves; a PDF in the PDF viewer the window
+has; text in the editor. The why shows once as a line in the window. A file that does not open is said, the rest open.
+
+### 7.3 Paths in the agent's terminal are links
+
+OpenCode prints paths as the container sees them (`/workspace/plots/residual.png`), which VS Code cannot open on the
+machine. The extension makes each such path in the agent's terminal a link to the folder's file; a click opens it on
+the left, as §7.2 does.
+
+### 7.4 Finding figures
+
+`find_figures(query)`: the figures of the folder best matching words, from what Clank knows of each: its
+name and folder, the title, axis labels and legend Matplotlib recorded when it was saved (design 0008 §3), the script
+that made it, a LaTeX `\caption` it is under, and when it was made; the best few, each with why it matched, for
+`show_files`.

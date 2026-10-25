@@ -14,7 +14,9 @@ permission or a question; the bridge's refusal is a 409 in its own words. The re
 wait, and what its window was told of its model's last change, design 0013 §7), `POST /agents/review` (switch it),
 `GET /agents/changes` (the newest changes, without the files) and `GET /agents/changes/{id}` (one, with the file
 before, after, and as written). `POST /agents/annotations` sends a figure the
-owner marked up (design 0008). The Monitor's flows (design 0012 §6.1): `GET /agents/flow/{workspace}` (the flows kept,
+owner marked up (design 0008). `POST /agents/show` opens files of a workspace's folder in the owner's VS Code window
+(design 0018 §7): the agent's, through the gateway, refused (409) while no VS Code window follows the service. The
+Monitor's flows (design 0012 §6.1): `GET /agents/flow/{workspace}` (the flows kept,
 briefly) and `GET /agents/flow/{workspace}/{session}` (one, whole, or what changed after the version `since`, with the
 session's marks); a session's context totals (design 0012 §4.1): `GET /agents/context/{workspace}/{session}`; what it
 does now (design 0012 §5): `GET /agents/now/{workspace}/{session}`. The Monitor's Watch for (design 0012 §8): `GET
@@ -111,6 +113,14 @@ class AnnotationRequest(BaseModel):
     image: str
 
 
+class ShowRequest(BaseModel):
+    """Files of a workspace's folder to open in the owner's VS Code window, as the agent named them, and why."""
+
+    workspace: str
+    paths: list[str]
+    why: str = ""
+
+
 class SeenRequest(BaseModel):
     """Marks of the Monitor's Watch for seen: these, by their ids, or every mark of a session (or of a workspace)."""
 
@@ -153,7 +163,14 @@ class AnswerRequest(BaseModel):
 
 def router(agents: "Agents") -> APIRouter:
     """The routes, over the agents component's part."""
-    from clank.components.agents.service import AgentError, AnnotationError, GuideError, ModeError, ReviewError
+    from clank.components.agents.service import (
+        AgentError,
+        AnnotationError,
+        GuideError,
+        ModeError,
+        ReviewError,
+        ShowError,
+    )
     from clank.components.agents.sessions import SessionError
     from clank.kernel.api import ApiError
     from clank.kernel.settings import SettingsError
@@ -473,6 +490,19 @@ def router(agents: "Agents") -> APIRouter:
             raise ApiError(409, "refused", str(error)) from error
         except OSError as error:
             raise ApiError(409, "refused", f"the figure could not be read: {error}") from error
+        return found
+
+    @routes.post("/agents/show")
+    async def show(wanted: ShowRequest, request: Request) -> dict[str, Any]:
+        """Open files of a workspace's folder in the owner's VS Code window, on the left (design 0018 §7): the agent's,
+        through the gateway; what was opened, what was not a file of the folder, and the words for the model."""
+        windows = "vscode" in request.app.state.streams.values()
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(
+                lambda: agents.showing.show(wanted.workspace, wanted.paths, wanted.why, windows=windows)
+            )
+        except ShowError as error:
+            raise ApiError(409, "refused", str(error)) from error
         return found
 
     @routes.get("/agents/changes")

@@ -26,6 +26,10 @@ orchestrator's checkpoint's one decision, which the service checks, keeps and ap
 writes anything in the folder, so the planner may use them, but `flow_job(command, title, minutes)` (§17): a box's
 long computation, which Clank runs detached in the container while the box's turn ends and waits for it.
 
+`show_files(paths, why)` (design 0018 §7) opens files of the folder in the owner's VS Code window, on the left beside
+OpenCode, through the gateway's `/agents/show` route: the owner looks at them themselves, so the model, asked to open
+something, opens it and stops. It writes nothing in the folder, so the planner may use it.
+
 It speaks MCP (revision 2025-06-18) over its standard input and output, one JSON message a line, with Python's standard
 library only, so it runs in any workspace's container.
 """
@@ -89,6 +93,27 @@ LOOK = {
         "required": ["path"],
     },
 }
+SHOW = {
+    "name": "show_files",
+    "description": (
+        "Open files of the workspace's folder in the user's VS Code window, beside you, for the user to look at "
+        "themselves: figures (they open in the user's annotator), PDFs, LaTeX, code, notes, any file, up to 12 at "
+        "once. When the user asks to see, open, show or pull up something, find the files (search the folder with "
+        "ls, find or rg), call this, say in one line what you opened, and stop: do not read, describe or check what "
+        "you opened (no look_at_figure) unless the user asks for that too. Returns what was opened, and each path that "
+        "is not a file of the folder."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "paths": {"type": "array", "items": {"type": "string"},
+                      "description": "The files, relative to the folder or under /workspace."},
+            "why": {"type": "string", "description": "What they are, in a few words: the user sees it."},
+        },
+        "required": ["paths"],
+    },
+    "annotations": {"readOnlyHint": True},
+}  # fmt: skip
 
 
 def _tool(name: str, description: str, properties: dict[str, Any], required: list[str], reads: bool) -> dict[str, Any]:
@@ -354,6 +379,19 @@ def flow(name: str, arguments: dict[str, Any]) -> str:
     return str(found.get("said") or "") if isinstance(found, dict) and found.get("said") else _json(found)
 
 
+def show(arguments: dict[str, Any]) -> str:
+    """Open files in the owner's VS Code window: the request to the gateway, and the service's words."""
+    if not WORKSPACE_NAME:
+        raise ValueError(
+            "this server does not know its workspace (Clank gives it one): start the agent again from Clank"
+        )
+    paths = arguments.get("paths") or []
+    named = [paths] if isinstance(paths, str) else [str(each) for each in paths]
+    body = {"workspace": WORKSPACE_NAME, "paths": named, "why": str(arguments.get("why") or "")}
+    found = _gateway("POST", "agents/show", body, "the owner's VS Code window")
+    return str(found.get("said") or "") if isinstance(found, dict) and found.get("said") else _json(found)
+
+
 def notion(name: str, arguments: dict[str, Any]) -> str:
     """One Notion tool: its request to the gateway, and the answer as text."""
     if name in PROPOSING and not WORKSPACE_NAME:
@@ -538,11 +576,11 @@ def answer(message: dict[str, Any]) -> dict[str, Any] | None:
             "serverInfo": {"name": "clank", "version": "1"},
         }  # fmt: skip
     elif method == "tools/list":
-        result = {"tools": [TOOL, LOOK, *_notion_tools(), *FLOW_TOOLS]}
+        result = {"tools": [TOOL, LOOK, SHOW, *_notion_tools(), *FLOW_TOOLS]}
     elif method == "tools/call":
         params = message.get("params") or {}
         arguments = params.get("arguments") or {}
-        names = {TOOL["name"], LOOK["name"], *(tool["name"] for tool in [*_notion_tools(), *FLOW_TOOLS])}
+        names = {TOOL["name"], LOOK["name"], SHOW["name"], *(tool["name"] for tool in [*_notion_tools(), *FLOW_TOOLS])}
         if params.get("name") not in names:
             return {"jsonrpc": "2.0", "id": id, "error": {"code": -32602, "message": "no such tool"}}
         path = str(arguments.get("path") or "")
@@ -551,6 +589,8 @@ def answer(message: dict[str, Any]) -> dict[str, Any] | None:
                 text, failed = notion(str(params["name"]), arguments), False
             elif str(params.get("name")).startswith("flow_"):
                 text, failed = flow(str(params["name"]), arguments), False
+            elif params.get("name") == SHOW["name"]:
+                text, failed = show(arguments), False
             elif params.get("name") == LOOK["name"]:
                 text, failed = look(path, str(arguments.get("question") or "")), False
             else:

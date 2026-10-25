@@ -54,7 +54,8 @@ agent's). So is a box's way to its flow (design 0013 §9): `/flows/...` forwards
 (`FLOWS`: reading it, proposing a box, submitting its proposals, a VERIFY's verdict, a planning's draft of a whole
 flow, design 0013 §15, and an orchestrator's decision, §16) the same way, and refuses everything else under
 `/flows/`: running, pausing, stopping and changing a flow, deciding proposals, and opening a planning, are the
-owner's.
+owner's. The agent opens files for the owner to see in Clank's VS Code window (design 0018 §7) the same way: `POST
+/agents/show` is forwarded, and everything else under `/agents/` refused.
 
 Run as its own process (`python -m clank.components.gateway.server`), supervised by the service (`service.py`), so a
 restart of the service or of the console cuts no request in flight. It reads its settings from `config/gateway.json`
@@ -125,6 +126,11 @@ FLOWS = {("GET", "read"), ("POST", "propose"), ("POST", "submit"), ("POST", "ver
 NOT_THE_AGENTS_FLOW = (
     "the agent reads its flow, proposes boxes, gives a VERIFY's verdict, drafts a flow, gives an orchestrator's "
     "decision and starts a box's job; nothing else (the owner runs, changes and decides flows, and opens a planning)"
+)
+# What the agent may ask of the agents' part through the gateway (design 0018 §7): opening files for the owner to see.
+AGENTS = {("POST", "show")}
+NOT_THE_AGENTS_SHOW = (
+    "the agent opens files for the owner to see; nothing else (the window, the review and the sessions are the owner's)"
 )
 Forward = Callable[[str, str, Any, dict[str, str]], Awaitable[tuple[int, Any]]]
 
@@ -229,6 +235,7 @@ def create_gateway(
     ask_cloud: Callable[[str, str], Awaitable[dict[str, Any]]] | None = None,
     marks: LocalMarks | None = None,
     spool: Spool | None = None,
+    agents: Forward | None = None,
 ) -> FastAPI:
     """The gateway's application, over its routes, its settings and its records (None: none kept); `wake` asks the
     service for a role loaded on demand, and says why not when it is not loaded ("" when it is being); `notion`
@@ -238,7 +245,8 @@ def create_gateway(
     it with the same token (design 0016 §5), kept out of every record and the live view; `ask_cloud` tells the service
     a workspace not yet answered wants the cloud model (design 0016 §9), which asks its question; `marks` are the
     sessions that used local-only content (design 0016 §10), kept from the cloud; `spool` keeps each cloud request
-    that ended, with its cost, until the service takes it (design 0016 §12)."""
+    that ended, with its cost, until the service takes it (design 0016 §12); `agents` forwards the agent's request to
+    open files for the owner (`agents_forwarder`, design 0018 §7)."""
     clients: dict[str, httpx2.AsyncClient] = {}
     activity = Activity(generation=routes.generation)
     holds = holds if holds is not None else Holds()
@@ -448,6 +456,17 @@ def create_gateway(
             return JSONResponse({"error": {"code": "unavailable", "message": said}}, status_code=503)
         body = await request.json() if await request.body() else None
         status, found = await flows(request.method, rest, body, dict(request.query_params))
+        return JSONResponse(found, status_code=status)
+
+    @app.api_route("/agents/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+    async def to_agents(rest: str, request: Request) -> Response:
+        if (request.method, rest) not in AGENTS:
+            return JSONResponse({"error": {"code": "forbidden", "message": NOT_THE_AGENTS_SHOW}}, status_code=403)
+        if agents is None:
+            said = "Showing files is reached through the Clank service, which this gateway was not given"
+            return JSONResponse({"error": {"code": "unavailable", "message": said}}, status_code=503)
+        body = await request.json() if await request.body() else None
+        status, found = await agents(request.method, rest, body, dict(request.query_params))
         return JSONResponse(found, status_code=status)
 
     @app.post("/v1/chat/completions")
@@ -1455,6 +1474,11 @@ def flows_forwarder(connect: "Callable[[], Client]", *, close: bool = True) -> F
     return _forwarder(connect, "flows", "Flows are reached", close=close)
 
 
+def agents_forwarder(connect: "Callable[[], Client]", *, close: bool = True) -> Forward:
+    """The agent's request to open files for the owner (design 0018 §7), sent to the service as Notion's are."""
+    return _forwarder(connect, "agents", "Showing files is reached", close=close)
+
+
 def _forwarder(connect: "Callable[[], Client]", prefix: str, reached: str, *, close: bool) -> Forward:
     """Requests under `/<prefix>/`, sent to the service's own routes there by a client of it named `agent`: the
     service's answer, its refusal, or that it does not answer (`reached`: what is reached through it)."""
@@ -1568,6 +1592,7 @@ def main(argv: list[str] | None = None) -> int:
     log = TrafficLog(home.logs / "traffic", settings.record_limit_kib, settings.keep_days) if settings.records else None
     notion = notion_forwarder(lambda: Client.connect(home, name="agent"))
     flows = flows_forwarder(lambda: Client.connect(home, name="agent"))
+    agents = agents_forwarder(lambda: Client.connect(home, name="agent"))
     holds = Holds(file=home.state / HOLDS_FILE)  # the pauses outlive a restart (design 0012 §9.4)
     marks = LocalMarks(home.state / MARKS_FILE)  # so do the sessions kept from the cloud (design 0016 §10)
     spool = Spool(home.state)  # and the cloud requests the service has not taken yet (design 0016 §12)
@@ -1584,6 +1609,7 @@ def main(argv: list[str] | None = None) -> int:
         ask_cloud=ask_cloud,
         marks=marks,
         spool=spool,
+        agents=agents,
     )
     from clank.kernel.service import server_config
 
