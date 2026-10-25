@@ -30,9 +30,12 @@ from clank.components.workspaces.cloud import EVENT_TYPES as CLOUD_EVENT_TYPES
 from clank.components.workspaces.cloud import CloudBounds
 from clank.components.workspaces.kinds import DockerSettings, Workspace
 from clank.components.workspaces.sandbox import BRIDGE_PROGRAM as BRIDGE_PROGRAM  # for the agents (design 0005)
+from clank.components.workspaces.sandbox import CURRENT_INSTRUCTIONS as CURRENT_INSTRUCTIONS  # for the agents
+from clank.components.workspaces.sandbox import CURRENT_PHONE as CURRENT_PHONE  # (design 0018 §7.5)
 from clank.components.workspaces.sandbox import LAYERS, image_tag, layered_tag, names, thread_env
 from clank.components.workspaces.sandbox import PHONE_PROGRAM as PHONE_PROGRAM
 from clank.components.workspaces.sandbox import WORKSPACE as WORKSPACE  # for the agents (design 0007)
+from clank.components.workspaces.sandbox import agent_files as agent_files
 from clank.components.workspaces.setup import proposed_setup
 from clank.kernel.clock import to_text
 from clank.kernel.core import Kernel

@@ -20,6 +20,8 @@ from tests.components.runtime.consoles import pick, serve
 from tests.console.frames import assert_frame, frame_when, settle
 from tests.fakes.engine import program
 
+FOLDER = str(Path(__file__).parents[2] / "fixtures" / "Clank")  # the folder named in the recorded frames
+
 pytestmark = pytest.mark.anyio
 NOW = datetime(2026, 10, 11, 11, 45, tzinfo=UTC)
 
@@ -35,7 +37,7 @@ def page_text(app: ClankConsole) -> str:
 
 
 async def test_the_models_page_shows_the_slot_and_l_loads_c_checks_and_u_unloads(rig: Rig, served: Client) -> None:
-    app = ClankConsole(served, now=lambda: NOW, zone=UTC, home=rig.kernel.home, page="models")
+    app = ClankConsole(served, now=lambda: NOW, zone=UTC, home=rig.kernel.home, page="models", folder=FOLDER)
     async with app.run_test(size=(120, 40)) as pilot:
         await settle(pilot, lambda: "never started" in page_text(app))
         assert_frame(await frame_when(pilot, app, "never started", "2,041 of 16,303"), "runtime-models-stopped")
@@ -63,7 +65,7 @@ async def test_a_load_refused_as_busy_says_so_in_the_services_words(rig: Rig, se
         program=list(program("kvmem", "--fake-start-seconds", "5")),
     )  # fmt: skip
     rig.runtime.state.add_install(slow, rig.clock.now())
-    app = ClankConsole(served, now=lambda: NOW, zone=UTC, home=rig.kernel.home, page="models")
+    app = ClankConsole(served, now=lambda: NOW, zone=UTC, home=rig.kernel.home, page="models", folder=FOLDER)
     async with app.run_test(size=(120, 40)) as pilot:
         await settle(pilot, lambda: "never started" in page_text(app))
         await pilot.press("l")

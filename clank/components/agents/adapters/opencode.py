@@ -26,7 +26,8 @@ server's tools only when the server's last check marks them read-only, each name
 at once, and the `explore` helper reads under the same rules. An edit the planner is denied is never asked about, so
 auto mode cannot answer it. `/implement <plan>` is Clank's command: `build` carries the plan out
 with the instructions of `prompts/implement.md` (§5). Every agent also reads Clank's instructions in the container
-(`/opt/clank/instructions/`, from the sandbox image), the LaTeX rules first among them (design 0020 §13).
+(`/home/agent/.clank/instructions/`, written at each start: design 0018 §7.5): how a file is opened for the owner, and
+the LaTeX rules (design 0020 §13).
 
 It compacts a session once a step's total (its prompt and its answer) reaches the window it is told less the output
 limit, counted up to 32,000 (its `session/overflow.ts`), and a compaction keeps a summary and the newest turns up to
@@ -46,6 +47,7 @@ from typing import Any
 from clank.components.agents.adapters.program import AgentModel, AgentProgram, Compaction
 from clank.components.agents.plans import INSTRUCTIONS, SETTINGS
 from clank.components.tools.service import Server
+from clank.components.workspaces.service import CURRENT_INSTRUCTIONS
 from clank.kernel.adapters import Capability
 
 ENVIRONMENT = {
@@ -72,7 +74,7 @@ KEPT_MOST, KEPT_LEAST = 15_000, 2_000  # what a compaction keeps of the newest t
 UNSAFE = re.compile(r"[^a-zA-Z0-9_-]")  # what OpenCode replaces in an MCP tool's name
 
 
-CLANK_INSTRUCTIONS = "/opt/clank/instructions/*.md"  # Clank's to every agent, in the container (design 0020 §13)
+CLANK_INSTRUCTIONS = CURRENT_INSTRUCTIONS  # Clank's to every agent, in the container (design 0018 §7.5)
 
 
 def prompt(name: str) -> str:

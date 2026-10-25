@@ -94,7 +94,7 @@ def test_your_servers_are_given_and_the_folders_only_once_allowed(
     config = json.loads(platform.files[(container_name, CONFIG)])
     key = kernel.parts["gateway"].workspace_key("paper", why="a test")  # the workspace's own (design 0016 §9)
     assert config["mcp"] == {
-        "clank": {"type": "local", "command": ["python3", "/opt/clank/phone_mcp.py"],
+        "clank": {"type": "local", "command": ["python3", "/home/agent/.clank/mcp/phone_mcp.py"],
                   "environment": {"CLANK_GATEWAY": "http://edge:18210/v1", "CLANK_WORKSPACE_NAME": "paper",
                                   "CLANK_GATEWAY_KEY": key},
                   "enabled": True},
@@ -118,7 +118,7 @@ def test_an_agent_started_without_a_terminal_gets_its_configuration_written_firs
     container_name = opened(kernel, platform, folder)
     env = kernel.parts["agents"].configure("paper")
     config = json.loads(platform.files[(container_name, CONFIG)])
-    assert config["mcp"]["clank"]["command"] == ["python3", "/opt/clank/phone_mcp.py"]
+    assert config["mcp"]["clank"]["command"] == ["python3", "/home/agent/.clank/mcp/phone_mcp.py"]
     assert env["OPENCODE_DISABLE_AUTOUPDATE"] == "1"
     assert "NUMBA_NUM_THREADS" in env
 

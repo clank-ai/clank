@@ -42,6 +42,9 @@ HOST = "host.docker.internal"
 EDGE_PROGRAM = "/opt/clank/edge.py"
 BRIDGE_PROGRAM = "/opt/clank/bridge.py"  # the session bridge to OpenCode's servers (design 0005 §2)
 PHONE_PROGRAM = "/opt/clank/phone_mcp.py"  # Clank's own MCP server for the agent: send_to_phone (design 0005 §3)
+AGENT_CLANK = f"{AGENT_HOME}/.clank"  # Clank's files for the agent, written at each start (design 0018 §7.5)
+CURRENT_PHONE = f"{AGENT_CLANK}/mcp/phone_mcp.py"  # Clank's MCP server as this Clank has it
+CURRENT_INSTRUCTIONS = f"{AGENT_CLANK}/instructions/*.md"  # Clank's instructions to every agent (design 0020 §13)
 IMAGE = "clank-sandbox"
 DEFAULT_NETWORK = "bridge"  # Docker's own, which reaches the internet: a workspace's setup only
 LAYERS = ("tex",)  # the image layers Clank knows (design 0020 §3), in the order they are built
@@ -218,6 +221,17 @@ def joined(spec: ContainerSpec) -> Sequence[tuple[str, str]]:
 def image_folder() -> Path:
     """The folder Clank's sandbox image is built from: its Dockerfile and the edge's program."""
     return Path(str(resources.files("clank.components.workspaces").joinpath("image")))
+
+
+def agent_files() -> list[tuple[str, str]]:
+    """Clank's files for the agent, as this Clank has them, each with its path in the container (design 0018 §7.5):
+    its MCP server and the module it imports, and its instructions."""
+    folder = image_folder()
+    found = [(f"{AGENT_CLANK}/mcp/{name}", (folder / name).read_text(encoding="utf-8"))
+             for name in ("phone_mcp.py", "find_figures.py")]  # fmt: skip
+    found += [(f"{AGENT_CLANK}/instructions/{rules.name}", rules.read_text(encoding="utf-8"))
+              for rules in sorted((folder / "instructions").glob("*.md"))]  # fmt: skip
+    return found
 
 
 def image_tag() -> str:

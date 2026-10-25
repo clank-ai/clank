@@ -4,6 +4,7 @@ question's options are buttons, clicked: a click on another question's option hi
 keeping the focus."""
 
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from textual.widgets import ListView
@@ -17,6 +18,8 @@ from clank.kernel.events import CLANK
 from clank.kernel.home import Home
 from clank.kernel.questions import Option, QuestionDraft
 from tests.console.frames import assert_frame, focus_on, frame_when, settle
+
+FOLDER = str(Path(__file__).parents[1] / "fixtures" / "Clank")  # the folder named in the recorded frames
 
 pytestmark = pytest.mark.anyio
 
@@ -40,7 +43,7 @@ async def test_the_questions_page_lists_every_waiting_question_and_answers_the_h
 ) -> None:
     kernel.questions.ask(FIRST, asked_by=CLANK)
     second = kernel.questions.ask(SECOND, asked_by=CLANK)
-    app = ClankConsole(client, now=lambda: NOW, zone=UTC, home=home, page="questions")
+    app = ClankConsole(client, now=lambda: NOW, zone=UTC, home=home, page="questions", folder=FOLDER)
     async with app.run_test(size=(120, 34)) as pilot:
         await settle(pilot, lambda: "Which preset?" in render_text(app))
         assert_frame(await frame_when(pilot, app, "Which preset?"), "questions")
@@ -57,7 +60,7 @@ async def test_a_click_on_another_questions_option_highlights_it_and_answers_it_
 ) -> None:
     first = kernel.questions.ask(FIRST, asked_by=CLANK)
     second = kernel.questions.ask(SECOND, asked_by=CLANK)
-    app = ClankConsole(client, now=lambda: NOW, zone=UTC, home=home, page="questions")
+    app = ClankConsole(client, now=lambda: NOW, zone=UTC, home=home, page="questions", folder=FOLDER)
     async with app.run_test(size=(120, 34)) as pilot:
         await frame_when(pilot, app, "Which preset?")
         listed = app.query_one("#questions-list", ListView)

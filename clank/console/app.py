@@ -509,6 +509,8 @@ class ClankConsole(App[str]):
         quits."""
         if not isinstance(event.widget, KeysBar):
             self._before_bar = event.widget
+        if not self.screen_stack:
+            return  # the console is quitting: its screens are taken down, and a focus still heard has nothing to tidy
         screen = self.screen  # the menu Esc showed hides again once the focus is elsewhere (as it is now)
         if not screen.is_modal and (screen.focused is None or screen.focused.id != "menu"):
             screen.remove_class("-menu-focus")

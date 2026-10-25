@@ -5,6 +5,7 @@ where its kind is defined), a planned menu entry (its milestone and design secti
 palette (Ctrl+P) finds every page and action by name and runs it."""
 
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from textual.widgets import Label, ListView
@@ -16,13 +17,15 @@ from clank.console.snapshot import render_text
 from clank.kernel.home import Home
 from tests.console.frames import assert_frame, focus_on, frame_when, settle
 
+FOLDER = str(Path(__file__).parents[1] / "fixtures" / "Clank")  # the folder named in the recorded frames
+
 pytestmark = pytest.mark.anyio
 
 NOW = datetime(2026, 10, 11, 13, 54, tzinfo=UTC)
 
 
 def make(client: Client, home: Home, page: str = "home") -> ClankConsole:
-    return ClankConsole(client, now=lambda: NOW, zone=UTC, home=home, page=page)
+    return ClankConsole(client, now=lambda: NOW, zone=UTC, home=home, page=page, folder=FOLDER)
 
 
 def items(app: ClankConsole, list_id: str) -> list[str]:

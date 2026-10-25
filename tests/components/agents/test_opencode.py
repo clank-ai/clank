@@ -11,9 +11,10 @@ once, and so is a call it repeats, for it and for the explore helper it may call
 measure, fit the owner's limits and write each section of a plan, Deliverables last, and that it asks the owner only
 questions about the plan. `/implement` hands a plan to `build`, with the instructions for carrying it out.
 
-Design 0020 §13: every agent reads Clank's instructions in the container (`/opt/clank/instructions/`), the LaTeX rules
-the checks enforce first among them: cite only the bibliography's entries, a new entry only with its DOI or arXiv id, a
-source or an UNVERIFIED mark on each value, compile clean, keep the document's style, answer each number."""
+Design 0020 §13: every agent reads Clank's instructions in the container (`/home/agent/.clank/instructions/`, written
+at each start: design 0018 §7.5), the LaTeX rules the checks enforce among them: cite only the bibliography's
+entries, a new entry only with its DOI or arXiv id, a source or an UNVERIFIED mark on each value, compile clean, keep
+the document's style, answer each number."""
 
 import json
 from importlib import resources
@@ -140,13 +141,11 @@ def test_every_agent_reads_clanks_instructions_in_the_container_the_latex_rules_
     from clank.components.workspaces.sandbox import image_folder
 
     config = json.loads(OpenCode().configuration(MODEL)[1])
-    assert config["instructions"] == ["/opt/clank/instructions/*.md"]
+    assert config["instructions"] == ["/home/agent/.clank/instructions/*.md"]
     rules = (image_folder() / "instructions" / "latex.md").read_text(encoding="utf-8")
     for needed in ("Cite only entries", "doi = {", "archivePrefix = {arXiv}", "% source:", "% UNVERIFIED:",
                    "no undefined", "own macros", "answer each by its number", "refused"):  # fmt: skip
         assert needed in rules, needed
-    dockerfile = (image_folder() / "Dockerfile").read_text(encoding="utf-8")
-    assert "COPY instructions/ /opt/clank/instructions/" in dockerfile
 
 
 def test_it_runs_its_terminal_interface_offline() -> None:

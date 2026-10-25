@@ -39,6 +39,10 @@ box's) whose context holds more than the new model's context as too small for it
 A flow built with the model (design 0013 §15) starts its planning session on the workspace's OpenCode window once it
 answers: `prepare` tells whoever asked (`on_prepared`) the workspace and port of each window it gives a command for.
 
+Each time an agent starts in a workspace (`prepare`, `configure`), Clank's files for it are written into its home in
+the container first (design 0018 §7.5: Clank's MCP server and its instructions, as this Clank has them), so its tools
+are always this Clank's whatever image its container was made from.
+
 Each workspace's OpenCode, and Clank's MCP server in its container, send the workspace's own key to the gateway (design
 0016 §9, from the gateway's service); a workspace allowed the cloud gets no MCP server marked local only, and Clank's
 server there lists no Notion tool; the gateway is given the names of the tools that never go to the cloud
@@ -321,6 +325,7 @@ class Agents:
         container = workspaces.container_of(workspace)
         model, notes = self._model(workspace)
         servers = self._given(workspace, model.key)
+        self._write_agent_files(workspace)
         path, text = adapter.configuration(model, servers, self._read_only(workspace))
         workspaces.put_file(workspace, path, text)
         with self._notices_lock:  # its configuration has the model's limits now: nothing more to tell its window
@@ -361,9 +366,18 @@ class Agents:
         workspaces: Workspaces = self.kernel.parts["workspaces"]
         adapter = self._adapter(program)
         model, _ = self._model(workspace)
+        self._write_agent_files(workspace)
         path, text = adapter.configuration(model, self._given(workspace, model.key), self._read_only(workspace))
         workspaces.put_file(workspace, path, text)
         return self.agent_env(workspace, program)
+
+    def _write_agent_files(self, workspace: str) -> None:
+        """Clank's MCP server and instructions, as this Clank has them, into the agent's home in the container."""
+        from clank.components.workspaces.service import agent_files
+
+        workspaces: Workspaces = self.kernel.parts["workspaces"]
+        for path, text in agent_files():
+            workspaces.put_file(workspace, path, text)
 
     def _port(self, workspace: str, notes: list[str]) -> int | None:
         """A port of its own for the program's API, so its session can be reached (design 0005 §2); None, and why in
@@ -523,7 +537,7 @@ class Agents:
         workspace's key at the gateway (`key`, else read), and told to list no Notion tool when the workspace may use
         the cloud model (design 0016 §10)."""
         from clank.components.tools.service import Server
-        from clank.components.workspaces.service import PHONE_PROGRAM
+        from clank.components.workspaces.service import CURRENT_PHONE
 
         tools: Tools = self.kernel.parts["tools"]
         record = self._workspace(workspace).record.model_dump()
@@ -540,7 +554,7 @@ class Agents:
                     "CLANK_GATEWAY_KEY": key or gateway.workspace_key(workspace, why=f"Clank's server in {workspace}"),
                     **({"CLANK_NOTION": "off"} if record.get("models") == "cloud" else {}),
                 }
-                given[row["name"]] = Server("stdio", command="python3", args=[PHONE_PROGRAM], env=address)
+                given[row["name"]] = Server("stdio", command="python3", args=[CURRENT_PHONE], env=address)
             else:
                 given[row["name"]] = tools.runnable(row["name"], folder, row["scope"], why=f"the agent of {workspace}")
         return given

@@ -102,11 +102,11 @@ SHOW = {
     "name": "show_files",
     "description": (
         "Open files of the workspace's folder in the user's VS Code window, beside you, for the user to look at "
-        "themselves: figures (they open in the user's annotator), PDFs, LaTeX, code, notes, any file, up to 12 at "
-        "once. When the user asks to see, open, show or pull up something, find the files (search the folder with "
-        "ls, find or rg), call this, say in one line what you opened, and stop: do not read, describe or check what "
-        "you opened (no look_at_figure) unless the user asks for that too. Returns what was opened, and each path that "
-        "is not a file of the folder."
+        "themselves (the only way to: this container has no `code` command): figures (they open in the user's "
+        "annotator), PDFs, LaTeX, code, notes, any file, up to 12 at once. When the user asks to see, open, show or "
+        "pull up something, find the files (find_figures, or search the folder with ls, find or rg), call this, say in "
+        "one line what you opened, and stop: do not read, describe or check what you opened (no look_at_figure) unless "
+        "the user asks for that too. Returns what was opened, and each path that is not a file of the folder."
     ),
     "inputSchema": {
         "type": "object",
