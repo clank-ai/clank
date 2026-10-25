@@ -12,7 +12,10 @@ window in the service's words (stronger for a workspace that existed before the 
 agent, `n` keeps it local and the page says how to allow it; the model's step says the cloud; once a provider is added,
 the workspace's bound shows in the service's words, `u` changes it asked first, the MCP servers the service holds back
 say so, and what its sessions cost today shows. Design 0011 §12.1: `u` is then a button of Then work's settings' row,
-and a click on it does what the key does."""
+and a click on it does what the key does.
+
+Design 0018 §8.1: over SSH, outside VS Code's Remote-SSH, `c` gets everything ready, opens nothing on the PC's screen,
+and says the command to run on the other computer."""
 
 import contextlib
 from collections.abc import Callable, Sequence
@@ -349,6 +352,32 @@ async def test_c_opens_the_folder_in_clanks_vs_code_window_with_opencode_beside_
         await pilot.press("c")
         await settle(pilot, lambda: "VS Code opens this folder" in message(app), seconds=30)
     assert asked(state)["opened"] == [str(project)]
+
+
+async def test_c_over_ssh_opens_nothing_on_the_pcs_screen_and_says_the_command_for_the_other_computer(
+    kernel: Kernel,
+    client: Client,
+    platform: FakePlatform,
+    gateway: None,
+    project: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SSH_CONNECTION", "10.0.0.2 51022 10.0.0.9 22")
+    kernel.settings.write("workspace", "paper", {"path": str(project)}, base=None, actor=YOU)
+    name = names(kernel.home.id).container("paper")
+    platform.containers.append(container(name, labels={"clank.home": kernel.home.id}))
+    kernel.parts["runtime"].state.set_slot("main", "ready", "a test", actor=YOU, preset="daily-262k")
+    state = fake_vscode(kernel, tmp_path, monkeypatch)
+    app = console(client, kernel, project)
+    async with app.run_test(size=(220, 50)) as pilot:
+        await settle(pilot, lambda: "Ready:  a start OpenCode here" in text(app), seconds=20)
+        await pilot.press("c")
+        await settle(pilot, lambda: "--folder-uri" in message(app), seconds=30)
+        said = message(app)
+    assert "over SSH, VS Code would open on the PC's own screen" in said
+    assert "vscode-remote://ssh-remote+10.0.0.9/" in said, "the address the session came in on"
+    assert not state.exists(), "VS Code was never run"
 
 
 async def test_f_opens_a_planning_and_brings_the_console_to_the_monitors_flow_view(

@@ -146,6 +146,32 @@ Then look around: the **Monitor** (F10) shows what the agent does and what fills
 stop, pause, guide or undo it; **Flows** (F10's Flow view, `n`) split a larger piece of work into steps, each a fresh
 session. [docs/console.md](console.md) explains every page and key.
 
+## 4b. Work from another computer, over SSH
+
+With a model on your GPU, every window the PC draws slows the model down. Working from a laptop instead, with VS Code
+on the laptop connected to the PC, leaves the PC's screen out of it
+([design 0018 §8](design/0018-clank-code.md#8-vs-code-on-another-computer)).
+
+1. **On the PC, once:** turn on Windows' OpenSSH server (Settings → System → Optional features → OpenSSH Server, then
+   start the `sshd` service and set it to start automatically) and add your laptop's public key to it, as
+   [Microsoft's guide](https://learn.microsoft.com/windows-server/administration/openssh/openssh_install_firstuse)
+   says. Build Clank's extension there (step 2b), and start Clank's service at the PC itself (`clank serve
+   --background`): started over SSH, it runs where it cannot use Docker's sign-in.
+2. **On the laptop:** install VS Code and Microsoft's Remote-SSH extension; nothing of Clank. Connect to the PC (F1,
+   **Remote-SSH: Connect to Host**).
+3. **In that window**, open a terminal (it runs on the PC), go to your folder and type `clank`. `c` on **This folder**
+   (or `clank code`) gets everything ready, then opens the folder in a new VS Code window on the laptop, connected to
+   the PC, with OpenCode beside your files. The first time, Clank installs its extension and the window's others in
+   VS Code's server on the PC, and adds its settings to that server's machine settings.
+4. **Lock the PC** (Windows+L) or turn its screens off: it then draws nothing for your work.
+
+From a plain SSH terminal (no VS Code), `c` opens nothing: a VS Code window there would open on the PC's own screen.
+Clank says the command to run on the laptop instead, `code --folder-uri "vscode-remote://ssh-remote+HOST/c:/..."`.
+HOST is the address you connected to, or the name in `ssh_host` of `config/vscode.json` (the name your laptop's SSH
+configuration gives the PC). If Clank's extension is also installed in the laptop's own VS Code, add
+`"remote.extensionKind": {"clank.clank": ["workspace"]}` to the laptop's settings, so it runs on the PC's side, where
+Clank is.
+
 ## 5. Updating
 
 Clank has no update command yet. If you installed it with the one-line installer, run it again: it installs the

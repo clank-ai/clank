@@ -5,12 +5,27 @@ console runs in VS Code's terminal (`TERM_PROGRAM`), else here. From the console
 takes the console's terminal: over SSH nothing opens (a message says how to attach), in Windows Terminal its window is
 split with `wt -w 0 split-pane -V -d <folder> <python> -m clank flow attach --workspace <W>` (`--home` when
 `CLANK_HOME` is set, `;` escaped), in VS Code's terminal VS Code, elsewhere the message; a split that cannot run says
-why."""
+why.
+
+Design 0018 §8.1: a terminal of VS Code's Remote-SSH on this machine (VS Code's remote command, `code` under a
+`remote-cli` folder, on the path, and `VSCODE_IPC_HOOK_CLI` set) is where VS Code opens, on the other computer, the
+service sent the command and its window's pipe; any other SSH terminal opens VS Code nowhere, and the command to run on
+the other computer is said (`code --folder-uri` with the PC's folder as Remote-SSH names it, on the host the settings
+name, else the address the session came in on); elsewhere it opens here, on the PC."""
 
 import pytest
 
 from clank.kernel import where
-from clank.kernel.where import console_opening, over_ssh, split_argv, where_to_open
+from clank.kernel.where import (
+    console_opening,
+    over_ssh,
+    remote_code,
+    split_argv,
+    ssh_command,
+    vscode_place,
+    vscode_request,
+    where_to_open,
+)
 
 SSH = {"SSH_CONNECTION": "10.0.0.2 51022 10.0.0.9 22"}
 
@@ -68,3 +83,55 @@ def test_a_split_that_cannot_run_says_why(monkeypatch: pytest.MonkeyPatch) -> No
     assert where.launch_split(["wt", "-w", "0", "split-pane"]) == "wt refused the split (exit 1)"
     monkeypatch.setattr(where, "run_wt", lambda argv: 0)
     assert where.launch_split(["wt", "-w", "0", "split-pane"]) == ""
+
+
+REMOTE_CODE = r"D:\vscode\.vscode-server\cli\servers\Stable-1\server\bin\remote-cli\code.cmd"
+REMOTE = {**SSH, "TERM_PROGRAM": "vscode", "VSCODE_IPC_HOOK_CLI": r"\\.\pipe\vscode-ipc-1.sock"}
+
+
+def test_a_vs_code_remote_ssh_terminal_opens_vs_code_on_the_other_computer() -> None:
+    def remote(name: str) -> str | None:
+        return REMOTE_CODE if name == "code" else None
+
+    assert remote_code(REMOTE, remote) == REMOTE_CODE
+    assert vscode_place(REMOTE, remote) == "remote"
+    assert console_opening(REMOTE, remote) == "vscode", "a planning opens there too"
+    assert where_to_open("", REMOTE, remote) == ("vscode", "")
+    assert where_to_open("here", REMOTE, remote) == ("here", "")
+
+
+def test_from_a_remote_ssh_terminal_the_service_is_sent_vs_codes_remote_command_and_its_windows_pipe() -> None:
+    def remote(name: str) -> str | None:
+        return REMOTE_CODE if name == "code" else None
+
+    assert vscode_request(r"D:\work\paper", REMOTE, look=remote) == {
+        "folder": r"D:\work\paper",
+        "remote": {"code": REMOTE_CODE, "hook": REMOTE["VSCODE_IPC_HOOK_CLI"]},
+    }
+    assert vscode_request(r"D:\work\paper", {}, "PLAN.md", look=remote) == {
+        "folder": r"D:\work\paper",
+        "file": "PLAN.md",
+    }
+
+
+def test_from_any_other_ssh_terminal_the_command_for_the_other_computer_names_the_pcs_folder() -> None:
+    assert ssh_command(r"C:\Research\paper", SSH, "") == (
+        'code --folder-uri "vscode-remote://ssh-remote+10.0.0.9/c:/Research/paper"'
+    ), "the address the SSH session came in on"
+    assert ssh_command(r"D:\Research\my paper", SSH, "lab-pc") == (
+        'code --folder-uri "vscode-remote://ssh-remote+lab-pc/d:/Research/my%20paper"'
+    ), "the host the settings name, the folder's parts quoted"
+    assert ssh_command("/srv/research/paper", {"SSH_TTY": "/dev/pts/1"}, "") == (
+        'code --folder-uri "vscode-remote://ssh-remote+THIS-PC/srv/research/paper"'
+    ), "no address known: a placeholder to replace"
+
+
+def test_any_other_ssh_terminal_opens_vs_code_nowhere_and_the_pc_opens_it_here() -> None:
+    def desktop(name: str) -> str | None:
+        return r"C:\Program Files\Microsoft VS Code\bin\code.cmd" if name == "code" else None
+
+    assert vscode_place(SSH, desktop) == "ssh"
+    assert vscode_place({**SSH, "TERM_PROGRAM": "vscode"}, desktop) == "ssh", "no remote command: not Remote-SSH's"
+    assert remote_code({"VSCODE_IPC_HOOK_CLI": "x"}, desktop) is None, "VS Code's own terminal on the PC"
+    assert vscode_place({"TERM_PROGRAM": "vscode", "VSCODE_IPC_HOOK_CLI": "x"}, desktop) == "here"
+    assert vscode_place({}, desktop) == "here"

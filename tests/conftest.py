@@ -56,5 +56,11 @@ def _no_test_splits_windows_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture(autouse=True)
 def _no_test_finds_vs_code(monkeypatch: pytest.MonkeyPatch) -> None:
-    """VS Code is never found on the PATH, so no test opens a window of it: a test names its fake in its settings."""
+    """VS Code is never found on the PATH, so no test opens a window of it: a test names its fake in its settings. Nor
+    is VS Code's remote command, and the tests sit at the PC, whatever terminal runs them (over SSH, or in VS Code's
+    Remote-SSH, a test would otherwise open a window on the other computer, design 0018 §8): a test that needs either
+    sets it."""
     monkeypatch.setattr("clank.components.agents.vscode.which", lambda name: None)
+    monkeypatch.setattr("clank.kernel.where.which", lambda name: None)
+    for name in ("SSH_CONNECTION", "SSH_CLIENT", "SSH_TTY", "VSCODE_IPC_HOOK_CLI"):
+        monkeypatch.delenv(name, raising=False)

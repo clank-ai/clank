@@ -492,7 +492,7 @@ export interface McpServer {
   local_only: boolean;
 }
 
-/** Clank's VS Code window: the program, and the extensions it has besides Clank's. */
+/** Clank's VS Code window: the program, the extensions it has besides Clank's, and this PC's SSH name. */
 export interface VsCodeSettings {
   /** The name clients show for this record; the file's own name when empty. */
   title: string;
@@ -500,6 +500,8 @@ export interface VsCodeSettings {
   program: string[];
   /** The extensions installed in the window when missing, by their marketplace ids (publisher.name), besides Clank's own: Python, Pylance, the debugger, Ruff, Jupyter, Lean 4, LaTeX Workshop, a PDF viewer, Rainbow CSV, Markdown All in One, Mermaid and Even Better TOML. */
   extensions: string[];
+  /** This PC's name in the SSH configuration of the computer you work from (design 0018 §8): over SSH, outside VS Code's Remote-SSH, Clank says the command that opens a folder there with it; empty: the address the SSH session came in on. */
+  ssh_host: string;
 }
 
 /** What each of the Monitor's Watch for rules does when it fires (design 0012 §8, decision 0053). */

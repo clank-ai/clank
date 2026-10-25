@@ -2,9 +2,12 @@
 running container (the gateway at the edge, the running preset's limits, or modest ones said when no model runs) and
 answers the command that starts it there; a workspace that is not there, or whose container does not run, is refused
 saying how to open it. `clank work` starts Docker when it is stopped, opens the folder's workspace,
-loads the slot's last configuration that worked when no model runs, and runs the agent in this terminal."""
+loads the slot's last configuration that worked when no model runs, and runs the agent in this terminal.
 
-from collections.abc import Iterator, Sequence
+Design 0018 §8.1: `clank code` over SSH gets the folder ready and opens nothing on the PC's screen, saying the command
+for the other computer; in a terminal of VS Code's Remote-SSH it opens the other computer's VS Code."""
+
+from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
 
 import pytest
@@ -16,11 +19,13 @@ from clank.cli import common, follow
 from clank.cli.main import main
 from clank.client import Client
 from clank.components.agents import cli as agents_cli
+from clank.components.agents import vscode
 from clank.components.agents.service import Agents
 from clank.components.runtime.state import LastGood
 from clank.components.workspaces import service as workspaces_service
 from clank.components.workspaces.sandbox import names
 from clank.components.workspaces.service import WorkspaceUnavailable
+from clank.kernel import where
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
 from clank.kernel.core import Kernel, open_kernel
@@ -153,6 +158,61 @@ def test_clank_code_gets_the_folder_ready_then_opens_it_in_clanks_vs_code_window
     assert f"VS Code opens {folder}: OpenCode opens beside your files" in result.output
     assert asked(state)["opened"] == [str(folder)]
     assert names(kernel.home.id).container("paper") in {c.name for c in kernel.parts["workspaces"].platform.containers}
+
+
+def test_clank_code_over_ssh_gets_the_folder_ready_and_says_the_command_for_the_other_computer(
+    kernel: Kernel, http: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    folder = tmp_path / "paper"
+    folder.mkdir()
+    monkeypatch.chdir(folder)
+    monkeypatch.setenv("SSH_CONNECTION", "10.0.0.2 51022 10.0.0.9 22")
+    set_vscode(kernel, {"ssh_host": "lab-pc"})
+    kernel.parts["runtime"].state.set_slot("main", "ready", "a test", actor=YOU, preset="daily-262k")
+    monkeypatch.setattr(follow, "ask", lambda text, default: "y")
+    result = run("code")
+    assert result.exit_code == 0, result.output
+    assert "over SSH, VS Code would open on the PC's own screen" in result.output
+    assert 'code --folder-uri "vscode-remote://ssh-remote+lab-pc/' in result.output
+    assert "Opening" not in result.output, "nothing opened on the PC's screen"
+    assert names(kernel.home.id).container("paper") in {c.name for c in kernel.parts["workspaces"].platform.containers}
+
+
+def test_clank_code_in_a_remote_ssh_terminal_opens_the_other_computers_vs_code(
+    kernel: Kernel, http: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    folder = tmp_path / "paper"
+    folder.mkdir()
+    monkeypatch.chdir(folder)
+    cli = tmp_path / ".vscode-server" / "bin" / "abc" / "bin" / "remote-cli"
+    cli.mkdir(parents=True)
+    (cli / "code").write_text("#!/bin/sh\n", encoding="utf-8")
+    monkeypatch.setenv("SSH_CONNECTION", "10.0.0.2 51022 10.0.0.9 22")
+    monkeypatch.setenv("VSCODE_IPC_HOOK_CLI", "/run/vscode-ipc-1.sock")
+    monkeypatch.setattr(where, "which", lambda name: str(cli / "code") if name == "code" else None)
+    monkeypatch.setattr(vscode, "home", lambda: tmp_path)
+    calls: list[list[str]] = []
+
+    def remote(argv: list[str], timeout: float = 0, env: Mapping[str, str] | None = None) -> Answer:
+        calls.append(argv)
+        assert (env or {}).get("VSCODE_IPC_HOOK_CLI") == "/run/vscode-ipc-1.sock"
+        return Answer(0, "clank.clank@9.9.9\n" if "--list-extensions" in argv else "", "")
+
+    monkeypatch.setattr(vscode, "run_answer", remote)
+    monkeypatch.setattr(vscode, "clank_vsix", lambda: None)
+    set_vscode(kernel, {"extensions": []})
+    kernel.parts["runtime"].state.set_slot("main", "ready", "a test", actor=YOU, preset="daily-262k")
+    monkeypatch.setattr(follow, "ask", lambda text, default: "y")
+    result = run("code")
+    assert result.exit_code == 0, result.output
+    assert f"VS Code opens {folder} on your computer: OpenCode opens beside your files" in result.output
+    assert calls[-1] == [str(cli / "code"), "--new-window", str(folder)]
+
+
+def set_vscode(kernel: Kernel, values: dict[str, object]) -> None:
+    """Clank's VS Code settings, as the owner writes them."""
+    current = kernel.settings.get("vscode", "vscode")
+    kernel.settings.write("vscode", "vscode", values, base=current.revision, actor=YOU)
 
 
 def run(*arguments: str) -> Result:

@@ -15,7 +15,9 @@ heading says why. Nothing is read while the page is not on screen or another vie
 **A flow built with the model** (design 0013 §15, decisions 0100 and 0101): `n` starts a planning beside the console,
 never in its terminal (`clank.kernel.where.console_opening`: over SSH nothing opens and the view says to run `clank
 flow attach` in another terminal; in Windows Terminal its window is split, OpenCode in the pane on the right; in VS
-Code's terminal, or with `N`, Clank's VS Code window); a planning open already is set aside only once asked first, and
+Code's terminal, or with `N`, Clank's VS Code window; from a terminal of VS Code's Remote-SSH, the other computer's VS
+Code, design 0018 §8, as for every file the view opens there); a planning open already is set aside only once asked
+first, and
 `n` pressed again while one starts does nothing. While the planning is open the view draws it (its steps in Selected's
 place, its latest draft marked DRAFT, a Live box for its session; Enter opens that session). `r` on a flow that has
 not run starts it from its first box, once confirmed.
@@ -200,6 +202,12 @@ class LiveBox(Vertical):
 
 NO_BOX_AT_WORK = "no box at work: the running box's session shows here"
 NO_CALL_YET = "no tool call yet"
+
+
+def window_name() -> str:
+    """The VS Code window a file opens in, as the view says it: the other computer's from a terminal of VS Code's
+    Remote-SSH (design 0018 §8), else Clank's own."""
+    return "your computer's VS Code" if places.vscode_place(os.environ) == places.REMOTE else "Clank's VS Code window"
 
 
 def panel(widget: Widget, title: str, id: str, board: str = "d1") -> Panel:
@@ -603,10 +611,8 @@ class FlowViewer:
                 console.say("this gate shows no file to edit", True)
                 return True
             path = files[0]["path"]
-            body = {"folder": str(view.get("folder") or ""), "file": path}
-            self._post(
-                "agents/vscode", body, f"{path} opens in Clank's VS Code window: save it there, then a approves it"
-            )
+            opens = f"{path} opens in {window_name()}: save it there, then a approves it"
+            self._vscode(str(view.get("folder") or ""), path, opens)
         elif option == "back":
             writer = files[0]["box"] if files else "the box before it"
             fields = [Field("note", f"Your note for {writer}'s next try: what to change (optional)", "what to change")]
@@ -897,6 +903,25 @@ class FlowViewer:
             console.call_from_thread(self.reread)
             if back:
                 console.call_from_thread(self.show_board, "d1")
+
+        self.page.run_worker(work, thread=True, group="monitor-flow-post", exit_on_error=False)
+
+    def _vscode(self, folder: str, file: str, done: str) -> None:
+        """VS Code on a folder, and a file of it, where the owner sits (design 0018 §8.1): Clank's window on the PC,
+        or the other computer's from a terminal of VS Code's Remote-SSH; over any other SSH nothing opens, and the
+        command to run on the other computer is said."""
+        if places.vscode_place(os.environ) != places.OVER_SSH:
+            self._post("agents/vscode", places.vscode_request(folder, os.environ, file), done)
+            return
+        console, client = self.page.console, self.page.console.client
+
+        def work() -> None:
+            try:
+                host = str(client.get("records/vscode/vscode")["values"].get("ssh_host") or "")
+            except (NotRunning, ClientError) as error:
+                console.call_from_thread(console.say, str(error), True)
+                return
+            console.call_from_thread(console.say, places.ssh_said(folder, os.environ, host, file))
 
         self.page.run_worker(work, thread=True, group="monitor-flow-post", exit_on_error=False)
 
@@ -1273,8 +1298,8 @@ class FlowViewer:
         flow, console = str(found["flow"]), self.page.console
         if found["where"] == "vscode":
             shows = "comes forward" if found.get("window") == "running" else "opens, OpenCode in its terminal"
-            done = f"{flow}: Clank's VS Code window {shows} on the planning session; watch the flow built here"
-            self._post("agents/vscode", {"folder": str(found.get("folder") or console.folder)}, done)
+            done = f"{flow}: {window_name()} {shows} on the planning session; watch the flow built here"
+            self._vscode(str(found.get("folder") or console.folder), "", done)
         elif said:
             console.say(said, failed)
         self.reread()
@@ -1305,8 +1330,7 @@ class FlowViewer:
             self.page.console.say("no file to open: the box chosen has written none yet", True)
             return
         path = str(found["path"])
-        body = {"folder": str(view.get("folder") or ""), "file": path}
-        self._post("agents/vscode", body, f"{path} opens in Clank's VS Code window")
+        self._vscode(str(view.get("folder") or ""), path, f"{path} opens in {window_name()}")
 
     def open(self) -> None:
         """Enter: what the box chosen holds. A running box's session in the Session view, pinned to it (Backspace comes

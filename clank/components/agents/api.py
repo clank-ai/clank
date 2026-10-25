@@ -5,29 +5,29 @@
 terminal runs to start it; it is quick, so it is a request, not an operation. A workspace whose container does not run,
 or a program Clank has no adapter for, is refused with the reason (409). `POST /agents/vscode` opens a folder in Clank's
 VS Code window, OpenCode beside the files: an operation (`vscode.py`), since the first time installs the window's
-extensions. `GET /agents/servers` lists the MCP servers of a workspace's agent with whether it gets each, and `POST
-/agents/servers` gives one or takes it away (design 0004 §10). The session bridge's routes (design 0005 §2): `GET
-/agents/sessions` (the OpenCode servers in a workspace's container, their sessions and what waits), a session's
+extensions; from a terminal of VS Code's Remote-SSH, the client's `remote` opens it in the other computer's VS Code
+instead (design 0018 §8). `GET /agents/servers` lists the MCP servers of a workspace's agent with whether it gets each,
+and `POST /agents/servers` gives one or takes it away (design 0004 §10). The session bridge's routes (design 0005 §2):
+`GET /agents/sessions` (the OpenCode servers in a workspace's container, their sessions and what waits), a session's
 messages, one tool call whole (design 0012 §7), sending one, starting a session, stopping one, and replying to a
 permission or a question; the bridge's refusal is a 409 in its own words. The review of the agent's changes (design
 0007): `GET /agents/review` (a workspace's mode, by folder or by name, whether its agents are watched, how many changes
-wait, and what its window was told of its model's last change, design 0013 §7), `POST /agents/review` (switch it),
-`GET /agents/changes` (the newest changes, without the files) and `GET /agents/changes/{id}` (one, with the file
-before, after, and as written). `POST /agents/annotations` sends a figure the owner marked up (design 0008), or a
-page of a PDF; `POST /agents/latex/pages` renders a PDF of a folder as page images to mark up (design 0020 §10),
-`POST /agents/latex/comments` sends the owner's comments on lines of LaTeX files to the agent (§11), and `POST
-/agents/latex/build` builds a document in its workspace's container for LaTeX Workshop (§3). `POST
-/agents/show` opens files of a workspace's folder in the owner's VS Code window (design 0018 §7): the agent's, through
-the gateway, refused (409) while no VS Code window follows the service. The
-Monitor's flows (design 0012 §6.1): `GET /agents/flow/{workspace}` (the flows kept,
-briefly) and `GET /agents/flow/{workspace}/{session}` (one, whole, or what changed after the version `since`, with the
-session's marks); a session's context totals (design 0012 §4.1): `GET /agents/context/{workspace}/{session}`; what it
-does now (design 0012 §5): `GET /agents/now/{workspace}/{session}`. The Monitor's Watch for (design 0012 §8): `GET
-/agents/marks` (the newest marks, and how many are not seen) and `POST /agents/marks/seen`. The Monitor's Guide (design
-0012 §9): `GET /agents/guide/{workspace}/{session}` (each action with its key, whether it can run and why not, what it
-does, its exact call, its cost and its last state; Drop's for the call `item`), and `POST
-/agents/guide/{workspace}/{session}/stop`, `.../note`, `.../compact`, `.../undo` (the revert confirmed), `.../redo` and
-`.../drop` (the call's part); an action that cannot run is a 409 in the Guide's words.
+wait, and what its window was told of its model's last change, design 0013 §7), `POST /agents/review` (switch it), `GET
+/agents/changes` (the newest changes, without the files) and `GET /agents/changes/{id}` (one, with the file before,
+after, and as written). `POST /agents/annotations` sends a figure the owner marked up (design 0008), or a page of a PDF;
+`POST /agents/latex/pages` renders a PDF of a folder as page images to mark up (design 0020 §10), `POST
+/agents/latex/comments` sends the owner's comments on lines of LaTeX files to the agent (§11), and `POST
+/agents/latex/build` builds a document in its workspace's container for LaTeX Workshop (§3). `POST /agents/show` opens
+files of a workspace's folder in the owner's VS Code window (design 0018 §7): the agent's, through the gateway, refused
+(409) while no VS Code window follows the service. The Monitor's flows (design 0012 §6.1): `GET
+/agents/flow/{workspace}` (the flows kept, briefly) and `GET /agents/flow/{workspace}/{session}` (one, whole, or what
+changed after the version `since`, with the session's marks); a session's context totals (design 0012 §4.1): `GET
+/agents/context/{workspace}/{session}`; what it does now (design 0012 §5): `GET /agents/now/{workspace}/{session}`. The
+Monitor's Watch for (design 0012 §8): `GET /agents/marks` (the newest marks, and how many are not seen) and `POST
+/agents/marks/seen`. The Monitor's Guide (design 0012 §9): `GET /agents/guide/{workspace}/{session}` (each action with
+its key, whether it can run and why not, what it does, its exact call, its cost and its last state; Drop's for the call
+`item`), and `POST /agents/guide/{workspace}/{session}/stop`, `.../note`, `.../compact`, `.../undo` (the revert
+confirmed), `.../redo` and `.../drop` (the call's part); an action that cannot run is a 409 in the Guide's words.
 """
 
 from typing import TYPE_CHECKING, Any
@@ -58,11 +58,21 @@ class PrepareRequest(BaseModel):
     program: str = "opencode"
 
 
+class RemoteWindow(BaseModel):
+    """The other computer's VS Code, as a terminal of its Remote-SSH on this PC knows it (design 0018 §8)."""
+
+    code: str = Field(description="VS Code's remote command in that terminal: `code` under its server's remote-cli.")
+    hook: str = Field(description="The pipe to the window the terminal belongs to (its VSCODE_IPC_HOOK_CLI).")
+
+
 class VsCodeRequest(BaseModel):
-    """A folder to open in Clank's VS Code window, and a file of it, if any."""
+    """A folder to open in Clank's VS Code window, and a file of it, if any; or in the other computer's VS Code."""
 
     folder: str
     file: str = Field("", description="A file of the folder to open in the window too, named from the folder.")
+    remote: RemoteWindow | None = Field(
+        None, description="Open it in the other computer's VS Code, connected to this PC, instead (design 0018 §8)."
+    )
 
 
 class MessageRequest(BaseModel):
@@ -225,7 +235,8 @@ def router(agents: "Agents") -> APIRouter:
     @routes.post("/agents/vscode")
     async def vscode(wanted: VsCodeRequest, request: Request) -> dict[str, Any]:
         """Open a folder in Clank's VS Code window, OpenCode beside the files: an operation that sets the window up the
-        first time (its settings, its extensions) and then opens the folder, and a file of it when one is named."""
+        first time (its settings, its extensions) and then opens the folder, and a file of it when one is named; with
+        `remote`, in the other computer's VS Code, connected to this PC (design 0018 §8)."""
         actor = client_actor(request.headers.get(CLIENT_HEADER))
         key = request.headers.get(REQUEST_KEY_HEADER)
         params = wanted.model_dump()

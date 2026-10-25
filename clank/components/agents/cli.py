@@ -9,7 +9,9 @@ it builds Clank's sandbox image, asked first unless `--yes`), a model in the mai
 configuration that worked, else `daily 262K`), the agent's configuration (written into the container), and then the
 agent itself, here. Leaving the agent stops nothing but the agent. `clank code` gets the folder ready the same way,
 then opens it in the VS Code window (set up the first time: its settings and extensions), where Clank's extension
-starts the agent beside the files.
+starts the agent beside the files. Over SSH (design 0018 §8) nothing opens on the PC's own screen: from a terminal of
+VS Code's Remote-SSH the folder opens in the other computer's VS Code, connected to this PC; from any other, the
+command to run on the other computer is said.
 
 With no model usable (design 0016 §14), both say so and how to add one (`clank`, or `clank model add`). With a cloud
 model in the main slot, the workspace is asked once, in the terminal and before OpenCode starts, whether its agent may
@@ -27,6 +29,7 @@ import click
 
 from clank.cli import common, follow
 from clank.client import Client, ClientError, NotRunning
+from clank.kernel import where
 from clank.kernel.home import Home
 from clank.kernel.service import ServiceError, start_detached
 
@@ -66,11 +69,23 @@ def code(folder: str | None, yes: bool) -> None:
     _usable(client)
     opened = _ready(client, path, yes)
     _cloud(client, opened["workspace"])
-    click.echo("Opening Clank's VS Code window (the first time, it installs its extensions)")
-    opened = _done(follow.follow(client, common.call(lambda: client.post("agents/vscode", {"folder": path}))))
+    place = where.vscode_place(os.environ)
+    if place == where.OVER_SSH:
+        host = str(common.call(lambda: client.get("records/vscode/vscode"))["values"].get("ssh_host") or "")
+        click.echo(f"The folder is ready; {where.ssh_said(path, os.environ, host)}")
+        return
+    if place == where.REMOTE:
+        click.echo(
+            "Opening VS Code on your computer, connected to this PC (the first time, it installs its extensions)"
+        )
+    else:
+        click.echo("Opening Clank's VS Code window (the first time, it installs its extensions)")
+    body = where.vscode_request(path, os.environ)
+    opened = _done(follow.follow(client, common.call(lambda: client.post("agents/vscode", body))))
     for name in opened["failed"]:
         click.echo(f"  {name} could not be installed: it is tried again the next time")
-    click.echo(f"VS Code opens {path}: OpenCode opens beside your files")
+    on = " on your computer" if place == where.REMOTE else ""
+    click.echo(f"VS Code opens {path}{on}: OpenCode opens beside your files")
 
 
 def _ready(client: Client, path: str, yes: bool) -> dict[str, Any]:

@@ -31,7 +31,7 @@ from urllib.parse import quote
 import click
 
 from clank.cli import common
-from clank.kernel.where import where_to_open
+from clank.kernel.where import REMOTE, vscode_place, vscode_request, where_to_open
 
 WORKSPACE = click.option("-w", "--workspace", default="", help="The flow's workspace; default: this folder's.")
 AS_JSON = click.option("--json", "as_json", is_flag=True, help="Print JSON, for scripts and models.")
@@ -409,10 +409,11 @@ def new(workspace: str, where: str | None, aside: bool, name: str) -> None:
     click.echo(f"Building {flow} with the model; its session's first message is {found['first_message']}.")
     if chosen == "vscode":
         open_vscode(client, found["folder"])
+        window = "VS Code on your computer" if vscode_place(os.environ) == REMOTE else "Clank's VS Code window"
         if found["window"] == "running":
-            click.echo("Clank's VS Code window comes forward: its OpenCode shows the planning session.")
+            click.echo(f"{window} comes forward: its OpenCode shows the planning session.")
         else:
-            click.echo("Clank's VS Code window opens: OpenCode starts in its terminal and shows the planning session.")
+            click.echo(f"{window} opens: OpenCode starts in its terminal and shows the planning session.")
         click.echo(f"Once the model wrote the flow: look, then r to run ({LOOK}), or `clank flow run {flow}`.")
         return
     for note in found.get("notes") or []:
@@ -481,8 +482,9 @@ def terminal(argv: list[str]) -> int:
 
 
 def open_vscode(client: Any, folder: str) -> None:
-    """Open the folder in Clank's VS Code window, where Clank's extension starts OpenCode beside the files."""
-    common.call(lambda: client.post("agents/vscode", {"folder": folder}))
+    """Open the folder in Clank's VS Code window, or from a terminal of VS Code's Remote-SSH in the other computer's
+    (design 0018 §8), where Clank's extension starts OpenCode beside the files."""
+    common.call(lambda: client.post("agents/vscode", vscode_request(folder, os.environ)))
 
 
 RUN = click.option("--run", "number", type=int, default=0, help="The run; default: the flow's latest.")

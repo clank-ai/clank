@@ -28,7 +28,7 @@ EXTENSIONS = (
 
 
 class VsCodeSettings(Settings):
-    """Clank's VS Code window: the program, and the extensions it has besides Clank's."""
+    """Clank's VS Code window: the program, the extensions it has besides Clank's, and this PC's SSH name."""
 
     KIND = "vscode"
     LABEL = "VS Code window"
@@ -54,6 +54,15 @@ class VsCodeSettings(Settings):
             "The extensions installed in the window when missing, by their marketplace ids (publisher.name), besides "
             "Clank's own: Python, Pylance, the debugger, Ruff, Jupyter, Lean 4, LaTeX Workshop, a PDF viewer, Rainbow "
             "CSV, Markdown All in One, Mermaid and Even Better TOML."
+        ),
+    )
+    ssh_host: str = Field(
+        "",
+        title="SSH host",
+        description=(
+            "This PC's name in the SSH configuration of the computer you work from (design 0018 §8): over SSH, outside "
+            "VS Code's Remote-SSH, Clank says the command that opens a folder there with it; empty: the address the "
+            "SSH session came in on."
         ),
     )
 

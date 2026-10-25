@@ -17,6 +17,12 @@ profiles are untouched. Opening a folder in it is the operation `agents.vscode` 
   installed is said and tried again the next time, and the folder opens all the same.
 - open: the folder, in a window of the instance, started on its own and not waited for. In it, Clank's extension opens
   OpenCode in a terminal beside the files (the setting `clank.agent.openOnStart`).
+
+From a terminal of VS Code's Remote-SSH (design 0018 §8), the client sends VS Code's remote command and its window's
+pipe (`remote`), and the same steps set up and open the other computer's VS Code instead (`remotecode.py`): the
+settings are the server's machine settings, the extensions are installed in VS Code's server on this PC through the
+remote command, which then opens the folder in a new window on the other computer, connected to this PC. It answers
+once the window was told, so it is waited for.
 """
 
 import json
@@ -29,11 +35,13 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
 from clank.components.agents.kinds import VsCodeSettings
+from clank.components.agents.remotecode import machine_settings, remote_command
 from clank.kernel.core import Kernel
 from clank.kernel.operations import OperationContext, OperationType, StepSpec
 from clank.kernel.processes import Answer, launch_program, run_answer
 
 which = shutil.which
+home = Path.home
 CLANK = "clank.clank"  # Clank's extension: its publisher and name
 LIST_SECONDS = 60.0
 INSTALL_SECONDS = 300.0  # an extension from the marketplace, downloaded and unpacked
@@ -81,6 +89,7 @@ class Program:
     cli: list[str]
     gui: list[str]
     env: dict[str, str] = field(default_factory=dict)
+    remote: str = ""  # VS Code's remote command, for the other computer's VS Code (design 0018 §8); "" on this PC
 
 
 def find_program(
@@ -106,6 +115,19 @@ def find_program(
     return Program(
         [executable, str(folder.joinpath(*match.group(1).split("\\")))], [executable], {"ELECTRON_RUN_AS_NODE": "1"}
     )
+
+
+def remote_program(remote: Mapping[str, Any]) -> Program:
+    """The other computer's VS Code, through the remote command a client sent and its window's pipe (design 0018 §8):
+    only the remote command of this user's VS Code server is run."""
+    code, hook = str(remote.get("code") or ""), str(remote.get("hook") or "")
+    argv = remote_command(code, home())
+    if argv is None or not hook:
+        raise WindowError(
+            f"{code or 'no program'} is not VS Code's remote command of this PC's VS Code server (with its window's "
+            "pipe): open VS Code from a terminal of VS Code's Remote-SSH"
+        )
+    return Program(argv, argv, {"VSCODE_IPC_HOOK_CLI": hook}, remote=code)
 
 
 def latex_settings(clank: str) -> dict[str, Any]:
@@ -193,32 +215,55 @@ class Window:
         named = str(context.params.get("file") or "")
         file = Path(folder).joinpath(*named.split("/")) if named else None
         settings = VsCodeSettings.model_validate(self.kernel.settings.get("vscode", "vscode").record.model_dump())
+        remote = context.params.get("remote")
         async with context.step("settings"):
             if not Path(folder).is_dir():
                 raise WindowError(f"{folder} is not a folder")
             if named and not _in_the_folder(named):
                 raise WindowError(f"{named} is not a file of {folder}: name it from the folder, as in PLAN.md")
-            program = find_program(settings.program)
+            program = remote_program(remote) if remote else find_program(settings.program)
             if program is None:
                 raise WindowError(
                     "VS Code was not found: install it (code.visualstudio.com), or name its `code` command in "
                     "config/vscode.json (program)"
                 )
-            self._write_settings(context)
+            self._write_settings(context, program)
         async with context.step("extensions"):
             installed, failed = await self._extensions(context, program, settings.extensions)
         async with context.step("open"):
-            opened = self.own(folder, str(file)) if file is not None else self.own(folder)
-            if not await context.run_blocking(launch_program, [*program.gui, *opened]):
-                raise WindowError(f"VS Code did not start: {program.gui[0]}")
-            context.log(f"{folder} opened in Clank's VS Code window; OpenCode opens beside the files")
+            paths = [folder, str(file)] if file is not None else [folder]
+            if program.remote:
+                await self._open_remote(context, program, paths)
+            else:
+                if not await context.run_blocking(launch_program, [*program.gui, *self.own(*paths)]):
+                    raise WindowError(f"VS Code did not start: {program.gui[0]}")
+                context.log(f"{folder} opened in Clank's VS Code window; OpenCode opens beside the files")
             if file is not None:
                 context.log(f"{named} opened in it")
         found: dict[str, Any] = {"folder": folder, "installed": installed, "failed": failed}
+        if program.remote:
+            found["where"] = "remote"
         return {**found, "file": str(file)} if file is not None else found
 
-    def _write_settings(self, context: OperationContext) -> None:
-        file = self.folder / "data" / "User" / "settings.json"
+    async def _open_remote(self, context: OperationContext, program: Program, paths: list[str]) -> None:
+        """The folder in a new window of the other computer's VS Code, connected to this PC (design 0018 §8.1)."""
+        answer = await context.run_blocking(self._run, program, ["--new-window", *paths], LIST_SECONDS)
+        if not answer.ok:
+            why = (answer.errors or answer.output).strip().splitlines()
+            raise WindowError(
+                f"VS Code's remote command did not open the folder ({why[-1] if why else answer.status}): open it from "
+                "VS Code's File menu"
+            )
+        context.log(
+            f"VS Code opens {paths[0]} on your computer, connected to this PC: OpenCode opens beside your files"
+        )
+
+    def _write_settings(self, context: OperationContext, program: Program) -> None:
+        """Clank's settings where missing: the instance's user settings, or the server's machine settings for the other
+        computer's VS Code (design 0018 §8.2)."""
+        file = machine_settings(program.remote) if program.remote else self.folder / "data" / "User" / "settings.json"
+        if file is None:
+            return
         clank = which("clank") or "clank"  # LaTeX Workshop's recipe runs it (design 0020 §3)
         text = settings_text(file.read_text(encoding="utf-8") if file.is_file() else None, clank)
         if text is None:
@@ -232,8 +277,13 @@ class Window:
     ) -> tuple[list[str], list[str]]:
         """Install what is missing; the extensions installed and those that could not be."""
         listed = await context.run_blocking(self._run, program, ["--list-extensions", "--show-versions"], LIST_SECONDS)
+        silent = (listed.errors or listed.output).strip()
+        if not listed.ok and program.remote:
+            raise WindowError(
+                f"VS Code's remote command did not answer ({silent}): open the folder from VS Code's File menu"
+            )
         if not listed.ok:
-            raise WindowError(f"VS Code did not list its extensions: {(listed.errors or listed.output).strip()}")
+            raise WindowError(f"VS Code did not list its extensions: {silent}")
         have = installed_versions(listed.output)
         wanted: list[tuple[list[str], str]] = []
         vsix = clank_vsix()
@@ -262,7 +312,9 @@ class Window:
         return installed, failed
 
     def _run(self, program: Program, arguments: list[str], timeout: float) -> Answer:
-        return run_answer([*program.cli, *self.own(*arguments)], timeout, env=program.env or None)
+        """VS Code's command line: the instance's on this PC, or the remote command, which has no instance."""
+        own = arguments if program.remote else self.own(*arguments)
+        return run_answer([*program.cli, *own], timeout, env=program.env or None)
 
 
 def _in_the_folder(named: str) -> bool:

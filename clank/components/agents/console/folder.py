@@ -16,7 +16,9 @@ a flow's box switched the main slot, that the window's model changed, until Open
 and its tools once checked; `m` gives one or takes it away, and checks one given in the workspace's container. `f`
 builds a flow with the model (design 0013 §15, decision 0100; `f`, since `n` answers a question here): it brings the
 console to the Monitor's Flow view, which opens the planning beside the console as its own `n` does and shows the flow
-built.
+built. `c` does every step not done, then opens VS Code on the folder: Clank's window on the PC, or over SSH (design
+0018 §8) the other computer's from a terminal of VS Code's Remote-SSH, else nothing opens and the command to run there
+is said.
 
 A step started here is followed here: the step being worked on has a turning spinner in place of its mark, its
 operation's step and last line show under "What runs from here" (with the spinner too), and its end, or why it failed,
@@ -46,6 +48,7 @@ until every required step is done, nor the keys that work on the workspace (`WOR
 """
 
 import json
+import os
 import time
 from collections.abc import Callable
 from typing import Any
@@ -73,6 +76,7 @@ from clank.console.pick import Choice, PickScreen, preset_choices
 from clank.console.rows import Rows
 from clank.console.style import mark
 from clank.console.text import painted
+from clank.kernel import where as places
 
 DEFAULT_PRESET = "daily-262k"
 READ_SECONDS = 5.0
@@ -568,7 +572,10 @@ class FolderPage(Page):
             "c does every step that is not done, then opens the folder in Clank's VS Code window (a VS Code of its "
             "own: its settings and extensions under Clank's folder, your main VS Code untouched; the first time it "
             "installs its extensions), where OpenCode opens in a terminal beside your files. `clank code` does the "
-            "same.",
+            "same. Over SSH nothing opens on the PC's own screen: in a terminal of VS Code's Remote-SSH, the folder "
+            "opens in your computer's VS Code, connected to this PC (Clank's extension and settings installed on this "
+            "PC's side first), and the PC draws no window; in any other, the console says the command to run on your "
+            "computer (`ssh_host` in config/vscode.json names this PC there).",
             "e installs the folder's own software (its packages, its command line, its MCP server) into the "
             "workspace's home, where the agent finds it: Clank proposes the command from the folder's pyproject.toml "
             "or requirements.txt, and you may change it; it runs in a container of its own that reaches the internet, "
@@ -873,7 +880,8 @@ class FolderPage(Page):
                     if not self._step(step, preset, command):
                         return
                 if "vscode" in steps:
-                    self._say("VS Code opens this folder: OpenCode opens beside your files")
+                    on = " on your computer" if places.vscode_place(os.environ) == places.REMOTE else ""
+                    self._say(f"VS Code opens this folder{on}: OpenCode opens beside your files")
                 elif all(step in steps for step in STEPS):
                     self._say("everything is ready: a starts OpenCode here")
             except (NotRunning, ClientError) as error:
@@ -912,7 +920,7 @@ class FolderPage(Page):
         if step == "model":
             return self._model(preset)
         if step == "vscode":
-            return self._follow(client.post("agents/vscode", {"folder": self.console.folder}))
+            return self._vscode()
         gateway = client.get("gateway")
         if gateway["state"] == "running":
             return True
@@ -921,6 +929,17 @@ class FolderPage(Page):
             self._say(f"the gateway does not run: {gateway.get('problem') or gateway['state']}", True)
             return False
         return True
+
+    def _vscode(self) -> bool:
+        """VS Code on the folder where the owner sits (design 0018 §8.1): Clank's window on the PC, or the other
+        computer's from a terminal of VS Code's Remote-SSH; over any other SSH nothing opens, and the command to run
+        there is said (the step then stops, done)."""
+        client, folder = self.console.client, self.console.folder
+        if places.vscode_place(os.environ) == places.OVER_SSH:
+            host = str(client.get("records/vscode/vscode")["values"].get("ssh_host") or "")
+            self._say(f"everything is ready; {places.ssh_said(folder, os.environ, host)}")
+            return False
+        return self._follow(client.post("agents/vscode", places.vscode_request(folder, os.environ)))
 
     def _setup(self, command: str | None) -> bool:
         """The folder's software: the command given (the form's, so no question), else the kept or proposed one when it

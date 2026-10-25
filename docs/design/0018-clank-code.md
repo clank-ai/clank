@@ -17,7 +17,7 @@ Code". Every section is proposed. Its first part to be built is the animation wo
 | 5 | What the extension API allows, and what it does not | Proposed 2026-10-23 |
 | 6 | Order of work | Proposed 2026-10-23 |
 | 7 | Showing files to the owner | Approved 2026-10-25 (the owner: "Yes"); revised after approval 2026-10-25: §7.5, the agent's tools are always this Clank's (a running container kept an image without `show_files`, and the model told the owner to open the figure themselves) |
-| 8 | VS Code on another computer | Proposed 2026-10-25 |
+| 8 | VS Code on another computer | Approved 2026-10-25 (the owner: "build it once we are sure the design is perfect"); §8.4 says how it is built |
 
 ## 1. An extension, not a fork
 
@@ -188,3 +188,21 @@ computer's own VS Code, it would run there instead and find no service: VS Code'
 
 The PC draws no window for the work: VS Code's server and OpenCode's terminal run there without a screen. Locking the PC
 or turning its screens off takes the rest of its drawing away.
+
+### 8.4 How it is built
+
+- **The client says where it sits** (`clank.kernel.where`): `vscode_place` is `remote` when VS Code's remote command
+  is on the path (`code` under a `remote-cli` folder) and `VSCODE_IPC_HOOK_CLI` is set, `ssh` over any other SSH, else
+  `here`. From a Remote-SSH terminal, `vscode_request` adds both to `POST /agents/vscode` (`remote`: `code` and
+  `hook`), since only that terminal has them; over any other SSH, the client opens nothing and says `ssh_said`, with
+  `ssh_command`'s `code --folder-uri`.
+- **The service opens it**, in the same operation as on the PC (`agents.vscode`: settings, extensions, open), so it is
+  followed and logged as before. The remote command is run as its `code.cmd` runs it, the Node of VS Code's server
+  with its `server-cli.js` (`agents/remotecode.py`), the pipe in its environment; a request names a program, so only
+  the remote command of the service's own user's VS Code server (`~/.vscode-server`, named whole, without `..`) is
+  run, any other refused. The open step waits for its answer: a remote command that does not answer fails the
+  operation, saying to open the folder from VS Code's File menu.
+- **Where it is used:** the console's `c`, `clank code`, a planning's `N` and `clank flow new --vscode`, and the Flow
+  view's files (a gate's *edit*, `o`).
+- **Tests** never find VS Code's remote command and never sit over SSH unless they set it (`tests/conftest.py`), so a
+  test run from a Remote-SSH terminal opens no window on the other computer.

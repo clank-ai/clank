@@ -30,6 +30,12 @@
       },
       "title": "Extensions",
       "type": "array"
+    },
+    "ssh_host": {
+      "default": "",
+      "description": "This PC's name in the SSH configuration of the computer you work from (design 0018 §8): over SSH, outside VS Code's Remote-SSH, Clank says the command that opens a folder there with it; empty: the address the SSH session came in on.",
+      "title": "SSH host",
+      "type": "string"
     }
   },
   "required": [
