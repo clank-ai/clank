@@ -165,6 +165,23 @@ class Builder:
                  "seconds": self.seconds}  # fmt: skip
         return self._built(workspace, asked)
 
+    def marked(
+        self, workspace: str, root: str, file: str, before: str | None, after: str, engine: str, keep: str
+    ) -> tuple[str, str]:
+        """The PDF of a change (design 0020 §9), kept in `keep` under the folder: the document marked by latexdiff
+        between `before` and `after`, or, for a new file (`before` None), the document built as it is after; its path
+        from the folder and whether it is marked, or ("", why) when it could not be made."""
+        if before is None:
+            asked = {"mode": "build", "root": root, "file": file, "text": after, "engine": engine,
+                     "seconds": self.seconds, "keep": keep}  # fmt: skip
+            said = self._said(workspace, asked)
+            kept = said.get("kept") or {}
+            return (str(kept.get("pdf") or ""), "") if said.get("built") else ("", str(said.get("unbuilt") or ""))
+        asked = {"mode": "diff", "root": root, "file": file, "before": before, "after": after, "engine": engine,
+                 "seconds": self.seconds * 1.5, "keep": keep}  # fmt: skip
+        said = self._said(workspace, asked)
+        return (str(said.get("pdf") or ""), "marked") if said.get("built") else ("", str(said.get("unbuilt") or ""))
+
     def before(self, workspace: str, folder: str, root: str, engine: str) -> Built:
         """The document as it is now, built once until a LaTeX file of the folder changes."""
         key = (workspace, root, fingerprint(folder))
@@ -175,22 +192,31 @@ class Builder:
         return self._before[key]
 
     def _built(self, workspace: str, asked: dict[str, Any]) -> Built:
+        said = self._said(workspace, asked)
+        if said.get("unbuilt"):
+            return Built(False, BuildLog(), unbuilt=str(said["unbuilt"]))
+        log = parse_log(str(said.get("log") or ""), str(said.get("blg") or ""))
+        return Built(bool(said.get("built")), log, seconds=float(said.get("seconds") or 0.0))
+
+    def _said(self, workspace: str, asked: dict[str, Any]) -> dict[str, Any]:
+        """The helper's answer to a request; `unbuilt` saying why when there is none to read."""
         try:
-            answer = self.run(workspace, ["python3", HELPER], json.dumps(asked).encode(), self.seconds + 30)
+            answer = self.run(workspace, ["python3", HELPER], json.dumps(asked).encode(), self.seconds * 2 + 30)
         except Exception as error:  # noqa: BLE001: the workspace's own words (its container does not run)
-            return Built(False, BuildLog(), unbuilt=str(error))
+            return {"unbuilt": str(error)}
         try:
-            said = json.loads(answer.output)
+            said: dict[str, Any] = json.loads(answer.output)
         except ValueError:
             missing = "No such file" in answer.errors or "can't open file" in answer.errors
             why = NO_TEX.format(workspace=workspace) if missing else (answer.errors or answer.output).strip()[-400:]
-            return Built(False, BuildLog(), unbuilt=why or "the build helper said nothing")
+            return {"unbuilt": why or "the build helper said nothing"}
         if said.get("missing"):
-            return Built(False, BuildLog(), unbuilt=NO_TEX.format(workspace=workspace))
+            return {"unbuilt": NO_TEX.format(workspace=workspace)}
         if said.get("timeout"):
-            return Built(False, BuildLog(), unbuilt=f"the build took longer than {self.seconds:g} seconds")
-        log = parse_log(str(said.get("log") or ""), str(said.get("blg") or ""))
-        return Built(bool(said.get("built")), log, seconds=float(said.get("seconds") or 0.0))
+            return {"unbuilt": f"the build took longer than {self.seconds:g} seconds"}
+        if said.get("error"):
+            return {"unbuilt": f"the build helper failed: {said['error']}"}
+        return said
 
 
 def _includes(name: str, text: str, wanted: list[str]) -> bool:

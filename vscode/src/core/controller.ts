@@ -25,7 +25,7 @@ import { aboutFlow, type Gates } from "./gates";
 import type { Question, SlotRecord } from "./kinds";
 import type { NotionReviews } from "./notion";
 import type { Presenter } from "./presenter";
-import { shown } from "./show";
+import { markedUp, shown } from "./show";
 import { aboutChange, type Reviews } from "./review";
 import { type CostView, type DockerInfo, type PresetView, type ServiceInfo, State, touched } from "./state";
 
@@ -361,7 +361,7 @@ export class Controller {
       if (message.name === "agents.model_changed" && data.summary) {
         this.presenter.info(data.summary); // a flow's box switched the main slot: the window is told (design 0013 §7)
       }
-      const opened = shown(message);
+      const opened = shown(message) ?? markedUp(message); // and a LaTeX change's PDF (design 0020 §9)
       if (opened) {
         await this.presenter.showFiles?.(opened); // the agent opened files for the owner (design 0018 §7)
       }

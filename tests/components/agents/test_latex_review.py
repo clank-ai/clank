@@ -5,7 +5,10 @@ A change to a `.tex` file the owner had is asked about even in auto mode; a `.te
 mode (auto: written once it passes); a `.bib` file is always asked about. Before a LaTeX change is asked about or
 answered, it is checked (citations, sources, the build): a change that fails is rejected with its reasons, which the
 model hears, and nobody is asked; the third refusal of a file in a row asks the owner, the refusals shown; a check that
-cannot run (no TeX in the container) asks the owner, saying so. Each check is an event (`agents.change_checked`)."""
+cannot run (no TeX in the container) asks the owner, saying so. Each check is an event (`agents.change_checked`).
+Design 0020 §9: once a change is asked about, its document marked by latexdiff between before and after is built in
+the container, and the event `agents.latex_diff` names its PDF, which the window opens beside the diff; a new document
+is built as it is instead."""
 
 import json
 from collections.abc import Callable
@@ -31,6 +34,7 @@ from tests.components.agents.test_review import (  # noqa: F401 (fixtures)
 )
 
 RECORDED = Path(__file__).parents[2] / "fixtures" / "latex"
+DIFFS: list[dict[str, Any]] = []  # what the helper was asked, in order
 PAPER = (
     "\\documentclass{article}\n\\usepackage{natbib}\n\\begin{document}\n\\section{Intro}\\label{sec:intro}\n"
     "Known \\citep{a2004}.\n\n\\bibliographystyle{plainnat}\n\\bibliography{refs}\n\\end{document}\n"
@@ -55,7 +59,15 @@ def builds(log: Callable[[str | None], tuple[bool, str]] | None = None) -> Calla
 
     def run(workspace: str, argv: list[str], given: bytes, timeout: float) -> Answer:
         asked = json.loads(given)
+        DIFFS.append(asked)
+        if asked["mode"] == "diff":
+            return Answer(
+                0, json.dumps({"built": True, "pdf": f"{asked['keep']}/diff.pdf", "log": "", "seconds": 2}), ""
+            )
         built, text = chosen(asked.get("text"))
+        if asked.get("keep"):
+            return Answer(0, json.dumps({"built": True, "log": text, "kept": {"pdf": f"{asked['keep']}/note.pdf"},
+                                         "seconds": 1.5}), "")  # fmt: skip
         return Answer(0, json.dumps({"built": built, "status": 0 if built else 12, "log": text, "blg": "",
                                      "seconds": 1.5}), "")  # fmt: skip
 
@@ -76,8 +88,8 @@ def ask_write(id: str, relative: str, content: str) -> dict[str, Any]:
 
 @pytest.fixture
 def paper(tmp_path: Path) -> Path:
-    (tmp_path / "main.tex").write_text(PAPER, encoding="utf-8")
-    (tmp_path / "refs.bib").write_text(BIB, encoding="utf-8")
+    (tmp_path / "main.tex").write_bytes(PAPER.encode())  # as the agent's container writes it: no carriage returns
+    (tmp_path / "refs.bib").write_bytes(BIB.encode())
     return tmp_path
 
 
@@ -102,6 +114,12 @@ def test_a_change_to_the_owners_tex_is_asked_about_in_auto_mode_once_it_passed_t
     assert review.store.get("per_1")["mode"] == "review", "the owner's file: asked about in auto mode too"  # type: ignore[index]
     [checked] = kernel.events.after(0, types=["agents.change_checked"])
     assert (checked.data["file"], checked.data["passed"], checked.data["refusals"]) == ("main.tex", True, [])
+    [marked] = until(lambda: kernel.events.after(0, types=["agents.latex_diff"]))
+    assert marked.data == {"workspace": "paper", "folder": str(paper), "change": "per_1", "file": "main.tex",
+                           "pdf": ".clank/latex/per_1/diff.pdf", "marked": True}  # fmt: skip
+    [diffed] = [asked for asked in DIFFS if asked["mode"] == "diff"]
+    assert (diffed["root"], diffed["file"], diffed["before"]) == ("main.tex", "main.tex", PAPER)
+    assert diffed["after"] == PAPER.replace("Known", "Well known")
 
 
 def test_a_change_that_fails_a_check_is_rejected_with_its_reasons_and_nobody_is_asked(
@@ -185,6 +203,7 @@ def test_without_tex_in_the_container_the_owner_is_asked_and_told_why(
     note = "\\documentclass{article}\n\\begin{document}\nA note.\n\\end{document}\n"
     feed("permission.asked", ask_write("per_1", "note.tex", note))
     question = asked(kernel, "per_1")
+    assert not kernel.events.after(0, types=["agents.latex_diff"]), "no TeX: no PDF"
     assert "NOT CHECKED: TeX is not in paper's container, so the document could not be built: `clank latex setup`" \
         in question.detail  # fmt: skip
 

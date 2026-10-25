@@ -21,7 +21,7 @@ from clank.components.agents.latex.building import SKIPPED, Builder, compile_pro
 from clank.components.agents.latex.citations import Lookup, bib_entries, bibliographies, cite_keys, entry_problems
 from clank.components.agents.latex.citations import missing_citations as missing
 from clank.components.agents.latex.sources import source_problems, unverified, values
-from clank.kernel.events import Actor, EventType
+from clank.kernel.events import Actor, EventType, Subject
 
 if TYPE_CHECKING:
     from clank.kernel.core import Kernel
@@ -31,6 +31,16 @@ KINDS = {".tex": "tex", ".bib": "bib", ".cls": "style", ".sty": "style", ".bst":
 LARGEST = 2 << 20  # bytes of a .tex or .bib file read
 MOST_TEX = 500  # .tex files read to find a document's root
 EVENT_TYPES = [
+    EventType(
+        "agents.latex_diff",
+        "The PDF of a LaTeX change waiting for your review (design 0020 §9): its document marked by latexdiff (removed "
+        "text struck in red, new text in blue), or a new document as built; VS Code opens it beside the diff.",
+        {
+            "workspace": "The workspace.", "folder": "Its folder.", "change": "The change's id.",
+            "file": "The file changed.", "pdf": "The PDF, from the folder (under .clank/latex/).",
+            "marked": "Whether the changes are marked (false: a new document, as built).",
+        },
+    ),
     EventType(
         "agents.change_checked",
         "Clank checked a change the agent asked to make to a LaTeX file (design 0020 §5): its citations, its values' "
@@ -57,11 +67,13 @@ class Verdict:
     unchecked: list[str] = field(default_factory=list)
     passed: list[str] = field(default_factory=list)
     unverified: int = 0
+    root: str = ""  # the document built, once it was
+    engine: str = ""
 
     def view(self) -> dict[str, Any]:
         """As kept with the change."""
         return {"refusals": self.refusals, "unchecked": self.unchecked, "passed": self.passed,
-                "unverified": self.unverified}  # fmt: skip
+                "unverified": self.unverified, "root": self.root, "engine": self.engine}  # fmt: skip
 
     def summary(self) -> str:
         """What the owner reads above the change."""
@@ -193,6 +205,7 @@ class LatexChecks:
             verdict.refusals += problems
         else:
             verdict.passed.append(f"the build ({'as clean as before' if before else 'clean'}, {after.seconds:g} s)")
+            verdict.root, verdict.engine = root, engine
 
     def _bibliography(self, folder: Path, root: str, texts: dict[str, str]) -> tuple[set[str], bool, str]:
         """The keys of the bibliographies the document loads, whether it loads one, and where they are (said)."""
@@ -221,6 +234,28 @@ class LatexChecks:
                         texts[path.relative_to(folder).as_posix()] = text
         texts[relative] = after
         return texts
+
+    def marked(self, change: dict[str, Any]) -> None:
+        """Build the PDF of a change asked about (§9) and say where it is (`agents.latex_diff`); nothing when its
+        document was not built by the checks, or when the PDF cannot be made."""
+        checks = change.get("checks") or {}
+        if not checks.get("root") or change.get("after") is None:
+            return
+        keep = f".clank/latex/{change['id']}"
+        pdf, marked = self.builder.marked(
+            str(change["workspace"]), checks["root"], str(change["relative"]), change.get("before"),
+            str(change["after"]), checks.get("engine") or "pdf", keep,
+        )  # fmt: skip
+        if not pdf:
+            return
+        self.kernel.events.record(
+            "agents.latex_diff",
+            summary=f"the PDF of the change to {change['relative']} in {change['workspace']}: {pdf}",
+            actor=ACTOR,
+            subject=Subject(kind="change", id=str(change["id"])),
+            data={"workspace": change["workspace"], "folder": change["folder"], "change": change["id"],
+                  "file": change["relative"], "pdf": pdf, "marked": marked == "marked"},
+        )  # fmt: skip
 
     def _run(self, workspace: str, argv: list[str], given: bytes, timeout: float) -> Any:
         return self.kernel.parts["workspaces"].run_in(workspace, argv, input=given, timeout=timeout)

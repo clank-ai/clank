@@ -29,7 +29,7 @@ failing test; each ends with a commit pushed to `main`.
 - [x] 6. **The checks in the review** (§5): a LaTeX change is checked before it is asked about or answered, off the
   watcher's thread; a refusal rejects it with its reason, and the third refusal of a file in a row asks the owner with
   it; a check that cannot run (no TeX in the container) asks the owner, saying so; each refusal is an event.
-- [ ] 7. **The marked-up PDF** (§9): `latexdiff --flatten` between the root before and after, built in the container
+- [x] 7. **The marked-up PDF** (§9): `latexdiff --flatten` between the root before and after, built in the container
   into `.clank/latex/<change>/diff.pdf`; an event the window follows to open it beside the diff.
 - [ ] 8. **Annotating the PDF** (§10): "Annotate this PDF" renders its pages in the container (`pdftoppm`) with each
   page's word boxes (`pdftotext -bbox-layout`), opens them in the figure annotator, and the marks on a page go to the

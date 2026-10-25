@@ -2,12 +2,13 @@
 // folder and why, and opened only by a window on that folder (Windows' folders compared without case, either slash, a
 // trailing slash or not); the paths the agent prints as the container sees them (`/workspace/...`) are found in a line
 // of its terminal, each with where it starts and its length, a line or column number after it and the punctuation that
-// ends a sentence left out.
+// ends a sentence left out. Design 0020 §9: the PDF of a LaTeX change waiting for review (`agents.latex_diff`) opens
+// the same way, beside the change's diff.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { containerLinks, sameFolder, shown } from "../src/core/show";
+import { containerLinks, markedUp, sameFolder, shown } from "../src/core/show";
 
 test("an agents.shown event gives its workspace, folder, files and why; any other gives nothing", () => {
   const data = {
@@ -25,6 +26,30 @@ test("an agents.shown event gives its workspace, folder, files and why; any othe
   });
   assert.equal(shown({ name: "agents.annotated", id: 52, data }), undefined);
   assert.equal(shown({ name: "agents.shown", id: 53, data: { data: { folder: "x" } } }), undefined, "no files");
+});
+
+test("a LaTeX change's PDF is opened as a file the agent showed, its why saying what it is", () => {
+  const data = {
+    id: 61,
+    type: "agents.latex_diff",
+    data: {
+      workspace: "paper",
+      folder: "C:/Research/paper",
+      change: "per_1",
+      file: "main.tex",
+      pdf: ".clank/latex/per_1/diff.pdf",
+      marked: true,
+    },
+  };
+  assert.deepEqual(markedUp({ name: "agents.latex_diff", id: 61, data }), {
+    workspace: "paper",
+    folder: "C:/Research/paper",
+    files: [".clank/latex/per_1/diff.pdf"],
+    why: "the change to main.tex, marked (red: removed, blue: added)",
+  });
+  const fresh = { ...data, data: { ...data.data, marked: false, pdf: ".clank/latex/per_1/note.pdf", file: "note.tex" } };
+  assert.equal(markedUp({ name: "agents.latex_diff", id: 62, data: fresh })?.why, "note.tex, as built");
+  assert.equal(markedUp({ name: "agents.shown", id: 63, data }), undefined);
 });
 
 test("a window opens them only when it is on that folder", () => {

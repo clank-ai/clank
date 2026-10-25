@@ -303,6 +303,8 @@ class Review:
             self._answer(change, "reject", LATEX, refusal_message(key[1], verdict.refusals))
         elif change["mode"] == "auto":
             self._answer(change, "accept", AUTO)
+        else:
+            self.latex.marked(change)  # its PDF, beside the diff (design 0020 §9)
 
     def _change(
         self, workspace: str, port: int, request: dict[str, Any], given: dict[str, Any] | None

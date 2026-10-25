@@ -1,7 +1,8 @@
 // The files the agent opens for the owner (design 0018 §7): the service's event `agents.shown` names a workspace's
 // folder on this machine and the files, from the folder, that a window on that folder opens on the left, beside the
 // agent (`shown`, `sameFolder`). The agent prints paths as its container sees them, under `/workspace/`; in its
-// terminal each becomes a link to the folder's file (`containerLinks`). Pure: `extension.ts` does the opening.
+// terminal each becomes a link to the folder's file (`containerLinks`). The PDF of a LaTeX change waiting for review
+// (`agents.latex_diff`, design 0020 §9) opens the same way (`markedUp`). Pure: `extension.ts` does the opening.
 
 import type { ServerEvent } from "./events";
 
@@ -38,6 +39,20 @@ export function shown(message: ServerEvent): Shown | undefined {
     return undefined;
   }
   return { workspace: String(data.workspace ?? ""), folder: data.folder, files, why: String(data.why ?? "") };
+}
+
+/** The PDF of a LaTeX change waiting for review, as files to open; undefined for any other event. */
+export function markedUp(message: ServerEvent): Shown | undefined {
+  if (message.name !== "agents.latex_diff") {
+    return undefined;
+  }
+  const data = ((message.data ?? {}) as { data?: Record<string, unknown> }).data ?? {};
+  if (typeof data.folder !== "string" || typeof data.pdf !== "string") {
+    return undefined;
+  }
+  const file = String(data.file ?? "");
+  const why = data.marked ? `the change to ${file}, marked (red: removed, blue: added)` : `${file}, as built`;
+  return { workspace: String(data.workspace ?? ""), folder: data.folder, files: [data.pdf], why };
 }
 
 /** Whether two folders are the same: either slash, with or without a trailing one; on Windows, whatever the case. */
