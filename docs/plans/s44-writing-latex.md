@@ -39,9 +39,17 @@ failing test; each ends with a commit pushed to `main`.
 - [x] 10. **What the agent is told** (§13): Clank's LaTeX rules in the build agent's instructions.
 - [x] 11. **LaTeX Workshop builds in the container** (§3): `clank latex build FILE` builds in the workspace's container
   and writes SyncTeX's paths as the machine's; the window's LaTeX Workshop recipe runs it.
-- [ ] 12. **Live tests**: the TeX layer built on this machine; real builds, refusals, the marked-up PDF and a PDF's
+- [x] 12. **Live tests**: the TeX layer built on this machine; real builds, refusals, the marked-up PDF and a PDF's
   marks in words, end to end through the service.
 
 ## Progress
 
-Each task's box is ticked in the commit that finishes it.
+Each task's box is ticked in the commit that finishes it. Built 2026-10-25, every task.
+
+Measured on this machine (2026-10-25): the TeX layer's image is 2.85 GB, 1.4 GB more than the sandbox image it is
+built on; building it took a few minutes, and again under a minute once its packages were cached. A small document builds
+in the container in 1 to 3 seconds; `tests/docker/test_latex_live.py` (a workspace opened with the layer, eight real
+checks with a Crossref lookup, a latexdiff PDF, LaTeX Workshop's build, the pages with their words, and a strike said
+with its source line) runs in 11 seconds. OpenCode 1.19.0 was seen to put `/opt/clank/instructions/*.md` into its
+model's requests: run against a stand-in model in the container, its request held the LaTeX rules once (counted, not
+read).

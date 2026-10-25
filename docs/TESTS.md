@@ -456,14 +456,14 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner gets | none yet |
 | 2 | The owner's choices | none yet |
-| 3 | TeX in the container | `tests/cli/test_latex_commands.py` (3), `tests/components/agents/test_latex_build.py` (3), `tests/components/workspaces/test_image_layers.py` (5) |
+| 3 | TeX in the container | `tests/cli/test_latex_commands.py` (3), `tests/components/agents/test_latex_build.py` (3), `tests/components/workspaces/test_image_layers.py` (5), `tests/docker/test_latex_live.py` (1) |
 | 4 | Which files the model may write | `tests/components/agents/test_latex_review.py` (6) |
-| 5 | The checks on every change | `tests/components/agents/test_latex_review.py` (6) |
-| 6 | Citations and the bibliography | `tests/components/agents/test_latex_citations.py` (6) |
-| 7 | Claims and their sources | `tests/components/agents/test_latex_sources.py` (6) |
-| 8 | Compiling clean | `tests/components/agents/test_latex_building.py` (6), `tests/components/workspaces/test_latex_helper.py` (3), `tests/docker/test_latex_layer.py` (4) |
-| 9 | Seeing a change | `tests/components/agents/test_latex_review.py` (6), `vscode/test/show.test.ts` (4) |
-| 10 | Annotating the PDF | `tests/components/agents/test_latex_pages.py` (3), `tests/components/agents/test_latex_pages_service.py` (2), `vscode/test/marks.test.ts` (10), `vscode/test/pdf.test.ts` (2) |
+| 5 | The checks on every change | `tests/components/agents/test_latex_review.py` (6), `tests/docker/test_latex_live.py` (1) |
+| 6 | Citations and the bibliography | `tests/components/agents/test_latex_citations.py` (6), `tests/docker/test_latex_live.py` (1) |
+| 7 | Claims and their sources | `tests/components/agents/test_latex_sources.py` (6), `tests/docker/test_latex_live.py` (1) |
+| 8 | Compiling clean | `tests/components/agents/test_latex_building.py` (6), `tests/components/workspaces/test_latex_helper.py` (3), `tests/docker/test_latex_layer.py` (4), `tests/docker/test_latex_live.py` (1) |
+| 9 | Seeing a change | `tests/components/agents/test_latex_review.py` (6), `tests/docker/test_latex_live.py` (1), `vscode/test/show.test.ts` (4) |
+| 10 | Annotating the PDF | `tests/components/agents/test_latex_pages.py` (3), `tests/components/agents/test_latex_pages_service.py` (2), `tests/docker/test_latex_live.py` (1), `vscode/test/marks.test.ts` (10), `vscode/test/pdf.test.ts` (2) |
 | 11 | Annotating the source | `tests/components/agents/test_latex_comments.py` (5), `vscode/test/comments.test.ts` (2) |
 | 12 | The agent's turn | `tests/components/agents/test_latex_comments.py` (5) |
 | 13 | What the agent is told | `tests/components/agents/test_opencode.py` (8) |
@@ -3819,6 +3819,12 @@ Design 0020 §8-§10, run in the TeX layer's image on this machine's Docker (`-m
 - a changes marked up pdf is kept under clank
 - a pdfs pages and words and synctex give back the line of a point
 - latex workshops build keeps the pdf log and synctex beside the document with this machines paths
+
+### `tests/docker/test_latex_live.py`
+
+Design 0020 §3, §5, §6, §7, §8, §9 and §10, end to end, on this machine's Docker when asked (`-m docker`): a workspace opened with the TeX layer (its image built when missing), then, through the service's own parts and the workspace's real container: the checks on real changes to a document (a clean change passes and its build is as clean as before; an invented citation, a value without a source, an undefined reference and a change that breaks the build are refused, each with its reason; a new bibliography entry is checked against Crossref's record, a wrong year refused), the change's PDF marked by latexdiff, the document's pages rendered with their words and a mark said with its source line, and LaTeX Workshop's build keeping the PDF beside the document.
+
+- the latex checks marked pdf pages and build run for real
 
 ### `tests/fakes/test_recorded.py`
 
