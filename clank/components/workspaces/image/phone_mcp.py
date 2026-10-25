@@ -37,6 +37,10 @@ what Matplotlib recorded of them, the LaTeX captions that include them and the s
 OpenCode, through the gateway's `/agents/show` route: the owner looks at them themselves, so the model, asked to open
 something, opens it and stops. It writes nothing in the folder, so the planner may use it.
 
+`run_job(command, title, minutes)`, `job_status(job)` and `job_stop(job)` (design 0021 §6) are the agent's jobs,
+through the gateway's `/agents/jobs` routes: a long computation run detached in the container at the lowest CPU
+priority, followed and stopped; the session is told when it ends. `job_status` reads only, so the planner may use it.
+
 It speaks MCP (revision 2025-06-18) over its standard input and output, one JSON message a line, with Python's standard
 library only, so it runs in any workspace's container.
 """
@@ -152,6 +156,43 @@ FIND = {
     },
     "annotations": {"readOnlyHint": True},
 }
+
+
+def _job_tools() -> list[dict[str, Any]]:
+    """The agent's jobs (design 0021 §6)."""
+    job = {"type": "integer", "description": "The job's number, as run_job gave it."}
+    return [
+        _tool(
+            "run_job",
+            "Start a long computation as a job: any command you expect to run more than two minutes (a simulation, a "
+            "sweep, a build, a batch of seeds), in place of running it with bash, which stops a command after a few "
+            "minutes. Clank runs it in the folder, detached, at the lowest CPU priority (so the model keeps its "
+            "speed), its output in a log, for at most minutes (240 by default). Then go on with other work, or end "
+            "your turn saying what you expect it to give: you are told when it ends (how, after how long, its log's "
+            "last lines, the files it wrote). Returns its number and where its log is, or why it did not start.",
+            {
+                "command": {
+                    "type": "string",
+                    "description": "The command, as you would run it in bash, in the folder.",
+                },
+                "title": {"type": "string", "description": "What it computes, in a few words."},
+                "minutes": {"type": "integer", "description": "How long it may run before Clank ends it (240)."},
+            },
+            ["command", "title"],
+            False,
+        ),
+        _tool(
+            "job_status",
+            "A job of this workspace: its state, how long it has run, its log's last lines and the files it wrote; "
+            "with no number, every job in a line each, newest first.",
+            {"job": job},
+            [],
+            True,
+        ),
+        _tool(
+            "job_stop", "Stop a job and everything it started. Returns what Clank did.", {"job": job}, ["job"], False
+        ),
+    ]
 
 
 def _tool(name: str, description: str, properties: dict[str, Any], required: list[str], reads: bool) -> dict[str, Any]:
@@ -427,6 +468,57 @@ def find(arguments: dict[str, Any]) -> str:
     return str(finder.find(WORKSPACE, str(arguments.get("query") or ""), int(limit) if limit else 5))
 
 
+def jobs(name: str, arguments: dict[str, Any]) -> str:
+    """One of the job tools (design 0021 §6): its request to the gateway, and the answer in words."""
+    if not WORKSPACE_NAME:
+        raise ValueError(
+            "this server does not know its workspace (Clank gives it one): start the agent again from Clank"
+        )
+    number = arguments.get("job")
+    named = {"job": int(number)} if number not in (None, "") else {}
+    if name == "run_job":
+        command, title = str(arguments.get("command") or ""), str(arguments.get("title") or "")
+        body = {"workspace": WORKSPACE_NAME, "command": command, "title": title,
+                "minutes": int(arguments.get("minutes") or 240)}  # fmt: skip
+        return str(_gateway("POST", "agents/jobs", body, "your jobs").get("said") or "")
+    if name == "job_stop":
+        return str(_gateway("POST", "agents/jobs/stop", {"workspace": WORKSPACE_NAME, **named}, "your jobs")["said"])
+    found = _gateway("POST", "agents/jobs/status", {"workspace": WORKSPACE_NAME, **named}, "your jobs")
+    if named:
+        return _job_whole(found)
+    return "\n".join(_job_line(each) for each in found.get("jobs") or []) or "No job of this workspace yet."
+
+
+def _job_line(job: dict[str, Any]) -> str:
+    """A job in a line: its number, title, state and how long."""
+    ran = _span(float(job.get("seconds") or 0))
+    state = f"ended, {job.get('said')}, after {ran}" if job.get("state") == "ended" else f"{job.get('state')} for {ran}"
+    return f"Job {job.get('job')} ({job.get('title')}): {state}. Its log: {job.get('folder')}/log."
+
+
+def _job_whole(job: dict[str, Any]) -> str:
+    """A job whole: its line, its log's last lines and the files it wrote."""
+    tail = str(job.get("tail") or "")
+    log = f"The last lines of its log:\n```\n{tail}\n```" if tail else "Its log is empty so far."
+    files = job.get("written") or []
+    wrote = "Files written in the folder since it started: " + ", ".join(files) + "." if files else ""
+    return "\n".join(part for part in (_job_line(job), log, wrote) if part)
+
+
+def _span(seconds: float) -> str:
+    """A length of time in words: 40 seconds, 12 minutes, 2 hours 5 minutes."""
+    whole = max(0, round(seconds))
+    hours, rest = divmod(whole, 3600)
+    minutes, rest = divmod(rest, 60)
+
+    def unit(count: int, word: str) -> str:
+        return f"{count} {word}{'' if count == 1 else 's'}"
+
+    if hours:
+        return unit(hours, "hour") + (f" {unit(minutes, 'minute')}" if minutes else "")
+    return unit(minutes, "minute") if minutes else unit(rest, "second")
+
+
 def show(arguments: dict[str, Any]) -> str:
     """Open files in the owner's VS Code window: the request to the gateway, and the service's words."""
     if not WORKSPACE_NAME:
@@ -640,18 +732,20 @@ def answer(message: dict[str, Any]) -> dict[str, Any] | None:
             "serverInfo": {"name": "clank", "version": "1"},
         }  # fmt: skip
     elif method == "tools/list":
-        result = {"tools": [TOOL, LOOK, SHOW, FIND, *_notion_tools(), *FLOW_TOOLS]}
+        result = {"tools": [TOOL, LOOK, SHOW, FIND, *_notion_tools(), *FLOW_TOOLS, *_job_tools()]}
     elif method == "tools/call":
         params = message.get("params") or {}
         arguments = params.get("arguments") or {}
         names = {TOOL["name"], LOOK["name"], SHOW["name"], FIND["name"]}
-        names |= {tool["name"] for tool in [*_notion_tools(), *FLOW_TOOLS]}
+        names |= {tool["name"] for tool in [*_notion_tools(), *FLOW_TOOLS, *_job_tools()]}
         if params.get("name") not in names:
             return {"jsonrpc": "2.0", "id": id, "error": {"code": -32602, "message": "no such tool"}}
         path = str(arguments.get("path") or "")
         try:
             if str(params.get("name")).startswith("notion_"):
                 text, failed = notion(str(params["name"]), arguments), False
+            elif str(params.get("name")) in ("run_job", "job_status", "job_stop"):
+                text, failed = jobs(str(params["name"]), arguments), False
             elif str(params.get("name")).startswith("flow_"):
                 text, failed = flow(str(params["name"]), arguments), False
             elif params.get("name") == FIND["name"]:

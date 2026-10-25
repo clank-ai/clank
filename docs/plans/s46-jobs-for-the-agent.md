@@ -18,7 +18,7 @@ task starts with a failing test; each ends with a commit pushed to `main`.
   its minutes and, when one ends, records `agents.job_ended` and tells the session that started it in a message (how
   it ended, its log's end, the files it wrote). Routes: `POST /agents/jobs`, `GET /agents/jobs?workspace=`,
   `GET /agents/jobs/{workspace}/{n}`, `POST /agents/jobs/{workspace}/{n}/stop`; the gateway forwards the agent's.
-- [ ] 3. **The agent's tools**: `run_job(command, title, minutes)`, `job_status(job)` and `job_stop(job)` in Clank's MCP
+- [x] 3. **The agent's tools**: `run_job(command, title, minutes)`, `job_status(job)` and `job_stop(job)` in Clank's MCP
   server; the instructions (`jobs.md`): a command expected to run more than two minutes is a job.
 - [ ] 4. **Seeing jobs**: `clank jobs` (each workspace's, or one's), a notification in VS Code when one ends (Open its
   log), and the readout's line of running jobs.

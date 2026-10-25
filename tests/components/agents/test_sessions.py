@@ -360,10 +360,10 @@ def test_send_to_phone_puts_a_file_of_the_folder_in_its_outbox_with_its_caption(
         "send_to_phone", "look_at_figure", "show_files", "find_figures", "notion_databases", "notion_query",
         "notion_page", "notion_search", "notion_propose_entry", "notion_propose_change", "notion_propose_removal",
         "notion_submit", "notion_reply", "flow_read", "flow_propose_box", "flow_submit", "flow_verdict", "flow_decide",
-        "flow_job", "flow_draft",
+        "flow_job", "flow_draft", "run_job", "job_status", "job_stop",
     ], (
         "finding figures and showing files (design 0018 §7), the Notion tools (design 0010 §4-§7), a flow's (design "
-        "0013 §9, §16, §17) and its draft (§15)"
+        "0013 §9, §16, §17) and its draft (§15), and the agent's jobs (design 0021 §6)"
     )  # fmt: skip
     assert sent["result"]["isError"] is False
     outbox = tmp_path / ".clank" / "outbox"

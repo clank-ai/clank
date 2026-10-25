@@ -487,7 +487,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (3), `vscode/test/readout.test.ts` (9) |
 | 4 | The agent panel | none yet |
 | 5 | Artifacts | none yet |
-| 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (5), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/components/workspaces/test_jobs_runner.py` (2) |
+| 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (5), `tests/components/agents/test_job_tools.py` (3), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
 | 9 | Seeing images | `tests/components/agents/test_agent_files.py` (2), `tests/components/agents/test_look.py` (3) |
@@ -818,6 +818,14 @@ Design 0012 §9.1, §9.5 and §9.7 (§11 step 10), decision 0056: what the Guide
 - undo waits for the session to stop and redo follows until your next message
 - drop is refused for the step in progress and says what it frees and costs
 - undo and drop states are read from the flow
+
+### `tests/components/agents/test_job_tools.py`
+
+Design 0021 §6: Clank's own MCP server gives the agent `run_job(command, title, minutes)`, `job_status(job)` and `job_stop(job)`: requests to the gateway's `/agents/jobs`, `/agents/jobs/status` and `/agents/jobs/stop` naming the workspace the server serves. `run_job`'s description tells the model to start as a job any command expected to run more than two minutes, and that it is told when the job ends; its answer is the service's words. `job_status` reads only (the planner may use it): one job with its log's last lines and the files it wrote, or every job of the workspace in a line each. A refusal is the tool's error in the service's words.
+
+- the job tools are listed and run job says when to use it
+- run job asks the gateway naming its workspace and answers the services words
+- job status gives one job whole or every job in a line
 
 ### `tests/components/agents/test_latex_build.py`
 

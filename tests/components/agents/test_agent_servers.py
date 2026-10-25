@@ -147,14 +147,14 @@ async def test_the_planner_gets_the_tools_a_servers_last_check_marks_read_only_a
         "clank_notion_query": "allow", "clank_notion_search": "allow", "clank_flow_read": "allow",
         "clank_flow_propose_box": "allow", "clank_flow_submit": "allow", "clank_flow_verdict": "allow",
         "clank_flow_draft": "allow", "clank_flow_decide": "allow", "clank_show_files": "allow",
-        "clank_find_figures": "allow",
+        "clank_find_figures": "allow", "clank_job_status": "allow",
     }, (
         "Clank's own server gives the planner its reading of Notion, never its proposals (design 0010 §4), and its "
         "flow's tools, which write nothing in the folder (design 0013 §9), a planning's draft of a flow included "
         "(design 0013 §15: the planning session is the planner's), and the orchestrator's decision (design 0013 "
         "§16: a checkpoint is a Plan-mode session; without it the orchestrator could only write its decision as text, "
         "as it did on 2026-10-22), and finding figures and opening files for the owner to see (design 0018 §7: neither "
-        "changes a file)"
+        "changes a file), and following its jobs (design 0021 §6)"
     )  # fmt: skip
 
 
