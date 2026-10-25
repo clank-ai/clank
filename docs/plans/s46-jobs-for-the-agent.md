@@ -22,7 +22,7 @@ task starts with a failing test; each ends with a commit pushed to `main`.
   server; the instructions (`jobs.md`): a command expected to run more than two minutes is a job.
 - [x] 4. **Seeing jobs**: `clank jobs` (each workspace's, or one's), a notification in VS Code when one ends (Open its
   log), and the readout's line of running jobs.
-- [ ] 5. **The model keeps its speed**: writing speed measured with a CPU-heavy job running at normal and at the lowest
+- [x] 5. **The model keeps its speed**: writing speed measured with a CPU-heavy job running at normal and at the lowest
   priority (`bench/speedtest.py`), and the result recorded in design 0021 §6.
 
 ## Progress
@@ -31,4 +31,5 @@ Written 2026-10-25. Tasks 1-4 built the same day. Live on the local model (front
 to run a two-minute synthetic simulation as a job and add its results to an artifact when told it ended, the model
 started it with `run_job` (job 1), ended its turn, was told by Clank when the job exited 0 after 2 minutes, and made the
 artifact's version 3 with the simulated series 17 seconds later; VS Code said the job's end in the window of its
-folder.
+folder. Task 5 measured on the quiet PC: 80 tokens a second with no job, 71 with a CPU-heavy job at normal
+priority, 79 at the lowest (design 0021 §6).

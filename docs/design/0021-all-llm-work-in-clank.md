@@ -121,6 +121,11 @@ side bar, the console and the phone), says when one ends, and tells the agent's 
 job writing results can feed an artifact (§5). Flows' jobs (design 0013) are the same jobs; the HPC's (Slurm over
 SSH, design 0015) come after.
 
+Measured (2026-10-25, the local model on an idle PC, 8K-token thinking-heavy prompts, three warm requests each, the
+load 16 busy processes in the workspace's container): the model wrote at 80 tokens a second with no job, 71 with the
+load at normal priority (12% slower), and 79 with it at the lowest (`nice -n 19`, as Clank runs jobs): a job at the
+lowest priority costs the model next to nothing.
+
 ## 7. The engine keeps one conversation
 
 Until the engine can keep several (KVMem's own work), Clank keeps the main model for the session the owner works in:
