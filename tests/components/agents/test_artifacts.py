@@ -3,8 +3,10 @@ artifact's next version (`.clank/artifacts/<name>/v<n>/`), keeping their layout 
 first; `artifact.json` keeps its title, kind and every version (when, its entry, its files, its note, the session that
 made it); `agents.artifact_made` is recorded. A Markdown artifact gets Clank's page that renders it with the kept
 libraries, math included, and so does an SVG one. A name, a kind, a file not the folder's, too many or too large files,
-or an entry page that names the network, are refused, saying why. The owner's comment on a version goes to the session
-that made it, in one message naming the artifact and its version, and `agents.artifact_commented` is recorded."""
+an entry page that names the network, or an HTML page that would show broken (a file it reads missing from where it
+looks, math in dollar signs auto-render would leave as text), are refused, saying why. The owner's comment on a
+version goes to the session that made it, in one message naming the artifact and its version, and
+`agents.artifact_commented` is recorded."""
 
 import json
 from collections.abc import Iterator
@@ -123,6 +125,42 @@ def test_a_page_that_names_the_network_is_refused(kernel: Kernel, folder: Path) 
         artifacts_of(kernel).make("paper", "online", "Online", "html", ["report/online.html"])
 
 
+def test_a_page_that_reads_a_file_missing_from_where_it_looks_is_refused_naming_the_path_that_works(
+    kernel: Kernel, folder: Path
+) -> None:
+    # the model's own mistake on 2026-10-25: data/sweep.csv read by a page in a folder of its own
+    (folder / "report" / "lost.html").write_text(
+        '<script src="clank-lib/plotly.min.js"></script><img src="plot.png">'
+        '<script>fetch("results/sweep.json").then(r => r.json());</script>',
+        encoding="utf-8",
+    )
+    with pytest.raises(ArtifactError, match=r"results/sweep\.json") as refused:
+        artifacts_of(kernel).make("paper", "lost", "Lost", "html", ["report/lost.html", "results/sweep.json"])
+    said = str(refused.value)
+    assert "report/results/sweep.json" in said, "where the page looks"
+    assert '"../results/sweep.json"' in said, "the path that works from the page"
+    assert "plot.png" in said, "every missing file is named at once"
+
+
+def test_math_in_dollar_signs_that_auto_render_would_leave_as_text_is_refused_with_the_call_that_draws_it(
+    kernel: Kernel, folder: Path
+) -> None:
+    head = '<script src="clank-lib/katex.min.js"></script><script src="clank-lib/auto-render.min.js"></script>'
+    (folder / "report" / "math.html").write_text(
+        f"{head}<p>The period is $T_0 = 2\\pi\\sqrt{{L/g}}$.</p><script>renderMathInElement(document.body);</script>",
+        encoding="utf-8",
+    )
+    with pytest.raises(ArtifactError, match="delimiters") as refused:
+        artifacts_of(kernel).make("paper", "math", "Math", "html", ["report/math.html"])
+    assert '{left: "$", right: "$", display: false}' in str(refused.value)
+    (folder / "report" / "math.html").write_text(
+        f"{head}<p>The period is $T_0$.</p><script>renderMathInElement(document.body, "
+        '{delimiters: [{left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false}]});</script>',
+        encoding="utf-8",
+    )
+    assert artifacts_of(kernel).make("paper", "math", "Math", "html", ["report/math.html"])["version"] == 1
+
+
 def test_the_owners_comment_goes_to_the_session_that_made_that_version(
     kernel: Kernel, folder: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -135,7 +173,9 @@ def test_the_owners_comment_goes_to_the_session_that_made_that_version(
         return {}
 
     monkeypatch.setattr(sessions, "send", send)
-    artifacts_of(kernel).make("paper", "sweep", "Sweep results", "html", ["report/index.html"], session="ses_1")
+    artifacts_of(kernel).make(
+        "paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"], session="ses_1"
+    )
     said = artifacts_of(kernel).comment("paper", "sweep", 1, "Use a log scale on y.", actor=YOU)
     [(workspace, port, session, text)] = sent
     assert (workspace, port, session) == ("paper", 4096, "ses_1")
@@ -157,13 +197,18 @@ def test_the_routes_make_list_and_read_artifacts_and_take_the_owners_comment(
     monkeypatch.setattr(sessions, "runs", lambda workspace, session: None)
     headers = {"Authorization": "Bearer t"}
     with TestClient(create_app(kernel, token="t", port=7727), base_url="http://127.0.0.1:7727") as http:
-        body = {"workspace": "paper", "name": "sweep", "title": "Sweep", "files": ["report/index.html"]}
+        body = {
+            "workspace": "paper",
+            "name": "sweep",
+            "title": "Sweep",
+            "files": ["report/index.html", "results/sweep.json"],
+        }
         made = http.post("/api/v1/agents/artifacts", json=body, headers=headers).json()
         assert made["version"] == 1
         listed = http.get("/api/v1/agents/artifacts", params={"workspace": "paper"}, headers=headers).json()
         assert [each["name"] for each in listed["artifacts"]] == ["sweep"]
         one = http.get("/api/v1/agents/artifacts/paper/sweep", headers=headers).json()
-        assert one["versions"][0]["entry"] == "index.html"
+        assert one["versions"][0]["entry"] == "report/index.html"
         refused = http.post("/api/v1/agents/artifacts/paper/sweep/comment", json={"version": 1, "text": "log y"},
                             headers=headers)  # fmt: skip
         assert refused.status_code == 409, "no session of the agent's runs to tell"

@@ -12,8 +12,10 @@ page.
 
 Refused, saying why: a name that is not lowercase letters, digits and dashes; a kind other than html, markdown or svg;
 no file, a file that is not the folder's (or is Clank's own, under `.clank/`), more than `MOST_FILES` files or more than
-`MOST_BYTES` in all; a first file that is not a page of its kind; and an entry page that names the network (a source, a
-link, a style or a fetch at `http://`, `https://` or `//`).
+`MOST_BYTES` in all; a first file that is not a page of its kind; an entry page that names the network (a source, a
+link, a style or a fetch at `http://`, `https://` or `//`); and an HTML page that would show broken (`_check_page`): a
+file it loads or fetches that is not among its files from where the page is (the model's own mistake, 2026-10-25), or
+math in `$...$` given to KaTeX's auto-render without the delimiters that make it read them.
 """
 
 import base64
@@ -40,6 +42,8 @@ LIB_SCRIPT = re.compile(r"""<script\b[^>]*\bsrc=["']clank-lib/([^"']+)["'][^>]*>
 LIB_STYLE = re.compile(r"""<link\b[^>]*\bhref=["']clank-lib/([^"']+)["'][^>]*>""", re.IGNORECASE)
 FONT = re.compile(r"url\((fonts/[A-Za-z0-9_.-]+)\)")
 LOCAL = re.compile(r"""\b(src|href)=(["'])(?![a-z][a-z0-9+.-]*:|//|#)([^"']+)\2""", re.IGNORECASE)
+READ = re.compile(r"""\b(fetch)\s*\(\s*(["'`])(?![a-z][a-z0-9+.-]*:|//)([^"'`]+)\2""", re.IGNORECASE)
+INLINE_MATH = re.compile(r"(?<![$\\])\$(?!\$)[^$\n]+?(?<![$\\])\$(?!\$)")
 TYPES = {
     ".json": "application/json", ".csv": "text/csv", ".tsv": "text/tab-separated-values", ".txt": "text/plain",
     ".md": "text/markdown", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
@@ -168,6 +172,9 @@ class Artifacts:
                 f"{paths[0].name} names the network: an artifact uses only its own files and Clank's libraries "
                 "(clank-lib/plotly.min.js, katex.min.js, katex.min.css, marked.min.js, mermaid.min.js)"
             )
+        if kind == "html":
+            _check_page(paths[0].read_text(encoding="utf-8", errors="replace"),
+                        [path.relative_to(folder).as_posix() for path in paths])  # fmt: skip
         home = folder / FOLDER / name
         kept = self._kept(home) or {"name": name, "title": title, "kind": kind, "versions": []}
         number = len(kept["versions"]) + 1
@@ -316,6 +323,39 @@ class Artifacts:
         except (OSError, ValueError):
             return None
         return found
+
+
+def _check_page(page: str, files: list[str]) -> None:
+    """Refuse an HTML page that would show broken: a file it loads or fetches by a literal path that is not among the
+    artifact's files from where the page is (each named, with the path that reaches it when the artifact has a file of
+    that name), and math in `$...$` handed to KaTeX's auto-render without the delimiters that make it read them."""
+    here = posixpath.dirname(files[0])
+    missing = []
+    for found in [*LOCAL.finditer(page), *READ.finditer(page)]:
+        named = found.group(3).split("#")[0].split("?")[0]
+        if not named or named.startswith(("clank-lib/", "${")) or "${" in named:
+            continue
+        looked = posixpath.normpath(posixpath.join(here, named))
+        if looked in files:
+            continue
+        same = [each for each in files[1:] if posixpath.basename(each) == posixpath.basename(looked)]
+        reach = (
+            f': the artifact has {same[0]}, which the page reaches as "{posixpath.relpath(same[0], here or ".")}"'
+            if same else ", not among its files"
+        )  # fmt: skip
+        missing.append(f"{named} (the page looks at {looked}{reach})")
+    if missing:
+        raise ArtifactError(
+            "the page reads files the artifact does not have where it looks: " + "; ".join(dict.fromkeys(missing))
+            + ". A path in the page starts from the page's own folder; name every file it reads in the artifact"
+        )  # fmt: skip
+    text = re.sub(r"<script\b[^>]*>[\s\S]*?</script>", "", page, flags=re.IGNORECASE)
+    if "renderMathInElement" in page and "delimiters" not in page and INLINE_MATH.search(text):
+        raise ArtifactError(
+            "the page writes math in $...$, which KaTeX's auto-render leaves as text unless its delimiters say so: "
+            'call renderMathInElement(document.body, {delimiters: [{left: "$$", right: "$$", display: true}, '
+            '{left: "$", right: "$", display: false}]})'
+        )
 
 
 def _library(name: str) -> str:

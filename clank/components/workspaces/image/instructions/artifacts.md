@@ -6,10 +6,15 @@ such as `artifacts-src/sweep/`), then call Clank's `make_artifact` with its page
 opens it beside you in the user's VS Code window; tell the user in a line what it shows.
 
 Its page uses only its own files and Clank's libraries, never the network: `clank-lib/plotly.min.js` for charts (read
-the data from a JSON or CSV file beside the page with `fetch`), `clank-lib/katex.min.js` with `clank-lib/katex.min.css`
-and `clank-lib/auto-render.min.js` for math, `clank-lib/marked.min.js` for Markdown, `clank-lib/mermaid.min.js` for
+the data from a JSON or CSV file with `fetch`), `clank-lib/katex.min.js` with `clank-lib/katex.min.css` and
+`clank-lib/auto-render.min.js` for math, `clank-lib/marked.min.js` for Markdown, `clank-lib/mermaid.min.js` for
 diagrams. A Markdown report needs no page of its own: make it with the kind `markdown` (math in `$...$` and
 `$$...$$`). Keep the numbers it shows from the files that hold them, never typed by hand.
+
+A path in the page starts from the page's own folder: a page at `artifacts-src/sweep/index.html` reads `data/sweep.csv`
+as `../../data/sweep.csv`, and every file it reads is named in `make_artifact`. KaTeX's auto-render reads `$...$` only
+when told: `renderMathInElement(document.body, {delimiters: [{left: "$$", right: "$$", display: true}, {left: "$",
+right: "$", display: false}]})`. Clank refuses a page that would show broken, saying what to change.
 
 The user may comment on a version; the comment comes to you naming it. To change the artifact, write its files again
 and call `make_artifact` with the same name: that makes the next version, and the user sees both.

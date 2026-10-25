@@ -17,7 +17,7 @@ built (§11). The owner approved §3-§7 and §9-§11 the same day, chose the si
 | 2 | What the review found | Recorded 2026-10-25 |
 | 3 | The model's readout | Approved 2026-10-25 (the owner chose the panel under OpenCode, and every figure) |
 | 4 | The agent panel | Approved 2026-10-25 |
-| 5 | Artifacts | Approved 2026-10-25 |
+| 5 | Artifacts | Approved 2026-10-25; revised after approval 2026-10-25: a page that would show broken is refused, saying what to change (the first live test's two mistakes) |
 | 6 | Jobs: long work for the agent | Approved 2026-10-25 |
 | 7 | The engine keeps one conversation | Approved 2026-10-25 |
 | 8 | Sessions that stay fast | Proposed 2026-10-25; the owner decides later ("Decide later"): OpenCode compacts near the whole window, as now |
@@ -96,7 +96,11 @@ an explainer, a report, slides, a diagram. Local: nothing leaves the PC.
 
 - **Made by a tool**: `make_artifact(name, title, kind, files)` in Clank's MCP server, the agent having written the
   page's files (HTML, or Markdown with math, or SVG, with its data files). Clank keeps each version in the folder's
-  `.clank/artifacts/<name>/` with `artifact.json` (title, kind, versions, what made it), and opens it.
+  `.clank/artifacts/<name>/` with `artifact.json` (title, kind, versions, what made it), and opens it. A page that
+  would show broken is refused, saying what to change: a file it reads that is not among its files from where the
+  page is (with the path that reaches it), and math in `$...$` that KaTeX's auto-render would leave as text (with the
+  call that draws it). Both were the model's mistakes in the first live test (2026-10-25): its chart drew no points
+  and its formula showed as TeX.
 - **Shown** in VS Code on the left (a webview with its versions, Open in browser, Comment, Send to phone), in the agent
   panel as a card, and on the phone. Pages run with no network: the libraries they may use (charts, math, diagrams)
   are served by Clank from its own copies, and a page reads only its own folder's files. A page whose data file

@@ -79,9 +79,9 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.2 | Records | `tests/components/flows/test_proposals_auto.py` (3), `tests/components/runtime/test_state.py` (4), `tests/console/test_records.py` (4), `tests/kernel/test_grouped_settings.py` (5), `tests/kernel/test_records.py` (5), `tests/kernel/test_settings.py` (15), `tests/kernel/test_settings_checks.py` (3), `tests/kernel/test_store.py` (9), `tests/tools/test_schemas.py` (1), `tests/tools/test_tstypes.py` (5), `vscode/test/kinds.test.ts` (1) |
 | 2.3 | Events | `tests/kernel/test_clock.py` (4), `tests/kernel/test_event_attention.py` (3), `tests/kernel/test_events.py` (9), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_eventsdoc.py` (1), `vscode/test/events.test.ts` (2), `vscode/test/state.test.ts` (1) |
 | 2.4 | Operations | `tests/components/workspaces/test_docker_operations.py` (13), `tests/console/test_pages.py` (10), `tests/kernel/test_operations.py` (15) |
-| 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (14), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (16), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
+| 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (14), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (17), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
 | 2.6 | Policy | none yet |
-| 2.7 | Callers and access | `tests/console/test_home.py` (14), `tests/kernel/test_access.py` (5), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (4), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (16), `vscode/test/live.test.ts` (1) |
+| 2.7 | Callers and access | `tests/console/test_home.py` (14), `tests/kernel/test_access.py` (5), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (4), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (17), `vscode/test/live.test.ts` (1) |
 | 2.8 | Secrets | `tests/components/tools/test_servers.py` (7), `tests/kernel/test_secrets.py` (4) |
 | 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (9), `tests/components/workspaces/test_sandbox.py` (5), `tests/kernel/test_processes.py` (8) |
 | 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (6), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
@@ -95,7 +95,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.18 | Choices this section makes | none yet |
 | 3 | The skeleton (M0) and the order of milestones | see its subsections |
 | 3.1 | How the rest is designed and built | none yet |
-| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (3), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (14), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (19), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (6), `tests/tools/test_codemap.py` (8), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (16) |
+| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (3), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (14), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (19), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (6), `tests/tools/test_codemap.py` (8), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (17) |
 | 3.3 | The milestones after M0 | `tests/docker/test_escape.py` (3) |
 | 3.4 | Carried into the later milestones' designs | none yet |
 
@@ -124,7 +124,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 8 | The console, VS Code and the commands | `tests/components/runtime/test_runtime_api.py` (6) |
 | 8.1 | The models page (the menu's Models entry, now built) | `tests/components/runtime/test_console_models.py` (2) |
 | 8.2 | Presets, providers and models, launch options | `tests/components/runtime/test_console_options.py` (5), `tests/components/runtime/test_console_presets.py` (2), `tests/components/runtime/test_console_providers.py` (2) |
-| 8.3 | VS Code | `vscode/test/controller.test.ts` (16) |
+| 8.3 | VS Code | `vscode/test/controller.test.ts` (17) |
 | 8.4 | Commands | `tests/components/runtime/test_engine_commands.py` (3), `tests/components/runtime/test_model_commands.py` (3) |
 | 9 | Testing, and the order of work | `tests/components/runtime/test_fake_engine.py` (3), `tests/real/test_engines.py` (1) |
 
@@ -307,7 +307,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | A box's settings | `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_session_modes.py` (7), `tests/components/flows/test_accept_command.py` (10), `tests/components/flows/test_box_server.py` (7), `tests/components/flows/test_flow_file.py` (18), `tests/components/flows/test_runner_controls.py` (10) |
 | 5 | Running a box: a fresh session | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_monitor_bridge.py` (11), `tests/components/agents/test_monitor_sessions.py` (5), `tests/components/agents/test_monitor_watch.py` (10), `tests/components/agents/test_session_modes.py` (7), `tests/components/flows/test_accept_command.py` (10), `tests/components/flows/test_box_server.py` (7), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_first_prepared.py` (17), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_prepare.py` (8), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_controls.py` (10), `tests/components/flows/test_verify_loop.py` (6), `tests/components/runtime/test_count_tokens.py` (5) |
 | 6 | The runner, an operation of the service | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_prepare.py` (8), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_restart.py` (6), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_controls.py` (10), `tests/components/flows/test_runner_routes.py` (2), `tests/components/flows/test_runs.py` (7) |
-| 7 | A model per box, and what a switch costs | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_model_changed.py` (4), `tests/components/agents/test_monitor_bridge.py` (11), `tests/components/agents/test_monitor_watch.py` (10), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_model_per_box.py` (13), `tests/components/flows/test_models.py` (4), `tests/components/flows/test_prepare.py` (8), `tests/console/test_data.py` (17), `vscode/test/controller.test.ts` (16) |
+| 7 | A model per box, and what a switch costs | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_model_changed.py` (4), `tests/components/agents/test_monitor_bridge.py` (11), `tests/components/agents/test_monitor_watch.py` (10), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_model_per_box.py` (13), `tests/components/flows/test_models.py` (4), `tests/components/flows/test_prepare.py` (8), `tests/console/test_data.py` (17), `vscode/test/controller.test.ts` (17) |
 | 8 | Deliverables, tries and stale boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_deliverables.py` (3), `tests/components/flows/test_diffs.py` (5), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_runs.py` (7), `tests/components/flows/test_stale.py` (9), `tests/components/flows/test_verify.py` (8), `tests/components/flows/test_waiting.py` (9) |
 | 9 | The model proposes boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_tools.py` (9), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_proposals.py` (8), `tests/components/flows/test_proposals_again.py` (6), `tests/components/flows/test_proposals_auto.py` (3), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_proposals_join.py` (12), `tests/components/flows/test_proposals_routes.py` (2), `tests/components/flows/test_verify.py` (8), `tests/components/flows/test_waiting.py` (9), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12) |
 | 10 | Gates | `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_diffs.py` (5), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_routes.py` (2), `tests/components/flows/test_runs.py` (7), `tests/components/flows/test_verify_loop.py` (6), `tests/components/flows/test_waiting.py` (9), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12), `vscode/test/gates.test.ts` (16) |
@@ -376,7 +376,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 14 | The first run: Add a model | `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (16), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (17), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (19) |
 | 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_folder.py` (22), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
 | 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3) |
-| 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (16) |
+| 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (17) |
 | 18 | Tests, the fake OpenRouter, and the checks owed with a real key | `tests/contract/test_endpoint.py` (5), `tests/real/test_openrouter.py` (5), `tests/test_architecture.py` (7), `tests/tools/test_capture_endpoint.py` (2) |
 | 19 | Build steps | none yet |
 | 20 | What this design does not cover | none yet |
@@ -417,7 +417,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 6 | Order of work | none yet |
 | 7 | Showing files to the owner | see its subsections |
 | 7.1 | The agent opens files | `tests/components/agents/test_show_files_tool.py` (4), `tests/components/agents/test_showing.py` (4), `tests/components/gateway/test_agents_forwarding.py` (2) |
-| 7.2 | The window opens them on the left | `vscode/test/controller.test.ts` (16), `vscode/test/show.test.ts` (4) |
+| 7.2 | The window opens them on the left | `vscode/test/controller.test.ts` (17), `vscode/test/show.test.ts` (4) |
 | 7.3 | Paths in the agent's terminal are links | `vscode/test/show.test.ts` (4) |
 | 7.4 | Finding figures | `tests/components/agents/test_find_figures_tool.py` (5), `tests/components/workspaces/test_figure_geometry.py` (4) |
 | 7.5 | The agent's tools are this Clank's | `tests/components/agents/test_agent_files.py` (2), `tests/components/agents/test_opencode.py` (8), `tests/docker/test_agent_files_live.py` (1) |
@@ -486,7 +486,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (3), `vscode/test/readout.test.ts` (10) |
 | 4 | The agent panel | none yet |
-| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (8), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (4) |
+| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (10), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (5) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (3), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
@@ -689,12 +689,14 @@ Design 0021 §5: Clank's own MCP server gives the agent `make_artifact(name, tit
 
 ### `tests/components/agents/test_artifacts.py`
 
-Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copies the files the agent named into the artifact's next version (`.clank/artifacts/<name>/v<n>/`), keeping their layout from their common folder, its entry page first; `artifact.json` keeps its title, kind and every version (when, its entry, its files, its note, the session that made it); `agents.artifact_made` is recorded. A Markdown artifact gets Clank's page that renders it with the kept libraries, math included, and so does an SVG one. A name, a kind, a file not the folder's, too many or too large files, or an entry page that names the network, are refused, saying why. The owner's comment on a version goes to the session that made it, in one message naming the artifact and its version, and `agents.artifact_commented` is recorded.
+Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copies the files the agent named into the artifact's next version (`.clank/artifacts/<name>/v<n>/`), keeping their layout from their common folder, its entry page first; `artifact.json` keeps its title, kind and every version (when, its entry, its files, its note, the session that made it); `agents.artifact_made` is recorded. A Markdown artifact gets Clank's page that renders it with the kept libraries, math included, and so does an SVG one. A name, a kind, a file not the folder's, too many or too large files, an entry page that names the network, or an HTML page that would show broken (a file it reads missing from where it looks, math in dollar signs auto-render would leave as text), are refused, saying why. The owner's comment on a version goes to the session that made it, in one message naming the artifact and its version, and `agents.artifact_commented` is recorded.
 
 - making one copies its files as a version keeping their layout and records it
 - a markdown or svg artifact gets clanks page that renders it
 - what cannot be an artifact is refused saying why
 - a page that names the network is refused
+- a page that reads a file missing from where it looks is refused naming the path that works
+- math in dollar signs that auto render would leave as text is refused with the call that draws it
 - the owners comment goes to the session that made that version
 - the routes make list and read artifacts and take the owners comment
 - an export is one file with its libraries and data inside that needs nothing else
@@ -4477,6 +4479,7 @@ Design 0021 §5: artifacts in VS Code. The service's `agents.artifact_made` name
 - a page gets the policy, its base, the libraries' place and the bar, and keeps the agent's own
 - a page without a head or a body still gets them
 - the versions are said newest first, the one shown marked
+- the bar names the artifact, lists its versions and asks for a comment or a browser, its words escaped
 
 ### `vscode/test/client.test.ts`
 
@@ -4529,6 +4532,7 @@ Design 0002 §2.5, §2.7 and §3.2: the extension's controller keeps the status 
 - a window told its model changed shows it once, in the service's words
 - a job of the window's workspace that ends is said once, with where its log is; another workspace's is not
 - the files the agent opened for the owner go to the presenter, with their folder and why
+- an artifact the agent made goes to the presenter, which opens it in a window on its folder
 - a cloud model's item says cloud, its tooltip the spending in the service's words, and the pause
 - Switch model lists a cloud preset as its provider and model, with its price
 
