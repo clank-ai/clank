@@ -112,7 +112,8 @@ class Slots:
                 raise SlotError(f"{name} runs {self._title(slot.preset)}: unload it first, or switch to {wanted}")
             prepared = await self._prepare(context, str(context.params["preset"]), context.params.get("options"))
             before = None if isinstance(prepared, CloudPrepared) else await self._ready_to_start(context, prepared)
-        return await self._bring_up(context, name, prepared, before, steps=True)
+        why = str(context.params.get("why") or "")  # the watcher's, loading a crashed preset's fallback
+        return await self._bring_up(context, name, prepared, before, steps=True, why=why)
 
     async def unload(self, context: OperationContext) -> dict[str, Any]:
         """Stop what the slot runs."""

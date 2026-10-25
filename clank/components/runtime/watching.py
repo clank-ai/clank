@@ -14,7 +14,8 @@ the slot, a provider that does not answer leaves it ready, marked; the crash rul
 An engine that ends, or stops answering, makes its slot failed with the engine's own last words and its launch
 crashed. One that had been ready for ten minutes or more is started again once (`runtime.restart`), saying so; a second
 crash within the hour leaves the slot failed and asks the user whether to start it again; one that crashed soon after
-its start is left failed.
+its start is left failed. A preset that names a `fallback` (settings on trial, design 0021 §10) has its fallback loaded
+in its place instead, the slot's reason saying why.
 """
 
 import logging
@@ -145,6 +146,13 @@ class Watcher:
         state.set_slot(name, "failed", f"{title} crashed: {reason}", actor=CLANK, preset=slot.preset)
         if launch is None or slot.preset is None:
             return
+        fallback = self._fallback(slot.preset)
+        if fallback:
+            why = f"{title} crashed ({reason}): loading its fallback, {self.runtime.title(fallback)}"
+            await self.runtime.kernel.operations.start(
+                "runtime.load", {"slot": name, "preset": fallback, "why": why}, actor=CLANK
+            )
+            return
         recent = [
             earlier
             for earlier in state.launches(20)
@@ -159,6 +167,20 @@ class Watcher:
             await self.runtime.kernel.operations.start("runtime.restart", {**params, "ask": True}, actor=CLANK)
         elif launch.ready_at is not None and now - launch.ready_at >= RESTART_AFTER:
             await self.runtime.kernel.operations.start("runtime.restart", {**params, "ask": False}, actor=CLANK)
+
+    def _fallback(self, preset: str) -> str:
+        """The preset a crashed one names to load in its place (design 0021 §10), when it is another that exists."""
+        from clank.components.runtime.service import PresetNotFound  # here: the service imports this module
+
+        try:
+            view = self.runtime.preset(preset)
+            fallback = str(view.get("fallback") or "")
+            if not fallback or fallback in (view["id"], view["title"]):
+                return ""
+            self.runtime.preset(fallback)
+        except (PresetNotFound, ValueError):  # a preset gone or unreadable since: the crash rule applies
+            return ""
+        return fallback
 
     def _cloud(self, slot: SlotRecord) -> bool:
         """Whether a provider someone else runs serves the slot (design 0016 §7): no process of its own here."""

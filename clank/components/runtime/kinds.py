@@ -72,6 +72,14 @@ class Preset(Settings):
     notes: str = Field(
         "", title="Notes", description="Anything worth knowing: where it came from, what it deviates in."
     )
+    fallback: str = Field(
+        "",
+        title="Fallback",
+        description=(
+            "A preset the slot loads when this one's engine crashes (settings on trial, design 0021 §10); empty: the "
+            "crash rule every preset has (started again once, or asked)."
+        ),
+    )
 
     @model_validator(mode="after")
     def _one_provider(self) -> "Preset":

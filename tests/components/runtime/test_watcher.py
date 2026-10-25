@@ -4,7 +4,10 @@ again once, saying so; a second crash within the hour leaves it failed and asks 
 engine whose health fails three times in a row is stopped and the slot failed. When the service starts, an engine
 still running is adopted, not restarted, and a slot whose engine ended meanwhile is said to have stopped while the
 service was not running. A host that cannot say whether the engine runs (a busy WSL leaves a question unanswered)
-says nothing about it: the slot is kept, and asked again."""
+says nothing about it: the slot is kept, and asked again.
+
+Design 0021 §10: a preset on trial names a fallback; when its engine crashes, the slot loads the fallback, saying
+why."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -102,6 +105,30 @@ async def test_a_second_crash_within_the_hour_leaves_it_failed_and_asks(engines:
         assert engines.runtime.state.slot("main").status == "failed"
         engines.kernel.questions.answer(question.id, by=YOU, option="start")
         await until(lambda: engines.runtime.state.slot("main").status == "ready")
+
+
+async def test_a_crash_of_a_preset_that_names_a_fallback_loads_the_fallback_and_says_why(
+    engines: Rig, tmp_path: Path
+) -> None:
+    kvmem_runs(engines, tmp_path, "--fake-crash-after", "0.5")
+    engines.preset("fake-kvmem-trial", {"title": "fake KVMem trial", "engine": "kvmem-llamacpp",
+                                        "engine_version": "v0.16.0-rc1", "model": "tiny", "fallback": "fake-kvmem-small",
+                                        "options": {"context": 8192, "kvmem.budget": 4096}})  # fmt: skip
+    async with engines.kernel.operations.running():
+        started = await engines.kernel.operations.start(
+            "runtime.load", {"slot": "main", "preset": "fake KVMem trial"}, actor=YOU
+        )
+        with anyio.fail_after(60):
+            await engines.kernel.operations.wait(started.id)
+        await until(lambda: not LocalHost().alive(identity(engines)))
+        await engines.runtime.watch_once()
+        await until(lambda: engines.runtime.state.slot("main").preset == "fake-kvmem-small")
+    operations = engines.kernel.operations.find(limit=20)
+    [fallback] = [
+        each for each in operations if each.type == "runtime.load" and each.params["preset"] == "fake-kvmem-small"
+    ]
+    assert "fake KVMem trial crashed" in str(fallback.params.get("why"))
+    assert "loading its fallback, fake KVMem small" in str(fallback.params.get("why"))
 
 
 async def test_an_engine_whose_health_fails_three_times_is_stopped_and_the_slot_failed(

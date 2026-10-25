@@ -21,7 +21,7 @@ Builds [design 0021](../design/0021-all-llm-work-in-clank.md) §3, §7 (what is 
   (its documented setting is for MCP requests in general, 5 s by default, and today's readings of 8-44 s passed it),
   `look_at_figure` answers within 45 s that the vision model is still reading, keeps reading in the background, and
   gives the reading when the same figure and question are asked again. Tests: `test_look.py`, `test_agent_files.py`.
-- [ ] 4. **The faster settings** (§10): a preset may name a `fallback`; when its engine ends on its own (a crash), the
+- [x] 4. **The faster settings** (§10): a preset may name a `fallback`; when its engine ends on its own (a crash), the
   slot loads the fallback and says why. "frontier 262K fast (trial)" falls back to frontier 262K. Tests: the runtime's.
 - [ ] 5. **The sign-in start** (§11): `clank autostart on|off|status`: an entry in Windows' Startup folder, run without a
   window, that starts Docker Desktop when it is stopped and then Clank's service; shown in Task Manager's startup
