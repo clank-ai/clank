@@ -41,6 +41,9 @@ something, opens it and stops. It writes nothing in the folder, so the planner m
 through the gateway's `/agents/jobs` routes: a long computation run detached in the container at the lowest CPU
 priority, followed and stopped; the session is told when it ends. `job_status` reads only, so the planner may use it.
 
+`make_artifact(name, title, kind, files, note)` (design 0021 §5) makes a page for the owner from files the agent wrote
+in the folder, through the gateway's `/agents/artifacts`: Clank keeps it as a version and opens it in VS Code.
+
 It speaks MCP (revision 2025-06-18) over its standard input and output, one JSON message a line, with Python's standard
 library only, so it runs in any workspace's container.
 """
@@ -193,6 +196,35 @@ def _job_tools() -> list[dict[str, Any]]:
             "job_stop", "Stop a job and everything it started. Returns what Clank did.", {"job": job}, ["job"], False
         ),
     ]
+
+
+ARTIFACT = {
+    "name": "make_artifact",
+    "description": (
+        "Make a page for the user from files you wrote in the folder: an interactive plot of results, a parameter "
+        "explorer, an explainer, a report, a diagram. Clank keeps it as a version under .clank/artifacts/<name>/ and "
+        "opens it in the user's VS Code window beside you. Its page (the first file) uses only its own files and "
+        "Clank's libraries, with no network: clank-lib/plotly.min.js (charts), clank-lib/katex.min.js with "
+        "clank-lib/katex.min.css and clank-lib/auto-render.min.js (math), clank-lib/marked.min.js (Markdown), "
+        "clank-lib/mermaid.min.js (diagrams). Name its data files after it: they are copied with it, keeping their "
+        "paths. A markdown kind is a .md file (math in $...$ and $$...$$), drawn by Clank's page; an svg kind is a "
+        ".svg file. To change it, write its files again and call make_artifact with the same name: that makes the "
+        "next version. Returns its version, or why it was refused."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string", "description": "Lowercase letters, digits and dashes, as in sweep-results."},
+            "title": {"type": "string", "description": "What the user sees as its title."},
+            "kind": {"type": "string", "enum": ["html", "markdown", "svg"], "description": "Its page's kind (html)."},
+            "files": {"type": "array", "items": {"type": "string"},
+                      "description": "Its page first, then every file it reads, from the folder."},
+            "note": {"type": "string", "description": "What changed in this version, in a line."},
+        },
+        "required": ["name", "title", "files"],
+    },
+    "annotations": {"readOnlyHint": False},
+}  # fmt: skip
 
 
 def _tool(name: str, description: str, properties: dict[str, Any], required: list[str], reads: bool) -> dict[str, Any]:
@@ -519,6 +551,20 @@ def _span(seconds: float) -> str:
     return unit(minutes, "minute") if minutes else unit(rest, "second")
 
 
+def artifact(arguments: dict[str, Any]) -> str:
+    """Make an artifact (design 0021 §5): the request to the gateway, and the service's words."""
+    if not WORKSPACE_NAME:
+        raise ValueError(
+            "this server does not know its workspace (Clank gives it one): start the agent again from Clank"
+        )
+    files = arguments.get("files") or []
+    named = [files] if isinstance(files, str) else [str(each) for each in files]
+    body = {"workspace": WORKSPACE_NAME, "name": str(arguments.get("name") or ""),
+            "title": str(arguments.get("title") or ""), "kind": str(arguments.get("kind") or "html"),
+            "files": named, "note": str(arguments.get("note") or "")}  # fmt: skip
+    return str(_gateway("POST", "agents/artifacts", body, "artifacts").get("said") or "")
+
+
 def show(arguments: dict[str, Any]) -> str:
     """Open files in the owner's VS Code window: the request to the gateway, and the service's words."""
     if not WORKSPACE_NAME:
@@ -732,11 +778,11 @@ def answer(message: dict[str, Any]) -> dict[str, Any] | None:
             "serverInfo": {"name": "clank", "version": "1"},
         }  # fmt: skip
     elif method == "tools/list":
-        result = {"tools": [TOOL, LOOK, SHOW, FIND, *_notion_tools(), *FLOW_TOOLS, *_job_tools()]}
+        result = {"tools": [TOOL, LOOK, SHOW, FIND, *_notion_tools(), *FLOW_TOOLS, *_job_tools(), ARTIFACT]}
     elif method == "tools/call":
         params = message.get("params") or {}
         arguments = params.get("arguments") or {}
-        names = {TOOL["name"], LOOK["name"], SHOW["name"], FIND["name"]}
+        names = {TOOL["name"], LOOK["name"], SHOW["name"], FIND["name"], ARTIFACT["name"]}
         names |= {tool["name"] for tool in [*_notion_tools(), *FLOW_TOOLS, *_job_tools()]}
         if params.get("name") not in names:
             return {"jsonrpc": "2.0", "id": id, "error": {"code": -32602, "message": "no such tool"}}
@@ -744,6 +790,8 @@ def answer(message: dict[str, Any]) -> dict[str, Any] | None:
         try:
             if str(params.get("name")).startswith("notion_"):
                 text, failed = notion(str(params["name"]), arguments), False
+            elif params.get("name") == ARTIFACT["name"]:
+                text, failed = artifact(arguments), False
             elif str(params.get("name")) in ("run_job", "job_status", "job_stop"):
                 text, failed = jobs(str(params["name"]), arguments), False
             elif str(params.get("name")).startswith("flow_"):

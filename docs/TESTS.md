@@ -486,7 +486,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (3), `vscode/test/readout.test.ts` (10) |
 | 4 | The agent panel | none yet |
-| 5 | Artifacts | `tests/components/agents/test_artifacts.py` (6), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/tools/test_artifact_libs.py` (2) |
+| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (6), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/tools/test_artifact_libs.py` (2) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (3), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
@@ -679,6 +679,13 @@ Design 0008 §5: a figure the owner marked up goes to the workspace's agent, run
 
 - a marked up figure reaches the agent with its marks in words and the copy attached
 - an annotation is refused with the reason when it cannot be sent
+
+### `tests/components/agents/test_artifact_tool.py`
+
+Design 0021 §5: Clank's own MCP server gives the agent `make_artifact(name, title, kind, files, note)`: a request to the gateway's `POST /agents/artifacts` naming the workspace the server serves, the files as the model gave them (one given as a string is a list of one). Its description says when to make one, that its page uses only its own files and Clank's libraries (named `clank-lib/...`), and how a new version is made; the answer is the service's words, a refusal the tool's error in its words.
+
+- make artifact is listed and says what a page may use
+- make artifact asks the gateway naming its workspace and answers the services words
 
 ### `tests/components/agents/test_artifacts.py`
 
