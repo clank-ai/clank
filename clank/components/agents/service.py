@@ -64,6 +64,9 @@ from clank.components.agents.adapters.program import AgentModel, AgentProgram, C
 from clank.components.agents.annotations import EVENT_TYPES as ANNOTATION_EVENTS
 from clank.components.agents.annotations import AnnotationError as AnnotationError  # for the routes
 from clank.components.agents.annotations import Annotations
+from clank.components.agents.artifacts import EVENT_TYPES as ARTIFACT_EVENTS
+from clank.components.agents.artifacts import ArtifactError as ArtifactError  # for the routes
+from clank.components.agents.artifacts import Artifacts
 from clank.components.agents.context import totals
 from clank.components.agents.guide import Guide, Ruled
 from clank.components.agents.guide import GuideError as GuideError  # for the routes
@@ -145,6 +148,7 @@ EVENT_TYPES = [
     *LATEX_EVENTS,
     *COMMENT_EVENTS,
     *JOB_EVENTS,
+    *ARTIFACT_EVENTS,
 ]
 ROLE = "agent"
 SESSION_MODEL = {"providerID": PROVIDER, "modelID": ROLE}  # the model a message names: the gateway's role
@@ -195,6 +199,7 @@ class Agents:
         self.annotations = Annotations(kernel, self.sessions, self.reads_images, self._read_image)
         self.showing = Showing(kernel)  # files opened for the owner (design 0018 §7)
         self.jobs = AgentJobs(kernel, self.sessions)  # long computations the agent starts (design 0021 §6)
+        self.artifacts = Artifacts(kernel, self.sessions)  # pages the agent makes for the owner (design 0021 §5)
         self.pages = PageMarks(self.review.latex.run)  # a PDF's pages to mark up (design 0020 §10)
         self.answers = Answers(self.sessions)  # every number answered (design 0020 §12)
         self.annotations.pages, self.annotations.answers = self.pages, self.answers
@@ -259,6 +264,15 @@ class Agents:
         kept = self.flows.flows(workspace)
         session = str(kept[0].get("session") or "") if kept else ""
         return self.jobs.start(workspace, command, title, minutes, session=session)
+
+    def make_artifact(
+        self, workspace: str, name: str, title: str, kind: str, files: list[str], note: str
+    ) -> dict[str, Any]:
+        """Make the agent's artifact (design 0021 §5; `artifacts.py`), the session that made it being the workspace's
+        newest kept, the one that asked."""
+        kept = self.flows.flows(workspace)
+        session = str(kept[0].get("session") or "") if kept else ""
+        return self.artifacts.make(workspace, name, title, kind, files, note=note, session=session)
 
     def all_jobs(self, workspace: str = "") -> list[dict[str, Any]]:
         """The jobs of a workspace's agent, or of every workspace's (`jobs.py`), newest first."""

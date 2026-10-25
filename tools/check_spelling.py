@@ -17,7 +17,7 @@ from tools.files import read_text, repository_files
 from tools.markdown import prose_lines
 
 SELF = "tools/check_spelling.py"
-VENDORED = "clank/components/artifacts/lib/"  # other authors' libraries, kept as they are (decision 0135)
+VENDORED = "clank/components/agents/artifact_lib/"  # other authors' libraries, kept as they are (decision 0135)
 KEEP = "spelling: keep"
 AMERICAN = {
     "aeroplane": "airplane",

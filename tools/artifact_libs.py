@@ -1,4 +1,5 @@
-"""The artifact libraries (decision 0135): fetch them into `clank/components/artifacts/lib/`, or check the copy there.
+"""The artifact libraries (decision 0135): fetch them into `clank/components/agents/artifact_lib/`, or check the copy
+there.
 
 `python -m tools.artifact_libs fetch` downloads each library's files at its pinned version from jsDelivr's copy of its
 npm package (`SOURCES`), KaTeX's fonts as its style sheet names them, and the license texts, then writes
@@ -15,7 +16,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-LIB = ROOT / "clank" / "components" / "artifacts" / "lib"
+LIB = ROOT / "clank" / "components" / "agents" / "artifact_lib"
 MANIFEST = LIB / "LIBRARIES.json"
 NPM = "https://cdn.jsdelivr.net/npm"
 # library: (npm package, version, license, {file kept: path in the package}, the package's license file)

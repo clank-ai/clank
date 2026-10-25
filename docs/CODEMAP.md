@@ -25,6 +25,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/adapters/program.py` | The agent program kind of adapter: the interface every program that works in a workspace meets (decision 0011, |
 | `clank/components/agents/annotations.py` | Annotations (design 0008 §5): a figure the owner marked up, kept in the folder and sent to the workspace's agent. |
 | `clank/components/agents/api.py` | The agents component's routes (design 0004 §4): making a workspace's agent ready. |
+| `clank/components/agents/artifacts.py` | Artifacts (design 0021 §5): pages the agent makes for the owner (an interactive plot of results, a parameter |
 | `clank/components/agents/changes.py` | A change the agent asks to make to a file (design 0007 §5): the file as it would be after it, its diff, and where |
 | `clank/components/agents/cli.py` | `clank work [FOLDER]` (design 0004 §1): the agent, in a folder's container, in this terminal, at once; `clank code |
 | `clank/components/agents/component.py` | The agents component's declaration (design 0002 §1, design 0004 §4). |
@@ -323,7 +324,7 @@ it is for. The module's docstring says why it is built the way it is.
 | --- | --- |
 | `tools/__init__.py` | Tools for working on Clank: the generated code map and tests page, and the repository's own checks. |
 | `tools/apidoc.py` | Write `docs/API.md`: every route of the Clank API, with its method, path, access level and what it does. |
-| `tools/artifact_libs.py` | The artifact libraries (decision 0135): fetch them into `clank/components/artifacts/lib/`, or check the copy there. |
+| `tools/artifact_libs.py` | The artifact libraries (decision 0135): fetch them into `clank/components/agents/artifact_lib/`, or check the copy |
 | `tools/capture_endpoint.py` | Record what OpenRouter answers Clank's fixed made-up requests (design 0016 §18, design 0015 §14), with the owner's |
 | `tools/check.py` | Run every check that continuous integration runs, in one command: formatting, lint, types, the VS Code extension |
 | `tools/check_colors.py` | Refuse a color or a state's mark written in the console's code, where only the style's elements may be named |

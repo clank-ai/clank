@@ -55,8 +55,9 @@ agent's). So is a box's way to its flow (design 0013 §9): `/flows/...` forwards
 flow, design 0013 §15, and an orchestrator's decision, §16) the same way, and refuses everything else under
 `/flows/`: running, pausing, stopping and changing a flow, deciding proposals, and opening a planning, are the
 owner's. The agent opens files for the owner to see in Clank's VS Code window (design 0018 §7), and starts, follows
-and stops its jobs (design 0021 §6), the same way: `POST /agents/show`, `/agents/jobs`, `/agents/jobs/status` and
-`/agents/jobs/stop` are forwarded, and everything else under `/agents/` refused.
+and stops its jobs (design 0021 §6) and makes its artifacts (§5), the same way: `POST /agents/show`, `/agents/jobs`,
+`/agents/jobs/status`, `/agents/jobs/stop` and `/agents/artifacts` are forwarded, and everything else under `/agents/`
+refused.
 
 Run as its own process (`python -m clank.components.gateway.server`), supervised by the service (`service.py`), so a
 restart of the service or of the console cuts no request in flight. It reads its settings from `config/gateway.json`
@@ -129,10 +130,10 @@ NOT_THE_AGENTS_FLOW = (
     "decision and starts a box's job; nothing else (the owner runs, changes and decides flows, and opens a planning)"
 )
 # What the agent may ask of the agents' part through the gateway (design 0018 §7): opening files for the owner to see.
-AGENTS = {("POST", "show"), ("POST", "jobs"), ("POST", "jobs/status"), ("POST", "jobs/stop")}
+AGENTS = {("POST", "show"), ("POST", "jobs"), ("POST", "jobs/status"), ("POST", "jobs/stop"), ("POST", "artifacts")}
 NOT_THE_AGENTS_SHOW = (
-    "the agent opens files for the owner to see and runs its jobs; nothing else (the window, the review and the "
-    "sessions are the owner's)"
+    "the agent opens files for the owner to see, runs its jobs and makes its artifacts; nothing else (the window, the "
+    "review, the sessions and comments are the owner's)"
 )
 Forward = Callable[[str, str, Any, dict[str, str]], Awaitable[tuple[int, Any]]]
 

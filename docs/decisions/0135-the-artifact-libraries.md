@@ -12,8 +12,9 @@
   are not imported by Clank, only served to its pages and copied into its VS Code extension.
 
 ## Decision
-- Clank keeps four libraries, each at a pinned version, in `clank/components/artifacts/lib/`: **Plotly** (`plotly.js-dist-min`
-  2.35.2, MIT: charts, heatmaps, 3D, sliders), **KaTeX** 0.16.11 (MIT: math, with its auto-render and its fonts),
+- Clank keeps four libraries, each at a pinned version, in `clank/components/agents/artifact_lib/` (the agents
+  component makes the artifacts): **Plotly** (`plotly.js-dist-min` 2.35.2, MIT: charts, heatmaps, 3D, sliders),
+  **KaTeX** 0.16.11 (MIT: math, with its auto-render and its fonts),
   **marked** 14.1.3 (MIT: Markdown) and **Mermaid** 11.4.0 (MIT: diagrams). `LIBRARIES.json` lists each file with its
   version, the URL it was fetched from (jsDelivr's copy of the npm package) and its SHA-256; their license texts are
   kept beside them.

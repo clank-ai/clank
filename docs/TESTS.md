@@ -486,7 +486,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (3), `vscode/test/readout.test.ts` (10) |
 | 4 | The agent panel | none yet |
-| 5 | Artifacts | `tests/tools/test_artifact_libs.py` (2) |
+| 5 | Artifacts | `tests/components/agents/test_artifacts.py` (6), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/tools/test_artifact_libs.py` (2) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (3), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
@@ -679,6 +679,17 @@ Design 0008 §5: a figure the owner marked up goes to the workspace's agent, run
 
 - a marked up figure reaches the agent with its marks in words and the copy attached
 - an annotation is refused with the reason when it cannot be sent
+
+### `tests/components/agents/test_artifacts.py`
+
+Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copies the files the agent named into the artifact's next version (`.clank/artifacts/<name>/v<n>/`), keeping their layout from their common folder, its entry page first; `artifact.json` keeps its title, kind and every version (when, its entry, its files, its note, the session that made it); `agents.artifact_made` is recorded. A Markdown artifact gets Clank's page that renders it with the kept libraries, math included, and so does an SVG one. A name, a kind, a file not the folder's, too many or too large files, or an entry page that names the network, are refused, saying why. The owner's comment on a version goes to the session that made it, in one message naming the artifact and its version, and `agents.artifact_commented` is recorded.
+
+- making one copies its files as a version keeping their layout and records it
+- a markdown or svg artifact gets clanks page that renders it
+- what cannot be an artifact is refused saying why
+- a page that names the network is refused
+- the owners comment goes to the session that made that version
+- the routes make list and read artifacts and take the owners comment
 
 ### `tests/components/agents/test_changes.py`
 

@@ -6,22 +6,25 @@ terminal runs to start it; it is quick, so it is a request, not an operation. A 
 or a program Clank has no adapter for, is refused with the reason (409). `POST /agents/vscode` opens a folder in Clank's
 VS Code window, OpenCode beside the files: an operation (`vscode.py`), since the first time installs the window's
 extensions; from a terminal of VS Code's Remote-SSH, the client's `remote` opens it in the other computer's VS Code
-instead (design 0018 §8). `GET /agents/servers` lists the MCP servers of a workspace's agent with whether it gets each,
-and `POST /agents/servers` gives one or takes it away (design 0004 §10). The session bridge's routes (design 0005 §2):
-`GET /agents/sessions` (the OpenCode servers in a workspace's container, their sessions and what waits), a session's
-messages, one tool call whole (design 0012 §7), sending one, starting a session, stopping one, and replying to a
-permission or a question; the bridge's refusal is a 409 in its own words. The review of the agent's changes (design
-0007): `GET /agents/review` (a workspace's mode, by folder or by name, whether its agents are watched, how many changes
-wait, and what its window was told of its model's last change, design 0013 §7), `POST /agents/review` (switch it), `GET
-/agents/changes` (the newest changes, without the files) and `GET /agents/changes/{id}` (one, with the file before,
-after, and as written). `POST /agents/annotations` sends a figure the owner marked up (design 0008), or a page of a PDF;
-`POST /agents/latex/pages` renders a PDF of a folder as page images to mark up (design 0020 §10), `POST
-/agents/latex/comments` sends the owner's comments on lines of LaTeX files to the agent (§11), and `POST
-/agents/latex/build` builds a document in its workspace's container for LaTeX Workshop (§3). `POST /agents/show` opens
-files of a workspace's folder in the owner's VS Code window (design 0018 §7): the agent's, through the gateway, refused
-(409) while no VS Code window follows the service. The Monitor's flows (design 0012 §6.1): `GET
-/agents/flow/{workspace}` (the flows kept, briefly) and `GET /agents/flow/{workspace}/{session}` (one, whole, or what
-changed after the version `since`, with the session's marks); a session's context totals (design 0012 §4.1): `GET
+instead (design 0018 §8). The agent's jobs (design 0021 §6): `POST /agents/jobs`, `/agents/jobs/status` and
+`/agents/jobs/stop` (the agent's, through the gateway) and `GET /agents/jobs`; its artifacts (§5): `POST
+/agents/artifacts` (the agent's), `GET /agents/artifacts`, `GET /agents/artifacts/{workspace}/{name}` and `POST
+.../comment` (the owner's, to the session that made the version). `GET /agents/servers` lists the MCP servers of a
+workspace's agent with whether it gets each, and `POST /agents/servers` gives one or takes it away (design 0004 §10).
+The session bridge's routes (design 0005 §2): `GET /agents/sessions` (the OpenCode servers in a workspace's container,
+their sessions and what waits), a session's messages, one tool call whole (design 0012 §7), sending one, starting a
+session, stopping one, and replying to a permission or a question; the bridge's refusal is a 409 in its own words. The
+review of the agent's changes (design 0007): `GET /agents/review` (a workspace's mode, by folder or by name, whether its
+agents are watched, how many changes wait, and what its window was told of its model's last change, design 0013 §7),
+`POST /agents/review` (switch it), `GET /agents/changes` (the newest changes, without the files) and `GET
+/agents/changes/{id}` (one, with the file before, after, and as written). `POST /agents/annotations` sends a figure the
+owner marked up (design 0008), or a page of a PDF; `POST /agents/latex/pages` renders a PDF of a folder as page images
+to mark up (design 0020 §10), `POST /agents/latex/comments` sends the owner's comments on lines of LaTeX files to the
+agent (§11), and `POST /agents/latex/build` builds a document in its workspace's container for LaTeX Workshop (§3).
+`POST /agents/show` opens files of a workspace's folder in the owner's VS Code window (design 0018 §7): the agent's,
+through the gateway, refused (409) while no VS Code window follows the service. The Monitor's flows (design 0012 §6.1):
+`GET /agents/flow/{workspace}` (the flows kept, briefly) and `GET /agents/flow/{workspace}/{session}` (one, whole, or
+what changed after the version `since`, with the session's marks); a session's context totals (design 0012 §4.1): `GET
 /agents/context/{workspace}/{session}`; what it does now (design 0012 §5): `GET /agents/now/{workspace}/{session}`. The
 Monitor's Watch for (design 0012 §8): `GET /agents/marks` (the newest marks, and how many are not seen) and `POST
 /agents/marks/seen`. The Monitor's Guide (design 0012 §9): `GET /agents/guide/{workspace}/{session}` (each action with
@@ -165,6 +168,24 @@ class JobRequest(BaseModel):
     minutes: int = Field(240, description="Its time limit, in minutes: then it is ended.")
 
 
+class ArtifactRequest(BaseModel):
+    """An artifact the agent makes, or its next version (design 0021 §5)."""
+
+    workspace: str
+    name: str
+    title: str = ""
+    kind: str = "html"
+    files: list[str]
+    note: str = ""
+
+
+class CommentRequest(BaseModel):
+    """The owner's comment on a version of an artifact."""
+
+    version: int
+    text: str
+
+
 class JobAsk(BaseModel):
     """A job of a workspace's agent (all of them, with no number)."""
 
@@ -217,6 +238,7 @@ def router(agents: "Agents") -> APIRouter:
     from clank.components.agents.service import (
         AgentError,
         AnnotationError,
+        ArtifactError,
         CommentError,
         GuideError,
         JobsError,
@@ -650,6 +672,49 @@ def router(agents: "Agents") -> APIRouter:
             return {"jobs": await anyio.to_thread.run_sync(agents.all_jobs, workspace)}
         except JobsError as error:
             raise ApiError(409, "refused", str(error)) from error
+
+    @routes.post("/agents/artifacts")
+    async def make_artifact(wanted: ArtifactRequest) -> dict[str, Any]:
+        """Make an artifact, or its next version, from files of the workspace's folder (design 0021 §5): the agent's,
+        through the gateway; its version, its page and the words for the model."""
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(
+                lambda: agents.make_artifact(
+                    wanted.workspace, wanted.name, wanted.title, wanted.kind, wanted.files, wanted.note
+                )
+            )
+        except ArtifactError as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
+
+    @routes.get("/agents/artifacts")
+    async def artifacts(workspace: str) -> dict[str, Any]:
+        """A workspace's artifacts, the newest made first."""
+        try:
+            return {"artifacts": await anyio.to_thread.run_sync(agents.artifacts.list, workspace)}
+        except ArtifactError as error:
+            raise ApiError(409, "refused", str(error)) from error
+
+    @routes.get("/agents/artifacts/{workspace}/{name}")
+    async def artifact(workspace: str, name: str) -> dict[str, Any]:
+        """An artifact whole: its title, its kind, and every version with its page and files."""
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(agents.artifacts.one, workspace, name)
+        except ArtifactError as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
+
+    @routes.post("/agents/artifacts/{workspace}/{name}/comment")
+    async def comment_artifact(workspace: str, name: str, wanted: CommentRequest, request: Request) -> dict[str, Any]:
+        """The owner's comment on a version, sent to the session that made it."""
+        actor = client_actor(request.headers.get(CLIENT_HEADER))
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(
+                lambda: agents.artifacts.comment(workspace, name, wanted.version, wanted.text, actor=actor)
+            )
+        except (ArtifactError, SessionError) as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
 
     @routes.get("/agents/changes")
     async def changes(workspace: str | None = None, limit: int = 50) -> dict[str, Any]:

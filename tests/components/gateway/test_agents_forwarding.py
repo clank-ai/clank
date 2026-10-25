@@ -4,7 +4,7 @@ forwards `POST /agents/show` to the service as the client `agent`, and refuses e
 the service comes back with its words, and a service that does not answer is said so.
 
 Design 0021 §6: the agent's jobs are forwarded the same way: starting one, its status, stopping it; listing every
-workspace's jobs is the owner's."""
+workspace's jobs is the owner's. Design 0021 §5: so is making an artifact; commenting on one is the owner's."""
 
 from typing import Any
 
@@ -51,7 +51,8 @@ def test_showing_files_is_forwarded_and_nothing_else_under_agents() -> None:
             assert answer.status_code in (403, 404), url
             if answer.status_code == 403:
                 assert (
-                    "the agent opens files for the owner to see and runs its jobs" in answer.json()["error"]["message"]
+                    "the agent opens files for the owner to see, runs its jobs and makes its artifacts"
+                    in answer.json()["error"]["message"]
                 )
         assert len(asked) == 1, "nothing refused was forwarded"
         job = {"workspace": "myproject", "command": "python sweep.py", "title": "sweep", "minutes": 60}
@@ -60,6 +61,10 @@ def test_showing_files_is_forwarded_and_nothing_else_under_agents() -> None:
             answer = http.post(f"/agents/{path}", json=body)
             assert (answer.status_code, answer.json()) == (200, {"forwarded": path})
         assert [each[1] for each in asked[1:]] == ["jobs", "jobs/status", "jobs/stop"]
+        made = http.post("/agents/artifacts", json={"workspace": "myproject", "name": "sweep", "files": ["a.html"]})
+        assert (made.status_code, made.json()) == (200, {"forwarded": "artifacts"})
+        commented = http.post("/agents/artifacts/myproject/sweep/comment", json={"version": 1, "text": "hi"})
+        assert commented.status_code == 403, "commenting is the owner's"
 
 
 def test_a_refusal_comes_back_with_its_words_and_a_silent_service_is_said_so() -> None:

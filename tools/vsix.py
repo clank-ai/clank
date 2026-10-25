@@ -16,7 +16,7 @@ from typing import Any
 from xml.sax.saxutils import escape, quoteattr
 
 FOLDER = Path(__file__).resolve().parents[1] / "vscode"
-LIBRARIES = Path(__file__).resolve().parents[1] / "clank" / "components" / "artifacts" / "lib"  # decision 0135
+LIBRARIES = Path(__file__).resolve().parents[1] / "clank" / "components" / "agents" / "artifact_lib"  # (0135)
 CONTENT_TYPES = """<?xml version="1.0" encoding="utf-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension=".json" ContentType="application/json" />
