@@ -16,9 +16,11 @@ Builds [design 0021](../design/0021-all-llm-work-in-clank.md) §3, §7 (what is 
   context bar; tested without VS Code), the status bar item, and the panel: a webview in a group under the agent's
   terminal, a quarter of the column, read once a second while it shows; the agent's group kept at the right edge with
   it; `Clank: Show the model's readout`. Extension 0.9.3.
-- [ ] 3. **Seeing images** (§9): the agent's instructions say its model reads no images and `look_at_figure` asks
-  Clank's vision model; OpenCode's time limit for a call of Clank's own MCP server is measured (a slow tool in the
-  live test) and set above the vision model's longest reading.
+- [x] 3. **Seeing images** (§9): the agent's instructions (`images.md`) say its model reads no images and
+  `look_at_figure` asks Clank's vision model, always there; rather than rely on OpenCode's time limit for a tool call
+  (its documented setting is for MCP requests in general, 5 s by default, and today's readings of 8-44 s passed it),
+  `look_at_figure` answers within 45 s that the vision model is still reading, keeps reading in the background, and
+  gives the reading when the same figure and question are asked again. Tests: `test_look.py`, `test_agent_files.py`.
 - [ ] 4. **The faster settings** (§10): a preset may name a `fallback`; when its engine ends on its own (a crash), the
   slot loads the fallback and says why. "frontier 262K fast (trial)" falls back to frontier 262K. Tests: the runtime's.
 - [ ] 5. **The sign-in start** (§11): `clank autostart on|off|status`: an entry in Windows' Startup folder, run without a

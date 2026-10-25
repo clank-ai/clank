@@ -5,7 +5,10 @@ phone. `.clank/` gets a `.gitignore` of its own, so git ignores it.
 
 `look_at_figure(path, question)` (design 0008 §7) lets the agent check a figure it made: the vision model (the gateway's
 role `vision`, at `CLANK_GATEWAY`, loaded on demand) answers the question about the image, and the figure's geometry
-(written when Matplotlib saved it, `.clank/figures/`) is given beside it: its plots, their axes and their lines.
+(written when Matplotlib saved it, `.clank/figures/`) is given beside it: its plots, their axes and their lines. A
+reading that takes longer than a tool call may (OpenCode stops one after a while; design 0021 §9) answers within
+`ANSWER_SECONDS` that the vision model is still reading, and goes on in the background: the same figure and question
+asked again are given its reading, without asking the vision model twice.
 
 The Notion tools (design 0010 §4-§5) ask the gateway's `/notion/` routes, which forward them to Clank's service: the
 reading ones (`notion_databases`, `notion_query`, `notion_page`, `notion_search`, marked read-only, so the planner may
@@ -39,6 +42,7 @@ library only, so it runs in any workspace's container.
 """
 
 import base64
+import concurrent.futures
 import hashlib
 import importlib
 import json
@@ -57,6 +61,13 @@ LARGEST = 50 << 20
 PROTOCOL = "2025-06-18"
 GATEWAY = os.environ.get("CLANK_GATEWAY", "")
 LOOK_SECONDS = 300.0  # the vision model may be loaded first
+ANSWER_SECONDS = float(os.environ.get("CLANK_LOOK_ANSWER_SECONDS") or 45)  # within OpenCode's time limit for a call
+STILL_READING = (
+    "(the vision model is still reading it: call look_at_figure again in a minute with the same path and question, "
+    "and its reading is given then)"
+)
+READINGS: dict[tuple[str, str], "concurrent.futures.Future[str]"] = {}  # by the image's hash and the question
+READERS = concurrent.futures.ThreadPoolExecutor(max_workers=2, thread_name_prefix="clank-look")
 IMAGES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
 ROOT = GATEWAY[: -len("/v1")] if GATEWAY.endswith("/v1") else GATEWAY  # its /notion/ and /flows/ routes are here
 WORKSPACE_NAME = os.environ.get("CLANK_WORKSPACE_NAME", "")
@@ -84,10 +95,12 @@ LOOK = {
     "name": "look_at_figure",
     "description": (
         "Look at a figure of the workspace's folder (PNG or JPEG) and answer a question about it: whether it shows "
-        "what it should, whether labels, legends and scales read well, what a part of it shows. A vision model reads "
-        "the image; the figure's geometry (its plots, axis ranges and scales, lines and their labels), known when "
+        "what it should, whether labels, legends and scales read well, what a part of it shows. Your own model reads "
+        "no images: this tool is how you see one. Clank's vision model reads the image (loaded when needed, so it is "
+        "always there); the figure's geometry (its plots, axis ranges and scales, lines and their labels), known when "
         "Matplotlib saved it here, is given too. Use it after making or changing a figure, before saying it is done. "
-        "Returns the vision model's answer and the geometry."
+        "Returns the vision model's answer and the geometry; when it says the vision model is still reading, call it "
+        "again in a minute with the same path and question."
     ),
     "inputSchema": {
         "type": "object",
@@ -549,8 +562,24 @@ def look(path: str, question: str) -> str:
 
 
 def _seen(data: bytes, kind: str, question: str) -> str:
+    """The vision model's reading, or, past `ANSWER_SECONDS`, that it is still reading (the reading kept for the same
+    image and question asked again)."""
     if not GATEWAY:
         return "(no vision model: Clank gave this server no gateway)"
+    key = (hashlib.sha256(data).hexdigest(), question.strip())
+    reading = READINGS.get(key)
+    if reading is None:
+        reading = READINGS[key] = READERS.submit(_read, data, kind, question)
+    try:
+        said = reading.result(timeout=ANSWER_SECONDS)
+    except concurrent.futures.TimeoutError:
+        return STILL_READING
+    READINGS.pop(key, None)
+    return said
+
+
+def _read(data: bytes, kind: str, question: str) -> str:
+    """Ask the vision model about the image; its answer, or why it gave none."""
     asked = (question.strip() or "Describe this figure: what it plots, and anything that reads badly.") + (
         " Answer briefly and concretely, reading values from the axes."
     )

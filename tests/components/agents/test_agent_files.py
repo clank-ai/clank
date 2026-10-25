@@ -2,7 +2,10 @@
 a terminal), it writes its current MCP server (`phone_mcp.py` and `find_figures.py`) and its instructions into the
 agent's home in the container (`/home/agent/.clank/`), and OpenCode's configuration runs that server and reads those
 instructions: the agent's tools are this Clank's, whatever image its container was made from. The instructions say how
-a file is opened for the user (`show_files`; there is no `code` command in the container)."""
+a file is opened for the user (`show_files`; there is no `code` command in the container).
+
+Design 0021 §9: and that the agent's model reads no images, `look_at_figure` asking Clank's vision model, which is
+always there."""
 
 import json
 from pathlib import Path
@@ -32,6 +35,9 @@ def test_clanks_files_for_the_agent_are_its_mcp_server_and_its_instructions_as_t
     files = found[f"{AGENT_CLANK}/instructions/files.md"]
     for needed in ("show_files", "no `code` command", "find_figures", "Do not read, describe or check"):
         assert needed in files, needed
+    images = found[f"{AGENT_CLANK}/instructions/images.md"]
+    for needed in ("reads no images", "look_at_figure", "never tell the user that no vision model is loaded"):
+        assert needed in images, needed  # design 0021 §9
 
 
 def test_starting_an_agent_writes_them_and_its_configuration_runs_and_reads_them(

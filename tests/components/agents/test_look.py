@@ -1,12 +1,17 @@
 """Design 0008 §7: the agent's tool `look_at_figure` (Clank's own MCP server in the container) asks the vision model,
 through the gateway's role `vision`, about a figure of the folder, and gives the figure's geometry beside the answer
 (its plots, their axes and lines, as Matplotlib's save left them); when the vision model does not answer (vision is
-off), the answer says why and the geometry is still given; a file that is not a PNG or a JPEG is refused."""
+off), the answer says why and the geometry is still given; a file that is not a PNG or a JPEG is refused.
+
+Design 0021 §9: a reading that takes longer than the tool may (OpenCode stops a tool call after a while) answers in
+time that the vision model is still reading, and the same figure and question asked again are given its reading,
+without asking the vision model twice."""
 
 import json
 import subprocess
 import sys
 import threading
+import time
 from collections.abc import Iterator
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -27,9 +32,11 @@ class Gateway(BaseHTTPRequestHandler):
 
     asked: ClassVar[list[dict[str, Any]]] = []
     refusal: ClassVar[str] = ""
+    delay: ClassVar[float] = 0.0
 
     def do_POST(self) -> None:
         Gateway.asked.append(json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0))))
+        time.sleep(Gateway.delay)
         if Gateway.refusal:
             self._json({"error": {"message": Gateway.refusal, "type": "no_engine"}}, 503)
         else:
@@ -49,7 +56,7 @@ class Gateway(BaseHTTPRequestHandler):
 
 @pytest.fixture
 def gateway() -> Iterator[str]:
-    Gateway.asked, Gateway.refusal = [], ""
+    Gateway.asked, Gateway.refusal, Gateway.delay = [], "", 0.0
     port = free_port()
     server = ThreadingHTTPServer(("127.0.0.1", port), Gateway)
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -114,3 +121,39 @@ def test_without_the_vision_model_the_geometry_is_still_given_and_a_non_image_is
     refused = call(folder, gateway, {"path": "notes.txt"})
     assert refused["isError"] is True
     assert "is not a PNG or a JPEG" in refused["content"][0]["text"]
+
+
+def test_a_slow_reading_answers_within_the_tools_time_limit_and_is_given_when_asked_again(
+    folder: Path, gateway: str
+) -> None:
+    Gateway.delay = 3.0  # the vision model reads longer than the tool may take (design 0021 §9)
+    look = {"name": "look_at_figure", "arguments": {"path": "figs/plot.png", "question": "Where is the red dot?"}}
+    server = subprocess.Popen(
+        [sys.executable, str(SERVER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True,
+        creationflags=background_flags(),
+        env={"CLANK_WORKSPACE": str(folder), "CLANK_GATEWAY": gateway, "CLANK_LOOK_ANSWER_SECONDS": "1",
+             "SYSTEMROOT": "C:\\Windows", "PATH": ""},
+    )  # fmt: skip
+    assert server.stdin is not None and server.stdout is not None
+
+    def ask(id: int) -> str:
+        assert server.stdin is not None and server.stdout is not None
+        server.stdin.write(json.dumps({"jsonrpc": "2.0", "id": id, "method": "tools/call", "params": look}) + "\n")
+        server.stdin.flush()
+        reply = json.loads(server.stdout.readline())
+        return str(reply["result"]["content"][0]["text"])
+
+    try:
+        server.stdin.write(json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}) + "\n")
+        server.stdin.flush()
+        server.stdout.readline()
+        first = ask(2)
+        time.sleep(3.5)
+        second = ask(3)
+    finally:
+        server.kill()
+        server.communicate(timeout=10)  # closes its pipes
+    assert "the vision model is still reading it" in first
+    assert "call look_at_figure again" in first
+    assert "The red dot sits at (2.5, 3)." in second
+    assert len(Gateway.asked) == 1, "the second call is given the first's reading, not asked again"
