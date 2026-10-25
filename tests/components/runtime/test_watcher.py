@@ -111,8 +111,10 @@ async def test_a_crash_of_a_preset_that_names_a_fallback_loads_the_fallback_and_
     engines: Rig, tmp_path: Path
 ) -> None:
     kvmem_runs(engines, tmp_path, "--fake-crash-after", "2")  # after its load has ended, even on a busy machine
-    trial = {"title": "fake KVMem trial", "engine": "kvmem-llamacpp", "engine_version": "v0.16.0-rc1", "model": "tiny",
-             "fallback": "fake-kvmem-small", "options": {"context": 8192, "kvmem.budget": 4096}}  # fmt: skip
+    trial: dict[str, object] = {
+        "title": "fake KVMem trial", "engine": "kvmem-llamacpp", "engine_version": "v0.16.0-rc1", "model": "tiny",
+        "fallback": "fake-kvmem-small", "options": {"context": 8192, "kvmem.budget": 4096},
+    }  # fmt: skip
     engines.preset("fake-kvmem-trial", trial)
     async with engines.kernel.operations.running():
         started = await engines.kernel.operations.start(

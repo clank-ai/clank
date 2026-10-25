@@ -164,6 +164,9 @@ on the laptop connected to the PC, leaves the PC's screen out of it
    the PC, with OpenCode beside your files. The first time, Clank installs its extension and the window's others in
    VS Code's server on the PC, and adds its settings to that server's machine settings.
 4. **Lock the PC** (Windows+L) or turn its screens off: it then draws nothing for your work.
+5. **Ready after a restart:** `clank autostart on` starts Clank's service, and Docker through it, when you sign in
+   to Windows (Task Manager's Startup apps lists it as Clank; `clank autostart off` removes it). Over SSH they cannot
+   be started, so after a Windows update's restart the PC needs you to sign in once at it.
 
 From a plain SSH terminal (no VS Code), `c` opens nothing: a VS Code window there would open on the PC's own screen.
 Clank says the command to run on the laptop instead, `code --folder-uri "vscode-remote://ssh-remote+HOST/c:/..."`.

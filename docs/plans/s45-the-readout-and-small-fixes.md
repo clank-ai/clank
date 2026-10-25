@@ -23,11 +23,11 @@ Builds [design 0021](../design/0021-all-llm-work-in-clank.md) §3, §7 (what is 
   gives the reading when the same figure and question are asked again. Tests: `test_look.py`, `test_agent_files.py`.
 - [x] 4. **The faster settings** (§10): a preset may name a `fallback`; when its engine ends on its own (a crash), the
   slot loads the fallback and says why. "frontier 262K fast (trial)" falls back to frontier 262K. Tests: the runtime's.
-- [ ] 5. **The sign-in start** (§11): `clank autostart on|off|status`: an entry in Windows' Startup folder, run without a
+- [x] 5. **The sign-in start** (§11): `clank autostart on|off|status`: an entry in Windows' Startup folder, run without a
   window, that starts Docker Desktop when it is stopped and then Clank's service; shown in Task Manager's startup
   apps like any other. Tests: the entry's command, on, off and status; the docs.
 
 ## Progress
 
 Written 2026-10-25. Tasks 1-2 built the same day (extension 0.9.3; `test/readout.test.ts` holds the rows); the
-panel's place under the agent is to be seen in the owner's window once the service runs the new route.
+panel's place under the agent is to be seen in the owner's window once the service runs the new route. Tasks 3-5 built the same day.

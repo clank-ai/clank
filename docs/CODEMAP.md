@@ -10,6 +10,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/__init__.py` | Clank: a local LLM suite, a coding and research assistant that runs on your own hardware. |
 | `clank/__main__.py` | `python -m clank` runs the `clank` command, for when the command's own script is not on the PATH. |
 | `clank/cli/__init__.py` | The `clank` command: a client of the Clank API, like the console and the VS Code extension (design 0002 §2.15). |
+| `clank/cli/autostart.py` | `clank autostart on\|off\|status` (design 0021 §11): Clank's service, and Docker Desktop through it, started when the |
 | `clank/cli/common.py` | What the commands that are clients of the API share (design 0002 §2.15): connecting to the service as `cli`, |
 | `clank/cli/console.py` | `clank console`: open Clank's console (design 0001 §5, design 0002 §2.15). |
 | `clank/cli/follow.py` | Following an operation from the command line (design 0002 §2.4, §2.15): its steps and the log lines each step |

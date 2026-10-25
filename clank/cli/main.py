@@ -16,6 +16,7 @@ import click
 
 from clank import __version__, registry
 from clank.cli import records
+from clank.cli.autostart import autostart
 from clank.cli.console import console
 from clank.cli.service import serve, status, stop
 
@@ -42,7 +43,7 @@ def main(context: click.Context) -> None:
         context.invoke(console, opening="folder")
 
 
-for command in (serve, stop, status, console, *records.COMMANDS):
+for command in (serve, stop, status, console, autostart, *records.COMMANDS):
     main.add_command(command)
 for component in registry.components():
     if component.commands is not None:
