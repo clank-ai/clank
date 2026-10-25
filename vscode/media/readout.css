@@ -1,0 +1,105 @@
+/* The readout's page (design 0021 §3): small, dense, in the theme's colors. */
+body {
+  margin: 0;
+  padding: 6px 10px;
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  line-height: 1.45;
+}
+
+.title {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.row {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.now {
+  color: var(--vscode-textLink-foreground);
+}
+
+.muted,
+.hint {
+  color: var(--vscode-descriptionForeground);
+}
+
+.hint {
+  margin-top: 4px;
+  font-size: 0.9em;
+}
+
+.graph {
+  font-family: var(--vscode-editor-font-family);
+  letter-spacing: 1px;
+}
+
+.bar {
+  display: flex;
+  height: 10px;
+  margin: 4px 0 2px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.piece {
+  height: 100%;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-size: 0.9em;
+  margin-bottom: 2px;
+}
+
+.key {
+  white-space: nowrap;
+}
+
+.swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-radius: 1px;
+}
+
+.part0 {
+  background: var(--vscode-charts-blue);
+}
+
+.part1 {
+  background: var(--vscode-charts-orange);
+}
+
+.part2 {
+  background: var(--vscode-charts-green);
+}
+
+.part3 {
+  background: var(--vscode-charts-purple);
+}
+
+.part4 {
+  background: var(--vscode-charts-yellow);
+}
+
+.part5 {
+  background: var(--vscode-charts-red);
+}
+
+.free {
+  background: transparent;
+}
+
+.swatch.free {
+  border: 1px solid var(--vscode-panel-border);
+}

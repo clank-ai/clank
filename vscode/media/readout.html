@@ -1,0 +1,28 @@
+<!doctype html>
+<!-- The model's readout (design 0021 §3), under the agent's terminal. The extension fills in the {{...}} fields: the
+     content security policy's sources, the nonce of the script, and the addresses of the style sheet and the script. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src {{source}}; script-src 'nonce-{{nonce}}';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{css}}" />
+    <title>Clank · the model</title>
+  </head>
+  <body>
+    <div id="title" class="title">Reading the model's readout…</div>
+    <div class="row"><span id="speed"></span> <span id="graph" class="graph"></span></div>
+    <div id="now" class="row now"></div>
+    <div id="context" class="row"></div>
+    <div id="bar" class="bar" aria-hidden="true"></div>
+    <div id="legend" class="legend"></div>
+    <div id="exact" class="row muted"></div>
+    <div id="engine" class="row muted"></div>
+    <div id="machine" class="row muted"></div>
+    <div class="hint muted">Ctrl+X, then B, hides OpenCode's own sidebar.</div>
+    <script nonce="{{nonce}}" src="{{script}}"></script>
+  </body>
+</html>

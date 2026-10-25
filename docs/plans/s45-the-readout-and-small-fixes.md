@@ -12,7 +12,7 @@ Builds [design 0021](../design/0021-all-llm-work-in-clank.md) §3, §7 (what is 
   and total, use), and the drafted tokens accepted as the engine's log last said (`spec_stats`, read by the KVMem
   adapter from the newest launch's log; absent for an engine that does not say it). A folder with no workspace, or a
   workspace with no session yet, answers what there is. Tests: `tests/components/agents/test_readout.py`.
-- [ ] 2. **The readout in VS Code** (§3): `core/readout.ts` (the status line, the panel's rows, the speed graph, the
+- [x] 2. **The readout in VS Code** (§3): `core/readout.ts` (the status line, the panel's rows, the speed graph, the
   context bar; tested without VS Code), the status bar item, and the panel: a webview in a group under the agent's
   terminal, a quarter of the column, read once a second while it shows; the agent's group kept at the right edge with
   it; `Clank: Show the model's readout`. Extension 0.9.3.
@@ -27,4 +27,5 @@ Builds [design 0021](../design/0021-all-llm-work-in-clank.md) §3, §7 (what is 
 
 ## Progress
 
-Written 2026-10-25.
+Written 2026-10-25. Tasks 1-2 built the same day (extension 0.9.3; `test/readout.test.ts` holds the rows); the
+panel's place under the agent is to be seen in the owner's window once the service runs the new route.

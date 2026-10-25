@@ -18,7 +18,8 @@
 // keyboard left with the agent, each as VS Code opens its kind (a figure in the annotator); a path the agent prints
 // under `/workspace/` is a link in its terminal, opened the same way. "Annotate this PDF" (design 0020 §10,
 // `core/pdf.ts`): its pages rendered by the service, the one picked opened in the annotator beside the agent. Comments
-// for the agent on lines of .tex files (design 0020 §11, `comments.ts`), sent together.
+// for the agent on lines of .tex files (design 0020 §11, `comments.ts`), sent together. The model's readout (design
+// 0021 §3, `readout.ts`): its speed, context and phase in the status bar, and a panel under the agent's terminal.
 // Everything else is in `core/`, which is tested without VS Code. What the status bar shows is returned from
 // `activate`, for the suite that runs inside VS Code (decision 0029).
 
@@ -36,6 +37,7 @@ import { type GateAction, type GateButton, type GatePresenter, Gates, type Side 
 import type { Question } from "./core/kinds";
 import type { Choice, Presenter } from "./core/presenter";
 import { FIGURE_EDITOR, FigureEditor } from "./figures";
+import { isReadoutGroup, ReadoutPanel } from "./readout";
 import { implement, type ImplementMode, type ImplementPresenter, lenses, planPath, relativePlan } from "./core/plans";
 import { NotionReviews, type TreeNode } from "./core/notion";
 import { type ChangeView, type ReviewPresenter, Reviews } from "./core/review";
@@ -253,11 +255,12 @@ function questionOf(tab: vscode.Tab | undefined): string | undefined {
   return uri?.scheme === REVIEW ? uri.path.split("/")[1] : undefined;
 }
 
-/** The editor group of the files: never the one of the agent's terminal (it sits beside the files). */
+/** The editor group of the files: never the one of the agent's terminal (it sits beside the files), nor the
+ * readout's under it. */
 function filesColumn(): vscode.ViewColumn {
   const groups = vscode.window.tabGroups.all;
   const terminal = groups.find((group) => group.tabs.some((tab) => tab.input instanceof vscode.TabInputTerminal));
-  const files = groups.find((group) => group !== terminal);
+  const files = groups.find((group) => group !== terminal && !(group.tabs.length && isReadoutGroup(group)));
   if (files) {
     return files.viewColumn;
   }
@@ -472,6 +475,7 @@ async function startAgent(
   connect: () => ClankClient | undefined,
   presenter: VsCodePresenter,
   quiet: boolean,
+  started?: () => void,
 ): Promise<boolean> {
   const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (!folder) {
@@ -516,6 +520,7 @@ async function startAgent(
     isTransient: true,
   });
   terminal.show();
+  started?.();
   return true;
 }
 
@@ -540,12 +545,18 @@ const FOCUS_GROUP = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Se
 );
 
 /** The agent at the right edge of the editor area: its group moved there when it is not (a window from before, or a
- * group opened to its right), the keyboard given back to the group that had it. */
+ * group opened to its right), the keyboard given back to the group that had it. The readout's group under it (design
+ * 0021 §3) is not counted, nor is anything moved while it is made. */
 class AgentOnTheRight {
   private moving = false;
 
+  constructor(private readonly arranging: () => boolean = () => false) {}
+
   async keep(): Promise<void> {
-    const groups = vscode.window.tabGroups.all;
+    if (this.arranging()) {
+      return;
+    }
+    const groups = vscode.window.tabGroups.all.filter((group) => !isReadoutGroup(group));
     const agent = groups.find((group) =>
       group.tabs.some((tab) => tab.input instanceof vscode.TabInputTerminal && agentTerminalOpen([], [tab.label])),
     );
@@ -634,7 +645,7 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
     }
     const mode: ImplementMode = chosen === "current" ? (reviews.view?.mode ?? "review") : chosen;
     const opening = async (): Promise<void> => {
-      await startAgent(connect, presenter, false);
+      await startAgent(connect, presenter, false, agentStarted);
     };
     await implement(
       client,
@@ -643,7 +654,19 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
       mode,
     );
   };
-  const onTheRight = new AgentOnTheRight();
+  const readoutItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 95);
+  readoutItem.command = "clank.showReadout";
+  const readout = new ReadoutPanel(context.extensionUri, readoutItem, connect, (column) =>
+    column <= FOCUS_GROUP.length ? vscode.commands.executeCommand(FOCUS_GROUP[column - 1]) : Promise.resolve(),
+  );
+  const withAgent = (): boolean =>
+    vscode.workspace.getConfiguration("clank").get<boolean>("readout.openWithAgent") ?? true;
+  const agentStarted = (): void => {
+    if (withAgent()) {
+      setTimeout(() => void readout.show(), 1500); // once the agent's group is placed
+    }
+  };
+  const onTheRight = new AgentOnTheRight(() => readout.arranging);
   const latexComments = new LatexComments(connect, presenter);
   context.subscriptions.push(
     vscode.window.tabGroups.onDidChangeTabGroups((event) => {
@@ -660,7 +683,10 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
     vscode.commands.registerCommand("clank.dockerStart", () => controller.docker("start")),
     vscode.commands.registerCommand("clank.dockerStop", () => controller.docker("stop")),
     vscode.commands.registerCommand("clank.reconnect", () => controller.reconnect()),
-    vscode.commands.registerCommand("clank.openAgent", () => startAgent(connect, presenter, false)),
+    vscode.commands.registerCommand("clank.openAgent", () => startAgent(connect, presenter, false, agentStarted)),
+    vscode.commands.registerCommand("clank.showReadout", () => readout.show()),
+    readoutItem,
+    readout,
     vscode.commands.registerCommand("clank.acceptChange", (uri?: vscode.Uri) => controller.acceptChange(reviewedBy(uri))),
     vscode.commands.registerCommand("clank.rejectChange", (uri?: vscode.Uri) => controller.rejectChange(reviewedBy(uri))),
     vscode.commands.registerCommand("clank.switchReview", () => controller.switchReview()),
@@ -718,9 +744,11 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
   );
   clankItem.show();
   dockerItem.show();
+  readoutItem.show();
   controller.start();
+  readout.start();
   if (vscode.workspace.getConfiguration("clank").get<boolean>("agent.openOnStart")) {
-    void startOnOpen(() => startAgent(connect, presenter, true)).then(() => onTheRight.keep());
+    void startOnOpen(() => startAgent(connect, presenter, true, agentStarted)).then(() => onTheRight.keep());
   } else {
     void onTheRight.keep();
   }

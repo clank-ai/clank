@@ -484,7 +484,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | Where Clank stands | none yet |
 | 2 | What the review found | none yet |
-| 3 | The model's readout | `tests/components/agents/test_readout.py` (3) |
+| 3 | The model's readout | `tests/components/agents/test_readout.py` (3), `vscode/test/readout.test.ts` (7) |
 | 4 | The agent panel | none yet |
 | 5 | Artifacts | none yet |
 | 6 | Jobs: long work for the agent | none yet |
@@ -4555,6 +4555,18 @@ Design 0009 §7, §8: a Markdown file whose header says `kind: plan` (the same c
 - a window that never comes is waited for half a minute, then the plan is offered once more and the refusal said
 - a look at the servers that fails is one more look, not the end of the wait
 - the retry happens once, a declined offer stops, and other refusals are said as they come
+
+### `vscode/test/readout.test.ts`
+
+Design 0021 §3: the model's readout in VS Code. The status bar says the speed, the context used of the window and the phase ("63 tok/s · 161K/262K · thinking"), and with no session yet the model and its state. The panel's rows: the model and its speed options; writing speed (live while it writes, else the last step's), the prompt's reading speed for the last step, the drafted tokens accepted, and the recent steps as a small graph; what it does now and for how long (a tool or a call by its name); the context used of the window with the compaction line and the cache's share, part by part as a bar whose free room is the rest of the window; how much is attended exactly on the GPU and how much retrieved; whether the engine holds this session's conversation; the GPU's memory and use. A part the service could not read says so, never a number.
+
+- tokens are written as people read them
+- the speed graph scales the recent steps between the lowest and highest bar
+- the status bar says the speed, the context used of the window and the phase
+- the panel shows the model, its speed, what it does now, the context part by part, and the machine
+- the reading speed is the last step's, once its prompt was read
+- a tool or a call is named, and an engine holding another conversation is said with its cost
+- parts the service could not read say so, never a number
 
 ### `vscode/test/review.test.ts`
 

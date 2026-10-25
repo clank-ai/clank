@@ -9,6 +9,8 @@ where the service answers and the local token from CLANK_HOME each time it conne
 | --- | --- |
 | Status bar, left | `Clank`: whether the service runs, and how many questions wait for you (click: the questions) |
 | Status bar, left | `Docker`: its state (click: start or stop it) |
+| Status bar, left | The model's readout (design 0021 §3): its writing speed, the context used of its window and what it does now, e.g. `63 tok/s · 161K/262K · thinking` (click: the panel) |
+| Editor, under the agent | **Clank · the model**: the model and its speed settings; writing speed (live), the last prompt's reading speed, the drafted tokens accepted and recent steps as a graph; what it does now; the context window part by part with the compaction line and the cache's share; what is attended exactly on the GPU and what is retrieved; whether the engine holds this session's conversation; the GPU's memory and use. It opens with the agent (`clank.readout.openWithAgent`) or from `Clank: Show the model's readout` |
 | Status bar, left | `Plan`, `Review` or `Auto`: the Planner, or how the agent of the window's folder changes files (click: pick one) |
 | Editor | On an open plan (a Markdown file whose header says `kind: plan`): **▶ Implement with Review**, **▶ Implement with Auto**, and **↻ Continue (k of m steps done)** when some checklist items are done; each hands the plan to the agent (design 0009) |
 | Status bar, left | `Completion`: on and served (check), on but its model not running (warning), or off (click: turn it off or on) |
@@ -24,6 +26,7 @@ where the service answers and the local token from CLANK_HOME each time it conne
 | Commands (Ctrl+Shift+P) | `Clank: Questions waiting for you`, `Clank: Start Docker`, `Clank: Stop Docker`, `Clank: Start or stop Docker`, `Clank: Connect to the Clank service again`, `Clank: Accept the change`, `Clank: Reject the change`, `Clank: Pick the mode: Plan, Review or Auto`, `Clank: Implement the plan with Review`, `Clank: Implement the plan with Auto`, `Clank: Continue implementing the plan`, `Clank: Turn completion on or off`, `Clank: Review the Notion changes` |
 | Setting | `clank.home`: CLANK_HOME, when it is not the environment's or `~/.clank` |
 | Setting | `clank.changes.showInAuto`: in auto mode, open each change the agent makes (on by default) |
+| Setting | `clank.readout.openWithAgent`: open the model's readout under the agent when it starts (on by default) |
 
 What you do here is recorded as you (vscode), and every other client shows it.
 

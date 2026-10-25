@@ -357,12 +357,14 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/core/pdf.ts` | "Annotate this PDF" (design 0020 §10): the service renders a PDF of the window's folder as pages (built by Clank first |
 | `vscode/src/core/plans.ts` | Plans in the editor (design 0009 §7, §8): a Markdown file whose header says `kind: plan` gets buttons that hand it to |
 | `vscode/src/core/presenter.ts` | What the controller asks of VS Code, and nothing more: the two status bar items, a question shown with its options, |
+| `vscode/src/core/readout.ts` | The model's readout (design 0021 §3): what the service's `GET /agents/readout` answers for the window's folder, put |
 | `vscode/src/core/review.ts` | Reviewing the agent's changes in VS Code (design 0007 §6). A question about a change in the window's folder opens as |
 | `vscode/src/core/show.ts` | The files the agent opens for the owner (design 0018 §7): the service's event `agents.shown` names a workspace's |
 | `vscode/src/core/state.ts` | What the extension shows, as last read: the service, Docker, the questions waiting, and the runtime's slots and |
 | `vscode/src/extension.ts` | The Clank extension's entry point: the thin glue between VS Code and the controller (design 0002 §3.2, M0.6). It |
 | `vscode/src/figures.ts` | Clank's figure annotator in VS Code (design 0008 §6): a custom editor for PNG and JPEG files that shows the |
 | `vscode/src/notion.ts` | The Notion changes in VS Code (design 0010 §6), the glue over `core/notion.ts`: the "Notion changes" view (a tree in |
+| `vscode/src/readout.ts` | The model's readout in VS Code (design 0021 §3): the status bar item and the panel under the agent's terminal. The |
 | `vscode/test/agent.test.ts` | Design 0004 §5: in Clank's VS Code window the agent starts beside the files: for the folder the window has open, |
 | `vscode/test/annotator.page.test.ts` | Design 0008 §6, in a real browser: the annotator page (media/annotator.html, as VS Code's webview shows it) in |
 | `vscode/test/browser.ts` | Headless Edge for the tests of the extension's pages (the annotator, the Notion review): a page opened from a file and |
@@ -380,6 +382,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/notion.test.ts` | Design 0010 §6: the Notion changes view lists each batch waiting with its databases and their entries (marked new, |
 | `vscode/test/pdf.test.ts` | Design 0020 §10: "Annotate this PDF" asks the service for a PDF's pages (from the window's folder), then opens the |
 | `vscode/test/plans.test.ts` | Design 0009 §7, §8: a Markdown file whose header says `kind: plan` (the same cases as Clank's own `is_plan` and |
+| `vscode/test/readout.test.ts` | Design 0021 §3: the model's readout in VS Code. The status bar says the speed, the context used of the window and the |
 | `vscode/test/review.test.ts` | Design 0007 §6: a change the agent asks for, in the window's folder, opens as a diff beside the files instead of a |
 | `vscode/test/show.test.ts` | Design 0018 §7.2 and §7.3: the files the agent opened (the event `agents.shown`) are read from the event with their |
 | `vscode/test/state.test.ts` | Design 0002 §1 and §2.3: what the extension shows is read from the API and kept current by events: a question's |
