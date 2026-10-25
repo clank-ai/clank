@@ -30,6 +30,8 @@ COPY edge.py bridge.py phone_mcp.py find_figures.py /opt/clank/
 # Every Python finds Clank's sitecustomize: when Matplotlib saves a raster figure in the folder, its geometry is written
 # under .clank/figures/ for the annotator (design 0008 §3); nothing else changes, and nothing at all without Matplotlib.
 COPY python/ /opt/clank/python/
+# Clank's instructions to every agent (design 0020 §13: the LaTeX rules the checks enforce); OpenCode reads each.
+COPY instructions/ /opt/clank/instructions/
 
 # A workspace's own software is installed into ~/.venv (design 0004 §10): first on the PATH, so the agent, its terminal
 # and the MCP servers it starts find it without being told; and `python` is Python 3 with or without it. The folder is

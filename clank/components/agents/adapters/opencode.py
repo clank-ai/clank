@@ -25,7 +25,8 @@ server's tools only when the server's last check marks them read-only, each name
 (the owner, 2026-10-17): every rule allows or denies, so anything else, and a call repeated (`doom_loop`), is refused
 at once, and the `explore` helper reads under the same rules. An edit the planner is denied is never asked about, so
 auto mode cannot answer it. `/implement <plan>` is Clank's command: `build` carries the plan out
-with the instructions of `prompts/implement.md` (§5).
+with the instructions of `prompts/implement.md` (§5). Every agent also reads Clank's instructions in the container
+(`/opt/clank/instructions/`, from the sandbox image), the LaTeX rules first among them (design 0020 §13).
 
 It compacts a session once a step's total (its prompt and its answer) reaches the window it is told less the output
 limit, counted up to 32,000 (its `session/overflow.ts`), and a compaction keeps a summary and the newest turns up to
@@ -69,6 +70,9 @@ GUARDS = ("*>*", "*$(*", "*`*", "*--output*")
 OUTPUT_COUNTED = 32_000  # the output limit OpenCode keeps room for, at most (its OUTPUT_TOKEN_MAX)
 KEPT_MOST, KEPT_LEAST = 15_000, 2_000  # what a compaction keeps of the newest turns, at most and at least
 UNSAFE = re.compile(r"[^a-zA-Z0-9_-]")  # what OpenCode replaces in an MCP tool's name
+
+
+CLANK_INSTRUCTIONS = "/opt/clank/instructions/*.md"  # Clank's to every agent, in the container (design 0020 §13)
 
 
 def prompt(name: str) -> str:
@@ -176,6 +180,7 @@ class OpenCode(AgentProgram):
             "autoupdate": False,
             "share": "disabled",
             "permission": {"external_directory": "deny", "webfetch": "deny", "websearch": "deny", "edit": "ask"},
+            "instructions": [CLANK_INSTRUCTIONS],
             "agent": {
                 "plan": {"disable": True},
                 "planner": {
