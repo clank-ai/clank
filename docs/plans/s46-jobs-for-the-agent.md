@@ -12,7 +12,7 @@ task starts with a failing test; each ends with a commit pushed to `main`.
   other components through `workspaces/service.py`; `flows/jobs.py` keeps what is a flow's (its folder, what a box is
   told). Every job runs at the lowest CPU priority (`nice -n 19`), so the model keeps its speed. Tests: flows' job
   tests unchanged; the start's command line.
-- [ ] 2. **The agent's jobs in the service** (`agents/jobs.py`): start (a number, its folder
+- [x] 2. **The agent's jobs in the service** (`agents/jobs.py`): start (a number, its folder
   `.clank/jobs/agent/<n>/`, its title, command, minutes and the session that started it in `job.json` beside the
   runner's files), list, one (state, time, the log's last lines, the files written) and stop; a watcher ends a job past
   its minutes and, when one ends, records `agents.job_ended` and tells the session that started it in a message (how

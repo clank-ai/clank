@@ -57,6 +57,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/estimate.py` | The context's parts, estimated (design 0012 §4.2, §4.3, §4.6; decisions 0051, 0052 and 0067): what fills a |
 | `clank/components/agents/figures.py` | A mark on a figure, in words (design 0008 §4): what an agent is told about each mark the owner drew. |
 | `clank/components/agents/guide.py` | The Guide (design 0012 §9.1-§9.7, §11 steps 9 to 11): what the owner, or a Watch for rule, does to the session the |
+| `clank/components/agents/jobs.py` | The agent's jobs (design 0021 §6): a long computation the agent the owner talks to starts and goes on from, instead |
 | `clank/components/agents/kinds.py` | The agents component's kinds of record (design 0004 §5): the VS Code window's settings, `config/vscode.json`, what |
 | `clank/components/agents/latex/__init__.py` | LaTeX with the agent (design 0020): the checks on every LaTeX change, the builds in the container, and the marks on |
 | `clank/components/agents/latex/answers.py` | Every number answered (design 0020 §12): after a numbered message to the agent (comments on the LaTeX source, marks |

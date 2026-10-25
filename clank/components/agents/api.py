@@ -156,6 +156,22 @@ class ShowRequest(BaseModel):
     why: str = ""
 
 
+class JobRequest(BaseModel):
+    """A long computation the agent starts as a job in its workspace (design 0021 §6)."""
+
+    workspace: str
+    command: str
+    title: str = ""
+    minutes: int = Field(240, description="Its time limit, in minutes: then it is ended.")
+
+
+class JobAsk(BaseModel):
+    """A job of a workspace's agent (all of them, with no number)."""
+
+    workspace: str
+    job: int | None = None
+
+
 class SeenRequest(BaseModel):
     """Marks of the Monitor's Watch for seen: these, by their ids, or every mark of a session (or of a workspace)."""
 
@@ -203,6 +219,7 @@ def router(agents: "Agents") -> APIRouter:
         AnnotationError,
         CommentError,
         GuideError,
+        JobsError,
         ModeError,
         PageError,
         ReviewError,
@@ -589,6 +606,50 @@ def router(agents: "Agents") -> APIRouter:
         except ShowError as error:
             raise ApiError(409, "refused", str(error)) from error
         return found
+
+    @routes.post("/agents/jobs")
+    async def start_job(wanted: JobRequest) -> dict[str, Any]:
+        """Start a long computation as a job in a workspace's container (design 0021 §6): the agent's, through the
+        gateway; its number, its folder, and the words for the model. The session told when it ends is the workspace's
+        newest."""
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(
+                lambda: agents.start_job(wanted.workspace, wanted.command, wanted.title, wanted.minutes)
+            )
+        except JobsError as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
+
+    @routes.post("/agents/jobs/status")
+    async def job_status(wanted: JobAsk) -> dict[str, Any]:
+        """A job of the workspace's, whole (its log's last lines, the files it wrote), or all of them briefly: the
+        agent's, through the gateway."""
+        try:
+            if wanted.job is None:
+                return {"jobs": await anyio.to_thread.run_sync(agents.jobs.list, wanted.workspace)}
+            found: dict[str, Any] = await anyio.to_thread.run_sync(agents.jobs.one, wanted.workspace, wanted.job)
+        except JobsError as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
+
+    @routes.post("/agents/jobs/stop")
+    async def stop_job(wanted: JobAsk) -> dict[str, Any]:
+        """End a job and everything it started."""
+        if wanted.job is None:
+            raise ApiError(422, "invalid", "name the job to stop")
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(agents.jobs.stop, wanted.workspace, wanted.job)
+        except JobsError as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
+
+    @routes.get("/agents/jobs")
+    async def jobs(workspace: str = "") -> dict[str, Any]:
+        """The jobs of a workspace's agent, or of every workspace's, newest first (design 0021 §6)."""
+        try:
+            return {"jobs": await anyio.to_thread.run_sync(agents.all_jobs, workspace)}
+        except JobsError as error:
+            raise ApiError(409, "refused", str(error)) from error
 
     @routes.get("/agents/changes")
     async def changes(workspace: str | None = None, limit: int = 50) -> dict[str, Any]:

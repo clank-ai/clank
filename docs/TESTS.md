@@ -487,7 +487,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (3), `vscode/test/readout.test.ts` (9) |
 | 4 | The agent panel | none yet |
 | 5 | Artifacts | none yet |
-| 6 | Jobs: long work for the agent | `tests/components/workspaces/test_jobs_runner.py` (2) |
+| 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (5), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
 | 9 | Seeing images | `tests/components/agents/test_agent_files.py` (2), `tests/components/agents/test_look.py` (3) |
@@ -647,6 +647,16 @@ Design 0018 §7.5: each time Clank starts an agent in a workspace (`prepare`, an
 
 - clanks files for the agent are its mcp server and its instructions as this clank has them
 - starting an agent writes them and its configuration runs and reads them
+
+### `tests/components/agents/test_agent_jobs.py`
+
+Design 0021 §6: the agent the owner talks to starts a long computation as a job. A job is numbered in its workspace, its folder `.clank/jobs/agent/<n>/` in the folder, its title, command, minutes and the session that started it kept in its `job.json` beside the runner's files; it runs in the container through the runner. A job is running once its process id is written, and ended once its exit is; one is listed, or read whole with its log's last lines and the files it wrote, and stopped. The watcher ends a job past its minutes, and when one ends records `agents.job_ended` once and tells the session that started it, in a message saying how it ended, its log's end and the files it wrote. The agent reaches them through the gateway: start, status and stop.
+
+- a job is numbered its files kept in the folder and started in the container
+- a job is running once its process is written and ended once its exit is
+- an ended job is recorded once and the session that started it told
+- a job past its minutes is ended and one is stopped when asked
+- the routes start follow and stop a job and list every workspaces
 
 ### `tests/components/agents/test_agent_servers.py`
 

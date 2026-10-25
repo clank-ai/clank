@@ -67,6 +67,9 @@ from clank.components.agents.annotations import Annotations
 from clank.components.agents.context import totals
 from clank.components.agents.guide import Guide, Ruled
 from clank.components.agents.guide import GuideError as GuideError  # for the routes
+from clank.components.agents.jobs import EVENT_TYPES as JOB_EVENTS
+from clank.components.agents.jobs import AgentJobs
+from clank.components.agents.jobs import JobsError as JobsError  # for the routes
 from clank.components.agents.kinds import MonitorSettings, OpenCodeSettings
 from clank.components.agents.latex.answers import Answers
 from clank.components.agents.latex.checks import EVENT_TYPES as LATEX_EVENTS
@@ -141,6 +144,7 @@ EVENT_TYPES = [
     *MODEL_EVENTS,
     *LATEX_EVENTS,
     *COMMENT_EVENTS,
+    *JOB_EVENTS,
 ]
 ROLE = "agent"
 SESSION_MODEL = {"providerID": PROVIDER, "modelID": ROLE}  # the model a message names: the gateway's role
@@ -188,6 +192,7 @@ class Agents:
         self.review.modes = self.modes
         self.annotations = Annotations(kernel, self.sessions, self.reads_images, self._read_image)
         self.showing = Showing(kernel)  # files opened for the owner (design 0018 §7)
+        self.jobs = AgentJobs(kernel, self.sessions)  # long computations the agent starts (design 0021 §6)
         self.pages = PageMarks(self.review.latex.run)  # a PDF's pages to mark up (design 0020 §10)
         self.answers = Answers(self.sessions)  # every number answered (design 0020 §12)
         self.annotations.pages, self.annotations.answers = self.pages, self.answers
@@ -217,6 +222,7 @@ class Agents:
         async with anyio.create_task_group() as group:
             group.start_soon(self.review.watchers.run)
             group.start_soon(self.flows.run)
+            group.start_soon(self.jobs.run)
             group.start_soon(self.marks.run, self.flows, slot_facts(self.kernel))
 
     def monitor_settings(self) -> MonitorSettings:
@@ -244,6 +250,21 @@ class Agents:
         moment = self.kernel.clock.now().timestamp()
         found = now(session, doing, self.flows.view(workspace, session), gateway.routes(), gateway.facts, guard, moment)
         return {"workspace": workspace, **found}
+
+    def start_job(self, workspace: str, command: str, title: str, minutes: int) -> dict[str, Any]:
+        """Start the agent's job (design 0021 §6; `jobs.py`), the session told when it ends being the workspace's
+        newest kept, the one that asked."""
+        kept = self.flows.flows(workspace)
+        session = str(kept[0].get("session") or "") if kept else ""
+        return self.jobs.start(workspace, command, title, minutes, session=session)
+
+    def all_jobs(self, workspace: str = "") -> list[dict[str, Any]]:
+        """The jobs of a workspace's agent, or of every workspace's (`jobs.py`), newest first."""
+        if workspace:
+            return self.jobs.list(workspace)
+        workspaces: Workspaces = self.kernel.parts["workspaces"]
+        found = [job for record in workspaces.records() for job in self.jobs.list(str(record["name"]))]
+        return sorted(found, key=lambda job: -float(job["started"]))
 
     def readout(self, folder: str, session: str = "") -> dict[str, Any]:
         """The model's readout for a folder (design 0021 §3; `readout.py`): its workspace's session (the one named,

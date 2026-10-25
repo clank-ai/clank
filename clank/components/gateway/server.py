@@ -54,8 +54,9 @@ agent's). So is a box's way to its flow (design 0013 §9): `/flows/...` forwards
 (`FLOWS`: reading it, proposing a box, submitting its proposals, a VERIFY's verdict, a planning's draft of a whole
 flow, design 0013 §15, and an orchestrator's decision, §16) the same way, and refuses everything else under
 `/flows/`: running, pausing, stopping and changing a flow, deciding proposals, and opening a planning, are the
-owner's. The agent opens files for the owner to see in Clank's VS Code window (design 0018 §7) the same way: `POST
-/agents/show` is forwarded, and everything else under `/agents/` refused.
+owner's. The agent opens files for the owner to see in Clank's VS Code window (design 0018 §7), and starts, follows
+and stops its jobs (design 0021 §6), the same way: `POST /agents/show`, `/agents/jobs`, `/agents/jobs/status` and
+`/agents/jobs/stop` are forwarded, and everything else under `/agents/` refused.
 
 Run as its own process (`python -m clank.components.gateway.server`), supervised by the service (`service.py`), so a
 restart of the service or of the console cuts no request in flight. It reads its settings from `config/gateway.json`
@@ -128,9 +129,10 @@ NOT_THE_AGENTS_FLOW = (
     "decision and starts a box's job; nothing else (the owner runs, changes and decides flows, and opens a planning)"
 )
 # What the agent may ask of the agents' part through the gateway (design 0018 §7): opening files for the owner to see.
-AGENTS = {("POST", "show")}
+AGENTS = {("POST", "show"), ("POST", "jobs"), ("POST", "jobs/status"), ("POST", "jobs/stop")}
 NOT_THE_AGENTS_SHOW = (
-    "the agent opens files for the owner to see; nothing else (the window, the review and the sessions are the owner's)"
+    "the agent opens files for the owner to see and runs its jobs; nothing else (the window, the review and the "
+    "sessions are the owner's)"
 )
 Forward = Callable[[str, str, Any, dict[str, str]], Awaitable[tuple[int, Any]]]
 
@@ -463,7 +465,7 @@ def create_gateway(
         if (request.method, rest) not in AGENTS:
             return JSONResponse({"error": {"code": "forbidden", "message": NOT_THE_AGENTS_SHOW}}, status_code=403)
         if agents is None:
-            said = "Showing files is reached through the Clank service, which this gateway was not given"
+            said = "Showing files and jobs are reached through the Clank service, which this gateway was not given"
             return JSONResponse({"error": {"code": "unavailable", "message": said}}, status_code=503)
         body = await request.json() if await request.body() else None
         status, found = await agents(request.method, rest, body, dict(request.query_params))
