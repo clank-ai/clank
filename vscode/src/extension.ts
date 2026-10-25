@@ -39,7 +39,7 @@ import type { Choice, Presenter } from "./core/presenter";
 import { ArtifactPanels } from "./artifacts";
 import type { ArtifactMade } from "./core/artifacts";
 import { FIGURE_EDITOR, FigureEditor } from "./figures";
-import { isReadoutGroup, ReadoutPanel } from "./readout";
+import { closeEmptyGroups, isReadoutGroup, ReadoutPanel } from "./readout";
 import { implement, type ImplementMode, type ImplementPresenter, lenses, planPath, relativePlan } from "./core/plans";
 import { NotionReviews, type TreeNode } from "./core/notion";
 import { type ChangeView, type ReviewPresenter, Reviews } from "./core/review";
@@ -556,6 +556,7 @@ async function startAgent(
     // one OpenCode window per workspace: the service closed the others, so their tabs go too
     vscode.window.terminals.filter((each) => each.name.startsWith(AGENT_TERMINAL)).forEach((each) => each.dispose());
   }
+  await closeEmptyGroups(); // a reloaded window's empty places, so the terminal goes beside the files
   const terminal = vscode.window.createTerminal({
     name: found.terminal.name,
     shellPath: found.terminal.program,
@@ -715,7 +716,7 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
     vscode.workspace.getConfiguration("clank").get<boolean>("readout.openWithAgent") ?? true;
   const agentStarted = (): void => {
     if (withAgent()) {
-      setTimeout(() => void readout.show(), 1500); // once the agent's group is placed
+      setTimeout(() => void readout.show(true), 1500); // once the agent's group is placed, under it
     }
   };
   const onTheRight = new AgentOnTheRight(() => readout.arranging);

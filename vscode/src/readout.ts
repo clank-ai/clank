@@ -3,7 +3,10 @@
 // own below the agent's (a quarter of the right column's height), draws the rows `core/readout.ts` makes, read once a
 // second while it shows. A click on the item, or `Clank: Show the model's readout`, opens the panel or brings it
 // forward; it opens by itself with the agent when `clank.readout.openWithAgent` is on. Its group is neither the files'
-// nor counted when the agent's group is kept at the right edge (`isReadoutGroup`).
+// nor counted when the agent's group is kept at the right edge (`isReadoutGroup`). When the agent starts afresh the
+// panel is made again under its new terminal (`show(true)`), and the groups a reloaded window left empty are closed
+// first (`closeEmptyGroups`): neither the terminal nor the panel is revived, so their places stayed, and the new
+// terminal went into a corner of them (2026-10-25).
 
 import { randomBytes } from "node:crypto";
 
@@ -20,6 +23,17 @@ const SHARE = 0.25; // of the right column's height
 /** Whether an editor group holds only the readout (or nothing yet: the group made for it, before its panel opens). */
 export function isReadoutGroup(group: vscode.TabGroup): boolean {
   return group.tabs.every((tab) => tab.input instanceof vscode.TabInputWebview && tab.input.viewType.endsWith(READOUT));
+}
+
+/** Close the editor groups that hold nothing, but the first: the files' place, left of the agent's, kept even empty
+ * (closing it too left the agent and the readout alone in the window, the files then opened in the readout's group). */
+export async function closeEmptyGroups(): Promise<void> {
+  const empty = vscode.window.tabGroups.all.filter(
+    (group) => group.tabs.length === 0 && group.viewColumn !== vscode.ViewColumn.One,
+  );
+  if (empty.length) {
+    await vscode.window.tabGroups.close(empty, true);
+  }
 }
 
 interface Layout {
@@ -55,12 +69,15 @@ export class ReadoutPanel implements vscode.Disposable {
     this.panel?.dispose();
   }
 
-  /** Open the panel under the agent's terminal, or bring it forward. */
-  async show(): Promise<void> {
-    if (this.panel) {
+  /** Open the panel under the agent's terminal, or bring it forward; `again` (the agent started afresh) makes it
+   * again under the terminal now there. */
+  async show(again = false): Promise<void> {
+    if (this.panel && !again) {
       this.panel.reveal(undefined, true);
       return;
     }
+    this.panel?.dispose();
+    await closeEmptyGroups();
     const before = vscode.window.tabGroups.activeTabGroup.viewColumn;
     const agent = vscode.window.tabGroups.all.find((group) =>
       group.tabs.some((tab) => tab.input instanceof vscode.TabInputTerminal && tab.label.startsWith("OpenCode · ")),
@@ -103,8 +120,10 @@ export class ReadoutPanel implements vscode.Disposable {
       }
     });
     panel.onDidDispose(() => {
-      this.panel = undefined;
-      this.ready = false;
+      if (this.panel === panel) {
+        this.panel = undefined; // not a newer panel, made again under a new terminal
+        this.ready = false;
+      }
     });
     webview.html = template
       .replaceAll("{{source}}", webview.cspSource)
