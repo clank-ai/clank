@@ -64,6 +64,7 @@ from clank.components.agents.context import totals
 from clank.components.agents.guide import Guide, Ruled
 from clank.components.agents.guide import GuideError as GuideError  # for the routes
 from clank.components.agents.kinds import MonitorSettings, OpenCodeSettings
+from clank.components.agents.latex.checks import EVENT_TYPES as LATEX_EVENTS
 from clank.components.agents.modes import BUILD as BUILD  # the agent a flow's box in review or auto is sent to
 from clank.components.agents.modes import EVENT_TYPES as MODE_EVENTS
 from clank.components.agents.modes import PLANNER as PLANNER  # and a box in plan mode
@@ -127,6 +128,7 @@ EVENT_TYPES = [
     *SHOWING_EVENTS,
     *WATCH_EVENTS,
     *MODEL_EVENTS,
+    *LATEX_EVENTS,
 ]
 ROLE = "agent"
 SESSION_MODEL = {"providerID": PROVIDER, "modelID": ROLE}  # the model a message names: the gateway's role

@@ -59,6 +59,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/kinds.py` | The agents component's kinds of record (design 0004 §5): the VS Code window's settings, `config/vscode.json`, what |
 | `clank/components/agents/latex/__init__.py` | LaTeX with the agent (design 0020): the checks on every LaTeX change, the builds in the container, and the marks on |
 | `clank/components/agents/latex/building.py` | Compiling clean (design 0020 §8): a change to a LaTeX file must leave its document building, with no undefined |
+| `clank/components/agents/latex/checks.py` | The checks on every LaTeX change (design 0020 §4 and §5), as the review asks them. |
 | `clank/components/agents/latex/citations.py` | Citations and the bibliography (design 0020 §6): no citation the agent writes may name an entry the bibliography |
 | `clank/components/agents/latex/sources.py` | Claims and their sources (design 0020 §7): a value the agent writes into a LaTeX document says where it comes from. |
 | `clank/components/agents/latexcli.py` | `clank latex` (design 0020): LaTeX with the agent. `clank latex setup [FOLDER]` gives the folder's workspace the TeX |

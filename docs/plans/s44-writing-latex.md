@@ -13,7 +13,7 @@ failing test; each ends with a commit pushed to `main`.
   its container from it; `runs_current_image` and the folder's view compare with it. `clank latex setup` adds the TeX
   layer to the folder's workspace. Decision 0134 records the layer's packages. Tests: the tag, the build argument, the
   container's image, the record; a real build marked `tex`.
-- [ ] 2. **The rule for LaTeX files** (§4): `.tex` files that existed before the agent created them, `.bib` files and
+- [x] 2. **The rule for LaTeX files** (§4): `.tex` files that existed before the agent created them, `.bib` files and
   class and style files are always reviewed, in auto mode too; a `.tex` file the agent created follows the mode.
 - [x] 3. **Citations** (§6): every citation command's keys are entries of the bibliographies the document loads; a new
   `.bib` entry has a DOI or an arXiv id that resolves and matches its title, first author and year (Crossref, arXiv;
@@ -26,7 +26,7 @@ failing test; each ends with a commit pushed to `main`.
   changed file written in it, `latexmk` with the document's engine, two minutes); the log's errors, undefined references
   and citations, and labels defined twice, compared with the document's build before the change (kept until a TeX file
   of the folder changes).
-- [ ] 6. **The checks in the review** (§5): a LaTeX change is checked before it is asked about or answered, off the
+- [x] 6. **The checks in the review** (§5): a LaTeX change is checked before it is asked about or answered, off the
   watcher's thread; a refusal rejects it with its reason, and the third refusal of a file in a row asks the owner with
   it; a check that cannot run (no TeX in the container) asks the owner, saying so; each refusal is an event.
 - [ ] 7. **The marked-up PDF** (§9): `latexdiff --flatten` between the root before and after, built in the container

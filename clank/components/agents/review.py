@@ -16,6 +16,13 @@ header, before the change or after it, says `kind: plan`) is answered at once in
 progress)", and shown afterwards as in auto mode: the implementer ticks its steps and writes its log without asking
 each time (design 0009 §5).
 
+A change to a LaTeX file (design 0020 §4-§5, `latex/checks.py`) is checked before it is asked about or answered, off
+the watcher's thread (its state `checking` meanwhile): its citations, its values' sources, its document's build. A
+change that fails is rejected at once with the reasons, as "Clank's LaTeX checks", which the model hears; the third
+refusal of a file in a row asks the owner instead, the refusals shown. What passed, and what could not be checked, are
+said above the change's diff; a change with something not checked, a `.tex` file the owner had, a `.bib` file and a
+style file are asked about in auto mode too. A `.tex` file the agent created follows the mode once written.
+
 Clank answers `once`, never `always`, so the mode can be switched back (§3). An answer given in the agent's terminal
 settles the change and withdraws its question; a server gone withdraws the questions of its changes, and so does a
 watcher's first reading for those no longer waiting. Once the file is written (`edited`), the change keeps the file as
@@ -32,6 +39,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from clank.components.agents.changes import NAME, ChangeStore, proposed, unified
+from clank.components.agents.latex.checks import ACTOR as LATEX
+from clank.components.agents.latex.checks import LatexChecks, Verdict, kind_of, refusal_message
 from clank.components.agents.plans import is_plan, plan_path
 from clank.components.agents.sessions import SessionError
 from clank.components.agents.watch import Watchers
@@ -53,6 +62,7 @@ REVIEW = Actor(kind="clank", via="review")
 TERMINAL = "the agent's terminal"
 LARGEST = 4_000_000  # bytes of a file read to show a change of it
 SHOWN_DIFF = 6000  # characters of a change's diff in its question
+REFUSALS_ASKED = 3  # the refusal of a LaTeX file, in a row, that asks the owner (design 0020 §5)
 EVENT_TYPES = [
     EventType(
         "agents.change_proposed",
@@ -107,6 +117,8 @@ class Review:
         self._seen: dict[str, set[str]] = {}  # the asks each workspace's watcher has said since it started
         self._writing: dict[tuple[str, str], str] = {}  # (workspace, file) accepted, not written yet: the change
         self._session_modes: dict[tuple[str, str], str] = {}  # (workspace, session): a flow's box's own mode
+        self.latex = LatexChecks(kernel)  # the checks on LaTeX changes (design 0020)
+        self._refused: dict[tuple[str, str], int] = {}  # (workspace, file): LaTeX refusals in a row
         self.modes: Modes | None = None  # the mode shown (design 0009 §7), set by the agents component
         kernel.questions.on_resolved(self._resolved)
 
@@ -241,12 +253,56 @@ class Review:
                     self._send(known)  # answered while OpenCode did not hear it: say it again
                 return
             change = self._change(workspace, port, request, given if isinstance(given, dict) else None)
-            if change["mode"] == "review":  # asked under the lock, so an answer from the terminal waits for it
+            checking = bool(change["latex"])
+            if checking:
+                change["state"] = "checking"  # asked about or answered once checked (design 0020 §5)
+            elif change["mode"] == "review":  # asked under the lock, so an answer from the terminal waits for it
                 change["question"] = self.kernel.questions.ask(self._question(change), asked_by=REVIEW).id
             self.store.save(change)
         self._record("agents.change_proposed", change, f"{workspace}'s agent asks to change {change['relative']}")
-        if change["mode"] == "auto":
+        if checking:
+            threading.Thread(target=self._checked, args=(change["id"],), name="latex-check", daemon=True).start()
+        elif change["mode"] == "auto":
             self._answer(change, "accept", PLAN if change["plan"] else AUTO)
+
+    def _checked(self, id: str) -> None:
+        """A LaTeX change checked (design 0020 §5): rejected with its reasons, or asked about, or answered."""
+        change = self.store.get(id)
+        if change is None:
+            return
+        try:
+            verdict = self.latex.check(change)
+        except Exception as error:  # noqa: BLE001: a check that broke leaves the change to the owner
+            log.exception("checking %s's change %s failed", change["workspace"], id)
+            verdict = Verdict(unchecked=[f"the checks failed ({type(error).__name__}: {error})"])
+        key = (str(change["workspace"]), str(change["relative"]))
+        with self._lock:
+            change = self.store.get(id)
+            if change is None or change["state"] != "checking":
+                return  # settled meanwhile (the terminal answered, the agent stopped)
+            change["checks"] = verdict.view()
+            count = self._refused.get(key, 0) + 1 if verdict.refusals else 0
+            self._refused[key] = count % REFUSALS_ASKED
+            reject = bool(verdict.refusals) and count < REFUSALS_ASKED
+            if not reject:
+                if verdict.refusals or verdict.unchecked:
+                    change["mode"] = "review"
+                change["state"] = "waiting"
+                if change["mode"] == "review":
+                    change["question"] = self.kernel.questions.ask(self._question(change), asked_by=REVIEW).id
+            self.store.save(change)
+        self.kernel.events.record(
+            "agents.change_checked",
+            summary=f"Clank checked {key[1]} in {key[0]}: " + ("refused" if verdict.refusals else "passed"),
+            actor=LATEX,
+            subject=Subject(kind="change", id=id),
+            data={"workspace": key[0], "change": id, "file": key[1], "passed": not verdict.refusals,
+                  "refusals": verdict.refusals, "unchecked": verdict.unchecked, "refused_in_a_row": count},
+        )  # fmt: skip
+        if reject:
+            self._answer(change, "reject", LATEX, refusal_message(key[1], verdict.refusals))
+        elif change["mode"] == "auto":
+            self._answer(change, "accept", AUTO)
 
     def _change(
         self, workspace: str, port: int, request: dict[str, Any], given: dict[str, Any] | None
@@ -274,12 +330,16 @@ class Review:
             added, removed = _counted(diff)
             problem = problem or "it could not be worked out from what the agent said: its diff shows it"
         plan = plan_path(relative) and (is_plan(before) or is_plan(after))
+        created = before is None and not path.exists()
+        latex = "" if plan else kind_of(relative) or ""
+        mode = "auto" if plan else self.mode_of(workspace, request.get("sessionID"))
+        if latex and self.latex.forced(workspace, relative, created):
+            mode = "review"  # the owner's LaTeX, a bibliography, a style file: asked about in auto mode too
         return {
             "id": request["id"], "workspace": workspace, "port": port, "session": request.get("sessionID"),
             "file": file, "path": str(path), "relative": relative, "folder": folder, "before": before, "after": after,
             "exact": exact, "made": None, "diff": diff, "additions": added, "deletions": removed,
-            "created": before is None and not path.exists(),
-            "mode": "auto" if plan else self.mode_of(workspace, request.get("sessionID")),
+            "created": created, "mode": mode, "latex": latex, "checks": None,
             "plan": plan, "state": "waiting",
             "by": "", "note": "", "asked": to_text(self.kernel.clock.now()), "answered": "", "written": "",
             "question": None, "problem": problem,
@@ -293,6 +353,13 @@ class Review:
         verb = "create" if change["created"] else "change"
         diff = change["diff"]
         shown = diff if len(diff) <= SHOWN_DIFF else diff[:SHOWN_DIFF] + f"\n… [{len(diff):,} characters]"
+        checks = change.get("checks")
+        if checks and checks["refusals"]:
+            listed = "\n".join(f"- {each}" for each in checks["refusals"])
+            said = f"Clank's LaTeX checks refused this change {REFUSALS_ASKED} times in a row; the last time:\n{listed}"
+            shown = f"{said}\n\n{shown}"
+        elif checks:
+            shown = f"{Verdict(**checks).summary()}\n\n{shown}"
         return QuestionDraft(
             type="approval",
             title=f"The agent of {change['workspace']} wants to {verb} {change['relative']} ({counts})",
@@ -372,6 +439,8 @@ class Review:
                 made = None
             change["made"] = made
             change["written"] = to_text(self.kernel.clock.now())
+            if change.get("latex") == "tex" and change["created"]:
+                self.latex.created.add(workspace, change["relative"])  # the agent's own document (design 0020 §4)
             if made is not None:
                 change["diff"], change["additions"], change["deletions"] = unified(
                     change["before"], made, change["relative"]
