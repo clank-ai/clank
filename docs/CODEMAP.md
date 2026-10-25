@@ -250,6 +250,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/workspaces/image/phone_mcp.py` | Clank's own MCP server for the agent (design 0005 §3): `send_to_phone(path, caption)` sends a file of the folder to |
 | `clank/components/workspaces/image/python/clank_figures.py` | Clank's figure geometry (design 0008 §3): when Matplotlib saves a raster figure inside the workspace's folder, write |
 | `clank/components/workspaces/image/python/sitecustomize.py` | Clank's sitecustomize in the sandbox image (design 0008 §3): every Python in a workspace's container finds it on |
+| `clank/components/workspaces/jobs.py` | Jobs in a workspace's container (design 0013 §17, decision 0132; design 0021 §6): a long computation run detached, |
 | `clank/components/workspaces/kinds.py` | The workspaces component's kinds of record: how Clank uses Docker (`config/docker.json`), and from M4 each workspace |
 | `clank/components/workspaces/layers/tex/latex_build.py` | Clank's LaTeX helper, in the TeX layer (design 0020 §8-§10, decision 0134): run in a workspace's container, it reads |
 | `clank/components/workspaces/sandbox.py` | A workspace's container and the edge, as Clank wants them (design 0004 §3 and §6, design 0002 §2.9). |

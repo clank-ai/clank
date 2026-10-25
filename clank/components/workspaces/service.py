@@ -24,6 +24,7 @@ from typing import Any, Literal
 import anyio
 import anyio.to_thread
 
+from clank.components.workspaces import jobs as jobs  # the job runner, for the flows and the agents (design 0021 §6)
 from clank.components.workspaces.adapters import CONTAINER_PLATFORMS
 from clank.components.workspaces.adapters.platform import Container, ContainerPlatform, PlatformError, PlatformStatus
 from clank.components.workspaces.cloud import EVENT_TYPES as CLOUD_EVENT_TYPES
