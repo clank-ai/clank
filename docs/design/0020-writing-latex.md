@@ -3,30 +3,30 @@
 Part of Clank Code ([design 0018](0018-clank-code.md)). Started 2026-10-25 at the owner's request: "we need to add the
 ability for the model to write Latex documents for me as well but we need to be very, very careful with the way that we
 allow the model to write latex documents and I also need the ability to very carefully annotate the latex documents
-that it may end up making so that we can change certain things." Diagrams come later (§17). Every section is proposed;
-nothing is built until the owner approves it.
+that it may end up making so that we can change certain things." Diagrams come later (§17). Approved by the owner on
+2026-10-25 ("begin building everything for the latex writing"); built by [plan s44](../plans/s44-writing-latex.md).
 
 ## Sections
 
 | § | Section | Status |
 | --- | --- | --- |
-| 1 | What the owner gets | Proposed 2026-10-25 |
+| 1 | What the owner gets | Approved 2026-10-25 |
 | 2 | The owner's choices | Recorded 2026-10-25 |
-| 3 | TeX in the container | Proposed 2026-10-25 |
-| 4 | Which files the model may write | Proposed 2026-10-25 |
-| 5 | The checks on every change | Proposed 2026-10-25 |
-| 6 | Citations and the bibliography | Proposed 2026-10-25 |
-| 7 | Claims and their sources | Proposed 2026-10-25 |
-| 8 | Compiling clean | Proposed 2026-10-25 |
-| 9 | Seeing a change | Proposed 2026-10-25 |
-| 10 | Annotating the PDF | Proposed 2026-10-25 |
-| 11 | Annotating the source | Proposed 2026-10-25 |
-| 12 | The agent's turn | Proposed 2026-10-25 |
-| 13 | What the agent is told | Proposed 2026-10-25 |
-| 14 | Limits | Proposed 2026-10-25 |
-| 15 | Tests | Proposed 2026-10-25 |
-| 16 | Build steps | Proposed 2026-10-25 |
-| 17 | Later: diagrams | Proposed 2026-10-25 |
+| 3 | TeX in the container | Approved 2026-10-25 |
+| 4 | Which files the model may write | Approved 2026-10-25 |
+| 5 | The checks on every change | Approved 2026-10-25 |
+| 6 | Citations and the bibliography | Approved 2026-10-25 |
+| 7 | Claims and their sources | Approved 2026-10-25 |
+| 8 | Compiling clean | Approved 2026-10-25 |
+| 9 | Seeing a change | Approved 2026-10-25 |
+| 10 | Annotating the PDF | Approved 2026-10-25 |
+| 11 | Annotating the source | Approved 2026-10-25 |
+| 12 | The agent's turn | Approved 2026-10-25 |
+| 13 | What the agent is told | Approved 2026-10-25 |
+| 14 | Limits | Approved 2026-10-25 |
+| 15 | Tests | Approved 2026-10-25 |
+| 16 | Build steps | Approved 2026-10-25 |
+| 17 | Later: diagrams | Approved 2026-10-25 |
 
 ## 1. What the owner gets
 
@@ -102,8 +102,11 @@ owner to add it.
 
 ## 7. Claims and their sources
 
-A paragraph the change adds or alters that states a number (a digit outside a label, a reference or a citation key) or a
-result the document did not have before carries its source in a comment within the paragraph:
+A paragraph the change adds or alters that states a value carries its source in a comment within the paragraph. A value
+is a decimal (`0.104`, `-1.2732(4)`), a percentage, a number in scientific notation (`3.2e-4`, `3.2	imes 10^{-4}`), or
+an integer of three digits or more that is not a year; small integers (`$N = 16$`, `$x^2$`, "Section 2") are not, nor
+is anything inside a label, a reference or a citation key, nor a comment. (Claude's call when building: "a number" as
+the design first said would flag every exponent; the owner may widen it.)
 
 ```latex
 The ground-state energy is $E_0 = -1.2732(4)$. % source: runs/vmc-l16/summary.json
