@@ -38,9 +38,16 @@ nothing leaving the PC. Each task starts with a failing test; each ends with a c
   lists the folder's; its bar's versions, Comment (sent) and Open in browser (an exported copy).
 - [x] 5. **Export**: `clank artifact list` and `clank artifact export NAME [--version N]`: one self-contained HTML file,
   its libraries and data inlined.
-- [ ] 6. **Live**: the real model makes an artifact from a small dataset in a throwaway folder; it opens in VS Code,
+- [x] 6. **Live**: the real model makes an artifact from a small dataset in a throwaway folder; it opens in VS Code,
   is seen working (a screenshot of that window only), is commented on, and a second version comes back.
 
 ## Progress
 
-Written 2026-10-25.
+Written 2026-10-25. Tasks 1-5 built the same day. Task 6, live on the local model (frontier 262K) in a throwaway
+folder: the model's first page opened in the window beside its terminal, but drew no points (its page fetched
+`data/sweep.csv` from a folder of its own, where that path is not the file) and showed its formula as TeX (KaTeX's
+auto-render without the `$` delimiters). Both are now refused by `make_artifact`, saying what to change (7137d21). A
+window reopened had put OpenCode in a corner under empty groups (fixed in vscode 0.9.7, 4efc058), and after the
+service restarted, the owner's comment was refused for a session the service had not heard from yet (fixed, 9b0230b).
+Then the comment (points missing, formula as TeX) went to the session, and the model answered with version 2 in about
+two minutes: the measured curve over the dashed small-angle line, the formula drawn, the bar on version 2 (newest).
