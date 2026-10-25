@@ -5,7 +5,8 @@ made it); `agents.artifact_made` is recorded. A Markdown artifact gets Clank's p
 libraries, math included, and so does an SVG one. A name, a kind, a file not the folder's, too many or too large files,
 an entry page that names the network, or an HTML page that would show broken (a file it reads missing from where it
 looks, math in dollar signs auto-render would leave as text), are refused, saying why. The owner's comment on a
-version goes to the session that made it, in one message naming the artifact and its version, and
+version goes to the session that made it, in one message naming the artifact and its version (through a server that
+runs in the workspace when the service has not heard from that session since it started), and
 `agents.artifact_commented` is recorded."""
 
 import json
@@ -184,6 +185,30 @@ def test_the_owners_comment_goes_to_the_session_that_made_that_version(
     assert "make_artifact" in text, "how to answer: a new version"
     assert "sent to the session" in said["said"]
     assert kernel.events.latest(5, types=["agents.artifact_commented"])
+
+
+def test_a_comment_after_a_restart_goes_to_that_session_through_a_server_that_runs_in_the_workspace(
+    kernel: Kernel, folder: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # the service knows a session's server only once it has heard from it: after a restart, none (2026-10-25), but
+    # every OpenCode server of the workspace reads the sessions kept on disk
+    sessions = kernel.parts["agents"].sessions
+    sent: list[tuple[int, str]] = []
+    running: list[dict[str, Any]] = [{"port": 4096, "sessions": []}, {"port": 4100, "sessions": [{"id": "ses_1"}]}]
+    monkeypatch.setattr(sessions, "runs", lambda workspace, session: None)
+    monkeypatch.setattr(sessions, "servers", lambda workspace: running)
+    monkeypatch.setattr(sessions, "send", lambda workspace, port, session, text, *, actor: sent.append((port, session)))
+    artifacts_of(kernel).make(
+        "paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"], session="ses_1"
+    )
+    artifacts_of(kernel).comment("paper", "sweep", 1, "Use a log scale on y.", actor=YOU)
+    assert sent == [(4100, "ses_1")], "the server that has the session open, when one has"
+    running[1]["sessions"] = []
+    artifacts_of(kernel).comment("paper", "sweep", 1, "And label the axes.", actor=YOU)
+    assert sent[-1] == (4096, "ses_1"), "else the first that runs"
+    running.clear()
+    with pytest.raises(ArtifactError, match="start the agent"):
+        artifacts_of(kernel).comment("paper", "sweep", 1, "Again.", actor=YOU)
 
 
 def test_the_routes_make_list_and_read_artifacts_and_take_the_owners_comment(
