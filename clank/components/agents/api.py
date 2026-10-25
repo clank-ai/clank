@@ -180,10 +180,10 @@ class ArtifactRequest(BaseModel):
 
 
 class CommentRequest(BaseModel):
-    """The owner's comment on a version of an artifact."""
+    """The owner's comment on a version of an artifact, or the version to export (its text unused)."""
 
     version: int
-    text: str
+    text: str = ""
 
 
 class JobAsk(BaseModel):
@@ -713,6 +713,18 @@ def router(agents: "Agents") -> APIRouter:
                 lambda: agents.artifacts.comment(workspace, name, wanted.version, wanted.text, actor=actor)
             )
         except (ArtifactError, SessionError) as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
+
+    @routes.post("/agents/artifacts/{workspace}/{name}/export")
+    async def export_artifact(workspace: str, name: str, wanted: CommentRequest | None = None) -> dict[str, Any]:
+        """One version as one self-contained page (its libraries and files inside it); where it was written."""
+        version = wanted.version if wanted is not None else 0
+        try:
+            if not version:
+                version = len((await anyio.to_thread.run_sync(agents.artifacts.one, workspace, name))["versions"])
+            found: dict[str, Any] = await anyio.to_thread.run_sync(agents.artifacts.export, workspace, name, version)
+        except ArtifactError as error:
             raise ApiError(409, "refused", str(error)) from error
         return found
 

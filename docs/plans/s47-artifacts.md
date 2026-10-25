@@ -36,7 +36,7 @@ nothing leaving the PC. Each task starts with a failing test; each ends with a c
   instructions (`artifacts.md`): when to make one, the libraries, data files beside the page, no network.
 - [ ] 4. **In VS Code**: an artifact made in the window's folder opens in the files' group; `Clank: Open an artifact`
   lists the folder's; its bar's versions, Comment (sent) and Open in browser (an exported copy).
-- [ ] 5. **Export**: `clank artifact list` and `clank artifact export NAME [--version N]`: one self-contained HTML file,
+- [x] 5. **Export**: `clank artifact list` and `clank artifact export NAME [--version N]`: one self-contained HTML file,
   its libraries and data inlined.
 - [ ] 6. **Live**: the real model makes an artifact from a small dataset in a throwaway folder; it opens in VS Code,
   is seen working (a screenshot of that window only), is commented on, and a second version comes back.

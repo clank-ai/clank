@@ -25,6 +25,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/adapters/program.py` | The agent program kind of adapter: the interface every program that works in a workspace meets (decision 0011, |
 | `clank/components/agents/annotations.py` | Annotations (design 0008 §5): a figure the owner marked up, kept in the folder and sent to the workspace's agent. |
 | `clank/components/agents/api.py` | The agents component's routes (design 0004 §4): making a workspace's agent ready. |
+| `clank/components/agents/artifactcli.py` | `clank artifact` (design 0021 §5): the artifacts the agent made in a folder's workspace, from the command line. |
 | `clank/components/agents/artifacts.py` | Artifacts (design 0021 §5): pages the agent makes for the owner (an interactive plot of results, a parameter |
 | `clank/components/agents/changes.py` | A change the agent asks to make to a file (design 0007 §5): the file as it would be after it, its diff, and where |
 | `clank/components/agents/cli.py` | `clank work [FOLDER]` (design 0004 §1): the agent, in a folder's container, in this terminal, at once; `clank code |
@@ -351,6 +352,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/comments.ts` | Comments for the agent on LaTeX files (design 0020 §11), in VS Code: a comment controller on every .tex file of the |
 | `vscode/src/core/agent.ts` | Starting the agent beside the files (design 0004 §5): for the folder Clank's VS Code window has open, the folder's |
 | `vscode/src/core/annotate.ts` | Sending a figure the owner marked up (design 0008 §5-§6): what the annotator page sends, passed to the service |
+| `vscode/src/core/artifacts.ts` | Artifacts in VS Code (design 0021 §5): the service's `agents.artifact_made` read (`artifactMade`), and a page made |
 | `vscode/src/core/client.ts` | The extension's client of the Clank API (design 0002 §2.7, §2.14). Every call carries the local token and names the |
 | `vscode/src/core/comments.ts` | Comments on the LaTeX source (design 0020 §11): VS Code's comment threads on lines of .tex files, sent to the agent |
 | `vscode/src/core/completion.ts` | Completion in VS Code (design 0006 §5): gray text after the cursor, from the model in the fast slot, through the |
@@ -373,6 +375,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/readout.ts` | The model's readout in VS Code (design 0021 §3): the status bar item and the panel under the agent's terminal. The |
 | `vscode/test/agent.test.ts` | Design 0004 §5: in Clank's VS Code window the agent starts beside the files: for the folder the window has open, |
 | `vscode/test/annotator.page.test.ts` | Design 0008 §6, in a real browser: the annotator page (media/annotator.html, as VS Code's webview shows it) in |
+| `vscode/test/artifacts.test.ts` | Design 0021 §5: artifacts in VS Code. The service's `agents.artifact_made` names the workspace, its folder on this |
 | `vscode/test/browser.ts` | Headless Edge for the tests of the extension's pages (the annotator, the Notion review): a page opened from a file and |
 | `vscode/test/client.test.ts` | Design 0002 §2.7 and §2.14: the extension's client sends the local token and names itself `vscode` on every call, |
 | `vscode/test/comments.test.ts` | Design 0020 §11: comments on lines of LaTeX files are sent to the agent together, each with its file (from the |

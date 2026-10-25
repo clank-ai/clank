@@ -27,12 +27,13 @@ def pages() -> list[Any]:
 
 
 def commands() -> list[Any]:
-    """`clank work`, `clank code`, `clank latex` (design 0020) and `clank jobs` (design 0021 §6)."""
+    """`clank work`, `clank code`, `clank latex` (design 0020), `clank jobs` and `clank artifact` (design 0021)."""
+    from clank.components.agents.artifactcli import artifact
     from clank.components.agents.cli import code, work
     from clank.components.agents.jobscli import jobs
     from clank.components.agents.latexcli import latex
 
-    return [work, code, latex, jobs]
+    return [work, code, latex, jobs, artifact]
 
 
 COMPONENT = Component(

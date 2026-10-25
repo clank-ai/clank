@@ -16,8 +16,10 @@ no file, a file that is not the folder's (or is Clank's own, under `.clank/`), m
 link, a style or a fetch at `http://`, `https://` or `//`).
 """
 
+import base64
 import json
 import os
+import posixpath
 import re
 import shutil
 from pathlib import Path, PurePosixPath
@@ -33,6 +35,33 @@ if TYPE_CHECKING:
 
 FOLDER = ".clank/artifacts"
 CONTAINER = "/workspace/"
+LIB = Path(__file__).resolve().parent / "artifact_lib"  # the libraries (decision 0135)
+LIB_SCRIPT = re.compile(r"""<script\b[^>]*\bsrc=["']clank-lib/([^"']+)["'][^>]*>\s*</script>""", re.IGNORECASE)
+LIB_STYLE = re.compile(r"""<link\b[^>]*\bhref=["']clank-lib/([^"']+)["'][^>]*>""", re.IGNORECASE)
+FONT = re.compile(r"url\((fonts/[A-Za-z0-9_.-]+)\)")
+LOCAL = re.compile(r"""\b(src|href)=(["'])(?![a-z][a-z0-9+.-]*:|//|#)([^"']+)\2""", re.IGNORECASE)
+TYPES = {
+    ".json": "application/json", ".csv": "text/csv", ".tsv": "text/tab-separated-values", ".txt": "text/plain",
+    ".md": "text/markdown", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+    ".gif": "image/gif", ".webp": "image/webp", ".js": "text/javascript", ".css": "text/css", ".html": "text/html",
+    ".woff2": "font/woff2",
+}  # fmt: skip
+# An exported page's own files, answered when it fetches them (the page opened from disk may not read files beside it)
+FETCH = """<script>
+(() => {{
+  const files = {files};
+  const base = "https://artifact.invalid/{entry_dir}";
+  const real = window.fetch.bind(window);
+  window.fetch = (input, init) => {{
+    const url = typeof input === "string" ? input : input.url;
+    const path = decodeURIComponent(new URL(url, base).pathname.slice(1));
+    const found = files[path];
+    if (!found) return real(input, init);
+    const bytes = Uint8Array.from(atob(found[1]), (each) => each.charCodeAt(0));
+    return Promise.resolve(new Response(bytes, {{ headers: {{ "Content-Type": found[0] }} }}));
+  }};
+}})();
+</script>"""
 NAME = re.compile(r"[a-z0-9][a-z0-9-]{0,47}")
 KINDS = {"html": (".html", ".htm"), "markdown": (".md", ".markdown"), "svg": (".svg",)}
 MOST_FILES = 50
@@ -223,6 +252,45 @@ class Artifacts:
         )  # fmt: skip
         return {"said": f"Your comment on {name} version {version} was sent to the session that made it."}
 
+    def export(self, workspace: str, name: str, version: int) -> dict[str, Any]:
+        """One version as one self-contained page (`.clank/artifacts/<name>/export/<name>-v<n>.html`): its libraries
+        inlined (KaTeX's fonts as data), its other files inside it, answered when it fetches them, and its images and
+        links to them as data; it opens from disk, in any browser, with no network."""
+        kept = self.one(workspace, name)
+        made = next((each for each in kept["versions"] if each["version"] == version), None)
+        if made is None:
+            raise ArtifactError(f"the artifact {name} has no version {version}")
+        home = Path(kept["folder"]) / FOLDER / name
+        root = home / f"v{version}"
+        entry = str(made["entry"])
+        page = (root / entry).read_text(encoding="utf-8", errors="replace")
+        entry_dir = posixpath.dirname(entry)
+        files = {
+            path.relative_to(root).as_posix(): (TYPES.get(path.suffix.lower(), "application/octet-stream"),
+                                                base64.b64encode(path.read_bytes()).decode("ascii"))
+            for path in sorted(root.rglob("*")) if path.is_file() and path.relative_to(root).as_posix() != entry
+        }  # fmt: skip
+        page = LIB_SCRIPT.sub(lambda found: f"<script>{_library(found.group(1))}</script>", page)
+        page = LIB_STYLE.sub(lambda found: f"<style>{_style(found.group(1))}</style>", page)
+
+        def inline(found: re.Match[str]) -> str:
+            path = posixpath.normpath(posixpath.join(entry_dir, found.group(3)))
+            if path not in files:
+                return found.group(0)
+            kind, data = files[path]
+            return f"{found.group(1)}={found.group(2)}data:{kind};base64,{data}{found.group(2)}"
+
+        page = LOCAL.sub(inline, page)
+        shim = FETCH.format(
+            files=json.dumps(files).replace("</", "<\\/"), entry_dir=f"{entry_dir}/" if entry_dir else ""
+        )
+        opened = re.search(r"<head[^>]*>", page, re.IGNORECASE)
+        page = page[: opened.end()] + shim + page[opened.end() :] if opened else shim + page
+        target = home / "export" / f"{name}-v{version}.html"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(page, encoding="utf-8")
+        return {"file": str(target), "said": f"{name} version {version} as one page: {target}"}
+
     def _folder(self, workspace: str) -> Path:
         workspaces: Workspaces = self.kernel.parts["workspaces"]
         try:
@@ -248,6 +316,25 @@ class Artifacts:
         except (OSError, ValueError):
             return None
         return found
+
+
+def _library(name: str) -> str:
+    """A library's script, safe inside a page's <script> element."""
+    path = LIB / name
+    if not path.is_file() or not path.resolve().is_relative_to(LIB.resolve()):
+        raise ArtifactError(f"clank-lib/{name} is not one of Clank's libraries")
+    return path.read_text(encoding="utf-8").replace("</script", "<\\/script")
+
+
+def _style(name: str) -> str:
+    """A library's style sheet, its fonts as data."""
+    text = _library(name)
+
+    def font(found: re.Match[str]) -> str:
+        data = base64.b64encode((LIB / found.group(1)).read_bytes()).decode("ascii")
+        return f"url(data:font/woff2;base64,{data})"
+
+    return FONT.sub(font, text)
 
 
 def _escaped(text: str) -> str:

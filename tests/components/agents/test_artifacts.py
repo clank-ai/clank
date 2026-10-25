@@ -170,3 +170,43 @@ def test_the_routes_make_list_and_read_artifacts_and_take_the_owners_comment(
         assert "start the agent" in refused.json()["error"]["message"]
         bad = http.post("/api/v1/agents/artifacts", json={**body, "files": ["../x.html"]}, headers=headers)
         assert bad.status_code == 409
+
+
+def test_an_export_is_one_file_with_its_libraries_and_data_inside_that_needs_nothing_else(
+    kernel: Kernel, folder: Path
+) -> None:
+    artifacts = artifacts_of(kernel)
+    artifacts.make("paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"])
+    exported = Path(artifacts.export("paper", "sweep", 1)["file"])
+    assert exported == folder / ".clank/artifacts/sweep/export/sweep-v1.html"
+    page = exported.read_text(encoding="utf-8")
+    assert "clank-lib/" not in page, "the libraries are inside it"
+    assert "Plotly" in page
+    assert "results/sweep.json" in page, "its data file is inside it, answered when the page fetches it"
+    assert "window.fetch" in page
+    with pytest.raises(ArtifactError, match="has no version 4"):
+        artifacts.export("paper", "sweep", 4)
+
+
+def test_clank_artifact_lists_a_folders_artifacts_and_exports_the_newest_version(
+    kernel: Kernel, folder: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from click.testing import CliRunner
+    from fastapi.testclient import TestClient
+
+    from clank.cli import common
+    from clank.cli.main import main
+    from clank.client import Client
+    from clank.kernel.api import create_app
+
+    artifacts_of(kernel).make("paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"])
+    artifacts_of(kernel).make("paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"])
+    with TestClient(create_app(kernel, token="t", port=7727), base_url="http://127.0.0.1:7727") as http:
+        monkeypatch.setattr(common, "connect", lambda: Client("http://127.0.0.1:7727", "t", name="cli", http=http))
+        listed = CliRunner().invoke(main, ["artifact", "list", str(folder)])
+        exported = CliRunner().invoke(main, ["artifact", "export", "sweep", str(folder)])
+    assert listed.exit_code == 0, listed.output
+    assert "sweep  Sweep results  (html, 2 versions" in listed.output
+    assert exported.exit_code == 0, exported.output
+    assert "sweep version 2 as one page" in exported.output
+    assert (folder / ".clank/artifacts/sweep/export/sweep-v2.html").is_file()

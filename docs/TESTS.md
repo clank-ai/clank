@@ -486,7 +486,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (3), `vscode/test/readout.test.ts` (10) |
 | 4 | The agent panel | none yet |
-| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (6), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/tools/test_artifact_libs.py` (2) |
+| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (8), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (4) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (3), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
@@ -697,6 +697,8 @@ Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copi
 - a page that names the network is refused
 - the owners comment goes to the session that made that version
 - the routes make list and read artifacts and take the owners comment
+- an export is one file with its libraries and data inside that needs nothing else
+- clank artifact lists a folders artifacts and exports the newest version
 
 ### `tests/components/agents/test_changes.py`
 
@@ -4466,6 +4468,15 @@ Design 0008 §6, in a real browser: the annotator page (media/annotator.html, as
 
 - a box drawn on the figure and a message sent leave the page with the marks, the words and the marked-up copy
 - a note opens as a bubble that stays on the figure; dragged, only the bubble moves; a click edits it
+
+### `vscode/test/artifacts.test.ts`
+
+Design 0021 §5: artifacts in VS Code. The service's `agents.artifact_made` names the workspace, its folder on this machine, the artifact, its title, kind, version and page, and a window on that folder opens it. A page is shown as the agent wrote it, with Clank's content security policy first in its head (nothing from the network: only the webview's own files, inline scripts and styles), a <base> at its version's folder (so its relative paths work), its `clank-lib/` names pointed at the extension's copy of the libraries, and Clank's bar (versions, Comment, Open in browser) in a shadow root of its own at the end of its body, so neither's styles touch the other's.
+
+- an artifact made is read from its event, and nothing else is
+- a page gets the policy, its base, the libraries' place and the bar, and keeps the agent's own
+- a page without a head or a body still gets them
+- the versions are said newest first, the one shown marked
 
 ### `vscode/test/client.test.ts`
 
