@@ -34,7 +34,7 @@ nothing leaving the PC. Each task starts with a failing test; each ends with a c
   `GET /agents/artifacts/{workspace}/{name}`, `POST /agents/artifacts/{workspace}/{name}/comment`.
 - [x] 3. **The agent's tool**: `make_artifact(name, title, kind, files, note)` in Clank's MCP server, and its
   instructions (`artifacts.md`): when to make one, the libraries, data files beside the page, no network.
-- [ ] 4. **In VS Code**: an artifact made in the window's folder opens in the files' group; `Clank: Open an artifact`
+- [x] 4. **In VS Code**: an artifact made in the window's folder opens in the files' group; `Clank: Open an artifact`
   lists the folder's; its bar's versions, Comment (sent) and Open in browser (an exported copy).
 - [x] 5. **Export**: `clank artifact list` and `clank artifact export NAME [--version N]`: one self-contained HTML file,
   its libraries and data inlined.

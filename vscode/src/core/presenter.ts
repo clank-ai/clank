@@ -2,6 +2,7 @@
 // a pick from a list, a message, and the files the agent opened for the owner (design 0018 §7). `extension.ts` implements it with VS Code's API; the tests with a fake, so the
 // controller is tested without VS Code.
 
+import type { ArtifactMade } from "./artifacts";
 import type { Question } from "./kinds";
 import type { Shown } from "./show";
 
@@ -28,4 +29,6 @@ export interface Presenter {
   warn(text: string): void;
   /** Open the files the agent opened for the owner, when this window is on their folder (design 0018 §7.2). */
   showFiles?(shown: Shown): Promise<void>;
+  /** An artifact the agent made (design 0021 §5): opened in a window on its folder, beside the files. */
+  openArtifact?(made: ArtifactMade): Promise<void>;
 }

@@ -20,6 +20,7 @@ where the service answers and the local token from CLANK_HOME each time it conne
 | Activity bar | **Notion changes** (design 0010 §6): each batch the agent proposes for your Notion, its databases and their entries (new, changed, removed), with **Approve all** and **Reject…**; its badge counts what waits |
 | Editor | A batch's review: each database as a table (changes and their neighbors, or all rows), the chosen entry's Fields, Page and how it will look in Notion; uncheck what should wait, then **Approve N checked**; comment on the batch, an entry, a field or a paragraph, and **Send back with N comments** for the agent to revise it (its answers show under your comments) |
 | Status bar, left | `Notion: N changes waiting`, when some do (click: the Notion changes) |
+| Editor | An artifact the agent made (design 0021 §5): its page beside your files, drawn with Clank's libraries and nothing from the network; its bar picks a version, sends your **Comment** to the session that made it, and opens it **in your browser** as one self-contained page; `Clank: Open an artifact` lists the folder's |
 | Notifications | A question asked while VS Code is open, with its options as buttons |
 | Notifications | A job the agent started in the window's folder (design 0021 §6) that ended: how, after how long, and where its log is |
 | Notifications | When a flow's box switched the main slot (design 0013 §7): the model your OpenCode window talks to now, its limits, and a preset too small for one of your sessions, named; the window takes the new limits when it next starts |

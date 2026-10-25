@@ -36,6 +36,8 @@ import { Controller } from "./core/controller";
 import { type GateAction, type GateButton, type GatePresenter, Gates, type Side } from "./core/gates";
 import type { Question } from "./core/kinds";
 import type { Choice, Presenter } from "./core/presenter";
+import { ArtifactPanels } from "./artifacts";
+import type { ArtifactMade } from "./core/artifacts";
 import { FIGURE_EDITOR, FigureEditor } from "./figures";
 import { isReadoutGroup, ReadoutPanel } from "./readout";
 import { implement, type ImplementMode, type ImplementPresenter, lenses, planPath, relativePlan } from "./core/plans";
@@ -91,6 +93,9 @@ function implementPresenter(
 
 /** The presenter, with VS Code's status bar, notifications and quick picks. */
 class VsCodePresenter implements Presenter {
+  /** The artifacts' panels (design 0021 §5), given once they are made. */
+  artifacts: ArtifactPanels | undefined;
+
   constructor(
     private readonly clankItem: vscode.StatusBarItem,
     private readonly dockerItem: vscode.StatusBarItem,
@@ -141,6 +146,13 @@ class VsCodePresenter implements Presenter {
     const what = found.files.join(", ");
     vscode.window.setStatusBarMessage(`$(eye) The agent opened ${what}${found.why ? `: ${found.why}` : ""}`, 15_000);
   }
+
+  async openArtifact(made: ArtifactMade): Promise<void> {
+    const windows = process.platform === "win32";
+    if (vscode.workspace.workspaceFolders?.some((each) => sameFolder(each.uri.fsPath, made.folder, windows))) {
+      await this.artifacts?.show(made, made.version); // only in a window on its folder
+    }
+  }
 }
 
 /** A file opened for the owner to look at: in the editor group of the files, in its own tab, the keyboard left where it
@@ -154,6 +166,40 @@ async function openBeside(file: vscode.Uri, warn: (text: string) => void): Promi
     });
   } catch (error) {
     warn(`${file.fsPath} did not open: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/** `Clank: Open an artifact`: the window's folder's artifacts, the newest first, the one picked opened. */
+async function openArtifact(
+  connect: () => ClankClient | undefined,
+  presenter: VsCodePresenter,
+  artifacts: ArtifactPanels,
+  readout: ReadoutPanel,
+): Promise<void> {
+  const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const client = connect();
+  const workspace = readout.workspace;
+  if (!folder || !client || !workspace) {
+    presenter.warn("open a folder whose Clank workspace runs, with the Clank service running");
+    return;
+  }
+  try {
+    const found = await client.get<{ artifacts: Array<{ name: string; title: string; kind: string; versions: number }> }>(
+      "agents/artifacts",
+      { workspace },
+    );
+    const chosen = await presenter.pick(
+      found.artifacts.map((each) => ({
+        label: each.title, detail: `${each.name} · ${each.kind} · ${each.versions} version(s)`, value: each,
+      })),
+      found.artifacts.length ? "Open an artifact" : "No artifact in this folder yet",
+    );
+    if (chosen) {
+      await artifacts.show({ workspace, folder, name: chosen.name, title: chosen.title, kind: chosen.kind,
+                             version: chosen.versions, entry: "" });  // prettier-ignore
+    }
+  } catch (error) {
+    presenter.warn(error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -601,6 +647,10 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
     return found ? new ClankClient(found.url, found.token) : undefined;
   };
   const presenter = new VsCodePresenter(clankItem, dockerItem);
+  const artifacts = new ArtifactPanels(context.extensionUri, {
+    connect, info: (text) => presenter.info(text), warn: (text) => presenter.warn(text), column: filesColumn,
+  });
+  presenter.artifacts = artifacts;
   const modeItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 98);
   modeItem.command = "clank.switchReview";
   const texts = new ChangeTexts();
@@ -687,6 +737,8 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
     vscode.commands.registerCommand("clank.reconnect", () => controller.reconnect()),
     vscode.commands.registerCommand("clank.openAgent", () => startAgent(connect, presenter, false, agentStarted)),
     vscode.commands.registerCommand("clank.showReadout", () => readout.show()),
+    vscode.commands.registerCommand("clank.openArtifact", () => openArtifact(connect, presenter, artifacts, readout)),
+    artifacts,
     readoutItem,
     readout,
     vscode.commands.registerCommand("clank.acceptChange", (uri?: vscode.Uri) => controller.acceptChange(reviewedBy(uri))),

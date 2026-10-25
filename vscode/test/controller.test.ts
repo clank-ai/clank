@@ -15,6 +15,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import type { ArtifactMade } from "../src/core/artifacts";
 import { ClankError } from "../src/core/client";
 import { Controller, type Api } from "../src/core/controller";
 import type { ServerEvent } from "../src/core/events";
@@ -194,6 +195,12 @@ class FakePresenter implements Presenter {
 
   async showFiles(found: Shown): Promise<void> {
     this.opened.push(found);
+  }
+
+  artifacts: ArtifactMade[] = [];
+
+  async openArtifact(made: ArtifactMade): Promise<void> {
+    this.artifacts.push(made);
   }
 }
 
@@ -475,6 +482,23 @@ test("the files the agent opened for the owner go to the presenter, with their f
       { workspace: "paper", folder: "C:/Research/paper", files: ["plots/residual.png"], why: "asked for" },
     ]);
     assert.deepEqual(presenter.told, [], "no notification: the files are what the owner sees");
+  } finally {
+    running.stop();
+  }
+});
+
+test("an artifact the agent made goes to the presenter, which opens it in a window on its folder", async () => {
+  const api = new FakeApi();
+  const presenter = new FakePresenter();
+  const running = controller(api, presenter);
+  running.start();
+  try {
+    await until(() => presenter.clankText.includes("Clank"));
+    const made = { workspace: "paper", folder: "C:/Research/paper", name: "sweep", title: "Sweep", kind: "html",
+                   version: 1, entry: ".clank/artifacts/sweep/v1/index.html" };  // prettier-ignore
+    api.send({ name: "agents.artifact_made", id: 47, data: { id: 47, type: "agents.artifact_made", data: made } });
+    await until(() => presenter.artifacts.length === 1);
+    assert.deepEqual(presenter.artifacts, [made]);
   } finally {
     running.stop();
   }

@@ -349,6 +349,7 @@ it is for. The module's docstring says why it is built the way it is.
 | --- | --- |
 | `vscode/host/run.ts` | Runs the host suite inside a real VS Code (decision 0029): VS Code 1.138.0, the oldest the extension accepts, |
 | `vscode/host/suite.ts` | Design 0002 §3.2 and decision 0029: inside a real VS Code, the extension activates and registers every command its |
+| `vscode/src/artifacts.ts` | Artifacts in VS Code (design 0021 §5): a webview panel per artifact, in the files' group, showing a version's page as |
 | `vscode/src/comments.ts` | Comments for the agent on LaTeX files (design 0020 §11), in VS Code: a comment controller on every .tex file of the |
 | `vscode/src/core/agent.ts` | Starting the agent beside the files (design 0004 §5): for the folder Clank's VS Code window has open, the folder's |
 | `vscode/src/core/annotate.ts` | Sending a figure the owner marked up (design 0008 §5-§6): what the annotator page sends, passed to the service |

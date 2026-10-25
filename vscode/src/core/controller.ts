@@ -15,9 +15,11 @@
 // cloud model in the main slot (design 0016 §17), the Clank item says "cloud", its tooltip the cloud's spending today
 // and this month and a pause, all in the service's words; Switch model lists a cloud preset as its provider and model
 // with its price as the service says it. A service without the cloud's routes shows none of it. The files the agent opened
-// for the owner (`agents.shown`, design 0018 §7) go to the presenter, which opens them in a window on their folder.
+// for the owner (`agents.shown`, design 0018 §7) go to the presenter, which opens them in a window on their folder, and
+// so do the artifacts it makes (`agents.artifact_made`, design 0021 §5).
 
 import { type Annotation, annotate } from "./annotate";
+import { artifactMade } from "./artifacts";
 import { ClankError, NotRunning } from "./client";
 import type { Completer } from "./completion";
 import type { ServerEvent } from "./events";
@@ -371,6 +373,10 @@ export class Controller {
       const opened = shown(message) ?? markedUp(message); // and a LaTeX change's PDF (design 0020 §9)
       if (opened) {
         await this.presenter.showFiles?.(opened); // the agent opened files for the owner (design 0018 §7)
+      }
+      const made = artifactMade(message);
+      if (made) {
+        await this.presenter.openArtifact?.(made); // a page the agent made for the owner (design 0021 §5)
       }
       if (message.name === "question.asked" && data.subject?.id) {
         const asked = this.state.questions.find((question) => question.id === data.subject?.id);
