@@ -63,6 +63,7 @@ function preset(id: string, title: string, problems: string[] = []): PresetView 
     slot: "main",
     host: "",
     notes: "",
+    fallback: "",
     source: "default",
     file: "/clank/defaults/presets/" + id + ".json",
     problems,

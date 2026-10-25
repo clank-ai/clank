@@ -60,6 +60,7 @@ export interface PanelRows {
 }
 
 const BARS = "▁▂▃▄▅▆▇█";
+const READ_SPEED_FROM = 2000; // new tokens of a prompt: fewer, and the time to its first token is mostly waiting
 const WRITING = new Set(["thinking", "answering", "writing"]);
 const GB = 2 ** 30;
 
@@ -141,8 +142,13 @@ function speedRow({ now, drafts }: Readout): string {
   }
   const { prompt } = now;
   if (prompt.of === "the last step" && !prompt.reading && prompt.first_ms && prompt.tokens) {
-    const read = (prompt.tokens - (prompt.cached ?? 0)) / (prompt.first_ms / 1000);
-    said.push(`read ${Math.round(read).toLocaleString("en-US")} tok/s`);
+    const fresh = Math.max(prompt.tokens - (prompt.cached ?? 0), 0);
+    const seconds = prompt.first_ms / 1000;
+    said.push(
+      fresh >= READ_SPEED_FROM
+        ? `read ${Math.round(fresh / seconds).toLocaleString("en-US")} tok/s`
+        : `read ${fresh.toLocaleString("en-US")} new tokens in ${seconds.toFixed(1)} s`, // too few for a speed
+    );
   }
   if (drafts?.share !== null && drafts?.share !== undefined) {
     said.push(`drafts ${Math.round(drafts.share * 100)}% accepted`);
@@ -179,6 +185,7 @@ function bar(context: ReadoutContext): Segment[] {
     return [];
   }
   const parts = [...context.parts.parts]
+    .filter((part) => part.tokens > 0)
     .sort((a, b) => b.tokens - a.tokens)
     .map((part) => ({ label: part.label, tokens: part.tokens, share: part.tokens / window }));
   const free = Math.max(window - (context.used ?? context.parts.tokens), 0);

@@ -112,6 +112,28 @@ test("the reading speed is the last step's, once its prompt was read", () => {
   assert.equal(panelRows(ended).speed, "last step 63 tok/s · read 1,000 tok/s · drafts 56% accepted");
 });
 
+test("a prompt read mostly from the cache says how few tokens were new, not a speed of them", () => {
+  const cached = {
+    ...WRITING,
+    now: {
+      ...WRITING.now!,
+      state: "idle",
+      phase: "idle",
+      working: false,
+      prompt: { first_ms: 2300, reading: false, tokens: 14200, cached: 14004, of: "the last step" },
+    },
+  };
+  assert.equal(panelRows(cached).speed, "last step 63 tok/s · read 196 new tokens in 2.3 s · drafts 56% accepted");
+});
+
+test("the bar leaves out the parts that hold nothing", () => {
+  const empty = { part: "loop", label: "loop text", tokens: 0, share: 0 };
+  const context = { ...WRITING.context!, parts: { ...WRITING.context!.parts!, parts: [...WRITING.context!.parts!.parts, empty] } };
+  const labels = panelRows({ ...WRITING, context }).bar.map((segment) => segment.label);
+  assert.ok(!labels.includes("loop text"));
+  assert.ok(labels.includes("free"));
+});
+
 test("a tool or a call is named, and an engine holding another conversation is said with its cost", () => {
   const tool = { ...WRITING.now!, state: "tool", phase: "running a tool", call: { tool: "bash", title: "", input: "" } };
   assert.equal(panelRows({ ...WRITING, now: tool }).now, "running a tool: bash · 12 s");
