@@ -270,6 +270,11 @@ class EngineAdapter(Adapter):
         reserves more than it touches); None for one that does not."""
         return None
 
+    def drafts(self, lines: Sequence[str]) -> dict[str, Any] | None:
+        """The tokens its drafting proposed and how many were accepted, as its log last said (design 0021 §3): the
+        tokens written, drafted and accepted, and the share accepted; None for an engine that does not say it."""
+        return None
+
     def option(self, key: str) -> EngineOption:
         """The option of that key, or `EngineError`."""
         for found in self.options():

@@ -6,7 +6,8 @@ at a time; vision takes a projector file (`--mmproj`), on the GPU or the CPU; sp
 head. Clank's defaults for it are the ones measured best on an RTX 5080 (PROTOTYPE.md): a 262K context, a 36K exact
 window, MTP with 3 draft tokens, thinking on with a 4096-token budget; CUDA graphs are off, the owner's decision of
 2026-10-08 after three crashes on an MTP verify step. It is ready when its log says `listening on`; its log reports
-what each GPU buffer took.
+what each GPU buffer took, and at each answer's end the tokens its MTP head drafted and those accepted
+(`KVMEM_TRACE spec_stats`, `drafts`: the model's readout, design 0021 §3).
 
 Its GPU layers (`-ngl`) and its sampling (`--temp` and the rest) have no default of Clank's (design 0003 §4.1, decision
 0119): unset, KVMem gets no flag and keeps its own, 99 layers (every one) and Qwen3.8-27B's model card's sampling,
@@ -67,6 +68,7 @@ from clank.components.runtime.adapters.engine import (
 BITS = {"f16": 16.0, "q8_0": 8.5, "q5_0": 5.5, "q4_0": 4.5}
 BUFFER = re.compile(r"\b(CUDA\d+) (model|KV|RS|compute) buffer size =\s*([\d.]+) MiB")
 MTP_POOL = re.compile(r"\bKVMEM_TRACE mtp_pool cells=\d+ .*?\bbytes=(\d+)")
+SPEC_STATS = re.compile(r"^KVMEM_TRACE spec_stats n_gen=(\d+) n_drafted=(\d+) n_accept=(\d+)\b")  # each answer's drafts
 REPORTED = {"model": "weights", "KV": "kv", "RS": "recurrent", "compute": "compute"}
 MIB = 1024 * 1024
 BLOCK = 128  # tokens in one of its blocks; the first block is always on the GPU
@@ -322,6 +324,16 @@ class KvmemLlamacpp(EngineAdapter):
     def ready(self, line: str) -> bool:
         """`llama-kvmem-server listening on http://...`."""
         return "listening on http://" in line
+
+    def drafts(self, lines: Sequence[str]) -> dict[str, Any] | None:
+        """Its newest `KVMEM_TRACE spec_stats` line, written at each answer's end with MTP on: the tokens written, the
+        tokens the MTP head drafted and those accepted (design 0021 §3)."""
+        for line in reversed(lines):
+            if (match := SPEC_STATS.match(line)) is not None:
+                tokens, drafted, accepted = (int(group) for group in match.groups())
+                return {"tokens": tokens, "drafted": drafted, "accepted": accepted,
+                        "share": round(accepted / drafted, 3) if drafted else None}  # fmt: skip
+        return None
 
     def memory_report(self, lines: Sequence[str]) -> dict[str, float]:
         """The GPU buffers its log reports: weights, KV, recurrent state, compute and the MTP head's pool, in MiB."""

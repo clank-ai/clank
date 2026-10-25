@@ -12,7 +12,8 @@ routes read those kinds through `read_records` and `read_record` (design 0002 §
 A preset's facts (`facts`, design 0012 §4, decision 0067) are what the Monitor reads of the context window: its engine
 adapter's context facts for the preset's options, and its model's template facts and calibration from the catalog; a
 slot's route carries those of the preset it runs. A text is counted for a preset (`count_tokens`, decision 0087) by its
-engine when the main slot runs that preset and the engine counts, else estimated and said so.
+engine when the main slot runs that preset and the engine counts, else estimated and said so. What a slot's engine
+last said of its drafting (`drafts`, design 0021 §3) is read from the end of its newest launch's log by its adapter.
 """
 
 import math
@@ -50,6 +51,7 @@ LOCAL = {"name": "local", "adapter": "local", "distro": "", "clank_folder": "~/.
 PLAIN_TOKENS_PER_CHARACTER = 0.3
 CALIBRATED_PART = "user"  # the part of a request whose calibration a message of the owner's, or a box's, takes
 COUNT_SECONDS = 10  # how long the engine is given to count a text
+LOG_TAIL = 64 * 1024  # the bytes at the end of an engine's log its newest figures are read from
 
 
 class PresetNotFound(Exception):
@@ -205,6 +207,23 @@ class Runtime:
             model = launching.models(self).get(found.model)
             return None if model is None else preset_facts(id, found, model)
         except (PresetNotFound, AdapterError, EngineError, ValueError, TypeError):
+            return None
+
+    def drafts(self, slot: str) -> dict[str, Any] | None:
+        """The drafts the engine a slot runs last said it proposed and had accepted (design 0021 §3), read from the end
+        of its newest launch's log by its adapter; None for a slot never launched, an engine that does not say it, or
+        a log that is gone."""
+        record = self.state.slot(slot)
+        if record.launch_id is None:
+            return None
+        launch = self.state.launch(record.launch_id)
+        try:
+            with open(launch.log, "rb") as log:
+                log.seek(0, 2)
+                log.seek(max(log.tell() - LOG_TAIL, 0))
+                lines = log.read().decode("utf-8", errors="replace").splitlines()
+            return ENGINES.get(launch.engine)(launch.engine_version).drafts(lines)
+        except (OSError, AdapterError, EngineError):
             return None
 
     def count_tokens(self, preset: str, text: str) -> dict[str, Any]:

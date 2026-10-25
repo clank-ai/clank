@@ -326,6 +326,14 @@ def router(agents: "Agents") -> APIRouter:
         found: dict[str, Any] = await anyio.to_thread.run_sync(agents.context, workspace, session)
         return found
 
+    @routes.get("/agents/readout")
+    async def readout(folder: str, session: str = "") -> dict[str, Any]:
+        """The model's readout for a folder (design 0021 §3): its workspace's session (the one named, else the newest),
+        that session's now and context totals, and the machine (the main slot and its speed options, the GPU, the
+        drafted tokens accepted); a part that cannot be read is null."""
+        found: dict[str, Any] = await anyio.to_thread.run_sync(agents.readout, folder, session)
+        return found
+
     @routes.get("/agents/now/{workspace}/{session}")
     async def doing_now(workspace: str, session: str) -> dict[str, Any]:
         """What a session does now (design 0012 §5): its phase, from the gateway or from OpenCode, with its detail; its

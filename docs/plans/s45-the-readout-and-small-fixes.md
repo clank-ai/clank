@@ -6,7 +6,7 @@ Builds [design 0021](../design/0021-all-llm-work-in-clank.md) §3, §7 (what is 
 
 ## Tasks
 
-- [ ] 1. **The readout's route** (§3): `GET /agents/readout?folder=&session=`: the folder's workspace, its newest kept
+- [x] 1. **The readout's route** (§3): `GET /agents/readout?folder=&session=`: the folder's workspace, its newest kept
   session (or the one named), its `now` and its context totals as their routes give them, the main slot (its state,
   preset, title, and the options that change speed: drafted tokens, CUDA graphs), the GPU's newest meter (memory used
   and total, use), and the drafted tokens accepted as the engine's log last said (`spec_stats`, read by the KVMem

@@ -70,6 +70,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/now.py` | What a session does now (design 0012 §5, §11 step 7): the Monitor's Now panel, as the service says it, so the console |
 | `clank/components/agents/pausing.py` | The Guide's pause in the service (design 0012 §9.4, §11 step 11, decision 0055): **pause after this step** (`p`). |
 | `clank/components/agents/plans.py` | Plans (design 0009 §4): a plan is a Markdown file whose header says `kind: plan`, wherever the folder keeps it. |
+| `clank/components/agents/readout.py` | The model's readout (design 0021 §3): what VS Code shows under OpenCode's terminal, and in its status bar, of the |
 | `clank/components/agents/remotecode.py` | VS Code on another computer (design 0018 §8): from a terminal of VS Code's Remote-SSH on this PC, a folder opens in |
 | `clank/components/agents/review.py` | Reviewing the agent's changes (design 0007): the workspace's mode, and what Clank does when the agent asks to change |
 | `clank/components/agents/service.py` | The agents component's part in the service (design 0004 §4): making a workspace's agent ready to work. |

@@ -86,6 +86,7 @@ from clank.components.agents.pausing import Pausing
 from clank.components.agents.plans import INSTRUCTIONS as INSTRUCTIONS  # for the flows: no box delivers them (0013 §9)
 from clank.components.agents.plans import SETTINGS as SETTINGS  # for the flows: no box delivers in them (0013 §9)
 from clank.components.agents.plans import is_plan as is_plan  # for the flows: a plan's progress (design 0013 §8)
+from clank.components.agents.readout import gpu_view, slot_view
 from clank.components.agents.review import EVENT_TYPES as REVIEW_EVENTS
 from clank.components.agents.review import Review
 from clank.components.agents.review import ReviewError as ReviewError  # for the components that use this one
@@ -243,6 +244,33 @@ class Agents:
         moment = self.kernel.clock.now().timestamp()
         found = now(session, doing, self.flows.view(workspace, session), gateway.routes(), gateway.facts, guard, moment)
         return {"workspace": workspace, **found}
+
+    def readout(self, folder: str, session: str = "") -> dict[str, Any]:
+        """The model's readout for a folder (design 0021 §3; `readout.py`): its workspace's session (the one named,
+        else the newest kept), that session's `now` and context totals, and the machine: the main slot, the GPU, the
+        drafts."""
+        try:
+            workspace: str | None = self.annotations.workspace_of(folder)[0]
+        except AnnotationError:
+            workspace = None
+        kept = self.flows.flows(workspace) if workspace else []
+        chosen = session or (str(kept[0].get("session") or "") if kept else "")
+        named = next((flow for flow in kept if flow.get("session") == chosen), {})
+        runtime: Runtime = self.kernel.parts["runtime"]
+        machine: Machine = self.kernel.parts["machine"]
+        slot = runtime.state.slot("main")
+        options = runtime.state.launch(slot.launch_id).options if slot.launch_id is not None else None
+        followed = workspace is not None and bool(chosen)
+        return {
+            "folder": folder,
+            "workspace": workspace,
+            "session": {"id": chosen, "title": str(named.get("title") or "")} if followed else None,
+            "now": self.now(str(workspace), chosen) if followed else None,
+            "context": self.context(str(workspace), chosen) if followed else None,
+            "slot": slot_view(slot, runtime.title(slot.preset), options),
+            "gpu": gpu_view(machine.meters()),
+            "drafts": runtime.drafts("main"),
+        }
 
     def figures(self, workspace: str, session: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         """A session's context totals, with its parts (their items' steps from its flow, design 0012 §4.2), and the
