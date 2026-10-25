@@ -15,13 +15,13 @@ failing test; each ends with a commit pushed to `main`.
   container's image, the record; a real build marked `tex`.
 - [ ] 2. **The rule for LaTeX files** (§4): `.tex` files that existed before the agent created them, `.bib` files and
   class and style files are always reviewed, in auto mode too; a `.tex` file the agent created follows the mode.
-- [ ] 3. **Citations** (§6): every citation command's keys are entries of the bibliographies the document loads; a new
+- [x] 3. **Citations** (§6): every citation command's keys are entries of the bibliographies the document loads; a new
   `.bib` entry has a DOI or an arXiv id that resolves and matches its title, first author and year (Crossref, arXiv;
   the lookup injected in tests, from recorded answers).
-- [ ] 4. **Sources** (§7): a changed paragraph that states a value (a decimal, a percentage, a number in scientific
+- [x] 4. **Sources** (§7): a changed paragraph that states a value (a decimal, a percentage, a number in scientific
   notation, an integer of three digits or more that is not a year) carries `% source:` naming a file of the folder, a
   bibliography key, a DOI or an arXiv id, or `% UNVERIFIED:`.
-- [ ] 5. **Compiling** (§8): the document's root (its `% !TEX root`, the file itself with `\documentclass`, else the
+- [x] 5. **Compiling** (§8): the document's root (its `% !TEX root`, the file itself with `\documentclass`, else the
   file that includes it); a build in the container (`latex_build.py`: a scratch tree of links to the folder's files, the
   changed file written in it, `latexmk` with the document's engine, two minutes); the log's errors, undefined references
   and citations, and labels defined twice, compared with the document's build before the change (kept until a TeX file

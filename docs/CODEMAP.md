@@ -57,6 +57,10 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/figures.py` | A mark on a figure, in words (design 0008 §4): what an agent is told about each mark the owner drew. |
 | `clank/components/agents/guide.py` | The Guide (design 0012 §9.1-§9.7, §11 steps 9 to 11): what the owner, or a Watch for rule, does to the session the |
 | `clank/components/agents/kinds.py` | The agents component's kinds of record (design 0004 §5): the VS Code window's settings, `config/vscode.json`, what |
+| `clank/components/agents/latex/__init__.py` | LaTeX with the agent (design 0020): the checks on every LaTeX change, the builds in the container, and the marks on |
+| `clank/components/agents/latex/building.py` | Compiling clean (design 0020 §8): a change to a LaTeX file must leave its document building, with no undefined |
+| `clank/components/agents/latex/citations.py` | Citations and the bibliography (design 0020 §6): no citation the agent writes may name an entry the bibliography |
+| `clank/components/agents/latex/sources.py` | Claims and their sources (design 0020 §7): a value the agent writes into a LaTeX document says where it comes from. |
 | `clank/components/agents/latexcli.py` | `clank latex` (design 0020): LaTeX with the agent. `clank latex setup [FOLDER]` gives the folder's workspace the TeX |
 | `clank/components/agents/modes.py` | The workspace's mode as the owner sees it, and handing a plan to the agent (design 0009 §7-§8). |
 | `clank/components/agents/now.py` | What a session does now (design 0012 §5, §11 step 7): the Monitor's Now panel, as the service says it, so the console |
@@ -240,6 +244,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/workspaces/image/python/clank_figures.py` | Clank's figure geometry (design 0008 §3): when Matplotlib saves a raster figure inside the workspace's folder, write |
 | `clank/components/workspaces/image/python/sitecustomize.py` | Clank's sitecustomize in the sandbox image (design 0008 §3): every Python in a workspace's container finds it on |
 | `clank/components/workspaces/kinds.py` | The workspaces component's kinds of record: how Clank uses Docker (`config/docker.json`), and from M4 each workspace |
+| `clank/components/workspaces/layers/tex/latex_build.py` | Clank's LaTeX helper, in the TeX layer (design 0020 §8-§10, decision 0134): run in a workspace's container, it reads |
 | `clank/components/workspaces/sandbox.py` | A workspace's container and the edge, as Clank wants them (design 0004 §3 and §6, design 0002 §2.9). |
 | `clank/components/workspaces/service.py` | The workspaces component's part in the service. In M0 it holds Docker: the container platform's status, whose each |
 | `clank/components/workspaces/setup.py` | A workspace's software (design 0004 §10): what installs the folder's own programs where its agent finds them. |
