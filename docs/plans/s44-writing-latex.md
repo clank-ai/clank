@@ -6,7 +6,7 @@ failing test; each ends with a commit pushed to `main`.
 
 ## Tasks
 
-- [ ] 1. **Image layers and the TeX layer** (§3). A workspace's record names its layers (`layers`, empty by default);
+- [x] 1. **Image layers and the TeX layer** (§3). A workspace's record names its layers (`layers`, empty by default);
   its image is the sandbox image, or, with layers, an image built on it from each layer's Dockerfile
   (`clank/components/workspaces/layers/<name>/`, the base's tag as the build argument `BASE`), tagged by the base's
   tag and the layers' files (`sandbox.layered_tag`). Opening a workspace builds what is missing (asked first) and makes

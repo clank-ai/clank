@@ -1,5 +1,6 @@
 """The workspaces component's routes: Docker's status, and starting and stopping it; the workspaces, and opening,
-installing the software of (design 0004 §10), stopping and removing one (design 0004 §1).
+installing the software of (design 0004 §10), stopping and removing one (design 0004 §1); a workspace's image layers
+(design 0020 §3).
 
 They are included under `/api/v1/` behind the local token like every route (design 0002 §2.7). Reading the platform
 runs its commands, so it happens off the service's event loop. Starting and stopping return the operation they start
@@ -24,6 +25,7 @@ class OpenRequest(BaseModel):
 
     folder: str
     yes: bool = False
+    layers: list[str] = []
 
 
 class SetupRequest(BaseModel):
@@ -39,6 +41,13 @@ class CloudAnswer(BaseModel):
     """Whether a workspace's agent may use the cloud model (false: kept on this machine)."""
 
     allow: bool
+
+
+class LayerRequest(BaseModel):
+    """An image layer to add to a workspace (`added`), or to take away."""
+
+    layer: str
+    added: bool = True
 
 
 class RemoveRequest(BaseModel):
@@ -103,6 +112,21 @@ def router(workspaces: "Workspaces") -> APIRouter:
     async def remove_workspace(name: str, wanted: RemoveRequest, request: Request) -> dict[str, Any]:
         """Remove a workspace's container, its home and its record, never its folder: an operation that asks first."""
         return await _start(workspaces, "workspaces.remove", request, {"name": name, "yes": wanted.yes})
+
+    @routes.post("/workspaces/{name}/layers")
+    async def layers(name: str, wanted: LayerRequest, request: Request) -> dict[str, Any]:
+        """Add an image layer to a workspace (design 0020 §3: tex), or take it away; built the next time it opens."""
+        from clank.components.workspaces.folders import WorkspaceError
+        from clank.kernel.api import ApiError
+
+        actor = client_actor(request.headers.get(CLIENT_HEADER))
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(
+                lambda: workspaces.set_layer(name, wanted.layer, wanted.added, actor=actor)
+            )
+        except WorkspaceError as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
 
     @routes.post("/workspaces/{name}/cloud")
     async def cloud(name: str, answer: CloudAnswer, request: Request) -> dict[str, Any]:

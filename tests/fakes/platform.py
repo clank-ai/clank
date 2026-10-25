@@ -47,6 +47,8 @@ class FakePlatform(ContainerPlatform):
         self._checks = 0
         self.cpus_memory: tuple[int, int] | None = (16, 32768)
         self.images: set[str] = set()
+        self.build_args: dict[str, dict[str, str]] = {}  # each image built: its build arguments
+        self.build_folders: dict[str, str] = {}  # and the folder it was built from
         self.networks: dict[str, bool] = {}
         self.joined: set[tuple[str, str]] = set()
         self.files: dict[tuple[str, str], str] = {}
@@ -113,8 +115,11 @@ class FakePlatform(ContainerPlatform):
         labels: Mapping[str, str],
         line: Callable[[str], None],
         canceled: Callable[[], bool],
+        args: Mapping[str, str] | None = None,
     ) -> int | None:
         self.calls.append(f"build {tag}")
+        self.build_args[tag] = dict(args or {})
+        self.build_folders[tag] = folder
         for text in self.build_lines:
             if canceled():
                 return None

@@ -19,7 +19,10 @@ contained and limited as the workspace's container, but on Docker's default netw
 the folder's own software can be downloaded into the home without the workspace's container ever reaching out.
 
 All of them run Clank's sandbox image, built from the `image` folder beside this module; its tag is the checksum of that
-folder's files (`image_tag`), so a change to them builds a new image, and an image of that tag is the one they made.
+folder's files (`image_tag`), so a change to them builds a new image, and an image of that tag is the one they made. A
+workspace whose record names image layers (design 0020 §3: `tex`) runs an image built on it, a layer at a time in
+their order, each from its folder under `layers` with the image below as the build argument `BASE` (`layer_chain`);
+its tag names the layers and is the checksum of the base's tag and the layers' files (`layered_tag`).
 """
 
 import csv
@@ -41,6 +44,7 @@ BRIDGE_PROGRAM = "/opt/clank/bridge.py"  # the session bridge to OpenCode's serv
 PHONE_PROGRAM = "/opt/clank/phone_mcp.py"  # Clank's own MCP server for the agent: send_to_phone (design 0005 §3)
 IMAGE = "clank-sandbox"
 DEFAULT_NETWORK = "bridge"  # Docker's own, which reaches the internet: a workspace's setup only
+LAYERS = ("tex",)  # the image layers Clank knows (design 0020 §3), in the order they are built
 THREADS = ("OMP_NUM_THREADS", "NUMBA_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")
 
 
@@ -218,9 +222,59 @@ def image_folder() -> Path:
 
 def image_tag() -> str:
     """The sandbox image's tag: the checksum of its folder's files (Python's caches left out)."""
-    folder = image_folder()
     digest = hashlib.sha256()
+    _add_files(digest, image_folder())
+    return f"{IMAGE}:{digest.hexdigest()[:12]}"
+
+
+def layer_folder(name: str) -> Path:
+    """The folder an image layer is built from: its Dockerfile, and what it copies."""
+    return Path(str(resources.files("clank.components.workspaces").joinpath("layers", name)))
+
+
+@dataclass(frozen=True)
+class LayerStep:
+    """One layer built on the image below it: the layer, the tag it builds on, and the tag it gets."""
+
+    layer: str
+    base: str
+    tag: str
+
+
+def layer_chain(layers: Sequence[str]) -> list[LayerStep]:
+    """The layers a workspace names, in Clank's order, each built on the image below it, the sandbox image first;
+    empty for none. An unknown layer is a `ValueError` naming the layers there are."""
+    unknown = sorted(set(layers) - set(LAYERS))
+    if unknown:
+        raise ValueError(f"there is no image layer {unknown[0]!r}: the layers are {', '.join(LAYERS)}")
+    wanted = [name for name in LAYERS if name in set(layers)]
+    steps: list[LayerStep] = []
+    below = image_tag()
+    for count in range(1, len(wanted) + 1):
+        tag = _layered(wanted[:count])
+        steps.append(LayerStep(wanted[count - 1], below, tag))
+        below = tag
+    return steps
+
+
+def layered_tag(layers: Sequence[str]) -> str:
+    """The tag of the image a workspace with these layers runs: the sandbox image's, with none."""
+    chain = layer_chain(layers)
+    return chain[-1].tag if chain else image_tag()
+
+
+def _layered(layers: Sequence[str]) -> str:
+    """The tag of the sandbox image with these layers on it: their names, and the checksum of the base's tag and their
+    folders' files."""
+    digest = hashlib.sha256(image_tag().encode("utf-8"))
+    for name in layers:
+        digest.update(name.encode("utf-8") + b"\0")
+        _add_files(digest, layer_folder(name))
+    return f"{IMAGE}-{'-'.join(layers)}:{digest.hexdigest()[:12]}"
+
+
+def _add_files(digest: "hashlib._Hash", folder: Path) -> None:
+    """Each file of the folder, by its path and its bytes (Python's caches left out)."""
     for path in sorted(folder.rglob("*")):
         if path.is_file() and "__pycache__" not in path.parts:
             digest.update(path.relative_to(folder).as_posix().encode("utf-8") + b"\0" + path.read_bytes())
-    return f"{IMAGE}:{digest.hexdigest()[:12]}"

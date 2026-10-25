@@ -141,9 +141,10 @@ class ContainerPlatform(Adapter):
         labels: Mapping[str, str],
         line: Callable[[str], None],
         canceled: Callable[[], bool],
+        args: Mapping[str, str] | None = None,
     ) -> int | None:
-        """Build an image from a folder, giving `line` each line as it comes; its exit status, or None when it could not
-        start or was canceled."""
+        """Build an image from a folder, with build arguments (`args`), giving `line` each line as it comes; its exit
+        status, or None when it could not start or was canceled."""
 
     @abstractmethod
     def ensure_network(self, name: str, *, internal: bool, labels: Mapping[str, str]) -> None:

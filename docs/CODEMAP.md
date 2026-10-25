@@ -57,6 +57,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/figures.py` | A mark on a figure, in words (design 0008 §4): what an agent is told about each mark the owner drew. |
 | `clank/components/agents/guide.py` | The Guide (design 0012 §9.1-§9.7, §11 steps 9 to 11): what the owner, or a Watch for rule, does to the session the |
 | `clank/components/agents/kinds.py` | The agents component's kinds of record (design 0004 §5): the VS Code window's settings, `config/vscode.json`, what |
+| `clank/components/agents/latexcli.py` | `clank latex` (design 0020): LaTeX with the agent. `clank latex setup [FOLDER]` gives the folder's workspace the TeX |
 | `clank/components/agents/modes.py` | The workspace's mode as the owner sees it, and handing a plan to the agent (design 0009 §7-§8). |
 | `clank/components/agents/now.py` | What a session does now (design 0012 §5, §11 step 7): the Monitor's Now panel, as the service says it, so the console |
 | `clank/components/agents/pausing.py` | The Guide's pause in the service (design 0012 §9.4, §11 step 11, decision 0055): **pause after this step** (`p`). |

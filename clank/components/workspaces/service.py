@@ -30,9 +30,9 @@ from clank.components.workspaces.cloud import EVENT_TYPES as CLOUD_EVENT_TYPES
 from clank.components.workspaces.cloud import CloudBounds
 from clank.components.workspaces.kinds import DockerSettings, Workspace
 from clank.components.workspaces.sandbox import BRIDGE_PROGRAM as BRIDGE_PROGRAM  # for the agents (design 0005)
+from clank.components.workspaces.sandbox import LAYERS, image_tag, layered_tag, names, thread_env
 from clank.components.workspaces.sandbox import PHONE_PROGRAM as PHONE_PROGRAM
 from clank.components.workspaces.sandbox import WORKSPACE as WORKSPACE  # for the agents (design 0007)
-from clank.components.workspaces.sandbox import image_tag, names, thread_env
 from clank.components.workspaces.setup import proposed_setup
 from clank.kernel.clock import to_text
 from clank.kernel.core import Kernel
@@ -259,7 +259,7 @@ class Workspaces:
         found = self.platform.container(container) if running and container else None
         known = found.state if found is not None else "not made"
         state = known if running else f"Docker is {docker['state']}"
-        tag = image_tag()
+        tag = layered_tag(workspace[1].layers) if workspace else image_tag()
         built = self.platform.image_exists(tag) if running else None
         return {
             "folder": path,
@@ -277,7 +277,32 @@ class Workspaces:
         from an older image (its bridge and Clank's MCP server are baked into it), which moves to the new one when the
         workspace is stopped and opened again; None when it has no container."""
         found = self.platform.container(names(self.kernel.home.id).container(workspace))
-        return found.image == image_tag() if found is not None else None
+        layers = Workspace.model_validate(self.kernel.settings.get("workspace", workspace).record.model_dump()).layers
+        return found.image == layered_tag(layers) if found is not None else None
+
+    def set_layer(self, name: str, layer: str, added: bool, *, actor: Actor) -> dict[str, Any]:
+        """Add an image layer to a workspace's record, or take it away (design 0020 §3); its layers, and what then."""
+        from clank.components.workspaces.folders import WorkspaceError
+
+        if layer not in LAYERS:
+            raise WorkspaceError(f"there is no image layer {layer!r}: the layers are {', '.join(LAYERS)}")
+        known = {loaded.id: loaded for loaded in self.kernel.settings.records("workspace")}
+        if name not in known:
+            raise WorkspaceError(f"there is no workspace {name!r}")
+        loaded = known[name]
+        record = loaded.record.model_dump()
+        layers = [each for each in LAYERS if (each in record.get("layers", []) or each == layer) and
+                  not (each == layer and not added)]  # fmt: skip
+        if layers != record.get("layers", []):
+            self.kernel.settings.write(
+                "workspace", name, {**record, "layers": layers}, base=loaded.revision, actor=actor
+            )
+        verb = "added to" if added else "taken from"
+        said = (
+            f"{layer} is {verb} {name}: open the workspace again to build its image (asked first); its container moves "
+            "to it once it is stopped and opened again"
+        )
+        return {"workspace": name, "layers": layers, "said": said}
 
     def container_of(self, workspace: str) -> str:
         """The name of a workspace's container, once it runs; `WorkspaceUnavailable` saying why not."""

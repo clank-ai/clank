@@ -234,10 +234,12 @@ class DockerDesktop(ContainerPlatform):
         labels: Mapping[str, str],
         line: Callable[[str], None],
         canceled: Callable[[], bool],
+        args: Mapping[str, str] | None = None,
     ) -> int | None:
-        """`docker build`, its plain progress followed line by line."""
+        """`docker build`, with its build arguments, its plain progress followed line by line."""
         marks = [part for key, value in labels.items() for part in ("--label", f"{key}={value}")]
-        argv = [self.command or "docker", "build", "--progress", "plain", "--tag", tag, *marks, folder]
+        given = [part for key, value in (args or {}).items() for part in ("--build-arg", f"{key}={value}")]
+        argv = [self.command or "docker", "build", "--progress", "plain", "--tag", tag, *marks, *given, folder]
         return self.follow(argv, line, canceled)
 
     def ensure_network(self, name: str, *, internal: bool, labels: Mapping[str, str]) -> None:

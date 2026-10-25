@@ -64,6 +64,14 @@ class Workspace(Settings):
         title="Memory",
         description="The memory its container may use, in MiB; empty: a quarter of what Docker has.",
     )
+    layers: list[str] = Field(
+        default_factory=list,
+        title="Image layers",
+        description=(
+            "What its container has besides Clank's sandbox image, each built on it once: tex (TeX Live, for the LaTeX "
+            "the agent writes, design 0020). Its container moves to the new image when it is next made."
+        ),
+    )
     setup: str | None = Field(
         None,
         title="Setup",
