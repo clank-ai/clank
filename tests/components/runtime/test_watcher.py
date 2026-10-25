@@ -65,7 +65,7 @@ async def until(holds: object, seconds: float = 30) -> None:
 
 
 async def test_an_engine_that_ends_leaves_the_slot_failed_in_its_own_words(engines: Rig, tmp_path: Path) -> None:
-    kvmem_runs(engines, tmp_path, "--fake-crash-after", "0.5")
+    kvmem_runs(engines, tmp_path, "--fake-crash-after", "2")  # after its load has ended, even on a busy machine
     async with engines.kernel.operations.running():
         await load(engines)
         await until(lambda: not LocalHost().alive(identity(engines)))
@@ -110,10 +110,10 @@ async def test_a_second_crash_within_the_hour_leaves_it_failed_and_asks(engines:
 async def test_a_crash_of_a_preset_that_names_a_fallback_loads_the_fallback_and_says_why(
     engines: Rig, tmp_path: Path
 ) -> None:
-    kvmem_runs(engines, tmp_path, "--fake-crash-after", "0.5")
-    engines.preset("fake-kvmem-trial", {"title": "fake KVMem trial", "engine": "kvmem-llamacpp",
-                                        "engine_version": "v0.16.0-rc1", "model": "tiny", "fallback": "fake-kvmem-small",
-                                        "options": {"context": 8192, "kvmem.budget": 4096}})  # fmt: skip
+    kvmem_runs(engines, tmp_path, "--fake-crash-after", "2")  # after its load has ended, even on a busy machine
+    trial = {"title": "fake KVMem trial", "engine": "kvmem-llamacpp", "engine_version": "v0.16.0-rc1", "model": "tiny",
+             "fallback": "fake-kvmem-small", "options": {"context": 8192, "kvmem.budget": 4096}}  # fmt: skip
+    engines.preset("fake-kvmem-trial", trial)
     async with engines.kernel.operations.running():
         started = await engines.kernel.operations.start(
             "runtime.load", {"slot": "main", "preset": "fake KVMem trial"}, actor=YOU
