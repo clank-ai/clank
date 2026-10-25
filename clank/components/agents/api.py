@@ -13,9 +13,10 @@ permission or a question; the bridge's refusal is a 409 in its own words. The re
 0007): `GET /agents/review` (a workspace's mode, by folder or by name, whether its agents are watched, how many changes
 wait, and what its window was told of its model's last change, design 0013 §7), `POST /agents/review` (switch it),
 `GET /agents/changes` (the newest changes, without the files) and `GET /agents/changes/{id}` (one, with the file
-before, after, and as written). `POST /agents/annotations` sends a figure the
-owner marked up (design 0008). `POST /agents/show` opens files of a workspace's folder in the owner's VS Code window
-(design 0018 §7): the agent's, through the gateway, refused (409) while no VS Code window follows the service. The
+before, after, and as written). `POST /agents/annotations` sends a figure the owner marked up (design 0008), or a
+page of a PDF; `POST /agents/latex/pages` renders a PDF of a folder as page images to mark up (design 0020 §10). `POST
+/agents/show` opens files of a workspace's folder in the owner's VS Code window (design 0018 §7): the agent's, through
+the gateway, refused (409) while no VS Code window follows the service. The
 Monitor's flows (design 0012 §6.1): `GET /agents/flow/{workspace}` (the flows kept,
 briefly) and `GET /agents/flow/{workspace}/{session}` (one, whole, or what changed after the version `since`, with the
 session's marks); a session's context totals (design 0012 §4.1): `GET /agents/context/{workspace}/{session}`; what it
@@ -113,6 +114,13 @@ class AnnotationRequest(BaseModel):
     image: str
 
 
+class PagesRequest(BaseModel):
+    """A PDF of a folder to mark up, from the folder."""
+
+    folder: str
+    pdf: str
+
+
 class ShowRequest(BaseModel):
     """Files of a workspace's folder to open in the owner's VS Code window, as the agent named them, and why."""
 
@@ -168,6 +176,7 @@ def router(agents: "Agents") -> APIRouter:
         AnnotationError,
         GuideError,
         ModeError,
+        PageError,
         ReviewError,
         ShowError,
     )
@@ -490,6 +499,21 @@ def router(agents: "Agents") -> APIRouter:
             raise ApiError(409, "refused", str(error)) from error
         except OSError as error:
             raise ApiError(409, "refused", f"the figure could not be read: {error}") from error
+        return found
+
+    @routes.post("/agents/latex/pages")
+    async def pages(wanted: PagesRequest) -> dict[str, Any]:
+        """A PDF of a folder as page images for the annotator (design 0020 §10): built first when its `.tex` is beside
+        it, rendered in the container with each page's words; the pages, by number."""
+        from pathlib import Path
+
+        try:
+            workspace, root = agents.annotations.workspace_of(wanted.folder)
+            found: dict[str, Any] = await anyio.to_thread.run_sync(
+                lambda: agents.pages.render(workspace, Path(root), wanted.pdf)
+            )
+        except (AnnotationError, PageError, WorkspaceUnavailable) as error:
+            raise ApiError(409, "refused", str(error)) from error
         return found
 
     @routes.post("/agents/show")

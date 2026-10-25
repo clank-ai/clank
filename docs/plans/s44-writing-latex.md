@@ -31,7 +31,7 @@ failing test; each ends with a commit pushed to `main`.
   it; a check that cannot run (no TeX in the container) asks the owner, saying so; each refusal is an event.
 - [x] 7. **The marked-up PDF** (§9): `latexdiff --flatten` between the root before and after, built in the container
   into `.clank/latex/<change>/diff.pdf`; an event the window follows to open it beside the diff.
-- [ ] 8. **Annotating the PDF** (§10): "Annotate this PDF" renders its pages in the container (`pdftoppm`) with each
+- [x] 8. **Annotating the PDF** (§10): "Annotate this PDF" renders its pages in the container (`pdftoppm`) with each
   page's word boxes (`pdftotext -bbox-layout`), opens them in the figure annotator, and the marks on a page go to the
   agent in words: the words under each, and SyncTeX's file and line.
 - [ ] 9. **Annotating the source, and the agent's turn** (§11, §12): comment threads on `.tex` files, sent together;

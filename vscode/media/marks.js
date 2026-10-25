@@ -2,15 +2,20 @@
 // pixels, numbered as they are drawn, undone and redone; how each is drawn (on the screen at any scale, and on the
 // marked-up copy sent to the agent); and their numbers' badges. A note is a bubble tied to a pin: the pin (its number)
 // is what the note is about, the bubble holds its words, wrapped, and is kept on the figure wherever it is put; moving
-// the bubble moves only where it is shown. It is a plain script, so the page loads it as it is and Node's tests require
+// the bubble moves only where it is shown. On a PDF's page (design 0020 §10), three more marks for text: a highlight
+// (a translucent box), a strike (a line through words) and an insertion (a caret at a point, with its words as a
+// note's). It is a plain script, so the page loads it as it is and Node's tests require
 // it: it touches no page and no canvas of its own, only the 2D context it is given.
 (function (root) {
   "use strict";
 
   /** The colors, red first; their names are the service's (`figures.COLORS`). */
   const PALETTE = ["#e5484d", "#3e63dd", "#30a46c", "#f5a524"];
-  /** The tools: the pen draws freely; a box, a circle and an arrow are dragged; a text is placed with a click. */
-  const TOOLS = ["pen", "box", "circle", "arrow", "text"];
+  /** The tools: the pen draws freely; a box, a circle and an arrow are dragged; a text is placed with a click; on a
+   * PDF's page, a highlight and a strike are dragged and an insertion is placed with a click, with its words. */
+  const TOOLS = ["pen", "box", "circle", "arrow", "text", "highlight", "strike", "insert"];
+  /** The marks that carry words in a bubble: a note, and an insertion (what to insert). */
+  const WORDED = ["text", "insert"];
 
   /** The marks drawn, in order; each change kept, so undo and redo step through them (a clear too). */
   class Marks {
@@ -28,7 +33,7 @@
     /** A new mark, numbered after the last; drawing anew forgets what was undone. */
     add(kind, color, points, text) {
       const mark = { n: this.list.length + 1, kind, color, points: points.map((p) => [round(p[0]), round(p[1])]) };
-      if (kind === "text") mark.text = String(text || "");
+      if (WORDED.includes(kind)) mark.text = String(text || "");
       this.change([...this.list, mark]);
       return mark;
     }
@@ -95,7 +100,7 @@
 
   /** Whether a dragged mark is too small to be meant (a click with the box, circle or arrow tool). */
   function tooSmall(mark, slack) {
-    if (mark.kind === "text") return !mark.text;
+    if (WORDED.includes(mark.kind)) return !mark.text;
     const [left, top, right, bottom] = bounds(mark);
     return right - left < slack && bottom - top < slack;
   }
@@ -112,7 +117,7 @@
 
   /** Where a mark's number goes: the start of a stroke, a shape's top left corner, an arrow's tail. */
   function badgeAt(mark) {
-    if (mark.kind === "box" || mark.kind === "circle") {
+    if (mark.kind === "box" || mark.kind === "circle" || mark.kind === "highlight") {
       const [left, top] = bounds(mark);
       return [left, top];
     }
@@ -191,7 +196,7 @@
   function hitNote(list, point, measure, imageWidth, imageHeight) {
     for (let index = list.length - 1; index >= 0; index--) {
       const mark = list[index];
-      if (mark.kind !== "text") continue;
+      if (!WORDED.includes(mark.kind)) continue;
       const [left, top, right, bottom] = noteLayout(mark, measure, imageWidth, imageHeight).box;
       if (point[0] >= left && point[0] <= right && point[1] >= top && point[1] <= bottom) return mark;
     }
@@ -294,6 +299,26 @@
       context.fill();
     } else if (mark.kind === "text") {
       drawNote(context, mark, scale, imageWidth, imageHeight);
+    } else if (mark.kind === "highlight") {
+      const [left, top, right, bottom] = bounds(mark).map((value) => value * scale);
+      context.globalAlpha = 0.3;
+      context.fillRect(left, top, right - left, bottom - top);
+      context.globalAlpha = 1;
+    } else if (mark.kind === "strike") {
+      const [from, to] = [at(mark.points[0]), at(mark.points[mark.points.length - 1])];
+      context.beginPath();
+      context.moveTo(from[0], from[1]);
+      context.lineTo(to[0], to[1]);
+      context.stroke();
+    } else if (mark.kind === "insert") {
+      const [x, y] = at(mark.points[0]);
+      const half = Math.max(7, imageWidth / 90) * scale;
+      context.beginPath();
+      context.moveTo(x - half, y + half * 1.4);
+      context.lineTo(x, y);
+      context.lineTo(x + half, y + half * 1.4);
+      context.stroke();
+      drawNote(context, mark, scale, imageWidth, imageHeight);
     }
     drawBadge(context, mark, scale, imageWidth);
     context.restore();
@@ -318,7 +343,7 @@
   }
 
   const api = {
-    PALETTE, TOOLS, Marks, bounds, tooSmall, arrowHead, badgeAt, strokeWidth, draw, drawBadge,
+    PALETTE, TOOLS, WORDED, Marks, bounds, tooSmall, arrowHead, badgeAt, strokeWidth, draw, drawBadge,
     wrap, noteLook, noteLayout, hitNote, measurer,
   };
   if (typeof module === "object" && module.exports) module.exports = api;

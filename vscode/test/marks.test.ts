@@ -2,7 +2,8 @@
 // (a clear too), dropped when too small to be meant; each is drawn at any scale with its number in a badge; a note is a
 // bubble tied to its pin, its words wrapped inside it, kept on the figure wherever it is put, moved without moving its
 // pin, edited (emptied, it goes and the marks after it are numbered again) and found by a click; and a send says where
-// it went, with or without the marked-up figure.
+// it went, with or without the marked-up figure. Design 0020 §10: on a PDF's page, three more marks for text: a highlight (a translucent box), a
+// strike (a line through words) and an insertion (a caret at a point, with what to insert, as a note).
 
 import assert from "node:assert/strict";
 import * as path from "node:path";
@@ -168,6 +169,31 @@ test("a note is drawn as a bubble tied to its pin, a line for each of its lines"
   assert.ok(calls.some((call) => call.startsWith("arcTo(")), "a rounded bubble");
   assert.ok(calls.filter((call) => call.startsWith("fillText(")).length >= 3, "its lines and the pin's number");
   assert.ok(calls.some((call) => call.startsWith("fillText(2,")), "the pin's number");
+});
+
+test("a page's text marks: a highlight is a translucent box, a strike a line, an insertion a caret with its words", () => {
+  const drawn = new marks.Marks();
+  const amber = marks.PALETTE[3]!;
+  drawn.add("highlight", amber, [[10, 20], [110, 40]]);
+  drawn.add("strike", marks.PALETTE[0]!, [[10, 30], [200, 31]]);
+  const insert = drawn.add("insert", marks.PALETTE[0]!, [[50, 60]], "a comma");
+  assert.deepEqual(insert, { n: 3, kind: "insert", color: "#e5484d", points: [[50, 60]], text: "a comma" });
+  assert.ok(["highlight", "strike", "insert"].every((tool) => (marks as unknown as { TOOLS: string[] }).TOOLS.includes(tool)));
+  assert.equal(marks.tooSmall({ n: 1, kind: "insert", color: "#e5484d", points: [[1, 1]], text: "" }, 6), true);
+  assert.equal(marks.tooSmall({ n: 1, kind: "strike", color: "#e5484d", points: [[1, 1], [4, 1]] }, 6), true);
+  const highlight = recorder();
+  marks.draw(highlight.context, drawn.list[0]!, 1, 640);
+  assert.ok(highlight.calls.includes("fillRect(10,20,100,20)"), highlight.calls.join(" "));
+  const strike = recorder();
+  marks.draw(strike.context, drawn.list[1]!, 1, 640);
+  assert.ok(strike.calls.includes("moveTo(10,30)") && strike.calls.includes("lineTo(200,31)"), strike.calls.join(" "));
+  const caret = recorder();
+  marks.draw(caret.context, insert, 1, 640, 480);
+  assert.ok(caret.calls.some((call) => call.startsWith("fillText(a comma,")), "its words, in a bubble");
+  assert.ok(caret.calls.includes("moveTo(43,70)") && caret.calls.includes("lineTo(50,60)"), caret.calls.join(" "));
+  const shape = marks.noteLayout(insert, measure, 640, 480);
+  const center = [(shape.box[0]! + shape.box[2]!) / 2, (shape.box[1]! + shape.box[3]!) / 2];
+  assert.equal(marks.hitNote(drawn.list, center, measure, 640, 480)?.n, 3, "its bubble is found as a note's is");
 });
 
 test("a send says where it went, with or without the marked-up figure", async () => {

@@ -299,3 +299,8 @@ body[data-tool="text"] #canvas {
 #status[data-kind="sent"] {
   color: var(--good);
 }
+
+/* A PDF's page (design 0020 §10): the tools for text show only there. */
+body:not([data-page="true"]) .page-only {
+  display: none;
+}

@@ -7,7 +7,8 @@ of the annotation (the marks, the message, the words, where it went) are kept in
 `.gitignore` keeps out of git. The message goes to the session most recently active among the agents running in the
 workspace's container, with the marked-up copy as an image when the agent's model reads images (`reads_images`);
 else, unless vision is off, with what the vision model read in it (`read_image`, design 0008 §7). Nothing is sent
-while no agent runs. Each annotation sent is an event (`agents.annotated`).
+while no agent runs. Each annotation sent is an event (`agents.annotated`). A page of a PDF Clank rendered (design 0020
+§10, `latex/pages.py`) is said as a page: each mark with its source file and line and the words under it.
 """
 
 import base64
@@ -21,6 +22,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from clank.components.agents.figures import describe, image_size
+from clank.components.agents.latex.pages import PageMarks, page_image
 from clank.kernel.clock import to_text
 from clank.kernel.events import Actor, EventType, Subject
 
@@ -68,6 +70,7 @@ class Annotations:
         self.sessions = sessions
         self.reads_images = reads_images
         self.read_image = read_image or (lambda image, question: "")
+        self.pages: PageMarks | None = None  # a PDF's pages (design 0020 §10), set by the agents' part
         self._lock = threading.Lock()
 
     def send(
@@ -88,8 +91,14 @@ class Annotations:
         marked = _decoded(image)
         if not marks and not message.strip():
             raise AnnotationError("mark something on the figure or write what to do, then send")
-        geometry = self._geometry(root, relative, data)
-        sentences = describe(marks, geometry, size)
+        page = page_image(root, relative) if self.pages is not None else None
+        geometry = None if page else self._geometry(root, relative, data)
+        if page is not None and self.pages is not None:
+            sentences = self.pages.describe(workspace, root, relative, marks) if marks else []
+            about = f"page {page[1]} of `{page[0]['pdf']}`"
+        else:
+            sentences = describe(marks, geometry, size)
+            about = f"the figure `{relative}`"
         target = self._target(workspace)
         attached = self.reads_images()
         with self._lock:
@@ -106,7 +115,9 @@ class Annotations:
             copy.write_bytes(marked)
         shown = "/".join([*KEPT, copy.name])
         seen = "" if attached or not marks else self.read_image(marked, READING)
-        text = compose(relative, shown, sentences, message, attached, geometry is not None, seen)
+        text = compose(
+            relative, shown, sentences, message, attached, geometry is not None or page is not None, seen, about=about
+        )
         files = [{"url": f"file:///workspace/{shown}", "mime": "image/png", "filename": copy.name}] if attached else []
         record = {
             "figure": relative, "copy": shown, "marks": marks, "message": message, "said": sentences,
@@ -129,6 +140,10 @@ class Annotations:
             },
         )
         return {**target, "workspace": workspace, "annotation": shown, "text": text, "attached": attached}
+
+    def workspace_of(self, folder: str) -> tuple[str, Path]:
+        """The workspace of a folder and its folder; `AnnotationError` when it has none."""
+        return self._workspace(folder)
 
     def _workspace(self, folder: str) -> tuple[str, Path]:
         workspaces: Workspaces = self.kernel.parts["workspaces"]
@@ -165,11 +180,20 @@ class Annotations:
 
 
 def compose(
-    figure: str, copy: str, sentences: list[str], message: str, attached: bool, measured: bool, seen: str = ""
+    figure: str,
+    copy: str,
+    sentences: list[str],
+    message: str,
+    attached: bool,
+    measured: bool,
+    seen: str = "",
+    *,
+    about: str = "",
 ) -> str:
-    """The message the agent receives: the figure and its marked-up copy, each mark in words (and what the vision model
-    saw in the copy, when the agent's model cannot see it), then the owner's words."""
-    lines = [f"About the figure `{figure}`: my marked-up copy is `{copy}`" + (" (attached)." if attached else ".")]
+    """The message the agent receives: the figure (or a PDF's page, `about`) and its marked-up copy, each mark in words
+    (and what the vision model saw in the copy, when the agent's model cannot see it), then the owner's words."""
+    subject = about or f"the figure `{figure}`"
+    lines = [f"About {subject}: my marked-up copy is `{copy}`" + (" (attached)." if attached else ".")]
     if sentences:
         lines += ["", "My marks:", *(f"- {sentence}" for sentence in sentences)]
         if not measured:

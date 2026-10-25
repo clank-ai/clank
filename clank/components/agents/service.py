@@ -65,6 +65,8 @@ from clank.components.agents.guide import Guide, Ruled
 from clank.components.agents.guide import GuideError as GuideError  # for the routes
 from clank.components.agents.kinds import MonitorSettings, OpenCodeSettings
 from clank.components.agents.latex.checks import EVENT_TYPES as LATEX_EVENTS
+from clank.components.agents.latex.pages import PageError as PageError  # for the routes
+from clank.components.agents.latex.pages import PageMarks
 from clank.components.agents.modes import BUILD as BUILD  # the agent a flow's box in review or auto is sent to
 from clank.components.agents.modes import EVENT_TYPES as MODE_EVENTS
 from clank.components.agents.modes import PLANNER as PLANNER  # and a box in plan mode
@@ -176,6 +178,8 @@ class Agents:
         self.review.modes = self.modes
         self.annotations = Annotations(kernel, self.sessions, self.reads_images, self._read_image)
         self.showing = Showing(kernel)  # files opened for the owner (design 0018 §7)
+        self.pages = PageMarks(self.review.latex.run)  # a PDF's pages to mark up (design 0020 §10)
+        self.annotations.pages = self.pages
         self.flows = SessionFlows(self.sessions, gateway_asker(kernel), plan_reader(kernel))
         self.pausing = Pausing(kernel, self.sessions)  # the Guide's pause (design 0012 §9.4)
         now = lambda: to_text(kernel.clock.now())  # noqa: E731

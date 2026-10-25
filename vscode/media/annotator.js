@@ -10,7 +10,7 @@
 
   const vscode = acquireVsCodeApi();
   const { PALETTE, TOOLS, Marks, tooSmall, draw, drawBadge, noteLayout, hitNote, measurer } = window.ClankMarks;
-  const KEYS = { p: "pen", b: "box", c: "circle", a: "arrow", t: "text" };
+  const KEYS = { p: "pen", b: "box", c: "circle", a: "arrow", t: "text", h: "highlight", s: "strike", i: "insert" };
   const NAMES = { pen: "drawing", box: "box", circle: "circle", arrow: "arrow", text: "note" };
   const MOVED = 3; // screen pixels: a press on a bubble that moves less is a click (it edits the note)
   const marks = new Marks();
@@ -154,8 +154,8 @@
       canvas.setPointerCapture(event.pointerId);
       return;
     }
-    if (state.tool === "text") {
-      openNote(at);
+    if (state.tool === "text" || state.tool === "insert") {
+      openNote(at, undefined, state.tool);
       return;
     }
     drawing = { kind: state.tool, color: state.color, points: state.tool === "pen" ? [at] : [at, at] };
@@ -216,13 +216,14 @@
 
   /** A note written in a bubble beside its pin (a new one at `at`, or the note `editing`): Enter keeps it,
    * Shift+Enter starts a new line, Escape (or leaving a new one empty) drops it; a click elsewhere keeps it. */
-  function openNote(at, editing) {
+  function openNote(at, editing, kind) {
     closeNote(true);
     const editor = document.createElement("div");
     editor.className = "note-editor";
     const input = document.createElement("textarea");
     input.rows = 1;
-    input.placeholder = "Your note";
+    const inserting = (editing ? editing.kind : kind) === "insert";
+    input.placeholder = inserting ? "What to insert here" : "Your note";
     input.value = editing ? editing.text : "";
     input.setAttribute("aria-label", "Note");
     const hint = document.createElement("div");
@@ -231,7 +232,10 @@
     editor.append(input, hint);
     const color = editing ? editing.color : state.color;
     editor.style.setProperty("--note", color);
-    note = { editor, input, at, color, n: editing ? editing.n : undefined, bubble: editing ? editing.bubble : undefined };
+    note = {
+      editor, input, at, color, kind: inserting ? "insert" : "text",
+      n: editing ? editing.n : undefined, bubble: editing ? editing.bubble : undefined,
+    };
     input.addEventListener("input", placeEditor);
     input.addEventListener("keydown", (key) => {
       if (key.key === "Enter" && !key.shiftKey && !key.isComposing) {
@@ -274,12 +278,12 @@
 
   function closeNote(keep) {
     if (!note) return;
-    const { editor, input, at, color, n } = note;
+    const { editor, input, at, color, n, kind } = note;
     note = null;
     const text = input.value.trim();
     editor.remove();
     if (n === undefined) {
-      if (keep && text) marks.add("text", color, [at], text);
+      if (keep && text) marks.add(kind, color, [at], text);
     } else if (keep && text !== marks.list.find((mark) => mark.n === n)?.text) {
       marks.editNote(n, text);
     }
@@ -367,6 +371,7 @@
         state.width = image.naturalWidth;
         state.height = image.naturalHeight;
         $("name").textContent = data.name || "";
+        document.body.dataset.page = data.page ? "true" : "false"; // a PDF's page: its tools for text show
         layout();
         if (data.updated) say("The figure changed on disk: this is the new version.");
       };

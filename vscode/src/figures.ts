@@ -1,7 +1,8 @@
 // Clank's figure annotator in VS Code (design 0008 §6): a custom editor for PNG and JPEG files that shows the
 // annotator page (media/annotator.html) in a webview. It sends the page the figure as a data URL (so the page can draw
 // the marked-up copy from it), again when the file changes on disk (the agent rendered it anew), and passes a send to
-// the service with the folder the window has open around the figure; the page then says where it went or why not.
+// the service with the folder the window has open around the figure; the page then says where it went or why not. A
+// PDF's page Clank rendered (`.clank/latex/pages/`, design 0020 §10) is said to be one, so its tools for text show.
 
 import { randomBytes } from "node:crypto";
 import * as path from "node:path";
@@ -54,6 +55,7 @@ export class FigureEditor implements vscode.CustomReadonlyEditorProvider {
         src: `data:${type};base64,${Buffer.from(bytes).toString("base64")}`,
         name: vscode.workspace.asRelativePath(figure),
         updated,
+        page: figure.fsPath.replace(/\\/g, "/").includes("/.clank/latex/pages/"),
       });
     };
     const watcher = vscode.workspace.createFileSystemWatcher(

@@ -16,7 +16,8 @@
 // `clank-flow:` documents in VS Code's diff, closed when the gate is settled), an answer's words asked in an input box.
 // The files the agent opens for the owner (design 0018 §7, `core/show.ts`) open in the editor group of the files, the
 // keyboard left with the agent, each as VS Code opens its kind (a figure in the annotator); a path the agent prints
-// under `/workspace/` is a link in its terminal, opened the same way.
+// under `/workspace/` is a link in its terminal, opened the same way. "Annotate this PDF" (design 0020 §10,
+// `core/pdf.ts`): its pages rendered by the service, the one picked opened in the annotator beside the agent.
 // Everything else is in `core/`, which is tested without VS Code. What the status bar shows is returned from
 // `activate`, for the suite that runs inside VS Code (decision 0029).
 
@@ -37,6 +38,7 @@ import { FIGURE_EDITOR, FigureEditor } from "./figures";
 import { implement, type ImplementMode, type ImplementPresenter, lenses, planPath, relativePlan } from "./core/plans";
 import { NotionReviews, type TreeNode } from "./core/notion";
 import { type ChangeView, type ReviewPresenter, Reviews } from "./core/review";
+import { pageToMark } from "./core/pdf";
 import { containerLinks, sameFolder, type Shown } from "./core/show";
 import { NOTION_VIEW, type NotionActions, NotionPage, NotionTree, VsCodeNotionPresenter } from "./notion";
 
@@ -149,6 +151,45 @@ async function openBeside(file: vscode.Uri, warn: (text: string) => void): Promi
   } catch (error) {
     warn(`${file.fsPath} did not open: ${error instanceof Error ? error.message : String(error)}`);
   }
+}
+
+/** "Annotate this PDF": the PDF named (else the one open), its pages rendered by the service, the page to mark up
+ * opened in the annotator, in the editor group of the files. */
+async function annotatePdf(
+  uri: vscode.Uri | undefined,
+  connect: () => ClankClient | undefined,
+  presenter: VsCodePresenter,
+): Promise<void> {
+  const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
+  const open = input instanceof vscode.TabInputCustom || input instanceof vscode.TabInputText ? input.uri : undefined;
+  const pdf = uri ?? open;
+  const folder = pdf && vscode.workspace.getWorkspaceFolder(pdf);
+  if (!pdf || !pdf.fsPath.toLowerCase().endsWith(".pdf") || !folder) {
+    presenter.warn("pick a PDF of the folder open here (right-click it: Annotate this PDF with Clank)");
+    return;
+  }
+  const client = connect();
+  if (!client) {
+    presenter.warn("the Clank service does not run: `clank serve --background` starts it");
+    return;
+  }
+  const relative = vscode.workspace.asRelativePath(pdf, false).replace(/\\/g, "/");
+  const found = await vscode.window.withProgress(
+    { location: vscode.ProgressLocation.Notification, title: `Clank: rendering the pages of ${relative}` },
+    () => pageToMark(client, folder.uri.fsPath, relative, (items, placeholder) => presenter.pick(items, placeholder)),
+  );
+  if (found === undefined) {
+    return;
+  }
+  if ("error" in found) {
+    presenter.warn(found.error);
+    return;
+  }
+  const page = vscode.Uri.joinPath(folder.uri, ...found.image.split("/"));
+  await vscode.commands.executeCommand("vscode.openWith", page, FIGURE_EDITOR, {
+    viewColumn: filesColumn(),
+    preview: false,
+  });
 }
 
 /** A path under `/workspace/` the agent printed, as a link to the folder's file (design 0018 §7.3). */
@@ -646,6 +687,7 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
       new FigureEditor(context.extensionUri, (annotation) => controller.annotate(annotation)),
       { webviewOptions: { retainContextWhenHidden: true } },
     ),
+    vscode.commands.registerCommand("clank.annotatePdf", (uri?: vscode.Uri) => annotatePdf(uri, connect, presenter)),
     vscode.commands.registerCommand("clank.annotateFigure", (uri?: vscode.Uri) => {
       const target = uri ?? vscode.window.activeTextEditor?.document.uri;
       return target ? vscode.commands.executeCommand("vscode.openWith", target, FIGURE_EDITOR) : undefined;

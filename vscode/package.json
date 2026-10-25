@@ -106,6 +106,12 @@
         "icon": "$(edit)"
       },
       {
+        "command": "clank.annotatePdf",
+        "title": "Annotate this PDF with Clank",
+        "category": "Clank",
+        "icon": "$(edit)"
+      },
+      {
         "command": "clank.notion.open",
         "title": "Review the Notion changes",
         "category": "Clank",
@@ -173,6 +179,17 @@
           "command": "clank.annotateFigure",
           "when": "resourceExtname =~ /^\\.(png|jpe?g)$/i",
           "group": "navigation@9"
+        },
+        {
+          "command": "clank.annotatePdf",
+          "when": "resourceExtname == .pdf",
+          "group": "navigation@9"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "clank.annotatePdf",
+          "when": "resourceExtname == .pdf"
         }
       ],
       "view/title": [

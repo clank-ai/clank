@@ -61,6 +61,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/latex/building.py` | Compiling clean (design 0020 §8): a change to a LaTeX file must leave its document building, with no undefined |
 | `clank/components/agents/latex/checks.py` | The checks on every LaTeX change (design 0020 §4 and §5), as the review asks them. |
 | `clank/components/agents/latex/citations.py` | Citations and the bibliography (design 0020 §6): no citation the agent writes may name an entry the bibliography |
+| `clank/components/agents/latex/pages.py` | A PDF's pages, marked up and said in words (design 0020 §10). |
 | `clank/components/agents/latex/sources.py` | Claims and their sources (design 0020 §7): a value the agent writes into a LaTeX document says where it comes from. |
 | `clank/components/agents/latexcli.py` | `clank latex` (design 0020): LaTeX with the agent. `clank latex setup [FOLDER]` gives the folder's workspace the TeX |
 | `clank/components/agents/modes.py` | The workspace's mode as the owner sees it, and handing a plan to the agent (design 0009 §7-§8). |
@@ -347,6 +348,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/core/gates.ts` | Gates in VS Code (design 0013 §10, §14 step 7). A question about a flow (a gate, a YOU box, a failed box, a box whose |
 | `vscode/src/core/kinds.ts` | The TypeScript types of Clank's kinds of record, as the API sends them (decisions 0015, 0028). |
 | `vscode/src/core/notion.ts` | The Notion changes in VS Code (design 0010 §6): the batches of proposals the local agent submitted for Notion, in a |
+| `vscode/src/core/pdf.ts` | "Annotate this PDF" (design 0020 §10): the service renders a PDF of the window's folder as pages (built by Clank first |
 | `vscode/src/core/plans.ts` | Plans in the editor (design 0009 §7, §8): a Markdown file whose header says `kind: plan` gets buttons that hand it to |
 | `vscode/src/core/presenter.ts` | What the controller asks of VS Code, and nothing more: the two status bar items, a question shown with its options, |
 | `vscode/src/core/review.ts` | Reviewing the agent's changes in VS Code (design 0007 §6). A question about a change in the window's folder opens as |
@@ -369,6 +371,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/marks.test.ts` | Design 0008 §6: the annotator's marks are numbered as they are drawn, kept in the image's pixels, undone and redone |
 | `vscode/test/notion.page.test.ts` | Design 0010 §6, in a real browser: the review page (media/notion.html, as VS Code's webview shows it) in headless |
 | `vscode/test/notion.test.ts` | Design 0010 §6: the Notion changes view lists each batch waiting with its databases and their entries (marked new, |
+| `vscode/test/pdf.test.ts` | Design 0020 §10: "Annotate this PDF" asks the service for a PDF's pages (from the window's folder), then opens the |
 | `vscode/test/plans.test.ts` | Design 0009 §7, §8: a Markdown file whose header says `kind: plan` (the same cases as Clank's own `is_plan` and |
 | `vscode/test/review.test.ts` | Design 0007 §6: a change the agent asks for, in the window's folder, opens as a diff beside the files instead of a |
 | `vscode/test/show.test.ts` | Design 0018 §7.2 and §7.3: the files the agent opened (the event `agents.shown`) are read from the event with their |

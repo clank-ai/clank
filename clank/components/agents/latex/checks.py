@@ -130,7 +130,7 @@ class LatexChecks:
 
     def __init__(self, kernel: "Kernel") -> None:
         self.kernel = kernel
-        self.builder = Builder(self._run)
+        self.builder = Builder(self.run)
         self.lookup = Lookup()
         self.created = Created(kernel.home.state / "latex-created.json")
 
@@ -257,7 +257,8 @@ class LatexChecks:
                   "file": change["relative"], "pdf": pdf, "marked": marked == "marked"},
         )  # fmt: skip
 
-    def _run(self, workspace: str, argv: list[str], given: bytes, timeout: float) -> Any:
+    def run(self, workspace: str, argv: list[str], given: bytes, timeout: float) -> Any:
+        """Run a command in the workspace's container (the TeX layer's helper)."""
         return self.kernel.parts["workspaces"].run_in(workspace, argv, input=given, timeout=timeout)
 
 
