@@ -17,7 +17,8 @@
 // The files the agent opens for the owner (design 0018 §7, `core/show.ts`) open in the editor group of the files, the
 // keyboard left with the agent, each as VS Code opens its kind (a figure in the annotator); a path the agent prints
 // under `/workspace/` is a link in its terminal, opened the same way. "Annotate this PDF" (design 0020 §10,
-// `core/pdf.ts`): its pages rendered by the service, the one picked opened in the annotator beside the agent.
+// `core/pdf.ts`): its pages rendered by the service, the one picked opened in the annotator beside the agent. Comments
+// for the agent on lines of .tex files (design 0020 §11, `comments.ts`), sent together.
 // Everything else is in `core/`, which is tested without VS Code. What the status bar shows is returned from
 // `activate`, for the suite that runs inside VS Code (decision 0029).
 
@@ -38,6 +39,7 @@ import { FIGURE_EDITOR, FigureEditor } from "./figures";
 import { implement, type ImplementMode, type ImplementPresenter, lenses, planPath, relativePlan } from "./core/plans";
 import { NotionReviews, type TreeNode } from "./core/notion";
 import { type ChangeView, type ReviewPresenter, Reviews } from "./core/review";
+import { LatexComments } from "./comments";
 import { pageToMark } from "./core/pdf";
 import { containerLinks, sameFolder, type Shown } from "./core/show";
 import { NOTION_VIEW, type NotionActions, NotionPage, NotionTree, VsCodeNotionPresenter } from "./notion";
@@ -642,6 +644,7 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
     );
   };
   const onTheRight = new AgentOnTheRight();
+  const latexComments = new LatexComments(connect, presenter);
   context.subscriptions.push(
     vscode.window.tabGroups.onDidChangeTabGroups((event) => {
       if (event.opened.length) {
@@ -688,6 +691,12 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
       { webviewOptions: { retainContextWhenHidden: true } },
     ),
     vscode.commands.registerCommand("clank.annotatePdf", (uri?: vscode.Uri) => annotatePdf(uri, connect, presenter)),
+    latexComments,
+    vscode.commands.registerCommand("clank.latexComment.save", (reply: vscode.CommentReply) => latexComments.save(reply)),
+    vscode.commands.registerCommand("clank.latexComment.remove", (thread: vscode.CommentThread) =>
+      latexComments.remove(thread),
+    ),
+    vscode.commands.registerCommand("clank.latexComments.send", () => latexComments.send()),
     vscode.commands.registerCommand("clank.annotateFigure", (uri?: vscode.Uri) => {
       const target = uri ?? vscode.window.activeTextEditor?.document.uri;
       return target ? vscode.commands.executeCommand("vscode.openWith", target, FIGURE_EDITOR) : undefined;

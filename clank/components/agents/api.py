@@ -14,7 +14,8 @@ permission or a question; the bridge's refusal is a 409 in its own words. The re
 wait, and what its window was told of its model's last change, design 0013 §7), `POST /agents/review` (switch it),
 `GET /agents/changes` (the newest changes, without the files) and `GET /agents/changes/{id}` (one, with the file
 before, after, and as written). `POST /agents/annotations` sends a figure the owner marked up (design 0008), or a
-page of a PDF; `POST /agents/latex/pages` renders a PDF of a folder as page images to mark up (design 0020 §10). `POST
+page of a PDF; `POST /agents/latex/pages` renders a PDF of a folder as page images to mark up (design 0020 §10),
+and `POST /agents/latex/comments` sends the owner's comments on lines of LaTeX files to the agent (§11). `POST
 /agents/show` opens files of a workspace's folder in the owner's VS Code window (design 0018 §7): the agent's, through
 the gateway, refused (409) while no VS Code window follows the service. The
 Monitor's flows (design 0012 §6.1): `GET /agents/flow/{workspace}` (the flows kept,
@@ -114,6 +115,15 @@ class AnnotationRequest(BaseModel):
     image: str
 
 
+class CommentsRequest(BaseModel):
+    """Comments on lines of LaTeX files to send to the agent: each its file (from the folder), its first and last line,
+    the text it covers and its words; and a message besides."""
+
+    folder: str
+    comments: list[dict[str, Any]]
+    message: str = ""
+
+
 class PagesRequest(BaseModel):
     """A PDF of a folder to mark up, from the folder."""
 
@@ -174,6 +184,7 @@ def router(agents: "Agents") -> APIRouter:
     from clank.components.agents.service import (
         AgentError,
         AnnotationError,
+        CommentError,
         GuideError,
         ModeError,
         PageError,
@@ -513,6 +524,18 @@ def router(agents: "Agents") -> APIRouter:
                 lambda: agents.pages.render(workspace, Path(root), wanted.pdf)
             )
         except (AnnotationError, PageError, WorkspaceUnavailable) as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
+
+    @routes.post("/agents/latex/comments")
+    async def latex_comments(wanted: CommentsRequest, request: Request) -> dict[str, Any]:
+        """Send the owner's comments on LaTeX files to the workspace's agent, numbered (design 0020 §11)."""
+        actor = client_actor(request.headers.get(CLIENT_HEADER))
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(
+                lambda: agents.comments.send(wanted.folder, wanted.comments, wanted.message, actor=actor)
+            )
+        except (CommentError, AnnotationError, SessionError, WorkspaceUnavailable) as error:
             raise ApiError(409, "refused", str(error)) from error
         return found
 

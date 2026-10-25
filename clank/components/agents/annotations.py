@@ -8,7 +8,9 @@ of the annotation (the marks, the message, the words, where it went) are kept in
 workspace's container, with the marked-up copy as an image when the agent's model reads images (`reads_images`);
 else, unless vision is off, with what the vision model read in it (`read_image`, design 0008 §7). Nothing is sent
 while no agent runs. Each annotation sent is an event (`agents.annotated`). A page of a PDF Clank rendered (design 0020
-§10, `latex/pages.py`) is said as a page: each mark with its source file and line and the words under it.
+§10, `latex/pages.py`) is said as a page: each mark with its source file and line and the words under it, then the
+rule to change only what the marks ask and answer each by its number, which is checked when the agent's turn ends
+(`latex/answers.py`).
 """
 
 import base64
@@ -22,6 +24,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from clank.components.agents.figures import describe, image_size
+from clank.components.agents.latex.answers import Answers
 from clank.components.agents.latex.pages import PageMarks, page_image
 from clank.kernel.clock import to_text
 from clank.kernel.events import Actor, EventType, Subject
@@ -39,6 +42,10 @@ READING = (
     "plot's own data coordinates (read the axes)."
 )
 PNG = b"\x89PNG\r\n\x1a\n"
+PAGE_RULE = (
+    "Change only what the marks ask, and answer each by its number: what you changed and on which lines, or why you "
+    "did not."
+)  # on a PDF's page (design 0020 §12)
 EVENT_TYPES = [
     EventType(
         "agents.annotated",
@@ -71,6 +78,7 @@ class Annotations:
         self.reads_images = reads_images
         self.read_image = read_image or (lambda image, question: "")
         self.pages: PageMarks | None = None  # a PDF's pages (design 0020 §10), set by the agents' part
+        self.answers: Answers | None = None  # every number answered (design 0020 §12), set by the agents' part
         self._lock = threading.Lock()
 
     def send(
@@ -115,9 +123,9 @@ class Annotations:
             copy.write_bytes(marked)
         shown = "/".join([*KEPT, copy.name])
         seen = "" if attached or not marks else self.read_image(marked, READING)
-        text = compose(
-            relative, shown, sentences, message, attached, geometry is not None or page is not None, seen, about=about
-        )
+        rule = PAGE_RULE if page is not None and marks else ""
+        measured = geometry is not None or page is not None
+        text = compose(relative, shown, sentences, message, attached, measured, seen, about=about, rule=rule)
         files = [{"url": f"file:///workspace/{shown}", "mime": "image/png", "filename": copy.name}] if attached else []
         record = {
             "figure": relative, "copy": shown, "marks": marks, "message": message, "said": sentences,
@@ -126,6 +134,9 @@ class Annotations:
         }  # fmt: skip
         copy.with_suffix(".json").write_text(json.dumps(record, ensure_ascii=False, indent=1), encoding="utf-8")
         self.sessions.send(workspace, target["port"], target["session"], text, actor=actor, files=files)
+        if rule and self.answers is not None:
+            numbers = [int(mark.get("n") or 0) for mark in marks if mark.get("n")]
+            self.answers.expect(workspace, target["port"], target["session"], "mark", numbers, text.split("\n")[0])
         self.kernel.events.record(
             "agents.annotated",
             summary=f"{actor.describe()} sent {relative} with {len(marks)} marks to {workspace}'s agent",
@@ -140,6 +151,10 @@ class Annotations:
             },
         )
         return {**target, "workspace": workspace, "annotation": shown, "text": text, "attached": attached}
+
+    def target_of(self, workspace: str) -> dict[str, Any]:
+        """The session most recently active in the workspace's container: its port and id."""
+        return self._target(workspace)
 
     def workspace_of(self, folder: str) -> tuple[str, Path]:
         """The workspace of a folder and its folder; `AnnotationError` when it has none."""
@@ -189,6 +204,7 @@ def compose(
     seen: str = "",
     *,
     about: str = "",
+    rule: str = "",
 ) -> str:
     """The message the agent receives: the figure (or a PDF's page, `about`) and its marked-up copy, each mark in words
     (and what the vision model saw in the copy, when the agent's model cannot see it), then the owner's words."""
@@ -202,6 +218,8 @@ def compose(
             )
     if seen:
         lines += ["", "What the vision model sees at my marks:", seen]
+    if rule:
+        lines += ["", rule]
     if message.strip():
         lines += ["", message.strip()]
     return "\n".join(lines)

@@ -112,6 +112,23 @@
         "icon": "$(edit)"
       },
       {
+        "command": "clank.latexComment.save",
+        "title": "Comment for the agent",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.latexComment.remove",
+        "title": "Remove this comment",
+        "category": "Clank",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "clank.latexComments.send",
+        "title": "Send comments to the agent",
+        "category": "Clank",
+        "icon": "$(send)"
+      },
+      {
         "command": "clank.notion.open",
         "title": "Review the Notion changes",
         "category": "Clank",
@@ -184,6 +201,25 @@
           "command": "clank.annotatePdf",
           "when": "resourceExtname == .pdf",
           "group": "navigation@9"
+        }
+      ],
+      "comments/commentThread/context": [
+        {
+          "command": "clank.latexComment.save",
+          "when": "commentController == clank.latex",
+          "group": "inline"
+        }
+      ],
+      "comments/commentThread/title": [
+        {
+          "command": "clank.latexComments.send",
+          "when": "commentController == clank.latex && commentThread == draft",
+          "group": "navigation@1"
+        },
+        {
+          "command": "clank.latexComment.remove",
+          "when": "commentController == clank.latex",
+          "group": "navigation@2"
         }
       ],
       "editor/title/context": [

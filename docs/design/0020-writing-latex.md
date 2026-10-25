@@ -20,7 +20,7 @@ that it may end up making so that we can change certain things." Diagrams come l
 | 8 | Compiling clean | Approved 2026-10-25 |
 | 9 | Seeing a change | Approved 2026-10-25 |
 | 10 | Annotating the PDF | Approved 2026-10-25 |
-| 11 | Annotating the source | Approved 2026-10-25 |
+| 11 | Annotating the source | Revised after approval 2026-10-25: comments go in a message of their own, and a thread shows the number it was sent as (the agent answers in its session) |
 | 12 | The agent's turn | Approved 2026-10-25 |
 | 13 | What the agent is told | Approved 2026-10-25 |
 | 14 | Limits | Approved 2026-10-25 |
@@ -152,8 +152,11 @@ Each mark goes to the agent in words: "Mark 2 (strike) on page 3, §2.1 *Main re
 ## 11. Annotating the source
 
 On a `.tex` file, the owner comments on a line or a selection (VS Code's comment threads); "Send comments to the agent"
-sends them, each with its file, its lines and the text it covers, in the same message as any PDF marks. A comment
-thread shows the agent's answer when it comes, and is resolved by the owner.
+sends every comment not sent yet, each with its file, its lines and the text it covers, numbered, in a message of
+their own (marks on a PDF's page go with their page, §10). Each thread then says the number it was sent as; the agent
+answers by those numbers in its session, and the owner removes a thread once it is done. (Revised when built: the
+annotator sends a page's marks at once, so the two cannot share one message; and the agent's answer is a message in its
+session, which Clank checks (§12), not a reply Clank could place in each thread.)
 
 ## 12. The agent's turn
 

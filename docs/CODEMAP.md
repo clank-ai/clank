@@ -58,9 +58,11 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/guide.py` | The Guide (design 0012 §9.1-§9.7, §11 steps 9 to 11): what the owner, or a Watch for rule, does to the session the |
 | `clank/components/agents/kinds.py` | The agents component's kinds of record (design 0004 §5): the VS Code window's settings, `config/vscode.json`, what |
 | `clank/components/agents/latex/__init__.py` | LaTeX with the agent (design 0020): the checks on every LaTeX change, the builds in the container, and the marks on |
+| `clank/components/agents/latex/answers.py` | Every number answered (design 0020 §12): after a numbered message to the agent (comments on the LaTeX source, marks |
 | `clank/components/agents/latex/building.py` | Compiling clean (design 0020 §8): a change to a LaTeX file must leave its document building, with no undefined |
 | `clank/components/agents/latex/checks.py` | The checks on every LaTeX change (design 0020 §4 and §5), as the review asks them. |
 | `clank/components/agents/latex/citations.py` | Citations and the bibliography (design 0020 §6): no citation the agent writes may name an entry the bibliography |
+| `clank/components/agents/latex/comments.py` | Comments on the LaTeX source (design 0020 §11): the owner comments on lines of `.tex` files in VS Code (comment |
 | `clank/components/agents/latex/pages.py` | A PDF's pages, marked up and said in words (design 0020 §10). |
 | `clank/components/agents/latex/sources.py` | Claims and their sources (design 0020 §7): a value the agent writes into a LaTeX document says where it comes from. |
 | `clank/components/agents/latexcli.py` | `clank latex` (design 0020): LaTeX with the agent. `clank latex setup [FOLDER]` gives the folder's workspace the TeX |
@@ -338,9 +340,11 @@ it is for. The module's docstring says why it is built the way it is.
 | --- | --- |
 | `vscode/host/run.ts` | Runs the host suite inside a real VS Code (decision 0029): VS Code 1.138.0, the oldest the extension accepts, |
 | `vscode/host/suite.ts` | Design 0002 §3.2 and decision 0029: inside a real VS Code, the extension activates and registers every command its |
+| `vscode/src/comments.ts` | Comments for the agent on LaTeX files (design 0020 §11), in VS Code: a comment controller on every .tex file of the |
 | `vscode/src/core/agent.ts` | Starting the agent beside the files (design 0004 §5): for the folder Clank's VS Code window has open, the folder's |
 | `vscode/src/core/annotate.ts` | Sending a figure the owner marked up (design 0008 §5-§6): what the annotator page sends, passed to the service |
 | `vscode/src/core/client.ts` | The extension's client of the Clank API (design 0002 §2.7, §2.14). Every call carries the local token and names the |
+| `vscode/src/core/comments.ts` | Comments on the LaTeX source (design 0020 §11): VS Code's comment threads on lines of .tex files, sent to the agent |
 | `vscode/src/core/completion.ts` | Completion in VS Code (design 0006 §5): gray text after the cursor, from the model in the fast slot, through the |
 | `vscode/src/core/connection.ts` | Where the Clank service answers, and the local token that proves the caller is the user (design 0002 §2.7). |
 | `vscode/src/core/controller.ts` | What the extension does (design 0002 §2.5, §2.7, §3.2): it connects to the Clank service and keeps the status bar |
@@ -361,6 +365,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/annotator.page.test.ts` | Design 0008 §6, in a real browser: the annotator page (media/annotator.html, as VS Code's webview shows it) in |
 | `vscode/test/browser.ts` | Headless Edge for the tests of the extension's pages (the annotator, the Notion review): a page opened from a file and |
 | `vscode/test/client.test.ts` | Design 0002 §2.7 and §2.14: the extension's client sends the local token and names itself `vscode` on every call, |
+| `vscode/test/comments.test.ts` | Design 0020 §11: comments on lines of LaTeX files are sent to the agent together, each with its file (from the |
 | `vscode/test/completion.test.ts` | Design 0006 §5: completion asks the gateway only while it is on and its slot serves, after the wait, not when it was |
 | `vscode/test/connection.test.ts` | Design 0002 §2.7: the extension finds the service through CLANK_HOME (its setting, else the environment, else |
 | `vscode/test/controller.test.ts` | Design 0002 §2.5, §2.7 and §3.2: the extension's controller keeps the status bar current (the service and the |

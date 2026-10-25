@@ -64,7 +64,11 @@ from clank.components.agents.context import totals
 from clank.components.agents.guide import Guide, Ruled
 from clank.components.agents.guide import GuideError as GuideError  # for the routes
 from clank.components.agents.kinds import MonitorSettings, OpenCodeSettings
+from clank.components.agents.latex.answers import Answers
 from clank.components.agents.latex.checks import EVENT_TYPES as LATEX_EVENTS
+from clank.components.agents.latex.comments import EVENT_TYPES as COMMENT_EVENTS
+from clank.components.agents.latex.comments import CommentError as CommentError  # for the routes
+from clank.components.agents.latex.comments import Comments
 from clank.components.agents.latex.pages import PageError as PageError  # for the routes
 from clank.components.agents.latex.pages import PageMarks
 from clank.components.agents.modes import BUILD as BUILD  # the agent a flow's box in review or auto is sent to
@@ -131,6 +135,7 @@ EVENT_TYPES = [
     *WATCH_EVENTS,
     *MODEL_EVENTS,
     *LATEX_EVENTS,
+    *COMMENT_EVENTS,
 ]
 ROLE = "agent"
 SESSION_MODEL = {"providerID": PROVIDER, "modelID": ROLE}  # the model a message names: the gateway's role
@@ -179,7 +184,9 @@ class Agents:
         self.annotations = Annotations(kernel, self.sessions, self.reads_images, self._read_image)
         self.showing = Showing(kernel)  # files opened for the owner (design 0018 §7)
         self.pages = PageMarks(self.review.latex.run)  # a PDF's pages to mark up (design 0020 §10)
-        self.annotations.pages = self.pages
+        self.answers = Answers(self.sessions)  # every number answered (design 0020 §12)
+        self.annotations.pages, self.annotations.answers = self.pages, self.answers
+        self.comments = Comments(kernel, self.sessions, self.annotations, self.answers)  # design 0020 §11
         self.flows = SessionFlows(self.sessions, gateway_asker(kernel), plan_reader(kernel))
         self.pausing = Pausing(kernel, self.sessions)  # the Guide's pause (design 0012 §9.4)
         now = lambda: to_text(kernel.clock.now())  # noqa: E731

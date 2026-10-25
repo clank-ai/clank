@@ -34,7 +34,7 @@ failing test; each ends with a commit pushed to `main`.
 - [x] 8. **Annotating the PDF** (§10): "Annotate this PDF" renders its pages in the container (`pdftoppm`) with each
   page's word boxes (`pdftotext -bbox-layout`), opens them in the figure annotator, and the marks on a page go to the
   agent in words: the words under each, and SyncTeX's file and line.
-- [ ] 9. **Annotating the source, and the agent's turn** (§11, §12): comment threads on `.tex` files, sent together;
+- [x] 9. **Annotating the source, and the agent's turn** (§11, §12): comment threads on `.tex` files, sent together;
   each mark and comment numbered; every number answered.
 - [ ] 10. **What the agent is told** (§13): Clank's LaTeX rules in the build agent's instructions.
 - [ ] 11. **LaTeX Workshop builds in the container** (§3): `clank latex build FILE` builds in the workspace's container
