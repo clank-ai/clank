@@ -50,6 +50,8 @@ export interface Options {
   completion?: Completer;
   notion?: NotionReviews;
   gates?: Gates;
+  /** The workspace of the window's folder, when known (the readout's): its jobs' ends are said (design 0021 §6). */
+  workspace?: () => string | undefined;
 }
 
 interface EventData {
@@ -57,7 +59,7 @@ interface EventData {
   type?: string;
   summary?: string;
   subject?: { kind?: string; id?: string } | null;
-  data?: { clients?: string[] };
+  data?: { clients?: string[]; workspace?: string; job?: number };
 }
 
 const PATHS = {
@@ -360,6 +362,11 @@ export class Controller {
       }
       if (message.name === "agents.model_changed" && data.summary) {
         this.presenter.info(data.summary); // a flow's box switched the main slot: the window is told (design 0013 §7)
+      }
+      const workspace = data.data?.workspace;
+      if (message.name === "agents.job_ended" && workspace && workspace === this.options.workspace?.()) {
+        const said = (data.summary ?? "").replace(`${workspace}: `, "");
+        this.presenter.info(`${said}. Its log: .clank/jobs/agent/${data.data?.job}/log`); // design 0021 §6
       }
       const opened = shown(message) ?? markedUp(message); // and a LaTeX change's PDF (design 0020 §9)
       if (opened) {

@@ -429,6 +429,32 @@ test("a window told its model changed shows it once, in the service's words", as
   }
 });
 
+test("a job of the window's workspace that ends is said once, with where its log is; another workspace's is not", async () => {
+  const api = new FakeApi();
+  const presenter = new FakePresenter();
+  const running = new Controller(presenter, () => api, {
+    home: "/h", retryMs: 10, now: () => 0, newKey: () => "k", workspace: () => "paper",
+  });
+  running.start();
+  try {
+    await until(() => presenter.clankText.includes("Clank"));
+    const ended = (id: number, workspace: string) => ({
+      name: "agents.job_ended",
+      id,
+      data: {
+        id, type: "agents.job_ended", summary: `${workspace}: Job 3 (sweep) exited 0 after 12 minutes`,
+        subject: { kind: "workspace", id: workspace }, data: { workspace, job: 3, title: "sweep" },
+      },
+    });
+    api.send(ended(45, "elsewhere"));
+    api.send(ended(46, "paper"));
+    await until(() => presenter.told.length === 1);
+    assert.deepEqual(presenter.told, ["Job 3 (sweep) exited 0 after 12 minutes. Its log: .clank/jobs/agent/3/log"]);
+  } finally {
+    running.stop();
+  }
+});
+
 test("the files the agent opened for the owner go to the presenter, with their folder and why", async () => {
   const api = new FakeApi();
   const presenter = new FakePresenter();

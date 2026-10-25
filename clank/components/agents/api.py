@@ -347,7 +347,7 @@ def router(agents: "Agents") -> APIRouter:
     async def readout(folder: str, session: str = "") -> dict[str, Any]:
         """The model's readout for a folder (design 0021 §3): its workspace's session (the one named, else the newest),
         that session's now and context totals, and the machine (the main slot and its speed options, the GPU, the
-        drafted tokens accepted); a part that cannot be read is null."""
+        drafted tokens accepted), and the workspace's jobs running (§6); a part that cannot be read is null."""
         found: dict[str, Any] = await anyio.to_thread.run_sync(agents.readout, folder, session)
         return found
 

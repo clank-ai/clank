@@ -44,6 +44,7 @@
     text("exact", rows.exact);
     text("engine", rows.engine);
     text("machine", rows.machine);
+    text("jobs", rows.jobs);
     bar(rows.bar);
   });
   vscode.postMessage({ type: "ready" });

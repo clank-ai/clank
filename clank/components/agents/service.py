@@ -293,6 +293,7 @@ class Agents:
             "slot": slot_view(slot, runtime.title(slot.preset), options),
             "gpu": gpu_view(machine.meters()),
             "drafts": runtime.drafts("main"),
+            "jobs": [job for job in self.jobs.list(workspace) if job["state"] != "ended"] if workspace else [],
         }
 
     def figures(self, workspace: str, session: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:

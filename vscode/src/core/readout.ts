@@ -2,7 +2,8 @@
 // in words for the status bar (`statusText`) and for the panel under OpenCode's terminal (`panelRows`): the model and
 // its speed options; the speed (writing, the last prompt's reading, the drafted tokens accepted, recent steps as a
 // graph); what it does now; the context used, part by part (`bar`), the exact window and what is retrieved; whether
-// the engine holds this session's conversation; the GPU. Pure: `extension.ts` asks the service and draws.
+// the engine holds this session's conversation; the GPU; the jobs running in the folder's workspace (design 0021 §6).
+// Pure: `extension.ts` asks the service and draws.
 
 /** One recent figure set of the session's, as `now` gives it (design 0012 §5). */
 export interface ReadoutNow {
@@ -37,6 +38,7 @@ export interface Readout {
   slot: { status: string; preset: string | null; title: string; speed_options: Record<string, unknown> };
   gpu: { name: string; use: number | null; memory_used: number | null; memory_total: number | null } | null;
   drafts: { tokens: number; drafted: number; accepted: number; share: number | null } | null;
+  jobs?: Array<{ job: number; title: string; state: string; seconds: number }>; // absent from a service before jobs
 }
 
 /** One part of the context bar: its label, its tokens, and its share of the window. */
@@ -57,6 +59,7 @@ export interface PanelRows {
   exact: string;
   engine: string;
   machine: string;
+  jobs: string;
 }
 
 const BARS = "▁▂▃▄▅▆▇█";
@@ -118,7 +121,18 @@ export function panelRows(readout: Readout): PanelRows {
       ? `GPU ${(gpu.memory_used / GB).toFixed(1)} of ${(gpu.memory_total / GB).toFixed(1)} GB` +
         (gpu.use === null ? "" : ` · ${Math.round(gpu.use)}% busy`)
       : "the GPU's meters are not read",
+    jobs: jobsRow(readout.jobs ?? []),
   };
+}
+
+function jobsRow(jobs: NonNullable<Readout["jobs"]>): string {
+  if (!jobs.length) {
+    return "";
+  }
+  const each = jobs.map(
+    (job) => `${job.job} ${job.title} (${job.state === "running" ? `${Math.floor(job.seconds / 60)} min` : job.state})`,
+  );
+  return `jobs: ${each.join(" · ")}`;
 }
 
 function speedOptions(options: Record<string, unknown>): string[] {

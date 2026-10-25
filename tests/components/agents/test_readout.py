@@ -3,7 +3,7 @@ newest line counting; an engine that does not say it gives nothing. The runtime 
 a slot, and a slot never launched has none. `GET /agents/readout?folder=` composes, for the folder's workspace, its
 newest kept session (or the one named) with that session's `now` and context totals, the main slot (its state, its
 preset and title, and the options that change its speed), the GPU's newest meter and the drafts; a folder with no
-workspace, or a workspace with no session yet, answers what there is."""
+workspace, or a workspace with no session yet, answers what there is. Its jobs running (design 0021 §6) come with it."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -114,9 +114,11 @@ def test_the_readout_composes_the_folders_newest_session_its_now_its_context_the
     assert found["slot"]["title"] == "frontier 262K"
     assert found["slot"]["speed_options"] == {"spec.draft_tokens": 4, "cuda_graphs": True}
     assert found["drafts"]["share"] == 0.562
+    assert found["jobs"] == [], "no job runs in the workspace"
     assert found["gpu"] == {"name": "GPU", "use": 91.0, "memory_used": 15 * 2**30, "memory_total": 16 * 2**30}
     assert named["session"]["id"] == "ses_old"
     assert asked == [("paper", "ses_new"), ("paper", "ses_old")]
     assert nowhere["workspace"] is None
     assert (nowhere["session"], nowhere["now"], nowhere["context"]) == (None, None, None)
     assert nowhere["slot"]["status"] == "ready", "the machine's figures whatever the folder"
+    assert nowhere["jobs"] == []

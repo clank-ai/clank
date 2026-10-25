@@ -618,7 +618,9 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
   const notionPage = new NotionPage(context.extensionUri, () => notionActions);
   const notion = new NotionReviews(new VsCodeNotionPresenter(notionView, notionTree, notionItem, notionPage, presenter));
   const gates = new Gates(new VsCodeGatePresenter(texts, presenter));
-  const controller = new Controller(presenter, connect, { home: home(), reviews, completion: completer, notion, gates });
+  const controller = new Controller(presenter, connect, {
+    home: home(), reviews, completion: completer, notion, gates, workspace: () => readout.workspace,
+  });
   const notionActions: NotionActions = {
     open: (opening) => controller.notion((each, api) => each.open(api, opening)),
     approve: (batch, parts) => controller.notion((each, api) => each.approve(api, batch, parts)),

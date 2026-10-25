@@ -33,6 +33,8 @@ export class ReadoutPanel implements vscode.Disposable {
   private ready = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private stopped = false;
+  /** The workspace of the window's folder, as the newest readout said (a job's end is said in its window). */
+  workspace: string | undefined;
   arranging = false; // while the panel's group is made: the agent's group is not moved meanwhile
 
   constructor(
@@ -130,6 +132,7 @@ export class ReadoutPanel implements vscode.Disposable {
       return;
     }
     const readout = await this.read();
+    this.workspace = readout?.workspace ?? this.workspace;
     this.item.text = statusText(readout);
     this.item.tooltip = readout ? tooltip(readout) : "The Clank service does not answer, or this window has no folder.";
     if (readout && this.panel && this.ready) {
@@ -154,7 +157,8 @@ export class ReadoutPanel implements vscode.Disposable {
 
 function tooltip(readout: Readout): string {
   const rows = panelRows(readout);
-  return [rows.title, rows.speed, rows.now, rows.context, rows.exact, rows.engine, rows.machine, "Click: the panel."]
+  return [rows.title, rows.speed, rows.now, rows.context, rows.exact, rows.engine, rows.machine, rows.jobs,
+    "Click: the panel."]
     .filter(Boolean)
     .join("\n");
 }

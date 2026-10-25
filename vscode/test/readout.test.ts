@@ -112,6 +112,16 @@ test("the reading speed is the last step's, once its prompt was read", () => {
   assert.equal(panelRows(ended).speed, "last step 63 tok/s · read 1,000 tok/s · drafts 56% accepted");
 });
 
+test("the jobs running in the folder's workspace show with how long each has run", () => {
+  const jobs = [
+    { job: 3, title: "sweep", state: "running", seconds: 754 },
+    { job: 4, title: "anneal", state: "starting", seconds: 2 },
+  ];
+  assert.equal(panelRows({ ...WRITING, jobs }).jobs, "jobs: 3 sweep (12 min) · 4 anneal (starting)");
+  assert.equal(panelRows({ ...WRITING, jobs: [] }).jobs, "");
+  assert.equal(panelRows(WRITING).jobs, "", "a service from before jobs says none");
+});
+
 test("a prompt read mostly from the cache says how few tokens were new, not a speed of them", () => {
   const cached = {
     ...WRITING,

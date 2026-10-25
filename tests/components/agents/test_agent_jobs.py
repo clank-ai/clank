@@ -4,7 +4,8 @@ its `job.json` beside the runner's files; it runs in the container through the r
 process id is written, and ended once its exit is; one is listed, or read whole with its log's last lines and the files
 it wrote, and stopped. The watcher ends a job past its minutes, and when one ends records `agents.job_ended` once and
 tells the session that started it, in a message saying how it ended, its log's end and the files it wrote. The agent
-reaches them through the gateway: start, status and stop."""
+reaches them through the gateway: start, status and stop. The readout carries the jobs running in the folder's
+workspace, and `clank jobs` lists, shows and stops them."""
 
 import json
 from collections.abc import Iterator
@@ -169,3 +170,38 @@ def test_the_routes_start_follow_and_stop_a_job_and_list_every_workspaces(kernel
         refused = http.post("/api/v1/agents/jobs", json={**body, "workspace": "nowhere"}, headers=headers)
         assert refused.status_code == 409
         assert "there is no workspace 'nowhere'" in refused.json()["error"]["message"]
+
+
+def test_the_readout_carries_the_jobs_running_in_the_folders_workspace(kernel: Kernel, folder: Path) -> None:
+    jobs = jobs_of(kernel)
+    jobs.start("paper", "python sweep.py", "sweep", 60)
+    jobs.start("paper", "python done.py", "done", 60)
+    (folder / ".clank/jobs/agent/1/pid").write_text("41\n", encoding="utf-8")
+    (folder / ".clank/jobs/agent/2/pid").write_text("42\n", encoding="utf-8")
+    (folder / ".clank/jobs/agent/2/exit").write_text("0\n", encoding="utf-8")
+    running = kernel.parts["agents"].readout(str(folder))["jobs"]
+    assert [(each["job"], each["title"], each["state"]) for each in running] == [(1, "sweep", "running")]
+
+
+def test_clank_jobs_lists_shows_and_stops_them(kernel: Kernel, folder: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from click.testing import CliRunner
+    from fastapi.testclient import TestClient
+
+    from clank.cli import common
+    from clank.cli.main import main
+    from clank.client import Client
+    from clank.kernel.api import create_app
+
+    jobs_of(kernel).start("paper", "python sweep.py", "sweep", 60)
+    own = folder / ".clank/jobs/agent/1"
+    (own / "pid").write_text("41" + chr(10), encoding="utf-8")
+    (own / "log").write_text("seed 1: 0.41" + chr(10), encoding="utf-8")
+    with TestClient(create_app(kernel, token="t", port=7727), base_url="http://127.0.0.1:7727") as http:
+        monkeypatch.setattr(common, "connect", lambda: Client("http://127.0.0.1:7727", "t", name="cli", http=http))
+        listed = CliRunner().invoke(main, ["jobs"])
+        shown = CliRunner().invoke(main, ["jobs", "show", "paper", "1"])
+        stopped = CliRunner().invoke(main, ["jobs", "stop", "paper", "1"])
+    assert listed.exit_code == 0, listed.output
+    assert "paper  job 1  sweep: running for" in listed.output
+    assert "seed 1: 0.41" in shown.output
+    assert "job 1 (sweep) is being stopped" in stopped.output

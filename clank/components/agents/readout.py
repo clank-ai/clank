@@ -7,7 +7,8 @@ the service keeps the flow of (the one the window's OpenCode is working in). For
 window, its parts, the exact window and the compaction line, the cache's share, whose conversation the engine holds),
 as their own routes give them. Then the machine, whatever the folder: the main slot (its state, its preset and title,
 and the options that change its speed, `SPEED_OPTIONS`), the GPU's newest meter (its use and memory), and the tokens
-the engine last said it drafted and had accepted (`Runtime.drafts`). A part that cannot be read is None.
+the engine last said it drafted and had accepted (`Runtime.drafts`); and the workspace's jobs running (design
+0021 §6). A part that cannot be read is None.
 """
 
 from collections.abc import Mapping
