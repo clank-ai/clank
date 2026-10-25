@@ -5,8 +5,9 @@ what a mark drawn on the image needs to be said in the figure's own terms.
 `Figure.savefig`: after a PNG or JPEG is saved under the folder (`CLANK_FIGURES_ROOT`, `/workspace` in a container),
 `.clank/figures/<its path>.json` holds the image's size and checksum, and for each plot (axes) its box in the image's
 pixels (left, top, right, bottom), its data limits and scales, its title and axis labels, its lines and scatters (label,
-color, at most `POINTS` of their points; a line with error bars is one line) and its legend (entries, box); and the
-figure's title. Positions are measured after the save, through the box the file was cut to (a tight one too). Nothing is
+color, at most `POINTS` of their points; a line with error bars is one line) and its legend (entries, box); the
+figure's title; and the script that saved it, from the folder, when it is a file of it (design 0018 §7.4: a figure is
+found by it). Positions are measured after the save, through the box the file was cut to (a tight one too). Nothing is
 imported until Matplotlib is, and any failure is swallowed: Clank never makes a save fail.
 """
 
@@ -102,6 +103,7 @@ def record(fig: Any, fname: Any, kwargs: dict[str, Any]) -> Path | None:
         "size": list(size),
         "sha256": hashlib.sha256(data).hexdigest(),
         "made": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "script": _script(root),
         **_measure(fig, kwargs, size),
     }
     folder = root / ".clank" / "figures"
@@ -114,6 +116,18 @@ def record(fig: Any, fname: Any, kwargs: dict[str, Any]) -> Path | None:
     part.write_text(json.dumps(geometry, ensure_ascii=False), encoding="utf-8")
     part.replace(kept)
     return kept
+
+
+def _script(root: Path) -> str:
+    """The script Python runs, from the folder, when it is a file of it; "" otherwise (`python -c`, a notebook)."""
+    named = sys.argv[0] if sys.argv else ""
+    if not named or named == "-c":
+        return ""
+    path = Path(named).resolve()
+    try:
+        return path.relative_to(root).as_posix() if path.is_file() else ""
+    except ValueError:
+        return ""
 
 
 def _measure(fig: Any, kwargs: dict[str, Any], size: tuple[int, int]) -> dict[str, Any]:

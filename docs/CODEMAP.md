@@ -234,6 +234,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/workspaces/folders.py` | Workspaces: folders agents work in, each in a container of its own (design 0004 §1, §3 and §6; design 0002 §2.9). |
 | `clank/components/workspaces/image/bridge.py` | Clank's bridge to the OpenCode servers in this container (design 0005 §2): the Clank service runs it with `docker |
 | `clank/components/workspaces/image/edge.py` | The edge's one program (design 0004 §3): it forwards one port to the host, and nothing else. |
+| `clank/components/workspaces/image/find_figures.py` | Finding the figures of a folder by words (design 0018 §7.4), for Clank's own MCP server's `find_figures`. |
 | `clank/components/workspaces/image/phone_mcp.py` | Clank's own MCP server for the agent (design 0005 §3): `send_to_phone(path, caption)` sends a file of the folder to |
 | `clank/components/workspaces/image/python/clank_figures.py` | Clank's figure geometry (design 0008 §3): when Matplotlib saves a raster figure inside the workspace's folder, write |
 | `clank/components/workspaces/image/python/sitecustomize.py` | Clank's sitecustomize in the sandbox image (design 0008 §3): every Python in a workspace's container finds it on |

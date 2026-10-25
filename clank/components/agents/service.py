@@ -136,8 +136,8 @@ CLANK_SERVER = "clank"  # Clank's own MCP server, given to every agent: send_to_
 NOTION_PREFIX = "clank_notion_"  # Clank's Notion tools, as OpenCode names them: never to the cloud (design 0016 §10)
 LOCAL_ONLY = "held back: local only, it never goes to the cloud model"
 # Its tools that only read, which the planner may use (design 0010 §4): Notion's reading, never its proposals; and
-# opening files for the owner to see (design 0018 §7).
-CLANK_READ_ONLY = ("notion_databases", "notion_page", "notion_query", "notion_search", "show_files")
+# finding figures and opening files for the owner to see (design 0018 §7).
+CLANK_READ_ONLY = ("notion_databases", "notion_page", "notion_query", "notion_search", "show_files", "find_figures")
 # Its tools of a box's flow, which write nothing in the folder, so the planner may use them too (design 0013 §9); a
 # planning's draft of a whole flow, which the planner sends (design 0013 §15); and an orchestrator's decision, which a
 # checkpoint, a Plan-mode session, gives (design 0013 §16).

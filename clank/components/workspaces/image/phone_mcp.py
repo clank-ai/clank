@@ -26,6 +26,10 @@ orchestrator's checkpoint's one decision, which the service checks, keeps and ap
 writes anything in the folder, so the planner may use them, but `flow_job(command, title, minutes)` (§17): a box's
 long computation, which Clank runs detached in the container while the box's turn ends and waits for it.
 
+`find_figures(query, limit)` (design 0018 §7.4) finds the folder's figures that best match words, from their names,
+what Matplotlib recorded of them, the LaTeX captions that include them and the scripts that name them (its neighbor
+`find_figures.py`, in the container too); it reads only, and asks nothing of the gateway.
+
 `show_files(paths, why)` (design 0018 §7) opens files of the folder in the owner's VS Code window, on the left beside
 OpenCode, through the gateway's `/agents/show` route: the owner looks at them themselves, so the model, asked to open
 something, opens it and stops. It writes nothing in the folder, so the planner may use it.
@@ -36,6 +40,7 @@ library only, so it runs in any workspace's container.
 
 import base64
 import hashlib
+import importlib
 import json
 import os
 import shutil
@@ -114,6 +119,26 @@ SHOW = {
     },
     "annotations": {"readOnlyHint": True},
 }  # fmt: skip
+FIND = {
+    "name": "find_figures",
+    "description": (
+        "Find the figures of the workspace's folder (images and PDFs) that best match words: their names and folders, "
+        "the titles, axis labels and legends Matplotlib recorded when it saved them and the script that did, the LaTeX "
+        "captions and labels of the figure environments that include them, the scripts that name them, and when they "
+        "were made (today, yesterday, this week, last week, a weekday, latest). Use it when the user asks for a figure "
+        "by what it shows; then open the ones they want with show_files. Returns the best figures, each with what is "
+        "known of it and the words it matched, or the newest figures when none matches."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "What the figure shows, or when it was made, in words."},
+            "limit": {"type": "integer", "description": "How many figures at most (5 by default)."},
+        },
+        "required": ["query"],
+    },
+    "annotations": {"readOnlyHint": True},
+}
 
 
 def _tool(name: str, description: str, properties: dict[str, Any], required: list[str], reads: bool) -> dict[str, Any]:
@@ -379,6 +404,16 @@ def flow(name: str, arguments: dict[str, Any]) -> str:
     return str(found.get("said") or "") if isinstance(found, dict) and found.get("said") else _json(found)
 
 
+def find(arguments: dict[str, Any]) -> str:
+    """The figures of the folder best matching the words, found in the container (`find_figures.py`)."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    if here not in sys.path:
+        sys.path.insert(0, here)
+    finder = importlib.import_module("find_figures")  # its neighbor, copied beside it into the container
+    limit = arguments.get("limit")
+    return str(finder.find(WORKSPACE, str(arguments.get("query") or ""), int(limit) if limit else 5))
+
+
 def show(arguments: dict[str, Any]) -> str:
     """Open files in the owner's VS Code window: the request to the gateway, and the service's words."""
     if not WORKSPACE_NAME:
@@ -576,11 +611,12 @@ def answer(message: dict[str, Any]) -> dict[str, Any] | None:
             "serverInfo": {"name": "clank", "version": "1"},
         }  # fmt: skip
     elif method == "tools/list":
-        result = {"tools": [TOOL, LOOK, SHOW, *_notion_tools(), *FLOW_TOOLS]}
+        result = {"tools": [TOOL, LOOK, SHOW, FIND, *_notion_tools(), *FLOW_TOOLS]}
     elif method == "tools/call":
         params = message.get("params") or {}
         arguments = params.get("arguments") or {}
-        names = {TOOL["name"], LOOK["name"], SHOW["name"], *(tool["name"] for tool in [*_notion_tools(), *FLOW_TOOLS])}
+        names = {TOOL["name"], LOOK["name"], SHOW["name"], FIND["name"]}
+        names |= {tool["name"] for tool in [*_notion_tools(), *FLOW_TOOLS]}
         if params.get("name") not in names:
             return {"jsonrpc": "2.0", "id": id, "error": {"code": -32602, "message": "no such tool"}}
         path = str(arguments.get("path") or "")
@@ -589,6 +625,8 @@ def answer(message: dict[str, Any]) -> dict[str, Any] | None:
                 text, failed = notion(str(params["name"]), arguments), False
             elif str(params.get("name")).startswith("flow_"):
                 text, failed = flow(str(params["name"]), arguments), False
+            elif params.get("name") == FIND["name"]:
+                text, failed = find(arguments), False
             elif params.get("name") == SHOW["name"]:
                 text, failed = show(arguments), False
             elif params.get("name") == LOOK["name"]:

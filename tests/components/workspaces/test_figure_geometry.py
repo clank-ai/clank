@@ -3,7 +3,8 @@ writes its geometry under `.clank/figures/` (a `.gitignore` keeps git out): the 
 box in the image's pixels, its data limits and scales, its title and labels, its lines with their labels and data, its
 legend. A point of the data, placed through that geometry, falls on the pixel Matplotlib drew it on, with a tight
 bounding box and on a log scale too. A figure saved outside the folder, or as a PDF, gets none; a Python that never
-imports Matplotlib never loads it."""
+imports Matplotlib never loads it. Design 0018 §7.4: the script that saved it is kept too, when it is a file of the
+folder, so the figure can be found by it."""
 
 import json
 import os
@@ -105,6 +106,25 @@ fig.savefig("bars.png")
     geometry = json.loads((tmp_path / ".clank" / "figures" / "bars.png.json").read_text(encoding="utf-8"))
     lines = geometry["axes"][0]["lines"]
     assert [(line["label"], line["y"]) for line in lines] == [("n = 16", [1, 2, 3]), ("n = 32", [2, 3, 4])]
+
+
+def test_the_script_that_saved_a_figure_is_kept_when_it_is_a_file_of_the_folder(tmp_path: Path) -> None:
+    folder, outside = tmp_path / "paper", tmp_path / "elsewhere"
+    (folder / "figs").mkdir(parents=True)
+    (folder / "analysis").mkdir()
+    outside.mkdir()
+    (folder / "analysis" / "make.py").write_text(SCRIPT, encoding="utf-8")
+    env = {**os.environ, "PYTHONPATH": str(HOOK), "CLANK_FIGURES_ROOT": str(folder), "MPLBACKEND": "Agg"}
+    done = subprocess.run(
+        [sys.executable, "analysis/make.py", str(outside)], cwd=folder, env=env, capture_output=True, text=True,
+        timeout=120, creationflags=background_flags(),
+    )  # fmt: skip
+    assert done.returncode == 0, done.stderr
+    kept = folder / ".clank" / "figures" / "figs" / "plot.png.json"
+    assert json.loads(kept.read_text(encoding="utf-8"))["script"] == "analysis/make.py"
+    again = run(folder, str(outside))
+    assert again.returncode == 0, again.stderr
+    assert json.loads(kept.read_text(encoding="utf-8"))["script"] == "", "run as python -c: no script"
 
 
 def test_a_python_that_never_imports_matplotlib_never_loads_it(tmp_path: Path) -> None:

@@ -26,7 +26,7 @@ RUN apt-get update \
 # Ubuntu's image has a user `ubuntu` with uid 1000; the agent takes its place.
 RUN userdel --remove ubuntu 2>/dev/null; useradd --create-home --uid 1000 --shell /bin/bash agent
 
-COPY edge.py bridge.py phone_mcp.py /opt/clank/
+COPY edge.py bridge.py phone_mcp.py find_figures.py /opt/clank/
 # Every Python finds Clank's sitecustomize: when Matplotlib saves a raster figure in the folder, its geometry is written
 # under .clank/figures/ for the annotator (design 0008 §3); nothing else changes, and nothing at all without Matplotlib.
 COPY python/ /opt/clank/python/
