@@ -56,6 +56,7 @@ export class ReadoutPanel implements vscode.Disposable {
     private readonly item: vscode.StatusBarItem,
     private readonly connect: () => ClankClient | undefined,
     private readonly focusGroup: (column: number) => Thenable<unknown>,
+    private readonly session: () => string = () => "", // the agent panel's, when it shows one (else the newest)
   ) {}
 
   /** Read the readout from now on: every few seconds for the item, every second while the panel shows. */
@@ -167,7 +168,7 @@ export class ReadoutPanel implements vscode.Disposable {
       return undefined;
     }
     try {
-      return await client.get<Readout>("agents/readout", { folder });
+      return await client.get<Readout>("agents/readout", { folder, session: this.session() });
     } catch {
       return undefined; // a service from before the readout, or one that stopped: the item says so
     }

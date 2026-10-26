@@ -87,10 +87,47 @@ const CONTAINER = "/workspace/";
 const GIVEN = ["command", "filePath", "path", "pattern", "url", "name", "query", "description"];
 const MATH = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\$([^$\n]+?)\$|\\\(([\s\S]+?)\\\)/g;
 
+/** What a call was given, as fields: the page gives it as JSON text, cut past the bridge's limit (then each whole
+ * `"key": "text"` before the cut is read). */
+export function givenFields(input: unknown): Record<string, unknown> {
+  if (input && typeof input === "object") {
+    return input as Record<string, unknown>;
+  }
+  if (typeof input !== "string") {
+    return {};
+  }
+  try {
+    const parsed: unknown = JSON.parse(input);
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    const found: Record<string, unknown> = {};
+    for (const match of input.matchAll(/"(\w+)":\s*"((?:[^"\\]|\\.)*)"/g)) {
+      try {
+        found[match[1]] ??= JSON.parse(`"${match[2]}"`);
+      } catch {
+        // a text cut inside an escape: left out
+      }
+    }
+    return found;
+  }
+}
+
+/** A call's input as the panel shows it: laid out when it is whole JSON, else as it came. */
+function inputShown(input: unknown): string {
+  if (typeof input !== "string") {
+    return JSON.stringify(input ?? {}, null, 2);
+  }
+  try {
+    return JSON.stringify(JSON.parse(input), null, 2);
+  } catch {
+    return input;
+  }
+}
+
 /** A call in one line: its tool (without Clank's prefix), then its title, else what it was given that says most. */
 export function callSummary(tool: string, input: unknown, title: string): string {
   const name = tool.replace(CLANK_TOOL, "");
-  const given = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
+  const given = givenFields(input);
   const said = title || GIVEN.map((key) => given[key]).find((value) => typeof value === "string" && value) || "";
   return said ? `${name}: ${String(said).split("\n")[0]}` : name;
 }
@@ -135,11 +172,11 @@ function partItems(part: PagePart): Item[] {
   }
   const tool = part.tool;
   const status = part.status ?? "pending";
-  const input = part.input && typeof part.input === "object" ? (part.input as Record<string, unknown>) : {};
+  const input = givenFields(part.input);
   const items: Item[] = [{
     kind: "call", id: part.id, tool: tool.replace(CLANK_TOOL, ""), status,
     summary: callSummary(tool, part.input, part.title ?? ""),
-    input: typeof part.input === "string" ? part.input : JSON.stringify(part.input ?? {}, null, 2),
+    input: inputShown(part.input),
     output: part.output ?? "", error: part.error ?? "",
   }];  // prettier-ignore
   if (status !== "completed") {

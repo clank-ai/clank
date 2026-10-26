@@ -1,0 +1,211 @@
+/* The agent panel (design 0021 §4): VS Code's own colors and fonts, a conversation to scroll, the input at its foot. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(127, 127, 127, 0.3));
+}
+
+.title {
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.state {
+  color: var(--vscode-descriptionForeground);
+  white-space: nowrap;
+}
+
+.state.busy {
+  color: var(--vscode-charts-blue, #3794ff);
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+button {
+  font: inherit;
+  color: var(--vscode-button-secondaryForeground, inherit);
+  background: var(--vscode-button-secondaryBackground, rgba(127, 127, 127, 0.2));
+  border: 0;
+  border-radius: 3px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--vscode-button-secondaryHoverBackground, rgba(127, 127, 127, 0.3));
+}
+
+button.primary,
+.send {
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+}
+
+main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+}
+
+.older {
+  display: block;
+  margin: 0 auto 8px;
+}
+
+.item {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.owner {
+  padding: 6px 10px;
+  border-left: 3px solid var(--vscode-charts-blue, #3794ff);
+  background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
+  white-space: pre-wrap;
+}
+
+.text p:first-child {
+  margin-top: 0;
+}
+
+.text pre,
+.call pre {
+  overflow-x: auto;
+  padding: 6px;
+  background: var(--vscode-textCodeBlock-background, rgba(127, 127, 127, 0.12));
+  font-family: var(--vscode-editor-font-family);
+  font-size: var(--vscode-editor-font-size);
+  white-space: pre-wrap;
+}
+
+.text code {
+  font-family: var(--vscode-editor-font-family);
+}
+
+.text table {
+  border-collapse: collapse;
+}
+
+.text td,
+.text th {
+  border: 1px solid rgba(127, 127, 127, 0.4);
+  padding: 2px 6px;
+}
+
+details > summary {
+  cursor: pointer;
+  color: var(--vscode-descriptionForeground);
+}
+
+.thinking .body {
+  white-space: pre-wrap;
+  color: var(--vscode-descriptionForeground);
+  padding: 4px 0 4px 12px;
+}
+
+.call summary {
+  font-family: var(--vscode-editor-font-family);
+}
+
+.call.running summary,
+.call.pending summary {
+  color: var(--vscode-charts-blue, #3794ff);
+}
+
+.call.error summary,
+.error {
+  color: var(--vscode-errorForeground, #f14c4c);
+}
+
+.image img {
+  max-width: 100%;
+  border: 1px solid rgba(127, 127, 127, 0.3);
+  cursor: pointer;
+}
+
+.card,
+.wait {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  border: 1px solid var(--vscode-panel-border, rgba(127, 127, 127, 0.4));
+  border-radius: 4px;
+}
+
+.wait {
+  border-color: var(--vscode-charts-yellow, #cca700);
+}
+
+.band {
+  text-align: center;
+  color: var(--vscode-descriptionForeground);
+  border-top: 1px dashed rgba(127, 127, 127, 0.5);
+  padding-top: 4px;
+}
+
+footer {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  padding: 6px 8px;
+  border-top: 1px solid var(--vscode-panel-border, rgba(127, 127, 127, 0.3));
+}
+
+textarea {
+  flex: 1;
+  resize: vertical;
+  font: inherit;
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, rgba(127, 127, 127, 0.4));
+  padding: 4px;
+}
+
+.files {
+  position: absolute;
+  bottom: 100%;
+  left: 8px;
+  right: 8px;
+  max-height: 40vh;
+  overflow-y: auto;
+  background: var(--vscode-editorSuggestWidget-background, var(--vscode-editor-background));
+  border: 1px solid var(--vscode-editorSuggestWidget-border, rgba(127, 127, 127, 0.4));
+}
+
+.files div {
+  padding: 2px 8px;
+  cursor: pointer;
+  font-family: var(--vscode-editor-font-family);
+}
+
+.files div.chosen,
+.files div:hover {
+  background: var(--vscode-list-activeSelectionBackground, rgba(127, 127, 127, 0.3));
+}

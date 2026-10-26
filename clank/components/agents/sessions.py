@@ -453,6 +453,17 @@ class Sessions:
         self._acted(workspace, port, session, "show", "on the window at this port", actor)
         return bool(found.get("shown", True))
 
+    def show_in_terminal(self, workspace: str, session: str, *, actor: Actor) -> dict[str, Any]:
+        """Show the session in the workspace's OpenCode terminal (the agent panel's Terminal, design 0021 §4): whether
+        it showed it, and the terminal's port; refused when no terminal runs."""
+        terminal = next((each for each in self.servers(workspace) if each.get("terminal")), None)
+        if terminal is None:
+            raise SessionError(
+                f"no OpenCode terminal runs in {workspace}: open the agent (Clank: Open the agent) first"
+            )
+        port = int(terminal["port"])
+        return {"shown": self.show_in_window(workspace, port, session, actor=actor), "port": port}
+
     def start_in_window(
         self, workspace: str, port: int, text: str, *, title: str, actor: Actor, agent: str = "", wait: float = 0.0
     ) -> tuple[str, bool]:

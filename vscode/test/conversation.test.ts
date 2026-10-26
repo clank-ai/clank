@@ -86,6 +86,23 @@ test("a call is summed up in one line: its tool without Clank's prefix and what 
   assert.equal(callSummary("todowrite", {}, ""), "todowrite");
 });
 
+test("a call's input given as JSON text, or cut past the bridge's limit, is still read for its summary and card", () => {
+  assert.equal(callSummary("clank_run_job", '{"command": "python3 simulate.py", "title": "Sweep"}', ""), "run_job: python3 simulate.py");
+  const cut = '{"name": "pendulum", "title": "Pendulum \\"period\\"", "files": ["pendulum.html", "data/sweep.csv", "data/sim … [912 characters]';
+  const [call, card] = conversationItems([{
+    info: { id: "msg_9", role: "assistant" },
+    parts: [{ id: "prt_9", type: "tool", tool: "clank_make_artifact", status: "completed", title: "", input: cut,
+              output: "Artifact Pendulum (pendulum), version 3, made." }],
+  }]);  // prettier-ignore
+  assert.equal(call.kind === "call" && call.summary, "make_artifact: pendulum");
+  assert.deepEqual(card, { kind: "artifact", id: "prt_9-artifact", name: "pendulum", title: 'Pendulum "period"', version: 3 });
+  const [shown] = conversationItems([{
+    info: { id: "msg_10", role: "assistant" },
+    parts: [{ id: "prt_10", type: "tool", tool: "bash", status: "completed", title: "", input: '{"command": "ls"}' }],
+  }]);  // prettier-ignore
+  assert.equal(shown.kind === "call" && shown.input, '{\n  "command": "ls"\n}', "shown laid out when it is whole");
+});
+
 test("math is set aside before Markdown reads the text and drawn in its place", () => {
   const split = splitMath("Let $a_1 = b_2$ and $$\\sum_i x_i$$ hold, with \\(y_k\\) too; it costs $5.");
   assert.equal(split.text, "Let @@MATH0@@ and @@MATH1@@ hold, with @@MATH2@@ too; it costs $5.");

@@ -482,6 +482,13 @@ def router(agents: "Agents") -> APIRouter:
             lambda: agents.sessions.start(workspace, wanted.text, env=env, actor=actor, title=wanted.title)
         )
 
+    @routes.post("/agents/sessions/{workspace}/{session}/terminal")
+    async def show_in_terminal(workspace: str, session: str, request: Request) -> dict[str, Any]:
+        """Show the session in the workspace's OpenCode terminal (design 0021 §4); refused when none runs."""
+        actor = client_actor(request.headers.get(CLIENT_HEADER))
+        found: dict[str, Any] = await bridged(lambda: agents.sessions.show_in_terminal(workspace, session, actor=actor))
+        return found
+
     @routes.post("/agents/sessions/{workspace}/{port}/{session}/stop")
     async def stop(workspace: str, port: int, session: str, request: Request) -> Any:
         """Stop what the session does now."""

@@ -11,6 +11,7 @@ where the service answers and the local token from CLANK_HOME each time it conne
 | Status bar, left | `Docker`: its state (click: start or stop it) |
 | Status bar, left | The model's readout (design 0021 §3): its writing speed, the context used of its window and what it does now, e.g. `63 tok/s · 161K/262K · thinking` (click: the panel) |
 | Editor, under the agent | **Clank · the model**: the model and its speed settings; writing speed (live), the last prompt's reading speed, the drafted tokens accepted and recent steps as a graph; what it does now; the context window part by part with the compaction line and the cache's share; what is attended exactly on the GPU and what is retrieved; whether the engine holds this session's conversation; the GPU's memory and use; the jobs running in the folder's workspace (design 0021 §6). It opens with the agent (`clank.readout.openWithAgent`) or from `Clank: Show the model's readout` |
+| Editor, beside the agent | **Clank · agent** (design 0021 §4): the agent's conversation drawn, on the same session as OpenCode's terminal: the owner's messages, the model's Markdown with its math (KaTeX), its thinking and each tool call folded, the figures it looked at or showed, the artifacts it made as cards that open, and what waits (a permission, a question) with its buttons; a box to write to it (Enter sends, `@` names a file, an image can be pasted), and Sessions, New, Stop, Compact and Terminal (this session shown in OpenCode's terminal). It opens with the agent as a tab beside the terminal, which stays in front (`clank.agentPanel.openWithAgent`), or from `Clank: Show the agent panel`, or the link `vscode://clank.clank/agent-panel` |
 | Status bar, left | `Plan`, `Review` or `Auto`: the Planner, or how the agent of the window's folder changes files (click: pick one) |
 | Editor | On an open plan (a Markdown file whose header says `kind: plan`): **▶ Implement with Review**, **▶ Implement with Auto**, and **↻ Continue (k of m steps done)** when some checklist items are done; each hands the plan to the agent (design 0009) |
 | Status bar, left | `Completion`: on and served (check), on but its model not running (warning), or off (click: turn it off or on) |
@@ -29,6 +30,7 @@ where the service answers and the local token from CLANK_HOME each time it conne
 | Setting | `clank.home`: CLANK_HOME, when it is not the environment's or `~/.clank` |
 | Setting | `clank.changes.showInAuto`: in auto mode, open each change the agent makes (on by default) |
 | Setting | `clank.readout.openWithAgent`: open the model's readout under the agent when it starts (on by default) |
+| Setting | `clank.agentPanel.openWithAgent`: open the agent panel beside the agent's terminal when it starts (on by default) |
 
 What you do here is recorded as you (vscode), and every other client shows it.
 

@@ -349,6 +349,7 @@ it is for. The module's docstring says why it is built the way it is.
 | --- | --- |
 | `vscode/host/run.ts` | Runs the host suite inside a real VS Code (decision 0029): VS Code 1.138.0, the oldest the extension accepts, |
 | `vscode/host/suite.ts` | Design 0002 §3.2 and decision 0029: inside a real VS Code, the extension activates and registers every command its |
+| `vscode/src/agentPanel.ts` | The agent panel in VS Code (design 0021 §4): a webview tab in the agent's group, beside OpenCode's terminal, on the |
 | `vscode/src/artifacts.ts` | Artifacts in VS Code (design 0021 §5): a webview panel per artifact, in the files' group, showing a version's page as |
 | `vscode/src/comments.ts` | Comments for the agent on LaTeX files (design 0020 §11), in VS Code: a comment controller on every .tex file of the |
 | `vscode/src/core/agent.ts` | Starting the agent beside the files (design 0004 §5): for the folder Clank's VS Code window has open, the folder's |
@@ -359,6 +360,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/core/completion.ts` | Completion in VS Code (design 0006 §5): gray text after the cursor, from the model in the fast slot, through the |
 | `vscode/src/core/connection.ts` | Where the Clank service answers, and the local token that proves the caller is the user (design 0002 §2.7). |
 | `vscode/src/core/controller.ts` | What the extension does (design 0002 §2.5, §2.7, §3.2): it connects to the Clank service and keeps the status bar |
+| `vscode/src/core/conversation.ts` | The agent panel's conversation (design 0021 §4): what `GET /agents/conversation` answers, and the items the panel |
 | `vscode/src/core/events.ts` | The event stream's text read into messages (Server-Sent Events, decision 0017). A message ends at a blank line; it |
 | `vscode/src/core/gates.ts` | Gates in VS Code (design 0013 §10, §14 step 7). A question about a flow (a gate, a YOU box, a failed box, a box whose |
 | `vscode/src/core/kinds.ts` | The TypeScript types of Clank's kinds of record, as the API sends them (decisions 0015, 0028). |
@@ -374,6 +376,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/figures.ts` | Clank's figure annotator in VS Code (design 0008 §6): a custom editor for PNG and JPEG files that shows the |
 | `vscode/src/notion.ts` | The Notion changes in VS Code (design 0010 §6), the glue over `core/notion.ts`: the "Notion changes" view (a tree in |
 | `vscode/src/readout.ts` | The model's readout in VS Code (design 0021 §3): the status bar item and the panel under the agent's terminal. The |
+| `vscode/test/agent.page.test.ts` | Design 0021 §4, in a real browser: the agent panel's page (media/agent.html, as VS Code's webview shows it, with |
 | `vscode/test/agent.test.ts` | Design 0004 §5: in Clank's VS Code window the agent starts beside the files: for the folder the window has open, |
 | `vscode/test/annotator.page.test.ts` | Design 0008 §6, in a real browser: the annotator page (media/annotator.html, as VS Code's webview shows it) in |
 | `vscode/test/artifacts.test.ts` | Design 0021 §5: artifacts in VS Code. The service's `agents.artifact_made` names the workspace, its folder on this |
@@ -383,6 +386,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/completion.test.ts` | Design 0006 §5: completion asks the gateway only while it is on and its slot serves, after the wait, not when it was |
 | `vscode/test/connection.test.ts` | Design 0002 §2.7: the extension finds the service through CLANK_HOME (its setting, else the environment, else |
 | `vscode/test/controller.test.ts` | Design 0002 §2.5, §2.7 and §3.2: the extension's controller keeps the status bar current (the service and the |
+| `vscode/test/conversation.test.ts` | Design 0021 §4: the agent panel's conversation, drawn from a page of the session's messages in the Monitor's shape. |
 | `vscode/test/events.test.ts` | Design 0002 §2.3 (decision 0017): the event stream's text is read into whole messages, whether a message arrives |
 | `vscode/test/gates.test.ts` | Design 0013 §10 and §14 step 7 (design 0007 §6): a question about a flow shows in VS Code as a gate, a notification |
 | `vscode/test/kinds.test.ts` | Design 0002 §2.2 (decisions 0015, 0028): the TypeScript types generated from Clank's kinds describe what the API |

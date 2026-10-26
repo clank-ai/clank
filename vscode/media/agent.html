@@ -1,0 +1,47 @@
+<!doctype html>
+<!-- The agent panel (design 0021 §4), beside the agent's terminal. The extension fills in the {{...}} fields: the
+     content security policy's sources, the nonce of the scripts, and the addresses of the style sheets and scripts
+     (marked and KaTeX are the artifacts' libraries, decision 0135). KaTeX writes its layout in style attributes, so the
+     policy lets styles be inline; no script runs but those carrying the nonce, and nothing comes from the network. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src {{source}} 'unsafe-inline'; font-src {{source}}; img-src {{source}} data:; script-src 'nonce-{{nonce}}';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{katexCss}}" />
+    <link rel="stylesheet" href="{{css}}" />
+    <title>Clank · the agent</title>
+  </head>
+  <body>
+    <header>
+      <span id="title" class="title">Reading the conversation…</span>
+      <span id="state" class="state"></span>
+      <span class="actions">
+        <button data-act="sessions" title="Pick another session of this folder">Sessions</button>
+        <button data-act="new" title="Start a new session with the next message">New</button>
+        <button data-act="stop" title="Stop the agent now">Stop</button>
+        <button data-act="compact" title="Compact the conversation at the next step">Compact</button>
+        <button data-act="terminal" title="Show this session in OpenCode's terminal">Terminal</button>
+      </span>
+    </header>
+    <main id="conversation">
+      <button id="older" class="older" hidden>Show older messages</button>
+      <div id="items"></div>
+    </main>
+    <footer>
+      <div id="files" class="files" hidden></div>
+      <textarea
+        id="input"
+        rows="3"
+        placeholder="Write to the agent. Enter sends, Shift+Enter starts a new line, @ names a file, an image can be pasted."
+      ></textarea>
+      <button id="send" class="send">Send</button>
+    </footer>
+    <script nonce="{{nonce}}" src="{{marked}}"></script>
+    <script nonce="{{nonce}}" src="{{katex}}"></script>
+    <script nonce="{{nonce}}" src="{{script}}"></script>
+  </body>
+</html>

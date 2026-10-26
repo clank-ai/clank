@@ -5,7 +5,8 @@ folder's workspace, its session (the one named, else the newest the service keep
 session a server lists, so a panel opened after the service restarted still has one), the server that reaches it, a
 page of its messages as the bridge reads them (the newest, or those before a cursor) with the cursor of the page before,
 whether it is busy, and the permissions and questions waiting in it; a folder with no workspace, or a workspace with no
-session, answers what there is."""
+session, answers what there is. The panel's Terminal shows the session in the workspace's OpenCode terminal, refused
+when none runs."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -117,3 +118,26 @@ def test_the_conversation_is_the_folders_session_its_page_of_messages_whether_it
     assert (nowhere["session"], nowhere["messages"], nowhere["next"]) == (None, [], "")
     assert empty["workspace"] == "paper"
     assert empty["session"] is None, "no server runs, no session kept"
+
+
+def test_a_session_is_shown_in_the_workspaces_terminal_and_refused_when_no_terminal_runs(
+    kernel: Kernel, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sessions = kernel.parts["agents"].sessions
+    running = [server(4100, session("ses_a")), server(4096, session("ses_a"))]  # 4096 runs the terminal
+    shown: list[tuple[str, int, str]] = []
+    monkeypatch.setattr(sessions, "servers", lambda workspace: running)
+
+    def show(workspace: str, port: int, id: str, *, actor: Actor, wait: float = 0.0) -> bool:
+        shown.append((workspace, port, id))
+        return True
+
+    monkeypatch.setattr(sessions, "show_in_window", show)
+    with TestClient(create_app(kernel, token="t", port=7727), base_url="http://127.0.0.1:7727") as client:
+        answer = client.post("/api/v1/agents/sessions/paper/ses_a/terminal", headers=HEADERS)
+        running.pop()
+        refused = client.post("/api/v1/agents/sessions/paper/ses_a/terminal", headers=HEADERS)
+    assert answer.json() == {"shown": True, "port": 4096}
+    assert shown == [("paper", 4096, "ses_a")]
+    assert refused.status_code == 409
+    assert "no OpenCode terminal" in refused.json()["error"]["message"]

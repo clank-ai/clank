@@ -36,6 +36,7 @@ import { Controller } from "./core/controller";
 import { type GateAction, type GateButton, type GatePresenter, Gates, type Side } from "./core/gates";
 import type { Question } from "./core/kinds";
 import type { Choice, Presenter } from "./core/presenter";
+import { AgentPanel } from "./agentPanel";
 import { ArtifactPanels } from "./artifacts";
 import type { ArtifactMade } from "./core/artifacts";
 import { FIGURE_EDITOR, FigureEditor } from "./figures";
@@ -709,14 +710,25 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
   };
   const readoutItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 95);
   readoutItem.command = "clank.showReadout";
-  const readout = new ReadoutPanel(context.extensionUri, readoutItem, connect, (column) =>
-    column <= FOCUS_GROUP.length ? vscode.commands.executeCommand(FOCUS_GROUP[column - 1]) : Promise.resolve(),
+  const readout = new ReadoutPanel(
+    context.extensionUri,
+    readoutItem,
+    connect,
+    (column) => (column <= FOCUS_GROUP.length ? vscode.commands.executeCommand(FOCUS_GROUP[column - 1]) : Promise.resolve()),
+    () => agentPanel.session(), // after a restart the service follows no session yet; the panel finds one
   );
-  const withAgent = (): boolean =>
-    vscode.workspace.getConfiguration("clank").get<boolean>("readout.openWithAgent") ?? true;
+  const agentPanel = new AgentPanel(context.extensionUri, {
+    connect, info: (text) => presenter.info(text), warn: (text) => presenter.warn(text),
+    pick: (items, placeholder) => presenter.pick(items, placeholder), openArtifact: (made) => artifacts.show(made, made.version),
+    filesColumn,
+  });  // prettier-ignore
+  const setting = (name: string): boolean => vscode.workspace.getConfiguration("clank").get<boolean>(name) ?? true;
   const agentStarted = (): void => {
-    if (withAgent()) {
+    if (setting("readout.openWithAgent")) {
       setTimeout(() => void readout.show(true), 1500); // once the agent's group is placed, under it
+    }
+    if (setting("agentPanel.openWithAgent")) {
+      setTimeout(() => void agentPanel.show(false), 2500); // a tab beside the terminal, which stays in front
     }
   };
   const onTheRight = new AgentOnTheRight(() => readout.arranging);
@@ -738,6 +750,12 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
     vscode.commands.registerCommand("clank.reconnect", () => controller.reconnect()),
     vscode.commands.registerCommand("clank.openAgent", () => startAgent(connect, presenter, false, agentStarted)),
     vscode.commands.registerCommand("clank.showReadout", () => readout.show()),
+    vscode.commands.registerCommand("clank.showAgentPanel", () => agentPanel.show()),
+    agentPanel,
+    vscode.window.registerUriHandler({
+      // vscode://clank.clank/agent-panel opens the agent panel in front (for scripts and Clank's other clients)
+      handleUri: (uri) => (uri.path === "/agent-panel" ? agentPanel.show() : undefined),
+    }),
     vscode.commands.registerCommand("clank.openArtifact", () => openArtifact(connect, presenter, artifacts, readout)),
     artifacts,
     readoutItem,

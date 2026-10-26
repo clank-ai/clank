@@ -485,7 +485,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | Where Clank stands | none yet |
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (3), `vscode/test/readout.test.ts` (10) |
-| 4 | The agent panel | `tests/components/agents/test_conversation.py` (2) |
+| 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (1), `vscode/test/conversation.test.ts` (5) |
 | 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (11), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (5) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (3), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
@@ -727,10 +727,11 @@ Design 0012 §4.1 (revised 2026-10-20, decision 0089): OpenCode is told the engi
 
 ### `tests/components/agents/test_conversation.py`
 
-Design 0021 §4: the agent panel's conversation. `Sessions.reach` finds the server that reaches a session: the one the service heard it on, else one of the workspace's servers that lists it, else the first that runs (every OpenCode server of a folder reads the sessions it keeps on disk), else none. `GET /agents/conversation?folder=` composes, for the folder's workspace, its session (the one named, else the newest the service keeps a flow of, else the newest root session a server lists, so a panel opened after the service restarted still has one), the server that reaches it, a page of its messages as the bridge reads them (the newest, or those before a cursor) with the cursor of the page before, whether it is busy, and the permissions and questions waiting in it; a folder with no workspace, or a workspace with no session, answers what there is.
+Design 0021 §4: the agent panel's conversation. `Sessions.reach` finds the server that reaches a session: the one the service heard it on, else one of the workspace's servers that lists it, else the first that runs (every OpenCode server of a folder reads the sessions it keeps on disk), else none. `GET /agents/conversation?folder=` composes, for the folder's workspace, its session (the one named, else the newest the service keeps a flow of, else the newest root session a server lists, so a panel opened after the service restarted still has one), the server that reaches it, a page of its messages as the bridge reads them (the newest, or those before a cursor) with the cursor of the page before, whether it is busy, and the permissions and questions waiting in it; a folder with no workspace, or a workspace with no session, answers what there is. The panel's Terminal shows the session in the workspace's OpenCode terminal, refused when none runs.
 
 - the server that reaches a session is the one heard else one that lists it else the first that runs
 - the conversation is the folders session its page of messages whether it is busy and what waits in it
+- a session is shown in the workspaces terminal and refused when no terminal runs
 
 ### `tests/components/agents/test_figures.py`
 
@@ -4462,6 +4463,12 @@ Design 0002 §2.5 and §2.7: the VS Code extension's client, run by Node against
 
 - the extensions client answers a question recorded as you through vscode
 
+### `vscode/test/agent.page.test.ts`
+
+Design 0021 §4, in a real browser: the agent panel's page (media/agent.html, as VS Code's webview shows it, with marked and KaTeX from Clank's libraries) in headless Edge. A conversation sent to it is drawn: the owner's message, the model's Markdown with its math drawn by KaTeX (underscores kept), raw HTML in it shown as text, the thinking and each call folded, an image, an artifact card whose Open says which version, and what waits with its buttons. A fold the owner opened stays open when the conversation is drawn again. Enter sends the message, Shift+Enter does not; @ asks for the folder's files and the one chosen is put as the agent sees it. A screenshot is left in out/test/.
+
+- the agent panel draws the conversation, keeps the folds opened, and sends what the owner does
+
 ### `vscode/test/agent.test.ts`
 
 Design 0004 §5: in Clank's VS Code window the agent starts beside the files: for the folder the window has open, the folder's workspace is read; when its container runs, the agent's configuration is written into it and the terminal runs the command the service answers, named after the program and the workspace; otherwise it says what is missing and how to get it ready, and writes nothing. A window that has the agent's terminal (running, or only its tab, restored with a reloaded window before VS Code revives it) does not start another. With one OpenCode window per workspace (the service closed the others first), the new terminal replaces the window's agent terminals. The agent's group stays at the right edge: moved there when it is not, the keyboard given back to the group that had it.
@@ -4543,6 +4550,16 @@ Design 0002 §2.5, §2.7 and §3.2: the extension's controller keeps the status 
 - an artifact the agent made goes to the presenter, which opens it in a window on its folder
 - a cloud model's item says cloud, its tooltip the spending in the service's words, and the pause
 - Switch model lists a cloud preset as its provider and model, with its price
+
+### `vscode/test/conversation.test.ts`
+
+Design 0021 §4: the agent panel's conversation, drawn from a page of the session's messages in the Monitor's shape. The owner's messages (OpenCode's own synthetic parts left out); the model's text, its thinking (folded when drawn) and each tool call with its state and a one-line summary (Clank's tools named without their server's prefix); a figure the agent looked at or showed, inline, as a path in the folder; an artifact it made, as a card with its name and version; a step that failed, and a compaction, said. Math in the model's text is set aside before Markdown reads it (so its underscores stay math), each piece drawn by KaTeX in its place. What waits in the session (permissions and questions) comes as items too, last.
+
+- a page becomes the owner's messages, the model's text, thinking and calls, figures and artifact cards
+- a call is summed up in one line: its tool without Clank's prefix and what it was given
+- a call's input given as JSON text, or cut past the bridge's limit, is still read for its summary and card
+- math is set aside before Markdown reads the text and drawn in its place
+- what waits in the session comes as items: each permission with what it asks, each question
 
 ### `vscode/test/events.test.ts`
 
