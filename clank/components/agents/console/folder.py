@@ -773,7 +773,7 @@ class FolderPage(Page):
         field = Field(
             "command",
             "The command that installs it, run in the folder (/workspace) with the internet",
-            "python3 -m venv ~/.venv && ~/.venv/bin/python -m pip install -r requirements.txt",
+            "python3 -m venv --system-site-packages ~/.venv && ~/.venv/bin/python -m pip install -r requirements.txt",
             setup.get("command") or "",
         )
         note = (

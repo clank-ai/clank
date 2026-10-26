@@ -388,7 +388,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/annotator.page.test.ts` | Design 0008 §6, in a real browser: the annotator page (media/annotator.html, as VS Code's webview shows it) in |
 | `vscode/test/artifacts.test.ts` | Design 0021 §5: artifacts in VS Code. The service's `agents.artifact_made` names the workspace, its folder on this |
 | `vscode/test/board.page.test.ts` | Design 0022 §3, in a real browser: the board's page (media/board.html, as VS Code's board editor shows it, with the |
-| `vscode/test/board.test.ts` | Design 0022 §2-§3 and §6: the board editor's pure core. A board is read from its file and written back in the same shape; |
+| `vscode/test/board.test.ts` | Design 0022 §2, §3, §6 and §7: the board editor's pure core. A board is read from its file and written back in the same shape; |
 | `vscode/test/browser.ts` | Headless Edge for the tests of the extension's pages (the annotator, the Notion review): a page opened from a file and |
 | `vscode/test/client.test.ts` | Design 0002 §2.7 and §2.14: the extension's client sends the local token and names itself `vscode` on every call, |
 | `vscode/test/comments.test.ts` | Design 0020 §11: comments on lines of LaTeX files are sent to the agent together, each with its file (from the |

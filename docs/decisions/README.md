@@ -145,6 +145,7 @@ and use the template below.
 | [0135](0135-the-artifact-libraries.md) | The artifact libraries: Plotly, KaTeX, marked and Mermaid, pinned, kept in Clank | Accepted (with design 0021) | 2026-10-25 |
 | [0136](0136-the-board-canvas-is-clanks-own.md) | The board's canvas is Clank's own: no whiteboard library (tldraw, Excalidraw, Fabric.js), no new dependency | Accepted (with design 0022) | 2026-10-26 |
 | [0137](0137-board-export-with-librsvg.md) | A board exports through one SVG, made PDF or PNG by librsvg (`librsvg2-bin`) in the TeX layer | Accepted (building design 0022) | 2026-10-26 |
+| [0138](0138-scientific-python-in-the-sandbox.md) | Scientific Python (NumPy, SciPy, pandas, Matplotlib, SymPy) in the sandbox image, from Ubuntu's packages; a setup's environment sees them | Accepted | 2026-10-26 |
 
 ## Template
 

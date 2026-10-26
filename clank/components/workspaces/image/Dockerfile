@@ -1,5 +1,7 @@
 # Clank's sandbox image (design 0004 §3, decision 0033: Clank's own): where agents work, one container per workspace.
-# Ubuntu 24.04 with Python 3.12, Node.js 22, git, the build tools and ripgrep, and OpenCode at the version Clank knows;
+# Ubuntu 24.04 with Python 3.12 and its scientific packages as Ubuntu packages them (NumPy, SciPy, pandas, Matplotlib,
+# SymPy: decision 0138, so the agent plots and computes in any folder), Node.js 22, git, the build tools and ripgrep,
+# and OpenCode at the version Clank knows;
 # a user `agent` (uid 1000) whose home is a volume of each workspace's own, its ~/.venv (the folder's own software,
 # installed by a workspace's setup) first on the PATH. The edge runs from it too (edge.py). Its tag
 # is the checksum of this folder (`sandbox.image_tag`), so a change here builds a new image.
@@ -12,6 +14,7 @@ ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN apt-get update \
  && apt-get install --yes --no-install-recommends \
       ca-certificates curl gnupg git build-essential python3 python3-pip python3-venv ripgrep less nano \
+      python3-numpy python3-scipy python3-pandas python3-matplotlib python3-sympy \
  && mkdir -p /etc/apt/keyrings \
  && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
       | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \

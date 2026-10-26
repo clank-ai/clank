@@ -83,7 +83,7 @@ def test_the_setup_command_installs_the_folders_software_and_says_with_what(
     assert run("workspace", "open", "--yes").exit_code == 0
     installed = run("workspace", "setup", "--yes")
     assert installed.exit_code == 0, installed.output
-    assert "paper: installed with python3 -m venv ~/.venv && ~/.venv/bin/python -m pip install -r requirements.txt" in (
+    assert "paper: installed with python3 -m venv --system-site-packages ~/.venv && ~/.venv/bin/python -m pip install -r requirements.txt" in (
         installed.output
     )
     platform.setup_status = 2

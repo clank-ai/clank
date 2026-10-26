@@ -146,6 +146,22 @@ Then look around: the **Monitor** (F10) shows what the agent does and what fills
 stop, pause, guide or undo it; **Flows** (F10's Flow view, `n`) split a larger piece of work into steps, each a fresh
 session. [docs/console.md](console.md) explains every page and key.
 
+### Boards: lay out figures with the agent
+
+In VS Code, a **board** is a canvas you share with the agent: a `.board` file in the folder ([design
+0022](design/0022-boards.md)). Make one with **Clank: New board**, or ask the agent ("make a board with the two plots
+side by side and the fit's equation under them"). The agent's container has Python's scientific packages (NumPy,
+SciPy, pandas, Matplotlib, SymPy), so it makes the plots itself.
+
+- **Figures** are the folder's images, drawn again when a script writes them again. Drop one from the Explorer or
+  paste one.
+- **LaTeX**: math is drawn at once; TikZ, pgfplots and tables are compiled with the folder's TeX (`clank latex setup`
+  adds it).
+- **Ask the agent**: select items and ask about them; draw a **slot** and press **Fill** for the agent to make that
+  figure; **pin** comments and **Send pins**.
+- **Export** a frame as one figure: PDF for `\includegraphics`, PNG or SVG, beside the board. Kept, it is made again
+  each time the frame changes, so your paper always shows the latest layout.
+
 ## 4b. Work from another computer, over SSH
 
 With a model on your GPU, every window the PC draws slows the model down. Working from a laptop instead, with VS Code

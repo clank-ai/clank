@@ -224,7 +224,7 @@ class WorkspacesPage(Page):
         field = Field(
             "command",
             "The command that installs its software, run in the folder (/workspace) with the internet",
-            "python3 -m venv ~/.venv && ~/.venv/bin/python -m pip install -r requirements.txt",
+            "python3 -m venv --system-site-packages ~/.venv && ~/.venv/bin/python -m pip install -r requirements.txt",
             setup.get("command") or "",
         )
         client, folder, name = self.console.client, selected["path"], selected["name"]
