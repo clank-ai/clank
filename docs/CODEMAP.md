@@ -123,6 +123,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/flows/runner.py` | The runner (design 0013 §5-§8, §10; decisions 0060-0063, 0065): flows run in the service, one box after another. |
 | `clank/components/flows/runs.py` | The runs of a flow (design 0013 §6, §8; decision 0061): each a readable JSON file in its own folder. |
 | `clank/components/flows/service.py` | The flows component's part (design 0013 §6, §11): the flows, read from their files and checked. |
+| `clank/components/flows/summaries.py` | One line per flow for a list (design 0025 §6; design 0013 §12), made in the service so every client says a flow's |
 | `clank/components/flows/verdicts.py` | A VERIFY's verdict (design 0013 §2, §8, §9): *pass*, or *fail* with numbered findings, and the lines it checked. |
 | `clank/components/flows/view.py` | What the Monitor's Flow view shows of a flow (design 0013 §12; boards D1-D4), made in the service, as a session's |
 | `clank/components/flows/waiting.py` | What a flow waits for, told the same way to every client (design 0013 §10, §14 step 7). |
@@ -190,6 +191,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/remote/console/phone.py` | The Phone page (design 0005 §5): the phone page on the tailnet, pairing, the paired devices, what was sent. |
 | `clank/components/remote/console/traffic.py` | A paired device's exchanges with this computer, over the console (design 0005 §5, transparency): opened from the |
 | `clank/components/remote/devices.py` | Paired devices and the codes that pair them (design 0005 §4, after a pattern already proven on this PC). |
+| `clank/components/remote/flowsapi.py` | The phone's flow routes (design 0025 §6; plan s58): what the Flows tab reads and does, each a thin call on the flows |
 | `clank/components/remote/icon.py` | The phone app's Home Screen icon as a PNG (design 0025 §3), drawn here with the standard library: iOS takes a PNG |
 | `clank/components/remote/kinds.py` | The remote component's kind of record: how the phone reaches Clank (`config/remote.json`, design 0005 §4). |
 | `clank/components/remote/outbox.py` | The files the agents sent to the phone (design 0005 §3): each workspace's `.clank/outbox/`, where Clank's own MCP |

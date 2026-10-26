@@ -72,7 +72,7 @@ from clank.components.flows.runs import order, read_whole, write_whole
 from clank.kernel.clock import to_text
 from clank.kernel.events import Actor, EventType, Subject
 from clank.kernel.questions import Option, QuestionDraft, QuestionError
-from clank.kernel.settings import DEFAULTS
+from clank.kernel.settings import DEFAULTS, SettingsError
 
 if TYPE_CHECKING:
     from clank.components.flows.service import Flows
@@ -685,7 +685,11 @@ class Building:
         from clank.components.agents.service import AgentError, SessionError
         from clank.components.workspaces.service import WorkspaceUnavailable
 
-        self._current_image(workspace)
+        try:
+            self._current_image(workspace)
+        except SettingsError as error:  # no such workspace: said as `begin` says it
+            words = f"Clank has no workspace {workspace}: `clank workspace open` in its folder makes it"
+            raise BuildError(words) from error
         planning = self.begin(workspace, name, where, actor=actor, aside=aside)
         said = {"flow": planning.flow, "name": planning.name, "where": where, "title": session_title(planning),
                 "folder": str(self.kernel.parts["workspaces"].folder_of(workspace)),

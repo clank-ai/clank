@@ -193,6 +193,14 @@ def router(flows: "Flows") -> APIRouter:
         answers that take words."""
         return {"waiting": await anyio.to_thread.run_sync(flows.waiting)}
 
+    @routes.get("/flows/summaries")
+    async def summaries(workspace: str = "") -> dict[str, Any]:
+        """One line per flow for a list (design 0025 §6): its state in a word (never, queued, running, paused, waits,
+        building, done, stopped) and in words, the box it is at, how many boxes are done, its model, its time, the
+        question it waits for, its file's problems; what waits for you first, then what runs, then what ended,
+        newest first, and what never ran last. `workspace` keeps one workspace's flows only."""
+        return {"flows": await anyio.to_thread.run_sync(flows.summaries, workspace)}
+
     @routes.get("/flows/view")
     async def shown(folder: str = "", flow: str = "") -> dict[str, Any]:
         """What the Monitor's Flow view shows (design 0013 §12): the flow named (`<workspace>/<name>`), else the

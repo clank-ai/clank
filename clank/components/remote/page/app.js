@@ -6,7 +6,8 @@
 // every action carries the X-Clank-Phone header. The logic that needs no browser is `model.mjs`.
 
 import {
-  RECONNECT_SECONDS, allSessions, clockText, lastKnown, machineGauges, modelLine, streamState, waitingCount, workingRows,
+  RECONNECT_SECONDS, allSessions, boxGlyph, clockText, flowFilter, lastKnown, machineGauges, modelLine, runControls,
+  streamState, waitingCount, workingRows,
 } from "./model.mjs";
 
 const view = document.getElementById("view");
@@ -28,6 +29,7 @@ const ATTENTION_SECONDS = 20;
 const state = {
   tab: "now", place: null, overview: null, messages: [], timer: null, task: "", files: null,
   log: { items: [], open: {} }, notes: {}, reads: {}, events: [], known: null,
+  flows: { rows: null, plannings: {}, filter: "all", view: null, building: false, timer: null },
   link: { connected: false, failedSince: null, tries: 0, lastEventAt: null, source: null },
 };
 try { state.known = JSON.parse(localStorage.getItem(KNOWN) || "null"); } catch { state.known = null; }
@@ -318,13 +320,241 @@ function nowView(overview) {
   return parts;
 }
 
-// Flows: what the flows wait for, from Clank's questions about them; the Flow view with its boxes comes with the next
-// step of design 0025.
+// Flows (design 0025 §6): the list from the service's summaries (each flow's state in a word and in words), filtered;
+// a flow's screen from the Flow view's JSON (design 0013 §12), as the console draws it; both read again when a
+// flows.* or question.* event arrives on the stream, once per burst.
+const FILTER_WORDS = { all: "All", running: "Running", waits: "Waits", ended: "Ended" };
+const FLOW_GLYPHS = {
+  waits: ["!", "warn"], running: ["●", "good"], building: ["…", "good"], paused: ["‖", "warn"], queued: ["○", "dim"],
+  done: ["✓", "dim"], stopped: ["✗", "dim"], never: ["○", "dim"],
+};
+
+async function loadFlows() {
+  try {
+    const found = await api("api/flows");
+    state.flows.rows = found.flows;
+    state.flows.plannings = found.plannings || {};
+    if (state.tab === "flows" && !(state.place && state.place.flow)) draw();
+  } catch (error) { say(error.message); }
+}
+
+async function loadFlow() {
+  const place = state.place;
+  if (!place || !place.flow) return;
+  const { workspace, name } = place.flow;
+  try {
+    const found = await api(`api/flows/${encodeURIComponent(workspace)}/${encodeURIComponent(name)}`);
+    if (state.place !== place) return;
+    const shown = state.flows.view;
+    if (shown && !shown.missing && shown.version === found.version && shown.flow === found.flow) return;
+    state.flows.view = found;
+    draw();
+  } catch (error) {
+    if (state.place === place) { state.flows.view = { missing: error.message }; draw(); }
+  }
+}
+
+function flowsChanged() {
+  clearTimeout(state.flows.timer);
+  state.flows.timer = setTimeout(() => {
+    if (state.place && state.place.flow) loadFlow();
+    if (state.tab === "flows") loadFlows();
+  }, 300);
+}
+
+function openFlow(workspace, name) {
+  state.place = { flow: { workspace, name }, from: state.place };
+  state.flows.view = null;
+  draw();
+  window.scrollTo(0, 0);
+  loadFlow();
+}
+
 function flowsView(overview) {
-  const waiting = overview.questions.filter((question) => question.flow).map(flowBox);
-  const parts = [section("flows waiting for you", waiting.length)];
-  parts.push(...(waiting.length ? waiting : [el("div", { class: "empty" }, "No flow waits for you.")]));
-  parts.push(el("div", { class: "dim" }, "The running flows, their boxes and gates come here with the next step; the console's Flow view (F10) shows them now."));
+  const flows = state.flows;
+  const parts = [buildBox(overview)];
+  parts.push(el("div", { class: "chips" }, Object.keys(FILTER_WORDS).map((which) => el("button", {
+    class: "chip" + (flows.filter === which ? " on" : ""), onclick: () => { flows.filter = which; draw(); },
+  }, FILTER_WORDS[which]))));
+  if (flows.rows === null) { parts.push(el("div", { class: "empty" }, "Reading…")); return parts; }
+  const shown = flowFilter(flows.rows, flows.filter);
+  parts.push(section("flows", shown.length));
+  if (!shown.length) {
+    parts.push(el("div", { class: "empty" }, flows.rows.length
+      ? "No flow in this filter." : "No flow yet: build one with the model, or write its file (clank flow new)."));
+  }
+  for (const line of shown) parts.push(flowRow(line));
+  return parts;
+}
+
+function flowRow(line) {
+  const [glyph, glyphClass] = FLOW_GLYPHS[line.state] || ["○", "dim"];
+  const sub = [line.words, line.workspace, line.model].filter(Boolean).join(" · ");
+  return row({ glyph, glyphClass, line: line.title, sub, meta: line.time ? ago(line.time) : "",
+    onclick: () => openFlow(line.workspace, line.name) });
+}
+
+// Build a flow: a planning opened in Clank's VS Code window on the PC, in a running workspace (design 0013 §15).
+function buildBox(overview) {
+  const flows = state.flows;
+  const running = overview.workspaces.filter((workspace) => workspace.state === "running" && !workspace.problem);
+  const close = el("button", { class: "btn small", onclick: () => { flows.building = false; draw(); } }, "cancel");
+  if (!flows.building) {
+    return el("div", { class: "btns" },
+      el("button", { class: "btn go", onclick: () => { flows.building = true; draw(); } }, "Build a flow"));
+  }
+  if (!running.length) {
+    return el("div", { class: "box" }, el("div", {}, "No workspace runs: open one on the computer, then build a flow here."),
+      el("div", { class: "btns" }, close));
+  }
+  const choice = el("select", {}, running.map((workspace) => el("option", { value: workspace.name }, workspace.name)));
+  const name = el("input", { placeholder: "its name (empty: the first free)", autocapitalize: "none" });
+  return el("div", { class: "box" },
+    el("div", { class: "head" }, "build a flow with the model"),
+    el("div", { class: "dim" }, "The planning opens in Clank's VS Code window on the PC: talk it through there, or from its session here once it starts."),
+    running.length > 1 ? choice : el("div", {}, `in ${running[0].name}`), name,
+    el("div", { class: "btns" },
+      el("button", { class: "btn go", onclick: async () => {
+        const workspace = running.length > 1 ? choice.value : running[0].name;
+        try {
+          const opened = await api("api/flows/new", { workspace, name: name.value.trim() });
+          flows.building = false;
+          say(opened.window === "waits" ? "planning opened: it waits for Clank's VS Code window on the PC"
+            : "planning opened in Clank's VS Code window on the PC", true);
+          loadFlows();
+        } catch (error) { say(error.message); }
+      } }, "open the planning"), close));
+}
+
+// A flow (design 0025 §6): its run's words and the controls its state allows, what it waits for, its planning while it
+// is built, its proposals, its boxes as a column with the running box open, what lies ahead, its deliverables.
+function flowScreen(overview) {
+  const found = state.flows.view;
+  const place = state.place.flow;
+  if (!found) return [el("div", { class: "empty" }, "Reading…")];
+  if (found.missing) return [el("div", { class: "empty" }, found.missing)];
+  const run = found.run;
+  const where = `api/flows/${encodeURIComponent(place.workspace)}/${encodeURIComponent(place.name)}`;
+  const act = (action) => async () => {
+    try {
+      await api(`${where}/${action}`, {});
+      say(action === "run" ? "started" : `${action}${action.endsWith("e") ? "d" : "ped"}`, true);
+      loadFlow();
+      loadFlows();
+    } catch (error) { say(error.message); }
+  };
+  const facts = [["flow", found.title], ["where", found.workspace], ["run", runWords(run)]];
+  if (run) facts.push(["since", `${ago(run.created)} ago`]);
+  const parts = [kv(facts)];
+  const words = { pause: "Pause after this box", resume: "Resume", stop: "Stop", run: "Run" };
+  parts.push(el("div", { class: "btns" }, runControls(run).map((control) => el("button", {
+    class: "btn" + (control === "stop" ? " no" : control === "pause" ? "" : " go"),
+    onclick: act(control === "resume" ? "run" : control),
+  }, words[control]))));
+  const waiting = overview.questions.filter((question) => question.flow && question.flow.flow === found.flow).map(flowBox);
+  if (waiting.length) parts.push(section("waiting for you", waiting.length), ...waiting);
+  if (found.planning) parts.push(...planningParts(found.planning));
+  if (found.proposals && found.proposals.items && found.proposals.items.length) parts.push(...proposalParts(found, where));
+  parts.push(section("boxes", (found.boxes || []).length));
+  for (const box of found.boxes || []) parts.push(...boxParts(box));
+  if (found.ahead && found.ahead.length) {
+    parts.push(section("ahead", found.ahead.length));
+    for (const next of found.ahead) parts.push(row({ glyph: "›", line: titleOf(found, next.box), sub: next.costs.join(" · ") }));
+  }
+  if (found.deliverables && found.deliverables.length) {
+    parts.push(section("deliverables", found.deliverables.length));
+    for (const file of found.deliverables) {
+      const sub = [titleOf(found, file.box), file.try ? `try ${file.try}` : "", file.present === false ? "not in the folder" : ""];
+      parts.push(row({ glyph: file.passed === true ? "✓" : file.passed === false ? "✗" : "·",
+        glyphClass: file.passed === false ? "bad" : file.passed ? "good" : "dim", line: file.path, sub: sub.filter(Boolean).join(" · ") }));
+    }
+  }
+  if (found.built) parts.push(section("built with the model"), el("div", { class: "dim" }, builtWords(found.built)));
+  return parts;
+}
+
+function titleOf(found, id) {
+  const box = (found.boxes || []).find((each) => each.id === id);
+  return box ? box.title : id;
+}
+
+function runWords(run) {
+  if (!run) return "not run yet";
+  if (run.status === "queued") return `queued${run.behind ? " behind " + run.behind.split("/").pop() : ""}`;
+  if (run.status === "done" || run.status === "stopped") return run.status;
+  if (run.waiting) return `waits for you · ${run.waiting.kind}`;
+  return run.paused ? "paused" : `running · run ${run.number}`;
+}
+
+function builtWords(built) {
+  return Object.entries(built).filter(([, value]) => typeof value === "string" && value)
+    .map(([key, value]) => `${key.replace(/_/g, " ")}: ${value}`).join(" · ") || "built with the model";
+}
+
+// A planning (design 0013 §15): its state, where it opens, its steps so far, and its session once it started.
+function planningParts(planning) {
+  const tone = (kind) => kind === "failed" ? "bad" : kind === "waiting" || kind === "waits" ? "warn" : "dim";
+  const place = planning.where === "vscode" ? "in Clank's VS Code window on the PC"
+    : planning.where === "attach" ? planning.attach : "in the terminal that asked";
+  return [section("building with the model"), el("div", { class: "box" },
+    el("div", { class: "head" }, `${planning.title || planning.name} · ${planning.status}`),
+    planning.why ? el("div", { class: "warn" }, planning.why) : null,
+    el("div", { class: "dim" }, place),
+    el("div", { class: "steps" }, (planning.steps || []).map((step) => el("div", { class: "step" },
+      el("span", { class: tone(step.kind) }, step.kind), " ", step.said,
+      step.at ? el("span", { class: "dim" }, ` · ${ago(step.at)} ago`) : null))),
+    planning.session ? el("div", { class: "btns" }, el("button", { class: "btn small",
+      onclick: () => openSession(planning.session.workspace, planning.session.port, planning.session.session, planning.title),
+    }, "its session")) : null)];
+}
+
+// The proposals of the run's batch (design 0013 §9): each with Accept and Reject while it waits; all at once.
+function proposalParts(found, where) {
+  const batch = found.proposals;
+  const waiting = batch.waiting || [];
+  const decide = (decision, body) => async () => {
+    try { await api(`${where}/proposals/${decision}`, body); say(`${decision}ed`, true); loadFlow(); }
+    catch (error) { say(error.message); }
+  };
+  const parts = [section(`proposals · from ${titleOf(found, batch.box)}`, waiting.length)];
+  if (batch.summary) parts.push(el("div", { class: "dim" }, batch.summary));
+  for (const item of batch.items) {
+    const open = item.state === "proposed";
+    parts.push(el("div", { class: "box" + (open ? " waiting" : "") },
+      el("div", { class: "head" }, `${item.id} · ${item.type} · ${item.title}`),
+      el("div", { class: "dim" }, [item.why, item.preset_title, item.mode].filter(Boolean).join(" · ")),
+      item.prompt ? el("div", { class: "muted" }, item.prompt.split("\n")[0]) : null,
+      item.writes && item.writes.length ? el("div", { class: "dim" }, `writes ${item.writes.join(", ")}`) : null,
+      open ? el("div", { class: "btns" },
+        el("button", { class: "btn ok small", onclick: decide("accept", { proposals: [item.id] }) }, "Accept"),
+        el("button", { class: "btn no small", onclick: decide("reject", { proposals: [item.id] }) }, "Reject"))
+        : el("div", { class: "dim" }, item.state)));
+  }
+  if (waiting.length > 1) {
+    parts.push(el("div", { class: "btns" },
+      el("button", { class: "btn ok", onclick: decide("accept", { all: true }) }, "Accept all"),
+      el("button", { class: "btn no", onclick: decide("reject", { all: true }) }, "Reject all")));
+  }
+  return parts;
+}
+
+// A box in the column: its glyph, type, model, tries and when it ended; the running one open with its session.
+function boxParts(box) {
+  const tries = box.tries || [];
+  const last = tries[tries.length - 1];
+  const sub = [box.type, box.preset_title, tries.length ? `try ${tries.length}${box.cap ? " of " + box.cap : ""}` : "",
+    box.ended ? `${ago(box.ended)} ago` : "", box.asks ? "asks you" : ""];
+  const parts = [row({ glyph: boxGlyph(box), glyphClass: box.state === "running" ? "good" : box.state === "failed" ? "bad" : box.asks ? "warn" : "dim",
+    line: box.title, sub: sub.filter(Boolean).join(" · ") })];
+  if (box.state === "running" && last) {
+    const written = (last.written || []).map((file) => (typeof file === "string" ? file : file.path));
+    parts.push(el("div", { class: "box open-box" },
+      el("div", { class: "dim" }, [last.tokens ? `${last.tokens.toLocaleString()} tokens` : "", `since ${ago(last.started)}`, last.agent, last.mode].filter(Boolean).join(" · ")),
+      written.length ? el("div", { class: "dim" }, `wrote ${written.join(", ")}`) : null,
+      last.session && last.session.session ? el("div", { class: "btns" }, el("button", { class: "btn small",
+        onclick: () => openSession(last.session.workspace, last.session.port, last.session.session, box.title) }, "Session")) : null));
+  }
+  if (box.state === "failed" && box.why) parts.push(el("div", { class: "box" }, el("span", { class: "bad" }, "✗ "), box.why));
   return parts;
 }
 
@@ -552,6 +782,7 @@ function draw() {
   const paused = link.state === "reconnecting"
     ? el("div", { class: "paused" }, `Live updates paused ${clockText(link.pausedSeconds)}. Below: as of ${state.known ? clock(state.known.at) : "a moment ago"}.`) : null;
   const parts = place && place.more === "log" ? logView() : place && place.more === "events" ? eventsView()
+    : place && place.flow ? flowScreen(state.overview)
     : place ? workspaceView(state.overview) : state.tab === "flows" ? flowsView(state.overview) : state.tab === "work" ? workView(state.overview)
     : state.tab === "files" ? filesView() : state.tab === "more" ? moreView() : nowView(state.overview);
   view.replaceChildren(paused, ...parts);
@@ -643,6 +874,7 @@ function stream(again = false) {
     state.events.unshift(event);
     if (state.events.length > 500) state.events.length = 500;
     noticed(event);
+    if (event.type.startsWith("flows.") || event.type.startsWith("question.")) flowsChanged();
     if (state.place && state.place.more === "events") draw();
   });
   source.addEventListener("reset", () => { say("the PC pruned events while this phone was away: shown afresh"); });
@@ -688,6 +920,7 @@ for (const button of tabs.querySelectorAll("button")) {
     draw();
     window.scrollTo(0, 0);
     if (state.tab === "files") loadFiles();
+    if (state.tab === "flows") loadFlows();
   });
 }
 document.addEventListener("visibilitychange", () => {

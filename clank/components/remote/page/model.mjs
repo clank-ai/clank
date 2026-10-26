@@ -115,3 +115,29 @@ export function lastKnown(overview, atMs) {
     working: workingRows(overview).map((session) => `${session.workspace} · ${session.title || "a session"}`).slice(0, 3),
   };
 }
+
+// The Flows tab (design 0025 §6). The filters keep flows by the state the service's summaries give; a run's controls
+// follow its state; each box has a glyph for its state, a gate its own while it waits for you.
+export const FILTERS = {
+  all: null,
+  running: ["running", "paused", "queued", "building"],
+  waits: ["waits"],
+  ended: ["done", "stopped"],
+};
+const BOX_GLYPHS = { waiting: "○", running: "●", done: "✓", failed: "✗", stale: "!", skipped: "!", proposed: "?" };
+
+export function flowFilter(rows, which) {
+  const states = FILTERS[which];
+  return states ? rows.filter((row) => states.includes(row.state)) : rows;
+}
+
+export function runControls(run) {
+  if (!run || run.status === "done" || run.status === "stopped") return ["run"];
+  if (run.status === "queued") return ["stop"];
+  return [run.paused ? "resume" : "pause", "stop"];
+}
+
+export function boxGlyph(box) {
+  if (box.type === "gate" && box.state === "waiting") return "◇";
+  return BOX_GLYPHS[box.state] || "○";
+}

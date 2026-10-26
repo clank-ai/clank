@@ -20,6 +20,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response, StreamingRes
 from pydantic import BaseModel, Field
 
 from clank.components.remote.devices import TTL_DAYS, PairingError
+from clank.components.remote.flowsapi import flow_routes
 from clank.components.remote.icon import icon_png
 from clank.components.remote.stream import phone_stream
 from clank.kernel.events import Actor
@@ -370,6 +371,7 @@ def create_phone_app(remote: "Remote") -> FastAPI:
         response.delete_cookie(COOKIE)
         return response
 
+    app.include_router(flow_routes(kernel, device_of, acting), prefix="/api")  # the Flows tab's (design 0025 §6)
     return app
 
 

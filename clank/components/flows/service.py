@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, Any
 
 from clank.components.flows import preparing
 from clank.components.flows.building import EVENT_TYPES as BUILDING_EVENTS
-from clank.components.flows.building import BuildError, Building, Planning, Where, session_title
+from clank.components.flows.building import OPEN, BuildError, Building, Planning, Where, session_title
 from clank.components.flows.following import EVENT_TYPES as NEXT_EVENTS
 from clank.components.flows.following import Following, NextError
 from clank.components.flows.kinds import Flow
@@ -35,6 +35,7 @@ from clank.components.flows.proposing import EVENT_TYPES as PROPOSAL_EVENTS
 from clank.components.flows.runner import ACTIVE, RunError, Runner
 from clank.components.flows.runner import EVENT_TYPES as RUNNER_EVENTS
 from clank.components.flows.runs import Run, order
+from clank.components.flows.summaries import planned, sort_key, summarize
 from clank.components.flows.view import view
 from clank.components.flows.waiting import shown
 from clank.kernel.api import ApiError
@@ -114,6 +115,31 @@ class Flows:
             ],
             "unreadable": unreadable,
         }
+
+    def summaries(self, workspace: str = "") -> list[dict[str, Any]]:
+        """One line per flow for a list (design 0025 §6, `summaries.py`): its state in a word and in words, the box it
+        is at, how many boxes are done, its model, its time, the question it waits for, and how many problems its
+        file has now; what waits for you first, then what runs or is built, then what ended, newest first, and what
+        never ran last. `workspace` keeps one workspace's flows only."""
+        presets = self._presets()
+        titles = {preset["id"]: preset["title"] for preset in presets}
+        found = []
+        for loaded in self.kernel.settings.records(Flow.KIND):
+            if workspace and loaded.id.split("/", 1)[0] != workspace:
+                continue
+            flow = loaded.record
+            assert isinstance(flow, Flow)
+            run = self.runner.runs.latest(loaded.id)
+            line = summarize(loaded.id, flow, run, self.building.plannings.load(loaded.id), titles)
+            line["problems"] = len(self._problems(loaded.path, presets)) if loaded.path is not None else 0
+            found.append(line)
+        listed = {line["id"] for line in found}
+        for planning in self.building.plannings.all():  # a flow being built, its file not written yet (§15)
+            if planning.flow in listed or planning.status not in OPEN:
+                continue
+            if not workspace or planning.workspace == workspace:
+                found.append(planned(planning))
+        return sorted(found, key=sort_key)
 
     def flow(self, workspace: str, name: str) -> dict[str, Any]:
         """One flow, by its name in its workspace or its title: its values as in force, and what is wrong with its
@@ -555,6 +581,15 @@ class Flows:
             "revision": loaded.revision,
             "folder": str(place) if place is not None else "",
         }  # fmt: skip
+
+    def planning_view(self, workspace: str, flow: str) -> dict[str, Any]:
+        """The Flow view of a flow being built with the model, by its id, while its planning is open and before
+        its file is written (design 0013 §15): what the phone's flow screen reads for a flow listed as building;
+        `404 not_found` when the workspace has no open planning of that flow."""
+        planning = self.building.plannings.load(flow)
+        if planning is None or planning.workspace != workspace or planning.status not in OPEN:
+            raise ApiError(404, "not_found", f"{workspace} has no planning of {flow} open")
+        return self._planning_view(planning, workspace)
 
     def _planning_view(self, planning: Planning, workspace: str) -> dict[str, Any]:
         """The Flow view of a planning open in the workspace (design 0013 §15, decision 0101): its latest draft drawn

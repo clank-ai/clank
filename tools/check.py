@@ -34,7 +34,7 @@ CHECKS: list[tuple[str, list[str]]] = [
     ("types as on Windows", [sys.executable, "-m", "mypy", "--platform", "win32", "--cache-dir", ".mypy_cache/win32"]),
     ("types as on Linux", [sys.executable, "-m", "mypy", "--platform", "linux", "--cache-dir", ".mypy_cache/linux"]),
     ("VS Code extension", [sys.executable, "-m", "tools.extension"]),
-    ("phone app tests", ["node", "--test", "tests/phone/model.test.mjs"]),
+    ("phone app tests", ["node", "--test", "tests/phone/model.test.mjs", "tests/phone/flows.test.mjs"]),
     ("tests", [sys.executable, "-m", "pytest", "-q"]),
 ]
 
