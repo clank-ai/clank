@@ -16,7 +16,7 @@ the experience; this document says what holds it up.
 | 1 | What the owner felt, measured | Approved 2026-10-26 |
 | 2 | The conversation is read from the service's mirror | Approved 2026-10-26; built 2026-10-26 ([plan s50](../plans/s50-the-mirror.md)) |
 | 3 | Pushed, not polled: the conversation stream | Approved 2026-10-26; built 2026-10-26 ([plan s51](../plans/s51-the-stream.md)); revised 2026-10-26: the batch window is 50 ms, not 100 (with 100, a change was on the stream 111 ms behind the mirror, §6) |
-| 4 | Acting without waiting: the resident bridge | Approved 2026-10-26 |
+| 4 | Acting without waiting: the resident bridge | Approved 2026-10-26; built 2026-10-26 ([plan s52](../plans/s52-the-resident-bridge.md)) |
 | 5 | What the owner sees | Approved 2026-10-26; built 2026-10-26 for the agent panel ([plan s51](../plans/s51-the-stream.md)); the Monitor and the phone with steps 4 and 5 |
 | 6 | Measurements that hold it to its word | Approved 2026-10-26 |
 | 7 | What else it mends | Approved 2026-10-26 |
@@ -139,14 +139,14 @@ sends, reads, thinks, writes, runs a tool and waits, and the same stream on the 
 Tests against the fake OpenCode (`tests/fakes/opencode.py`) and a bench on the real one (`bench/talking.py`), before
 and after, kept in this section once measured:
 
-| Measure | Before (2026-10-26) | After step 1 (the mirror, 2026-10-26) | After step 2 (the stream, 2026-10-26) | Goal |
-| --- | --- | --- | --- | --- |
-| The owner's message visible after Enter | 6.1 s | the send's own time, plus one read (step 3 cuts the send; step 2 pushes) | shown at once (pending, within the panel's 100 ms draw); confirmed from the mirror 0.6 to 2.1 s later, the send's own `docker exec` (step 3 cuts it) | under 150 ms (shown at once), confirmed under 1.5 s |
-| The model's first words visible after its first token | about 6 s later | within the panel's poll (step 2 pushes them) | on the stream within 70 ms of the mirror hearing them, drawn within the panel's next 100 ms; OpenCode itself sends deltas about every 250 ms (44 flushes, median gap 265 ms) | under 150 ms later |
-| One read of `GET /agents/conversation` | 2.8 to 4.9 s | 2 ms at rest, 3 ms while the model writes (median); the first read of a session reads its history once, 1.0 to 1.3 s | 2 ms at rest (20 reads, the slowest 3 ms) | under 5 ms from the mirror |
-| A stream event after OpenCode's | (none) | (step 2) | 64 ms behind the mirror (median of 60; 66 ms the slowest), the 50 ms batch window and 14 ms of path; 111 ms with the window at 100 | under 100 ms |
-| `docker exec` started in a minute of one followed session | about 25 | 0 after the history's (a test counts them) | 0 after the history's | 0 (one for the container's life) |
-| An answer to a permission reaching OpenCode | 1.1 s or more | (step 3) | (step 3) | under 150 ms |
+| Measure | Before (2026-10-26) | After step 1 (the mirror, 2026-10-26) | After step 2 (the stream, 2026-10-26) | After step 3 (the resident bridge, 2026-10-26) | Goal |
+| --- | --- | --- | --- | --- | --- |
+| The owner's message visible after Enter | 6.1 s | the send's own time, plus one read (step 3 cuts the send; step 2 pushes) | shown at once (pending, within the panel's 100 ms draw); confirmed from the mirror 0.6 to 2.1 s later, the send's own `docker exec` (step 3 cuts it) | shown at once; the send's `POST` 92 and 156 ms (two runs), the message confirmed from the mirror 256 and 239 ms after Enter | under 150 ms (shown at once), confirmed under 1.5 s |
+| The model's first words visible after its first token | about 6 s later | within the panel's poll (step 2 pushes them) | on the stream within 70 ms of the mirror hearing them, drawn within the panel's next 100 ms; OpenCode itself sends deltas about every 250 ms (44 flushes, median gap 265 ms) | the same (37 flushes, median gap 248 ms) | under 150 ms later |
+| One read of `GET /agents/conversation` | 2.8 to 4.9 s | 2 ms at rest, 3 ms while the model writes (median); the first read of a session reads its history once, 1.0 to 1.3 s | 2 ms at rest (20 reads, the slowest 3 ms) | 2 ms (the slowest 8 ms) | under 5 ms from the mirror |
+| A stream event after OpenCode's | (none) | (step 2) | 64 ms behind the mirror (median of 60; 66 ms the slowest), the 50 ms batch window and 14 ms of path; 111 ms with the window at 100 | the same | under 100 ms |
+| `docker exec` started in a minute of one followed session | about 25 | 0 after the history's (a test counts them) | 0 after the history's | 0: the history too comes through the watcher's own process (the test counts both) | 0 (one for the container's life) |
+| An answer to a permission reaching OpenCode | 1.1 s or more | (step 3) | (step 3) | the same channel as the send: its own time is the bridge's `POST` to OpenCode (a test holds it to the channel; not measured live, the agent asked nothing) | under 150 ms |
 
 Step 1 measured on the owner's PC with the real model (`bench`: the scratch script `measure_mirror.py`, now
 `bench/talking.py`): 43 reads while the model worked, median 3.3 ms, one of 2.6 s (the history of the new session,
@@ -159,6 +159,11 @@ send's `POST` took 515, 614 and 2,145 ms, and the owner's message was on the str
 the test's measure (a delta fed, its event received: median 64 ms with the 50 ms window, 111 ms with 100 ms); the
 panel's live test showed the header following the readout ("Answering"), the thinking folded in one row per step and
 the words arriving as they were written.
+
+Step 3 measured the same day, the service restarted on the channel (two runs): the send's `POST` took 92 and 156 ms
+(the watcher's request, the bridge's two calls to OpenCode on the container's loopback, and the pipe), the owner's
+message was on the stream 256 and 239 ms after Enter, the model's first thinking 1.8 s after; a read 2 ms. Nothing starts a process for the
+actions the owner waits on: the history's page comes through the watcher too.
 
 ## 7. What else it mends
 
@@ -182,7 +187,10 @@ the words arriving as they were written.
 2. **Built 2026-10-26** ([plan s51](../plans/s51-the-stream.md)). The stream (§3) and the panel on it (§5): the
    extension's reader, optimistic send, the header's phases from the readout, incremental rendering, the scroll and
    pace rules; the bench's before-and-after (`bench/talking.py`).
-3. The resident bridge's request channel (§4): `prompt`, `permission`, `question`, `abort` first; the recovery path.
+3. **Built 2026-10-26** ([plan s52](../plans/s52-the-resident-bridge.md)). The resident bridge's request channel
+   (§4): `prompt`, `new`, `abort`, `permission`, `question`, `summarize`, `page`, `part` and `servers`; the recovery
+   path (a watcher that does not answer is ended and started again, the request sent once more through a process of
+   its own).
 4. The Monitor and the Flow view on the stream (§7).
 5. The phone on the stream, with its redesign (M9).
 

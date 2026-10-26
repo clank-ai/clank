@@ -69,7 +69,10 @@ only), or without a terminal (`serve`). Actions:
                                      instance ended: its stream is opened again), and `delta` (the text as it is
                                      written) for the sessions shown only: a line {"shown": [SESSION, ...]} on standard
                                      input names them, answered `shown`. What a burst changes many times is said once,
-                                     with its last state
+                                     with its last state. A request on standard input, {"id", "action", "args",
+                                     "body"}, does that action here (design 0023 §4: the actions the owner waits on
+                                     need no process of their own) and is answered at once, among the events, by a
+                                     line {"type": "answer", "id", "ok", ...} as a one-off run would print it
 
 It uses Python's standard library only, so it runs in any workspace's container, whatever the folder installs.
 """
@@ -88,6 +91,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from typing import Any
 
 FIRST, LAST = (int(part) for part in os.environ.get("CLANK_BRIDGE_PORTS", "4096-4127").split("-"))
@@ -738,7 +742,9 @@ class Watch:
     busy, then idle, after the step's parts. The text as it is written (`delta`) is joined per part and field, and
     only for the sessions the service says are shown (a line `{"shown": [...]}` on the input) or followed. A followed
     session's parts are said whole (a line `{"followed": [...]}`, design 0023 §2: the mirror keeps them), the others
-    in the Monitor's brief."""
+    in the Monitor's brief. A request on the input (`{"id", "action", "args", "body"}`, design 0023 §4) is done
+    here, in a thread of its own, and answered at once (`{"type": "answer", "id", "ok", ...}`), so the actions the
+    owner waits on need no process of their own."""
 
     def __init__(self) -> None:
         self.lock = threading.RLock()  # what is written, and what is held
@@ -845,7 +851,17 @@ class Watch:
                 with self.lock:
                     self.whole = {str(session) for session in told["followed"]}
                     self.say({"type": "followed", "sessions": sorted(self.whole)})
+            if isinstance(told, dict) and told.get("id") is not None and told.get("action"):
+                threading.Thread(target=self._request, args=(told,), daemon=True).start()
         self.stopped.set()
+
+    def _request(self, told: dict[str, Any]) -> None:
+        """A request of the service's (design 0023 §4, decision 0140): `{"id", "action", "args", "body"}` on the
+        input, its action done here as a one-off run would do it, its answer said at once with its id."""
+        args = [str(each) for each in told.get("args") or []]
+        body: dict[str, Any] = told["body"] if isinstance(told.get("body"), dict) else {}
+        result = answered(lambda: act([str(told["action"]), *args], lambda: body))
+        self.say({"type": "answer", "id": told["id"], **result})
 
     def _new_ports(self) -> list[int]:
         return [
@@ -1084,8 +1100,9 @@ def given() -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
-def act(argv: list[str]) -> dict[str, Any]:
-    """Do the action the arguments name; what it found or did."""
+def act(argv: list[str], asked: Callable[[], dict[str, Any]] = given) -> dict[str, Any]:
+    """Do the action the arguments name, its body from `asked` (standard input for a one-off run, the request's own
+    line on the watch's channel); what it found or did."""
     action, *rest = argv or [""]
     if action == "servers":
         return servers()
@@ -1099,9 +1116,9 @@ def act(argv: list[str]) -> dict[str, Any]:
         return page(int(rest[0]), rest[1], int(rest[2]) if len(rest) > 2 else PAGE, rest[3] if len(rest) > 3 else "",
                     whole)  # fmt: skip
     if action == "prompt":
-        return prompt(int(rest[0]), rest[1], given())
+        return prompt(int(rest[0]), rest[1], asked())
     if action == "new":
-        title = str(given().get("title") or "")
+        title = str(asked().get("title") or "")
         session = call(int(rest[0]), "POST", "/session", {"title": title} if title else {})
         return {"session": session["id"]}
     if action == "abort":
@@ -1116,26 +1133,26 @@ def act(argv: list[str]) -> dict[str, Any]:
         info = call(int(rest[0]), "POST", f"/session/{urllib.parse.quote(rest[1])}/unrevert") or {}
         return {"unreverted": True, "revert": info.get("revert") or {}}
     if action == "summarize":
-        return summarize(int(rest[0]), rest[1], given())
+        return summarize(int(rest[0]), rest[1], asked())
     if action == "permission":
         if rest[2] not in ("once", "always", "reject"):
             raise ValueError(f"a permission's reply is once, always or reject, not {rest[2]!r}")
         reply = {"reply": rest[2]}
-        note = str(given().get("message") or "").strip()
+        note = str(asked().get("message") or "").strip()
         if note and rest[2] == "reject":
             reply["message"] = note
         return {"replied": bool(call(int(rest[0]), "POST", f"/permission/{rest[1]}/reply", reply))}
     if action == "question":
-        answers = given().get("answers") or []
+        answers = asked().get("answers") or []
         return {"replied": bool(call(int(rest[0]), "POST", f"/question/{rest[1]}/reply", {"answers": answers}))}
     if action == "free-port":
         return {"port": free_port()}
     if action == "serve":
-        return serve({str(key): str(value) for key, value in (given().get("env") or {}).items()})
+        return serve({str(key): str(value) for key, value in (asked().get("env") or {}).items()})
     if action == "mcp":
         return mcp()
     if action == "mcp-start":
-        return mcp_start(int(rest[0]), rest[1], given().get("config"))
+        return mcp_start(int(rest[0]), rest[1], asked().get("config"))
     if action == "mcp-stop":
         return {"stopped": bool(call(int(rest[0]), "POST", f"/mcp/{urllib.parse.quote(rest[1])}/disconnect"))}
     if action == "agents":
@@ -1148,13 +1165,25 @@ def act(argv: list[str]) -> dict[str, Any]:
             call(int(rest[0]), "POST", "/tui/execute-command", {"command": "agent_cycle"})
         return {"cycled": count}
     if action == "show":
-        asked = given()
-        return show_waiting(int(rest[0]), str(rest[1]), float(asked.get("wait") or 0))
+        given_now = asked()
+        return show_waiting(int(rest[0]), str(rest[1]), float(given_now.get("wait") or 0))
     if action == "implement":
-        asked = given()
-        agent, wait = str(asked.get("agent") or BUILD), float(asked.get("wait") or 0)
-        return implement(int(rest[0]), str(asked.get("text") or ""), str(asked.get("title") or ""), agent, wait)
+        given_now = asked()
+        agent, wait = str(given_now.get("agent") or BUILD), float(given_now.get("wait") or 0)
+        return implement(int(rest[0]), str(given_now.get("text") or ""), str(given_now.get("title") or ""), agent, wait)
     raise ValueError(f"no action {action!r}")
+
+
+def answered(run: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+    """What `run` found or did, as the service reads it: `ok` and the result, or `ok` false and the error's words
+    (OpenCode's own for an answer of its own)."""
+    try:
+        return {"ok": True, **run()}
+    except urllib.error.HTTPError as error:
+        said = cut(error.read().decode(errors="replace"), 500)
+        return {"ok": False, "error": f"OpenCode answered {error.code}: {said}"}
+    except (OSError, ValueError, RuntimeError, IndexError, KeyError, urllib.error.URLError) as error:
+        return {"ok": False, "error": str(error) or type(error).__name__}
 
 
 def main() -> int:
@@ -1168,14 +1197,7 @@ def main() -> int:
     if sys.argv[1:2] == ["held"]:  # started by `hold`, never by the service
         held(int(sys.argv[2]), sys.argv[3], json.loads(sys.stdin.read() or "null"))
         return 0
-    try:
-        result = {"ok": True, **act(sys.argv[1:])}
-    except urllib.error.HTTPError as error:
-        said = cut(error.read().decode(errors="replace"), 500)
-        result = {"ok": False, "error": f"OpenCode answered {error.code}: {said}"}
-    except (OSError, ValueError, RuntimeError, IndexError, KeyError, urllib.error.URLError) as error:
-        result = {"ok": False, "error": str(error) or type(error).__name__}
-    print(json.dumps(result, ensure_ascii=False))
+    print(json.dumps(answered(lambda: act(sys.argv[1:])), ensure_ascii=False))
     return 0
 
 

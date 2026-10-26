@@ -1,6 +1,6 @@
 # 0140. One resident bridge a container, carrying the owner's requests
 
-- Status: Accepted (with design 0023, approved by the owner on 2026-10-26); built at its step 3
+- Status: Accepted (with design 0023, approved by the owner on 2026-10-26); built 2026-10-26 ([plan s52](../plans/s52-the-resident-bridge.md))
 - Date: 2026-10-26
 - Decided by: the owner (approving design 0023), Claude (the measurement and the shape)
 

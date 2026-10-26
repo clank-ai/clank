@@ -7,6 +7,12 @@ own. A watcher that ends while its container runs is started again, a little lat
 has no `watch` (from before design 0007) is said to be so (`state`) and not tried again until it is made again; its
 agent asks in its terminal meanwhile. A watcher ends when its input is closed: the service closes them all when it
 stops, and the bridge ends one a stopped service left behind (`replace_older`).
+
+The watcher is also the channel for the actions the owner waits on (design 0023 §4, decision 0140): `request` writes
+`{"id", "action", "args", "body"}` on its input and waits for the bridge's `answer` line with that id, which the
+review never hears. A request waits `REQUEST_SECONDS` at most: a watcher that does not answer is ended, so `keep`
+starts it again, and `Unanswered` tells the caller to send the request through a process of its own; so does
+`NoChannel` when no watcher is alive and synced for the workspace.
 """
 
 import json
@@ -28,12 +34,29 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 CHECK_SECONDS = 3.0
 RETRY_SECONDS = (2.0, 5.0, 15.0, 30.0, 60.0)  # after a watcher's 1st, 2nd, ... end while its container runs
+REQUEST_SECONDS = 10.0  # a request on the channel waits this long for its answer (design 0023 §4)
 OLDER = (
     "its container runs an older sandbox image: reopen the workspace (Workspaces, F6: x, then o) to review changes in "
     "VS Code; until then the agent asks in its terminal"
 )
 Heard = Callable[[str, dict[str, Any]], None]
 Spawn = Callable[[str], "subprocess.Popen[bytes]"]
+
+
+class NoChannel(Exception):
+    """No watcher alive and synced carries the workspace's requests now: a process of its own does."""
+
+
+class Unanswered(Exception):
+    """The watcher did not answer the request in time: it is ended, and a process of its own does the request."""
+
+
+class _Pending:
+    """A request waiting for its answer."""
+
+    def __init__(self) -> None:
+        self.done = threading.Event()
+        self.answer: dict[str, Any] = {}
 
 
 class Watcher:
@@ -46,6 +69,8 @@ class Watcher:
         self.problem = ""
         self.ended: float | None = None
         self._telling = threading.Lock()
+        self._pending: dict[str, _Pending] = {}  # each request waiting, by its id
+        self._requests = 0
         self.thread = threading.Thread(target=self._read, name=f"clank-watch-{workspace}", daemon=True)
         self.thread.start()
 
@@ -54,7 +79,8 @@ class Watcher:
         return self.ended is None
 
     def stop(self) -> None:
-        """Close its input, which ends the watch in the container; end the process if it lingers."""
+        """Close its input, which ends the watch in the container; end the process if it lingers. It is ended from
+        here on, whatever its reader still reads."""
         try:
             with self._telling:
                 if self.process.stdin is not None:
@@ -62,16 +88,44 @@ class Watcher:
             self.process.wait(timeout=5)
         except (OSError, subprocess.TimeoutExpired):
             self.process.kill()
+        if self.ended is None:
+            self.ended = time.monotonic()
+        self.synced = False
 
-    def tell(self, line: dict[str, Any]) -> None:
-        """A line on the watch's input (the sessions shown); nothing when the watch has ended."""
+    def tell(self, line: dict[str, Any]) -> bool:
+        """A line on the watch's input (the sessions shown, a request); whether it was written (not once the watch
+        has ended)."""
         try:
             with self._telling:
-                if self.process.stdin is not None:
-                    self.process.stdin.write((json.dumps(line) + "\n").encode())
-                    self.process.stdin.flush()
+                if self.process.stdin is None:
+                    return False
+                self.process.stdin.write((json.dumps(line) + "\n").encode())
+                self.process.stdin.flush()
+                return True
         except (OSError, ValueError):
-            pass
+            return False
+
+    def request(self, action: str, args: list[str], body: dict[str, Any] | None, timeout: float) -> dict[str, Any]:
+        """Do a bridge action through the watch (design 0023 §4): its answer as a one-off run would print it (`ok`
+        false with the bridge's words when it refused). `NoChannel` when the watch is not alive and synced, when its
+        input cannot be written, or when asked from its own reader thread (which reads the answers: a line heard
+        that asks goes through a process of its own); `Unanswered` after `timeout` seconds."""
+        if not self.alive() or not self.synced:
+            raise NoChannel(f"{self.workspace}'s watcher is not ready to carry requests")
+        if threading.current_thread() is self.thread:  # a line heard (the review, a listener) asks: the answer
+            raise NoChannel(f"{self.workspace}'s watcher cannot wait for itself")  # would be read by this very thread
+        with self._telling:
+            self._requests += 1
+            id = f"{self._requests}"
+        waiting = _Pending()
+        self._pending[id] = waiting
+        if not self.tell({"id": id, "action": action, "args": args, "body": body or {}}):
+            self._pending.pop(id, None)
+            raise NoChannel(f"{self.workspace}'s watcher takes no request: its input is closed")
+        if not waiting.done.wait(timeout):
+            self._pending.pop(id, None)
+            raise Unanswered(f"{self.workspace}'s watcher did not answer {action} within {timeout:g} seconds")
+        return waiting.answer
 
     def _read(self) -> None:
         self.heard(self.workspace, {"type": "started"})
@@ -96,6 +150,12 @@ class Watcher:
                 self.problem = OLDER
             return
         if not isinstance(line, dict):
+            return
+        if line.get("type") == "answer":  # a request's answer: for the one waiting, never for the review
+            waiting = self._pending.pop(str(line.get("id")), None)
+            if waiting is not None:
+                waiting.answer = line
+                waiting.done.set()
             return
         if line.get("ok") is False:  # a bridge without `watch`
             self.problem = OLDER if "no action" in str(line.get("error")) else str(line.get("error"))
@@ -184,6 +244,26 @@ class Watchers:
             watcher = self._watching.get(workspace)
         if watcher is not None:
             watcher.tell({"followed": self._followed[workspace]})
+
+    def request(
+        self, workspace: str, action: str, args: list[str], body: dict[str, Any] | None, timeout: float | None = None
+    ) -> dict[str, Any]:
+        """Do a bridge action through the workspace's watcher (design 0023 §4), waiting `REQUEST_SECONDS` unless
+        another wait is given; the answer as the bridge prints it. `NoChannel` without a watcher alive and synced;
+        `Unanswered` when it did not answer in time, the watcher ended so that `keep` starts it again: the caller
+        sends the request through a process of its own either way."""
+        with self._lock:
+            watcher = self._watching.get(workspace)
+        if watcher is None:
+            raise NoChannel(f"{workspace} has no watcher")
+        try:
+            return watcher.request(action, args, body, REQUEST_SECONDS if timeout is None else timeout)
+        except Unanswered as error:
+            log.warning(
+                "%s: the watcher is ended and started again; the request goes through a process of its own", error
+            )
+            watcher.stop()
+            raise
 
     def state(self, workspace: str) -> dict[str, Any]:
         """Whether the workspace's agents are watched now, and why not when they cannot be."""

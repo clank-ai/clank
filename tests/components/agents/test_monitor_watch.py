@@ -343,6 +343,38 @@ def test_a_shown_sessions_text_comes_as_it_is_written_joined_per_part_and_no_oth
             assert watching.end() == 0
 
 
+def test_a_request_on_the_watch_input_is_answered_at_once_with_its_id_among_the_events() -> None:
+    """Design 0023 §4 (decision 0140): the actions the owner waits on go through the watch's own process."""
+    with FakeOpenCode() as fake:
+        watching = Watching(f"{fake.port}-{fake.port}")
+        try:
+            watching.until("synced")
+            watching.tell({"id": "r1", "action": "servers", "args": [], "body": {}})
+            answer = watching.until("answer")[-1]
+            assert (answer["id"], answer["ok"]) == ("r1", True)
+            assert [int(each["port"]) for each in answer["servers"]] == [fake.port]
+            watching.tell(
+                {"id": "r2", "action": "prompt", "args": [str(fake.port), "ses_plan"], "body": {"text": "Go on."}}
+            )
+            answer = watching.until("answer")[-1]
+            assert (answer["id"], answer["ok"], answer["sent"]) == ("r2", True, True)
+            [sent] = fake.sent_to("/session/ses_plan/prompt_async")
+            assert sent["parts"] == [{"type": "text", "text": "Go on."}]
+            watching.tell({"id": "r3", "action": "bogus", "args": [], "body": {}})
+            answer = watching.until("answer")[-1]
+            assert (answer["id"], answer["ok"]) == ("r3", False)
+            assert "no action 'bogus'" in answer["error"]
+            watching.tell({"id": "r4", "action": "page", "args": [str(fake.port), "ses_plan", "1"], "body": {}})
+            watching.tell({"id": "r5", "action": "servers", "args": [], "body": {}})
+            answers = [watching.until("answer")[-1], watching.until("answer")[-1]]
+            assert {each["id"] for each in answers} == {"r4", "r5"}, "each request has its own answer"
+            assert all(each["ok"] for each in answers)
+            paged = next(each for each in answers if each["id"] == "r4")
+            assert len(paged["messages"]) == 1
+        finally:
+            assert watching.end() == 0
+
+
 def test_a_followed_sessions_parts_come_whole_with_their_text_as_it_is_written_and_others_cut() -> None:
     """Design 0023 §2: the mirror keeps whole parts for the sessions clients follow; the rest stay brief."""
     long_text = "x" * 7_000

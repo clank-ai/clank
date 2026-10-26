@@ -14,7 +14,10 @@ The Monitor's actions (design 0012 §9) are here too: rejecting what waits in a 
 call's result, reverting and unreverting, and reading its history a page at a time. A message sent to a session the
 gateway holds (design 0012 §9.4) closes the request it held before the message was sent once the message is sent, so
 OpenCode reads it next, while the pause stays (the request that carries it is held until the owner resumes); the pause
-and the resume themselves are the gateway's, recorded here too (`acted`).
+and the resume themselves are the gateway's, recorded here too (`acted`). The actions the owner waits on (`CHANNELED`:
+a message, a new session, a stop, an answer, a compaction, a page, a part, the servers) go through the watcher's own
+process (`channel`, design 0023 §4) and through a process of their own only when no watcher carries them or it did not
+answer in time.
 
 A container may run several OpenCode servers (a window's, the phone's, a flow's) that list the same sessions, since
 their storage is shared, while only one runs each (design 0012 §3). So the service keeps, from its watchers' lines
@@ -37,6 +40,7 @@ from collections.abc import Callable, Collection
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from clank.components.agents.watch import NoChannel, Unanswered
 from clank.kernel.clock import to_text
 from clank.kernel.events import Actor, EventType, Subject
 
@@ -46,6 +50,9 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 Heard = Callable[[str, dict[str, Any]], None]
+Channel = Callable[[str, str, list[str], dict[str, Any] | None], dict[str, Any]]  # workspace, action, args, body
+# The actions the owner waits on: through the watcher's channel (decision 0140); the rest run a process of their own.
+CHANNELED = ("prompt", "new", "abort", "permission", "question", "summarize", "page", "part", "servers")
 RUNNING = ("status", "message", "part", "delta", "removed", "todo", "compacted", "error")  # lines of a session's run
 READ_SECONDS = 30.0
 SERVE_SECONDS = 60.0
@@ -101,6 +108,7 @@ class Sessions:
         self._seen: dict[str, dict[str, Seen]] = {}  # by workspace, then session
         self._listeners: list[Heard] = []
         self._lock = threading.Lock()
+        self.channel: Channel | None = None  # the watchers' request channel (design 0023 §4), set by the agents' part
 
     def heard(self, workspace: str, line: dict[str, Any]) -> None:
         """A line of a workspace's watcher: where each session runs, its status, its parent; then every listener."""
@@ -482,6 +490,31 @@ class Sessions:
     def _bridge(
         self, workspace: str, argv: list[str], given: dict[str, Any] | None = None, timeout: float = READ_SECONDS
     ) -> dict[str, Any]:
+        """A bridge action: through the watcher's channel for the actions the owner waits on (design 0023 §4), else,
+        or when the channel is not there or did not answer, through a process of its own; what the bridge found or
+        did, `SessionError` with its words when it refused."""
+        found: dict[str, Any] | None = None
+        if self.channel is not None and argv and argv[0] in CHANNELED:
+            try:
+                found = self.channel(workspace, argv[0], argv[1:], given)
+            except (NoChannel, Unanswered) as why:
+                log.info("%s goes through a process of its own in %s: %s", argv[0], workspace, why)
+        if found is None:
+            found = self._bridge_once(workspace, argv, given, timeout)
+        if not found.get("ok"):
+            said = str(found.get("error") or "the bridge refused")
+            if said.startswith("no action"):
+                raise SessionError(
+                    f"{workspace}'s container runs an older sandbox image: stop the workspace and open it again "
+                    "(Workspaces, F6: x, then o) for this"
+                )
+            raise SessionError(said)
+        return found
+
+    def _bridge_once(
+        self, workspace: str, argv: list[str], given: dict[str, Any] | None, timeout: float
+    ) -> dict[str, Any]:
+        """One run of the bridge in the workspace's container, the body on its input; the line it printed."""
         from clank.components.workspaces.service import BRIDGE_PROGRAM, WorkspaceUnavailable
 
         workspaces: Workspaces = self.kernel.parts["workspaces"]
@@ -502,14 +535,6 @@ class Sessions:
                     "open it again (Workspaces, F6: x, then o) so its agents can be reached"
                 )
             raise SessionError(f"the bridge in {workspace}'s container did not answer: {said or 'nothing said'}")
-        if not found.get("ok"):
-            said = str(found.get("error") or "the bridge refused")
-            if said.startswith("no action"):
-                raise SessionError(
-                    f"{workspace}'s container runs an older sandbox image: stop the workspace and open it again "
-                    "(Workspaces, F6: x, then o) for this"
-                )
-            raise SessionError(said)
         return found
 
     def _release(self, session: str, before: str) -> None:

@@ -199,6 +199,7 @@ class Agents:
         self.kernel = kernel
         self.sessions = Sessions(kernel)
         self.review = Review(kernel, self.sessions)
+        self.sessions.channel = self.review.watchers.request  # the actions the owner waits on (design 0023 §4)
         self.modes = Modes(kernel, self.sessions, self.review)
         self.review.modes = self.modes
         self.annotations = Annotations(kernel, self.sessions, self.reads_images, self._read_image)

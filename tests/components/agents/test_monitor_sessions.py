@@ -7,7 +7,8 @@ runs each; a note, a stop, a reject, a compaction, a clear, a revert and an unre
 carried the session's run and no other, each recorded as `agents.acted`; a session no watcher saw goes to the port a
 client names; a server gone leaves its sessions unplaced, and so does a watcher started again that no longer follows
 it; listeners hear every line, once the review has handled it; the sessions shown are told to the watch, and told again
-to a watch started again. Design 0023 §2: the sessions followed are told the same way.
+to a watch started again. Design 0023 §2: the sessions followed are told the same way. Design 0023 §4: the actions
+the owner waits on go through the watcher's own process, and through a process of their own when it does not answer.
 """
 
 import subprocess
@@ -20,6 +21,7 @@ from typing import Any
 import pytest
 
 from clank import registry
+from clank.components.agents import watch
 from clank.components.agents.sessions import Sessions
 from clank.components.workspaces import service as workspaces_service
 from clank.components.workspaces.sandbox import image_folder, names
@@ -240,3 +242,71 @@ def test_the_sessions_followed_are_told_to_the_watch_and_told_again_when_it_star
     heard.clear()
     watchers._watching["paper"].stop()  # the watch ends, as when its exec breaks off
     until(lambda: (watchers.keep(), {"type": "followed", "sessions": ["ses_plan"]} in heard)[1], seconds=20)
+
+
+def test_the_actions_the_owner_waits_on_go_through_the_watcher_and_start_no_process(
+    kernel: Kernel, servers: list[FakeOpenCode], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Design 0023 §4 (decision 0140): a message, a stop, an answer to a permission or a question, a page and the
+    servers go through the watcher's own process, with no `docker exec` of their own."""
+    window, flow = servers
+    sessions = watched(kernel, tmp_path, f"{window.port}-{flow.port}", monkeypatch)
+    platform: FakePlatform = kernel.parts["workspaces"].platform
+    flow.feed({"type": "session.status", "properties": {"sessionID": "ses_plan", "status": {"type": "busy"}}})
+    until(lambda: sessions.runs("paper", "ses_plan") == flow.port)
+    flow.asks = [{"id": "per_1", "sessionID": "ses_plan", "permission": "bash", "patterns": ["rm runs"]}]
+    flow.questions = [{"id": "que_1", "sessionID": "ses_plan", "questions": [{"question": "Which?", "options": []}]}]
+    before = len(platform.calls)
+    sessions.send("paper", window.port, "ses_plan", "About step 3: skip it.", actor=OWNER)
+    sessions.stop("paper", window.port, "ses_plan", actor=OWNER)
+    sessions.permission("paper", flow.port, "per_1", "once", actor=OWNER)
+    sessions.question("paper", flow.port, "que_1", [["the first"]], actor=OWNER)
+    assert sessions.page("paper", window.port, "ses_plan", limit=1)["messages"][0]["info"]["role"] == "user"
+    assert {int(each["port"]) for each in sessions.servers("paper")} == {window.port, flow.port}
+    assert [path for _, path, _ in flow.sent] == [
+        "/session/ses_plan/prompt_async", "/session/ses_plan/abort", "/permission/per_1/reply",
+        "/question/que_1/reply",
+    ]  # fmt: skip
+    assert not [call for call in platform.calls[before:] if "bridge.py" in call], "no process of their own"
+    assert [event.data["action"] for event in kernel.events.after(0, types=["agents.acted"])] == [
+        "message", "stop", "permission", "question",
+    ]  # fmt: skip
+
+
+def test_a_request_the_watcher_does_not_answer_goes_through_a_process_of_its_own_and_the_watcher_starts_again(
+    kernel: Kernel, servers: list[FakeOpenCode], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Design 0023 §4: nothing the owner asked is lost when the watcher is deaf."""
+    window, flow = servers
+    sessions = watched(kernel, tmp_path, f"{window.port}-{flow.port}", monkeypatch)
+    platform: FakePlatform = kernel.parts["workspaces"].platform
+    flow.feed({"type": "session.status", "properties": {"sessionID": "ses_plan", "status": {"type": "busy"}}})
+    until(lambda: sessions.runs("paper", "ses_plan") == flow.port)
+    watchers = kernel.parts["agents"].review.watchers
+    monkeypatch.setattr(watch, "REQUEST_SECONDS", 0.3)
+    monkeypatch.setattr(watch, "RETRY_SECONDS", (0.2,))
+    deaf = (
+        f"import sys, json; print(json.dumps({{'type': 'synced', 'ports': [{window.port}, {flow.port}]}}), flush=True)"
+        "\nfor _ in sys.stdin: pass\n"
+    )  # a watcher that says it is synced, then answers nothing
+    spawned: list[str] = []
+
+    def spawn(workspace: str) -> "subprocess.Popen[bytes]":
+        spawned.append(workspace)
+        return subprocess.Popen([sys.executable, "-c", deaf], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, creationflags=background_flags())  # fmt: skip
+
+    watchers.spawn = spawn
+    watchers.stop()
+    watchers.keep()
+    until(lambda: watchers.state("paper")["watching"])
+    before = len(platform.calls)
+    sessions.send("paper", window.port, "ses_plan", "Go on.", actor=OWNER)
+    assert [path for _, path, _ in flow.sent] == ["/session/ses_plan/prompt_async"], "it reached OpenCode"
+    assert [call for call in platform.calls[before:] if "bridge.py prompt" in call], "through a process of its own"
+
+    def started_again() -> bool:
+        watchers.keep()
+        return len(spawned) == 2
+
+    until(started_again)
