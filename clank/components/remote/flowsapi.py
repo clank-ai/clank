@@ -21,7 +21,6 @@ import anyio.to_thread
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from clank.components.flows.building import OPEN
 from clank.kernel.api import ApiError
 from clank.kernel.core import Kernel
 from clank.kernel.events import Actor
@@ -58,7 +57,7 @@ def flow_routes(kernel: Kernel, device_of: Callable[[Request], Actor], acting: C
     @routes.get("/flows")
     async def listed(request: Request) -> Any:
         device_of(request)
-        return await served(lambda: {"flows": flows.summaries(), "plannings": _plannings(flows)})
+        return await served(lambda: {"flows": flows.summaries(), "plannings": flows.plannings_open()})
 
     @routes.post("/flows/new")
     async def new(body: NewBody, request: Request) -> Any:
@@ -108,15 +107,3 @@ def _view_or_planning(flows: Any, workspace: str, name: str) -> Any:
             return flows.planning_view(workspace, f"{workspace}/{name}")
         except ApiError:
             raise missing from None
-
-
-def _plannings(flows: Any) -> dict[str, Any]:
-    """The planning open in each workspace that has one, as the clients show it (its steps), by workspace."""
-    found: dict[str, Any] = {}
-    for planning in flows.building.plannings.all():
-        if planning.workspace in found or planning.status not in OPEN:
-            continue
-        shown = flows.being_built(planning.workspace)
-        if shown.get("planning") is not None:
-            found[planning.workspace] = shown
-    return found

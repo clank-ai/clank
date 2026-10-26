@@ -39,6 +39,9 @@ from clank.components.gateway.activity import WAITING as WAITING
 from clank.components.gateway.bounds import Bounds
 from clank.components.gateway.costs import Costs
 from clank.components.gateway.kinds import CompletionSettings, CostSettings, GatewaySettings, VisionSettings
+from clank.components.gateway.proxy import HOLD_SECONDS as HOLD_SECONDS  # the workspaces' ask reads these three
+from clank.components.gateway.proxy import allowed_host as allowed_host  # through this service (design 0024 §3)
+from clank.components.gateway.proxy import network_token as network_token
 from clank.components.gateway.routing import NOTION_TOOLS
 from clank.components.runtime.service import ProcessIdentity
 from clank.kernel.access import local_token

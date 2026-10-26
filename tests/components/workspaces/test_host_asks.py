@@ -1,7 +1,7 @@
 """Design 0024 §3 (decision 0141): a host the agent reaches without an allowance is asked for. The service allows at
 once when the record does, refuses at once within the quiet period, else asks the owner one question per workspace
 and host (the same question while it waits): answered always, the host joins the record and the request goes out;
-once, it goes out this time; no, or unanswered within `ASK_SECONDS`, it is refused and the host is not asked again for
+once, it goes out this time; no, or unanswered within `HOLD_SECONDS`, it is refused and the host is not asked again for
 `QUIET_MINUTES`. The routes the gateway's proxy uses: `POST /workspaces/{name}/hosts/wanted` and
 `GET /workspaces/hosts/wanted/{question}`."""
 
@@ -56,7 +56,7 @@ def test_a_host_not_allowed_is_asked_for_once_per_host_and_always_writes_the_all
     assert (question.about.kind, question.about.id) == ("workspace", "paper")
     assert question.expires is not None
     assert question.expires is not None
-    assert (question.expires - kernel.clock.now()).total_seconds() == network.ASK_SECONDS
+    assert (question.expires - kernel.clock.now()).total_seconds() == network.HOLD_SECONDS
     again = workspaces.network.wanted("paper", "api.semanticscholar.org")
     assert again["question"] == first["question"], "the same question while it waits"
     other = workspaces.network.wanted("paper", "pypi.org")
@@ -91,7 +91,7 @@ def test_no_or_no_answer_refuses_and_keeps_the_host_quiet_for_a_while(
     clock.advance(network.QUIET_MINUTES * 60 + 1)
     asked_again = workspaces.network.wanted("paper", "tracker.test")
     assert asked_again["question"] is not None, "after the quiet period, asked again"
-    clock.advance(network.ASK_SECONDS + 1)
+    clock.advance(network.HOLD_SECONDS + 1)
     kernel.questions.expire_due()
     assert workspaces.network.decision(asked_again["question"]) == {"status": "expired", "decision": "no"}
     assert workspaces.network.wanted("paper", "tracker.test")["quiet"] is True, "unanswered: quiet too"

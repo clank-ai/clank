@@ -13,7 +13,7 @@ private (`private_address`: the machine, the local networks, the carrier range t
 joined to the first address found, bytes both ways, counted and never read; a plain request (`GET http://host/path`)
 is forwarded to its host with the proxy's own headers dropped and `Connection: close`, one request a connection, its
 path recorded. A host not allowed is asked for when the proxy has an `ask` (design 0024 §3: the connection held up to
-`ASK_SECONDS` while the service asks the owner; `always` or `once` let the request out, logged as asked), else, or
+`HOLD_SECONDS` while the service asks the owner; `always` or `once` let the request out, logged as asked), else, or
 when the owner did not allow it, refused 403 with the words that say the host, the workspace and how it is
 allowed (`clank workspace allow FOLDER --host NAME`); a name that cannot be resolved 502. Every exchange is one line of
 `NetworkLog` (`logs/network/<day>.jsonl`: time, workspace, host, port, method, the path of a plain request, status,
@@ -41,7 +41,7 @@ log = logging.getLogger(__name__)
 CHUNK = 65536
 HEAD_MOST = 64 * 1024  # bytes of a request's head read before it is refused as too long
 KEEP_DAYS = 30
-ASK_SECONDS = 60  # how long a connection is held while the owner is asked about its host (design 0024 §3)
+HOLD_SECONDS = 60  # how long a connection is held while the owner is asked about its host (design 0024 §3)
 PRIVATE_NAMES = ("localhost", "edge", "host.docker.internal", "gateway.docker.internal")
 PRIVATE_SUFFIXES = (".localhost", ".local", ".internal", ".home.arpa")
 # The private ranges (RFC 1918, the loopback, link-local, the carrier range 100.64/10 the tailnet uses, this host,

@@ -582,6 +582,18 @@ class Flows:
             "folder": str(place) if place is not None else "",
         }  # fmt: skip
 
+    def plannings_open(self) -> dict[str, dict[str, Any]]:
+        """The planning open in each workspace that has one, as the clients show it (`being_built`), by workspace
+        (design 0013 §15): what the phone's Flows tab lists beside the flows."""
+        found: dict[str, dict[str, Any]] = {}
+        for planning in self.building.plannings.all():
+            if planning.workspace in found or planning.status not in OPEN:
+                continue
+            shown = self.being_built(planning.workspace)
+            if shown.get("planning") is not None:
+                found[planning.workspace] = shown
+        return found
+
     def planning_view(self, workspace: str, flow: str) -> dict[str, Any]:
         """The Flow view of a flow being built with the model, by its id, while its planning is open and before
         its file is written (design 0013 §15): what the phone's flow screen reads for a flow listed as building;

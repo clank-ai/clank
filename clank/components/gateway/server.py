@@ -95,7 +95,7 @@ from clank.components.gateway.keys import Keys
 from clank.components.gateway.kinds import GatewaySettings
 from clank.components.gateway.loops import LoopGuard
 from clank.components.gateway.marks import LocalMarks, held_back, local_calls, whose
-from clank.components.gateway.proxy import ASK_SECONDS, NetworkLog, Proxy, network_token
+from clank.components.gateway.proxy import HOLD_SECONDS, NetworkLog, Proxy, network_token
 from clank.components.gateway.records import TrafficLog
 from clank.components.gateway.routing import NO_KEY, Routes, SlotRoute
 from clank.components.gateway.sessions import session_of
@@ -1619,7 +1619,7 @@ def main(argv: list[str] | None = None) -> int:
             question = found.get("question")
             if not question:
                 return "no"
-            deadline = time.monotonic() + ASK_SECONDS + 5
+            deadline = time.monotonic() + HOLD_SECONDS + 5
             while time.monotonic() < deadline:
                 decided = client.get(f"workspaces/hosts/wanted/{quote(str(question), safe='')}")
                 if decided.get("status") != "waiting":

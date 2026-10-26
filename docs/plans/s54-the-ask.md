@@ -21,7 +21,7 @@ program does not flood the owner.
 - **The hold is the proxy's; the question is the service's.** The gateway process asks the service
   (`POST /workspaces/{name}/hosts/wanted`), which allows at once when the record does, refuses at once in a quiet
   period, else asks the owner and names the question; the proxy then reads the question's decision
-  (`GET /workspaces/hosts/wanted/{question}`) every half second until it is decided or `ASK_SECONDS` (60) pass, the
+  (`GET /workspaces/hosts/wanted/{question}`) every half second until it is decided or `HOLD_SECONDS` (60) pass, the
   connection held meanwhile. No new channel: the service's API, as every other part uses it.
 - **The quiet period is the service's** (`QUIET_MINUTES`, 10, per workspace and host), so every retrying program
   of the workspace meets the same answer, and the next ask after it is a new question.
@@ -31,7 +31,7 @@ program does not flood the owner.
 
 - [x] 1. **The asks** (`workspaces/network.py`, `HostAsks`): `wanted(workspace, host)` → `allowed` when the record
   allows; `quiet` (and no question) within the quiet period; else the open question of that pair, or a new one
-  ("Let paper's agent reach api.semanticscholar.org?", the three options, expiring in `ASK_SECONDS`, urgency high,
+  ("Let paper's agent reach api.semanticscholar.org?", the three options, expiring in `HOLD_SECONDS`, urgency high,
   about the workspace); `decision(question)` → `waiting`, or `always`, `once`, `no`; on resolution, *always* writes
   the allowance (`allow_host`, the answerer the actor), *no* and expiry start the quiet period. Tests with the kernel
   and its fake clock (`test_host_asks.py`).

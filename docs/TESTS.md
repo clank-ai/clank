@@ -3277,7 +3277,7 @@ Design 0008 §3: when Matplotlib saves a raster figure inside the workspace's fo
 
 ### `tests/components/workspaces/test_host_asks.py`
 
-Design 0024 §3 (decision 0141): a host the agent reaches without an allowance is asked for. The service allows at once when the record does, refuses at once within the quiet period, else asks the owner one question per workspace and host (the same question while it waits): answered always, the host joins the record and the request goes out; once, it goes out this time; no, or unanswered within `ASK_SECONDS`, it is refused and the host is not asked again for `QUIET_MINUTES`. The routes the gateway's proxy uses: `POST /workspaces/{name}/hosts/wanted` and `GET /workspaces/hosts/wanted/{question}`.
+Design 0024 §3 (decision 0141): a host the agent reaches without an allowance is asked for. The service allows at once when the record does, refuses at once within the quiet period, else asks the owner one question per workspace and host (the same question while it waits): answered always, the host joins the record and the request goes out; once, it goes out this time; no, or unanswered within `HOLD_SECONDS`, it is refused and the host is not asked again for `QUIET_MINUTES`. The routes the gateway's proxy uses: `POST /workspaces/{name}/hosts/wanted` and `GET /workspaces/hosts/wanted/{question}`.
 
 - a host not allowed is asked for once per host and always writes the allowance
 - no or no answer refuses and keeps the host quiet for a while

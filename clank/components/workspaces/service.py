@@ -446,7 +446,7 @@ class Workspaces:
     def proxy_url(self, name: str) -> str:
         """The proxy as a workspace's container is told it: its URL through the edge, with the workspace's own token
         (design 0024 §2), so the proxy knows whose request each is."""
-        from clank.components.gateway.proxy import network_token
+        from clank.components.gateway.service import network_token
         from clank.kernel.access import local_token
 
         return f"http://{name}:{network_token(local_token(self.kernel.home), name)}@{EDGE_ALIAS}:{self.proxy_port()}"
