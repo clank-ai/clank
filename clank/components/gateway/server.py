@@ -132,7 +132,7 @@ NOT_THE_AGENTS_FLOW = (
 # What the agent may ask of the agents' part through the gateway (design 0018 §7): opening files for the owner to see.
 AGENTS = {("POST", "show"), ("POST", "jobs"), ("POST", "jobs/status"), ("POST", "jobs/stop"), ("POST", "artifacts"),
           ("POST", "boards"), ("GET", "boards"), ("GET", "boards/read"), ("POST", "boards/add"),
-          ("POST", "boards/update"), ("POST", "boards/remove")}  # fmt: skip
+          ("POST", "boards/update"), ("POST", "boards/remove"), ("POST", "boards/export")}  # fmt: skip
 NOT_THE_AGENTS_SHOW = (
     "the agent opens files for the owner to see, runs its jobs, makes its artifacts and works on boards; nothing else "
     "(the window, the review, the sessions and comments are the owner's)"

@@ -1,10 +1,12 @@
-// Design 0022 §2-§3 and §6: the board editor's pure core. A board is read from its file and written back in the same shape;
+// Design 0022 §2, §3, §6 and §7: the board editor's pure core. A board is read from its file and written back in the same shape;
 // an item inside a frame moves with the frame, and the owner's pen strokes, highlights and pins over an item move with
 // the item; a move snaps the moved box's edges or center to another item's (within a few pixels) or else to the grid,
 // and says the guide it snapped to; a figure resized keeps its aspect; a selection aligns, takes one width, or spreads
 // evenly; new items get the next id and their kind's size; edits are operations (set, add, remove) applied in order;
 // what the owner selects is named for the agent by id and what it shows; and a compiled LaTeX item's drawing is asked
-// for once per source, keeping its last drawing while its source does not build.
+// for once per source, keeping its last drawing while its source does not build. Export takes the frame chosen, else
+// the selection, else the board's one frame, else asks which; a kept export is made again when what its frame shows
+// changes (or a script writes one of its figures again), not when a note or a pin moves.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -16,6 +18,9 @@ import {
   applyOps,
   askMessage,
   Drawings,
+  exportTarget,
+  exportsToRedo,
+  keptWith,
   fillMessage,
   overWords,
   pinsMessage,
@@ -157,4 +162,26 @@ test("a compiled drawing is asked for once per source, and a source that does no
   drawings.answer(asked.key, { error: "Too many }'s." });
   assert.deepEqual(drawings.shown(broken), { "latex-9": { svg: "<svg>A</svg>", error: "Too many }'s." } });
   assert.deepEqual(drawings.wanted(first), [], "the first source is still drawn");
+});
+
+test("Export takes the frame chosen, else the selection, else the board's one frame, else asks which", () => {
+  assert.deepEqual(exportTarget(BOARD, ["frame-5"]), { frame: "frame-5" });
+  assert.deepEqual(exportTarget(BOARD, ["fig-1", "latex-2"]), { ids: ["fig-1", "latex-2"] });
+  assert.deepEqual(exportTarget(BOARD, []), { frame: "frame-5" });
+  const two: Board = { ...BOARD, items: [...BOARD.items, { id: "frame-9", kind: "frame", x: 0, y: 900, w: 100, h: 100, name: "B" }] };
+  assert.deepEqual(exportTarget(two, []), { frames: ["frame-5", "frame-9"] });
+  const none: Board = { ...BOARD, items: BOARD.items.filter((each) => each.kind !== "frame") };
+  assert.deepEqual(exportTarget(none, []), { ids: ["fig-1", "latex-2"] }, "the board's figures and LaTeX");
+});
+
+test("a kept export is made again when what its frame shows changes, not when a note or a pin moves", () => {
+  const kept: Board = { ...BOARD, items: BOARD.items.map((each) =>
+    each.id === "frame-5" ? { ...each, export: { file: "figures/figure-3.pdf", format: "pdf", dpi: 300 } } : each) };  // prettier-ignore
+  const moved = (id: string, dx: number): Board => applyOps(kept, [{ op: "set", id, fields: { x: (item(id).x ?? 0) + dx } }]);
+  assert.deepEqual(exportsToRedo(kept, moved("fig-1", 20)), ["frame-5"]);
+  assert.deepEqual(exportsToRedo(kept, moved("note-4", 20)), []);
+  assert.deepEqual(exportsToRedo(kept, moved("pin-7", 20)), []);
+  assert.deepEqual(exportsToRedo(kept, applyOps(kept, [{ op: "set", id: "latex-2", fields: { source: "Q" } }])), ["frame-5"]);
+  assert.deepEqual(exportsToRedo(BOARD, applyOps(BOARD, [{ op: "set", id: "fig-1", fields: { x: 100 } }])), [], "not kept");
+  assert.deepEqual(keptWith(kept, "figures/amp.png"), ["frame-5"], "a figure's file written again");
 });

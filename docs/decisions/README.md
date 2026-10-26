@@ -144,6 +144,7 @@ and use the template below.
 | [0134](0134-the-tex-layer.md) | The TeX layer: TeX Live from Ubuntu's packages, in an image layer on the sandbox image | Accepted (with design 0020) | 2026-10-25 |
 | [0135](0135-the-artifact-libraries.md) | The artifact libraries: Plotly, KaTeX, marked and Mermaid, pinned, kept in Clank | Accepted (with design 0021) | 2026-10-25 |
 | [0136](0136-the-board-canvas-is-clanks-own.md) | The board's canvas is Clank's own: no whiteboard library (tldraw, Excalidraw, Fabric.js), no new dependency | Accepted (with design 0022) | 2026-10-26 |
+| [0137](0137-board-export-with-librsvg.md) | A board exports through one SVG, made PDF or PNG by librsvg (`librsvg2-bin`) in the TeX layer | Accepted (building design 0022) | 2026-10-26 |
 
 ## Template
 

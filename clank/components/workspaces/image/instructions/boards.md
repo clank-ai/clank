@@ -17,5 +17,8 @@ it.
   table, built with the folder's TeX.
 - A **slot** is a place the user drew for a figure: when asked to fill one, make the figure and add it with
   `{"slot": id}`; it takes the slot's place and size.
-- A **frame** groups items under a name (Figure 3) and exports as one figure for a paper.
-- A **pin** is the user's comment on an item: do what it asks, then say in a line what you changed.
+- A **frame** groups items under a name (Figure 3) and exports as one figure for a paper: `board_export` with the
+  frame makes a PDF (or PNG, or SVG) beside the board, its LaTeX typeset by TeX; `keep` true makes it again each time
+  the frame changes. Notes, slots and the user's marks are left out of it.
+- A **pin** is the user's comment on an item: do what it asks, then close it (`board_update` with `open` false) and
+  say in a line what you changed.

@@ -58,7 +58,7 @@ each kept in `.clank/boards/<name>/history/`); the owner's by the editor, saved 
 - [x] 5. **Compiled LaTeX**: `POST /agents/boards/latex` builds a `standalone` document with the board's preamble in
   the folder's container (the TeX layer), pdfLaTeX then `pdftocairo -svg`, glyphs flattened, kept by the source's hash
   in `.clank/boards/<name>/latex/`; a LaTeX item in `compiled` mode shows it, or its error.
-- [ ] 6. **Export**: a frame or the selection to SVG and PNG (made in the page), and to PDF (a `standalone` LaTeX
+- [x] 6. **Export**: a frame or the selection to SVG and PNG (made in the page), and to PDF (a `standalone` LaTeX
   document placing the figures and the LaTeX, built in the container); kept exports made again when the frame changes.
 - [ ] 7. **Live**: the real model, in a throwaway folder, adds figures and an equation, fills a slot the owner drew and
   answers a pin; a frame exported to PDF; seen in screenshots of that window only.
@@ -76,3 +76,10 @@ Written 2026-10-26.
 - Task 5 built: compiled LaTeX (`boardlatex.py`). Found while building: this TeX layer's `pdftocairo` writes sizes
   without units (points still), and the agent should hear at once whether its TikZ builds, so `board_add` and
   `board_update` of a compiled item build it, size it from its drawing and say so, or say LaTeX's error.
+- Task 6 built: export (`boardexport.py`, decision 0137). Measured first: librsvg keeps a nested `<svg>` vector in the
+  PDF but makes an SVG given as an `<image>` pixels, so the export nests each figure with ids of its own. The TeX layer
+  adds `librsvg2-bin`; a real build in it (`tests/docker/test_board_layer.py`) compiles a pgfplots drawing at its own
+  size and exports its frame as a PDF with no pictures in it. Found there: a plot on a board with no preamble failed, so
+  pgfplots and booktabs load by default. The agent has `board_export`; the owner's Export asks for the format and once
+  or kept; kept exports are made again by the service after the agent's changes and by the editor after the owner's.
+  Fixed on the way: `test_sessions`' list of the agent's tools had not been given the board tools.

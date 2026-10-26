@@ -16,7 +16,8 @@ from typing import Any
 
 SECONDS = 60.0  # a drawing's build limit
 POINT = 4 / 3  # CSS pixels in a TeX point (96 and 72 to the inch)
-PACKAGES = ("amsmath", "amssymb", "tikz")
+PACKAGES = ("amsmath", "amssymb", "tikz", "pgfplots", "booktabs")  # what a board's LaTeX can use without a preamble
+PGFPLOTS = "\\pgfplotsset{compat=1.18}"  # TeX Live 2023's pgfplots
 NO_TEX = "TeX is not in {workspace}'s container, so this LaTeX could not be compiled: `clank latex setup` adds it"
 SVG = "{http://www.w3.org/2000/svg}"
 XLINK = "{http://www.w3.org/1999/xlink}href"
@@ -35,7 +36,7 @@ cd / && rm -rf "$d"; exit $s"""
 
 def snippet(source: str, preamble: str) -> str:
     """An item's LaTeX as a document of its own, cropped to what it draws."""
-    packages = "".join(f"\\usepackage{{{name}}}\n" for name in PACKAGES)
+    packages = "".join(f"\\usepackage{{{name}}}\n" for name in PACKAGES) + f"{PGFPLOTS}\n"
     return (
         f"\\documentclass[border=2pt]{{standalone}}\n{packages}{preamble.strip()}\n"
         f"\\begin{{document}}\n{source.strip()}\n\\end{{document}}\n"

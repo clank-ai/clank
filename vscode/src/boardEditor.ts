@@ -13,11 +13,32 @@ import * as path from "node:path";
 import * as vscode from "vscode";
 
 import type { AgentApi } from "./core/agent";
-import { applyOps, askMessage, type Board, type Drawing, Drawings, fillMessage, type Op, parseBoard, pinsMessage, serializeBoard } from "./core/board";
+import { applyOps, askMessage, type Board, type Drawing, Drawings, exportsToRedo, exportTarget, fillMessage, keptWith, type Op, parseBoard,
+  pinsMessage, serializeBoard } from "./core/board";
 
 export const BOARD_EDITOR = "clank.board";
 const IMAGE = /\.(png|jpe?g|gif|webp|svg)$/i;
 const MEDIA_FOLDER = "board-media";
+const REDO_WAIT = 1500; // a kept export is made again this long after the owner's last edit
+const FORMATS = [
+  { label: "PDF", description: "for \\includegraphics in a paper: vector, its LaTeX typeset by TeX", format: "pdf" },
+  { label: "PNG", description: "300 dpi, for slides and notes", format: "png" },
+  { label: "SVG", description: "vector, for the web or another editor", format: "svg" },
+];
+
+/** What the service says of an export: the file, what was left out, and the export in words. */
+interface Exported {
+  file: string;
+  problems: string[];
+  said: string;
+}
+
+/** A kept export, as its frame remembers it. */
+interface KeptExport {
+  file: string;
+  format: string;
+  dpi: number;
+}
 
 /** What the editor needs of the rest of the extension. */
 export interface BoardHost {
@@ -87,6 +108,39 @@ export class BoardEditor implements vscode.CustomTextEditorProvider {
     let writing = 0; // the owner's own edits being written, which need no word
     let said = "";
     let posting: ReturnType<typeof setTimeout> | undefined;
+    let seen = current(); // the board as last drawn
+    let owners = false; // whether the change since is the owner's (the agent's makes its kept exports itself)
+    const redoing = new Set<string>(); // kept frames to export again
+    let redoTimer: ReturnType<typeof setTimeout> | undefined;
+    const service = async (): Promise<{ api: AgentApi; workspace: string }> => {
+      const api = this.host.api();
+      if (!api) throw new Error("the Clank service does not run: `clank serve --background` starts it");
+      workspace ??= (await api.get<{ workspace?: string }>("workspaces/folder", { folder: folder.fsPath })).workspace;
+      if (!workspace) throw new Error("this folder is not one of Clank's workspaces yet: `clank code` here makes it one");
+      return { api, workspace };
+    };
+    const exported = async (asked: Record<string, unknown>): Promise<Exported> => {
+      const { api, workspace } = await service();
+      return api.post<Exported>("agents/boards/export", { workspace, board: relative(), ...asked });
+    };
+    // Kept exports the owner's edit changed, made again a moment after the last edit (one export per frame).
+    const redo = (frames: string[]): void => {
+      for (const frame of frames) redoing.add(frame);
+      if (!redoing.size) return;
+      clearTimeout(redoTimer);
+      redoTimer = setTimeout(() => {
+        const board = current();
+        for (const frame of [...redoing]) {
+          redoing.delete(frame);
+          const kept = board.items.find((each) => each.id === frame)?.export as KeptExport | undefined;
+          if (!kept) continue;
+          exported({ frame, format: kept.format, file: kept.file, dpi: kept.dpi }).then(
+            (made) => void webview.postMessage({ type: "said", said: `Made ${made.file} again` }),
+            (error: unknown) => this.host.warn(`${frame}'s export: ${error instanceof Error ? error.message : String(error)}`),
+          );
+        }
+      }, REDO_WAIT);
+    };
     const post = async (): Promise<void> => {
       let board: Board;
       try {
@@ -110,16 +164,16 @@ export class BoardEditor implements vscode.CustomTextEditorProvider {
       for (const wanted of drawings.wanted(board)) void draw(wanted);
       void webview.postMessage({ type: "board", board, path: relative(), uris, said, compiled: drawings.shown(board) });
       said = "";
+      if (owners) redo(exportsToRedo(seen, board));
+      owners = false;
+      seen = board;
     };
     // A compiled LaTeX item's drawing, built by the service in the folder's container; the page draws it inline (so
     // its black takes the board's text color) once it is here.
     const draw = async (wanted: { id: string; key: string }): Promise<void> => {
       let drawing: Drawing;
       try {
-        const api = this.host.api();
-        if (!api) throw new Error("the Clank service does not run, so this LaTeX cannot be compiled: `clank serve --background` starts it");
-        workspace ??= (await api.get<{ workspace?: string }>("workspaces/folder", { folder: folder.fsPath })).workspace;
-        if (!workspace) throw new Error("this folder is not one of Clank's workspaces yet: `clank code` here makes it one");
+        const { api, workspace } = await service();
         const made = await api.post<{ file?: string; error?: string }>("agents/boards/latex", { workspace, board: relative(), id: wanted.id });
         const file = made.file ? vscode.Uri.joinPath(folder, ...made.file.split("/")) : undefined;
         drawing = file ? { svg: new TextDecoder().decode(await vscode.workspace.fs.readFile(file)) } : { error: made.error ?? "it did not build" };
@@ -161,8 +215,11 @@ export class BoardEditor implements vscode.CustomTextEditorProvider {
         if (event.document !== document || !event.contentChanges.length) return;
         if (event.reason === vscode.TextDocumentChangeReason.Undo || event.reason === vscode.TextDocumentChangeReason.Redo) {
           void document.save();
+          owners = true;
         } else if (!writing) {
           said = "Changed outside this editor: the agent's change, or another editor's";
+        } else {
+          owners = true;
         }
         later();
       }),
@@ -174,6 +231,7 @@ export class BoardEditor implements vscode.CustomTextEditorProvider {
     const changed = (uri: vscode.Uri): void => {
       const name = vscode.workspace.asRelativePath(uri, false).replace(/\\/g, "/");
       if (current().items.some((item) => item.kind === "figure" && (item.file === name || name.endsWith(`/${String(item.file)}`)))) later(300);
+      redo(keptWith(current(), name)); // a script wrote a figure of a kept frame again
     };
     subscriptions.push(pictures, pictures.onDidChange(changed), pictures.onDidCreate(changed));
 
@@ -212,7 +270,7 @@ export class BoardEditor implements vscode.CustomTextEditorProvider {
             break;
           }
           case "export":
-            this.host.info("exporting a frame as a figure comes with the next step of the board (design 0022 §7)");
+            await this.export(current(), message.ids ?? [], exported, folder);
             break;
         }
       } catch (error) {
@@ -221,8 +279,43 @@ export class BoardEditor implements vscode.CustomTextEditorProvider {
     });
     panel.onDidDispose(() => {
       clearTimeout(posting);
+      clearTimeout(redoTimer);
       for (const each of subscriptions) each.dispose();
     });
+  }
+
+  /** Export (design 0022 §7): the frame chosen, the selection, or the frame asked for; as PDF, PNG or SVG; once, or
+   * kept (made again each time the frame changes). The file opens beside the board when asked. */
+  private async export(board: Board, selected: string[], exported: (asked: Record<string, unknown>) => Promise<Exported>,
+    folder: vscode.Uri): Promise<void> {  // prettier-ignore
+    const target = exportTarget(board, selected);
+    const named = (id: string): string => String(board.items.find((each) => each.id === id)?.name ?? id);
+    let frame = target.frame;
+    if (target.frames) {
+      const picked = await vscode.window.showQuickPick(target.frames.map((id) => ({ label: named(id), description: id, id })),
+        { title: "Export which frame?" });  // prettier-ignore
+      if (!picked) return;
+      frame = picked.id;
+    }
+    const format = await vscode.window.showQuickPick(FORMATS, { title: frame ? `Export ${named(frame)} as` : "Export the selection as" });
+    if (!format) return;
+    let keep: boolean | undefined;
+    if (frame) {
+      const how = await vscode.window.showQuickPick(
+        [{ label: "Once", keep: false }, { label: "Keep it exported", description: "made again each time the frame changes", keep: true }],
+        { title: `Export ${named(frame)}` },
+      );  // prettier-ignore
+      if (!how) return;
+      keep = how.keep;
+    }
+    const made = await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: `Exporting ${frame ? named(frame) : "the selection"}…` },
+      () => exported(frame ? { frame, format: format.format, keep } : { ids: target.ids ?? [], format: format.format }),
+    );
+    const open = await vscode.window.showInformationMessage(made.said, "Open");
+    if (open) {
+      await vscode.commands.executeCommand("vscode.open", vscode.Uri.joinPath(folder, ...made.file.split("/")), { viewColumn: vscode.ViewColumn.Beside });
+    }
   }
 }
 

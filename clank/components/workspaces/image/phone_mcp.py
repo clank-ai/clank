@@ -313,6 +313,25 @@ BOARD_TOOLS = [
                         "required": ["board", "id"]},
         "annotations": {"readOnlyHint": False},
     },
+    {
+        "name": "board_export",
+        "description": (
+            "Export a frame (or items) as one figure for a paper or slides: the figures and the LaTeX in it, typeset "
+            "by TeX, as PDF (for \\includegraphics), PNG or SVG, a file of the folder (beside the board, named after "
+            "the frame, unless you name it). Notes, slots and the user's marks are left out. keep true makes it "
+            "again each time the frame changes. Returns the file."
+        ),
+        "inputSchema": {"type": "object", "properties": {
+            "board": _BOARD,
+            "frame": {"type": "string", "description": "The frame, by id (frame-4)."},
+            "ids": {"type": "array", "items": {"type": "string"}, "description": "Or the items, by id."},
+            "format": {"type": "string", "enum": ["pdf", "png", "svg"], "description": "pdf (default), png, svg."},
+            "file": {"type": "string", "description": "The file, from the folder (figures/fig3.pdf)."},
+            "dpi": {"type": "number", "description": "A PNG's resolution (300)."},
+            "keep": {"type": "boolean", "description": "true: made again when the frame changes."},
+        }, "required": ["board"]},
+        "annotations": {"readOnlyHint": False},
+    },
 ]  # fmt: skip
 
 
@@ -341,6 +360,13 @@ def board(name: str, arguments: dict[str, Any]) -> str:
         body = {"workspace": WORKSPACE_NAME, "board": named, "id": str(arguments.get("id") or ""), "changes": fields,
                 "at": at}  # fmt: skip
         return str(_gateway("POST", "agents/boards/update", body, "boards").get("said") or "")
+    if name == "board_export":
+        body = {"workspace": WORKSPACE_NAME, "board": named, "frame": str(arguments.get("frame") or ""),
+                "ids": [str(each) for each in arguments.get("ids") or []], "format": str(arguments.get("format") or ""),
+                "file": str(arguments.get("file") or ""), "keep": arguments.get("keep")}  # fmt: skip
+        if "dpi" in arguments:
+            body["dpi"] = int(arguments["dpi"])
+        return str(_gateway("POST", "agents/boards/export", body, "boards").get("said") or "")
     body = {"workspace": WORKSPACE_NAME, "board": named, "id": str(arguments.get("id") or "")}
     return str(_gateway("POST", "agents/boards/remove", body, "boards").get("said") or "")
 

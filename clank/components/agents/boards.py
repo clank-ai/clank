@@ -16,6 +16,7 @@ takes the slot. Refused, saying why: a board that is not there or not a board, a
 kind the agent does not add, an item not on the board.
 """
 
+import copy
 import hashlib
 import json
 import math
@@ -23,9 +24,12 @@ import os
 import re
 import shutil
 import struct
+import xml.etree.ElementTree as ET
+from collections.abc import Sequence
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Any
 
+from clank.components.agents.boardexport import Art, ExportError, art_of_picture, art_of_svg, chosen, compose, tex_text
 from clank.components.agents.boardlatex import build, flatten
 from clank.components.agents.boardplace import GRID, INSET, TITLE, PlaceError, frame_of, place
 from clank.kernel.events import CLANK, EventType, Subject
@@ -42,6 +46,15 @@ CAPTION = 28  # a figure's caption line, under it
 FIGURE_WIDTH = 360
 LATEX_WIDEST = 720  # a compiled drawing wider than this is drawn narrower
 ASPECT = 4 / 3  # a figure whose file cannot be measured
+EXPORT_FORMATS = ("pdf", "png", "svg")
+EXPORT_SECONDS = 120.0
+PICTURES = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+}
 PREFIX = {"figure": "fig", "latex": "latex", "note": "note", "slot": "slot", "frame": "frame", "arrow": "arrow",
           "pen": "pen", "highlight": "mark", "pin": "pin"}  # fmt: skip
 AGENT_KINDS = ("figure", "latex", "note", "slot", "frame", "arrow")
@@ -54,7 +67,7 @@ EVENT_TYPES = [
         "A board changed: made, or an item added, changed or taken away by the agent (design 0022).",
         {
             "workspace": "The workspace.", "board": "The board, from the folder.",
-            "change": "new, add, update or remove.", "id": "The item.", "said": "The change in words.",
+            "change": "new, add, update, remove or export.", "id": "The item.", "said": "The change in words.",
         },
     ),
 ]  # fmt: skip
@@ -134,6 +147,15 @@ def _region(item: dict[str, Any], x: float, y: float) -> str:
     row = "upper" if down < 1 / 3 else "lower" if down > 2 / 3 else "middle"
     column = "left" if across < 1 / 3 else "right" if across > 2 / 3 else "middle"
     return "center" if row == column == "middle" else f"{row} {column}"
+
+
+def _part(board: dict[str, Any], frame: str) -> str:
+    """What a frame's export shows, as one string (empty for a frame that is not there or shows nothing)."""
+    try:
+        shown = chosen(board, frame=frame)
+    except ExportError:
+        return ""
+    return json.dumps([(board.get("settings") or {}).get("preamble", ""), shown], sort_keys=True)
 
 
 class Boards:
@@ -379,6 +401,7 @@ class Boards:
         """Add an item, placed by `at` (`boardplace.py`); its id and the change in words."""
         root, path = self._board(workspace, board)
         loaded = self._load(path)
+        before = copy.deepcopy(loaded)
         items: list[dict[str, Any]] = loaded["items"]
         kept = self._checked(root, kind, fields)
         number = 1 + max((int(m[1]) for each in items if (m := re.search(r"-(\d+)$", str(each.get("id"))))), default=0)
@@ -427,6 +450,7 @@ class Boards:
         self._save(root, path, loaded, keep=True)
         relative = path.relative_to(root).as_posix()
         self._record(workspace, relative, "add", id, f"{relative}: {said}")
+        after += self._redo_kept(workspace, root, path, before, loaded)
         return {"board": relative, "id": id, "said": f"{said} on {relative}. The owner sees it at once.{after}"}
 
     @staticmethod
@@ -452,6 +476,7 @@ class Boards:
         """Change an item's words, size or place (`at`, as `add` takes it); the change in words."""
         root, path = self._board(workspace, board)
         loaded = self._load(path)
+        before = copy.deepcopy(loaded)
         items: list[dict[str, Any]] = loaded["items"]
         item = next((each for each in items if each.get("id") == id), None)
         if item is None:
@@ -501,12 +526,14 @@ class Boards:
         relative = path.relative_to(root).as_posix()
         said = f"Changed {id}" + (f", moved {self._at_words(at)}" if at else "")
         self._record(workspace, relative, "update", id, f"{relative}: {said}")
+        after += self._redo_kept(workspace, root, path, before, loaded)
         return {"board": relative, "id": id, "said": f"{said} on {relative}.{after}"}
 
     def remove(self, workspace: str, board: str, id: str) -> dict[str, Any]:
         """Take an item away; the change in words."""
         root, path = self._board(workspace, board)
         loaded = self._load(path)
+        before = copy.deepcopy(loaded)
         items: list[dict[str, Any]] = loaded["items"]
         if not any(each.get("id") == id for each in items):
             raise BoardError(f"there is no item {id} on the board")
@@ -514,7 +541,8 @@ class Boards:
         self._save(root, path, loaded, keep=True)
         relative = path.relative_to(root).as_posix()
         self._record(workspace, relative, "remove", id, f"{relative}: took {id} away")
-        return {"board": relative, "id": id, "said": f"Took {id} away from {relative}; its history keeps it."}
+        again = self._redo_kept(workspace, root, path, before, loaded)
+        return {"board": relative, "id": id, "said": f"Took {id} away from {relative}; its history keeps it.{again}"}
 
     # -- compiled LaTeX (design 0022 §6)
 
@@ -558,3 +586,128 @@ class Boards:
         if error:
             return f" It does not build: {error}. Change its source (clank_board_update) until it does."
         return " It builds with TeX, and is drawn at its own size."
+
+    # -- export (design 0022 §7)
+
+    def export(self, workspace: str, board: str, *, frame: str = "", ids: Sequence[str] = (), format: str = "",
+               file: str = "", dpi: int = 300, keep: bool | None = None) -> dict[str, Any]:  # fmt: skip
+        """A frame (or the items `ids`) as one figure: a PDF, PNG or SVG file of the folder (`file`, else beside the
+        board, named after the frame); `keep` has the frame remember it (True) or forget it (False)."""
+        root, path = self._board(workspace, board)
+        loaded = self._load(path)
+        try:
+            items = chosen(loaded, frame or None, ids)
+        except ExportError as error:
+            raise BoardError(str(error)) from error
+        named = PurePosixPath(file.replace("\\", "/")) if file else None
+        format = (named.suffix.lstrip(".").lower() if named and named.suffix else format or "pdf").lower()
+        if format not in EXPORT_FORMATS:
+            raise BoardError(f"a board exports as {', '.join(EXPORT_FORMATS)}, not {format}")
+        if named is None:
+            titled: dict[str, Any] = next((each for each in loaded["items"] if each.get("id") == frame), {})
+            stem = NAME.sub("-", str(titled.get("name") or f"{path.stem} selection").lower()).strip("-") or "figure"
+            named = PurePosixPath(path.relative_to(root).parent.as_posix()) / f"{stem}.{format}"
+        elif not named.suffix:
+            named = named.with_suffix(f".{format}")
+        out = self._inside(root, named.as_posix())
+        arts, problems = self._arts(workspace, root, path, loaded, items)
+        composed = compose(items, arts, background="#ffffff" if format == "png" else "")
+        out.parent.mkdir(parents=True, exist_ok=True)
+        relative = out.relative_to(root).as_posix()
+        if format == "svg":
+            out.write_text(composed, encoding="utf-8")
+        else:
+            kept = self._kept(root, path) / "export" / f"{out.stem}.svg"
+            kept.parent.mkdir(parents=True, exist_ok=True)
+            kept.write_text(composed, encoding="utf-8")
+            size = ["-d", str(dpi), "-p", str(dpi)] if format == "png" else []
+            argv = ["rsvg-convert", "-f", format, *size, "-o", f"{CONTAINER}{relative}",
+                    f"{CONTAINER}{kept.relative_to(root).as_posix()}"]  # fmt: skip
+            self._convert(workspace, argv, format)
+        board_path = path.relative_to(root).as_posix()
+        if keep is not None and frame:
+            framed = next(each for each in loaded["items"] if each.get("id") == frame)
+            remembered = {"file": relative, "format": format, "dpi": dpi} if keep else None
+            if framed.get("export") != remembered:
+                if remembered:
+                    framed["export"] = remembered
+                else:
+                    framed.pop("export", None)
+                self._save(root, path, loaded, keep=True)
+        what = frame or ", ".join(str(each["id"]) for each in items if each.get("kind") != "arrow")
+        said = f"Exported {what} as {relative}" + ("; it is made again each time the frame changes" if keep else "")
+        if problems:
+            said += f". Left out: {'; '.join(problems)}"
+        self._record(workspace, board_path, "export", frame or "", f"{board_path}: {said}")
+        return {"board": board_path, "file": relative, "problems": problems, "said": f"{said}."}
+
+    def _redo_kept(self, workspace: str, root: Path, path: Path, before: dict[str, Any], after: dict[str, Any]) -> str:
+        """Make again the kept exports whose frame shows something else after the agent's change; said in words."""
+        said = ""
+        for frame in after["items"]:
+            kept = frame.get("export")
+            if frame.get("kind") != "frame" or not isinstance(kept, dict):
+                continue
+            id = str(frame["id"])
+            if _part(before, id) == _part(after, id):
+                continue
+            try:
+                made = self.export(workspace, path.relative_to(root).as_posix(), frame=id,
+                                   format=str(kept.get("format") or "pdf"), file=str(kept.get("file") or ""),
+                                   dpi=int(kept.get("dpi") or 300))  # fmt: skip
+                said += f" Made {id}'s export {made['file']} again."
+            except BoardError as error:
+                said += f" {id}'s export could not be made again: {error}."
+        return said
+
+    def _arts(
+        self, workspace: str, root: Path, path: Path, board: dict[str, Any], items: list[dict[str, Any]]
+    ) -> tuple[dict[str, Art], list[str]]:
+        """Each part's drawing: a figure's file, the LaTeX and the captions typeset by TeX; and what could not be."""
+        arts: dict[str, Art] = {}
+        problems: list[str] = []
+        for item in items:
+            id, kind = str(item.get("id")), item.get("kind")
+            number = re.search(r"(\d+)$", id)
+            mark = number[1] if number else str(len(arts))
+            if kind == "figure":
+                try:
+                    picture = self._inside(root, str(item.get("file", "")))
+                    if picture.suffix.lower() == ".svg":
+                        arts[id] = art_of_svg(picture.read_text(encoding="utf-8"), f"f{mark}")
+                    else:
+                        size = image_size(picture) or (float(item.get("w", 360)), float(item.get("h", 270)))
+                        mime = PICTURES.get(picture.suffix.lower(), "image/png")
+                        arts[id] = art_of_picture(picture.read_bytes(), mime, *size)
+                except (BoardError, OSError, ET.ParseError) as error:
+                    problems.append(f"{id} ({error})")
+                if item.get("caption"):
+                    self._typeset(workspace, root, path, board, f"\\small {tex_text(str(item['caption']))}",
+                                  f"{id}:caption", f"c{mark}", arts, problems)  # fmt: skip
+            elif kind == "latex":
+                source = str(item.get("source") or "")
+                source = source if item.get("mode") == "compiled" else f"$\\displaystyle {source}$"
+                self._typeset(workspace, root, path, board, source, id, f"t{mark}", arts, problems)
+        return arts, problems
+
+    def _typeset(self, workspace: str, root: Path, path: Path, board: dict[str, Any], source: str, key: str,
+                 prefix: str, arts: dict[str, Art], problems: list[str]) -> None:  # fmt: skip
+        built, error = self._compiled(workspace, root, path, board, source)
+        if error:
+            problems.append(f"{key.split(':')[0]} (it does not build: {error})")
+        else:
+            arts[key] = art_of_svg(built.read_text(encoding="utf-8"), prefix)
+
+    def _convert(self, workspace: str, argv: list[str], format: str) -> None:
+        workspaces: Workspaces = self.kernel.parts["workspaces"]
+        try:
+            answer = workspaces.run_in(workspace, argv, timeout=EXPORT_SECONDS)
+        except Exception as error:  # the workspace's own words: its container does not run
+            raise BoardError(str(error)) from error
+        if answer.status == 127:
+            raise BoardError(f"{workspace}'s container cannot make {format.upper()} yet (librsvg is in the TeX layer): "
+                             "`clank latex setup` builds it again; SVG needs nothing")  # fmt: skip
+        if answer.status != 0:
+            raise BoardError(
+                f"the {format.upper()} could not be made: {(answer.errors or answer.output).strip()[-300:]}"
+            )

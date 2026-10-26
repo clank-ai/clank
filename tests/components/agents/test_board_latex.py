@@ -67,10 +67,12 @@ def folder(kernel: Kernel, tmp_path: Path) -> Path:
 
 
 def test_a_snippet_is_a_standalone_document_with_the_boards_preamble() -> None:
-    made = snippet("\\begin{tikzpicture}\\end{tikzpicture}", "\\usepackage{pgfplots}")
+    made = snippet("\\begin{tikzpicture}\\end{tikzpicture}", "\\usepackage{siunitx}")
     assert made.startswith("\\documentclass[border=2pt]{standalone}\n")
     assert "\\usepackage{amsmath}" in made
-    assert "\\usepackage{pgfplots}" in made
+    assert "\\usepackage{pgfplots}\n" in made, "plots need no preamble"
+    assert "\\pgfplotsset{compat=1.18}\n" in made
+    assert "\\usepackage{siunitx}" in made
     assert made.rstrip().endswith("\\end{document}")
 
 

@@ -190,6 +190,20 @@ class BoardChange(BaseModel):
     at: dict[str, Any] | None = None
 
 
+class BoardExport(BaseModel):
+    """A frame (or items) exported as one figure (design 0022 §7): the format (pdf, png, svg; else the file's), the
+    file (else beside the board, named after the frame), the PNG's resolution, and whether the frame keeps it."""
+
+    workspace: str
+    board: str
+    frame: str = ""
+    ids: list[str] = []
+    format: str = ""
+    file: str = ""
+    dpi: int = 300
+    keep: bool | None = None
+
+
 class ArtifactRequest(BaseModel):
     """An artifact the agent makes, or its next version (design 0021 §5)."""
 
@@ -758,6 +772,14 @@ def router(agents: "Agents") -> APIRouter:
         """A compiled LaTeX item's drawing (design 0022 §6), built in the folder's container once for its source:
         `file`, its SVG's path from the folder, or `error`, why it does not build. The owner's window asks for it."""
         return await boarded(lambda: agents.boards.compile_latex(wanted.workspace, wanted.board, wanted.id))
+
+    @routes.post("/agents/boards/export")
+    async def board_export(wanted: BoardExport) -> dict[str, Any]:
+        """Export a frame, or items, as one figure: a PDF, PNG or SVG file of the folder (design 0022 §7)."""
+        return await boarded(lambda: agents.boards.export(
+            wanted.workspace, wanted.board, frame=wanted.frame, ids=wanted.ids, format=wanted.format,
+            file=wanted.file, dpi=wanted.dpi, keep=wanted.keep,
+        ))  # fmt: skip
 
     @routes.post("/agents/artifacts")
     async def make_artifact(wanted: ArtifactRequest) -> dict[str, Any]:

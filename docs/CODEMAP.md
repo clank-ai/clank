@@ -28,6 +28,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/artifactcli.py` | `clank artifact` (design 0021 §5): the artifacts the agent made in a folder's workspace, from the command line. |
 | `clank/components/agents/artifacts.py` | Artifacts (design 0021 §5): pages the agent makes for the owner (an interactive plot of results, a parameter |
 | `clank/components/agents/boardcli.py` | `clank board` (design 0022 §1): a folder's boards from the command line. `clank board new NAME [--in FOLDER] |
+| `clank/components/agents/boardexport.py` | A board's figure out (design 0022 §7): a frame, or a selection, made one SVG that a paper or slides can use. |
 | `clank/components/agents/boardlatex.py` | Compiled LaTeX on a board (design 0022 §6): what KaTeX cannot draw (TikZ, pgfplots, a `tabular`, a package of the |
 | `clank/components/agents/boardplace.py` | Where a new item goes on a board (design 0022 §4): the agent says where ("below fig-2", "in the frame Figure 3", "in |
 | `clank/components/agents/boards.py` | Boards (design 0022): a canvas the owner and the agent share, a `.board` file of the folder (JSON: its title, its |
@@ -387,7 +388,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/annotator.page.test.ts` | Design 0008 §6, in a real browser: the annotator page (media/annotator.html, as VS Code's webview shows it) in |
 | `vscode/test/artifacts.test.ts` | Design 0021 §5: artifacts in VS Code. The service's `agents.artifact_made` names the workspace, its folder on this |
 | `vscode/test/board.page.test.ts` | Design 0022 §3, in a real browser: the board's page (media/board.html, as VS Code's board editor shows it, with the |
-| `vscode/test/board.test.ts` | Design 0022 §2-§3: the board editor's pure core. A board is read from its file and written back in the same shape; |
+| `vscode/test/board.test.ts` | Design 0022 §2-§3 and §6: the board editor's pure core. A board is read from its file and written back in the same shape; |
 | `vscode/test/browser.ts` | Headless Edge for the tests of the extension's pages (the annotator, the Notion review): a page opened from a file and |
 | `vscode/test/client.test.ts` | Design 0002 §2.7 and §2.14: the extension's client sends the local token and names itself `vscode` on every call, |
 | `vscode/test/comments.test.ts` | Design 0020 §11: comments on lines of LaTeX files are sent to the agent together, each with its file (from the |

@@ -20,11 +20,11 @@ change, each marked as added while building.
 | --- | --- | --- |
 | 1 | A board is a file in the folder | Approved 2026-10-26 |
 | 2 | What a board holds | Approved 2026-10-26 |
-| 3 | The owner on the board | Approved 2026-10-26 |
+| 3 | The owner on the board | Revised after approval 2026-10-26: the view follows what the agent places |
 | 4 | The agent on the board | Approved 2026-10-26 |
 | 5 | Asking the agent about the board | Approved 2026-10-26 |
-| 6 | LaTeX on the board | Approved 2026-10-26 |
-| 7 | A board's figures out: export | Approved 2026-10-26 |
+| 6 | LaTeX on the board | Revised after approval 2026-10-26: packages without a preamble; the agent hears whether it builds |
+| 7 | A board's figures out: export | Revised after approval 2026-10-26: what is left out; how it is made (decision 0137); who makes a kept export again |
 | 8 | Order of work | Approved 2026-10-26 |
 
 ## 1. A board is a file in the folder
@@ -64,6 +64,10 @@ A canvas to pan and zoom (the wheel, the space bar held), with the items as they
 - **Keys**: Delete, Ctrl+D (duplicate), Ctrl+G (group into a frame), arrows to nudge, Ctrl+Z and Ctrl+Y, 0 to fit the
   board, 1 for its real size.
 - The colors are the agent panel's theme tokens (design 0021 §4): VS Code's theme, or Clank Night.
+- **The view follows the agent** (revised after approval, 2026-10-26, from the first live test: a board the agent
+  filled opened at 10 %, fitted while its tab was behind another and had no size): until the owner pans or zooms, each
+  change is fitted, so what the agent places is seen; fitting (0, or a click on the zoom level) follows again. A fit
+  waits until the editor has a size.
 
 ## 4. The agent on the board
 
@@ -101,6 +105,13 @@ its own path drawn in the text's color, kept by its source's hash so it is compi
 made this way, from real LaTeX, after the owner found the first drawing's imitation of it "terrible" (2026-10-26). A LaTeX item says which it is ("math" or "compiled"), shows its error under it
 when it does not build, and keeps its last drawing until it does.
 
+Revised after approval (2026-10-26, while building it): a board's LaTeX loads `amsmath`, `amssymb`, TikZ, pgfplots
+(`compat=1.18`, TeX Live 2023's) and `booktabs` without a preamble, since the first real plot failed on a board whose
+preamble was empty; the board's preamble adds to them. When the agent adds or changes a compiled item, it is built at
+once and the agent's tool says whether it builds (or LaTeX's error, so the agent fixes its source), and a drawing that
+builds is placed at its own size (at most 720 pixels wide). Cairo's SVG sizes are points whether they say `pt` or not
+(this TeX layer's `pdftocairo` says nothing). The page draws the SVG inline, so black takes the board's text color.
+
 ## 7. A board's figures out: export
 
 A frame (or a selection) exports as one figure for a paper or slides: SVG (figures that are vector stay vector, the
@@ -108,6 +119,25 @@ LaTeX as its SVG), PNG at a chosen resolution, and PDF made from the SVG in the 
 two columns) or one of the owner's. The export is a file of the folder (`figures/fig3.pdf` beside the board); doing
 it again replaces it, and a frame can be kept exported (made again each time it changes), so a paper's
 `\includegraphics` always shows the board's latest layout.
+
+Revised after approval (2026-10-26, while building it):
+
+- **What is exported** is what a paper's figure shows: the figures and the LaTeX in the frame (or chosen; a chosen
+  frame brings what it holds) and the arrows between them. The working layer (notes, slots, pins, pen strokes,
+  highlights, the frame's own border and name) is left out; words that belong in the figure are LaTeX. The export is
+  cropped to what it shows, with 8 pixels around.
+- **How it is made** (decision 0137): Clank composes one SVG (each figure's SVG nested with ids of its own, so it stays
+  vector; pictures embedded as they are; the LaTeX and the captions typeset by TeX, so the figure's words are the
+  paper's), and librsvg (`rsvg-convert`, added to the TeX layer) makes it PDF or PNG (300 dots per inch unless asked).
+  It is made at the board's size (a board pixel is three quarters of a point); `\includegraphics[width=\linewidth]`
+  scales it, which a vector figure takes without loss. The paper's-width option waits for the owner's use of it.
+- **Who exports**: the owner, with Export (the frame chosen, else the selection, else the board's one frame, else a
+  choice of frames; then the format, then once or kept), and the agent, with `board_export`. Both go through the
+  service (`POST /agents/boards/export`), which writes the file beside the board, named after the frame
+  (`figures/figure-1.pdf`), unless a file is named.
+- **A kept export** is remembered on its frame (`export`: its file, format and resolution). It is made again when what
+  the frame shows changes: by the service after the agent's change, by the board editor after the owner's (a moment
+  after the last edit) and when a script writes one of its figures again. A note or a pin moving changes nothing.
 
 ## 8. Order of work
 

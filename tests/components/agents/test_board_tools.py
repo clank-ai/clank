@@ -1,8 +1,9 @@
-"""Design 0022 §4: Clank's own MCP server gives the agent the board as tools, each a request to the gateway's
+"""Design 0022 §4 and §7: Clank's own MCP server gives the agent the board as tools, each a request to the gateway's
 `/agents/boards` routes naming the workspace the server serves: `board_new(name, folder, title)`, `board_read(board)`
 (read-only: the board in words), `board_add(board, kind, ..., at)` (the item's fields as the model gave them, placed by
-`at`), `board_update(board, id, ..., at)` and `board_remove(board, id)`. The descriptions say to place by where, never
-by pixels; each answer is the service's words, a refusal the tool's error in its words."""
+`at`), `board_update(board, id, ..., at)`, `board_remove(board, id)` and `board_export(board, frame or ids, format,
+file, keep)`. The descriptions say to place by where, never by pixels; each answer is the service's words, a refusal
+the tool's error in its words."""
 
 import json
 import threading
@@ -101,3 +102,16 @@ def test_each_tool_asks_the_gateway_naming_its_workspace_and_answers_the_service
     assert replies[2]["result"]["isError"] is False
     assert replies[4]["result"] == {"content": [{"type": "text", "text": "there is no item fig-9 on the board"}],
                                     "isError": True}  # fmt: skip
+
+
+def test_board_export_asks_for_a_frame_as_a_figure_file(tmp_path: Path, gateway: str) -> None:
+    [listed, reply] = session(tmp_path, gateway, [
+        {"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+        called("board_export", {"board": "fig3", "frame": "frame-4", "format": "pdf", "keep": True}, 2),
+    ])  # fmt: skip
+    export = next(tool for tool in listed["result"]["tools"] if tool["name"] == "board_export")
+    assert export["inputSchema"]["properties"]["format"]["enum"] == ["pdf", "png", "svg"]
+    assert "includegraphics" in export["description"]
+    assert Gateway.asked == [("POST", "/agents/boards/export", {"workspace": "myproject", "board": "fig3",
+                              "frame": "frame-4", "ids": [], "format": "pdf", "file": "", "keep": True})]  # fmt: skip
+    assert reply["result"]["content"][0]["text"] == "done: /agents/boards/export"

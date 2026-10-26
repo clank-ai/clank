@@ -82,7 +82,8 @@ def test_a_refusal_comes_back_with_its_words_and_a_silent_service_is_said_so() -
 
 
 def test_the_agents_work_on_boards_is_forwarded() -> None:
-    """Design 0022 §4: making a board, listing the folder's, reading one, and adding, changing and taking away items."""
+    """Design 0022 §4 and §7: making a board, listing the folder's, reading one, adding, changing and taking away items,
+    and exporting a frame."""
     asked: list[tuple[str, str, Any, dict[str, str]]] = []
 
     async def forward(method: str, path: str, body: Any, params: dict[str, str]) -> tuple[int, Any]:
@@ -90,7 +91,7 @@ def test_the_agents_work_on_boards_is_forwarded() -> None:
         return 200, {"forwarded": path}
 
     calls = [("POST", "boards"), ("GET", "boards"), ("GET", "boards/read"), ("POST", "boards/add"),
-             ("POST", "boards/update"), ("POST", "boards/remove")]  # fmt: skip
+             ("POST", "boards/update"), ("POST", "boards/remove"), ("POST", "boards/export")]  # fmt: skip
     with gateway(forward) as http:
         for method, path in calls:
             if method == "GET":

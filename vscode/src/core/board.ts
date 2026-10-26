@@ -387,3 +387,51 @@ export class Drawings {
     return shown;
   }
 }
+
+// -- export (design 0022 §7; the service makes the file, `boardexport.py`)
+
+const EXPORTED = new Set(["figure", "latex"]);
+
+/** What Export takes: the frame chosen, else the selection, else the board's one frame, else the frames to choose
+ * from, else the board's figures and LaTeX. */
+export function exportTarget(board: Board, selected: string[]): { frame?: string; ids?: string[]; frames?: string[] } {
+  const chosen = board.items.filter((each) => selected.includes(each.id));
+  if (chosen.length === 1 && chosen[0].kind === "frame") return { frame: chosen[0].id };
+  if (chosen.length) return { ids: chosen.map((each) => each.id) };
+  const frames = board.items.filter((each) => each.kind === "frame").map((each) => each.id);
+  if (frames.length === 1) return { frame: frames[0] };
+  if (frames.length > 1) return { frames };
+  return { ids: board.items.filter((each) => EXPORTED.has(each.kind)).map((each) => each.id) };
+}
+
+/** What a frame's export shows, as one string: the figures and LaTeX inside it, the arrows between them, the preamble. */
+function exportPart(board: Board, frame: BoardItem): string {
+  const area = boxOf(frame);
+  if (!area) return "";
+  const shown = board.items.filter((each) => EXPORTED.has(each.kind) && boxOf(each) && inside(boxOf(each)!, area));
+  const ids = new Set(shown.map((each) => each.id));
+  const end = (side: unknown): boolean => typeof side === "object" && side !== null && ids.has(String((side as { item?: unknown }).item));
+  const arrows = board.items.filter((each) => each.kind === "arrow" && end(each.from) && end(each.to));
+  return JSON.stringify([board.settings.preamble, ...shown, ...arrows]);
+}
+
+function kept(board: Board): BoardItem[] {
+  return board.items.filter((each) => each.kind === "frame" && typeof each.export === "object" && each.export !== null);
+}
+
+/** The kept frames whose export shows something else after a change. */
+export function exportsToRedo(before: Board, after: Board): string[] {
+  return kept(after)
+    .filter((frame) => {
+      const was = before.items.find((each) => each.id === frame.id);
+      return !was || exportPart(before, was) !== exportPart(after, frame);
+    })
+    .map((frame) => frame.id);
+}
+
+/** The kept frames that show a figure of this file (written again by a script). */
+export function keptWith(board: Board, file: string): string[] {
+  return kept(board)
+    .filter((frame) => board.items.some((each) => each.kind === "figure" && each.file === file && inside(boxOf(each)!, boxOf(frame)!)))
+    .map((frame) => frame.id);
+}
