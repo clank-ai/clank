@@ -91,8 +91,10 @@ one line ("Placed fig-5 in the slot 'residuals'").
 
 Math is drawn at once with KaTeX (decision 0135): an equation, an `aligned` derivation, a matrix. Anything KaTeX cannot
 draw (TikZ, pgfplots, a `tabular`, a package of the owner's) is compiled in the folder's container with the TeX layer
-(design 0020, decision 0134): a `standalone` document with the board's preamble, made into SVG (`dvisvgm`), kept by its
-source's hash so it is compiled once. A LaTeX item says which it is ("math" or "compiled"), shows its error under it
+(design 0020, decision 0134): a `standalone` document with the board's preamble, built with pdfLaTeX and made into SVG
+with `pdftocairo -svg` (the TeX layer's image has it; it has no `dvisvgm`, found 2026-10-26), each glyph flattened into
+its own path drawn in the text's color, kept by its source's hash so it is compiled once. The design canvas's math was
+made this way, from real LaTeX, after the owner found the first drawing's imitation of it "terrible" (2026-10-26). A LaTeX item says which it is ("math" or "compiled"), shows its error under it
 when it does not build, and keeps its last drawing until it does.
 
 ## 7. A board's figures out: export
