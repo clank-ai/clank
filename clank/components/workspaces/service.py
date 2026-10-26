@@ -33,14 +33,14 @@ from clank.components.workspaces.kinds import DockerSettings, Workspace
 from clank.components.workspaces.sandbox import BRIDGE_PROGRAM as BRIDGE_PROGRAM  # for the agents (design 0005)
 from clank.components.workspaces.sandbox import CURRENT_INSTRUCTIONS as CURRENT_INSTRUCTIONS  # for the agents
 from clank.components.workspaces.sandbox import CURRENT_PHONE as CURRENT_PHONE  # (design 0018 §7.5)
-from clank.components.workspaces.sandbox import LAYERS, image_tag, layered_tag, names, thread_env
+from clank.components.workspaces.sandbox import EDGE_ALIAS, LAYERS, image_tag, layered_tag, names, thread_env
 from clank.components.workspaces.sandbox import PHONE_PROGRAM as PHONE_PROGRAM
 from clank.components.workspaces.sandbox import WORKSPACE as WORKSPACE  # for the agents (design 0007)
 from clank.components.workspaces.sandbox import agent_files as agent_files
 from clank.components.workspaces.setup import proposed_setup
 from clank.kernel.clock import to_text
 from clank.kernel.core import Kernel
-from clank.kernel.events import Actor, EventType
+from clank.kernel.events import Actor, EventType, Subject
 from clank.kernel.operations import Canceled, Operation, OperationContext, OperationType, Reconciliation, StepSpec
 from clank.kernel.processes import Answer, run_command
 from clank.kernel.questions import EXPIRY, Option, QuestionDraft
@@ -62,6 +62,16 @@ EVENT_TYPES = [
         },
     ),
     *CLOUD_EVENT_TYPES,
+    EventType(
+        "workspaces.host_allowed",
+        "A host was allowed to a workspace's agent through Clank's proxy, or taken back (design 0024 §1).",
+        {
+            "workspace": "The workspace.",
+            "host": "The host: a name, or a suffix starting with a dot.",
+            "allowed": "True when allowed, false when taken back.",
+            "who": "Who did it.",
+        },
+    ),
 ]
 
 
@@ -199,6 +209,36 @@ class Workspaces:
         self.cloud.allow(name, allow, actor=actor)
         return next(row for row in self.records() if row["name"] == name)
 
+    def allow_host(self, name: str, host: str, allow: bool, *, actor: Actor) -> dict[str, Any]:
+        """Allow a workspace's agent a host through Clank's proxy (design 0024 §1: an exact name, or a suffix starting
+        with a dot), or take it back; its record keeps when and how; the gateway's next routes carry it; its view
+        after."""
+        from clank.kernel.api import ApiError
+
+        self._named(name)
+        wanted = host.strip().lower().rstrip(".")
+        if not wanted or any(c in wanted for c in "/: @\\") or wanted in (".",):
+            raise ApiError(
+                400, "refused", f"{host!r} is not a host name: a name such as pypi.org, or a suffix such as .arxiv.org"
+            )
+        loaded = self.kernel.settings.get("workspace", name)
+        values = loaded.record.model_dump()
+        hosts = dict(values.get("hosts") or {})
+        if allow:
+            hosts[wanted] = f"allowed {to_text(self.kernel.clock.now())} by {actor.describe()}"
+        else:
+            hosts.pop(wanted, None)
+        self.kernel.settings.write("workspace", name, {**values, "hosts": hosts}, base=loaded.revision, actor=actor)
+        said = f"{name}'s agent may reach {wanted}" if allow else f"{name}'s agent may not reach {wanted} any more"
+        self.kernel.events.record(
+            "workspaces.host_allowed",
+            summary=f"{said} ({actor.describe()})",
+            actor=actor,
+            subject=Subject(kind="workspace", id=name),
+            data={"workspace": name, "host": wanted, "allowed": allow, "who": actor.describe()},
+        )
+        return next(row for row in self.records() if row["name"] == name)
+
     def _named(self, name: str) -> None:
         if not any(loaded.id == name for loaded in self.kernel.settings.records("workspace")):
             from clank.kernel.api import ApiError
@@ -212,6 +252,7 @@ class Workspaces:
             {
                 "name": loaded.id,
                 "path": Workspace.model_validate(loaded.record.model_dump()).path,
+                "hosts": dict(loaded.record.model_dump().get("hosts") or {}),
                 **self.cloud.view(loaded.id),
             }
             for loaded in self.kernel.settings.records("workspace")
@@ -273,6 +314,7 @@ class Workspaces:
             "state": state,
             "image": {"tag": tag, "built": built, "current": found.image == tag if found is not None else None},
             "setup": None if problem else _setup_view(path, workspace[1] if workspace else None),
+            "hosts": dict(workspace[1].hosts) if workspace else None,
             **(self.cloud.view(name) if name else dict.fromkeys(BOUND)),
         }
 
@@ -359,6 +401,21 @@ class Workspaces:
 
         gateway: Gateway = self.kernel.parts["gateway"]
         return gateway.settings().port
+
+    def proxy_port(self) -> int:
+        """The port the agent's proxy listens on (design 0024 §2), which the edge forwards too."""
+        from clank.components.gateway.service import Gateway
+
+        gateway: Gateway = self.kernel.parts["gateway"]
+        return gateway.settings().proxy_port
+
+    def proxy_url(self, name: str) -> str:
+        """The proxy as a workspace's container is told it: its URL through the edge, with the workspace's own token
+        (design 0024 §2), so the proxy knows whose request each is."""
+        from clank.components.gateway.proxy import network_token
+        from clank.kernel.access import local_token
+
+        return f"http://{name}:{network_token(local_token(self.kernel.home), name)}@{EDGE_ALIAS}:{self.proxy_port()}"
 
     def operation_types(self) -> list[OperationType]:
         """Starting and stopping Docker, under one lock; opening, stopping and removing a workspace."""

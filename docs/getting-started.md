@@ -146,6 +146,16 @@ Then look around: the **Monitor** (F10) shows what the agent does and what fills
 stop, pause, guide or undo it; **Flows** (F10's Flow view, `n`) split a larger piece of work into steps, each a fresh
 session. [docs/console.md](console.md) explains every page and key.
 
+### Let the agent reach the internet
+
+A workspace's container reaches nothing but Clank by itself. When the agent needs a host (a package index, a
+paper's site, a documentation site), allow that host for that workspace, and only it: `clank workspace allow
+FOLDER --host pypi.org --host .arxiv.org` (a name, or a suffix starting with a dot for a site and everything under
+it; `--no-host` takes one back). The agent's requests go through Clank's proxy, which lets them out to the hosts
+allowed and refuses the rest in plain words the agent reads; private addresses (your machine, your network) are
+never reached. Every exchange is logged in `logs/network/` by host, status, bytes and time, never by content. A
+workspace made before this gets the proxy when it is next stopped and opened.
+
 ### Boards: lay out figures with the agent
 
 In VS Code, a **board** is a canvas you share with the agent: a `.board` file in the folder ([design

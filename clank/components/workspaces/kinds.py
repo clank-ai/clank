@@ -95,6 +95,13 @@ class Workspace(Settings):
         title="Your MCP servers held back",
         description="Your own MCP servers (clank mcp add) this workspace's agent does not get; the others it gets.",
     )
+    hosts: dict[str, str] = Field(
+        default_factory=dict,
+        title="Hosts its agent may reach",
+        description="The internet hosts its agent reaches through Clank's proxy (design 0024): a name (pypi.org) or a "
+        "suffix (.arxiv.org: arxiv.org and every name under it), each with when and how it was allowed. Every other "
+        "host is refused; private addresses always.",
+    )
     changes: Literal["review", "auto"] = Field(
         "review",
         title="The agent's changes",

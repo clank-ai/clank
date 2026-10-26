@@ -144,6 +144,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/gateway/kinds.py` | The gateway component's kinds of record (design 0001 §6, design 0004 §2): its settings, from design 0006 how |
 | `clank/components/gateway/loops.py` | The loop guard (design 0004 §2, decision 0040): whether a streamed answer repeats itself. |
 | `clank/components/gateway/marks.py` | The sessions that used local-only content (design 0016 §10, decision 0111): a session is marked the first time any of |
+| `clank/components/gateway/proxy.py` | The forward proxy at the gateway (design 0024 §1, §2 and §7, decision 0141): the agent's only way to the internet, |
 | `clank/components/gateway/records.py` | The gateway's records (design 0001 §6.5): one JSON line per request, in one file per day. |
 | `clank/components/gateway/routing.py` | Where a request goes (design 0001 §6.1, steps 2 and 5; decision 0008): a role's slot, and the engine it runs now. |
 | `clank/components/gateway/server.py` | The gateway process (design 0001 §6, design 0004 §2): every model request of every tool, to the engine of its role's |
@@ -256,7 +257,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/workspaces/console/workspaces.py` | The Workspaces page (design 0004 §3, §10; built 2026-10-15): every workspace, its container, and what its agent has. |
 | `clank/components/workspaces/folders.py` | Workspaces: folders agents work in, each in a container of its own (design 0004 §1, §3 and §6; design 0002 §2.9). |
 | `clank/components/workspaces/image/bridge.py` | Clank's bridge to the OpenCode servers in this container (design 0005 §2): the Clank service runs it with `docker |
-| `clank/components/workspaces/image/edge.py` | The edge's one program (design 0004 §3): it forwards one port to the host, and nothing else. |
+| `clank/components/workspaces/image/edge.py` | The edge's one program (design 0004 §3): it forwards ports to the host, and nothing else. |
 | `clank/components/workspaces/image/find_figures.py` | Finding the figures of a folder by words (design 0018 §7.4), for Clank's own MCP server's `find_figures`. |
 | `clank/components/workspaces/image/phone_mcp.py` | Clank's own MCP server for the agent (design 0005 §3): `send_to_phone(path, caption)` sends a file of the folder to |
 | `clank/components/workspaces/image/python/clank_figures.py` | Clank's figure geometry (design 0008 §3): when Matplotlib saves a raster figure inside the workspace's folder, write |

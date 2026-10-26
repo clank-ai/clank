@@ -43,7 +43,8 @@ from clank.kernel.processes import TIMEOUT_SECONDS, Answer, Launch, TimedAnswer,
 TEMPLATE = (
     '{"id":{{json .ID}},"name":{{json .Names}},"image":{{json .Image}},"state":{{json .State}},'
     '"status":{{json .Status}},"clank.home":{{json (.Label "clank.home")}},'
-    '"clank.component":{{json (.Label "clank.component")}},"clank.record":{{json (.Label "clank.record")}}}'
+    '"clank.component":{{json (.Label "clank.component")}},"clank.record":{{json (.Label "clank.record")}},'
+    '"clank.ports":{{json (.Label "clank.ports")}},"clank.proxy":{{json (.Label "clank.proxy")}}}'
 )
 # Each container's labels as Docker's own map: `docker ps` joins them with commas, which a value may also hold.
 INSPECT = '{"id":{{json .Id}},"labels":{{json .Config.Labels}}}'

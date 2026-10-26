@@ -9,6 +9,7 @@ question is asked at the terminal, unless `--yes` answers it. A command that did
 
 import json
 import os
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -116,18 +117,31 @@ def open_workspace(folder: str | None, yes: bool) -> None:
 @click.argument("folder")
 @click.option("--cloud", "bound", flag_value="cloud", help="Let its agent use a cloud model.")
 @click.option("--local", "bound", flag_value="local", help="Keep it on this machine: never the cloud model.")
+@click.option("--host", "hosts", multiple=True, help="A host its agent may reach through Clank's proxy: a name "
+              "(pypi.org) or a suffix (.arxiv.org); may be given more than once.")  # fmt: skip
+@click.option("--no-host", "no_hosts", multiple=True, help="A host its agent may not reach any more.")
 @click.option("--yes", is_flag=True, help="Change it without asking first.")
-def allow(folder: str, bound: str | None, yes: bool) -> None:
-    """Where a workspace's requests may go (design 0016 §9): the cloud model too, or this machine only; asked first,
-    in the service's words, unless `--yes`."""
-    if bound is None:
-        raise click.UsageError("say --cloud or --local")
+def allow(folder: str, bound: str | None, hosts: tuple[str, ...], no_hosts: tuple[str, ...], yes: bool) -> None:
+    """Where a workspace's requests may go: the cloud model too, or this machine only (design 0016 §9; asked first,
+    in the service's words, unless `--yes`); and which internet hosts its agent may reach through Clank's proxy
+    (design 0024 §1), each allowed with `--host` or taken back with `--no-host`."""
+    if bound is None and not hosts and not no_hosts:
+        raise click.UsageError("say --cloud, --local, --host or --no-host")
     client = common.call(common.connect)
     path = str(Path(folder).resolve())
     view = common.call(lambda: client.get("workspaces/folder", folder=path))
     name = view.get("workspace")
     if not name:
         raise click.ClickException(f"{path} has no workspace yet: `clank workspace open` or This folder opens one")
+    if hosts or no_hosts:
+        changed = view
+        for host, allowed in [*((each, True) for each in hosts), *((each, False) for each in no_hosts)]:
+            body = {"host": host, "allow": allowed}
+            changed = common.call(partial(client.post, f"workspaces/{name}/hosts", body))
+        reached = ", ".join(sorted(changed.get("hosts") or {}))
+        click.echo(f"{name}: its agent may reach {reached}" if reached else f"{name}: its agent reaches no host")
+        if bound is None:
+            return
     if not yes:
         click.echo((view.get("cloud_confirm") or {}).get("allow" if bound == "cloud" else "local", ""))
         if not click.confirm("Change it", default=False):

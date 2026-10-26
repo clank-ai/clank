@@ -1,6 +1,6 @@
 # 0141. The agent reaches the internet only through Clank's proxy, by the owner's allowances; private addresses never
 
-- Status: Accepted (with design 0024, approved by the owner on 2026-10-26); built after design 0023
+- Status: Accepted (with design 0024, approved by the owner on 2026-10-26); the proxy, the allowances and the refusals built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)); the ask and the named sets follow
 - Date: 2026-10-26
 - Decided by: the owner (approving design 0024), Claude (the design)
 

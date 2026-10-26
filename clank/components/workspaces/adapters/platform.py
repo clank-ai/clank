@@ -29,7 +29,8 @@ from clank.components.workspaces.sandbox import ContainerSpec
 from clank.kernel.adapters import Adapter
 from clank.kernel.processes import Answer, Launch, TimedAnswer, TimedRun, launch_program, run_answer, stream_command
 
-LABELS = ("clank.home", "clank.component", "clank.record")
+LABELS = ("clank.home", "clank.component", "clank.record", "clank.ports", "clank.proxy")  # the edge's ports, a
+# container's proxy port (design 0024 §2): read back, so one made for others is made again
 
 
 class Follow(Protocol):

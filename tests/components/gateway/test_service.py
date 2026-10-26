@@ -73,6 +73,7 @@ async def test_the_routes_give_the_main_slots_engine_its_model_name_and_its_limi
         "local_only_given": False,
         "cost": {"day_usd": 0.0, "month_usd": 0.0, "taken": 0, "run": "", "limit_day_usd": None,
                  "limit_month_usd": None},
+        "network": {},
     }  # fmt: skip
     rig.gpu[:] = [GpuMemory(16303, 2041), GpuMemory(16303, 3150)]
     async with rig.kernel.operations.running():
@@ -118,7 +119,9 @@ def test_the_service_starts_the_gateway_adopts_it_after_a_restart_and_says_what_
     rig: Rig, http: TestClient
 ) -> None:
     port = free_port()
-    (rig.kernel.home.config / "gateway.json").write_text(json.dumps({"schema": "gateway/1", "port": port}) + "\n")
+    (rig.kernel.home.config / "gateway.json").write_text(
+        json.dumps({"schema": "gateway/1", "port": port, "proxy_port": free_port()}) + "\n"
+    )
     rig.kernel.settings.reload_changed()
     gateway: Gateway = rig.kernel.parts["gateway"]
     try:

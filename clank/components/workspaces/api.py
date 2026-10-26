@@ -43,6 +43,13 @@ class CloudAnswer(BaseModel):
     allow: bool
 
 
+class HostAnswer(BaseModel):
+    """A host a workspace's agent may reach through Clank's proxy (design 0024 §1), or may not any more."""
+
+    host: str
+    allow: bool = True
+
+
 class LayerRequest(BaseModel):
     """An image layer to add to a workspace (`added`), or to take away."""
 
@@ -134,6 +141,15 @@ def router(workspaces: "Workspaces") -> APIRouter:
         actor = client_actor(request.headers.get(CLIENT_HEADER))
         found: dict[str, Any] = await anyio.to_thread.run_sync(
             lambda: workspaces.allow_cloud(name, answer.allow, actor=actor)
+        )
+        return found
+
+    @routes.post("/workspaces/{name}/hosts")
+    async def hosts(name: str, answer: HostAnswer, request: Request) -> dict[str, Any]:
+        """Allow a workspace's agent a host through Clank's proxy, or take it back (design 0024 §1); its view after."""
+        actor = client_actor(request.headers.get(CLIENT_HEADER))
+        found: dict[str, Any] = await anyio.to_thread.run_sync(
+            lambda: workspaces.allow_host(name, answer.host, answer.allow, actor=actor)
         )
         return found
 

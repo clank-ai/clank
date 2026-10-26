@@ -331,7 +331,16 @@ class Gateway:
             "slots": slots, "roles": dict(ROLES), "default_slot": "main", "demand": demand,
             "workspaces": self.bounds.routes(), "local_only": self.local_only(),
             "local_only_given": self._local_only is not None, "cost": self.costs.routes(),
+            "network": self.network_routes(),
         }  # fmt: skip
+
+    def network_routes(self) -> dict[str, dict[str, Any]]:
+        """Each workspace's hosts allowed through the proxy (design 0024 §1), from its record, as the gateway's
+        routes carry them."""
+        return {
+            loaded.id: {"hosts": sorted(loaded.record.model_dump().get("hosts") or {})}
+            for loaded in self.kernel.settings.records("workspace")
+        }
 
     def local_only(self) -> list[str]:
         """The tools that never go to a cloud model (design 0016 §10), by their prefixes: Clank's Notion tools always,

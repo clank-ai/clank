@@ -21,7 +21,7 @@ from clank.kernel.core import Kernel, open_kernel
 from clank.kernel.events import Actor
 from clank.kernel.home import Home
 from clank.kernel.operations import Operation
-from tests.fakes.platform import FakePlatform
+from tests.fakes.platform import FakePlatform, container
 
 pytestmark = pytest.mark.anyio
 YOU = Actor(kind="user", via="console")
@@ -92,6 +92,43 @@ async def test_opening_a_folder_makes_its_workspace_and_its_container_and_the_ne
     assert platform.networks == {home.outer: False, inner: True}, "its own internal network, and the edge's"
     assert platform.specs[home.container("my-project")].networks == ((inner, ""),)
     assert sorted(path.name for path in folder.iterdir()) == ["notes.md"], "nothing is written in the folder"
+
+
+async def test_the_edge_is_made_again_when_the_ports_it_forwards_change(
+    kernel: Kernel, platform: FakePlatform, folder: Path
+) -> None:
+    """Design 0024 §2: an edge from before the proxy forwards one port; it is stopped and made again with both."""
+    home = names(kernel.home.id)
+    platform.containers.append(container(home.edge, labels={"clank.ports": "18210"}))
+    async with kernel.operations.running():
+        done = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+    assert done.status == "done", done.error
+    assert [call for call in platform.calls if home.edge in call] == [
+        f"stop {home.edge}", f"remove {home.edge}", f"run {home.edge}", f"join {home.edge} {home.inner('my-project')}",
+    ]  # fmt: skip
+    assert platform.specs[home.edge].labels[-1] == ("clank.ports", "18210,18211")
+    assert "18211" in platform.specs[home.edge].command
+
+
+async def test_a_stopped_container_from_before_the_proxy_is_made_again_when_opened(
+    kernel: Kernel, platform: FakePlatform, folder: Path
+) -> None:
+    """Design 0024 §2: the proxy is in the container's environment, so one made without it is made again (stopped
+    first by the owner, as an image change is); its label `clank.proxy` says which it was told."""
+    home = names(kernel.home.id)
+    async with kernel.operations.running():
+        done = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+        assert done.status == "done", done.error
+        name = home.container("my-project")
+        assert platform.container(name) is not None
+        assert platform.container(name).clank.get("clank.proxy") == "18211"  # type: ignore[union-attr]
+        platform.containers = [each for each in platform.containers if each.name != name]
+        platform.containers.append(container(name, state="exited", labels={"clank.record": "my-project"}))
+        platform.calls.clear()
+        again = await run(kernel, "workspaces.open", {"folder": str(folder)})
+    assert again.status == "done", again.error
+    assert [call for call in platform.calls if name in call] == [f"remove {name}", f"run {name}"]
+    assert dict(platform.specs[name].env)["HTTPS_PROXY"].endswith("@edge:18211")
 
 
 async def test_the_image_build_is_asked_first_and_no_builds_nothing(

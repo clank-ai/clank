@@ -2,7 +2,8 @@
 the machine (its home is a volume of its own), runs as the image's user with no capability and no new privileges, on an
 internal network of its own only, within its CPU, memory and process limits, under Clank's labels; the edge is on the
 network that reaches the host (each workspace's own it joins when that workspace opens), with a read-only root, small
-limits, and a command that forwards the gateway's port and nothing else. A folder whose path has a comma or a quote
+limits, and a command that forwards the gateway's port and the proxy's (design 0024 §2) and nothing else; a workspace's
+container is told the proxy with its own token. A folder whose path has a comma or a quote
 still mounts as itself. Design 0004 §10: a workspace's container tells numerical libraries how many CPUs it has.
 Decision 0142 (design 0023 §7): Clank's programs are mounted read-only at /opt/clank in every container Clank runs,
 not copied into the image, whose tag follows its Dockerfile alone."""
@@ -76,7 +77,7 @@ def test_every_program_in_a_workspaces_container_starts_as_many_threads_as_the_c
     assert "NUMBA_NUM_THREADS=1" in values(run_arguments(small), "--env"), "at least one"
     setup = setup_spec(HOME, "my-project", r"C:\work\my-project", IMAGE, cpus=8.0, memory_mib=4096, command="make")
     assert "NUMBA_NUM_THREADS=8" in values(run_arguments(setup), "--env")
-    assert values(run_arguments(edge_spec(HOME, IMAGE, gateway_port=18210)), "--env") == []
+    assert values(run_arguments(edge_spec(HOME, IMAGE, gateway_port=18210, proxy_port=18211)), "--env") == []
 
 
 def test_a_folder_whose_path_has_a_comma_or_a_quote_mounts_as_itself() -> None:
@@ -85,8 +86,8 @@ def test_a_folder_whose_path_has_a_comma_or_a_quote_mounts_as_itself() -> None:
     assert folder == r'type=bind,"source=C:\work\a,b ""c""",target=/workspace'
 
 
-def test_the_edge_reaches_the_host_and_forwards_the_gateways_port_only() -> None:
-    spec = edge_spec(HOME, IMAGE, gateway_port=18210)
+def test_the_edge_reaches_the_host_and_forwards_the_gateways_and_the_proxys_ports_only() -> None:
+    spec = edge_spec(HOME, IMAGE, gateway_port=18210, proxy_port=18211)
     arguments = run_arguments(spec)
     assert values(arguments, "--name") == ["clank-abc123-edge"]
     assert values(arguments, "--network") == ["clank-abc123-outer"], "each workspace's network is joined as it opens"
@@ -96,10 +97,27 @@ def test_the_edge_reaches_the_host_and_forwards_the_gateways_port_only() -> None
     assert values(arguments, "--cap-drop") == ["ALL"]
     assert values(arguments, "--security-opt") == ["no-new-privileges"]
     assert values(arguments, "--add-host") == ["host.docker.internal:host-gateway"]
-    assert values(arguments, "--label") == ["clank.home=abc123", "clank.component=workspaces", "clank.record=edge"]
-    assert arguments[arguments.index(IMAGE) + 1 :] == [
-        "python3", "/opt/clank/edge.py", "18210", "host.docker.internal", "18210"
+    assert values(arguments, "--label") == [
+        "clank.home=abc123", "clank.component=workspaces", "clank.record=edge", "clank.ports=18210,18211",
     ]  # fmt: skip
+    assert arguments[arguments.index(IMAGE) + 1 :] == [
+        "python3", "/opt/clank/edge.py", "18210", "host.docker.internal", "18210", "18211", "host.docker.internal",
+        "18211",
+    ]  # fmt: skip
+
+
+def test_a_workspaces_container_is_told_the_proxy_with_its_own_token_and_what_bypasses_it() -> None:
+    """Design 0024 §2: the proxy's URL, with the workspace's token, in the environment; the edge and the loopback
+    bypass it; a container made without one is told nothing."""
+    spec = workspace_spec(
+        HOME, "paper", r"C:\work\paper", IMAGE, cpus=2.0, memory_mib=2048, proxy="http://paper:abc@edge:18211"
+    )
+    env = dict(spec.env)
+    assert env["HTTP_PROXY"] == env["HTTPS_PROXY"] == env["ALL_PROXY"] == "http://paper:abc@edge:18211"
+    assert env["NO_PROXY"] == "edge,localhost,127.0.0.1"
+    assert "HTTP_PROXY=http://paper:abc@edge:18211" in values(run_arguments(spec), "--env")
+    without = workspace_spec(HOME, "paper", r"C:\work\paper", IMAGE, cpus=2.0, memory_mib=2048)
+    assert "HTTP_PROXY" not in dict(without.env)
 
 
 def test_the_images_tag_follows_its_dockerfile_alone_since_the_programs_are_mounted(

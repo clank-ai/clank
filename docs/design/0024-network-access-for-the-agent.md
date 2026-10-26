@@ -12,13 +12,13 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 
 | § | Section | Status |
 | --- | --- | --- |
-| 1 | The rule: through Clank, by allowance | Approved 2026-10-26 |
-| 2 | The way out: a forward proxy at the gateway | Approved 2026-10-26 |
+| 1 | The rule: through Clank, by allowance | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)): the allowances, `clank workspace allow --host`; the console's and VS Code's keys with §4 |
+| 2 | The way out: a forward proxy at the gateway | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)) |
 | 3 | A host the agent asks for | Approved 2026-10-26 |
 | 4 | What the owner sees | Approved 2026-10-26 |
 | 5 | Packages, papers, data: the named sets | Approved 2026-10-26 |
 | 6 | Search | Approved 2026-10-26 |
-| 7 | What is never reached | Approved 2026-10-26 |
+| 7 | What is never reached | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)) |
 | 8 | Order of work | Approved 2026-10-26 |
 
 ## 1. The rule: through Clank, by allowance
@@ -119,9 +119,11 @@ Search is not a host but a provider, and a choice of the owner's:
 
 ## 8. Order of work
 
-1. The proxy, the edge's second port, the container's environment, the record's `hosts`, `clank workspace allow
-   --host`, the `403` words, the log file; tests against a fake upstream on this machine and the forwarding tests of
-   the edge (design 0004 §3).
+1. **Built 2026-10-26** ([plan s53](../plans/s53-the-proxy.md)). The proxy, the edge's second port, the container's
+   environment, the record's `hosts`, `clank workspace allow --host`, the `403` words, the log file; tests against a
+   fake upstream on this machine and the forwarding tests of the edge (design 0004 §3). The workspace's token in the
+   proxy's URL is derived from the service's local token (the SHA-256 HMAC over the workspace's name), so the
+   gateway checks it without being handed anything; the allowances ride on the routes the gateway fetches.
 2. The ask of §3: the hold, the question, its answers, the quiet period; its tests with the fake OpenCode's agent
    asking.
 3. The named sets, their file, the console's key.

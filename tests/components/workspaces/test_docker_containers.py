@@ -121,7 +121,7 @@ def test_a_container_joins_and_leaves_a_network_and_a_network_is_removed_each_tw
 
 
 def test_a_command_docker_refuses_raises_its_own_words() -> None:
-    spec = edge_spec("abc", "clank-sandbox:abc", gateway_port=18210)
+    spec = edge_spec("abc", "clank-sandbox:abc", gateway_port=18210, proxy_port=18211)
     refused = Docker({("run",): Answer(125, "", "docker: Error response from daemon: Conflict. The name is in use.\n")})
     with pytest.raises(PlatformError, match=r"clank-abc-edge could not start: .*Conflict\. The name is in use\."):
         adapter(refused).run_container(spec)

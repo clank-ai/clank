@@ -91,6 +91,14 @@
       "title": "Your MCP servers held back",
       "type": "array"
     },
+    "hosts": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "The internet hosts its agent reaches through Clank's proxy (design 0024): a name (pypi.org) or a suffix (.arxiv.org: arxiv.org and every name under it), each with when and how it was allowed. Every other host is refused; private addresses always.",
+      "title": "Hosts its agent may reach",
+      "type": "object"
+    },
     "changes": {
       "default": "review",
       "description": "review: the agent asks before it changes a file, and you accept or reject the change (VS Code shows it beside your files); auto: it changes files without asking, and VS Code shows each change after.",

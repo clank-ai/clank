@@ -110,6 +110,15 @@ class Routes:
             found = [dict(each) for each in self._raw.get("workspaces", {}).values() if each.get("workspace") == name]
         return found[0] if found else None
 
+    def hosts_of(self, workspace: str) -> list[str] | None:
+        """The hosts a workspace's agent may reach through the proxy (design 0024 §1), as the routes carry them; None
+        for a workspace the routes do not name, which is allowed nothing."""
+        with self._lock:
+            found = (self._raw.get("network") or {}).get(workspace)
+        if not isinstance(found, dict):
+            return None
+        return [str(each) for each in found.get("hosts") or []]
+
     def any_cloud(self) -> bool:
         """Whether any workspace may use the cloud model."""
         with self._lock:
@@ -160,6 +169,7 @@ class Routes:
                 "local_only": [str(each) for each in raw.get("local_only") or []],
                 "local_only_given": bool(raw.get("local_only_given", True)),
                 "cost": dict(raw.get("cost") or {}),
+                "network": dict(raw.get("network") or {}),
             }
             slots: dict[str, Any] = self._raw["slots"]
             for name in {*slots, *self._engines}:

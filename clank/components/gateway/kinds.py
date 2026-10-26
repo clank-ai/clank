@@ -30,6 +30,14 @@ class GatewaySettings(Settings):
     port: int = Field(
         18210, ge=1024, le=65535, title="Port", description="Where tools reach the gateway, on this machine only."
     )
+    proxy_port: int = Field(
+        18211,
+        ge=1024,
+        le=65535,
+        title="Proxy port",
+        description="Where the agent's internet requests enter Clank's proxy (design 0024), on this machine only; "
+        "the edge forwards it to the containers.",
+    )
     hold_seconds: int = Field(
         300,
         ge=0,
@@ -79,6 +87,12 @@ class GatewaySettings(Settings):
         256, ge=1, title="Field limit", description="The longest text kept of one field of a request or answer, in KiB."
     )
     keep_days: int = Field(14, ge=1, title="Days kept", description="How many days of requests are kept.")
+    network_days: int = Field(
+        30,
+        ge=1,
+        title="Network days kept",
+        description="How many days of the agent's internet exchanges are kept (logs/network, design 0024 §4).",
+    )
 
 
 class CompletionSettings(Settings):

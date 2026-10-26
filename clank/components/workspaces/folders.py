@@ -39,6 +39,8 @@ from clank.components.workspaces.adapters.platform import ContainerPlatform
 from clank.components.workspaces.kinds import Workspace
 from clank.components.workspaces.sandbox import (
     EDGE_ALIAS,
+    PORTS_LABEL,
+    PROXY_LABEL,
     ContainerSpec,
     edge_spec,
     image_folder,
@@ -189,12 +191,15 @@ class Folders:
             inner = found.inner(name)
             await context.run_blocking(lambda: platform.ensure_network(inner, internal=True, labels=labels))
         async with context.step("edge"):
-            port = self.workspaces.gateway_port()
-            await self._ensure(context, platform, edge_spec(home, tag, gateway_port=port))
+            port, proxy_port = self.workspaces.gateway_port(), self.workspaces.proxy_port()
+            edge = edge_spec(home, tag, gateway_port=port, proxy_port=proxy_port)
+            await self._replace_edge(context, platform, edge)
+            await self._ensure(context, platform, edge)
             await context.run_blocking(platform.join_network, inner, found.edge, EDGE_ALIAS)
         async with context.step("container"):
             cpus, memory_mib = await self._limits(context, platform, workspace)
-            spec = workspace_spec(home, name, folder, image, cpus=cpus, memory_mib=memory_mib)
+            proxy = self.workspaces.proxy_url(name)
+            spec = workspace_spec(home, name, folder, image, cpus=cpus, memory_mib=memory_mib, proxy=proxy)
             await self._ensure(context, platform, spec)
         return {"workspace": name, "folder": folder, "container": spec.name, "image": image}
 
@@ -354,13 +359,36 @@ class Folders:
             what = LAYER_WORDS[layer][0] if layer in LAYER_WORDS else "the sandbox image"
             raise WorkspaceError(f"{what} could not be built (exit {status}): the lines above say why")
 
-    async def _ensure(self, context: OperationContext, platform: ContainerPlatform, spec: ContainerSpec) -> None:
-        """Make the container when it is not there; start it when it is stopped; make it again from a newer image."""
+    async def _replace_edge(self, context: OperationContext, platform: ContainerPlatform, spec: ContainerSpec) -> None:
+        """An edge that forwards other ports than the spec's (one from before the proxy, design 0024 §2) is stopped
+        and removed, so `_ensure` makes it again: every workspace's way to the gateway pauses for the moment."""
         found = await context.run_blocking(platform.container, spec.name)
-        if found is not None and found.image != spec.image and found.state != "running":
-            await context.run_blocking(platform.remove_container, spec.name)
-            context.log(f"{spec.name} was made from {found.image}; it is made again from {spec.image}")
-            found = None
+        wanted = dict(spec.labels).get(PORTS_LABEL, "")
+        if found is None or found.clank.get(PORTS_LABEL, "") == wanted:
+            return
+        if found.state == "running":
+            await context.run_blocking(platform.stop_container, spec.name, 10)
+        await context.run_blocking(platform.remove_container, spec.name)
+        context.log(
+            f"{spec.name} forwarded ports {found.clank.get(PORTS_LABEL) or 'of its own'}; it is made again for {wanted}"
+        )
+
+    async def _ensure(self, context: OperationContext, platform: ContainerPlatform, spec: ContainerSpec) -> None:
+        """Make the container when it is not there; start it when it is stopped; make it again from a newer image, or
+        when it was not told the proxy this one is (its label `clank.proxy`, design 0024 §2)."""
+        found = await context.run_blocking(platform.container, spec.name)
+        wanted_proxy = dict(spec.labels).get(PROXY_LABEL, "")
+        if found is not None and found.state != "running":
+            if found.image != spec.image:
+                await context.run_blocking(platform.remove_container, spec.name)
+                context.log(f"{spec.name} was made from {found.image}; it is made again from {spec.image}")
+                found = None
+            elif found.clank.get(PROXY_LABEL, "") != wanted_proxy:
+                await context.run_blocking(platform.remove_container, spec.name)
+                context.log(
+                    f"{spec.name} was made without the proxy; it is made again, told the proxy on {wanted_proxy}"
+                )
+                found = None
         if found is None:
             await context.run_blocking(platform.run_container, spec)
             context.log(f"{spec.name} made and started")
@@ -369,6 +397,8 @@ class Folders:
             context.log(f"{spec.name} started")
         elif found.image != spec.image:
             context.log(f"{spec.name} runs {found.image}: it is made again from {spec.image} once it is stopped")
+        elif found.clank.get(PROXY_LABEL, "") != wanted_proxy:
+            context.log(f"{spec.name} runs without the proxy: it is made again, told the proxy, once it is stopped")
         else:
             context.log(f"{spec.name} runs")
 

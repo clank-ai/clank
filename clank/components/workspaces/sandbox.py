@@ -42,6 +42,9 @@ WORKSPACE = "/workspace"
 AGENT_HOME = "/home/agent"
 PROCESSES = 1024
 EDGE_ALIAS = "edge"
+PORTS_LABEL = "clank.ports"  # the ports the edge forwards, so a change makes it again (design 0024 §2)
+PROXY_LABEL = "clank.proxy"  # the proxy's port a workspace's container was told, so one told none is made again
+NO_PROXY = "edge,localhost,127.0.0.1"  # what a workspace's container reaches without the proxy
 HOST = "host.docker.internal"
 PROGRAMS = "/opt/clank"  # Clank's programs and instructions, mounted read-only from `image_folder()` (0142)
 EDGE_PROGRAM = f"{PROGRAMS}/edge.py"
@@ -124,13 +127,22 @@ class ContainerSpec:
     programs: str = ""  # the folder of Clank's programs, mounted read-only at `PROGRAMS` (decision 0142)
 
 
-def workspace_spec(home: str, name: str, folder: str, image: str, *, cpus: float, memory_mib: int) -> ContainerSpec:
-    """A workspace's container: its folder at `/workspace`, its home a volume of its own, the internal network only."""
+def workspace_spec(
+    home: str, name: str, folder: str, image: str, *, cpus: float, memory_mib: int, proxy: str = ""
+) -> ContainerSpec:
+    """A workspace's container: its folder at `/workspace`, its home a volume of its own, the internal network only;
+    told the proxy (design 0024 §2: its URL, with the workspace's token) when one is given, the edge and the loopback
+    bypassing it."""
     found = names(home)
+    env = thread_env(cpus)
+    labels = _labels(home, name)
+    if proxy:
+        env += (("HTTP_PROXY", proxy), ("HTTPS_PROXY", proxy), ("ALL_PROXY", proxy), ("NO_PROXY", NO_PROXY))
+        labels += ((PROXY_LABEL, proxy.rsplit(":", 1)[-1].rstrip("/")),)  # the port, never the token
     return ContainerSpec(
         name=found.container(name),
         image=image,
-        labels=_labels(home, name),
+        labels=labels,
         networks=((found.inner(name), ""),),
         command=("sleep", "infinity"),
         binds=((folder, WORKSPACE),),
@@ -138,7 +150,7 @@ def workspace_spec(home: str, name: str, folder: str, image: str, *, cpus: float
         workdir=WORKSPACE,
         cpus=cpus,
         memory_mib=memory_mib,
-        env=thread_env(cpus),
+        env=env,
         programs=str(image_folder()),
     )
 
@@ -166,16 +178,18 @@ def setup_spec(
     )
 
 
-def edge_spec(home: str, image: str, *, gateway_port: int) -> ContainerSpec:
+def edge_spec(home: str, image: str, *, gateway_port: int, proxy_port: int) -> ContainerSpec:
     """The edge: on the network that reaches the host (each workspace's own it joins as `edge` when it opens); it
-    forwards the gateway's port to the host's and nothing else."""
+    forwards the gateway's port and the proxy's (design 0024 §2) to the host's and nothing else. Its label
+    `clank.ports` names the ports, so an edge forwarding others is made again (`folders.py`)."""
     found = names(home)
+    ports = (gateway_port, proxy_port)
     return ContainerSpec(
         name=found.edge,
         image=image,
-        labels=_labels(home, "edge"),
+        labels=(*_labels(home, "edge"), (PORTS_LABEL, ",".join(str(port) for port in ports))),
         networks=((found.outer, ""),),
-        command=("python3", EDGE_PROGRAM, str(gateway_port), HOST, str(gateway_port)),
+        command=("python3", EDGE_PROGRAM, *(part for port in ports for part in (str(port), HOST, str(port)))),
         cpus=0.5,
         memory_mib=128,
         processes=64,

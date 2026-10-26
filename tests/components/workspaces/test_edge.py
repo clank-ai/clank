@@ -1,7 +1,7 @@
 """Design 0004 §3: the edge's program forwards one port to one target and nothing else: a request sent whole through it
 gets its answer back (the target still writes after the request side is done), a streamed answer comes piece by
-piece, and a connection the target refuses is closed at once. It runs as the program it is in the image (the same
-file), here on this machine."""
+piece, and a connection the target refuses is closed at once. Design 0024 §2: several ports, each to its own target
+(the gateway's and the proxy's). It runs as the program it is in the image (the same file), here on this machine."""
 
 import socket
 import subprocess
@@ -92,3 +92,30 @@ def test_a_connection_the_target_refuses_is_closed_at_once() -> None:
         process.wait(30)
         assert process.stdout is not None
         process.stdout.close()
+
+
+def test_the_edge_forwards_several_ports_each_to_its_own_target(target: int) -> None:
+    second = ThreadingHTTPServer(("127.0.0.1", 0), Answer)
+    threading.Thread(target=second.serve_forever, daemon=True).start()
+    first_listen, second_listen = free_port(), free_port()
+    program = str(image_folder() / "edge.py")
+    process = subprocess.Popen(
+        [sys.executable, "-B", program, str(first_listen), "127.0.0.1", str(target), str(second_listen), "127.0.0.1",
+         str(second.server_port)], stdout=subprocess.PIPE,
+    )  # fmt: skip
+    try:
+        assert process.stdout is not None
+        said = {process.stdout.readline().strip() for _ in range(2)}
+        assert said == {
+            f"edge: port {first_listen} goes to 127.0.0.1:{target}".encode(),
+            f"edge: port {second_listen} goes to 127.0.0.1:{second.server_port}".encode(),
+        }, "it says each pair once it listens"
+        assert ask(first_listen, b"one").endswith(b"got:one:done")
+        assert ask(second_listen, b"two").endswith(b"got:two:done")
+    finally:
+        process.kill()
+        process.wait(30)
+        assert process.stdout is not None
+        process.stdout.close()
+        second.shutdown()
+        second.server_close()

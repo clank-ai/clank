@@ -1,7 +1,9 @@
 """Design 0004 §1 and design 0002 §2.15: `clank workspace open [FOLDER]` (this folder unless one is named) follows the
 operation and says where its container runs; `clank workspace list` shows each workspace with its container's state;
 `clank workspace stop [NAME]` (this folder's workspace unless one is named) and `clank workspace remove NAME` follow
-theirs; the routes start the operations and list the workspaces."""
+theirs; the routes start the operations and list the workspaces. Design 0024 §1: `clank workspace allow FOLDER --host
+NAME` names a host the workspace's agent may reach through Clank's proxy (`--no-host` takes it back), kept in its
+record with when and how, carried to the gateway's routes, and recorded."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -116,3 +118,31 @@ def test_the_routes_list_the_workspaces_with_their_containers_state(
     assert row["container"] == names(kernel.home.id).container("notes")
     platform.state = "stopped"
     assert http.get("/api/v1/workspaces", headers=auth).json()[0]["state"] == "Docker is stopped"
+
+
+def test_the_allow_command_names_the_hosts_a_workspaces_agent_may_reach(
+    kernel: Kernel, http: TestClient, platform: FakePlatform, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    folder = tmp_path / "paper"
+    folder.mkdir()
+    monkeypatch.chdir(folder)
+    assert run("workspace", "open", "--yes").exit_code == 0
+    allowed = run("workspace", "allow", str(folder), "--host", "pypi.org", "--host", ".arxiv.org")
+    assert allowed.exit_code == 0, allowed.output
+    assert "paper: its agent may reach .arxiv.org, pypi.org" in allowed.output
+    hosts = kernel.settings.get("workspace", "paper").record.model_dump()["hosts"]
+    assert sorted(hosts) == [".arxiv.org", "pypi.org"]
+    assert all("allowed" in how and "cli" in how for how in hosts.values()), "each with when and how"
+    assert http.get("/api/v1/gateway/routes").json()["network"]["paper"]["hosts"] == [".arxiv.org", "pypi.org"]
+    assert http.get("/api/v1/workspaces/folder", params={"folder": str(folder)}).json()["hosts"] == hosts
+    taken = run("workspace", "allow", str(folder), "--no-host", "pypi.org")
+    assert taken.exit_code == 0, taken.output
+    assert "paper: its agent may reach .arxiv.org" in taken.output
+    assert list(kernel.settings.get("workspace", "paper").record.model_dump()["hosts"]) == [".arxiv.org"]
+    events = kernel.events.after(0, types=["workspaces.host_allowed"])
+    assert [(event.data["host"], event.data["allowed"]) for event in events] == [
+        ("pypi.org", True), (".arxiv.org", True), ("pypi.org", False),
+    ]  # fmt: skip
+    none = run("workspace", "allow", str(folder))
+    assert none.exit_code != 0
+    assert "--cloud, --local, --host or --no-host" in none.output

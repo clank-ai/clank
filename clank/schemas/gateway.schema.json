@@ -29,6 +29,14 @@
       "title": "Port",
       "type": "integer"
     },
+    "proxy_port": {
+      "default": 18211,
+      "description": "Where the agent's internet requests enter Clank's proxy (design 0024), on this machine only; the edge forwards it to the containers.",
+      "maximum": 65535,
+      "minimum": 1024,
+      "title": "Proxy port",
+      "type": "integer"
+    },
     "hold_seconds": {
       "default": 300,
       "description": "How long a request waits, in seconds, for a slot that is starting or switching, before refusal.",
@@ -94,6 +102,13 @@
       "description": "How many days of requests are kept.",
       "minimum": 1,
       "title": "Days kept",
+      "type": "integer"
+    },
+    "network_days": {
+      "default": 30,
+      "description": "How many days of the agent's internet exchanges are kept (logs/network, design 0024 §4).",
+      "minimum": 1,
+      "title": "Network days kept",
       "type": "integer"
     }
   },

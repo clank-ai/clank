@@ -88,6 +88,7 @@ client may notify the owner of it, its summary the title.
 | `settings.invalid` | kept | A settings file could not be read; the last good values stay in force until it is fixed. | `file`: The file.; `line`: The line of the problem, when known.; `field`: The field, when known.; `message`: What is wrong. |
 | `settings.migrated` | kept | A settings file written by an older Clank was brought to the current version; its original is kept. | `kind`: The kind of record.; `id`: The record.; `file`: The file.; `from`: The version it was written in.; `to`: The version it is now.; `original`: Where the original was kept. |
 | `workspaces.cloud_answered` | kept | A workspace was allowed the cloud model, or kept on this machine (design 0016 §9). | `workspace`: The workspace.; `models`: Its bound now: this-machine or cloud.; `who`: Who answered. |
+| `workspaces.host_allowed` | kept | A host was allowed to a workspace's agent through Clank's proxy, or taken back (design 0024 §1). | `workspace`: The workspace.; `host`: The host: a name, or a suffix starting with a dot.; `allowed`: True when allowed, false when taken back.; `who`: Who did it. |
 
 ## gateway
 

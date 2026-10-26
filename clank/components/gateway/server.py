@@ -94,6 +94,7 @@ from clank.components.gateway.keys import Keys
 from clank.components.gateway.kinds import GatewaySettings
 from clank.components.gateway.loops import LoopGuard
 from clank.components.gateway.marks import LocalMarks, held_back, local_calls, whose
+from clank.components.gateway.proxy import NetworkLog, Proxy, network_token
 from clank.components.gateway.records import TrafficLog
 from clank.components.gateway.routing import NO_KEY, Routes, SlotRoute
 from clank.components.gateway.sessions import session_of
@@ -241,6 +242,7 @@ def create_gateway(
     marks: LocalMarks | None = None,
     spool: Spool | None = None,
     agents: Forward | None = None,
+    proxy: Proxy | None = None,
 ) -> FastAPI:
     """The gateway's application, over its routes, its settings and its records (None: none kept); `wake` asks the
     service for a role loaded on demand, and says why not when it is not loaded ("" when it is being); `notion`
@@ -251,7 +253,8 @@ def create_gateway(
     a workspace not yet answered wants the cloud model (design 0016 §9), which asks its question; `marks` are the
     sessions that used local-only content (design 0016 §10), kept from the cloud; `spool` keeps each cloud request
     that ended, with its cost, until the service takes it (design 0016 §12); `agents` forwards the agent's request to
-    open files for the owner (`agents_forwarder`, design 0018 §7)."""
+    open files for the owner (`agents_forwarder`, design 0018 §7); `proxy` is the agent's way to the internet (design
+    0024 §2), served on the settings' `proxy_port` with the application, and stopped with it."""
     clients: dict[str, httpx2.AsyncClient] = {}
     activity = Activity(generation=routes.generation)
     holds = holds if holds is not None else Holds()
@@ -272,9 +275,21 @@ def create_gateway(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         clients["engine"] = httpx2.AsyncClient(timeout=httpx2.Timeout(None, connect=10))
         clients["cloud"] = httpx2.AsyncClient(timeout=httpx2.Timeout(CLOUD_READ_SECONDS, connect=CLOUD_CONNECT_SECONDS))
+        proxied = None
+        if proxy is not None:
+            try:
+                proxied = await proxy.serve("127.0.0.1", settings.proxy_port)
+            except OSError as error:  # the port is taken: the gateway serves its models all the same, said in its log
+                logging.getLogger(__name__).warning(
+                    "the agent's proxy could not listen on port %d (%s): the agent reaches no host until the gateway "
+                    "starts again with a free proxy_port", settings.proxy_port, error,
+                )  # fmt: skip
         try:
             yield
         finally:
+            if proxied is not None:
+                proxied.close()
+                await proxied.wait_closed()
             await clients["engine"].aclose()
             await clients["cloud"].aclose()
 
@@ -1602,6 +1617,12 @@ def main(argv: list[str] | None = None) -> int:
     marks = LocalMarks(home.state / MARKS_FILE)  # so do the sessions kept from the cloud (design 0016 §10)
     spool = Spool(home.state)  # and the cloud requests the service has not taken yet (design 0016 §12)
     routes.followed = True  # what the service says now decides a cloud request (design 0016 §9)
+    local = local_token(home)
+    proxy = Proxy(  # the agent's way to the internet (design 0024 §2), by the routes' allowances
+        hosts=routes.hosts_of,
+        token_of=lambda workspace: network_token(local, workspace),
+        log=NetworkLog(home.logs / "network", settings.network_days),
+    )
     app = create_gateway(
         routes,
         settings,
@@ -1610,11 +1631,12 @@ def main(argv: list[str] | None = None) -> int:
         notion,
         flows,
         holds,
-        local_token(home),
+        local,
         ask_cloud=ask_cloud,
         marks=marks,
         spool=spool,
         agents=agents,
+        proxy=proxy,
     )
     from clank.kernel.service import server_config
 
