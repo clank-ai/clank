@@ -1,8 +1,8 @@
 # 0136. The board's canvas is Clank's own
 
-- Status: Proposed (with design 0022, 2026-10-26)
+- Status: Accepted (with design 0022, approved by the owner on 2026-10-26)
 - Date: 2026-10-26
-- Decided by: Claude (proposed; the owner approves design 0022)
+- Decided by: Claude, with design 0022 the owner approved
 
 ## Context
 

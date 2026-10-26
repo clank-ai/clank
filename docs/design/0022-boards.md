@@ -8,20 +8,24 @@ things around on the board and to annotate things and ask the model to place cer
 
 An artifact (§5 of design 0021) is a page the agent makes and the owner comments on. A board is a place both work on:
 the agent puts figures, LaTeX and notes on it, the owner moves them, annotates them, and asks for more, in VS Code,
-on this PC. Proposed 2026-10-26; drawn on the design canvas, page "Boards".
+on this PC. Proposed 2026-10-26, drawn on the design canvas (page "Boards"), and approved the same day: "I will
+step away from the computer so that you can begin building the board. Note that this board needs to be fleshed out
+some more while you are building it, so while you are testing things I want you to take the liberty to make any
+functional design choices that I could use". The choices made while building are recorded in the sections they
+change, each marked as added while building.
 
 ## Sections
 
 | § | Section | Status |
 | --- | --- | --- |
-| 1 | A board is a file in the folder | Proposed 2026-10-26 |
-| 2 | What a board holds | Proposed 2026-10-26 |
-| 3 | The owner on the board | Proposed 2026-10-26 |
-| 4 | The agent on the board | Proposed 2026-10-26 |
-| 5 | Asking the agent about the board | Proposed 2026-10-26 |
-| 6 | LaTeX on the board | Proposed 2026-10-26 |
-| 7 | A board's figures out: export | Proposed 2026-10-26 |
-| 8 | Order of work | Proposed 2026-10-26 |
+| 1 | A board is a file in the folder | Approved 2026-10-26 |
+| 2 | What a board holds | Approved 2026-10-26 |
+| 3 | The owner on the board | Approved 2026-10-26 |
+| 4 | The agent on the board | Approved 2026-10-26 |
+| 5 | Asking the agent about the board | Approved 2026-10-26 |
+| 6 | LaTeX on the board | Approved 2026-10-26 |
+| 7 | A board's figures out: export | Approved 2026-10-26 |
+| 8 | Order of work | Approved 2026-10-26 |
 
 ## 1. A board is a file in the folder
 

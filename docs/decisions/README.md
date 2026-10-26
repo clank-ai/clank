@@ -143,7 +143,7 @@ and use the template below.
 | [0133](0133-the-manim-layer-and-its-packages.md) | The Manim layer and its packages: Manim, Manim Slides, manim-voiceover and a local Kokoro voice | Proposed (with design 0019) | 2026-10-23 |
 | [0134](0134-the-tex-layer.md) | The TeX layer: TeX Live from Ubuntu's packages, in an image layer on the sandbox image | Accepted (with design 0020) | 2026-10-25 |
 | [0135](0135-the-artifact-libraries.md) | The artifact libraries: Plotly, KaTeX, marked and Mermaid, pinned, kept in Clank | Accepted (with design 0021) | 2026-10-25 |
-| [0136](0136-the-board-canvas-is-clanks-own.md) | The board's canvas is Clank's own: no whiteboard library (tldraw, Excalidraw, Fabric.js), no new dependency | Proposed (with design 0022) | 2026-10-26 |
+| [0136](0136-the-board-canvas-is-clanks-own.md) | The board's canvas is Clank's own: no whiteboard library (tldraw, Excalidraw, Fabric.js), no new dependency | Accepted (with design 0022) | 2026-10-26 |
 
 ## Template
 
