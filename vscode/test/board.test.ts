@@ -14,6 +14,9 @@ import {
   type BoardItem,
   applyOps,
   askMessage,
+  fillMessage,
+  overWords,
+  pinsMessage,
   movers,
   moveOps,
   newItem,
@@ -114,4 +117,23 @@ test("what the owner selects is named for the agent by id and what it shows", ()
       '(LaTeX "A(f) = \\frac{F_0}{x}"):\n\nPut the equation under the plot.\n\n' +
       "Read the board with board_read first, and change it with board_add, board_update and board_remove.",
   );
+});
+
+test("a slot to fill and the open pins are each a message naming what the agent works on", () => {
+  assert.equal(
+    fillMessage("figures/fig3.board", BOARD, "slot-3"),
+    'On the board figures/fig3.board, fill the slot slot-3 ("phase"): make the figure it names from the folder\'s ' +
+      'data (a script, or a job if it runs long), then place it with board_add(board="figures/fig3.board", ' +
+      'kind="figure", file=..., at={"slot": "slot-3"}). It takes the slot\'s place and size.\n\n' +
+      "Read the board with board_read first, and change it with board_add, board_update and board_remove.",
+  );
+  assert.equal(
+    pinsMessage("figures/fig3.board", BOARD),
+    "On the board figures/fig3.board, the owner pinned comments:\n" +
+      '- pin-7, on the lower right of fig-1: "Mark Q"\n\n' +
+      "Do what each asks, then close it with board_update(id=..., open=false).\n\n" +
+      "Read the board with board_read first, and change it with board_add, board_update and board_remove.",
+  );
+  assert.equal(overWords(BOARD, 260, 125), "the upper middle of fig-1");
+  assert.equal(overWords(BOARD, 2000, 2000), "the board");
 });

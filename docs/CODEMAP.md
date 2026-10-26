@@ -354,10 +354,12 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/host/suite.ts` | Design 0002 §3.2 and decision 0029: inside a real VS Code, the extension activates and registers every command its |
 | `vscode/src/agentPanel.ts` | The agent panel in VS Code (design 0021 §4): a webview tab in the agent's group, beside OpenCode's terminal, on the |
 | `vscode/src/artifacts.ts` | Artifacts in VS Code (design 0021 §5): a webview panel per artifact, in the files' group, showing a version's page as |
+| `vscode/src/boardEditor.ts` | The board editor in VS Code (design 0022 §1, §3, §5): a custom text editor for `*.board` files, so a board is a |
 | `vscode/src/comments.ts` | Comments for the agent on LaTeX files (design 0020 §11), in VS Code: a comment controller on every .tex file of the |
 | `vscode/src/core/agent.ts` | Starting the agent beside the files (design 0004 §5): for the folder Clank's VS Code window has open, the folder's |
 | `vscode/src/core/annotate.ts` | Sending a figure the owner marked up (design 0008 §5-§6): what the annotator page sends, passed to the service |
 | `vscode/src/core/artifacts.ts` | Artifacts in VS Code (design 0021 §5): the service's `agents.artifact_made` read (`artifactMade`), and a page made |
+| `vscode/src/core/board.ts` | The board editor's pure core (design 0022 §2-§3): a board read from its file and written back in the same shape |
 | `vscode/src/core/client.ts` | The extension's client of the Clank API (design 0002 §2.7, §2.14). Every call carries the local token and names the |
 | `vscode/src/core/comments.ts` | Comments on the LaTeX source (design 0020 §11): VS Code's comment threads on lines of .tex files, sent to the agent |
 | `vscode/src/core/completion.ts` | Completion in VS Code (design 0006 §5): gray text after the cursor, from the model in the fast slot, through the |
@@ -383,6 +385,8 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/agent.test.ts` | Design 0004 §5: in Clank's VS Code window the agent starts beside the files: for the folder the window has open, |
 | `vscode/test/annotator.page.test.ts` | Design 0008 §6, in a real browser: the annotator page (media/annotator.html, as VS Code's webview shows it) in |
 | `vscode/test/artifacts.test.ts` | Design 0021 §5: artifacts in VS Code. The service's `agents.artifact_made` names the workspace, its folder on this |
+| `vscode/test/board.page.test.ts` | Design 0022 §3, in a real browser: the board's page (media/board.html, as VS Code's board editor shows it, with the |
+| `vscode/test/board.test.ts` | Design 0022 §2-§3: the board editor's pure core. A board is read from its file and written back in the same shape; |
 | `vscode/test/browser.ts` | Headless Edge for the tests of the extension's pages (the annotator, the Notion review): a page opened from a file and |
 | `vscode/test/client.test.ts` | Design 0002 §2.7 and §2.14: the extension's client sends the local token and names itself `vscode` on every call, |
 | `vscode/test/comments.test.ts` | Design 0020 §11: comments on lines of LaTeX files are sent to the agent together, each with its file (from the |

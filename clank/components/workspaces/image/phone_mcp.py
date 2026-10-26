@@ -237,7 +237,7 @@ _AT = {
     ),
 }
 _BOARD = {"type": "string", "description": "The board: its name (fig3) or its path in the folder (figures/fig3.board)."}
-BOARD_FIELDS = ("file", "caption", "source", "mode", "text", "label", "name", "around", "from", "to", "w", "h")
+BOARD_FIELDS = ("file", "caption", "source", "mode", "text", "label", "name", "around", "from", "to", "w", "h", "open")
 BOARD_TOOLS = [
     {
         "name": "board_new",
@@ -295,13 +295,14 @@ BOARD_TOOLS = [
         "name": "board_update",
         "description": (
             "Change an item of a board: its caption, source, text, label, name, file or size, and move it with `at` "
-            "(as board_add takes it). Returns what changed."
+            "(as board_add takes it); close a pin you dealt with (open false). Returns what changed."
         ),
         "inputSchema": {"type": "object", "properties": {
             "board": _BOARD, "id": {"type": "string", "description": "The item, as board_read names it."},
             "file": {"type": "string"}, "caption": {"type": "string"}, "source": {"type": "string"},
             "mode": {"type": "string", "enum": ["math", "compiled"]}, "text": {"type": "string"},
-            "label": {"type": "string"}, "name": {"type": "string"}, "w": {"type": "number"}, "at": _AT,
+            "label": {"type": "string"}, "name": {"type": "string"}, "w": {"type": "number"},
+            "open": {"type": "boolean", "description": "false closes a pin you dealt with."}, "at": _AT,
         }, "required": ["board", "id"]},
         "annotations": {"readOnlyHint": False},
     },

@@ -307,3 +307,34 @@ const TOOLS_SAID = "Read the board with board_read first, and change it with boa
 export function askMessage(path: string, board: Board, ids: string[], text: string): string {
   return `On the board ${path}, about ${namedItems(board, ids)}:\n\n${text.trim()}\n\n${TOOLS_SAID}`;
 }
+
+/** Where a point is on the board, in words: on the upper left ... center ... lower right of the topmost item there
+ * (frames aside), as the service says it to the model; else "the board". */
+export function overWords(board: Board, x: number, y: number): string {
+  for (const item of [...board.items].reverse()) {
+    const box = SOLID.has(item.kind) ? boxOf(item) : undefined;
+    if (!box || x < box.x || x > box.x + box.w || y < box.y || y > box.y + box.h) continue;
+    const across = (x - box.x) / Math.max(box.w, 1);
+    const down = (y - box.y) / Math.max(box.h, 1);
+    const row = down < 1 / 3 ? "upper" : down > 2 / 3 ? "lower" : "middle";
+    const column = across < 1 / 3 ? "left" : across > 2 / 3 ? "right" : "middle";
+    return `the ${row === "middle" && column === "middle" ? "center" : `${row} ${column}`} of ${item.id}`;
+  }
+  return "the board";
+}
+
+/** The message that asks the agent to fill a slot the owner drew. */
+export function fillMessage(path: string, board: Board, id: string): string {
+  const slot = board.items.find((each) => each.id === id);
+  return `On the board ${path}, fill the slot ${id} ("${String(slot?.label ?? "a figure")}"): make the figure it names ` +
+    `from the folder's data (a script, or a job if it runs long), then place it with board_add(board="${path}", ` +
+    `kind="figure", file=..., at={"slot": "${id}"}). It takes the slot's place and size.\n\n${TOOLS_SAID}`;  // prettier-ignore
+}
+
+/** The message that sends the agent every open pin, each by what it is on. */
+export function pinsMessage(path: string, board: Board): string {
+  const pins = board.items.filter((each) => each.kind === "pin" && each.open !== false);
+  const lines = pins.map((pin) => `- ${pin.id}, on ${overWords(board, pin.x ?? 0, pin.y ?? 0)}: "${String(pin.text ?? "")}"`);
+  return `On the board ${path}, the owner pinned comments:\n${lines.join("\n")}\n\n` +
+    `Do what each asks, then close it with board_update(id=..., open=false).\n\n${TOOLS_SAID}`;  // prettier-ignore
+}

@@ -38,6 +38,7 @@ import type { Question } from "./core/kinds";
 import type { Choice, Presenter } from "./core/presenter";
 import { AgentPanel } from "./agentPanel";
 import { ArtifactPanels } from "./artifacts";
+import { BoardEditor, newBoard } from "./boardEditor";
 import type { ArtifactMade } from "./core/artifacts";
 import { FIGURE_EDITOR, FigureEditor } from "./figures";
 import { closeEmptyGroups, isReadoutGroup, ReadoutPanel } from "./readout";
@@ -752,6 +753,10 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
     vscode.commands.registerCommand("clank.showReadout", () => readout.show()),
     vscode.commands.registerCommand("clank.showAgentPanel", () => agentPanel.show()),
     agentPanel,
+    BoardEditor.register(context.extensionUri, {
+      tell: (text) => agentPanel.tell(text), info: (text) => presenter.info(text), warn: (text) => presenter.warn(text),
+    }),
+    vscode.commands.registerCommand("clank.newBoard", () => newBoard((text) => presenter.warn(text))),
     vscode.window.registerUriHandler({
       // vscode://clank.clank/agent-panel opens the agent panel in front (for scripts and Clank's other clients)
       handleUri: (uri) => (uri.path === "/agent-panel" ? agentPanel.show() : undefined),

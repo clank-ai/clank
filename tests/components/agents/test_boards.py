@@ -218,3 +218,14 @@ def test_clank_board_makes_lists_and_shows_a_folders_boards(
     assert "Made figures/fig3.board" in made.output
     assert "figures/fig3.board  Figure 3  (1 item)" in listed.output
     assert "fig-1: figure figures/amp.png" in shown.output
+
+
+def test_the_agent_closes_a_pin_it_dealt_with(kernel: Kernel, folder: Path) -> None:
+    boards = boards_of(kernel)
+    boards.new("resonance", "fig3", folder="figures")
+    board = on_disk(folder)
+    board["items"].append({"id": "pin-1", "kind": "pin", "x": 10, "y": 10, "text": "Mark Q", "open": True})
+    (folder / "figures" / "fig3.board").write_text(json.dumps(board), encoding="utf-8")
+    boards.update("resonance", "fig3", "pin-1", {"open": False})
+    assert on_disk(folder)["items"][0]["open"] is False
+    assert 'pin-1: a pin on the board, answered: "Mark Q"' in boards.describe("resonance", "fig3")

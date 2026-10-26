@@ -2,7 +2,7 @@
   "name": "clank",
   "displayName": "Clank",
   "description": "Clank in VS Code: the service and Docker in the status bar, the questions Clank asks you, the agent beside your files, each change it makes for you to review, completion as you type, figures to mark up for the agent, the agent's proposals for your Notion to review, and the gates of your flows.",
-  "version": "0.9.9",
+  "version": "0.10.0",
   "publisher": "clank",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -17,7 +17,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCustomEditor:clank.board"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -70,6 +71,11 @@
       {
         "command": "clank.showAgentPanel",
         "title": "Show the agent panel",
+        "category": "Clank"
+      },
+      {
+        "command": "clank.newBoard",
+        "title": "New board",
         "category": "Clank"
       },
       {
@@ -188,8 +194,14 @@
         },
         "clank.agentPanel.theme": {
           "type": "string",
-          "enum": ["vscode", "clank-night"],
-          "enumDescriptions": ["The colors of the window's VS Code theme, whichever it is", "Clank Night: the colors of Clank's console"],
+          "enum": [
+            "vscode",
+            "clank-night"
+          ],
+          "enumDescriptions": [
+            "The colors of the window's VS Code theme, whichever it is",
+            "Clank Night: the colors of Clank's console"
+          ],
           "default": "vscode",
           "description": "The agent panel's colors: the window's VS Code theme, or one of Clank's."
         },
@@ -311,6 +323,16 @@
           }
         ],
         "priority": "option"
+      },
+      {
+        "viewType": "clank.board",
+        "displayName": "Clank board",
+        "selector": [
+          {
+            "filenamePattern": "*.board"
+          }
+        ],
+        "priority": "default"
       }
     ],
     "viewsContainers": {

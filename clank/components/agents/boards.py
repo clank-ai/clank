@@ -444,7 +444,18 @@ class Boards:
         item = next((each for each in items if each.get("id") == id), None)
         if item is None:
             raise BoardError(f"there is no item {id} on the board")
-        allowed = {"caption", "source", "mode", "text", "label", "name", "file", "w", "h"}
+        allowed = {
+            "caption",
+            "source",
+            "mode",
+            "text",
+            "label",
+            "name",
+            "file",
+            "w",
+            "h",
+            "open",
+        }  # open: a pin dealt with
         unknown = sorted(set(changes) - allowed)
         if unknown:
             raise BoardError(f"an item's {', '.join(unknown)} cannot be changed: change {', '.join(sorted(allowed))}")

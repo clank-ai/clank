@@ -111,6 +111,25 @@ export class AgentPanel implements vscode.Disposable {
     return this.conversation?.session?.id ?? "";
   }
 
+  /** Send the agent a message from elsewhere in the window (a board's question, design 0022 §5): to the session the
+   * panel shows, or a new one, as a message written in the panel would go; the panel is then shown beside it. */
+  async tell(text: string): Promise<void> {
+    const client = this.host.connect();
+    const folder = this.folder();
+    if (!client || !folder) {
+      this.host.warn("the Clank service does not run: `clank serve --background` starts it");
+      return;
+    }
+    const found =
+      this.conversation ?? (await client.get<Conversation>("agents/conversation", { folder, session: this.pinned, limit: 1 }));
+    if (!found.workspace) {
+      this.host.warn("this folder has no Clank workspace: open it with `clank code` first");
+      return;
+    }
+    await this.send(client, found.workspace, found.session, text);
+    await this.show(false);
+  }
+
   /** Open the panel in the agent's group (else beside), or bring it forward; `focus` false leaves the keyboard where
    * it is and the agent's terminal in front. */
   async show(focus = true): Promise<void> {
