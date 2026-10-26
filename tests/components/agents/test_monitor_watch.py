@@ -8,6 +8,7 @@ that ended; what a burst changes many times is said once, with its last state, a
 what came before it; the text as it is written comes only for the sessions the service says are shown, joined per
 part. The review's lines, and the questions, their answers and an instance that ended, still come at once, after what
 the burst held. A stream opened again (OpenCode's instance started again) says idle for a session that no longer runs.
+Design 0023 §2: a followed session's parts come whole, with their text as it is written; the others stay brief.
 """
 
 import json
@@ -338,5 +339,81 @@ def test_a_shown_sessions_text_comes_as_it_is_written_joined_per_part_and_no_oth
             assert watching.until("shown")[-1]["sessions"] == []
             fake.replay("a step")
             assert "delta" not in [line["type"] for line in watching.burst()]
+        finally:
+            assert watching.end() == 0
+
+
+def test_a_followed_sessions_parts_come_whole_with_their_text_as_it_is_written_and_others_cut() -> None:
+    """Design 0023 §2: the mirror keeps whole parts for the sessions clients follow; the rest stay brief."""
+    long_text = "x" * 7_000
+    long_output = "y" * 3_000
+    part_event = {
+        "type": "message.part.updated",
+        "properties": {
+            "sessionID": "ses_plan",
+            "part": {
+                "id": "prt_long",
+                "sessionID": "ses_plan",
+                "messageID": "msg_06",
+                "type": "text",
+                "text": long_text,
+            },
+        },
+    }
+    tool_event = {"type": "message.part.updated", "properties": {"sessionID": "ses_plan", "part": {
+        "id": "prt_tool", "sessionID": "ses_plan", "messageID": "msg_06", "type": "tool", "tool": "bash",
+        "callID": "call_long", "state": {"status": "completed", "title": "ls", "input": {"command": "ls"},
+                                         "output": long_output, "time": {"start": 1, "end": 2}}}}}  # fmt: skip
+    with FakeOpenCode() as fake:
+        watching = Watching(f"{fake.port}-{fake.port}")
+        try:
+            watching.until("synced")
+            fake.feed(part_event, tool_event)
+            parts = {line["part"]["id"]: line["part"] for line in watching.burst() if line["type"] == "part"}
+            assert len(parts["prt_long"]["text"]) < 7_000, "cut, as the Monitor reads it"
+            assert parts["prt_long"]["length"] == 7_000
+            assert "whole" not in parts["prt_long"]
+            assert len(parts["prt_tool"]["output"]) < 3_000
+            watching.tell({"followed": ["ses_plan"]})
+            assert watching.until("followed")[-1] == {"type": "followed", "sessions": ["ses_plan"]}
+            fake.feed(
+                part_event,
+                tool_event,
+                {
+                    "type": "message.part.delta",
+                    "properties": {
+                        "sessionID": "ses_plan",
+                        "messageID": "msg_06",
+                        "partID": "prt_long",
+                        "field": "text",
+                        "delta": "z",
+                    },
+                },
+            )
+            lines = watching.burst()
+            parts = {line["part"]["id"]: line["part"] for line in lines if line["type"] == "part"}
+            assert parts["prt_long"]["text"] == long_text
+            assert parts["prt_long"]["whole"] is True
+            assert parts["prt_tool"]["output"] == long_output
+            assert [line["text"] for line in lines if line["type"] == "delta"] == ["z"], "its text as it is written too"
+            fake.feed(
+                {
+                    "type": "message.part.updated",
+                    "properties": {
+                        "sessionID": "ses_child",
+                        "part": {
+                            "id": "prt_other",
+                            "sessionID": "ses_child",
+                            "messageID": "msg_c1",
+                            "type": "text",
+                            "text": long_text,
+                        },
+                    },
+                }
+            )
+            [other] = [line["part"] for line in watching.burst() if line["type"] == "part"]
+            assert len(other["text"]) < 7_000, "a session not followed stays brief"
+            watching.tell({"followed": []})
+            assert watching.until("followed")[-1]["sessions"] == []
         finally:
             assert watching.end() == 0

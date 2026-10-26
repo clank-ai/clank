@@ -7,7 +7,7 @@ runs each; a note, a stop, a reject, a compaction, a clear, a revert and an unre
 carried the session's run and no other, each recorded as `agents.acted`; a session no watcher saw goes to the port a
 client names; a server gone leaves its sessions unplaced, and so does a watcher started again that no longer follows
 it; listeners hear every line, once the review has handled it; the sessions shown are told to the watch, and told again
-to a watch started again.
+to a watch started again. Design 0023 §2: the sessions followed are told the same way.
 """
 
 import subprocess
@@ -221,3 +221,22 @@ def test_the_sessions_shown_are_told_to_the_watch_and_told_again_when_it_starts_
     heard.clear()
     watchers._watching["paper"].stop()  # the watch ends, as when its exec breaks off
     until(lambda: (watchers.keep(), {"type": "shown", "sessions": ["ses_plan"]} in heard)[1], seconds=20)
+
+
+def test_the_sessions_followed_are_told_to_the_watch_and_told_again_when_it_starts_again(
+    kernel: Kernel, servers: list[FakeOpenCode], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Design 0023 §2: a followed session's parts come whole; the watch is told as it is told the sessions shown."""
+    window, flow = servers
+    sessions = watched(kernel, tmp_path, f"{window.port}-{flow.port}", monkeypatch)
+    heard: list[dict[str, Any]] = []
+    sessions.listen(lambda workspace, line: heard.append(line))
+    watchers = kernel.parts["agents"].review.watchers
+    watchers.follow("paper", ["ses_plan"])
+    until(lambda: {"type": "followed", "sessions": ["ses_plan"]} in heard)
+    flow.replay("a step")
+    parts = until(lambda: [line for line in heard if line["type"] == "part" and line["part"].get("whole")])
+    assert parts[0]["session"] == "ses_plan"
+    heard.clear()
+    watchers._watching["paper"].stop()  # the watch ends, as when its exec breaks off
+    until(lambda: (watchers.keep(), {"type": "followed", "sessions": ["ses_plan"]} in heard)[1], seconds=20)

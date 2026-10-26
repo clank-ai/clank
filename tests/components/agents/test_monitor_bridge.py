@@ -1,6 +1,6 @@
 """Design 0012 §3, §5.1, §6.1 and §9 (§11 step 4) and design 0013 §5 and §7: the bridge the Monitor and flows need,
 run on this machine against a fake OpenCode server replaying a synthetic session's events
-(`tests/fixtures/opencode/1.19.0/session.json`).
+(`tests/fixtures/opencode/1.19.0/session.json`). Design 0023 §2: a page read whole, for the mirror.
 
 The bridge pages through a session's messages, each part in the one shape its watch also uses; a message keeps the
 session's agent and model; it rejects what waits in a session and its subagents (going on past what was answered
@@ -25,6 +25,7 @@ import pytest
 from clank.components.workspaces.sandbox import image_folder
 from clank.kernel.processes import background_flags
 from tests.fakes.opencode import FakeOpenCode
+from tests.support.flowlines import step, text
 
 BRIDGE = image_folder() / "bridge.py"
 LINE = "a line of output" + chr(10)  # 17 characters
@@ -304,3 +305,33 @@ def test_a_steps_error_keeps_its_name_so_a_stop_tells_apart_from_a_failure() -> 
     assert (failed["error"], failed["error_name"]) == ("The engine broke off", "APIError")
     assert module.seen_message(step)["error_name"] == ""
     assert "error_name" not in module.seen_message({**step, "role": "user"}), "the owner's message has no error"
+
+
+def test_a_page_read_whole_carries_each_parts_text_and_output_uncut() -> None:
+    """Design 0023 §2: the mirror's history is read whole, once."""
+    with FakeOpenCode() as fake:
+        port = str(fake.port)
+        with fake.store.lock:
+            fake.store.messages["ses_plan"].append(
+                step(
+                    "msg_long",
+                    "msg_00",
+                    1_760_900_900_000,
+                    [text("prt_long", "x" * 7_000)],
+                    completed=1_760_900_900_500,
+                )
+            )
+        brief_page, whole_page = (
+            bridge(fake, "page", port, "ses_plan", "1"),
+            bridge(fake, "page", port, "ses_plan", "1", "--whole"),
+        )
+        brief, whole = brief_page["messages"][0], whole_page["messages"][0]
+        assert brief["info"]["id"] == whole["info"]["id"] == "msg_long"
+        [brief_text] = [part for part in brief["parts"] if part["type"] == "text"]
+        [whole_text] = [part for part in whole["parts"] if part["type"] == "text"]
+        assert len(brief_text["text"]) < 7_000
+        assert "whole" not in brief_text
+        assert whole_text["text"] == "x" * 7_000
+        assert whole_text["whole"] is True
+        older = bridge(fake, "page", port, "ses_plan", "1", whole_page["next"], "--whole")
+        assert older["messages"][0]["info"]["id"] != "msg_long", "the flag goes after the cursor too"

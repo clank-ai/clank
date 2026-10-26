@@ -9,10 +9,11 @@ only), or without a terminal (`serve`). Actions:
                                      (`terminal`: an `opencode --port` process, not `opencode serve`); its subagents'
                                      sessions beside them (`children`, each with its `parent`)
     messages PORT SESSION [LIMIT]    a session's last messages, briefly (text, tools with title and state, files)
-    page PORT SESSION [LIMIT] [BEFORE]
+    page PORT SESSION [LIMIT] [BEFORE] [--whole]
                                      a page of a session's messages, oldest first, each part in the shape the watch
-                                     says it (design 0012 §6.1), and the cursor of the page before it (`next`, "" at
-                                     the first message): OpenCode's own `limit`, `before` and `X-Next-Cursor`
+                                     says it (design 0012 §6.1; whole, with `--whole`, as the mirror keeps them,
+                                     design 0023 §2), and the cursor of the page before it (`next`, "" at the first
+                                     message): OpenCode's own `limit`, `before` and `X-Next-Cursor`
     prompt PORT SESSION              send the message on standard input ({"text": ..., "files": [{"url", "mime",
                                      "filename"}]}, a file:// URL in the folder for an image) without waiting for the
                                      answer, with the agent and the model of the session's last message of the owner
@@ -365,16 +366,21 @@ def seen_message(info: dict[str, Any]) -> dict[str, Any]:
     return seen
 
 
-def seen_part(part: dict[str, Any]) -> dict[str, Any]:
+def seen_part(part: dict[str, Any], whole: bool = False) -> dict[str, Any]:
     """A part of a message as the Monitor reads it (design 0012 §6.1), from the event stream or the history alike: its
     ids and type and, by type, its text (cut, with its length); a tool call's id, state, title, input and output (cut,
     with the output's length), times (`compacted` once its result was cleared), the subagent it started and its exit
-    status, and a `todowrite` call's todo list whole (`todos`); a step's finish with its tokens; a patch's files."""
+    status, and a `todowrite` call's todo list whole (`todos`); a step's finish with its tokens; a patch's files. With
+    `whole` (a followed session, design 0023 §2), its text, input and output are cut only past `WHOLE`, and it says
+    so (`whole`)."""
     kind = part.get("type")
     seen: dict[str, Any] = {"id": part.get("id"), "message": part.get("messageID"), "type": kind}
+    text_limit, output_limit, input_limit = (WHOLE, WHOLE, WHOLE) if whole else (TEXT, OUTPUT, INPUT)
+    if whole:
+        seen["whole"] = True
     if kind in ("text", "reasoning"):
         text = str(part.get("text") or "")
-        seen.update({"text": cut(text, TEXT), "length": len(text)})
+        seen.update({"text": cut(text, text_limit), "length": len(text)})
         if part.get("synthetic"):
             seen["synthetic"] = True
     elif kind == "tool":
@@ -382,14 +388,14 @@ def seen_part(part: dict[str, Any]) -> dict[str, Any]:
         metadata = state.get("metadata") or part.get("metadata") or {}
         seen.update({
             "tool": part.get("tool"), "call": part.get("callID"), "status": state.get("status"),
-            "title": state.get("title") or "", "input": cut(state.get("input") or {}, INPUT),
+            "title": state.get("title") or "", "input": cut(state.get("input") or {}, input_limit),
             "time": state.get("time") or {},
         })  # fmt: skip
         if state.get("status") == "completed":
             output = str(state.get("output") or "")
-            seen.update({"output": cut(output, OUTPUT), "length": len(output)})
+            seen.update({"output": cut(output, output_limit), "length": len(output)})
         if state.get("status") == "error":
-            seen["error"] = cut(state.get("error") or "", OUTPUT)
+            seen["error"] = cut(state.get("error") or "", output_limit)
         if metadata.get("sessionId"):
             seen["subagent"] = metadata["sessionId"]
         listed = (state.get("input") or {}).get("todos") if isinstance(state.get("input"), dict) else None
@@ -615,9 +621,10 @@ def held(port: int, path: str, body: Any) -> None:
     sending.join()
 
 
-def page(port: int, session: str, limit: int, before: str) -> dict[str, Any]:
-    """A page of a session's messages, oldest first, each in the Monitor's shape, and the cursor of the page before
-    it ("" at the session's first message): OpenCode's own paging (`limit`, then `before` the cursor it gave)."""
+def page(port: int, session: str, limit: int, before: str, whole: bool = False) -> dict[str, Any]:
+    """A page of a session's messages, oldest first, each in the Monitor's shape (whole, for the mirror), and the
+    cursor of the page before it ("" at the session's first message): OpenCode's own paging (`limit`, then `before`
+    the cursor it gave)."""
     if not 1 <= limit <= PAGES:
         raise ValueError(f"a page holds 1 to {PAGES} messages, not {limit}")
     query = urllib.parse.urlencode({"limit": str(limit), **({"before": before} if before else {})})
@@ -629,7 +636,7 @@ def page(port: int, session: str, limit: int, before: str) -> dict[str, Any]:
         "messages": [
             {
                 "info": seen_message(each.get("info") or {}),
-                "parts": [seen_part(part) for part in each.get("parts") or []],
+                "parts": [seen_part(part, whole) for part in each.get("parts") or []],
             }
             for each in listed
         ],
@@ -729,7 +736,9 @@ class Watch:
     once the stream has been quiet for `BURST_QUIET` seconds, or `BURST_MOST` after its first line, and before any line
     said at once: a part updated a hundred times in a burst is said once, with its last state, and a status that went
     busy, then idle, after the step's parts. The text as it is written (`delta`) is joined per part and field, and
-    only for the sessions the service says are shown (a line `{"shown": [...]}` on the input)."""
+    only for the sessions the service says are shown (a line `{"shown": [...]}` on the input) or followed. A followed
+    session's parts are said whole (a line `{"followed": [...]}`, design 0023 §2: the mirror keeps them), the others
+    in the Monitor's brief."""
 
     def __init__(self) -> None:
         self.lock = threading.RLock()  # what is written, and what is held
@@ -741,6 +750,7 @@ class Watch:
         self.first = self.last = 0.0  # when the burst's first and last lines were held
         self.holding = threading.Event()
         self.shown: set[str] = set()  # the sessions whose text is said as it is written
+        self.whole: set[str] = set()  # the sessions followed: their parts said whole (design 0023 §2)
         self.running: dict[int, set[str]] = {}  # each port's sessions last said busy or retrying
 
     def run(self) -> None:
@@ -831,6 +841,10 @@ class Watch:
                 with self.lock:
                     self.shown = {str(session) for session in told["shown"]}
                     self.say({"type": "shown", "sessions": sorted(self.shown)})
+            if isinstance(told, dict) and isinstance(told.get("followed"), list):
+                with self.lock:
+                    self.whole = {str(session) for session in told["followed"]}
+                    self.say({"type": "followed", "sessions": sorted(self.whole)})
         self.stopped.set()
 
     def _new_ports(self) -> list[int]:
@@ -908,11 +922,12 @@ class Watch:
             self._message(port, properties)
         elif kind == "message.part.updated":
             part = properties.get("part") or {}
+            owner = str(part.get("sessionID") or session)
             self.hold(("part", port, part.get("id")), {
-                "type": "part", "port": port, "session": part.get("sessionID") or session, "part": seen_part(part),
+                "type": "part", "port": port, "session": owner, "part": seen_part(part, owner in self.whole),
             })  # fmt: skip
         elif kind == "message.part.delta":
-            if session in self.shown:
+            if session in self.shown or session in self.whole:
                 key = ("delta", port, properties.get("partID"), properties.get("field"))
                 self.join(key, {
                     "type": "delta", "port": port, "session": session, "message": properties.get("messageID"),
@@ -1079,7 +1094,10 @@ def act(argv: list[str]) -> dict[str, Any]:
     if action == "part":
         return part(int(rest[0]), rest[1], rest[2], rest[3], int(rest[4]) if len(rest) > 4 else WHOLE)
     if action == "page":
-        return page(int(rest[0]), rest[1], int(rest[2]) if len(rest) > 2 else PAGE, rest[3] if len(rest) > 3 else "")
+        whole = "--whole" in rest
+        rest = [each for each in rest if each != "--whole"]
+        return page(int(rest[0]), rest[1], int(rest[2]) if len(rest) > 2 else PAGE, rest[3] if len(rest) > 3 else "",
+                    whole)  # fmt: skip
     if action == "prompt":
         return prompt(int(rest[0]), rest[1], given())
     if action == "new":

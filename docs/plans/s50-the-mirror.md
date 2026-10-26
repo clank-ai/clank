@@ -19,11 +19,11 @@ copied, so this plan's changes to the bridge (and every later one) rebuild no im
 
 ## Tasks
 
-- [ ] 1. **Programs mounted, not copied** (decision 0142): `ContainerSpec.programs`, the folder mounted read-only at
+- [x] 1. **Programs mounted, not copied** (decision 0142): `ContainerSpec.programs`, the folder mounted read-only at
   `/opt/clank` by `run_arguments`; the workspace's, the setup's and the edge's specs mount Clank's image folder; the
   Dockerfile copies nothing; `image_tag` is the checksum of the Dockerfile alone. Tests: `test_sandbox.py` (the mount,
   read-only, in each spec), a tag that changes with the Dockerfile and not with `bridge.py`.
-- [ ] 2. **The bridge says whole parts for followed sessions**: `{"followed": [...]}` on the watch's input, answered
+- [x] 2. **The bridge says whole parts for followed sessions**: `{"followed": [...]}` on the watch's input, answered
   `followed`; for those sessions `part` lines carry the part whole (`seen_part(part, whole=True)`: text and reasoning up
   to `WHOLE`, a tool's output up to `WHOLE`, `whole: true`) and deltas come as for shown sessions; `page` takes
   `--whole`. `Watchers.follow(workspace, sessions)`, told again to a watch started again; `Sessions.page(..., whole=)`.

@@ -360,11 +360,14 @@ class Sessions:
         self._acted(workspace, port, session, "redo", "", actor)
         return dict(found.get("revert") or {})
 
-    def page(self, workspace: str, port: int, session: str, *, limit: int = 50, before: str = "") -> dict[str, Any]:
+    def page(
+        self, workspace: str, port: int, session: str, *, limit: int = 50, before: str = "", whole: bool = False
+    ) -> dict[str, Any]:
         """A page of the session's messages, oldest first, in the Monitor's shape, and the cursor of the page before
         it ("" at its first message)."""
         port = self._server(workspace, session, port)
-        return self._bridge(workspace, ["page", str(port), session, str(limit), *([before] if before else [])])
+        return self._bridge(workspace, ["page", str(port), session, str(limit), *([before] if before else []),
+                                        *(["--whole"] if whole else [])])  # fmt: skip
 
     def part(self, workspace: str, port: int, session: str, message: str, part: str) -> dict[str, Any]:
         """One tool call of the session whole (design 0012 §7: the watch cuts a call's input and output), from the

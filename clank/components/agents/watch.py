@@ -120,6 +120,7 @@ class Watchers:
         self._ends: dict[str, int] = {}  # how often each workspace's watcher ended while its container ran
         self._older: dict[str, str] = {}  # a workspace whose container cannot be watched, by that container's id
         self._shown: dict[str, list[str]] = {}  # the sessions whose text each workspace's watch says as it is written
+        self._followed: dict[str, list[str]] = {}  # the sessions whose parts each watch says whole (design 0023 §2)
 
     async def run(self) -> None:
         """Keep the watchers while the service runs; close them all when it stops."""
@@ -163,6 +164,8 @@ class Watchers:
                     continue
                 if workspace in self._shown:
                     self._watching[workspace].tell({"shown": self._shown[workspace]})
+                if workspace in self._followed:
+                    self._watching[workspace].tell({"followed": self._followed[workspace]})
 
     def show(self, workspace: str, sessions: list[str]) -> None:
         """Name the sessions whose text the workspace's watch says as it is written (design 0012 §6.1); told again
@@ -172,6 +175,15 @@ class Watchers:
             watcher = self._watching.get(workspace)
         if watcher is not None:
             watcher.tell({"shown": self._shown[workspace]})
+
+    def follow(self, workspace: str, sessions: list[str]) -> None:
+        """Name the sessions whose parts the workspace's watch says whole, with their text as it is written (design
+        0023 §2: the mirror keeps them); told again to a watch started again."""
+        with self._lock:
+            self._followed[workspace] = sorted(set(sessions))
+            watcher = self._watching.get(workspace)
+        if watcher is not None:
+            watcher.tell({"followed": self._followed[workspace]})
 
     def state(self, workspace: str) -> dict[str, Any]:
         """Whether the workspace's agents are watched now, and why not when they cannot be."""
