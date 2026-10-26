@@ -15,9 +15,9 @@ the experience; this document says what holds it up.
 | --- | --- | --- |
 | 1 | What the owner felt, measured | Approved 2026-10-26 |
 | 2 | The conversation is read from the service's mirror | Approved 2026-10-26; built 2026-10-26 ([plan s50](../plans/s50-the-mirror.md)) |
-| 3 | Pushed, not polled: the conversation stream | Approved 2026-10-26 |
+| 3 | Pushed, not polled: the conversation stream | Approved 2026-10-26; built 2026-10-26 ([plan s51](../plans/s51-the-stream.md)); revised 2026-10-26: the batch window is 50 ms, not 100 (with 100, a change was on the stream 111 ms behind the mirror, §6) |
 | 4 | Acting without waiting: the resident bridge | Approved 2026-10-26 |
-| 5 | What the owner sees | Approved 2026-10-26 |
+| 5 | What the owner sees | Approved 2026-10-26; built 2026-10-26 for the agent panel ([plan s51](../plans/s51-the-stream.md)); the Monitor and the phone with steps 4 and 5 |
 | 6 | Measurements that hold it to its word | Approved 2026-10-26 |
 | 7 | What else it mends | Approved 2026-10-26 |
 | 8 | Order of work | Approved 2026-10-26 |
@@ -74,7 +74,8 @@ for events; a stream of its own, since it carries a session's text and not the k
 - First an **opening snapshot**: the conversation as `GET /agents/conversation` gives it, with a `version`.
 - Then **what changes**, each with the version after it: `message` (a message's info, new or changed), `part` (a
   part's whole new state: a tool's input, state and output, a text's full text at a step's end), `delta` (text appended
-  to a part: its id, the field, the text; batched, at most ten a second), `status` (the session busy or idle, and its
+  to a part: its id, the field, the text; a burst within 50 ms comes as one flush, and the panel draws at most ten
+  times a second), `status` (the session busy or idle, and its
   phase as the Now panel says it, design 0012 §5: reading the prompt with its tokens and speed, thinking, writing,
   running a tool with its command, waiting for you, compacting), `waiting` (the permissions and questions open),
   `session` (the folder's newest session changed, when none was named). A `Last-Event-ID` on reconnect brings the
@@ -138,18 +139,26 @@ sends, reads, thinks, writes, runs a tool and waits, and the same stream on the 
 Tests against the fake OpenCode (`tests/fakes/opencode.py`) and a bench on the real one (`bench/talking.py`), before
 and after, kept in this section once measured:
 
-| Measure | Before (2026-10-26) | After step 1 (the mirror, 2026-10-26) | Goal |
-| --- | --- | --- | --- |
-| The owner's message visible after Enter | 6.1 s | the send's own time, plus one read (step 3 cuts the send; step 2 pushes) | under 150 ms (shown at once), confirmed under 1.5 s |
-| The model's first words visible after its first token | about 6 s later | within the panel's poll (step 2 pushes them) | under 150 ms later |
-| One read of `GET /agents/conversation` | 2.8 to 4.9 s | 2 ms at rest, 3 ms while the model writes (median); the first read of a session reads its history once, 1.0 to 1.3 s | under 5 ms from the mirror |
-| A stream event after OpenCode's | (none) | (step 2) | under 100 ms |
-| `docker exec` started in a minute of one followed session | about 25 | 0 after the history's (a test counts them) | 0 (one for the container's life) |
-| An answer to a permission reaching OpenCode | 1.1 s or more | (step 3) | under 150 ms |
+| Measure | Before (2026-10-26) | After step 1 (the mirror, 2026-10-26) | After step 2 (the stream, 2026-10-26) | Goal |
+| --- | --- | --- | --- | --- |
+| The owner's message visible after Enter | 6.1 s | the send's own time, plus one read (step 3 cuts the send; step 2 pushes) | shown at once (pending, within the panel's 100 ms draw); confirmed from the mirror 0.6 to 2.1 s later, the send's own `docker exec` (step 3 cuts it) | under 150 ms (shown at once), confirmed under 1.5 s |
+| The model's first words visible after its first token | about 6 s later | within the panel's poll (step 2 pushes them) | on the stream within 70 ms of the mirror hearing them, drawn within the panel's next 100 ms; OpenCode itself sends deltas about every 250 ms (44 flushes, median gap 265 ms) | under 150 ms later |
+| One read of `GET /agents/conversation` | 2.8 to 4.9 s | 2 ms at rest, 3 ms while the model writes (median); the first read of a session reads its history once, 1.0 to 1.3 s | 2 ms at rest (20 reads, the slowest 3 ms) | under 5 ms from the mirror |
+| A stream event after OpenCode's | (none) | (step 2) | 64 ms behind the mirror (median of 60; 66 ms the slowest), the 50 ms batch window and 14 ms of path; 111 ms with the window at 100 | under 100 ms |
+| `docker exec` started in a minute of one followed session | about 25 | 0 after the history's (a test counts them) | 0 after the history's | 0 (one for the container's life) |
+| An answer to a permission reaching OpenCode | 1.1 s or more | (step 3) | (step 3) | under 150 ms |
 
-Step 1 measured on the owner's PC with the real model (`bench`: the scratch script `measure_mirror.py`, to become
-`bench/talking.py` with step 2): 43 reads while the model worked, median 3.3 ms, one of 2.6 s (the history of the
-new session, read once); 20 reads at rest, median 2.0 ms, the slowest 2 ms.
+Step 1 measured on the owner's PC with the real model (`bench`: the scratch script `measure_mirror.py`, now
+`bench/talking.py`): 43 reads while the model worked, median 3.3 ms, one of 2.6 s (the history of the new session,
+read once); 20 reads at rest, median 2.0 ms, the slowest 2 ms.
+
+Step 2 measured the same day with `bench/talking.py` on the real model (three runs, the owner working on the PC): the
+send's `POST` took 515, 614 and 2,145 ms, and the owner's message was on the stream 590, 802 and 2,130 ms after Enter
+(in the third run the mirror heard OpenCode before the `POST` returned); the model's first delta followed 2.25 to
+3.15 s after Enter; a 120-word answer came as 74 deltas in 44 flushes. The stream's own delay behind the mirror is
+the test's measure (a delta fed, its event received: median 64 ms with the 50 ms window, 111 ms with 100 ms); the
+panel's live test showed the header following the readout ("Answering"), the thinking folded in one row per step and
+the words arriving as they were written.
 
 ## 7. What else it mends
 
@@ -170,8 +179,9 @@ new session, read once); 20 reads at rest, median 2.0 ms, the slowest 2 ms.
 1. **Built 2026-10-26** ([plan s50](../plans/s50-the-mirror.md)). The mirror made complete for followed sessions (§2): the watch keeps whole parts and deltas for a `followed` set
    named on its input (as `shown` is today); history read once; `GET /agents/conversation` from the mirror; the test
    that counts processes.
-2. The stream (§3) and the panel on it (§5): the extension's reader, optimistic send, the header's phases from the
-   gateway, incremental rendering, the scroll and pace rules; the bench's before-and-after.
+2. **Built 2026-10-26** ([plan s51](../plans/s51-the-stream.md)). The stream (§3) and the panel on it (§5): the
+   extension's reader, optimistic send, the header's phases from the readout, incremental rendering, the scroll and
+   pace rules; the bench's before-and-after (`bench/talking.py`).
 3. The resident bridge's request channel (§4): `prompt`, `permission`, `question`, `abort` first; the recovery path.
 4. The Monitor and the Flow view on the stream (§7).
 5. The phone on the stream, with its redesign (M9).

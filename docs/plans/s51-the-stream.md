@@ -24,8 +24,9 @@ following the model, one row of thinking that grows, tool calls as they start, q
   version outside the lock, returning what unsubscribes. Pure tests.
 - [x] 2. **The stream route** `GET /agents/conversation/stream?folder=&session=&limit=&after=`
   (`agents/streaming.py`): the conversation found as the route finds it; `snapshot` first (the route's answer with its
-  version), then each change as an event whose id is its version, gathered for `GATHER_SECONDS` (0.1) so a burst
-  comes as one flush; `after` or `Last-Event-ID` resumes from a version, a client behind the log gets a snapshot; a
+  version), then each change as an event whose id is its version, gathered for `GATHER_SECONDS` so a burst comes as
+  one flush (0.1 s at first; 0.05 after task 5 measured a change 111 ms behind the mirror); `after` or
+  `Last-Event-ID` resumes from a version, a client behind the log gets a snapshot; a
   `readout` event each second while the session works (`Agents.readout`: the foot's numbers and phase); `session` when
   the folder's newest session changed and none was named (the client reconnects); keepalives; `closing` when the
   service stops. A folder with no session yet: a snapshot saying so, then the newest session watched for. `Client.stream`
@@ -43,10 +44,17 @@ following the model, one row of thinking that grows, tool calls as they start, q
   pill; the pending message. Node tests for the panel's decisions (`core/following.ts`: the stream's parameters,
   resumed only on the same session; the growing wait; the fall back to polling; the older pages through a snapshot).
   Built 2026-10-26.
-- [ ] 5. **Docs and the measure**: design 0023 §3 and §5 built, §6's table after step 2 (`bench/talking.py`: the time
+- [x] 5. **Docs and the measure**: design 0023 §3 and §5 built, §6's table after step 2 (`bench/talking.py`: the time
   from a delta fed to the fake OpenCode to its event on the stream, and live: Enter to the message shown, the model's
-  first token to its words shown); the generated docs; `vscode/README.md`.
+  first token to its words shown); the generated docs; `vscode/README.md`. Built 2026-10-26: the stream's delay is a
+  test's measure (a delta the mirror hears is on the stream in 64 ms, median), the live numbers the bench's.
 
 ## Progress
 
 Written 2026-10-26, after step 1 was built and measured.
+
+- All five tasks built 2026-10-26; the numbers are in design 0023 §6. The extension is 0.10.2 (installed in Clank's
+  VS Code; a window open before the install runs the old panel until it is reloaded). Found on the way: a client
+  behind the folder's newest session needs its `after_session`, or another session's versions would resume it (the
+  route takes it); the batch window went from 100 to 50 ms after the measure. Not done here: the Monitor and the
+  phone on the stream (steps 4 and 5) and the resident bridge (step 3), which cuts the send's 0.5 to 2 s.

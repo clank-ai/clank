@@ -57,7 +57,7 @@ allowed-confusables = ["×"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["clank", "tools", "tests"]
+files = ["clank", "tools", "tests", "bench"]
 # Test folders are not packages; module names come from their paths, so two conftest.py files do not collide.
 explicit_package_bases = true
 plugins = ["pydantic.mypy"]

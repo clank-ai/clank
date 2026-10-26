@@ -1,10 +1,12 @@
 """Design 0023 §3: the conversation stream, `GET /agents/conversation/stream`, over real HTTP. It says it is connected,
 then gives a snapshot (the conversation route's answer, with its version), then each change of the mirror as an event
 whose id is its version: the status, a message, a part's text as it is written (`delta`), the waits; while the session
-works, a `readout` event each second; `after` (or `Last-Event-ID`) resumes from a version, and a client behind what the
-log keeps gets a snapshot again; when the folder's newest session changes and none was named, the stream says which
-and ends, so the client opens the new one. A folder with no session yet gets a snapshot saying so."""
+works, a `readout` event each second; a change the mirror hears is on the stream within the gather window (design 0023
+§6); `after` (or `Last-Event-ID`) resumes from a version, and a client behind what the log keeps gets a snapshot again;
+when the folder's newest session changes and none was named, the stream says which and ends, so the client opens the
+new one. A folder with no session yet gets a snapshot saying so."""
 
+import statistics
 import threading
 import time
 from collections.abc import Generator, Iterator
@@ -115,6 +117,30 @@ def test_the_stream_gives_a_snapshot_then_each_change_with_its_version_and_the_r
             status = until(events, "status")[-1]
             assert status.data == {"type": "status", "busy": False, "status": "idle"}
             assert status.id == version + 4
+        finally:
+            events.close()
+
+
+def test_a_change_the_mirror_hears_is_on_the_stream_within_the_gather_window(
+    kernel: Kernel, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    agents = ready(kernel, tmp_path / "paper", monkeypatch)
+    with live_service(kernel) as client:
+        events = client.stream("agents/conversation/stream", folder=str(tmp_path / "paper"), quiet=15)
+        try:
+            until(events, "snapshot")
+            took: list[float] = []
+            for n in range(20):
+                heard = time.perf_counter()
+                agents.sessions.heard("paper", line("delta", message="msg_1", part="prt_1", field="text", text=str(n)))
+                while until(events, "delta")[-1].data["text"] != str(n):
+                    pass
+                took.append(time.perf_counter() - heard)
+                time.sleep(0.05)
+            # The gather window is 0.1 s (design 0023 §3: a burst comes as one flush); the bound leaves room for a
+            # busy machine, the number itself is kept in design 0023 §6.
+            assert statistics.median(took) < 0.5, f"median {statistics.median(took):.3f} s"
+            assert max(took) < 2.0, f"max {max(took):.3f} s"
         finally:
             events.close()
 

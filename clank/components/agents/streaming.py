@@ -27,7 +27,7 @@ import anyio.to_thread
 if TYPE_CHECKING:
     from clank.components.agents.service import Agents
 
-GATHER_SECONDS = 0.1  # a burst of changes is sent as one flush
+GATHER_SECONDS = 0.05  # a burst of changes is sent as one flush (0.1 put a change 111 ms behind the mirror; this, 60)
 READOUT_SECONDS = 1.0  # the readout, while the session works
 KEEPALIVE_SECONDS = 15.0
 WATCH_SECONDS = 2.0  # a folder with no session yet is looked at again
