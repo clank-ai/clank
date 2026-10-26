@@ -30,23 +30,31 @@ each ends with a commit pushed to `main`.
 
 ## Tasks
 
-- [ ] 1. **The conversation route**: `Agents.conversation(folder, session, limit, before)` and
+- [x] 1. **The conversation route**: `Agents.conversation(folder, session, limit, before)` and
   `GET /agents/conversation`; `Sessions.reach(workspace, session)` (the server that runs the session, else one that
   lists it, else the first that runs; the artifacts' comment uses it too); a folder with no workspace, or a workspace
   with no session, answered as such. Tests with a fake bridge: the session chosen (named, kept, listed), its page and
   cursor, its waits, busy.
-- [ ] 2. **Drawing it** (`core/conversation.ts`): messages to items (owner, text, thinking, call, image, artifact card,
+- [x] 2. **Drawing it** (`core/conversation.ts`): messages to items (owner, text, thinking, call, image, artifact card,
   wait), each call's one-line summary, a page's items merged with the next reading (no flicker, the open folds kept).
   Node tests.
-- [ ] 3. **The panel in VS Code** (`src/agentPanel.ts`, `media/agent.{html,js,css}`): opened beside the terminal, drawn
+- [x] 3. **The panel in VS Code** (`src/agentPanel.ts`, `media/agent.{html,js,css}`): opened beside the terminal, drawn
   with marked and KaTeX from `media/lib`, read while it shows; folds, images (the folder's files through the webview),
   artifact cards opening the artifact's panel, older pages on scrolling up.
-- [ ] 4. **Writing and acting**: the input (Enter sends, Shift+Enter a new line), `@` files, a pasted image saved,
+- [x] 4. **Writing and acting**: the input (Enter sends, Shift+Enter a new line), `@` files, a pasted image saved,
   Stop, Compact, New session, Show in terminal, and the waits' buttons (allow once, always, reject; a question's
   answers). Node tests for what the core decides; the routes' tests for the service's part.
-- [ ] 5. **Live**: the real model, in a throwaway folder: the conversation drawn while it works, a message sent from the
+- [x] 5. **Live**: the real model, in a throwaway folder: the conversation drawn while it works, a message sent from the
   panel, a permission answered, an artifact card opened, seen in a screenshot of that window only.
 
 ## Progress
 
 Written 2026-10-25.
+
+- Tasks 1-5 built 2026-10-25/26 (0.9.8 ff9c15d; restyled as direction A, the owner's choice, 0.9.9 c934c04: theme tokens
+  following VS Code or Clank Night). Live, in the owner's window with the real model: the conversation drawn while it
+  worked, a message sent from the panel. Seen then: repeated Thinking rows, the header saying idle while the model read
+  the prompt, the readout's line twice; and every read through the bridge, three seconds behind. Design 0023 (talking
+  to the agent) takes those up with the stream; the items of the design canvas's "A · full design" (jobs tray, merged
+  thinking, live output, artifact previews, LaTeX card, question choices, change review, start page, Build and Plan,
+  the narrow layout) are built on it, not on the polling.
