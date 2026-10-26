@@ -138,14 +138,18 @@ sends, reads, thinks, writes, runs a tool and waits, and the same stream on the 
 Tests against the fake OpenCode (`tests/fakes/opencode.py`) and a bench on the real one (`bench/talking.py`), before
 and after, kept in this section once measured:
 
-| Measure | Today | Goal |
-| --- | --- | --- |
-| The owner's message visible after Enter | 6.1 s | under 150 ms (shown at once), confirmed under 1.5 s |
-| The model's first words visible after its first token | about 6 s later | under 150 ms later |
-| One read of `GET /agents/conversation` | 2.8 to 4.9 s | under 5 ms from the mirror |
-| A stream event after OpenCode's | (none) | under 100 ms |
-| `docker exec` started in a minute of one followed session | about 25 | 0 (one for the container's life) |
-| An answer to a permission reaching OpenCode | 1.1 s or more | under 150 ms |
+| Measure | Before (2026-10-26) | After step 1 (the mirror, 2026-10-26) | Goal |
+| --- | --- | --- | --- |
+| The owner's message visible after Enter | 6.1 s | the send's own time, plus one read (step 3 cuts the send; step 2 pushes) | under 150 ms (shown at once), confirmed under 1.5 s |
+| The model's first words visible after its first token | about 6 s later | within the panel's poll (step 2 pushes them) | under 150 ms later |
+| One read of `GET /agents/conversation` | 2.8 to 4.9 s | 2 ms at rest, 3 ms while the model writes (median); the first read of a session reads its history once, 1.0 to 1.3 s | under 5 ms from the mirror |
+| A stream event after OpenCode's | (none) | (step 2) | under 100 ms |
+| `docker exec` started in a minute of one followed session | about 25 | 0 after the history's (a test counts them) | 0 (one for the container's life) |
+| An answer to a permission reaching OpenCode | 1.1 s or more | (step 3) | under 150 ms |
+
+Step 1 measured on the owner's PC with the real model (`bench`: the scratch script `measure_mirror.py`, to become
+`bench/talking.py` with step 2): 43 reads while the model worked, median 3.3 ms, one of 2.6 s (the history of the
+new session, read once); 20 reads at rest, median 2.0 ms, the slowest 2 ms.
 
 ## 7. What else it mends
 
@@ -163,7 +167,7 @@ and after, kept in this section once measured:
 
 ## 8. Order of work
 
-1. The mirror made complete for followed sessions (§2): the watch keeps whole parts and deltas for a `followed` set
+1. **Built 2026-10-26** ([plan s50](../plans/s50-the-mirror.md)). The mirror made complete for followed sessions (§2): the watch keeps whole parts and deltas for a `followed` set
    named on its input (as `shown` is today); history read once; `GET /agents/conversation` from the mirror; the test
    that counts processes.
 2. The stream (§3) and the panel on it (§5): the extension's reader, optimistic send, the header's phases from the

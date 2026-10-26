@@ -43,7 +43,7 @@ copied, so this plan's changes to the bridge (and every later one) rebuild no im
   counted; a conversation read, then fed events (a message, parts, deltas, a status) and read ten times: no process
   after the history's, the text whole and the newest words there. The panel's shape unchanged (`test_conversation.py`
   still passes).
-- [ ] 5. **Docs and the measure**: design 0023 §2 built, §6's table given the mirror's read time (measured live:
+- [x] 5. **Docs and the measure**: design 0023 §2 built, §6's table given the mirror's read time (measured live:
   `bench/talking.py`, a read of the route before and after); decisions 0139, 0140 (accepted with the design); the
   generated docs; `vscode/README.md` where it says how the panel reads.
 
@@ -51,3 +51,10 @@ copied, so this plan's changes to the bridge (and every later one) rebuild no im
 
 Written 2026-10-26, after the owner approved designs 0023 and 0024 ("Approve both designs, go ahead with 0023's first
 step").
+
+- All five tasks built 2026-10-26. Measured live after the service moved to the mirror: a read of the conversation
+  takes 2 ms at rest and 3 ms while the model writes (median), against 2.8 to 4.9 s before; the first read of a session
+  reads its history once (1.0 to 1.3 s). Found on the way: a mirror that kept a session's port after its server was
+  gone (the throwaway container made again) read from a port that answered no more; a `synced` or `gone` line now
+  leaves such sessions without a port, and the route lists the servers again. The owner's workspaces move to the
+  mounted programs when next stopped and opened; until then their watch says parts in the brief, as before.
