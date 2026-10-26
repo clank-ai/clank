@@ -416,7 +416,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 5 | What the extension API allows, and what it does not | none yet |
 | 6 | Order of work | none yet |
 | 7 | Showing files to the owner | see its subsections |
-| 7.1 | The agent opens files | `tests/components/agents/test_show_files_tool.py` (4), `tests/components/agents/test_showing.py` (4), `tests/components/gateway/test_agents_forwarding.py` (2) |
+| 7.1 | The agent opens files | `tests/components/agents/test_show_files_tool.py` (4), `tests/components/agents/test_showing.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3) |
 | 7.2 | The window opens them on the left | `vscode/test/controller.test.ts` (17), `vscode/test/show.test.ts` (4) |
 | 7.3 | Paths in the agent's terminal are links | `vscode/test/show.test.ts` (4) |
 | 7.4 | Finding figures | `tests/components/agents/test_find_figures_tool.py` (5), `tests/components/workspaces/test_figure_geometry.py` (4) |
@@ -485,9 +485,9 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | Where Clank stands | none yet |
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (3), `vscode/test/readout.test.ts` (11) |
-| 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (1), `vscode/test/conversation.test.ts` (8) |
-| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (11), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (5) |
-| 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (3), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/components/workspaces/test_jobs_runner.py` (2) |
+| 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (1), `vscode/test/conversation.test.ts` (9) |
+| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (11), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (5) |
+| 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (3), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
 | 9 | Seeing images | `tests/components/agents/test_agent_files.py` (2), `tests/components/agents/test_look.py` (3) |
@@ -501,7 +501,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | A board is a file in the folder | `tests/components/agents/test_boards.py` (8) |
 | 2 | What a board holds | `tests/components/agents/test_boards.py` (8) |
 | 3 | The owner on the board | none yet |
-| 4 | The agent on the board | `tests/components/agents/test_board_place.py` (7), `tests/components/agents/test_boards.py` (8) |
+| 4 | The agent on the board | `tests/components/agents/test_board_place.py` (7), `tests/components/agents/test_board_tools.py` (2), `tests/components/agents/test_boards.py` (8) |
 | 5 | Asking the agent about the board | none yet |
 | 6 | LaTeX on the board | none yet |
 | 7 | A board's figures out: export | none yet |
@@ -727,6 +727,13 @@ Design 0022 §4: the agent places things on a board by where, never by pixels. `
 - a place named is snapped and none named is a new row under everything
 - an item not on the board is refused
 - beside an item in a frame is in that frame which grows to hold it
+
+### `tests/components/agents/test_board_tools.py`
+
+Design 0022 §4: Clank's own MCP server gives the agent the board as tools, each a request to the gateway's `/agents/boards` routes naming the workspace the server serves: `board_new(name, folder, title)`, `board_read(board)` (read-only: the board in words), `board_add(board, kind, ..., at)` (the item's fields as the model gave them, placed by `at`), `board_update(board, id, ..., at)` and `board_remove(board, id)`. The descriptions say to place by where, never by pixels; each answer is the service's words, a refusal the tool's error in its words.
+
+- the board tools are listed and say to place by where
+- each tool asks the gateway naming its workspace and answers the services words
 
 ### `tests/components/agents/test_boards.py`
 
@@ -1957,6 +1964,7 @@ Design 0018 §7.1: the agent asks the service to open files in the owner's VS Co
 
 - showing files is forwarded and nothing else under agents
 - a refusal comes back with its words and a silent service is said so
+- the agents work on boards is forwarded
 
 ### `tests/components/gateway/test_census.py`
 
@@ -4601,6 +4609,7 @@ Design 0021 §4: the agent panel's conversation, drawn from a page of the sessio
 - Clank's message that a job ended is a notice, and the owner's comment it relays is the owner's words
 - each call says what it did: an icon, a verb and what it was done to, as a path in the folder
 - three calls or more in a row fold under one line that says how many and how long; fewer stay in line
+- the agent's work on a board is said as the board's own lines
 
 ### `vscode/test/events.test.ts`
 

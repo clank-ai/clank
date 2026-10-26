@@ -51,7 +51,7 @@ def test_showing_files_is_forwarded_and_nothing_else_under_agents() -> None:
             assert answer.status_code in (403, 404), url
             if answer.status_code == 403:
                 assert (
-                    "the agent opens files for the owner to see, runs its jobs and makes its artifacts"
+                    "the agent opens files for the owner to see, runs its jobs, makes its artifacts and works on boards"
                     in answer.json()["error"]["message"]
                 )
         assert len(asked) == 1, "nothing refused was forwarded"
@@ -79,3 +79,24 @@ def test_a_refusal_comes_back_with_its_words_and_a_silent_service_is_said_so() -
         answer = http.post("/agents/show", json=SHOW)
         assert answer.status_code == 503
         assert "Showing files and jobs are reached through the Clank service" in answer.json()["error"]["message"]
+
+
+def test_the_agents_work_on_boards_is_forwarded() -> None:
+    """Design 0022 §4: making a board, listing the folder's, reading one, and adding, changing and taking away items."""
+    asked: list[tuple[str, str, Any, dict[str, str]]] = []
+
+    async def forward(method: str, path: str, body: Any, params: dict[str, str]) -> tuple[int, Any]:
+        asked.append((method, path, body, params))
+        return 200, {"forwarded": path}
+
+    calls = [("POST", "boards"), ("GET", "boards"), ("GET", "boards/read"), ("POST", "boards/add"),
+             ("POST", "boards/update"), ("POST", "boards/remove")]  # fmt: skip
+    with gateway(forward) as http:
+        for method, path in calls:
+            if method == "GET":
+                answer = http.get(f"/agents/{path}", params={"workspace": "myproject", "board": "fig3"})
+            else:
+                answer = http.post(f"/agents/{path}", json={"workspace": "myproject", "board": "fig3"})
+            assert (answer.status_code, answer.json()) == (200, {"forwarded": path}), path
+    assert [(each[0], each[1]) for each in asked] == calls
+    assert asked[2][3] == {"workspace": "myproject", "board": "fig3"}, "a read's query is forwarded with it"

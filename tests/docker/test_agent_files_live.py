@@ -41,4 +41,4 @@ async def test_starting_an_agent_gives_it_this_clanks_tools(machine: Kernel, tmp
     assert {"show_files", "find_figures", "send_to_phone"} <= tools
     rules = subprocess.run(["docker", "exec", container, "sh", "-c", "ls /home/agent/.clank/instructions"],
                            capture_output=True, text=True, timeout=60, check=False)  # fmt: skip
-    assert rules.stdout.split() == ["artifacts.md", "files.md", "images.md", "jobs.md", "latex.md"]
+    assert rules.stdout.split() == ["artifacts.md", "boards.md", "files.md", "images.md", "jobs.md", "latex.md"]

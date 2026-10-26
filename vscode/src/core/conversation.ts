@@ -116,6 +116,9 @@ const VIEWS: Record<string, [string, string, string]> = {
   clank_job_status: ["clock", "Checked on a job", "job"], clank_job_stop: ["stop", "Stopped a job", "job"],
   clank_make_artifact: ["sparkle", "Made an artifact", "name"], clank_look_at_figure: ["image", "Looked at", "path"],
   clank_show_files: ["eye", "Showed you", "files"], clank_find_figures: ["image", "Found figures", ""],
+  clank_board_new: ["board", "Made a board", "name"], clank_board_read: ["board", "Read the board", "board"],
+  clank_board_add: ["board", "Placed on the board", "placed"], clank_board_update: ["board", "Changed on the board", "id"],
+  clank_board_remove: ["board", "Took off the board", "id"],
 };  // prettier-ignore
 const PATHS = new Set(["filePath", "path", "files"]);
 
@@ -169,6 +172,12 @@ export function callView(tool: string, input: unknown, title: string): CallView 
   const given = givenFields(input);
   const known = VIEWS[tool];
   const [icon, verb, field] = known ?? ["tool", tool.replace(CLANK_TOOL, ""), ""];
+  if (field === "placed") {
+    // what went on the board: its kind, and its file (a path in the folder), label, name or source
+    const what = [given.file, given.label, given.name, given.source].find((each) => typeof each === "string" && each);
+    const shown = given.file === what && typeof what === "string" ? inFolder(what) : String(what ?? "");
+    return { icon, verb, detail: [String(given.kind ?? ""), shown.split("\n")[0]].filter(Boolean).join(" ") };
+  }
   const value = field ? given[field] : GIVEN.map((key) => given[key]).find((each) => typeof each === "string" && each);
   const named = Array.isArray(value) ? value.join(", ") : value === undefined || value === null ? "" : String(value);
   const detail = (named || (known ? "" : title)).split("\n")[0];

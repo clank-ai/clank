@@ -176,3 +176,18 @@ test("three calls or more in a row fold under one line that says how many and ho
     assert.deepEqual(steps.steps.map((each) => each.kind), ["call", "thinking", "call", "call", "call"]);
   }
 });
+
+test("the agent's work on a board is said as the board's own lines", () => {
+  const view = (tool: string, input: unknown): string => {
+    const shown = callView(tool, input, "");
+    return `${shown.icon} ${shown.verb} ${shown.detail}`;
+  };
+  assert.equal(view("clank_board_add", { board: "fig3", kind: "figure", file: "/workspace/figures/phase.png" }),
+               "board Placed on the board figure figures/phase.png");  // prettier-ignore
+  assert.equal(view("clank_board_add", { board: "fig3", kind: "latex", source: "A(f) = \frac{F_0}{x}" }),
+               "board Placed on the board latex A(f) = \frac{F_0}{x}");  // prettier-ignore
+  assert.equal(view("clank_board_read", { board: "fig3" }), "board Read the board fig3");
+  assert.equal(view("clank_board_update", { board: "fig3", id: "fig-2" }), "board Changed on the board fig-2");
+  assert.equal(view("clank_board_remove", { board: "fig3", id: "fig-2" }), "board Took off the board fig-2");
+  assert.equal(view("clank_board_new", { name: "fig3" }), "board Made a board fig3");
+});

@@ -227,6 +227,123 @@ ARTIFACT = {
 }  # fmt: skip
 
 
+_AT = {
+    "type": "object",
+    "description": (
+        'Where it goes, by where and never pixels: {"right_of": id}, {"left_of": id}, {"below": id}, '
+        '{"above": id} (beside an item, aligned with it), {"in": frame id} (inside a frame, which grows to hold '
+        'it), {"slot": slot id} (fills the slot the owner drew, which it takes), or {"x": .., "y": ..}. '
+        "Left out: a new row under everything."
+    ),
+}
+_BOARD = {"type": "string", "description": "The board: its name (fig3) or its path in the folder (figures/fig3.board)."}
+BOARD_FIELDS = ("file", "caption", "source", "mode", "text", "label", "name", "around", "from", "to", "w", "h")
+BOARD_TOOLS = [
+    {
+        "name": "board_new",
+        "description": (
+            "Make a board: a canvas you share with the user, a .board file in the folder, where you place figures, "
+            "LaTeX, notes and frames and the user moves and annotates them. It opens in the user's VS Code window. "
+            "Returns its path."
+        ),
+        "inputSchema": {"type": "object", "properties": {
+            "name": {"type": "string", "description": "Its name (fig3 makes fig3.board)."},
+            "folder": {"type": "string", "description": "The folder under the workspace to make it in (figures)."},
+            "title": {"type": "string", "description": "Its title."},
+        }, "required": ["name"]},
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "board_read",
+        "description": (
+            "Read a board in words: every item with its id, kind, place and size and what it shows, what each frame "
+            "holds, the open slots, and the user's annotations by what they are over (a pen loop, an arrow, a "
+            "highlight, a pin with its comment). Read it before you change it, and after the user asks about it."
+        ),
+        "inputSchema": {"type": "object", "properties": {"board": _BOARD}, "required": ["board"]},
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "board_add",
+        "description": (
+            "Add to a board, placed by where (`at`), never pixels: Clank aligns it with its neighbor and keeps it "
+            "clear of the others. A figure is an image file of the folder (PNG, JPEG, SVG ...), sized from it; LaTeX "
+            "is math (mode math, drawn at once: an equation, an aligned derivation) or a drawing compiled with TeX "
+            "(mode compiled: TikZ, pgfplots, a table); a note is Markdown with $math$; a slot is an empty place for a "
+            "figure; a frame goes around items you name (it exports as one figure); an arrow goes from one item to "
+            "another. A figure placed in a slot takes it. Returns the new item's id."
+        ),
+        "inputSchema": {"type": "object", "properties": {
+            "board": _BOARD,
+            "kind": {"type": "string", "enum": ["figure", "latex", "note", "slot", "frame", "arrow"]},
+            "file": {"type": "string", "description": "A figure's image, from the folder."},
+            "caption": {"type": "string", "description": "A figure's caption, under it."},
+            "source": {"type": "string", "description": "LaTeX's source, without $ for math."},
+            "mode": {"type": "string", "enum": ["math", "compiled"], "description": "LaTeX: math (default), compiled."},
+            "text": {"type": "string", "description": "A note's Markdown."},
+            "label": {"type": "string", "description": "A slot's label: the figure that goes there."},
+            "name": {"type": "string", "description": "A frame's name (Figure 3)."},
+            "around": {"type": "array", "items": {"type": "string"}, "description": "A frame's items, by id."},
+            "from": {"type": "object", "description": "An arrow's start: {\"item\": id}."},
+            "to": {"type": "object", "description": "An arrow's end: {\"item\": id}."},
+            "w": {"type": "number", "description": "A width in pixels, when the default does not suit."},
+            "at": _AT,
+        }, "required": ["board", "kind"]},
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "board_update",
+        "description": (
+            "Change an item of a board: its caption, source, text, label, name, file or size, and move it with `at` "
+            "(as board_add takes it). Returns what changed."
+        ),
+        "inputSchema": {"type": "object", "properties": {
+            "board": _BOARD, "id": {"type": "string", "description": "The item, as board_read names it."},
+            "file": {"type": "string"}, "caption": {"type": "string"}, "source": {"type": "string"},
+            "mode": {"type": "string", "enum": ["math", "compiled"]}, "text": {"type": "string"},
+            "label": {"type": "string"}, "name": {"type": "string"}, "w": {"type": "number"}, "at": _AT,
+        }, "required": ["board", "id"]},
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "board_remove",
+        "description": "Take an item away from a board (its history keeps it). Returns what was taken away.",
+        "inputSchema": {"type": "object", "properties": {"board": _BOARD, "id": {"type": "string"}},
+                        "required": ["board", "id"]},
+        "annotations": {"readOnlyHint": False},
+    },
+]  # fmt: skip
+
+
+def board(name: str, arguments: dict[str, Any]) -> str:
+    """A board tool (design 0022 §4): its request to the gateway naming the workspace, and the service's words."""
+    if not WORKSPACE_NAME:
+        raise ValueError(
+            "this server does not know its workspace (Clank gives it one): start the agent again from Clank"
+        )
+    named = str(arguments.get("board") or "")
+    fields = {key: arguments[key] for key in BOARD_FIELDS if key in arguments}
+    at = arguments.get("at") if isinstance(arguments.get("at"), dict) else None
+    body: dict[str, Any]
+    if name == "board_new":
+        body = {"workspace": WORKSPACE_NAME, "name": str(arguments.get("name") or ""),
+                "folder": str(arguments.get("folder") or ""), "title": str(arguments.get("title") or "")}  # fmt: skip
+        return str(_gateway("POST", "agents/boards", body, "boards").get("said") or "")
+    if name == "board_read":
+        query = urllib.parse.urlencode({"workspace": WORKSPACE_NAME, "board": named})
+        return str(_gateway("GET", f"agents/boards/read?{query}", None, "boards").get("said") or "")
+    if name == "board_add":
+        body = {"workspace": WORKSPACE_NAME, "board": named, "kind": str(arguments.get("kind") or ""),
+                "fields": fields, "at": at}  # fmt: skip
+        return str(_gateway("POST", "agents/boards/add", body, "boards").get("said") or "")
+    if name == "board_update":
+        body = {"workspace": WORKSPACE_NAME, "board": named, "id": str(arguments.get("id") or ""), "changes": fields,
+                "at": at}  # fmt: skip
+        return str(_gateway("POST", "agents/boards/update", body, "boards").get("said") or "")
+    body = {"workspace": WORKSPACE_NAME, "board": named, "id": str(arguments.get("id") or "")}
+    return str(_gateway("POST", "agents/boards/remove", body, "boards").get("said") or "")
+
+
 def _tool(name: str, description: str, properties: dict[str, Any], required: list[str], reads: bool) -> dict[str, Any]:
     return {
         "name": name,
@@ -778,12 +895,14 @@ def answer(message: dict[str, Any]) -> dict[str, Any] | None:
             "serverInfo": {"name": "clank", "version": "1"},
         }  # fmt: skip
     elif method == "tools/list":
-        result = {"tools": [TOOL, LOOK, SHOW, FIND, *_notion_tools(), *FLOW_TOOLS, *_job_tools(), ARTIFACT]}
+        result = {
+            "tools": [TOOL, LOOK, SHOW, FIND, *_notion_tools(), *FLOW_TOOLS, *_job_tools(), ARTIFACT, *BOARD_TOOLS]
+        }
     elif method == "tools/call":
         params = message.get("params") or {}
         arguments = params.get("arguments") or {}
         names = {TOOL["name"], LOOK["name"], SHOW["name"], FIND["name"], ARTIFACT["name"]}
-        names |= {tool["name"] for tool in [*_notion_tools(), *FLOW_TOOLS, *_job_tools()]}
+        names |= {tool["name"] for tool in [*_notion_tools(), *FLOW_TOOLS, *_job_tools(), *BOARD_TOOLS]}
         if params.get("name") not in names:
             return {"jsonrpc": "2.0", "id": id, "error": {"code": -32602, "message": "no such tool"}}
         path = str(arguments.get("path") or "")
@@ -792,6 +911,8 @@ def answer(message: dict[str, Any]) -> dict[str, Any] | None:
                 text, failed = notion(str(params["name"]), arguments), False
             elif params.get("name") == ARTIFACT["name"]:
                 text, failed = artifact(arguments), False
+            elif str(params.get("name")).startswith("board_"):
+                text, failed = board(str(params["name"]), arguments), False
             elif str(params.get("name")) in ("run_job", "job_status", "job_stop"):
                 text, failed = jobs(str(params["name"]), arguments), False
             elif str(params.get("name")).startswith("flow_"):
