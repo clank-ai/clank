@@ -57,7 +57,7 @@ uv run clank docker status             # Docker's state and whose each container
 uv run clank console                   # the console (starts the service in the background if need be); F1 for keys
 uv run clank console --snapshot        # one frame of the console as text, for scripts, reports and models
 uv run python -m tools.vsix            # package the VS Code extension (after tools.check compiled it), then:
-code --install-extension vscode/clank-0.10.0.vsix   # install it in VS Code (the name tools.vsix printed)
+code --install-extension vscode/clank-0.10.1.vsix   # install it in VS Code (the name tools.vsix printed)
 uv run python -m tools.check           # every check continuous integration runs: formatting, lint, types, tests
 uv run python -m tools.check --fix     # first fix what can be fixed, and regenerate every generated file
 uv run python -m tools.extension --host  # the extension's suite inside a real VS Code (opens a window)

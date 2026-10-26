@@ -7,7 +7,7 @@
 # is the checksum of this folder (`sandbox.image_tag`), so a change here builds a new image.
 FROM ubuntu:24.04
 
-ARG OPENCODE_VERSION=1.19.0
+ARG OPENCODE_VERSION=1.19.4
 ARG NODE_MAJOR=22
 ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 PIP_DISABLE_PIP_VERSION_CHECK=1
 

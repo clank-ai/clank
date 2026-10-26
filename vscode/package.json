@@ -2,7 +2,7 @@
   "name": "clank",
   "displayName": "Clank",
   "description": "Clank in VS Code: the service and Docker in the status bar, the questions Clank asks you, the agent beside your files, each change it makes for you to review, completion as you type, figures to mark up for the agent, the agent's proposals for your Notion to review, and the gates of your flows.",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "publisher": "clank",
   "private": true,
   "license": "AGPL-3.0-only",

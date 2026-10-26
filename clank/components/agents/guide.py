@@ -228,6 +228,11 @@ def _action(
             **more}  # fmt: skip
 
 
+def _step(node: Mapping[str, Any]) -> str:
+    """A step by its number; "that step" for one whose flow gives none (a flow drawn by another part)."""
+    return f"step {node['n']}" if node.get("n") is not None else "that step"
+
+
 def _undo(
     view: Mapping[str, Any], nodes: list[dict[str, Any]], *, session: str, why: str,
     speed: tuple[float, int] | None, state: dict[str, Any] | None
@@ -259,7 +264,7 @@ def _undo(
     while start > 0 and ordered[start - 1]["kind"] == "step" and not ordered[start - 1].get("cut"):
         start -= 1  # OpenCode would turn a revert at its last part into one of the whole turn: it goes too
     if start == 0:
-        gone = f"the message before step {ordered[start]['n']} is not in Clank's flow: undo cannot name where to cut"
+        gone = f"the message before {_step(ordered[start])} is not in Clank's flow: undo cannot name where to cut"
         return _action("undo", why or gone, True, state, brief="takes back the last step", does="", calls=[],
                        cost=cost, **nothing)  # fmt: skip
     before = ordered[start - 1]
@@ -274,7 +279,7 @@ def _undo(
         while begin > 0 and ordered[begin - 1]["kind"] == "said":
             begin -= 1
         mode, revert = "turn", {"message": str(ordered[begin]["id"]), "part": ""}
-        refused = (f"step {ordered[last]['n']} is the first after your message: undoing it alone would take back your "
+        refused = (f"{_step(ordered[last])} is the first after your message: undoing it alone would take back your "
                    "message too")  # fmt: skip
     takes = _takes([node for node in nodes if node["at"] >= ordered[begin]["at"]])
     what = _taken(takes, turn=mode == "turn")
@@ -286,7 +291,7 @@ def _undo(
               "is not taken back (to see)") if subagents else ""  # fmt: skip
     redo = "until your next message u redoes it (OpenCode's unrevert), and your next message makes it final"
     if mode == "step":
-        does = f"OpenCode's revert at the last part of step {before['n']} takes back {what}: {restored}; {redo}{theirs}"
+        does = f"OpenCode's revert at the last part of {_step(before)} takes back {what}: {restored}; {redo}{theirs}"
     else:
         does = (f"OpenCode's revert at your message takes back {what}: {restored}; the text of your message comes back "
                 f"in the note line, to send again or change; {redo}{theirs}")  # fmt: skip
@@ -340,9 +345,12 @@ def _taken(takes: Mapping[str, Any], *, turn: bool) -> str:
 
 
 def _numbers(numbers: list[Any]) -> str:
-    """Steps by their numbers: "step 2", "steps 2 and 3", "steps 2, 3 and 4", "steps 2 to 9"."""
+    """Steps by their numbers: "step 2", "steps 2 and 3", "steps 2, 3 and 4", "steps 2 to 9"; counted ("2 steps") when
+    a flow drawn by another part gives no numbers."""
     if not numbers:
         return ""
+    if any(each is None for each in numbers):
+        return "a step" if len(numbers) == 1 else f"{len(numbers)} steps"
     if len(numbers) == 1:
         return f"step {numbers[0]}"
     if len(numbers) > 3 and numbers == list(range(numbers[0], numbers[0] + len(numbers))):

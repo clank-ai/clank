@@ -164,3 +164,21 @@ def test_each_actions_state_is_read_from_the_flow() -> None:
     failed = {"state": "failed", "why": "the bridge refused", "time": "", "by": "you"}
     shown = offered(flow, kept={"stop": failed})["stop"]["state"]
     assert (shown["state"], shown["why"]) == ("failed", "the bridge refused")
+
+
+def test_an_undo_offer_never_fails_on_a_step_that_has_no_number() -> None:
+    """A flow another part draws (the console's fixture of a planning, a kept flow of an older shape) may hold steps
+    without `n`: the Guide still offers every action, naming "that step" where it cannot say which (a KeyError drew
+    the Monitor without the Guide's offers, 2026-10-26)."""
+    view = working("idle").view()
+    for node in view["nodes"]:
+        node.pop("n", None)
+    actions = {each["action"]: each for each in offer(view, port=4096, totals=TOTALS, ended=ENDED, kept={})}
+    assert set(actions) == {"stop", "note", "compact", "undo", "drop"}
+    assert actions["undo"]["can"] is True
+    assert "takes back your message and 2 steps" in actions["undo"]["does"], actions["undo"]["does"]
+    assert "None" not in actions["undo"]["does"]
+    bare = {**view, "nodes": [node for node in view["nodes"] if node["kind"] != "said"]}
+    undo = {each["action"]: each for each in offer(bare, port=4096, totals=TOTALS, ended=ENDED, kept={})}["undo"]
+    assert undo["can"] is False
+    assert undo["why"] == "the message before that step is not in Clank's flow: undo cannot name where to cut"
