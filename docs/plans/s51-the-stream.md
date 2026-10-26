@@ -22,7 +22,7 @@ following the model, one row of thinking that grows, tool calls as they start, q
   waits open), and `snapshot` when a merge or the cap changed more than one thing; `changes_since(workspace, session,
   version)` (None when the client is behind the log); `subscribe(workspace, session, callback)` called with each new
   version outside the lock, returning what unsubscribes. Pure tests.
-- [ ] 2. **The stream route** `GET /agents/conversation/stream?folder=&session=&limit=&after=`
+- [x] 2. **The stream route** `GET /agents/conversation/stream?folder=&session=&limit=&after=`
   (`agents/streaming.py`): the conversation found as the route finds it; `snapshot` first (the route's answer with its
   version), then each change as an event whose id is its version, gathered for `GATHER_SECONDS` (0.1) so a burst
   comes as one flush; `after` or `Last-Event-ID` resumes from a version, a client behind the log gets a snapshot; a

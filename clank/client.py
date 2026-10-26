@@ -99,9 +99,22 @@ class Client:
         """The event stream's messages, as they come; `opened` gets the response once the stream answers, so another
         thread can close it to end the stream."""
         params = _clean({"after": after, "types": ",".join(types) if types else None, "follow": follow})
+        yield from self.stream("events", opened=opened, **params)
+
+    def stream(
+        self,
+        path: str,
+        *,
+        opened: Callable[[httpx2.Response], None] | None = None,
+        quiet: float | None = None,
+        **params: Any,
+    ) -> Generator[ServerEvent, None, None]:
+        """A route's Server-Sent Events (the event stream, a conversation's, design 0023 §3), as they come; `opened`
+        gets the response once the stream answers; `quiet` seconds without a line end it as `NotRunning` (None: wait
+        as long as it takes, since a stream keeps alive on its own)."""
         try:
             with self._http.stream(
-                "GET", PREFIX + "events", params=params, timeout=httpx2.Timeout(10.0, read=None)
+                "GET", PREFIX + path, params=_clean(params), timeout=httpx2.Timeout(10.0, read=quiet)
             ) as answer:
                 if answer.status_code >= 400:
                     answer.read()

@@ -94,6 +94,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/sessionflow/todos.py` | The todo list's items across its revisions (design 0012 §6.2, decision 0050), the branches of a session that carries |
 | `clank/components/agents/sessions.py` | The session bridge (design 0005 §2): the service's way to the OpenCode servers running in a workspace's container. |
 | `clank/components/agents/showing.py` | Showing files to the owner (design 0018 §7.1): the agent names files of a workspace's folder, and Clank's VS Code |
+| `clank/components/agents/streaming.py` | The conversation stream (design 0023 §3): what happens in a conversation, pushed to a client as it happens, over |
 | `clank/components/agents/vscode.py` | Clank's VS Code window (design 0004 §5): a separate instance of the VS Code program on this machine, its settings and |
 | `clank/components/agents/watch.py` | The watchers (design 0007 §4): one for each running workspace container, the bridge's `watch` kept open with `docker |
 | `clank/components/agents/watchfor/__init__.py` | The Monitor's Watch for (design 0012 §8, decision 0053): rules over each session's flow, their marks, and what each |
