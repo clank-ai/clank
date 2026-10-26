@@ -15,13 +15,20 @@ interface Call {
 function answering(status: number, body: unknown, calls: Call[]): typeof fetch {
   return async (url: string | URL | Request, init?: RequestInit) => {
     calls.push({ url: String(url), init: init ?? {} });
-    return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
   };
 }
 
 test("every call carries the token and names the client vscode", async () => {
   const calls: Call[] = [];
-  const client = new ClankClient("http://127.0.0.1:7720", "the-token", answering(200, [], calls));
+  const client = new ClankClient(
+    "http://127.0.0.1:7720",
+    "the-token",
+    answering(200, [], calls),
+  );
   assert.deepEqual(await client.get("questions"), []);
   const headers = calls[0]!.init.headers as Record<string, string>;
   assert.equal(calls[0]!.url, "http://127.0.0.1:7720/api/v1/questions");
@@ -31,7 +38,11 @@ test("every call carries the token and names the client vscode", async () => {
 
 test("a request that starts an operation carries its request key and its body", async () => {
   const calls: Call[] = [];
-  const client = new ClankClient("http://127.0.0.1:7720", "t", answering(200, { id: "op-1" }, calls));
+  const client = new ClankClient(
+    "http://127.0.0.1:7720",
+    "t",
+    answering(200, { id: "op-1" }, calls),
+  );
   await client.post("docker/start", undefined, "press-1");
   await client.post("questions/q-1/answer", { option: "stop" });
   const first = calls[0]!.init.headers as Record<string, string>;
@@ -40,14 +51,27 @@ test("a request that starts an operation carries its request key and its body", 
 });
 
 test("the API's error shape becomes a ClankError with the service's own words", async () => {
-  const refusal = { error: { code: "refused", message: "q-1 was already answered by you (console)", where: {} } };
-  const client = new ClankClient("http://127.0.0.1:7720", "t", answering(409, refusal, []));
-  await assert.rejects(client.post("questions/q-1/answer", { option: "stop" }), (error: unknown) => {
-    assert.ok(error instanceof ClankError);
-    assert.equal(error.message, "q-1 was already answered by you (console)");
-    assert.equal(error.status, 409);
-    return true;
-  });
+  const refusal = {
+    error: {
+      code: "refused",
+      message: "q-1 was already answered by you (console)",
+      where: {},
+    },
+  };
+  const client = new ClankClient(
+    "http://127.0.0.1:7720",
+    "t",
+    answering(409, refusal, []),
+  );
+  await assert.rejects(
+    client.post("questions/q-1/answer", { option: "stop" }),
+    (error: unknown) => {
+      assert.ok(error instanceof ClankError);
+      assert.equal(error.message, "q-1 was already answered by you (console)");
+      assert.equal(error.status, 409);
+      return true;
+    },
+  );
 });
 
 test("a service that does not answer is NotRunning", async () => {
@@ -56,4 +80,48 @@ test("a service that does not answer is NotRunning", async () => {
   };
   const client = new ClankClient("http://127.0.0.1:7720", "t", refused);
   await assert.rejects(client.get("service"), NotRunning);
+});
+
+test("a stream route's messages come as they arrive, split or joined across the pieces read", async () => {
+  const calls: string[] = [];
+  const pieces = [
+    'event: connected\ndata: {}\n\nid: 7\nevent: snapshot\ndata: {"session": nu',
+    'll}\n\n: keepalive\n\nid: 8\nevent: delta\ndata: {"text": "a"}\n\n',
+  ];
+  const fetcher = async (url: string | URL | Request): Promise<Response> => {
+    calls.push(String(url));
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const piece of pieces) controller.enqueue(encoder.encode(piece));
+        controller.close();
+      },
+    });
+    return new Response(body, {
+      status: 200,
+      headers: { "Content-Type": "text/event-stream" },
+    });
+  };
+  const client = new ClankClient(
+    "http://127.0.0.1:7720",
+    "t",
+    fetcher as typeof fetch,
+  );
+  const heard = [];
+  for await (const event of client.stream(
+    "agents/conversation/stream",
+    { folder: "C:/work/paper", after: 6 },
+    new AbortController().signal,
+  )) {
+    heard.push(event);
+  }
+  assert.deepEqual(heard, [
+    { name: "connected", id: undefined, data: {} },
+    { name: "snapshot", id: 7, data: { session: null } },
+    { name: "delta", id: 8, data: { text: "a" } },
+  ]);
+  assert.equal(
+    calls[0],
+    "http://127.0.0.1:7720/api/v1/agents/conversation/stream?folder=C%3A%2Fwork%2Fpaper&after=6",
+  );
 });

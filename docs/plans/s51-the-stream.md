@@ -30,7 +30,7 @@ following the model, one row of thinking that grows, tool calls as they start, q
   the folder's newest session changed and none was named (the client reconnects); keepalives; `closing` when the
   service stops. A folder with no session yet: a snapshot saying so, then the newest session watched for. `Client.stream`
   in `clank/client.py` (any stream route). Tests with `live_service` and the mirror fed through the sessions' lines.
-- [ ] 3. **The extension's live state** (`core/live.ts`, pure, Node tests): `apply(state, event)` for every event,
+- [x] 3. **The extension's live state** (`core/live.ts`, pure, Node tests): `apply(state, event)` for every event,
   the pending owner message (sent, shown at once, replaced when its message arrives, returned with the error when the
   send fails), the version, `reconnect` when the session changed; `ClankClient.stream(path, parameters, signal)`
   generalizing `events`.

@@ -19,6 +19,7 @@ export interface PageMessage {
     error?: string | null;
     summary?: boolean | null;
     created?: number;
+    completed?: number | null;
   };
   parts: PagePart[];
 }
@@ -71,7 +72,7 @@ export interface CallView {
 }
 
 export type Item =
-  | { kind: "owner"; id: string; text: string; about?: string }
+  | { kind: "owner"; id: string; text: string; about?: string; pending?: boolean }
   | { kind: "notice"; id: string; title: string; detail: string; log?: string }
   | { kind: "text"; id: string; text: string }
   | { kind: "thinking"; id: string; text: string }
