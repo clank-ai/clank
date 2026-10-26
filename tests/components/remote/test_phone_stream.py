@@ -78,8 +78,9 @@ def paired(kernel: Kernel, base: str) -> dict[str, str]:
 class Events:
     """The stream's events as they come, read in a thread; `close` ends the response from outside."""
 
-    def __init__(self, base: str, headers: dict[str, str], cookies: dict[str, str]) -> None:
+    def __init__(self, base: str, headers: dict[str, str], cookies: dict[str, str], path: str = "/api/stream") -> None:
         self.found: list[tuple[str, int | None, Any]] = []
+        self.path = path
         self.status = 0
         self._lock = threading.Lock()
         self._response: httpx2.Response | None = None
@@ -90,7 +91,7 @@ class Events:
         try:
             with (
                 httpx2.Client(timeout=httpx2.Timeout(10, read=None)) as client,
-                client.stream("GET", f"{base}/api/stream", headers=headers, cookies=cookies) as response,
+                client.stream("GET", f"{base}{self.path}", headers=headers, cookies=cookies) as response,
             ):
                 self._response = response
                 self.status = response.status_code

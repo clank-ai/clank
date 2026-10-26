@@ -200,6 +200,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/remote/page/sw.js` | The phone app's service worker (design 0025 §3): it keeps the app's shell (the page, its script, its style, its icon) |
 | `clank/components/remote/qr.py` | The QR code the console shows for the phone's pair link (design 0025 §2, decision 0144), drawn as text. |
 | `clank/components/remote/service.py` | The remote component's part in the service (design 0005, decision 0012): the phone page and who may reach it. |
+| `clank/components/remote/sessionapi.py` | The phone's session routes (design 0025 §7; plan s59): the conversation stream, the Guide and the context of a |
 | `clank/components/remote/stream.py` | The phone's one live stream (design 0025 §3, decision 0143): Server-Sent Events from the listener to a paired |
 | `clank/components/remote/tailnet.py` | Tailscale, through its command (design 0005 §4): this machine's name on the tailnet and its user's login, and |
 | `clank/components/remote/traffic.py` | What passes between this computer and the paired devices (design 0005 §4, transparency): every exchange of the |

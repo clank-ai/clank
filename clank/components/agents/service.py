@@ -53,11 +53,12 @@ import hashlib
 import json
 import logging
 import threading
-from collections.abc import Callable, Collection
+from collections.abc import AsyncGenerator, Callable, Collection
 from typing import TYPE_CHECKING, Any
 
 import anyio
 
+from clank.components.agents import streaming
 from clank.components.agents.adapters import AGENT_PROGRAMS
 from clank.components.agents.adapters.opencode import PROVIDER, UNSAFE
 from clank.components.agents.adapters.program import AgentModel, AgentProgram, Compaction, kept_margin
@@ -318,6 +319,20 @@ class Agents:
             "drafts": runtime.drafts("main"),
             "jobs": [job for job in self.jobs.list(workspace) if job["state"] != "ended"] if workspace else [],
         }
+
+    def conversation_stream(
+        self,
+        folder: str,
+        session: str,
+        limit: int,
+        after: int | None,
+        closers: set[Callable[[], None]],
+        after_session: str = "",
+    ) -> AsyncGenerator[str, None]:
+        """The conversation pushed as it happens (design 0023 §3, `streaming.py`), for a client of another part (the
+        phone's listener, design 0025 §7): a snapshot, then each change of the mirror with its version, the readout
+        while the session works; `after` resumes from a version of the session `after_session`."""
+        return streaming.conversation_stream(self, folder, session, limit, after, closers, after_session=after_session)
 
     def conversation(self, folder: str, session: str = "", limit: int = 30, before: str = "") -> dict[str, Any]:
         """The agent panel's conversation for a folder (design 0021 §4), read from the mirror (design 0023 §2,

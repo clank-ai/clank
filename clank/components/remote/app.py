@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 from clank.components.remote.devices import TTL_DAYS, PairingError
 from clank.components.remote.flowsapi import flow_routes
 from clank.components.remote.icon import icon_png
+from clank.components.remote.sessionapi import CONVERSATION_STREAM_PATH, session_routes
 from clank.components.remote.stream import phone_stream
 from clank.kernel.events import Actor
 
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
 
 COOKIE = "clank_device"
 STREAM_PATH = "/api/stream"  # the live stream (design 0025 §3), logged as one line
+STREAM_PATHS = (STREAM_PATH, CONVERSATION_STREAM_PATH)  # the streams: each logged as one line, never read whole
 ACTION_HEADER = "x-clank-phone"
 STATIC = {  # the app's files, from the package (design 0025 §1: nothing fetched from elsewhere)
     "app.js": "text/javascript", "model.mjs": "text/javascript", "sw.js": "text/javascript", "style.css": "text/css",
@@ -136,7 +138,7 @@ def create_phone_app(remote: "Remote") -> FastAPI:
         began, when = time.perf_counter(), kernel.clock.now()
         asked = await request.body()
         response: Response = await call_next(request)
-        if request.url.path == STREAM_PATH and response.status_code == 200:
+        if request.url.path in STREAM_PATHS and response.status_code == 200:
             device = getattr(request.state, "device", None)
             await anyio.to_thread.run_sync(lambda: remote.traffic.record(
                 when=when, device=device, method=request.method, path=request.url.path, query=request.url.query,
@@ -372,6 +374,7 @@ def create_phone_app(remote: "Remote") -> FastAPI:
         return response
 
     app.include_router(flow_routes(kernel, device_of, acting), prefix="/api")  # the Flows tab's (design 0025 §6)
+    app.include_router(session_routes(kernel, remote.closers, device_of, acting, bridged), prefix="/api")  # §7
     return app
 
 
