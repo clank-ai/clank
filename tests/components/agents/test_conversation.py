@@ -86,8 +86,11 @@ def test_the_conversation_is_the_folders_session_its_page_of_messages_whether_it
     monkeypatch.setattr(agents.sessions, "runs", lambda workspace, id: None)
     pages: list[tuple[int, str, int, str]] = []
 
-    def page(workspace: str, port: int, id: str, *, limit: int = 50, before: str = "") -> dict[str, Any]:
+    def page(
+        workspace: str, port: int, id: str, *, limit: int = 50, before: str = "", whole: bool = False
+    ) -> dict[str, Any]:
         pages.append((port, id, limit, before))
+        assert whole, "the mirror reads whole parts"
         return {"messages": [{"info": {"id": "msg_1", "role": "user"}, "parts": []}], "next": "cursor_1"}
 
     monkeypatch.setattr(agents.sessions, "page", page)
@@ -98,7 +101,7 @@ def test_the_conversation_is_the_folders_session_its_page_of_messages_whether_it
             return found
 
         found = asked(folder=str(folder))
-        older = asked(folder=str(folder), session="ses_old", limit=10, before="cursor_1")
+        older = asked(folder=str(folder), session="ses_old", limit=10, before="msg_1")
         kept.clear()  # the service restarted: it keeps no flow yet
         listed = asked(folder=str(folder))
         nowhere = asked(folder=str(tmp_path / "elsewhere"))
@@ -107,17 +110,20 @@ def test_the_conversation_is_the_folders_session_its_page_of_messages_whether_it
     assert found["workspace"] == "paper"
     assert found["session"] == {"id": "ses_new", "title": "the newest", "port": 4096, "busy": True}
     assert found["messages"] == [{"info": {"id": "msg_1", "role": "user"}, "parts": []}]
-    assert found["next"] == "cursor_1"
+    assert found["next"] == "msg_1", "the message to read before, since OpenCode has older ones"
     assert found["waiting"] == {"permissions": [permission], "questions": []}, "only what waits in this session"
-    assert pages[0] == (4096, "ses_new", 30, ""), "the newest page by default"
+    assert pages[0] == (4096, "ses_new", 30, ""), "the newest page by default, read once"
     assert older["session"]["id"] == "ses_old"
     assert older["session"]["busy"] is False
-    assert pages[1] == (4096, "ses_old", 10, "cursor_1")
+    assert pages[1:] == [(4096, "ses_old", 10, ""), (4096, "ses_old", 10, "cursor_1")], (
+        "a session not followed: its newest page first, then what the mirror does not hold, from OpenCode's cursor"
+    )
+    assert older["messages"] == [], "OpenCode gave the same message again: nothing older"
     assert listed["session"]["id"] == "ses_new", "the newest root session a server lists"
     assert nowhere["workspace"] is None
     assert (nowhere["session"], nowhere["messages"], nowhere["next"]) == (None, [], "")
     assert empty["workspace"] == "paper"
-    assert empty["session"] is None, "no server runs, no session kept"
+    assert empty["session"]["id"] == "ses_new", "the mirror remembers the sessions it learned; a server gone is heard"
 
 
 def test_a_session_is_shown_in_the_workspaces_terminal_and_refused_when_no_terminal_runs(

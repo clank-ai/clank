@@ -76,6 +76,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/latex/pages.py` | A PDF's pages, marked up and said in words (design 0020 §10). |
 | `clank/components/agents/latex/sources.py` | Claims and their sources (design 0020 §7): a value the agent writes into a LaTeX document says where it comes from. |
 | `clank/components/agents/latexcli.py` | `clank latex` (design 0020): LaTeX with the agent. `clank latex build FILE` builds the document a `.tex` file belongs |
+| `clank/components/agents/mirror.py` | The mirror (design 0023 §2, decision 0139): the conversations the service holds for the sessions clients follow, |
 | `clank/components/agents/modes.py` | The workspace's mode as the owner sees it, and handing a plan to the agent (design 0009 §7-§8). |
 | `clank/components/agents/now.py` | What a session does now (design 0012 §5, §11 step 7): the Monitor's Now panel, as the service says it, so the console |
 | `clank/components/agents/pausing.py` | The Guide's pause in the service (design 0012 §9.4, §11 step 11, decision 0055): **pause after this step** (`p`). |

@@ -14,7 +14,7 @@ the experience; this document says what holds it up.
 | § | Section | Status |
 | --- | --- | --- |
 | 1 | What the owner felt, measured | Approved 2026-10-26 |
-| 2 | The conversation is read from the service's mirror | Approved 2026-10-26 |
+| 2 | The conversation is read from the service's mirror | Approved 2026-10-26; built 2026-10-26 ([plan s50](../plans/s50-the-mirror.md)) |
 | 3 | Pushed, not polled: the conversation stream | Approved 2026-10-26 |
 | 4 | Acting without waiting: the resident bridge | Approved 2026-10-26 |
 | 5 | What the owner sees | Approved 2026-10-26 |

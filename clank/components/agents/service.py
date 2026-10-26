@@ -84,6 +84,7 @@ from clank.components.agents.latex.comments import CommentError as CommentError 
 from clank.components.agents.latex.comments import Comments
 from clank.components.agents.latex.pages import PageError as PageError  # for the routes
 from clank.components.agents.latex.pages import PageMarks
+from clank.components.agents.mirror import Mirror
 from clank.components.agents.modes import BUILD as BUILD  # the agent a flow's box in review or auto is sent to
 from clank.components.agents.modes import EVENT_TYPES as MODE_EVENTS
 from clank.components.agents.modes import PLANNER as PLANNER  # and a box in plan mode
@@ -100,9 +101,9 @@ from clank.components.agents.review import EVENT_TYPES as REVIEW_EVENTS
 from clank.components.agents.review import Review
 from clank.components.agents.review import ReviewError as ReviewError  # for the components that use this one
 from clank.components.agents.sessionflow.kept import SessionFlows, gateway_asker, plan_reader
-from clank.components.agents.sessions import AT_WORK, Sessions
 from clank.components.agents.sessions import EVENT_TYPES as SESSION_EVENTS
 from clank.components.agents.sessions import SessionError as SessionError  # for the components that use this one
+from clank.components.agents.sessions import Sessions
 from clank.components.agents.showing import EVENT_TYPES as SHOWING_EVENTS
 from clank.components.agents.showing import ShowError as ShowError  # for the routes
 from clank.components.agents.showing import Showing
@@ -210,6 +211,8 @@ class Agents:
         self.annotations.pages, self.annotations.answers = self.pages, self.answers
         self.comments = Comments(kernel, self.sessions, self.annotations, self.answers)  # design 0020 §11
         self.flows = SessionFlows(self.sessions, gateway_asker(kernel), plan_reader(kernel))
+        self.mirror = Mirror()  # the conversations held for the sessions clients follow (design 0023 §2)
+        self.sessions.listen(self.mirror.heard)
         self.pausing = Pausing(kernel, self.sessions)  # the Guide's pause (design 0012 §9.4)
         now = lambda: to_text(kernel.clock.now())  # noqa: E731
         self.guide = Guide(self.sessions, self.flows, self.review, self.figures, now, self.pausing)
@@ -316,10 +319,13 @@ class Agents:
         }
 
     def conversation(self, folder: str, session: str = "", limit: int = 30, before: str = "") -> dict[str, Any]:
-        """The agent panel's conversation for a folder (design 0021 §4): its workspace's session (the one named, else
-        the newest kept, else the newest root session a server lists), the server that reaches it, a page of its
-        messages (the newest `limit`, or those before the cursor `before`) with the cursor of the page before, whether
-        it is busy, and the permissions and questions waiting in it."""
+        """The agent panel's conversation for a folder (design 0021 §4), read from the mirror (design 0023 §2,
+        decision 0139): its workspace's session (the one named, else the newest kept, else the newest root session
+        the watcher saw), the server that reaches it, a page of its messages (the newest `limit`, or those before the
+        message `before`) with the message to read before, whether it is busy, and the permissions and questions
+        waiting in it. The session is followed from the first read; its history is read from OpenCode once, whole,
+        and once more for what the mirror does not hold when a client reads back; the servers are listed once, when
+        the watcher has not named the sessions yet. Nothing else starts a process in the container."""
         try:
             workspace: str | None = self.annotations.workspace_of(folder)[0]
         except AnnotationError:
@@ -328,35 +334,50 @@ class Agents:
                                    "next": "", "waiting": {"permissions": [], "questions": []}}  # fmt: skip
         if workspace is None:
             return nothing
-        try:
-            running = self.sessions.servers(workspace)
-        except Exception:  # the container does not answer: the sessions kept still say which one
-            running = []
-        listed = sorted((each for server in running for each in server.get("sessions") or []),
-                        key=lambda each: each.get("updated") or 0, reverse=True)  # fmt: skip
+        for gone in {ws for ws, _ in self.mirror.forget()}:
+            self.review.watchers.follow(gone, self.mirror.followed(gone))
         kept = self.flows.flows(workspace)
-        chosen = session or str((kept[0] if kept else {}).get("session") or (listed[0]["id"] if listed else ""))
-        port = self.sessions.reach(workspace, chosen) if chosen else None
-        if port is None:
+        known = self.mirror.sessions(workspace)
+        chosen = session or str((kept[0] if kept else {}).get("session") or (known[0]["id"] if known else ""))
+        port = self.sessions.runs(workspace, chosen) if chosen else None
+        if port is None and chosen:
+            port = self.mirror.port(workspace, chosen)
+        if port is None:  # the watcher has not named the sessions (the service just started): list them once
+            try:
+                self.mirror.learn(workspace, self.sessions.servers(workspace))
+            except Exception:  # the container does not answer: nothing to read
+                return nothing
+            known = self.mirror.sessions(workspace)
+            chosen = chosen or (str(known[0]["id"]) if known else "")
+            port = self.mirror.port(workspace, chosen) if chosen else None
+        if not chosen or port is None:
             return nothing
-        seen: dict[str, Any] = next((each for each in listed if each.get("id") == chosen), {})
+        if chosen not in self.mirror.followed(workspace):
+            self.mirror.follow(workspace, chosen)
+            self.review.watchers.follow(workspace, self.mirror.followed(workspace))
+        found = self.mirror.conversation(workspace, chosen, limit, before)
+        if found is None:  # its history, once
+            self.mirror.merge(workspace, chosen, self.sessions.page(workspace, port, chosen, limit=limit, whole=True))
+            found = self.mirror.conversation(workspace, chosen, limit, before)
+        if found is not None and before and found["from_opencode"] and len(found["messages"]) < limit:
+            # a client reads back past what the mirror holds: that page from OpenCode, once, kept
+            older = self.sessions.page(workspace, port, chosen, limit=limit, before=found["from_opencode"], whole=True)
+            self.mirror.merge(workspace, chosen, older)
+            found = self.mirror.conversation(workspace, chosen, limit, before)
+        if found is None:
+            return nothing
         named: dict[str, Any] = next((flow for flow in kept if flow.get("session") == chosen), {})
-        page = self.sessions.page(workspace, port, chosen, limit=limit, before=before)
-        waits = [
-            each for server in running for each in server.get("permissions") or [] if each.get("session") == chosen
-        ]
-        asks = [each for server in running for each in server.get("questions") or [] if each.get("session") == chosen]
         return {
             **nothing,
             "session": {
                 "id": chosen,
-                "title": str(seen.get("title") or named.get("title") or ""),
+                "title": str(found["title"] or named.get("title") or ""),
                 "port": port,
-                "busy": seen.get("status") in AT_WORK,
+                "busy": found["busy"],
             },
-            "messages": page.get("messages") or [],
-            "next": str(page.get("next") or ""),
-            "waiting": {"permissions": waits, "questions": asks},
+            "messages": found["messages"],
+            "next": found["next"],
+            "waiting": found["waiting"],
         }
 
     def figures(self, workspace: str, session: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:

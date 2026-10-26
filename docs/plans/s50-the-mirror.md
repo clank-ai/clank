@@ -29,14 +29,14 @@ copied, so this plan's changes to the bridge (and every later one) rebuild no im
   `--whole`. `Watchers.follow(workspace, sessions)`, told again to a watch started again; `Sessions.page(..., whole=)`.
   Tests: `test_monitor_watch.py` (a followed session's part whole, another's cut, deltas for both), the telling and
   telling again, `page --whole`.
-- [ ] 3. **The mirror** (`agents/mirror.py`, `Mirror`): per followed `(workspace, session)` the messages (info) and
+- [x] 3. **The mirror** (`agents/mirror.py`, `Mirror`): per followed `(workspace, session)` the messages (info) and
   their parts whole, in order; the session's status, port and title; the permissions and questions open; a version.
   `heard` takes the watchers' lines (`message`, `part`, `delta`, `status`, `session`, `asked`, `replied`, `question`,
   `answered`, `removed`, `synced`); `merge(page)` takes a history page; `conversation(workspace, session, limit,
   before)` answers from memory in the route's shape, `None` when the session is not complete; `sessions(workspace)`
   the sessions known, newest first; `follow`, `unfollow`, `forget` (`FORGET_MINUTES` 30) and the cap (`FULL_BYTES` 4 MB:
   the oldest parts' text cut back to `TEXT`). Pure tests with fed lines: `test_mirror.py`.
-- [ ] 4. **The route from the mirror**: `Agents.conversation` follows the session (the mirror told, the watch told),
+- [x] 4. **The route from the mirror**: `Agents.conversation` follows the session (the mirror told, the watch told),
   reads its history once (`page --whole`, newest pages up to `limit`), and answers from the mirror; `before` from the
   mirror, else one page read and kept; the sessions listed from the mirror, `servers` only when it knows none; the
   waits from the mirror. The process-counting test: the fake OpenCode with the bridge on this machine, `inside`
