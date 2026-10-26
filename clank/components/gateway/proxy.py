@@ -12,8 +12,10 @@ here (the container has no way to the internet's names), refused when the name o
 private (`private_address`: the machine, the local networks, the carrier range the tailnet uses, link-local), else
 joined to the first address found, bytes both ways, counted and never read; a plain request (`GET http://host/path`)
 is forwarded to its host with the proxy's own headers dropped and `Connection: close`, one request a connection, its
-path recorded. A host not allowed is refused 403 with the words that say the host, the workspace and how it is allowed
-(`clank workspace allow FOLDER --host NAME`); a name that cannot be resolved 502. Every exchange is one line of
+path recorded. A host not allowed is asked for when the proxy has an `ask` (design 0024 §3: the connection held up to
+`ASK_SECONDS` while the service asks the owner; `always` or `once` let the request out, logged as asked), else, or
+when the owner did not allow it, refused 403 with the words that say the host, the workspace and how it is
+allowed (`clank workspace allow FOLDER --host NAME`); a name that cannot be resolved 502. Every exchange is one line of
 `NetworkLog` (`logs/network/<day>.jsonl`: time, workspace, host, port, method, the path of a plain request, status,
 bytes sent and received, seconds, why refused), never a body, never a tunnel's bytes; the days older than kept are
 removed when a day's first line is written. The resolver and the private check can be given (the tests reach upstreams
@@ -39,6 +41,7 @@ log = logging.getLogger(__name__)
 CHUNK = 65536
 HEAD_MOST = 64 * 1024  # bytes of a request's head read before it is refused as too long
 KEEP_DAYS = 30
+ASK_SECONDS = 60  # how long a connection is held while the owner is asked about its host (design 0024 §3)
 PRIVATE_NAMES = ("localhost", "edge", "host.docker.internal", "gateway.docker.internal")
 PRIVATE_SUFFIXES = (".localhost", ".local", ".internal", ".home.arpa")
 # The private ranges (RFC 1918, the loopback, link-local, the carrier range 100.64/10 the tailnet uses, this host,
@@ -46,6 +49,7 @@ PRIVATE_SUFFIXES = (".localhost", ".local", ".internal", ".home.arpa")
 PRIVATE_NETWORKS = [ipaddress.ip_network(each) for each in ("100.64.0.0/10", "0.0.0.0/8", "fc00::/7", "fe80::/10")]
 HOP_BY_HOP = ("proxy-authorization", "proxy-connection", "connection", "keep-alive", "te", "trailer", "upgrade")
 Resolve = Callable[[str, int], Awaitable[list[tuple[str, int]]]]
+Ask = Callable[[str, str], Awaitable[str]]  # workspace, host: always, once or no
 
 
 def network_token(local: str, workspace: str) -> str:
@@ -146,7 +150,9 @@ class Refused(Exception):
 
 class Proxy:
     """The forward proxy: `hosts(workspace)` is the workspace's allowances (None for an unknown workspace),
-    `token_of(workspace)` its token; `resolve` and `private` as the module's unless given."""
+    `token_of(workspace)` its token; `ask(workspace, host)`, when given, is awaited for a host not allowed while the
+    connection is held (design 0024 §3: `always`, `once` or `no`); `resolve` and `private` as the module's unless
+    given."""
 
     def __init__(
         self,
@@ -155,12 +161,14 @@ class Proxy:
         log: NetworkLog | None = None,
         resolve: Resolve | None = None,
         private: Callable[[str], bool] | None = None,
+        ask: Ask | None = None,
     ) -> None:
         self.hosts = hosts
         self.token_of = token_of
         self.log = log
         self.resolve = resolve or resolve_name
         self.private = private or private_address
+        self.ask = ask
 
     async def serve(self, host: str, port: int) -> asyncio.AbstractServer:
         """Listen on `host:port`; the server returned is the caller's to run and to close."""
@@ -186,7 +194,9 @@ class Proxy:
             if method != "CONNECT":
                 record["path"] = path
             try:
-                address = await self._admitted(workspace, host, port)
+                address, why = await self._admitted(workspace, host, port)
+                if why:
+                    record["why"] = why
                 if method == "CONNECT":
                     sent, received = await self._tunnel(reader, writer, address)
                     record.update(status=200, sent=sent, received=received)
@@ -202,6 +212,8 @@ class Proxy:
             record["why"] = "failed"
         finally:
             if record and self.log is not None:
+                if "status" not in record:  # ended before an answer (the handler cancelled, the client gone)
+                    record.update(status=0, why="ended")
                 record["seconds"] = round(time.monotonic() - began, 3)
                 self.log.write(record)
             writer.close()
@@ -223,20 +235,25 @@ class Proxy:
             return None
         return workspace
 
-    async def _admitted(self, workspace: str, host: str, port: int) -> tuple[str, int]:
-        """The address to connect to for an allowed, public host; `Refused` otherwise."""
+    async def _admitted(self, workspace: str, host: str, port: int) -> tuple[tuple[str, int], str]:
+        """The address to connect to for an allowed, public host, and why it was let out when it was asked for
+        (`asked: once`, `asked: always`; "" for a host allowed); `Refused` otherwise."""
         patterns = self.hosts(workspace)
-        if patterns is None:
-            raise Refused(403, "not allowed", _not_allowed(host, workspace))
         literal: str | None = None
         with contextlib.suppress(ValueError):  # a name, not an address
             literal = str(ipaddress.ip_address(host.strip("[]")))
         if (literal is not None and self.private(literal)) or private_name(host):
             raise Refused(403, "private", _private(host))
-        if not allowed_host(host, patterns):
-            raise Refused(403, "not allowed", _not_allowed(host, workspace))
+        why = ""
+        if not allowed_host(host, patterns or []):
+            if self.ask is None:
+                raise Refused(403, "not allowed", _not_allowed(host, workspace))
+            decision = await self.ask(workspace, host)  # the connection held meanwhile (design 0024 §3)
+            if decision not in ("always", "once"):
+                raise Refused(403, "asked: no", _not_allowed(host, workspace, asked=True))
+            why = f"asked: {decision}"
         if literal is not None:
-            return literal, port
+            return (literal, port), why
         try:
             found = await self.resolve(host, port)
         except OSError as error:
@@ -245,7 +262,7 @@ class Proxy:
             raise Refused(502, "unresolved", f"{host} could not be resolved: no address")
         if any(self.private(address) for address, _ in found):
             raise Refused(403, "private", _private(host))
-        return found[0]
+        return found[0], why
 
     async def _tunnel(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, address: tuple[str, int]
@@ -357,7 +374,13 @@ def _host_port(authority: str, default: int) -> tuple[str, int]:
     return host, int(port_text)
 
 
-def _not_allowed(host: str, workspace: str) -> str:
+def _not_allowed(host: str, workspace: str, asked: bool = False) -> str:
+    if asked:
+        return (
+            f"{host} is not allowed for the workspace {workspace}: the owner was asked and did not allow it (the host "
+            f"is not asked for again for a while). The owner allows it with `clank workspace allow FOLDER --host "
+            f"{host}`; otherwise work without it."
+        )
     return (
         f"{host} is not allowed for the workspace {workspace}: the owner allows it with "
         f"`clank workspace allow FOLDER --host {host}` (or you may ask once, in words, and otherwise work without it)."

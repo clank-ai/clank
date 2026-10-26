@@ -78,6 +78,7 @@ from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable, 
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, NamedTuple
+from urllib.parse import quote
 
 import anyio
 import anyio.to_thread
@@ -94,7 +95,7 @@ from clank.components.gateway.keys import Keys
 from clank.components.gateway.kinds import GatewaySettings
 from clank.components.gateway.loops import LoopGuard
 from clank.components.gateway.marks import LocalMarks, held_back, local_calls, whose
-from clank.components.gateway.proxy import NetworkLog, Proxy, network_token
+from clank.components.gateway.proxy import ASK_SECONDS, NetworkLog, Proxy, network_token
 from clank.components.gateway.records import TrafficLog
 from clank.components.gateway.routing import NO_KEY, Routes, SlotRoute
 from clank.components.gateway.sessions import session_of
@@ -1608,6 +1609,34 @@ def main(argv: list[str] | None = None) -> int:
     async def wake(role: str) -> str:
         return await anyio.to_thread.run_sync(wanted, role)
 
+    def host_wanted(workspace: str, host: str) -> str:
+        """Ask the service about a host the agent reaches (design 0024 §3), and wait for the owner's decision."""
+        client = Client.connect(home, name="gateway")
+        try:
+            found = client.post(f"workspaces/{quote(workspace, safe='')}/hosts/wanted", {"host": host})
+            if found.get("allowed"):
+                return "always"
+            question = found.get("question")
+            if not question:
+                return "no"
+            deadline = time.monotonic() + ASK_SECONDS + 5
+            while time.monotonic() < deadline:
+                decided = client.get(f"workspaces/hosts/wanted/{quote(str(question), safe='')}")
+                if decided.get("status") != "waiting":
+                    return str(decided.get("decision") or "no")
+                time.sleep(0.5)
+            return "no"
+        except Exception as error:
+            logging.getLogger(__name__).warning(
+                "the service could not be asked about %s for %s: %s", host, workspace, error
+            )
+            return "no"
+        finally:
+            client.close()
+
+    async def ask_host(workspace: str, host: str) -> str:
+        return await anyio.to_thread.run_sync(host_wanted, workspace, host)
+
     threading.Thread(target=follow, args=(routes, fetch, stop), name="routes", daemon=True).start()
     log = TrafficLog(home.logs / "traffic", settings.record_limit_kib, settings.keep_days) if settings.records else None
     notion = notion_forwarder(lambda: Client.connect(home, name="agent"))
@@ -1622,6 +1651,7 @@ def main(argv: list[str] | None = None) -> int:
         hosts=routes.hosts_of,
         token_of=lambda workspace: network_token(local, workspace),
         log=NetworkLog(home.logs / "network", settings.network_days),
+        ask=ask_host,
     )
     app = create_gateway(
         routes,

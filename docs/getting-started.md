@@ -152,7 +152,9 @@ A workspace's container reaches nothing but Clank by itself. When the agent need
 paper's site, a documentation site), allow that host for that workspace, and only it: `clank workspace allow
 FOLDER --host pypi.org --host .arxiv.org` (a name, or a suffix starting with a dot for a site and everything under
 it; `--no-host` takes one back). The agent's requests go through Clank's proxy, which lets them out to the hosts
-allowed and refuses the rest in plain words the agent reads; private addresses (your machine, your network) are
+allowed; a host not allowed is asked for: the request waits up to a minute while the question shows under
+**Waiting for you** (`y` allows it always for the workspace, `o` once, `n` refuses it, and it is not asked again
+for ten minutes); refused, the agent reads why in plain words. Private addresses (your machine, your network) are
 never reached. Every exchange is logged in `logs/network/` by host, status, bytes and time, never by content. A
 workspace made before this gets the proxy when it is next stopped and opened.
 

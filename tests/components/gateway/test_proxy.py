@@ -14,7 +14,7 @@ import json
 import socket
 import socketserver
 import threading
-from collections.abc import Iterator
+from collections.abc import Awaitable, Callable, Iterator
 from datetime import date
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -31,6 +31,7 @@ from tests.support.served import free_port
 
 HOSTS = {"paper": ["docs.test", ".example.test", "echo.test", "private.test", "10.0.0.9", "localhost"], "other": []}
 TOKENS = {"paper": "tok-paper", "other": "tok-other"}
+Ask = Callable[[str, str], Awaitable[str]]
 
 
 class Page(BaseHTTPRequestHandler):
@@ -61,7 +62,7 @@ class Shout(socketserver.BaseRequestHandler):
 class Served:
     """The proxy and its upstreams on this machine, with a resolver that maps the test's names to them."""
 
-    def __init__(self, folder: Path) -> None:
+    def __init__(self, folder: Path, ask: Ask | None = None) -> None:
         self.pages = ThreadingHTTPServer(("127.0.0.1", 0), Page)
         self.shouts = socketserver.ThreadingTCPServer(("127.0.0.1", 0), Shout)
         self.shouts.daemon_threads = True
@@ -71,7 +72,7 @@ class Served:
         self.port = free_port()
         self.proxy = Proxy(
             hosts=HOSTS.get, token_of=lambda workspace: TOKENS.get(workspace, ""), log=self.log,
-            resolve=self.resolve, private=lambda ip: ip != "127.0.0.1" and private_address(ip),
+            resolve=self.resolve, private=lambda ip: ip != "127.0.0.1" and private_address(ip), ask=ask,
         )  # fmt: skip
         self.loop = asyncio.new_event_loop()
         self.ready = threading.Event()
@@ -316,3 +317,41 @@ def test_the_routes_carry_each_workspaces_hosts_for_the_proxy() -> None:
     routes.update({"slots": {}, "roles": {}, "network": {"paper": {"hosts": [".arxiv.org", "pypi.org"]}}})
     assert routes.hosts_of("paper") == [".arxiv.org", "pypi.org"]
     assert routes.hosts_of("other") is None, "a workspace the routes do not name is allowed nothing"
+
+
+def test_a_host_not_allowed_is_asked_for_and_let_out_on_once_or_always_and_refused_on_no(tmp_path: Path) -> None:
+    """Design 0024 §3: the connection is held while the owner is asked; the answer decides this request."""
+    decisions = {"echo.test": "once", "docs.test": "always", "nope.test": "no"}
+    asked: list[tuple[str, str]] = []
+
+    async def ask(workspace: str, host: str) -> str:
+        asked.append((workspace, host))
+        return decisions.get(host, "no")
+
+    served = Served(tmp_path / "network", ask=ask)
+    try:
+        status, _, tunnel = connect(served, "echo.test:443", auth("other", "tok-other"))
+        assert status == 200, "once: this request goes out"
+        assert tunnel is not None
+        tunnel.sendall(b"hi")
+        assert tunnel.recv(65536) == b"HI"
+        tunnel.close()
+        assert get(served, "http://docs.test/a", auth("other", "tok-other")) == (200, b"page /a"), "always: out too"
+        status, body = get(served, "http://nope.test/", auth("other", "tok-other"))
+        assert status == 403
+        words = body.decode()
+        assert "nope.test is not allowed for the workspace other" in words
+        assert "asked" in words
+        assert "did not allow" in words
+        assert asked == [("other", "echo.test"), ("other", "docs.test"), ("other", "nope.test")]
+        for _ in range(100):
+            if len(served.lines()) == 3:
+                break
+            threading.Event().wait(0.05)
+        assert [(line["host"], line["status"], line.get("why")) for line in served.lines()] == [
+            ("echo.test", 200, "asked: once"), ("docs.test", 200, "asked: always"), ("nope.test", 403, "asked: no"),
+        ]  # fmt: skip
+        assert get(served, "http://docs.test/b", auth("paper", "tok-paper")) == (200, b"page /b")
+        assert asked[-1] == ("other", "nope.test"), "a host allowed is never asked for"
+    finally:
+        served.close()

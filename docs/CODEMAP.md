@@ -265,6 +265,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/workspaces/jobs.py` | Jobs in a workspace's container (design 0013 §17, decision 0132; design 0021 §6): a long computation run detached, |
 | `clank/components/workspaces/kinds.py` | The workspaces component's kinds of record: how Clank uses Docker (`config/docker.json`), and from M4 each workspace |
 | `clank/components/workspaces/layers/tex/latex_build.py` | Clank's LaTeX helper, in the TeX layer (design 0020 §8-§10, decision 0134): run in a workspace's container, it reads |
+| `clank/components/workspaces/network.py` | A host the agent asks for (design 0024 §3, decision 0141): when a workspace's agent reaches a host that is not |
 | `clank/components/workspaces/sandbox.py` | A workspace's container and the edge, as Clank wants them (design 0004 §3 and §6, design 0002 §2.9). |
 | `clank/components/workspaces/service.py` | The workspaces component's part in the service. In M0 it holds Docker: the container platform's status, whose each |
 | `clank/components/workspaces/setup.py` | A workspace's software (design 0004 §10): what installs the folder's own programs where its agent finds them. |

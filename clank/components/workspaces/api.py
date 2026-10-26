@@ -43,6 +43,12 @@ class CloudAnswer(BaseModel):
     allow: bool
 
 
+class HostWanted(BaseModel):
+    """A host a workspace's agent is reaching now (design 0024 §3), asked by the proxy."""
+
+    host: str
+
+
 class HostAnswer(BaseModel):
     """A host a workspace's agent may reach through Clank's proxy (design 0024 §1), or may not any more."""
 
@@ -142,6 +148,20 @@ def router(workspaces: "Workspaces") -> APIRouter:
         found: dict[str, Any] = await anyio.to_thread.run_sync(
             lambda: workspaces.allow_cloud(name, answer.allow, actor=actor)
         )
+        return found
+
+    @routes.get("/workspaces/hosts/wanted/{question}")
+    async def host_decision(question: str) -> dict[str, Any]:
+        """How a host's question went (design 0024 §3): waiting, or always, once or no; the proxy reads it while it
+        holds the agent's connection."""
+        found: dict[str, Any] = await anyio.to_thread.run_sync(workspaces.network.decision, question)
+        return found
+
+    @routes.post("/workspaces/{name}/hosts/wanted")
+    async def host_wanted(name: str, body: HostWanted) -> dict[str, Any]:
+        """A workspace's agent reaches a host (design 0024 §3): allowed by its record, quiet (refused lately), or the
+        question the owner is asked, which the proxy then waits on."""
+        found: dict[str, Any] = await anyio.to_thread.run_sync(lambda: workspaces.host_wanted(name, body.host))
         return found
 
     @routes.post("/workspaces/{name}/hosts")

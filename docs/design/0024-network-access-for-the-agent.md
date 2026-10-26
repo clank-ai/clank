@@ -14,7 +14,7 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 | --- | --- | --- |
 | 1 | The rule: through Clank, by allowance | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)): the allowances, `clank workspace allow --host`; the console's and VS Code's keys with §4 |
 | 2 | The way out: a forward proxy at the gateway | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)) |
-| 3 | A host the agent asks for | Approved 2026-10-26 |
+| 3 | A host the agent asks for | Approved 2026-10-26; built 2026-10-26 ([plan s54](../plans/s54-the-ask.md)) |
 | 4 | What the owner sees | Approved 2026-10-26 |
 | 5 | Packages, papers, data: the named sets | Approved 2026-10-26 |
 | 6 | Search | Approved 2026-10-26 |
@@ -124,8 +124,8 @@ Search is not a host but a provider, and a choice of the owner's:
    fake upstream on this machine and the forwarding tests of the edge (design 0004 §3). The workspace's token in the
    proxy's URL is derived from the service's local token (the SHA-256 HMAC over the workspace's name), so the
    gateway checks it without being handed anything; the allowances ride on the routes the gateway fetches.
-2. The ask of §3: the hold, the question, its answers, the quiet period; its tests with the fake OpenCode's agent
-   asking.
+2. **Built 2026-10-26** ([plan s54](../plans/s54-the-ask.md)). The ask of §3: the hold, the question, its answers,
+   the quiet period; tested with a fake ask on the proxy and the kernel's questions on the service.
 3. The named sets, their file, the console's key.
 4. Requests · F7's Network view, the Now panel's fetching line, This folder's hosts.
 5. The instructions (`network.md`) and the literature calls; getting started: how to let the agent fetch.

@@ -30,6 +30,7 @@ from clank.components.workspaces.adapters.platform import Container, ContainerPl
 from clank.components.workspaces.cloud import EVENT_TYPES as CLOUD_EVENT_TYPES
 from clank.components.workspaces.cloud import CloudBounds
 from clank.components.workspaces.kinds import DockerSettings, Workspace
+from clank.components.workspaces.network import HostAsks
 from clank.components.workspaces.sandbox import BRIDGE_PROGRAM as BRIDGE_PROGRAM  # for the agents (design 0005)
 from clank.components.workspaces.sandbox import CURRENT_INSTRUCTIONS as CURRENT_INSTRUCTIONS  # for the agents
 from clank.components.workspaces.sandbox import CURRENT_PHONE as CURRENT_PHONE  # (design 0018 §7.5)
@@ -127,6 +128,7 @@ class Workspaces:
         self._fingerprint: tuple[Any, ...] | None = None
         self._lock = threading.Lock()
         self.cloud = CloudBounds(kernel)  # where each workspace's requests may go (design 0016 §9)
+        self.network = HostAsks(kernel, self.allow_host)  # the hosts its agent asks for (design 0024 §3)
 
     def settings(self) -> DockerSettings:
         """How Clank uses Docker, as the settings say now."""
@@ -238,6 +240,11 @@ class Workspaces:
             data={"workspace": name, "host": wanted, "allowed": allow, "who": actor.describe()},
         )
         return next(row for row in self.records() if row["name"] == name)
+
+    def host_wanted(self, name: str, host: str) -> dict[str, Any]:
+        """A workspace's agent reaches a host (design 0024 §3): allowed, quiet, or the question asked (`network`)."""
+        self._named(name)
+        return self.network.wanted(name, host)
 
     def _named(self, name: str) -> None:
         if not any(loaded.id == name for loaded in self.kernel.settings.records("workspace")):
