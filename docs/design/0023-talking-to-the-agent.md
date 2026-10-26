@@ -13,14 +13,14 @@ the experience; this document says what holds it up.
 
 | § | Section | Status |
 | --- | --- | --- |
-| 1 | What the owner felt, measured | Proposed 2026-10-26 |
-| 2 | The conversation is read from the service's mirror | Proposed 2026-10-26 |
-| 3 | Pushed, not polled: the conversation stream | Proposed 2026-10-26 |
-| 4 | Acting without waiting: the resident bridge | Proposed 2026-10-26 |
-| 5 | What the owner sees | Proposed 2026-10-26 |
-| 6 | Measurements that hold it to its word | Proposed 2026-10-26 |
-| 7 | What else it mends | Proposed 2026-10-26 |
-| 8 | Order of work | Proposed 2026-10-26 |
+| 1 | What the owner felt, measured | Approved 2026-10-26 |
+| 2 | The conversation is read from the service's mirror | Approved 2026-10-26 |
+| 3 | Pushed, not polled: the conversation stream | Approved 2026-10-26 |
+| 4 | Acting without waiting: the resident bridge | Approved 2026-10-26 |
+| 5 | What the owner sees | Approved 2026-10-26 |
+| 6 | Measurements that hold it to its word | Approved 2026-10-26 |
+| 7 | What else it mends | Approved 2026-10-26 |
+| 8 | Order of work | Approved 2026-10-26 |
 
 ## 1. What the owner felt, measured
 

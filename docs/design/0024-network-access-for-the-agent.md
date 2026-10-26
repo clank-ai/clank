@@ -12,14 +12,14 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 
 | § | Section | Status |
 | --- | --- | --- |
-| 1 | The rule: through Clank, by allowance | Proposed 2026-10-26 |
-| 2 | The way out: a forward proxy at the gateway | Proposed 2026-10-26 |
-| 3 | A host the agent asks for | Proposed 2026-10-26 |
-| 4 | What the owner sees | Proposed 2026-10-26 |
-| 5 | Packages, papers, data: the named sets | Proposed 2026-10-26 |
-| 6 | Search | Proposed 2026-10-26 |
-| 7 | What is never reached | Proposed 2026-10-26 |
-| 8 | Order of work | Proposed 2026-10-26 |
+| 1 | The rule: through Clank, by allowance | Approved 2026-10-26 |
+| 2 | The way out: a forward proxy at the gateway | Approved 2026-10-26 |
+| 3 | A host the agent asks for | Approved 2026-10-26 |
+| 4 | What the owner sees | Approved 2026-10-26 |
+| 5 | Packages, papers, data: the named sets | Approved 2026-10-26 |
+| 6 | Search | Approved 2026-10-26 |
+| 7 | What is never reached | Approved 2026-10-26 |
+| 8 | Order of work | Approved 2026-10-26 |
 
 ## 1. The rule: through Clank, by allowance
 
