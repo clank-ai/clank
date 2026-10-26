@@ -2,7 +2,12 @@
   "name": "Clank",
   "short_name": "Clank",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#1a1b26",
-  "theme_color": "#1a1b26"
+  "background_color": "#16161e",
+  "theme_color": "#16161e",
+  "icons": [
+    {"src": "icon-180.png", "sizes": "180x180", "type": "image/png"},
+    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}
+  ]
 }

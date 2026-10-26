@@ -1,6 +1,7 @@
 """Design 0005 §5 (transparency): on the console's Phone page, Enter on a paired device opens everything it and this
 computer exchanged, newest first; the highlighted exchange shows what the device sent and what it was sent back. Design
-0011 §7: the window's list is a panel whose note counts the exchanges and what was sent to the device."""
+0011 §7: the window's list is a panel whose note counts the exchanges and what was sent to the device. Design 0025 §2:
+`p` shows a QR carrying the pair link, with the link and the code under it."""
 
 from collections.abc import Iterator
 from datetime import UTC, datetime
@@ -16,6 +17,7 @@ from clank.components.remote.app import create_phone_app
 from clank.components.remote.console.traffic import TrafficScreen
 from clank.components.workspaces import service as workspaces_service
 from clank.console.app import ClankConsole
+from clank.console.form import FormScreen
 from clank.console.panel import Panel
 from clank.console.snapshot import render_text
 from clank.kernel.clock import FakeClock
@@ -78,3 +80,21 @@ async def test_enter_on_a_device_shows_what_it_and_this_computer_exchanged(kerne
         await settle(pilot, lambda: listed.note.startswith("2 newest exchanges · ") and listed.note in render_text(app))
         assert listed.note.endswith(" sent to it")
         await pilot.press("escape")
+
+
+async def test_p_shows_a_qr_that_carries_the_pair_link_with_the_link_and_the_code_under_it(
+    kernel: Kernel, served: Client
+) -> None:
+    app = ClankConsole(served, now=lambda: NOW, zone=UTC, home=kernel.home, page="phone")
+    async with app.run_test(size=(160, 60)) as pilot:
+        code_label = app.query_one("#phone-code", Label)
+        await settle(pilot, lambda: "p makes a code" in str(code_label.content), seconds=20)
+        await pilot.press("p")
+        await settle(pilot, lambda: isinstance(app.screen, FormScreen))
+        await pilot.press("enter")
+        await settle(pilot, lambda: "Scan it with the iPhone" in str(code_label.content), seconds=20)
+        shown = str(code_label.content)
+        assert "█" in shown, "the QR, drawn as text"
+        assert "https://desk.tail0.ts.net:8445/pair?code=" in shown
+        assert "or type the code" in shown
+        assert "for phone, until" in shown

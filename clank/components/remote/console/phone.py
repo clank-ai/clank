@@ -1,8 +1,9 @@
 """The Phone page (design 0005 §5): the phone page on the tailnet, pairing, the paired devices, what was sent.
 
 "Remote access": whether it is on, listening and published, its address on the tailnet, and why not when it cannot be
-(Tailscale not signed in, Funnel on for its port). `x` turns it on or off. `p` makes a pairing code for a device (a form
-asks its name): the code and the address show here, to type on the phone within fifteen minutes; `c` cancels it.
+(Tailscale not signed in, Funnel on for its port). `x` turns it on or off. `p` makes a pair link for a device (a form
+asks its name): its QR code shows here, drawn as text to scan with the phone's camera (design 0025 §2, `qr.py`), with
+the link and the code under it, good for fifteen minutes; `c` cancels it, `p` again makes a new one.
 "Paired devices": each paired device with when it was paired and last used; Enter shows everything it and this
 computer exchanged (`traffic.py`); `d` revokes the highlighted one. "Sent to the phone": the newest files the agents
 sent. The page reads the remote component again every few seconds while it is on screen. Its panels, "Remote access",
@@ -17,6 +18,7 @@ from textual.widgets import Label, ListView
 
 from clank.client import ClientError, NotRunning
 from clank.components.remote.console.traffic import TrafficScreen
+from clank.components.remote.qr import qr_lines
 from clank.console import actions
 from clank.console.data import ConsoleData
 from clank.console.form import Field, FormScreen
@@ -58,7 +60,7 @@ class PhonePage(Page):
     PANELS = ("phone-access", "phone-devices-panel", "phone-sent")
     KEYS = (
         PageKey("x", "switch", "on or off", "remote access on or off"),
-        PageKey("p", "pair", "pairs", "pair a device: a code to type on it"),
+        PageKey("p", "pair", "pairs", "pair a device: a QR to scan on it (p again: a new one)"),
         PageKey("c", "cancel", "cancels the code"),
         PageKey("enter", "traffic", "what a device exchanged"),
         PageKey("d", "revoke", "revokes", "revoke the highlighted device"),
@@ -167,10 +169,15 @@ class PhonePage(Page):
         waiting = found.get("pairing")
         if self.code is not None and waiting is not None:
             code = self.code["code"]
-            shown = [
-                Content.assemble(("pairing code: ", "bold"), (f"{code[:4]} {code[4:]}", "bold $clank-now"),
-                                 f"   for {waiting['name']}, until {time_of(waiting['expires'], self.console.zone)}"),
-                Content(f"on the device, open {self.code['url'] or 'the phone page'} and type it   (c cancels it)"),
+            shown = [Content(line) for line in qr_lines(self.code["link"])] if self.code.get("link") else []
+            shown += [
+                Content.assemble(("Scan it with the iPhone's camera", "bold"),
+                                 f"   for {waiting['name']}, until {time_of(waiting['expires'], self.console.zone)}"
+                                 "   (c cancels it)"),
+                Content(f"or open {self.code.get('link') or self.code['url'] or 'the phone page'}"),
+                Content.assemble(
+                    "or type the code ", (f"{code[:4]} {code[4:]}", "bold $clank-now"), " on the phone page"
+                ),
             ]  # fmt: skip
         else:
             self.code = None

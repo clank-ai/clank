@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <!-- Clank's mark (design 0025 §3): the console's diamond in orange over a blue cursor, on the console's ground. -->
+  <rect width="180" height="180" fill="#16161e"/>
+  <rect x="48" y="128" width="84" height="14" rx="3" fill="#7aa2f7"/>
+  <polygon points="90,30 136,84 90,122 44,84" fill="#ff9e64"/>
+</svg>

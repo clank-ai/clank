@@ -15,6 +15,7 @@ and each new one is recorded (`remote.file_sent`).
 import logging
 import threading
 import time
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 import anyio
@@ -89,6 +90,7 @@ class Remote:
 
     def __init__(self, kernel: "Kernel") -> None:
         self.kernel = kernel
+        self.closers: set[Callable[[], None]] = set()  # what ends the live streams when the listener stops
         self.devices = Devices(kernel)
         self.traffic = Traffic(kernel.home.logs / "phone")
         self._server: PhoneServer | None = None
@@ -138,6 +140,13 @@ class Remote:
         url = f"https://{here.host}:{self.settings().tailnet_port}/" if here.host else ""
         return {"code": code, "url": url, "expires": to_text(expires), "on": self.settings().on}
 
+    def pair_link(self, name: str, *, actor: Actor) -> dict[str, Any]:
+        """A link that pairs a device of this name when opened on it (design 0025 §2: the code rides in the link, for
+        the QR the console shows): the link, the code, the page's address, until when."""
+        made = self.pair(name, actor=actor)
+        link = f"{made['url']}pair?code={made['code']}" if made["url"] else ""
+        return {**made, "link": link}
+
     def cancel_pairing(self, *, actor: Actor) -> dict[str, Any]:
         """Cancel the pairing code waiting, if any (recorded): it no longer pairs; the status after."""
         waiting = self.devices.cancel_code()
@@ -168,6 +177,11 @@ class Remote:
             subject=Subject(kind="device", id=device.id), data={"device": device.id, "name": device.name},
         )  # fmt: skip
         return device.view()
+
+    def machine_name(self) -> str:
+        """This machine's name on the tailnet (its host's first label), as the phone's pages say it."""
+        host = self._read_tailnet().host
+        return host.split(".")[0] if host else "the PC"
 
     def owner_login(self) -> str:
         """The Tailscale login of this machine's user: the only one the phone page answers."""
@@ -217,6 +231,8 @@ class Remote:
             self._published, self._problem = not problem, problem
         elif not settings.on and self._server is not None:
             self._server.should_exit = True
+            for close in list(self.closers):  # the live streams end, so the listener can stop (design 0025 §3)
+                close()
             self._server = None
             problem = await anyio.to_thread.run_sync(tailnet.unpublish, settings.tailnet_port)
             self._published, self._problem = False, problem

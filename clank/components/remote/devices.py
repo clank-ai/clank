@@ -4,8 +4,9 @@ A code is made on the computer only (the console, `clank remote pair`): eight ch
 `CODE_MINUTES` and once, kept as its SHA-256. The device types it on the phone page; Tailscale's verified login comes
 with the request, and a device is paired only to the login of this computer's own Tailscale user. Wrong codes are
 counted: after `TRIES` in `TRIES_MINUTES` minutes code entry rests until the window passes. A paired device gets a token
-of its own (kept as its SHA-256), sent back with every request; it lasts `TTL_DAYS` from its last use and at most
-`MAX_DAYS` from its pairing, and is revoked from the computer.
+of its own (kept as its SHA-256), sent back with every request; it lasts `TTL_DAYS` from its last use, renewed on
+each use (design 0025 §2: no ceiling from its pairing), and is revoked from the computer. An install claim
+(`install_claim`, `claim`) carries a pairing from the Safari tab into the installed app, once, within `CLAIM_MINUTES`.
 """
 
 import hashlib
@@ -26,7 +27,7 @@ CODE_MINUTES = 15
 TRIES = 8
 TRIES_MINUTES = 15
 TTL_DAYS = 30
-MAX_DAYS = 90
+CLAIM_MINUTES = 60  # how long an install claim may be traded for the token (design 0025 §2)
 SEEN_MINUTES = 5  # a device's last use is written at most this often
 
 
@@ -138,12 +139,49 @@ class Devices:
         now = self.kernel.clock.now()
         if device.revoked is not None or device.login != login:
             return None
-        if now - device.last_seen > timedelta(days=TTL_DAYS) or now - device.paired > timedelta(days=MAX_DAYS):
+        if now - device.last_seen > timedelta(days=TTL_DAYS):  # renewed on each use (design 0025 §2)
             return None
         if now - device.last_seen > timedelta(minutes=SEEN_MINUTES):
             with self._store.transaction() as db:
                 db.execute("UPDATE devices SET last_seen = ? WHERE id = ?", (to_text(now), device.id))
         return device
+
+    def install_claim(self, device: str) -> str:
+        """A one-time install claim for a device just paired (design 0025 §2): the icon's start link carries it, and
+        the installed app's first launch trades it for the device's token within `CLAIM_MINUTES`."""
+        now = self.kernel.clock.now()
+        claim = secrets.token_urlsafe(24)
+        with self._store.transaction() as db:
+            db.execute(
+                "INSERT INTO install_claims (claim_hash, device, created, expires) VALUES (?, ?, ?, ?)",
+                (_hash(claim), device, to_text(now), to_text(now + timedelta(minutes=CLAIM_MINUTES))),
+            )
+        return claim
+
+    def claim(self, claim: str, login: str) -> tuple[Device, str] | None:
+        """Trade an install claim for a new token of its device, once: the pairing moves into the installed app (the
+        old token stops); None for a claim spent, lapsed, unknown, or not the login's."""
+        if not claim:
+            return None
+        now = self.kernel.clock.now()
+        rows = self._store.read(
+            "SELECT device, expires FROM install_claims WHERE claim_hash = ? AND used IS NULL", (_hash(claim),)
+        )
+        if not rows or from_text(rows[0]["expires"]) <= now:
+            return None
+        found = self._store.read("SELECT * FROM devices WHERE id = ?", (rows[0]["device"],))
+        if not found:
+            return None
+        device = _device(found[0])
+        if device.revoked is not None or device.login != login:
+            return None
+        token = secrets.token_urlsafe(32)
+        with self._store.transaction() as db:
+            db.execute("UPDATE install_claims SET used = ? WHERE claim_hash = ?", (to_text(now), _hash(claim)))
+            db.execute(
+                "UPDATE devices SET token_hash = ?, last_seen = ? WHERE id = ?", (_hash(token), to_text(now), device.id)
+            )
+        return _device(self._store.read("SELECT * FROM devices WHERE id = ?", (device.id,))[0]), token
 
     def all(self) -> list[Device]:
         """Every paired device, the newest first, revoked ones too."""

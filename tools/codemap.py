@@ -1,5 +1,6 @@
-"""Write `docs/CODEMAP.md`: one line per module of `clank/`, `tools/` and the VS Code extension (`vscode/src/`,
-`vscode/test/`): the first line of a Python module's docstring, or of a TypeScript module's leading comment.
+"""Write `docs/CODEMAP.md`: one line per module of `clank/`, `tools/`, the VS Code extension (`vscode/src/`,
+`vscode/test/`) and the phone app's JavaScript (`clank/components/remote/page/`): the first line of a Python module's
+docstring, or of a TypeScript or JavaScript module's leading comment.
 
 A reader, a person or a local model with a small context, finds where a thing lives without opening the code. The map
 is generated, never edited by hand, and a test fails when it is out of date (`tests/test_repository.py`). A module
@@ -15,6 +16,8 @@ from tools.generated import write_or_check
 
 ROOTS = ("clank", "tools", "vscode")
 TYPESCRIPT = ("vscode/src", "vscode/test", "vscode/host")
+JAVASCRIPT = "clank/components/remote/page"  # the phone app, served from the package (design 0025)
+COMMENTED = (".ts", ".js", ".mjs")  # modules whose first line is a comment, not a docstring
 OUTPUT = Path("docs/CODEMAP.md")
 COMMAND = "uv run python -m tools.codemap"
 HEADER = """\
@@ -34,14 +37,15 @@ def modules(root: Path) -> list[Path]:
     files = repository_files(root)
     found = [path for path in files if path.suffix == ".py" and path.parts[0] in ROOTS[:2]]
     found += [path for path in files if path.suffix == ".ts" and path.parent.as_posix().startswith(TYPESCRIPT)]
+    found += [path for path in files if path.suffix in (".js", ".mjs") and path.parent.as_posix() == JAVASCRIPT]
     return sorted(found, key=lambda path: path.as_posix())
 
 
 def summary(root: Path, module: Path) -> str:
-    """The first line of the module's docstring (a TypeScript module's leading comment); raises CodeMapError when there
-    is none."""
+    """The first line of the module's docstring (a TypeScript or JavaScript module's leading comment); raises
+    CodeMapError when there is none."""
     name = module.as_posix()
-    if module.suffix == ".ts":
+    if module.suffix in COMMENTED:
         first = (root / module).read_text(encoding="utf-8").lstrip().splitlines()[:1]
         if not first or not first[0].startswith("//") or not first[0].strip("/ "):
             raise CodeMapError(f"{name}: has no leading comment; its first line must say what the module is for")

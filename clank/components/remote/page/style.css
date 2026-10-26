@@ -123,3 +123,32 @@ textarea:focus, input:focus, select:focus { outline: 1px solid var(--accent); }
 .toast.ok { background: var(--good); }
 .center { padding: 28px 4px; display: grid; gap: 12px; }
 .center .brand { font-size: 18px; }
+
+/* The installed app (design 0025): Now's model block and gauges, the attention line, the stream's states. */
+.tabs button { font-size: 12px; padding: 0 2px; }
+.hero { padding: 10px 2px 4px; display: grid; gap: 4px; }
+.hero .big { font-size: 18px; font-weight: 700; color: var(--text); overflow-wrap: anywhere; }
+.hero .big .dot { font-size: 12px; margin-right: 6px; }
+.hero .doing { color: var(--muted); }
+.hero .doing .acc { font-weight: 700; }
+.gauges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 6px 0 2px; }
+.gauge-tile { border: 1px solid var(--line); padding: 6px 8px; display: grid; gap: 2px; }
+.gauge-tile .k { color: var(--dim); font-size: 11px; }
+.gauge-tile .v { font-weight: 700; }
+.gauge-tile .bar { height: 3px; background: var(--line); }
+.gauge-tile .bar i { display: block; height: 100%; background: var(--accent); }
+.gauge-tile .bar i.warn { background: var(--warn); } .gauge-tile .bar i.bad { background: var(--bad); }
+.attention {
+  position: sticky; top: calc(41px + env(safe-area-inset-top)); z-index: 2; display: flex; gap: 1ch; align-items: center;
+  padding: 6px 12px; background: var(--raised); border-bottom: 1px solid var(--warn); color: var(--text); font-size: 13px;
+}
+.attention .what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attention button { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 2px 8px; }
+.paused { color: var(--warn); font-size: 12px; padding: 4px 2px 0; }
+main.stale > *:not(.paused) { opacity: 0.55; }
+.status .live { color: var(--good); } .status .reconnecting { color: var(--warn); } .status .offline { color: var(--bad); }
+.offline { padding: 16px 4px; display: grid; gap: 10px; }
+.offline h2 { margin: 0; font-size: 16px; color: var(--bad); }
+.offline .why { color: var(--muted); }
+.offline .known { border: 1px solid var(--line); padding: 8px 10px; display: grid; gap: 2px; }
+.launch .dim { font-size: 13px; }

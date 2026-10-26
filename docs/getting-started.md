@@ -205,6 +205,28 @@ configuration gives the PC). If Clank's extension is also installed in the lapto
 `"remote.extensionKind": {"clank.clank": ["workspace"]}` to the laptop's settings, so it runs on the PC's side, where
 Clank is.
 
+## 4c. Clank on your iPhone
+
+Clank's phone app shows what the model does and what waits for you, and answers from your pocket: a permission, a
+question, a flow's gate, a new task ([design 0025](design/0025-clank-for-iphone.md)). It reaches the PC only
+through your tailnet; nothing of it goes through anyone else's server, and the app itself is served by the PC.
+
+1. **Tailscale on both.** Install [Tailscale](https://tailscale.com/download) on the PC and on the iPhone, signed
+   in to the same account. Clank publishes its phone listener on the tailnet only, never to the internet.
+2. **Turn it on, on the PC:** `clank remote on`, or `x` on the console's Phone page (F9). `clank remote status`
+   says its address, and why not when it cannot listen (Tailscale not signed in, Funnel on for its port).
+3. **Pair the iPhone:** on the console's Phone page press `p` (or run `clank remote pair`). A QR code shows, with
+   its link and a code under it. Scan the QR with the iPhone's camera: the page that opens pairs the phone and
+   shows the steps to add Clank to the Home Screen (Share, then Add to Home Screen). Open it from its icon: the
+   app runs full screen, live on one stream from the PC, and stays paired for as long as it is used (thirty days
+   unused, and it asks to pair again). Without a camera at hand, type the code on the page instead.
+4. **When the PC cannot be reached,** the app says so, shows the last it knew and tries again on its own. Check
+   that Tailscale on the iPhone says Connected, and that the PC is awake.
+
+The console's Phone page lists the paired devices and everything each exchanged with the PC (Enter); `d` revokes
+one. The phone keeps only its token and the last summary, names and numbers. The app's Flows and session screens,
+its notifications and its settings come with design 0025's next steps.
+
 ## 5. Updating
 
 Clank has no update command yet. If you installed it with the one-line installer, run it again: it installs the

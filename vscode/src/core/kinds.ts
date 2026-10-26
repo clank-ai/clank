@@ -206,6 +206,8 @@ export interface Workspace {
   mcp_allowed: Record<string, string>;
   /** Your own MCP servers (clank mcp add) this workspace's agent does not get; the others it gets. */
   mcp_off: string[];
+  /** The internet hosts its agent reaches through Clank's proxy (design 0024): a name (pypi.org) or a suffix (.arxiv.org: arxiv.org and every name under it), each with when and how it was allowed. Every other host is refused; private addresses always. */
+  hosts: Record<string, string>;
   /** review: the agent asks before it changes a file, and you accept or reject the change (VS Code shows it beside your files); auto: it changes files without asking, and VS Code shows each change after. */
   changes: "review" | "auto";
   /** Opening OpenCode in a terminal (VS Code's, or the console's) first closes every OpenCode window open in the workspace, so there is only ever one and switching between plan, review and auto reaches it; off: each opening adds another window. OpenCode without a terminal (the phone's) is left alone. */
@@ -418,6 +420,8 @@ export interface GatewaySettings {
   start: boolean;
   /** Where tools reach the gateway, on this machine only. */
   port: number;
+  /** Where the agent's internet requests enter Clank's proxy (design 0024), on this machine only; the edge forwards it to the containers. */
+  proxy_port: number;
   /** How long a request waits, in seconds, for a slot that is starting or switching, before refusal. */
   hold_seconds: number;
   /** Answer OpenCode's session-title requests in the gateway, so they never take the place of the conversation the engine keeps cached (design 0001 §6.4). */
@@ -436,6 +440,8 @@ export interface GatewaySettings {
   record_limit_kib: number;
   /** How many days of requests are kept. */
   keep_days: number;
+  /** How many days of the agent's internet exchanges are kept (logs/network, design 0024 §4). */
+  network_days: number;
 }
 
 /** How completion in VS Code works (design 0006 §5-§6). */

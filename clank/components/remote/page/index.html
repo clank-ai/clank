@@ -6,24 +6,34 @@
   <meta name="theme-color" content="#16161e">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Clank">
   <title>Clank</title>
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <script src="app.js" defer></script>
+  <script type="module" src="app.js"></script>
 </head>
 <body>
   <header class="top">
     <button id="back" class="back hidden" aria-label="Back">‹</button>
     <span class="brand">◆ CLANK</span>
-    <span id="title" class="where"></span>
+    <span id="machine" class="where"></span>
     <span id="status" class="status"></span>
   </header>
-  <main id="view" aria-live="polite"></main>
+  <div id="attention" class="attention hidden" role="status"></div>
+  <main id="view" aria-live="polite">
+    <div class="center launch">
+      <div class="brand">◆ CLANK</div>
+      <div class="dim">connecting to the PC, through your tailnet</div>
+    </div>
+  </main>
   <nav id="tabs" class="tabs hidden">
-    <button data-tab="now" class="on">now<span class="count" id="count-now"></span></button>
-    <button data-tab="work">work</button>
-    <button data-tab="files">files</button>
-    <button data-tab="log">log</button>
+    <button data-tab="now" class="on">Now<span class="count" id="count-now"></span></button>
+    <button data-tab="flows">Flows</button>
+    <button data-tab="work">Work</button>
+    <button data-tab="files">Files</button>
+    <button data-tab="more">More</button>
   </nav>
   <div id="toast" class="toast hidden" role="status"></div>
 </body>

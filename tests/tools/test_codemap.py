@@ -84,3 +84,28 @@ def test_a_module_git_ignores_is_not_in_the_map(write_files: Write) -> None:
     text = render(root)
     assert "clank/a.py" in text
     assert "scratch" not in text
+
+
+def test_the_phone_apps_javascript_modules_get_their_line_from_their_leading_comment(write_files: Write) -> None:
+    root = write_files(
+        {
+            "clank/__init__.py": '"""Clank itself."""\n',
+            "clank/components/remote/page/model.mjs": "// The app's logic.\n// More.\n\nexport {};\n",
+            "clank/components/remote/page/sw.js": "// The service worker: the shell kept for the offline screen.\n",
+            "clank/components/remote/page/app.js": "// The app on the stream.\nimport {} from './model.mjs';\n",
+        }
+    )
+    text = render(root)
+    assert "| `clank/components/remote/page/model.mjs` | The app's logic. |" in text
+    assert (
+        "| `clank/components/remote/page/sw.js` | The service worker: the shell kept for the offline screen. |" in text
+    )
+    assert "| `clank/components/remote/page/app.js` | The app on the stream. |" in text
+
+
+def test_a_javascript_module_of_the_phone_app_without_a_leading_comment_is_named(write_files: Write) -> None:
+    root = write_files(
+        {"clank/__init__.py": '"""Clank itself."""\n', "clank/components/remote/page/bare.js": "export {};\n"}
+    )
+    with pytest.raises(CodeMapError, match=r"clank/components/remote/page/bare\.js"):
+        render(root)

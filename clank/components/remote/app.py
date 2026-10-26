@@ -9,24 +9,31 @@ keeps after pairing): the login is the first factor, the device the second. Ever
 site cannot act through the owner's browser. What a device does is recorded as that device (`Actor(kind="device")`).
 """
 
+import json
 import time
 from importlib import resources
 from typing import TYPE_CHECKING, Any
 
 import anyio.to_thread
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from clank.components.remote.devices import TTL_DAYS, PairingError
+from clank.components.remote.icon import icon_png
+from clank.components.remote.stream import phone_stream
 from clank.kernel.events import Actor
 
 if TYPE_CHECKING:
     from clank.components.remote.service import Remote
 
 COOKIE = "clank_device"
+STREAM_PATH = "/api/stream"  # the live stream (design 0025 §3), logged as one line
 ACTION_HEADER = "x-clank-phone"
-STATIC = {"app.js": "text/javascript", "style.css": "text/css", "manifest.webmanifest": "application/manifest+json"}
+STATIC = {  # the app's files, from the package (design 0025 §1: nothing fetched from elsewhere)
+    "app.js": "text/javascript", "model.mjs": "text/javascript", "sw.js": "text/javascript", "style.css": "text/css",
+    "icon.svg": "image/svg+xml",
+}  # fmt: skip
 CONTENT_POLICY = (
     "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; "
     "frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
@@ -123,10 +130,20 @@ def create_phone_app(remote: "Remote") -> FastAPI:
 
     @app.middleware("http")
     async def recorded(request: Request, call_next: Any) -> Response:
-        """Keep every exchange, its bodies whole (traffic.py): what a phone asked and what it was sent."""
+        """Keep every exchange, its bodies whole (traffic.py): what a phone asked and what it was sent; the live
+        stream (design 0025 §3) as one line, its body never read whole."""
         began, when = time.perf_counter(), kernel.clock.now()
         asked = await request.body()
         response: Response = await call_next(request)
+        if request.url.path == STREAM_PATH and response.status_code == 200:
+            device = getattr(request.state, "device", None)
+            await anyio.to_thread.run_sync(lambda: remote.traffic.record(
+                when=when, device=device, method=request.method, path=request.url.path, query=request.url.query,
+                status=response.status_code, ms=(time.perf_counter() - began) * 1000, request=asked,
+                request_type=request.headers.get("content-type", ""), response=b"(the live stream)",
+                response_type="text/event-stream",
+            ))  # fmt: skip
+            return response
         chunks = [chunk async for chunk in response.body_iterator]  # type: ignore[attr-defined]
         sent = b"".join(chunk if isinstance(chunk, bytes) else str(chunk).encode() for chunk in chunks)
         device = getattr(request.state, "device", None)
@@ -154,9 +171,50 @@ def create_phone_app(remote: "Remote") -> FastAPI:
         return response
 
     @app.get("/")
-    async def index(request: Request) -> Response:
+    async def index(request: Request, claim: str = "") -> Response:
+        """The app; a first launch from the Home Screen icon trades its install claim for the device's token (design
+        0025 §2), once."""
+        login = login_of(request)
+        response = Response(page("index.html"), media_type="text/html; charset=utf-8")
+        if claim:
+            traded = await anyio.to_thread.run_sync(remote.devices.claim, claim, login)
+            if traded is not None:
+                device, token = traded
+                request.state.device = (device.id, device.name)
+                response.set_cookie(COOKIE, token, max_age=TTL_DAYS * 86400, httponly=True, secure=True,
+                                    samesite="strict")  # fmt: skip
+        return response
+
+    @app.get("/pair")
+    async def pair_by_link(request: Request, code: str = "") -> Response:
+        """The pair link opened on the device (design 0025 §2): paired by the code in it, the cookie set, the steps
+        to add the app to the Home Screen served, with the install claim in the icon's start link."""
+        login = login_of(request)
+        try:
+            device, token = await anyio.to_thread.run_sync(remote.paired, code, login)
+        except PairingError as error:
+            raise HTTPException(403, str(error)) from error
+        request.state.device = (device.id, device.name)
+        claim = await anyio.to_thread.run_sync(remote.devices.install_claim, device.id)
+        machine = remote.machine_name()
+        text = page("install.html").decode("utf-8").replace("{{claim}}", claim).replace("{{machine}}", machine)
+        response = Response(text, media_type="text/html; charset=utf-8")
+        response.set_cookie(COOKIE, token, max_age=TTL_DAYS * 86400, httponly=True, secure=True, samesite="strict")
+        return response
+
+    @app.get("/icon-180.png")
+    async def icon(request: Request) -> Response:
+        """The Home Screen icon, drawn here (iOS takes a PNG)."""
         login_of(request)
-        return Response(page("index.html"), media_type="text/html; charset=utf-8")
+        return Response(icon_png(180), media_type="image/png", headers={"Cache-Control": "max-age=86400"})
+
+    @app.get("/manifest.webmanifest")
+    async def manifest(request: Request, claim: str = "") -> Response:
+        """The app's manifest, its start link carrying the device's install claim when there is one."""
+        login_of(request)
+        found = json.loads(page("manifest.webmanifest"))
+        found["start_url"] = f"./?claim={claim}" if claim else "./"
+        return Response(json.dumps(found), media_type="application/manifest+json")
 
     @app.get("/{name}")
     async def static(name: str, request: Request) -> Response:
@@ -178,6 +236,17 @@ def create_phone_app(remote: "Remote") -> FastAPI:
         response = JSONResponse({"device": device.view()})
         response.set_cookie(COOKIE, token, max_age=TTL_DAYS * 86400, httponly=True, secure=True, samesite="strict")
         return response
+
+    @app.get(STREAM_PATH)
+    async def stream(request: Request) -> StreamingResponse:
+        """The phone's one live stream (design 0025 §3): now, then each event as it is recorded, now again when it
+        changed; `Last-Event-ID` resumes."""
+        device_of(request)
+        given = request.headers.get("last-event-id", "").strip()
+        after = int(given) if given.isdigit() else None
+        text = phone_stream(remote, after, lambda: _overview(remote, files=False), remote.closers)
+        headers = {"Cache-Control": "no-store", "X-Accel-Buffering": "no"}
+        return StreamingResponse(text, media_type="text/event-stream", headers=headers)
 
     @app.get("/api/me")
     async def me(request: Request) -> dict[str, Any]:
@@ -321,7 +390,7 @@ def _flow_shown(view: dict[str, Any]) -> dict[str, Any]:
     return {**{key: view[key] for key in kept if key in view}, "files": files}
 
 
-def _overview(remote: "Remote") -> dict[str, Any]:
+def _overview(remote: "Remote", files: bool = True) -> dict[str, Any]:
     """What the phone shows first: the model, what the agent's model does now (the gateway's requests in flight and the
     last one), the machine (its CPU, memory and GPU, as last read), each workspace (the running ones first) with its
     agents' sessions and what waits (a change waiting for review only as Clank's question), Clank's questions waiting
@@ -373,5 +442,8 @@ def _overview(remote: "Remote") -> dict[str, Any]:
     ]  # fmt: skip
     told = ("id", "workspace", "session", "title", "rule", "name", "node", "why", "time", "offer", "did")
     marks = [{key: mark[key] for key in told} for mark in agents.marks.phone() if not _shown(mark, asks)]
-    return {"model": model, "agent": agent, "machine": machine, "workspaces": workspaces, "questions": questions,
-            "marks": marks, "files": remote.files(limit=30)}  # fmt: skip
+    found = {"model": model, "agent": agent, "machine": machine, "workspaces": workspaces, "questions": questions,
+             "marks": marks}  # fmt: skip
+    if files:
+        found["files"] = remote.files(limit=30)
+    return found

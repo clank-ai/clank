@@ -49,9 +49,10 @@ def router(remote: "Remote") -> APIRouter:
 
     @routes.post("/remote/pair")
     async def pair(wanted: PairRequest, request: Request) -> dict[str, Any]:
-        """A code to pair a device: typed on the phone page within fifteen minutes, once."""
+        """A code to pair a device, and the link that carries it (design 0025 §2: scanned as a QR, or typed on the
+        phone page) within fifteen minutes, once."""
         actor = client_actor(request.headers.get(CLIENT_HEADER))
-        found: dict[str, Any] = await anyio.to_thread.run_sync(lambda: remote.pair(wanted.name, actor=actor))
+        found: dict[str, Any] = await anyio.to_thread.run_sync(lambda: remote.pair_link(wanted.name, actor=actor))
         return found
 
     @routes.post("/remote/pair/cancel")

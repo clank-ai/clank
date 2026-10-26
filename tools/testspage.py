@@ -1,8 +1,9 @@
 """Write `docs/TESTS.md`: each section of each design, with the test files that hold it to its word.
 
 Each test file begins with a docstring naming the design sections it verifies, such as "Design 0002 §3.2" (design 0001
-§8.5); a TypeScript test file of the VS Code extension (`vscode/test/*.test.ts`) begins with a comment that does the
-same, and its tests are named in sentences (`test("a question fits its type", ...)`). This module reads those and the
+§8.5); a TypeScript test file of the VS Code extension (`vscode/test/*.test.ts`) and a Node test file of the phone app
+(`tests/phone/*.test.mjs`) begin with a comment that does the same, and their tests are named in sentences
+(`test("a question fits its type", ...)`). This module reads those and the
 designs' numbered headings, so the page shows which sections have
 tests and which have none yet. A test file that names no section, or names a section that no design has, is an error,
 so the references stay true when a design changes.
@@ -29,6 +30,7 @@ LISTED = r"§\d+(?:\.\d+)*(?:(?:\s*,\s*(?:and\s+)?|\s+and\s+)§\d+(?:\.\d+)*)*" 
 REFERENCE = re.compile(rf"design\s+(\d{{4}})\s+({LISTED})", re.IGNORECASE)
 TEST_FILE = re.compile(r"^test_.*\.py$")
 TYPESCRIPT_TEST = re.compile(r'^\s*test\(\s*"([^"]+)"', re.MULTILINE)
+COMMENTED_TESTS = (("vscode/test", ".test.ts"), ("tests/phone", ".test.mjs"))  # test files that begin with a comment
 TITLE = re.compile(r"^# Design (\d{4}): (.+)$")
 HEADING = re.compile(r"^#{2,3} (\d+(?:\.\d+)?)\.? (.+)$")
 HEADER = """\
@@ -102,8 +104,11 @@ def files_of_tests(root: Path) -> list[FileOfTests]:
         doc = ast.get_docstring(tree) or ""
         summary = " ".join(doc.split("\n\n")[0].split())
         found.append(FileOfTests(name, summary, references_in(doc), [sentence(test) for test in _test_names(tree)]))
-    typescript = root / "vscode" / "test"
-    for path in (path for path in files if path.is_relative_to(typescript) and path.name.endswith(".test.ts")):
+    commented = [
+        path for folder, suffix in COMMENTED_TESTS for path in files
+        if path.is_relative_to(root / folder) and path.name.endswith(suffix)
+    ]  # fmt: skip
+    for path in commented:
         text = path.read_text(encoding="utf-8")
         comment = _leading_comment(text)
         summary = " ".join(comment.split("\n\n")[0].split())

@@ -150,6 +150,8 @@ and use the template below.
 | [0140](0140-one-resident-bridge-a-container.md) | One resident bridge a container: the watcher's process carries the owner's requests on its input, one `docker exec` for the container's life | Accepted (with design 0023; built at its step 3) | 2026-10-26 |
 | [0141](0141-the-internet-through-clanks-proxy-by-allowance.md) | The agent reaches the internet only through Clank's forward proxy at the gateway, by the owner's allowances per workspace and host; private addresses refused always | Accepted (with design 0024; built after design 0023) | 2026-10-26 |
 | [0142](0142-programs-mounted-not-copied.md) | Clank's programs and instructions are mounted read-only at `/opt/clank` in every container, not copied into the image, whose tag follows its Dockerfile alone | Accepted (design 0023 §7; built with plan s50) | 2026-10-26 |
+| [0143](0143-the-phone-is-an-installed-web-app.md) | The phone is an installed web app on the iPhone (a PWA from the PC's own QR, inside the tailnet), not a native app | Accepted (the owner, 2026-10-21) |
+| [0144](0144-segno-draws-the-qr.md) | The QR code the console shows for the pair link is drawn by segno (a pure-Python library, no dependencies of its own), as text in the terminal | Accepted (Claude, with plan s57, 2026-10-26) |
 
 ## Template
 

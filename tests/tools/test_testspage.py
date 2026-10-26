@@ -157,3 +157,17 @@ def test_a_test_file_git_ignores_is_not_on_the_page(write_files: Write) -> None:
     text = render(root)
     assert "tests/test_details.py" in text
     assert "test_scratch" not in text
+
+
+def test_the_phone_apps_node_test_files_are_placed_by_their_leading_comment(write_files: Write) -> None:
+    script = (
+        "// Design 0009 §1.1: the phone app's logic holds.\n"
+        "\n"
+        'import { test } from "node:test";\n'
+        'test("the stream is live while connected", () => {});\n'
+    )
+    root = write_files({"docs/design/0009-sample.md": DESIGN, "tests/phone/model.test.mjs": script})
+    text = render(root)
+    assert "`tests/phone/model.test.mjs` (1)" in text
+    assert "Design 0009 §1.1: the phone app's logic holds." in text
+    assert "- the stream is live while connected" in text

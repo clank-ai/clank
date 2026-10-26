@@ -1,35 +1,43 @@
-// Clank's phone page (design 0005 §1, §4): pair, see what the model and the agents do now, reply to what waits, drive
-// a session, start a task, see the files sent. It looks like the console: monospace, thin rules, rows to tap.
-// Four tabs: now (what matters first), work (every workspace and its sessions), files, and log: everything this phone
-// and the computer exchanged, each exchange whole. Everything comes from this page's own address; every action carries
-// the X-Clank-Phone header.
-"use strict";
+// Clank's phone app (design 0025, decision 0143; the page of design 0005 made an installed app): live from one stream
+// of events, it shows Now (the model, the machine, what waits for you, what works), Flows (what waits in them; the Flow
+// view comes with the next step), Work (every workspace and its sessions, a new task), Files (what the agents sent),
+// and More (this phone's log of exchanges, settings); says when the stream drops and when the PC cannot be reached;
+// and looks like the console: monospace, thin rules, rows to tap. Everything comes from this page's own address;
+// every action carries the X-Clank-Phone header. The logic that needs no browser is `model.mjs`.
+
+import {
+  RECONNECT_SECONDS, allSessions, clockText, lastKnown, machineGauges, modelLine, streamState, waitingCount, workingRows,
+} from "./model.mjs";
 
 const view = document.getElementById("view");
-const title = document.getElementById("title");
+const machineLabel = document.getElementById("machine");
 const back = document.getElementById("back");
 const status = document.getElementById("status");
 const tabs = document.getElementById("tabs");
 const toast = document.getElementById("toast");
-const waitingCount = document.getElementById("count-now");
-const NOW_SECONDS = 4;
+const attention = document.getElementById("attention");
+const waitingBadge = document.getElementById("count-now");
 const BUSY_SECONDS = 2;
 const IDLE_SECONDS = 8;
-const RECENT = 5;
 const LOG_LIMIT = 100;
-const PHASES = { "waiting for its slot": "waiting for the model", "reading the prompt": "reading", "answering": "writing",
-  "waiting for its engine to start again": "waiting for the engine" };
+const KNOWN = "clank-last-known"; // the offline screen's summary, kept on the phone: names and numbers only
+const ATTENTION_SECONDS = 20;
 
-// tab: now, work or files; place: a workspace's page or a session's, over the tab; overview: the last one read; notes: a
-// flow's note being written, by its question; reads: the files of a flow's question read here.
-const state = { tab: "now", place: null, overview: null, messages: [], timer: null, task: "", log: { items: [], open: {} }, notes: {}, reads: {} };
+// tab: now, flows, work, files or more; place: a workspace's page, a session's or More's log, over the tab; overview:
+// the last `now` the stream sent; link: the stream's state; events: the stream's events this visit, newest first.
+const state = {
+  tab: "now", place: null, overview: null, messages: [], timer: null, task: "", files: null,
+  log: { items: [], open: {} }, notes: {}, reads: {}, events: [], known: null,
+  link: { connected: false, failedSince: null, tries: 0, lastEventAt: null, source: null },
+};
+try { state.known = JSON.parse(localStorage.getItem(KNOWN) || "null"); } catch { state.known = null; }
 
 function el(tag, props = {}, ...children) {
   const node = document.createElement(tag);
   for (const [key, value] of Object.entries(props)) {
     if (key === "class") node.className = value;
     else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
-    else if (value !== undefined && value !== null && value !== false) node.setAttribute(key, value);
+    else if (value !== null && value !== undefined) node.setAttribute(key, value);
   }
   for (const child of children.flat()) {
     if (child === null || child === undefined || child === false) continue;
@@ -40,52 +48,38 @@ function el(tag, props = {}, ...children) {
 
 function say(text, ok = false) {
   toast.textContent = text;
-  toast.className = ok ? "toast ok" : "toast";
+  toast.className = `toast ${ok ? "ok" : ""}`;
   clearTimeout(say.timer);
-  say.timer = setTimeout(() => toast.classList.add("hidden"), 4000);
+  say.timer = setTimeout(() => toast.classList.add("hidden"), ok ? 1500 : 4000);
 }
 
 async function api(path, body) {
   const options = body === undefined ? {} : {
     method: "POST", headers: { "Content-Type": "application/json", "X-Clank-Phone": "1" }, body: JSON.stringify(body),
   };
-  const answer = await fetch(path, { credentials: "same-origin", ...options });
-  let found = null;
-  try { found = await answer.json(); } catch (error) { found = null; }
-  if (!answer.ok) {
-    const error = new Error((found && found.error) || `the computer answered ${answer.status}`);
-    error.status = answer.status;
+  const response = await fetch(path, options);
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!response.ok) {
+    const error = new Error((data && data.error) || `${response.status}`);
+    error.status = response.status;
     throw error;
   }
-  return found;
+  return data;
 }
 
 function ago(when) {
   if (!when) return "";
-  const millis = typeof when === "number" ? (when > 1e12 ? when : when * 1000) : Date.parse(when);
-  const seconds = Math.max(0, (Date.now() - millis) / 1000);
-  if (seconds < 60) return "now";
-  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.round(seconds / 3600)}h`;
-  return `${Math.round(seconds / 86400)}d`;
+  const seconds = Math.max(0, (Date.now() - new Date(typeof when === "number" ? when * 1000 : when).getTime()) / 1000);
+  if (seconds < 60) return `${Math.round(seconds)} s`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+  if (seconds < 86400) return `${Math.round(seconds / 3600)} h`;
+  return `${Math.round(seconds / 86400)} d`;
 }
-
-function gb(bytes) { return (bytes / 1073741824).toFixed(1); }
-
 function size(bytes) { return bytes >= 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${bytes} B`; }
-
 function clock(when) { return new Date(when).toLocaleTimeString([], { hour12: false }); }
 
-// A gauge as the console draws one: a bar of blocks, the filled part in its tone, the rest dark.
-function gauge(fraction, width = 10) {
-  const filled = Math.max(0, Math.min(width, Math.round(fraction * width)));
-  return el("span", { class: "gauge" }, el("span", { class: tone(fraction) }, "█".repeat(filled)),
-    el("span", { class: "rest" }, "█".repeat(width - filled)));
-}
-
-function tone(fraction) { return fraction > 0.9 ? "bad" : fraction > 0.7 ? "warn" : "good"; }
-
-// A message's text, kept as text: code blocks, inline code and bold; nothing from it becomes markup.
+// Markdown's small part: fenced code, inline code, bold, paragraphs.
 function rich(text) {
   const box = el("div");
   const pieces = text.split(/```[a-zA-Z0-9_-]*\n?/);
@@ -121,17 +115,6 @@ function row({ glyph, glyphClass = "dim", line, sub, meta, onclick }) {
     onclick ? el("span", { class: "go" }, "›") : null);
 }
 
-// Every session of every running workspace, newest first, each with its workspace and its server's port.
-function allSessions(overview) {
-  const found = [];
-  for (const workspace of overview.workspaces) {
-    for (const server of workspace.servers) {
-      for (const session of server.sessions) found.push({ ...session, workspace: workspace.name, port: server.port });
-    }
-  }
-  return found.sort((a, b) => (b.updated || 0) - (a.updated || 0));
-}
-
 function sessionRow(session) {
   const busy = session.status === "busy";
   return row({
@@ -141,36 +124,21 @@ function sessionRow(session) {
   });
 }
 
-// The status lines: the model, what it does now, the GPU, the CPU and memory.
-function statusLines(overview) {
-  const model = overview.model;
-  const ready = model.status === "ready";
-  const rows = [["model", el("span", {}, el("span", { class: ready ? "good" : model.status === "starting" ? "warn" : "bad" }, model.status),
-    model.title ? ` · ${model.title}` : "")]];
-  const agent = overview.agent || {};
-  const flying = (agent.requests || [])[0];
-  if (flying) {
-    const speed = flying.per_second ? ` · ${flying.per_second} tok/s` : "";
-    rows.push(["now", el("span", {}, el("span", { class: "acc" }, PHASES[flying.phase] || flying.phase),
-      ` · ${flying.tokens.toLocaleString()} tok${speed} · ${Math.round(flying.seconds)}s`)]);
-  } else if (agent.last) {
-    const last = agent.last;
-    const speed = last.per_second ? ` at ${last.per_second} tok/s` : "";
-    rows.push(["now", el("span", { class: "muted" }, `idle · last ${last.tokens.toLocaleString()} tok${speed}, ${ago(last.time)} ago`)]);
-  } else {
-    rows.push(["now", el("span", { class: "muted" }, agent.state === "running" ? "idle" : `gateway ${agent.state || "unknown"}`)]);
-  }
-  const machine = overview.machine;
-  if (machine && machine.gpu) {
-    const gpu = machine.gpu;
-    rows.push(["gpu", el("span", {}, gauge(gpu.use / 100),
-      ` ${Math.round(gpu.use)}% · ${gb(gpu.memory_used)}/${gb(gpu.memory_total)} GB · ${gpu.temperature}°C`)]);
-  }
-  if (machine && machine.memory_total) {
-    rows.push(["cpu", el("span", {}, gauge(machine.cpu / 100),
-      ` ${Math.round(machine.cpu)}% · mem ${gb(machine.memory_used)}/${gb(machine.memory_total)} GB`)]);
-  }
-  return kv(rows);
+// Now's top: the model, what it does, its speed; then the machine as four gauges (design 0025 §5).
+function hero(overview) {
+  const line = modelLine(overview);
+  const dot = el("span", { class: "dot " + (line.ready ? "good" : line.status === "starting" ? "warn" : "bad") }, "●");
+  const doing = [line.doing ? el("span", { class: "acc" }, line.doing) : null, line.detail, line.speed].filter(Boolean);
+  const parts = [];
+  doing.forEach((part, index) => { if (index) parts.push(" · "); parts.push(part); });
+  const tiles = machineGauges(overview.machine).map((gauge) => el("div", { class: "gauge-tile" },
+    el("span", { class: "k" }, gauge.label), el("span", { class: "v" }, gauge.text),
+    el("div", { class: "bar" }, el("i", { class: gauge.fraction > 0.9 ? "bad" : gauge.fraction > 0.7 ? "warn" : "",
+      style: `width:${Math.round(Math.min(1, gauge.fraction) * 100)}%` }))));
+  return el("div", { class: "hero" },
+    el("div", { class: "big" }, dot, line.title, el("span", { class: "dim" }, ` · ${line.status}`)),
+    el("div", { class: "doing" }, parts.length ? parts : el("span", { class: "dim" }, "nothing in flight")),
+    tiles.length ? el("div", { class: "gauges" }, tiles) : null);
 }
 
 // A question a flow waits for (design 0013 §10): under its flow, the box it waits at, the files it shows (each read
@@ -219,7 +187,6 @@ function flowBox(question) {
           await api(`api/clank-questions/${question.id}`, { option: option.id, ...(words ? { text: words } : {}) });
           delete state.notes[question.id];
           say("answered", true);
-          refresh();
         } catch (error) { say(error.message); }
       },
     }, option.label))));
@@ -236,14 +203,14 @@ function markBox(mark) {
     waited.length ? el("div", { class: "dim" }, waited.join("; ")) : null,
     el("div", { class: "btns" }, el("button", {
       class: "btn small", onclick: async () => {
-        try { await api("api/marks/seen", { ids: [mark.id] }); say("seen", true); refresh(); }
+        try { await api("api/marks/seen", { ids: [mark.id] }); say("seen", true); }
         catch (error) { say(error.message); }
       },
     }, "seen")));
 }
 
 // What waits: OpenCode's permissions and questions (in one workspace, or in all), the Monitor's marks told to the phone,
-// and Clank's own questions.
+// and Clank's own questions. The stream's next `now` takes an answered one off the list.
 function waitingBoxes(overview, only = null) {
   const boxes = [];
   for (const workspace of overview.workspaces) {
@@ -252,7 +219,7 @@ function waitingBoxes(overview, only = null) {
       for (const asked of server.permissions) {
         const diff = asked.metadata && (asked.metadata.diff || asked.metadata.command);
         const reply = (answer) => async () => {
-          try { await api(`api/permissions/${encodeURIComponent(workspace.name)}/${server.port}/${asked.id}`, { reply: answer }); say("replied", true); refresh(); }
+          try { await api(`api/permissions/${encodeURIComponent(workspace.name)}/${server.port}/${asked.id}`, { reply: answer }); say("replied", true); }
           catch (error) { say(error.message); }
         };
         boxes.push(el("div", { class: "box waiting" },
@@ -267,7 +234,7 @@ function waitingBoxes(overview, only = null) {
       for (const asked of server.questions) {
         const answers = asked.questions.map(() => []);
         const send = async () => {
-          try { await api(`api/questions/${encodeURIComponent(workspace.name)}/${server.port}/${asked.id}`, { answers }); say("answered", true); refresh(); }
+          try { await api(`api/questions/${encodeURIComponent(workspace.name)}/${server.port}/${asked.id}`, { answers }); say("answered", true); }
           catch (error) { say(error.message); }
         };
         const blocks = asked.questions.map((question, index) => el("div", {},
@@ -283,15 +250,12 @@ function waitingBoxes(overview, only = null) {
   }
   for (const mark of (overview.marks || []).filter((each) => !only || each.workspace === only)) boxes.push(markBox(mark));
   for (const question of only ? [] : overview.questions) {
-    if (question.flow) {
-      boxes.push(flowBox(question));
-      continue;
-    }
+    if (question.flow) { boxes.push(flowBox(question)); continue; }
     boxes.push(el("div", { class: "box waiting" },
       el("div", { class: "head" }, `clank · ${question.title}`), question.detail ? el("pre", {}, question.detail) : null,
       el("div", { class: "btns" }, question.options.map((option) => el("button", {
         class: "btn small", onclick: async () => {
-          try { await api(`api/clank-questions/${question.id}`, { option: option.id }); say("answered", true); refresh(); }
+          try { await api(`api/clank-questions/${question.id}`, { option: option.id }); say("answered", true); }
           catch (error) { say(error.message); }
         },
       }, option.label)))));
@@ -299,7 +263,6 @@ function waitingBoxes(overview, only = null) {
   return boxes;
 }
 
-// A file as a row: a small picture of it, its caption, its workspace and when.
 function fileRow(file) {
   const href = `api/files/${encodeURIComponent(file.workspace)}/${encodeURIComponent(file.file)}`;
   const image = (file.mime || "").startsWith("image/");
@@ -340,19 +303,28 @@ function taskBox(workspaces) {
   }, running.length > 1 ? "start" : `start in ${running[0].name}`)));
 }
 
+// Now (design 0025 §5): the model and the machine, what waits for you, what works now.
 function nowView(overview) {
-  const parts = [section("status"), statusLines(overview)];
+  const parts = [hero(overview)];
   const waiting = waitingBoxes(overview);
-  if (waiting.length) parts.push(section("waiting for you", waiting.length), ...waiting);
-  const sessions = allSessions(overview);
-  const busy = sessions.filter((session) => session.status === "busy");
-  if (busy.length) parts.push(section("working now"), ...busy.map(sessionRow));
-  const idle = sessions.filter((session) => session.status !== "busy").slice(0, RECENT);
-  parts.push(section("recent"), ...(idle.length ? idle.map(sessionRow) : [el("div", { class: "empty" }, "No session yet.")]));
-  const problems = overview.workspaces.filter((workspace) => workspace.problem);
-  for (const workspace of problems) parts.push(el("div", { class: "box" }, el("span", { class: "warn" }, `${workspace.name}: `), workspace.problem));
-  parts.push(section("new task"), taskBox(overview.workspaces));
-  if (overview.files.length) parts.push(section("last files"), ...overview.files.slice(0, 2).map(fileRow));
+  parts.push(section("waiting for you", waiting.length));
+  parts.push(...(waiting.length ? waiting : [el("div", { class: "empty" }, "Nothing waits for you.")]));
+  const working = workingRows(overview);
+  parts.push(section("working now", working.length));
+  parts.push(...(working.length ? working.map(sessionRow) : [el("div", { class: "empty" }, "Nothing works now.")]));
+  for (const workspace of overview.workspaces.filter((each) => each.problem)) {
+    parts.push(el("div", { class: "box" }, el("span", { class: "warn" }, `${workspace.name}: `), workspace.problem));
+  }
+  return parts;
+}
+
+// Flows: what the flows wait for, from Clank's questions about them; the Flow view with its boxes comes with the next
+// step of design 0025.
+function flowsView(overview) {
+  const waiting = overview.questions.filter((question) => question.flow).map(flowBox);
+  const parts = [section("flows waiting for you", waiting.length)];
+  parts.push(...(waiting.length ? waiting : [el("div", { class: "empty" }, "No flow waits for you.")]));
+  parts.push(el("div", { class: "dim" }, "The running flows, their boxes and gates come here with the next step; the console's Flow view (F10) shows them now."));
   return parts;
 }
 
@@ -369,6 +341,9 @@ function workView(overview) {
       onclick: () => openWorkspace(workspace.name),
     }));
   }
+  const recent = allSessions(overview).slice(0, 8);
+  if (recent.length) parts.push(section("sessions"), ...recent.map(sessionRow));
+  parts.push(section("new task"), taskBox(overview.workspaces));
   return parts;
 }
 
@@ -385,13 +360,18 @@ function workspaceView(overview) {
   return parts;
 }
 
-function filesView(overview) {
-  if (!overview.files.length) return [el("div", { class: "empty" }, "Nothing sent yet. Ask an agent to send you a figure.")];
-  return [section("sent to you", overview.files.length), el("div", { class: "files" }, overview.files.map(fileTile))];
+async function loadFiles() {
+  try { state.files = (await api("api/files")).files || []; draw(); }
+  catch (error) { say(error.message); }
 }
 
-// The log: what this phone asked and what it was sent, newest first; an exchange opens whole when tapped. It is read
-// when the tab opens and when asked (reading it is an exchange too).
+function filesView() {
+  if (state.files === null) return [el("div", { class: "empty" }, "Reading…")];
+  if (!state.files.length) return [el("div", { class: "empty" }, "Nothing sent yet. Ask an agent to send you a figure.")];
+  return [section("sent to you", state.files.length), el("div", { class: "files" }, state.files.map(fileTile))];
+}
+
+// The log: what this phone asked and what it was sent, newest first; an exchange opens whole when tapped.
 async function loadLog() {
   try { state.log.items = (await api(`api/traffic?limit=${LOG_LIMIT}`)).exchanges; draw(); }
   catch (error) { say(error.message); }
@@ -409,7 +389,7 @@ function bodyText(value) {
 }
 
 function logView() {
-  const parts = [section("this phone and the computer", state.log.items.length),
+  const parts = [section("this phone and the PC", state.log.items.length),
     el("div", { class: "dim" }, "Everything this phone asked and was sent, newest first. Tap one to see it whole."),
     el("div", { class: "btns" }, el("button", { class: "btn small", onclick: loadLog }, "read again"))];
   for (const item of state.log.items) {
@@ -431,6 +411,35 @@ function logView() {
   return parts;
 }
 
+// The stream's events this visit, newest first: what happened, with its time and whether it asked for attention.
+function eventsView() {
+  const parts = [section("events this visit", state.events.length)];
+  for (const event of state.events.slice(0, 60)) {
+    parts.push(row({ glyph: event.attention ? "!" : "·", glyphClass: event.attention ? "warn" : "dim", line: event.title,
+      sub: `${clock(event.time)} · ${event.type}` }));
+  }
+  if (!state.events.length) parts.push(el("div", { class: "empty" }, "Nothing happened yet since the app opened."));
+  return parts;
+}
+
+// More: the log, the events, this phone and the PC; the rest of design 0025 §9 comes with its step.
+function moreView() {
+  const link = streamState(state.link, Date.now());
+  const last = state.link.lastEventAt ? `last event ${ago(state.link.lastEventAt)} ago` : "no event yet";
+  return [
+    section("more"),
+    row({ glyph: "›", line: "Activity", sub: `events this visit: ${state.events.length}`, onclick: () => { state.place = { more: "events" }; draw(); } }),
+    row({ glyph: "›", line: "This phone's log", sub: "every exchange with the PC, whole", onclick: () => { state.place = { more: "log" }; draw(); loadLog(); } }),
+    section("the PC"),
+    kv([["address", location.host], ["through", "Tailscale · tailnet only"], ["stream", `${link.state} · ${last}`],
+      ["app", "updates with Clank on the PC"]]),
+    section("this phone"),
+    el("div", { class: "btns" }, el("button", { class: "btn no", onclick: async () => {
+      try { await api("api/signout", {}); location.reload(); } catch (error) { say(error.message); }
+    } }, "sign out: this phone forgets its pairing")),
+  ];
+}
+
 function messageView(message) {
   const parts = [];
   for (const part of message.parts) {
@@ -449,14 +458,14 @@ function messageView(message) {
   return el("div", { class: "msg" }, el("div", { class: "who " + (you ? "you" : "agent") }, you ? "› you" : "◆ agent"), parts);
 }
 
-// A session's page keeps its composer from the moment it opens: the polls redraw the conversation above it, never the
+// A session's page keeps its composer from the moment it opens: the redraws change the conversation above it, never the
 // box being typed in (a phone's keyboard would close).
 function sessionParts(place) {
   const where = `api/sessions/${encodeURIComponent(place.workspace)}/${place.port}/${place.session}`;
   const text = el("textarea", { placeholder: "Tell the agent…" });
   const stop = el("button", {
     class: "btn no hidden", onclick: async () => {
-      try { await api(`${where}/stop`, {}); say("stopped", true); refresh(); }
+      try { await api(`${where}/stop`, {}); say("stopped", true); }
       catch (error) { say(error.message); }
     },
   }, "stop");
@@ -483,10 +492,8 @@ function drawSession() {
   parts.stop.classList.toggle("hidden", !busy);
   if (!view.contains(parts.composer)) view.replaceChildren(parts.head, parts.thread, parts.composer);
   const typing = parts.thread.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
-  if (typing) return; // an answer to the agent's question being typed
+  if (typing) return;
   const shown = state.messages.map(messageView).filter(Boolean);
-  const sent = state.overview.files.filter((file) => file.workspace === place.workspace && found && file.sent * 1000 >= (found.created || 0));
-  if (sent.length) shown.push(section("sent to you"), ...sent.map((file) => el("div", { class: "figure" }, fileTile(file))));
   const waiting = waitingBoxes(state.overview, place.workspace);
   if (waiting.length) shown.push(section("waiting for you", waiting.length), ...waiting);
   if (!shown.length) shown.push(el("div", { class: "empty" }, "No message yet."));
@@ -499,39 +506,55 @@ function drawSession() {
   }
 }
 
-function drawStatus(overview) {
-  const ready = overview.model.status === "ready";
-  const flying = ((overview.agent || {}).requests || []).length > 0;
-  status.replaceChildren(
-    el("span", { class: ready ? "good" : "bad" }, "● model"), " ",
-    el("span", { class: flying ? "acc" : "dim" }, flying ? "● working" : "○ idle"));
-  const waiting = waitingBoxes(overview).length;
-  waitingCount.textContent = waiting ? `(${waiting})` : "";
+// The header: the PC's name, the stream's state, the count of what waits.
+function drawHeader() {
+  const link = streamState(state.link, Date.now());
+  machineLabel.textContent = location.hostname.split(".")[0] || "";
+  const words = link.state === "live" ? "● live" : link.state === "reconnecting" ? `● reconnecting ${clockText(link.pausedSeconds)}` : "● offline";
+  status.replaceChildren(el("span", { class: link.state }, words));
+  const waiting = state.overview ? waitingCount(state.overview) : 0;
+  waitingBadge.textContent = waiting ? `(${waiting})` : "";
+}
+
+// The screen for when the PC cannot be reached (design 0025 §3): what was tried, what to check, the last known state.
+function offlineView() {
+  const link = streamState(state.link, Date.now());
+  const known = state.known;
+  return [el("div", { class: "offline" },
+    el("h2", {}, "Can't reach the PC"),
+    el("div", { class: "why" }, "Is Tailscale on? Is the PC awake?"),
+    kv([["this iPhone", navigator.onLine ? "online" : "offline"],
+      [location.hostname.split(".")[0] || "the PC", `didn't answer · ${link.tries} ${link.tries === 1 ? "try" : "tries"}, the last ${clockText(link.pausedSeconds % RECONNECT_SECONDS)} ago`]]),
+    el("div", { class: "muted" }, "Tailscale on this iPhone: an app can't see it. Open Tailscale and check it says Connected. The PC asleep or off: Clank can't wake it from here."),
+    el("div", { class: "btns" }, el("button", { class: "btn go", onclick: () => stream(true) }, "Try again"),
+      el("span", { class: "dim" }, ` next try in ${link.nextTryIn} s`)),
+    known ? el("div", { class: "known" },
+      el("div", { class: "dim" }, `Last known · ${clock(known.at)}, ${ago(known.at)} ago`),
+      el("div", {}, known.model),
+      el("div", {}, `${known.waiting} waiting for you`),
+      ...known.working.map((line) => el("div", {}, line)),
+      el("div", { class: "dim" }, "Kept on this iPhone: names and numbers only.")) : null)];
 }
 
 function draw() {
-  if (!state.overview) return;
-  drawStatus(state.overview);
+  drawHeader();
+  const link = streamState(state.link, Date.now());
   const place = state.place;
   back.classList.toggle("hidden", !place);
-  title.textContent = place ? (place.session ? place.title || "session" : place.workspace) : "";
   for (const button of tabs.querySelectorAll("button")) button.classList.toggle("on", button.dataset.tab === state.tab);
+  if (link.state === "offline" && !state.overview) { view.replaceChildren(...offlineView()); return; }
+  if (!state.overview) return;
+  view.classList.toggle("stale", link.state !== "live");
+  if (link.state === "offline") { view.className = ""; view.replaceChildren(...offlineView()); return; }
   if (place && place.session) return drawSession();
   const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
-  if (typing) return; // do not redraw under someone typing a task or an answer
-  const parts = place ? workspaceView(state.overview) : state.tab === "work" ? workView(state.overview)
-    : state.tab === "files" ? filesView(state.overview) : state.tab === "log" ? logView() : nowView(state.overview);
-  view.replaceChildren(...parts);
-}
-
-async function refresh() {
-  try {
-    state.overview = await api("api/overview");
-    draw();
-  } catch (error) {
-    if (error.status === 401) return pairView();
-    say(error.message);
-  }
+  if (typing) return;
+  const paused = link.state === "reconnecting"
+    ? el("div", { class: "paused" }, `Live updates paused ${clockText(link.pausedSeconds)}. Below: as of ${state.known ? clock(state.known.at) : "a moment ago"}.`) : null;
+  const parts = place && place.more === "log" ? logView() : place && place.more === "events" ? eventsView()
+    : place ? workspaceView(state.overview) : state.tab === "flows" ? flowsView(state.overview) : state.tab === "work" ? workView(state.overview)
+    : state.tab === "files" ? filesView() : state.tab === "more" ? moreView() : nowView(state.overview);
+  view.replaceChildren(paused, ...parts);
 }
 
 async function loadMessages() {
@@ -549,6 +572,7 @@ function openSession(workspace, port, session, name) {
   state.messages = [];
   draw();
   loadMessages();
+  followSession();
 }
 
 function openWorkspace(name) {
@@ -557,13 +581,24 @@ function openWorkspace(name) {
   window.scrollTo(0, 0);
 }
 
+// A session's messages are read every few seconds while its page shows (the conversation stream comes with the next
+// step of design 0025); everything else moves with the live stream.
+function followSession() {
+  clearTimeout(state.timer);
+  const place = state.place;
+  if (!place || !place.session || document.visibilityState !== "visible") return;
+  const open = state.overview && allSessions(state.overview).find((session) => session.id === place.session);
+  const seconds = open && open.status === "busy" ? BUSY_SECONDS : IDLE_SECONDS;
+  state.timer = setTimeout(() => { loadMessages().then(followSession); }, seconds * 1000);
+}
+
 function pairView() {
   tabs.classList.add("hidden");
   const code = el("input", { placeholder: "XXXX XXXX", autocomplete: "one-time-code", autocapitalize: "characters" });
   view.replaceChildren(el("div", { class: "center" },
     el("div", { class: "brand" }, "◆ CLANK"),
     el("div", {}, "Pair this phone"),
-    el("div", { class: "dim" }, "On the computer: Clank's console, F9 (Phone), p. Type the code it shows."),
+    el("div", { class: "dim" }, "On the computer: Clank's console, F9 (Phone), p. Scan the QR it shows, or type the code under it here."),
     code,
     el("div", { class: "btns" }, el("button", {
       class: "btn go", onclick: async () => {
@@ -573,35 +608,78 @@ function pairView() {
     }, "pair"))));
 }
 
-function tick() {
-  clearTimeout(state.timer);
-  if (document.visibilityState !== "visible") return;
-  refresh().then(() => {
-    const place = state.place;
-    if (place && place.session) loadMessages();
-    const open = place && place.session && state.overview && state.overview.workspaces
-      .flatMap((workspace) => workspace.servers).flatMap((server) => server.sessions).find((session) => session.id === place.session);
-    const seconds = place && place.session ? (open && open.status === "busy" ? BUSY_SECONDS : IDLE_SECONDS) : NOW_SECONDS;
-    state.timer = setTimeout(tick, seconds * 1000);
+// An event that asks for attention shows as a line under the header while it is fresh; Open goes to Now.
+function noticed(event) {
+  if (!event.attention) return;
+  attention.replaceChildren(el("span", { class: "what" }, event.title),
+    el("button", { onclick: () => { state.tab = "now"; state.place = null; attention.classList.add("hidden"); draw(); window.scrollTo(0, 0); } }, "Open"));
+  attention.classList.remove("hidden");
+  clearTimeout(noticed.timer);
+  noticed.timer = setTimeout(() => attention.classList.add("hidden"), ATTENTION_SECONDS * 1000);
+}
+
+// The live stream (design 0025 §3): `now` draws the app, each `event` is kept and may ask for attention; a drop is said
+// in the header, then the offline screen after thirty seconds; the browser resumes it from the last event it saw.
+function stream(again = false) {
+  if (state.link.source) { state.link.source.close(); state.link.source = null; }
+  if (again) { state.link.failedSince = null; state.link.tries = 0; draw(); }
+  const source = new EventSource("api/stream");
+  state.link.source = source;
+  source.addEventListener("open", () => {
+    state.link.connected = true; state.link.failedSince = null; state.link.tries = 0; drawHeader();
+  });
+  source.addEventListener("connected", () => { state.link.connected = true; draw(); });
+  source.addEventListener("now", (message) => {
+    state.overview = JSON.parse(message.data);
+    state.link.connected = true; state.link.failedSince = null; state.link.tries = 0;
+    state.link.lastEventAt = Date.now();
+    state.known = lastKnown(state.overview, Date.now());
+    try { localStorage.setItem(KNOWN, JSON.stringify(state.known)); } catch { /* storage may be refused: the screen still draws */ }
+    draw();
+  });
+  source.addEventListener("event", (message) => {
+    const event = JSON.parse(message.data);
+    state.link.lastEventAt = Date.now();
+    state.events.unshift(event);
+    if (state.events.length > 500) state.events.length = 500;
+    noticed(event);
+    if (state.place && state.place.more === "events") draw();
+  });
+  source.addEventListener("reset", () => { say("the PC pruned events while this phone was away: shown afresh"); });
+  source.addEventListener("closing", () => { source.close(); state.link.source = null; state.link.connected = false; state.link.failedSince = Date.now(); draw(); });
+  source.addEventListener("error", () => {
+    if (state.link.connected || state.link.failedSince === null) state.link.failedSince = Date.now();
+    state.link.connected = false;
+    state.link.tries += 1;
+    if (source.readyState === EventSource.CLOSED) { // the browser gave up (a 401, a 403): pair again, or wait
+      state.link.source = null;
+      api("api/me").catch((error) => { if (error.status === 401) pairView(); });
+    }
+    draw();
   });
 }
 
 async function start() {
+  if (location.search.includes("claim=")) history.replaceState(null, "", location.pathname); // the claim is spent
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => { /* an older iOS: the app still runs */ });
   try {
     await api("api/me");
   } catch (error) {
     if (error.status === 401) return pairView();
-    view.replaceChildren(el("div", { class: "center" }, el("div", { class: "brand" }, "◆ CLANK"), el("div", { class: "bad" }, error.message)));
+    state.link.failedSince = state.link.failedSince || Date.now();
+    state.link.tries += 1;
+    view.replaceChildren(...offlineView());
+    setTimeout(start, RECONNECT_SECONDS * 1000);
     return;
   }
   tabs.classList.remove("hidden");
-  tick();
+  stream();
 }
 
 back.addEventListener("click", () => {
-  state.place = state.place ? state.place.from : null;
+  state.place = state.place ? state.place.from || null : null;
   draw();
-  tick();
+  followSession();
 });
 for (const button of tabs.querySelectorAll("button")) {
   button.addEventListener("click", () => {
@@ -609,8 +687,12 @@ for (const button of tabs.querySelectorAll("button")) {
     state.place = null;
     draw();
     window.scrollTo(0, 0);
-    if (state.tab === "log") loadLog();
+    if (state.tab === "files") loadFiles();
   });
 }
-document.addEventListener("visibilitychange", tick);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") { if (!state.link.source) stream(); followSession(); }
+  else { clearTimeout(state.timer); if (state.link.source) { state.link.source.close(); state.link.source = null; } }
+});
+setInterval(() => { if (!document.hidden) drawHeader(); if (!document.hidden && streamState(state.link, Date.now()).state !== "live") draw(); }, 1000);
 start();

@@ -7,6 +7,7 @@ from typing import Any
 import click
 
 from clank.cli import common
+from clank.components.remote.qr import qr_lines
 
 
 @click.group()
@@ -43,11 +44,17 @@ def off() -> None:
 @remote.command()
 @click.argument("name", default="phone")
 def pair(name: str) -> None:
-    """A code to pair a device: open the phone page on it and type the code (fifteen minutes, once)."""
+    """Pair a device (design 0025 §2): a QR to scan with its camera, the link it carries, and the code to type on the
+    phone page instead (fifteen minutes, once)."""
     client = common.call(common.connect)
     found = common.call(lambda: client.post("remote/pair", {"name": name}))
-    click.echo(f"Code for {name}: {found['code'][:4]} {found['code'][4:]}  (until {found['expires']})")
-    click.echo(f"On the device, open {found['url'] or 'the phone page (Tailscale did not say its address)'}")
+    if found.get("link"):
+        for line in qr_lines(found["link"]):
+            click.echo(line)
+        click.echo(f"Scan it with the iPhone's camera, or open {found['link']}")
+    else:
+        click.echo("Tailscale did not say this machine's address: the phone page's link cannot be made")
+    click.echo(f"Code for {name}: {found['code'][:4]} {found['code'][4:]}  (until {found['expires']}), to type instead")
     if not found["on"]:
         click.echo("Remote access is off: `clank remote on` publishes the page first.")
 
