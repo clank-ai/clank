@@ -60,7 +60,7 @@ each kept in `.clank/boards/<name>/history/`); the owner's by the editor, saved 
   in `.clank/boards/<name>/latex/`; a LaTeX item in `compiled` mode shows it, or its error.
 - [x] 6. **Export**: a frame or the selection to SVG and PNG (made in the page), and to PDF (a `standalone` LaTeX
   document placing the figures and the LaTeX, built in the container); kept exports made again when the frame changes.
-- [ ] 7. **Live**: the real model, in a throwaway folder, adds figures and an equation, fills a slot the owner drew and
+- [x] 7. **Live**: the real model, in a throwaway folder, adds figures and an equation, fills a slot the owner drew and
   answers a pin; a frame exported to PDF; seen in screenshots of that window only.
 - [ ] 8. **Documentation**: getting started, the extension's README, the roadmap, and the website.
 
@@ -83,3 +83,11 @@ Written 2026-10-26.
   pgfplots and booktabs load by default. The agent has `board_export`; the owner's Export asks for the format and once
   or kept; kept exports are made again by the service after the agent's changes and by the editor after the owner's.
   Fixed on the way: `test_sessions`' list of the agent's tools had not been given the board tools.
+- Task 7 done (2026-10-26, frontier 262K fast, the throwaway folder, driven through the service with the editor's
+  messages word for word): a slot drawn below the tables was filled (`fig-13`, a new decay plot, placed in the slot,
+  which it took; 226 s with the model's script); a pin on `fig-1` ("label both axes with their units") was answered
+  honestly: the model looked at the figure with vision, found the units already there, closed the pin and said so
+  (146 s); `board_export` with `keep` made `figures/figure-1.pdf` (31 KB, one page, no raster image in it: the plots,
+  the tables, the formula and the new plot as placed) and the frame remembers it (29 s). Found: the model still wrote
+  its SVG by hand, since its session's history said Matplotlib was missing (it is there since decision 0138): the
+  board instructions now say what the container has. Sends took 3 to 12 s through the bridge (design 0023).

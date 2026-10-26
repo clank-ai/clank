@@ -12,7 +12,8 @@ and the user's pen marks, arrows, highlights and pins by what they are over), th
 it.
 
 - A **figure** is an image file of the folder: make it first (a script; a job for a long one), then add it. When a
-  script writes the same file again, the board shows the new figure by itself.
+  script writes the same file again, the board shows the new figure by itself. Your container has NumPy, SciPy,
+  pandas, Matplotlib and SymPy: plot with Matplotlib (`savefig` to PNG or SVG), never by writing SVG by hand.
 - **LaTeX**: math (`mode` math, without `$`) for an equation or a derivation; `mode` compiled for TikZ, pgfplots or a
   table, built with the folder's TeX.
 - A **slot** is a place the user drew for a figure: when asked to fill one, make the figure and add it with
