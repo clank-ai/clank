@@ -1,0 +1,679 @@
+/* A board (design 0022): the same theme tokens as the agent panel (media/agent.css), VS Code's theme by default or
+   Clank Night, plus the board's own: its canvas and grid, the paper figures and LaTeX sit on, and the ink of the
+   owner's marks. Items are placed in the world's pixels; the world is moved and zoomed as one. */
+
+:root {
+  --c-bg: var(--vscode-editor-background, #1f1f1f);
+  --c-text: var(--vscode-foreground, #cccccc);
+  --c-strong: var(--vscode-editor-foreground, var(--c-text));
+  --c-muted: var(--vscode-descriptionForeground, #9d9d9d);
+  --c-surface: color-mix(in srgb, var(--c-text) 4%, var(--c-bg));
+  --c-raised: color-mix(in srgb, var(--c-text) 9%, var(--c-bg));
+  --c-hover: color-mix(in srgb, var(--c-text) 6%, var(--c-bg));
+  --c-border: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
+  --c-rule: color-mix(in srgb, var(--c-text) 24%, var(--c-bg));
+  --c-input: var(--vscode-input-background, var(--c-surface));
+  --c-accent: var(--vscode-button-background, #0078d4);
+  --c-accent-text: var(--vscode-button-foreground, #ffffff);
+  --c-focus: var(--vscode-focusBorder, var(--c-accent));
+  --c-warn: var(--vscode-editorWarning-foreground, #cca700);
+  --c-err: var(--vscode-errorForeground, #f48771);
+  --c-code: var(--vscode-textCodeBlock-background, var(--c-surface));
+  --c-canvas: color-mix(in srgb, var(--c-text) 2%, var(--c-bg));
+  --c-dot: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
+  --c-paper: #ffffff;
+  --c-on-paper: #1f1f1f;
+  --c-ink: #e8508a;
+  --c-highlight: rgba(255, 213, 0, 0.32);
+  --c-note: color-mix(in srgb, var(--c-text) 6%, var(--c-bg));
+  --f-ui: var(--vscode-font-family, "Segoe UI", system-ui, sans-serif);
+  --f-mono: var(--vscode-editor-font-family, "Cascadia Code", Consolas, monospace);
+}
+
+body.theme-clank-night {
+  --c-bg: #1a1b26;
+  --c-text: #c0caf5;
+  --c-strong: #e0e6ff;
+  --c-muted: #9aa5ce;
+  --c-surface: #16161e;
+  --c-raised: #24283b;
+  --c-hover: #1f2335;
+  --c-border: #292e42;
+  --c-rule: #3b4261;
+  --c-input: #1f2335;
+  --c-accent: #7aa2f7;
+  --c-accent-text: #1a1b26;
+  --c-focus: #7aa2f7;
+  --c-warn: #e0af68;
+  --c-err: #f7768e;
+  --c-code: #16161e;
+  --c-canvas: #15161e;
+  --c-dot: #2a2e42;
+  --c-paper: #f5f6fa;
+  --c-ink: #f7768e;
+  --c-note: #202437;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--f-ui);
+  font-size: 13px;
+  line-height: 1.55;
+  user-select: none;
+}
+
+svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible,
+textarea:focus-visible,
+input:focus-visible {
+  outline: 1px solid var(--c-focus);
+  outline-offset: 1px;
+}
+
+[hidden] {
+  display: none !important; /* the page's own display rules never show what is hidden */
+}
+
+.unseen {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* the toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 42px;
+  flex: none;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--c-border);
+  color: var(--c-muted);
+}
+
+.tool,
+.bar button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms, color 120ms;
+}
+
+.tool:hover,
+.bar button:hover {
+  background: var(--c-hover);
+  color: var(--c-strong);
+}
+
+.tool.on {
+  background: var(--c-raised);
+  color: var(--c-strong);
+}
+
+.sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 6px;
+  background: var(--c-border);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.zoom {
+  min-width: 52px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--c-text);
+  font-size: 12px;
+}
+
+.status {
+  font-size: 12px;
+  margin-right: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button.text {
+  width: auto;
+  height: 28px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  background: transparent;
+  color: var(--c-text);
+  font-size: 12px;
+}
+
+button.text:hover {
+  background: var(--c-hover);
+}
+
+button.text.primary {
+  border-color: var(--c-accent);
+  background: var(--c-accent);
+  color: var(--c-accent-text);
+  font-weight: 600;
+}
+
+/* the canvas */
+.viewport {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background-color: var(--c-canvas);
+  background-image: radial-gradient(var(--c-dot) 1px, transparent 1px);
+  outline: none;
+  cursor: default;
+}
+
+.viewport.panning {
+  cursor: grabbing;
+}
+
+.viewport.tool-hand {
+  cursor: grab;
+}
+
+.viewport.tool-note,
+.viewport.tool-latex,
+.viewport.tool-frame,
+.viewport.tool-slot,
+.viewport.tool-highlight,
+.viewport.tool-pin,
+.viewport.tool-pen,
+.viewport.tool-arrow {
+  cursor: crosshair;
+}
+
+.world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+}
+
+.item {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.item.figure {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item.figure .picture {
+  flex: 1;
+  min-height: 0;
+  background: var(--c-paper);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.item.figure img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.item.figure .missing {
+  color: #616161;
+  font-size: 12px;
+  padding: 8px;
+  text-align: center;
+}
+
+.caption {
+  font-size: 12px;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 22px;
+  flex: none;
+}
+
+.item.latex .paper {
+  width: 100%;
+  height: 100%;
+  background: var(--c-paper);
+  color: var(--c-on-paper);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.item.latex .math {
+  transform-origin: center;
+  white-space: nowrap;
+}
+
+.item.latex .math .katex {
+  font-size: 1.35em;
+}
+
+.item.latex img {
+  max-width: 100%;
+  max-height: 100%;
+  pointer-events: none;
+}
+
+.item.latex .tag {
+  position: absolute;
+  right: 6px;
+  top: 3px;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: #757575;
+}
+
+.item.latex .problem {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 3px 6px;
+  background: rgba(199, 46, 46, 0.12);
+  color: #c72e2e;
+  font-size: 11px;
+}
+
+.item.note {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--c-note);
+  border: 1px solid var(--c-border);
+  overflow: hidden;
+  font-size: 12.5px;
+  user-select: text;
+}
+
+.item.note p {
+  margin: 0 0 6px;
+}
+
+.item.note h1,
+.item.note h2,
+.item.note h3 {
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  color: var(--c-strong);
+}
+
+.item.note code {
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  background: var(--c-code);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+.item.frame {
+  border: 1.5px solid var(--c-rule);
+  border-radius: 8px;
+}
+
+.frame-name {
+  position: absolute;
+  left: 0;
+  top: -24px;
+  font-size: 12px;
+  color: var(--c-muted);
+  white-space: nowrap;
+}
+
+.frame-name b {
+  color: var(--c-strong);
+  font-weight: 600;
+}
+
+.item.slot {
+  border: 1.5px dashed var(--c-accent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--c-accent) 7%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 12px;
+}
+
+.item.slot b {
+  color: var(--c-strong);
+  font-weight: 600;
+}
+
+.item.slot .hint {
+  color: var(--c-muted);
+  font-size: 12px;
+}
+
+.item.slot.filling {
+  border-style: solid;
+}
+
+.item.highlight {
+  background: var(--c-highlight);
+  border-radius: 3px;
+}
+
+.item.pin {
+  width: 0;
+  height: 0;
+}
+
+.pin-dot {
+  position: absolute;
+  left: -11px;
+  top: -11px;
+  width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--c-ink);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.item.pin.answered .pin-dot {
+  background: var(--c-muted);
+}
+
+.pin-text {
+  position: absolute;
+  left: 16px;
+  top: -14px;
+  width: max-content;
+  max-width: 240px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  font-size: 12px;
+  color: var(--c-strong);
+  white-space: pre-wrap;
+}
+
+.marks {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.marks path,
+.marks line {
+  stroke: var(--c-ink);
+  stroke-width: 2.5;
+  fill: none;
+  pointer-events: stroke;
+}
+
+.marks .arrow {
+  stroke-width: 2;
+}
+
+.marks #arrow-head path {
+  fill: var(--c-ink);
+  stroke: none;
+}
+
+.marks .chosen {
+  stroke: var(--c-accent);
+}
+
+/* selection */
+.outline {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1.5px solid var(--c-accent);
+  pointer-events: none;
+}
+
+.handle {
+  position: absolute;
+  box-sizing: border-box;
+  background: var(--c-bg);
+  border: 1.5px solid var(--c-accent);
+}
+
+.guides {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.guides line {
+  stroke: var(--c-ink);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.marquee {
+  position: absolute;
+  border: 1px solid var(--c-accent);
+  background: color-mix(in srgb, var(--c-accent) 10%, transparent);
+  pointer-events: none;
+}
+
+/* in-place editing */
+.editor {
+  position: absolute;
+  box-sizing: border-box;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--c-bg);
+  border: 1.5px solid var(--c-accent);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.editor textarea,
+.editor input {
+  font: inherit;
+  color: var(--c-text);
+  background: var(--c-input);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  resize: none;
+  user-select: text;
+}
+
+.editor textarea.code {
+  font-family: var(--f-mono);
+  font-size: 12px;
+}
+
+.editor .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--c-muted);
+}
+
+.editor .row .end {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.editor .preview {
+  min-height: 48px;
+  max-height: 200px;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-paper);
+  color: var(--c-on-paper);
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.segmented {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--c-raised);
+}
+
+.segmented button {
+  border: 0;
+  border-radius: 5px;
+  padding: 0 10px;
+  background: transparent;
+  color: var(--c-muted);
+  font-size: 12px;
+}
+
+.segmented button.on {
+  background: var(--c-bg);
+  color: var(--c-strong);
+  font-weight: 600;
+}
+
+/* the selection's bar and the question for the agent */
+.bar,
+.ask {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 8px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  color: var(--c-muted);
+}
+
+.ask {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 440px;
+  padding: 12px;
+  border-color: var(--c-focus);
+}
+
+.ask textarea {
+  border: 0;
+  resize: none;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  outline: none;
+  user-select: text;
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chips span {
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--c-raised);
+  color: var(--c-text);
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+}
+
+.ask-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ask-row .hint {
+  margin-right: auto;
+  font-size: 12px;
+}
+
+.empty {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  max-width: 420px;
+  text-align: center;
+  color: var(--c-muted);
+  pointer-events: none;
+}
+
+.empty b {
+  display: block;
+  color: var(--c-strong);
+  font-size: 15px;
+  margin-bottom: 6px;
+}

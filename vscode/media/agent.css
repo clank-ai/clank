@@ -94,6 +94,10 @@ pre {
   font-family: var(--f-mono);
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .unseen {
   position: absolute;
   width: 1px;

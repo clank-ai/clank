@@ -1,0 +1,77 @@
+<!doctype html>
+<!-- A board (design 0022), in VS Code's board editor. The extension fills in the {{...}} fields: the content security
+     policy's sources, the nonce of the scripts, and the addresses of the style sheets and scripts. The board's core
+     (core/board.ts, compiled as CommonJS) is loaded after marked and KaTeX (whose loaders would put themselves on an
+     `exports` object), with an `exports` object of its own, which it keeps using, and is kept as `BoardCore`, so
+     the page and the extension decide moves, snaps and edits the same way. marked and KaTeX are the artifacts'
+     libraries (decision 0135). Nothing comes from the network. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src {{source}} 'unsafe-inline'; font-src {{source}}; img-src {{source}} data: blob:; script-src 'nonce-{{nonce}}';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{katexCss}}" />
+    <link rel="stylesheet" href="{{css}}" />
+    <title>Clank board</title>
+  </head>
+  <body>
+    <div id="toolbar" class="toolbar" role="toolbar" aria-label="Board tools">
+      <button class="tool" data-tool="select" aria-label="Select (V)" title="Select (V)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 2l9 5-4 1.2-1.9 3.8z"></path></svg></button>
+      <button class="tool" data-tool="hand" aria-label="Pan (H, or hold Space)" title="Pan (H, or hold Space)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v12M2 8h12M8 2l-1.8 1.8M8 2l1.8 1.8M8 14l-1.8-1.8M8 14l1.8-1.8M2 8l1.8-1.8M2 8l1.8 1.8M14 8l-1.8-1.8M14 8l-1.8 1.8"></path></svg></button>
+      <span class="sep" aria-hidden="true"></span>
+      <button class="tool" data-tool="note" aria-label="Note (T)" title="Note: Markdown with $math$ (T)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3.5h10M8 3.5v9"></path></svg></button>
+      <button class="tool" data-tool="latex" aria-label="LaTeX (L)" title="LaTeX: math, or compiled with TeX (L)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12 3H4l4.5 5L4 13h8"></path></svg></button>
+      <button class="tool" data-tool="frame" aria-label="Frame (F)" title="Frame: a named group that exports as one figure (F)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 2v12M11 2v12M2 5h12M2 11h12"></path></svg></button>
+      <button class="tool" data-tool="slot" aria-label="Slot for the agent (S)" title="Slot: a place for the agent to fill with a figure (S)"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3" width="11" height="10" rx="1.5" stroke-dasharray="2 2"></rect></svg></button>
+      <span class="sep" aria-hidden="true"></span>
+      <button class="tool" data-tool="pen" aria-label="Pen (P)" title="Pen (P)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 2.5l2.5 2.5-7.5 7.5-3 .5.5-3z"></path></svg></button>
+      <button class="tool" data-tool="arrow" aria-label="Arrow (A)" title="Arrow, from one item to another (A)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13L13 3M7 3h6v6"></path></svg></button>
+      <button class="tool" data-tool="highlight" aria-label="Highlight (M)" title="Highlight (M)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13.5h10M5 10.5l5.5-7 2.5 2-5.5 7H5z"></path></svg></button>
+      <button class="tool" data-tool="pin" aria-label="Pin a comment for the agent (C)" title="Pin a comment for the agent (C)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14.5s5-4.6 5-8a5 5 0 0 0-10 0c0 3.4 5 8 5 8z"></path><circle cx="8" cy="6.5" r="1.6"></circle></svg></button>
+      <span class="sep" aria-hidden="true"></span>
+      <button class="tool" id="zoom-out" aria-label="Zoom out" title="Zoom out (-)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10"></path></svg></button>
+      <button class="zoom" id="zoom-level" title="Fit the board (0); its real size (1)">100 %</button>
+      <button class="tool" id="zoom-in" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10"></path></svg></button>
+      <span class="spacer"></span>
+      <span id="status" class="status"></span>
+      <button class="text" id="send-pins" hidden>Send pins to the agent</button>
+      <button class="text" id="export" title="Export the selected frame as a figure">Export</button>
+    </div>
+    <div id="viewport" class="viewport" tabindex="0" aria-label="The board">
+      <div id="world" class="world">
+        <div id="items"></div>
+        <svg id="marks" class="marks" aria-hidden="true"><defs><marker id="arrow-head" orient="auto" markerWidth="8" markerHeight="8" refX="6" refY="4"><path d="M0 0 L8 4 L0 8 Z"></path></marker></defs><g id="mark-paths"></g></svg>
+        <div id="selection"></div>
+      </div>
+      <svg id="guides" class="guides" aria-hidden="true"></svg>
+      <div id="marquee" class="marquee" hidden></div>
+    </div>
+    <div id="bar" class="bar" hidden>
+      <button data-align="left" aria-label="Align left edges" title="Align left edges"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2v12M5 5h8M5 11h5"></path></svg></button>
+      <button data-align="center" aria-label="Align centers" title="Align centers"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v12M3 5h10M5 11h6"></path></svg></button>
+      <button data-align="top" aria-label="Align tops" title="Align tops"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2.5h12M5 5v8M11 5v5"></path></svg></button>
+      <button data-align="middle" aria-label="Align middles" title="Align middles"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M5 3v10M11 5v6"></path></svg></button>
+      <button data-align="width" aria-label="Same width" title="Same width"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M4 6l-2 2 2 2M12 6l2 2-2 2M2 3v10M14 3v10"></path></svg></button>
+      <button data-align="spread" aria-label="Spread evenly" title="Spread evenly"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2v12M14 2v12"></path><rect x="6" y="5" width="4" height="6" rx="1"></rect></svg></button>
+      <span class="sep" aria-hidden="true"></span>
+      <button class="text" data-act="frame">Frame them</button>
+      <button class="text primary" data-act="ask">Ask the agent</button>
+      <button data-act="delete" aria-label="Delete" title="Delete (Del)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"></path></svg></button>
+    </div>
+    <div id="ask" class="ask" hidden>
+      <div id="ask-chips" class="chips"></div>
+      <label for="ask-text" class="unseen">What should the agent do with these?</label>
+      <textarea id="ask-text" rows="2" placeholder="What should the agent do with these? Enter sends."></textarea>
+      <div class="ask-row"><span class="hint">The agent gets these items by name, and your words.</span><button class="text" id="ask-cancel">Cancel</button><button class="text primary" id="ask-send">Ask</button></div>
+    </div>
+    <script nonce="{{nonce}}" src="{{marked}}"></script>
+    <script nonce="{{nonce}}" src="{{katex}}"></script>
+    <script nonce="{{nonce}}">window.exports = {};</script>
+    <script nonce="{{nonce}}" src="{{core}}"></script>
+    <script nonce="{{nonce}}">window.BoardCore = window.exports;</script>
+    <script nonce="{{nonce}}" src="{{script}}"></script>
+  </body>
+</html>
