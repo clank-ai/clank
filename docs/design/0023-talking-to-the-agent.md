@@ -155,6 +155,11 @@ and after, kept in this section once measured:
   of OpenCode's API in the service (`agents/opencode.py`) tested against the fake OpenCode without Docker. The one-off
   actions stay until the channel carries them all.
 - The service's bridge calls no longer queue behind the panel's reads, so builds, exports and `run_in` answer sooner.
+- **Clank's programs in the container are mounted, not copied** (a choice this work makes first, since the bridge
+  changes most): `bridge.py`, `phone_mcp.py`, `edge.py` and the instructions are copied into the sandbox image today,
+  so each change to them rebuilds a 2 GB image and remakes every container (32 image tags were found on the owner's
+  machine on 2026-10-26). Mounted read-only from Clank's own package folder into `/opt/clank`, they are always the
+  service's own version, and the image changes only when its Dockerfile does. A decision record says so when built.
 
 ## 8. Order of work
 
