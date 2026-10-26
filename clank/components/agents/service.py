@@ -41,7 +41,9 @@ answers: `prepare` tells whoever asked (`on_prepared`) the workspace and port of
 
 Each time an agent starts in a workspace (`prepare`, `configure`), Clank's files for it are written into its home in
 the container first (design 0018 §7.5: Clank's MCP server and its instructions, as this Clank has them), so its tools
-are always this Clank's whatever image its container was made from.
+are always this Clank's whatever image its container was made from; and its way to the model is put right first (design
+0004 §3: the edge running, forwarding the gateway's and the proxy's ports, on the workspace's network), what was put
+right said in `prepare`'s notes.
 
 Each workspace's OpenCode, and Clank's MCP server in its container, send the workspace's own key to the gateway (design
 0016 §9, from the gateway's service); a workspace allowed the cloud gets no MCP server marked local only, and Clank's
@@ -471,11 +473,14 @@ class Agents:
 
     def prepare(self, workspace: str, program: str = "opencode") -> dict[str, Any]:
         """Write the program's configuration into the workspace's container; the command that starts it there. With one
-        window at a time (the workspace's record, design 0004 §5), the OpenCode windows open there are closed first."""
+        window at a time (the workspace's record, design 0004 §5), the OpenCode windows open there are closed first.
+        The edge, the agent's way to the model, is put right first (design 0004 §3), and what was put right is said in
+        the notes."""
         workspaces: Workspaces = self.kernel.parts["workspaces"]
         adapter = self._adapter(program)
         container = workspaces.container_of(workspace)
         model, notes = self._model(workspace)
+        notes += workspaces.reach(workspace)
         servers = self._given(workspace, model.key)
         self._write_agent_files(workspace)
         path, text = adapter.configuration(model, servers, self._read_only(workspace))
@@ -514,11 +519,12 @@ class Agents:
 
     def configure(self, workspace: str, program: str = "opencode") -> dict[str, str]:
         """Write the program's configuration (the model, the MCP servers it gets) as `prepare` does, for one started
-        without a terminal (design 0005 §2); the environment it runs with."""
+        without a terminal (design 0005 §2), the edge put right first as there; the environment it runs with."""
         workspaces: Workspaces = self.kernel.parts["workspaces"]
         adapter = self._adapter(program)
         model, _ = self._model(workspace)
-        self._write_agent_files(workspace)
+        self._write_agent_files(workspace)  # refused first when its container does not run
+        workspaces.reach(workspace)
         path, text = adapter.configuration(model, self._given(workspace, model.key), self._read_only(workspace))
         workspaces.put_file(workspace, path, text)
         return self.agent_env(workspace, program)

@@ -1,11 +1,14 @@
 """The Workspaces page (design 0004 §3, §10; built 2026-10-15): every workspace, its container, and what its agent has.
 
-A line a workspace: its name, its container's state, its software (installed or not) and its folder. The highlighted
-workspace shows whole: its folder and container, its limits, its container's CPU and memory now (the machine's meters
-read them from Docker every ten seconds), its software and the command that installs it, and the MCP servers its agent
-gets. `o` opens it (its container starts; made first when it is not there), `x` stops its container, `e` installs its
-software (a form with the command to change or take), `d` removes it (asked first: its container and home go, its
-folder stays). The list is read again when Docker or an operation changes, and `r` reads it now.
+A line a workspace: its name, its container's state, its software (installed or not) and its folder; a workspace whose
+running container is cut off from the model (the edge not running on its network, design 0004 §3) says `cut off` in
+place of its state, in the failed color. The highlighted workspace shows whole: its folder and container, its limits,
+what is wrong with its way to the model and what Clank does about it (the service's words, `edge_said`), its container's
+CPU and memory now (the machine's meters read them from Docker every ten seconds), its software and the command that
+installs it, and the MCP servers its agent gets. `o` opens it (its container starts; made first when it is not there),
+`x` stops its container, `e` installs its software (a form with the command to change or take), `d` removes it (asked
+first: its container and home go, its folder stays). The list is read again when Docker or an operation changes, and `r`
+reads it now.
 
 Its panels are board E15's (design 0011 §8): "Workspaces", the list, with how many there are and run as its note, and
 "The highlighted workspace", with its name as note.
@@ -32,17 +35,24 @@ from clank.console.text import count, painted
 NAME = 18
 STATE = 12
 REFRESHED_BY = {"all", "docker", "operations", "connection"}
+CUT = "cut off"  # a running workspace's state while the edge does not run on its network
 NONE = "No workspace yet: clank in a folder (F4, o)."  # the list's panel says it while there is none
 
 
+def shown_state(row: dict[str, Any]) -> str:
+    """A workspace's state as its line shows it: its container's, or `cut off` while it runs cut off from the model."""
+    return CUT if row.get("edge") == "cut" else str(row["state"])
+
+
 def workspace_line(row: dict[str, Any]) -> str:
-    """One workspace: its name, its container's state, its software, its folder."""
+    """One workspace: its name, its container's state (`cut off` when cut off from the model), its software, its
+    folder."""
     setup = row.get("setup") or {}
     if setup.get("command") is None:
         software = "nothing to install"
     else:
         software = "software installed" if setup.get("installed") else "software not installed"
-    return f"{row['name']:<{NAME}} {row['state']:<{STATE}} {software:<22} {row['path']}"
+    return f"{row['name']:<{NAME}} {shown_state(row):<{STATE}} {software:<22} {row['path']}"
 
 
 def workspace_detail(
@@ -56,6 +66,8 @@ def workspace_detail(
         f"{row['name']}: {row['path']} at /workspace",
         f"container {row['container']}: {row['state']} · limits {', '.join(limits)}",
     ]
+    if row.get("edge_said"):
+        lines.append(str(row["edge_said"]))
     if usage is not None:
         lines.append(
             f"using now: {usage['cpu']:.0f}% of the machine's CPU, {size(usage['memory_used'])} of "
@@ -166,6 +178,9 @@ class WorkspacesPage(Page):
             "runs in a container of its own that reaches the internet (design 0004 §10).",
             "The highlighted workspace's use (CPU and memory) comes from Docker, read every ten seconds; its MCP "
             "servers are chosen on This folder (F4, m) or with clank mcp allow|hold.",
+            "A workspace cut off shows so in place of its state: its container runs, but the edge, its only way to the "
+            "model, does not run on its network. Clank puts it back within seconds, and o or starting its agent does "
+            "it at once; the highlighted workspace says what is wrong.",
         ]
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
@@ -192,7 +207,7 @@ class WorkspacesPage(Page):
         listed = self.query_one("#workspaces-list", ListView)
         kept = self._selected()
         self.rows, self.servers = rows, servers
-        lines = [painted(workspace_line(row), row["state"]) for row in rows]
+        lines = [painted(workspace_line(row), shown_state(row)) for row in rows]
         refill(listed, lines, [row["name"] for row in rows], kept["name"] if kept else None)
         running = sum(1 for row in rows if row["state"] == "running")
         note = f"{count(len(rows), 'workspace')}, {running} running" if rows else ""
@@ -216,7 +231,7 @@ class WorkspacesPage(Page):
         boxes = (readings[-1].get("containers") or []) if readings else []
         usage = next((box for box in boxes if box["name"] == selected["name"]), None)
         lines = workspace_detail(selected, usage, self.servers.get(selected["name"]))
-        shown = [Content(lines[0]), painted(lines[1], selected["state"]), *(Content(line) for line in lines[2:])]
+        shown = [Content(lines[0]), painted(lines[1], selected["state"]), *(painted(line, CUT) for line in lines[2:])]
         self.query_one("#workspace-detail", Label).update(Content("\n").join(shown))
 
     def _setup_form(self, selected: dict[str, Any]) -> None:

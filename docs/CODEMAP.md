@@ -265,6 +265,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/workspaces/console/__init__.py` | The workspaces component's console pages: Docker's (design 0002 §2.1, §2.15). |
 | `clank/components/workspaces/console/docker.py` | Docker's page in the console (design 0002 §3.2): its state and versions, a one-line summary, and every container |
 | `clank/components/workspaces/console/workspaces.py` | The Workspaces page (design 0004 §3, §10; built 2026-10-15): every workspace, its container, and what its agent has. |
+| `clank/components/workspaces/edge.py` | The edge on every workspace's network (design 0004 §3, design 0024 §2; revised 2026-10-26). Its program is |
 | `clank/components/workspaces/folders.py` | Workspaces: folders agents work in, each in a container of its own (design 0004 §1, §3 and §6; design 0002 §2.9). |
 | `clank/components/workspaces/image/bridge.py` | Clank's bridge to the OpenCode servers in this container (design 0005 §2): the Clank service runs it with `docker |
 | `clank/components/workspaces/image/edge.py` | The edge's one program (design 0004 §3): it forwards ports to the host, and nothing else. |

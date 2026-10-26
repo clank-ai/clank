@@ -62,12 +62,13 @@ def http(kernel: Kernel, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient
 
 
 def ran(platform: FakePlatform, kernel: Kernel, workspace: str, folder: Path) -> None:
-    """A workspace whose container runs, as `workspaces.open` leaves it."""
+    """A workspace whose container runs, as `workspaces.open` leaves it: the edge on its network."""
     kernel.settings.write("workspace", workspace, {"path": str(folder)}, base=None, actor=YOU)
     spec_name = names(kernel.home.id).container(workspace)
-    from tests.fakes.platform import container
+    from tests.fakes.platform import container, with_edge
 
     platform.containers.append(container(spec_name, labels={"clank.home": kernel.home.id}))
+    with_edge(platform, kernel.home.id, workspace)
 
 
 def test_prepare_writes_the_programs_configuration_and_answers_its_command(
