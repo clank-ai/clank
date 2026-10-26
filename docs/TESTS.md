@@ -484,8 +484,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | Where Clank stands | none yet |
 | 2 | What the review found | none yet |
-| 3 | The model's readout | `tests/components/agents/test_readout.py` (3), `vscode/test/readout.test.ts` (10) |
-| 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (1), `vscode/test/conversation.test.ts` (5) |
+| 3 | The model's readout | `tests/components/agents/test_readout.py` (3), `vscode/test/readout.test.ts` (11) |
+| 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (1), `vscode/test/conversation.test.ts` (8) |
 | 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (11), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (5) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (3), `tests/components/gateway/test_agents_forwarding.py` (2), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
@@ -4465,9 +4465,9 @@ Design 0002 §2.5 and §2.7: the VS Code extension's client, run by Node against
 
 ### `vscode/test/agent.page.test.ts`
 
-Design 0021 §4, in a real browser: the agent panel's page (media/agent.html, as VS Code's webview shows it, with marked and KaTeX from Clank's libraries) in headless Edge. A conversation sent to it is drawn: the owner's message, the model's Markdown with its math drawn by KaTeX (underscores kept), raw HTML in it shown as text, the thinking and each call folded, an image, an artifact card whose Open says which version, and what waits with its buttons. A fold the owner opened stays open when the conversation is drawn again. Enter sends the message, Shift+Enter does not; @ asks for the folder's files and the one chosen is put as the agent sees it. A screenshot is left in out/test/.
+Design 0021 §4, in a real browser: the agent panel's page (media/agent.html, as VS Code's webview shows it, with marked and KaTeX from Clank's libraries) in headless Edge, drawn as the owner chose it (direction A, 2026-10-26). A conversation sent to it is drawn: the owner's message (and a relayed comment's "on" line), Clank's notice that a job ended with its log to open, the thinking folded, three calls or more folded under "N steps · T s" with each call's verb and what it was done to, the model's Markdown with its math drawn by KaTeX (raw HTML in it shown as text), an artifact card whose Open says which version, and what waits with its buttons. A fold the owner opened stays open when the conversation is drawn again. While the agent works the send button stops it. Enter sends the message, Shift+Enter does not; @ asks for the folder's files and the one chosen is put as the agent sees it. The colors follow the VS Code theme's variables (a light one shows its owner bubble apart from its ground), or Clank Night when the extension says so. Screenshots are left in out/test/.
 
-- the agent panel draws the conversation, keeps the folds opened, and sends what the owner does
+- the agent panel draws the conversation as the owner chose it, in each theme, and sends what the owner does
 
 ### `vscode/test/agent.test.ts`
 
@@ -4560,6 +4560,9 @@ Design 0021 §4: the agent panel's conversation, drawn from a page of the sessio
 - a call's input given as JSON text, or cut past the bridge's limit, is still read for its summary and card
 - math is set aside before Markdown reads the text and drawn in its place
 - what waits in the session comes as items: each permission with what it asks, each question
+- Clank's message that a job ended is a notice, and the owner's comment it relays is the owner's words
+- each call says what it did: an icon, a verb and what it was done to, as a path in the folder
+- three calls or more in a row fold under one line that says how many and how long; fewer stay in line
 
 ### `vscode/test/events.test.ts`
 
@@ -4674,6 +4677,7 @@ Design 0021 §3: the model's readout in VS Code. The status bar says the speed, 
 - the bar leaves out the parts that hold nothing
 - a tool or a call is named, and an engine holding another conversation is said with its cost
 - parts the service could not read say so, never a number
+- the agent panel's foot says the speed, the context used of the window, the drafts and the GPU in one line
 
 ### `vscode/test/review.test.ts`
 
