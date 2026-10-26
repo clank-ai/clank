@@ -71,7 +71,7 @@ async def conversation_stream(
         """Wait for a delivery or `seconds`; whether one came (None: the service is closing)."""
         with anyio.move_on_after(seconds) as scope:
             await receive.receive()
-        return not scope.cancelled_caught
+        return not scope.cancelled_caught  # spelling: keep (AnyIO's own name)
 
     def snapshot(found: dict[str, Any], version: int) -> str:
         return _sse("snapshot", {**found, "version": version}, version)
