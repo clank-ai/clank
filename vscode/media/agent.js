@@ -3,7 +3,10 @@
 // address), keeps the folds the owner opened or closed and the place they scrolled to, follows the theme the extension
 // names, and sends back what the owner does: a message, a file named by @, an image pasted or picked, an answer to
 // what waits, an artifact, an image or a job's log to open, older messages, and the header's actions. Nothing here
-// reads the service.
+// reads the service. The conversation comes as the stream moves it (design 0023 §5): only the blocks whose content
+// changed are drawn again (each kept by its id), the scroll stays at the bottom while the owner is there and a "new ↓"
+// pill says when more came while they read above; a message of the owner's sent and not yet heard back shows as
+// pending; Escape stops the agent while it works.
 (function () {
   const vscode = acquireVsCodeApi();
   const main = document.getElementById("conversation");
@@ -12,7 +15,9 @@
   const input = document.getElementById("input");
   const files = document.getElementById("files");
   const send = document.getElementById("send");
+  const pill = document.getElementById("new");
   const folds = {}; // what the owner opened (true) or closed (false), by item
+  const rendered = new Map(); // each block drawn, by id: its content as JSON, and its element
   const chosen = {}; // a question's answers chosen so far, by question
   let state = "none";
   let found = []; // the files @ lists now
@@ -168,9 +173,10 @@
   function draw(block) {
     switch (block.kind) {
       case "owner":
-        return el("div", { class: "item owner", "data-id": block.id },
+        return el("div", { class: block.pending ? "item owner pending" : "item owner", "data-id": block.id },
                   block.about ? el("span", { class: "about", text: block.about }) : null,
-                  el("div", { class: "bubble", text: block.text }));  // prettier-ignore
+                  el("div", { class: "bubble", text: block.text }),
+                  block.pending ? el("span", { class: "sending", text: "sending…" }) : null);  // prettier-ignore
       case "notice":
         return el(
           "div",
@@ -293,11 +299,26 @@
       document.getElementById("subtitle").textContent = message.subtitle || "";
       document.getElementById("model").textContent = message.model || "";
       older.hidden = !message.older;
-      const drawn = message.blocks.map(draw).filter(Boolean);
-      list.replaceChildren(...(drawn.length ? drawn : [el("div", { class: "empty", text: message.empty || "Write to the agent to start." })]));
+      const next = new Map();
+      const nodes = [];
+      let changed = false;
+      for (const block of message.blocks) {
+        const json = JSON.stringify(block);
+        const kept = rendered.get(block.id);
+        const node = kept && kept.json === json ? kept.node : draw(block);
+        if (!node) continue;
+        if (!kept || kept.json !== json) changed = true;
+        nodes.push(node);
+        next.set(block.id, { json, node });
+      }
+      if (next.size !== rendered.size) changed = true;
+      rendered.clear();
+      for (const [id, entry] of next) rendered.set(id, entry);
+      list.replaceChildren(...(nodes.length ? nodes : [el("div", { class: "empty", text: message.empty || "Write to the agent to start." })]));
       showFoot(message.foot);
       showSend();
       if (stay) main.scrollTop = main.scrollHeight;
+      else if (changed) pill.hidden = false;
     } else if (message.type === "theme") {
       document.body.className = message.theme && message.theme !== "vscode" ? `theme-${message.theme}` : "";
     } else if (message.type === "files") {
@@ -342,10 +363,23 @@
         return;
       }
     }
+    if (event.key === "Escape" && state === "working") {
+      event.preventDefault();
+      vscode.postMessage({ type: "act", act: "stop" });
+      return;
+    }
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       submit();
     }
+  });
+
+  main.addEventListener("scroll", () => {
+    if (atBottom()) pill.hidden = true;
+  });
+  pill.addEventListener("click", () => {
+    main.scrollTop = main.scrollHeight;
+    pill.hidden = true;
   });
 
   input.addEventListener("paste", (event) => {

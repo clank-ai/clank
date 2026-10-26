@@ -45,8 +45,11 @@ async def conversation_stream(
     limit: int,
     after: int | None,
     closers: set[Callable[[], None]] | None = None,
+    after_session: str = "",
 ) -> AsyncGenerator[str, None]:
-    """The stream's text (the module's docstring says what comes)."""
+    """The stream's text (the module's docstring says what comes). `after` resumes from a version of the session
+    `after_session`; another session's versions mean nothing, so a client that followed the folder's newest gets a
+    snapshot when the newest is another."""
     send, receive = anyio.create_memory_object_stream[object](max_buffer_size=1000)
     token = anyio.lowlevel.current_token()
     loop = threading.get_ident()
@@ -98,7 +101,8 @@ async def conversation_stream(
         busy = bool(found["session"]["busy"])
         version = agents.mirror.version(workspace, chosen)
         stop = agents.mirror.subscribe(workspace, chosen, deliver)
-        since = agents.mirror.changes_since(workspace, chosen, after) if after is not None else None
+        resuming = after is not None and (not after_session or after_session == chosen)
+        since = agents.mirror.changes_since(workspace, chosen, after) if resuming and after is not None else None
         if since is None or any(event.get("type") == "snapshot" for _, event in since):
             yield snapshot(found, version)
         else:

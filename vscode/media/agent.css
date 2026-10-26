@@ -190,11 +190,36 @@ pre {
 }
 
 /* the conversation */
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 main {
   flex: 1;
   overflow-y: auto;
   padding: 20px 22px 12px;
   scroll-behavior: smooth;
+}
+
+.new {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  background: var(--c-raised);
+  color: var(--c-strong);
+  font: inherit;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
 }
 
 .items {
@@ -235,6 +260,15 @@ main {
   border-radius: 14px 14px 4px 14px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.owner.pending .bubble {
+  opacity: 0.72;
+}
+
+.owner .sending {
+  color: var(--c-muted);
+  font-size: 11px;
 }
 
 .prose {

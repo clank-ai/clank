@@ -371,6 +371,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/core/controller.ts` | What the extension does (design 0002 §2.5, §2.7, §3.2): it connects to the Clank service and keeps the status bar |
 | `vscode/src/core/conversation.ts` | The agent panel's conversation (design 0021 §4): what `GET /agents/conversation` answers, and the items the panel |
 | `vscode/src/core/events.ts` | The event stream's text read into messages (Server-Sent Events, decision 0017). A message ends at a blank line; it |
+| `vscode/src/core/following.ts` | The agent panel's decisions about the stream it follows (design 0023 §5), pure so Node tests them: which parameters |
 | `vscode/src/core/gates.ts` | Gates in VS Code (design 0013 §10, §14 step 7). A question about a flow (a gate, a YOU box, a failed box, a box whose |
 | `vscode/src/core/kinds.ts` | The TypeScript types of Clank's kinds of record, as the API sends them (decisions 0015, 0028). |
 | `vscode/src/core/notion.ts` | The Notion changes in VS Code (design 0010 §6): the batches of proposals the local agent submitted for Notion, in a |
@@ -381,6 +382,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/core/review.ts` | Reviewing the agent's changes in VS Code (design 0007 §6). A question about a change in the window's folder opens as |
 | `vscode/src/core/show.ts` | The files the agent opens for the owner (design 0018 §7): the service's event `agents.shown` names a workspace's |
 | `vscode/src/core/state.ts` | What the extension shows, as last read: the service, Docker, the questions waiting, and the runtime's slots and |
+| `vscode/src/core/talking.ts` | The agent panel's live state (design 0023 §3 and §5), built from the conversation stream's events: a `snapshot` |
 | `vscode/src/extension.ts` | The Clank extension's entry point: the thin glue between VS Code and the controller (design 0002 §3.2, M0.6). It |
 | `vscode/src/figures.ts` | Clank's figure annotator in VS Code (design 0008 §6): a custom editor for PNG and JPEG files that shows the |
 | `vscode/src/notion.ts` | The Notion changes in VS Code (design 0010 §6), the glue over `core/notion.ts`: the "Notion changes" view (a tree in |
@@ -399,6 +401,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/controller.test.ts` | Design 0002 §2.5, §2.7 and §3.2: the extension's controller keeps the status bar current (the service and the |
 | `vscode/test/conversation.test.ts` | Design 0021 §4: the agent panel's conversation, drawn from a page of the session's messages in the Monitor's shape. |
 | `vscode/test/events.test.ts` | Design 0002 §2.3 (decision 0017): the event stream's text is read into whole messages, whether a message arrives |
+| `vscode/test/following.test.ts` | Design 0023 §5: the agent panel's decisions about the stream it follows (pure, so Node tests them without VS Code). |
 | `vscode/test/gates.test.ts` | Design 0013 §10 and §14 step 7 (design 0007 §6): a question about a flow shows in VS Code as a gate, a notification |
 | `vscode/test/kinds.test.ts` | Design 0002 §2.2 (decisions 0015, 0028): the TypeScript types generated from Clank's kinds describe what the API |
 | `vscode/test/live.test.ts` | Design 0002 §2.5 and §2.7: against a real Clank service (the Python suite starts one and names it in CLANK_TEST_URL |
@@ -411,3 +414,4 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/review.test.ts` | Design 0007 §6: a change the agent asks for, in the window's folder, opens as a diff beside the files instead of a |
 | `vscode/test/show.test.ts` | Design 0018 §7.2 and §7.3: the files the agent opened (the event `agents.shown`) are read from the event with their |
 | `vscode/test/state.test.ts` | Design 0002 §1 and §2.3: what the extension shows is read from the API and kept current by events: a question's |
+| `vscode/test/talking.test.ts` | Design 0023 §3 and §5: the agent panel's live state, built from the conversation stream's events (pure). A snapshot |

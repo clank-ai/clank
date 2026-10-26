@@ -424,16 +424,23 @@ def router(agents: "Agents") -> APIRouter:
 
     @routes.get("/agents/conversation/stream")
     async def conversation_stream(
-        request: Request, folder: str, session: str = "", limit: int = 30, after: int | None = None
+        request: Request,
+        folder: str,
+        session: str = "",
+        limit: int = 30,
+        after: int | None = None,
+        after_session: str = "",
     ) -> StreamingResponse:
         """The conversation pushed as it happens (design 0023 §3): a snapshot, then each change of the mirror with its
         version as the event's id, the model's readout each second while the session works; `after` (or
-        Last-Event-ID) resumes from a version."""
+        Last-Event-ID) resumes from a version of the session `after_session`."""
         last = request.headers.get("last-event-id", "")
         if after is None and last.isdigit():
             after = int(last)
         shown = max(1, min(limit, 100))
-        body = streaming.conversation_stream(agents, folder, session, shown, after, request.app.state.closers)
+        body = streaming.conversation_stream(
+            agents, folder, session, shown, after, request.app.state.closers, after_session=after_session
+        )
         return StreamingResponse(body, media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
 
     @routes.get("/agents/now/{workspace}/{session}")

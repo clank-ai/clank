@@ -34,13 +34,15 @@ following the model, one row of thinking that grows, tool calls as they start, q
   the pending owner message (sent, shown at once, replaced when its message arrives, returned with the error when the
   send fails), the version, `reconnect` when the session changed; `ClankClient.stream(path, parameters, signal)`
   generalizing `events`.
-- [ ] 4. **The panel on the stream** (`agentPanel.ts`, `agent.js`): one stream while the panel shows (ended when hidden
+- [x] 4. **The panel on the stream** (`agentPanel.ts`, `agent.js`): one stream while the panel shows (ended when hidden
   or disposed), reconnecting with a growing wait and resuming from its version, falling back to the old polling after
   three failures (said in the header); drawn at most ten times a second from the live state; the header's phase from
   the `readout` events; Enter shows the message at once and clears the composer, Esc stops; the page changes only the
   blocks whose content changed (keyed by id, folds kept), keeps the scroll at the bottom while the owner is there and
   shows "new ↓" when not. Edge page tests: a block changed is redrawn and its neighbors are the same elements; the
-  pill; the pending message. Node tests for the panel's decisions.
+  pill; the pending message. Node tests for the panel's decisions (`core/following.ts`: the stream's parameters,
+  resumed only on the same session; the growing wait; the fall back to polling; the older pages through a snapshot).
+  Built 2026-10-26.
 - [ ] 5. **Docs and the measure**: design 0023 §3 and §5 built, §6's table after step 2 (`bench/talking.py`: the time
   from a delta fed to the fake OpenCode to its event on the stream, and live: Enter to the message shown, the model's
   first token to its words shown); the generated docs; `vscode/README.md`.

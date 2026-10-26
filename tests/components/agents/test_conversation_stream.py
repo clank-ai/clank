@@ -130,7 +130,8 @@ def test_a_client_resumes_from_its_version_or_gets_a_snapshot_when_behind_and_fo
         version = first.data["version"]
         for n in range(3):
             agents.sessions.heard("paper", line("delta", message="msg_1", part="prt_1", field="text", text=str(n)))
-        resumed = client.stream("agents/conversation/stream", folder=folder, after=version, quiet=15)
+        resumed = client.stream("agents/conversation/stream", folder=folder, after=version, after_session="ses_new",
+                                quiet=15)  # fmt: skip
         try:
             events = until(resumed, "delta")
             assert [e.name for e in events] == ["connected", "delta"], "no snapshot: the changes since, from the log"
@@ -138,6 +139,14 @@ def test_a_client_resumes_from_its_version_or_gets_a_snapshot_when_behind_and_fo
             assert until(resumed, "delta")[-1].data["text"] == "1"
         finally:
             resumed.close()
+        other = client.stream("agents/conversation/stream", folder=folder, after=version, after_session="ses_old",
+                              quiet=15)  # fmt: skip
+        try:
+            assert [e.name for e in until(other, "snapshot")] == ["connected", "snapshot"], (
+                "a version of another session means nothing here: a snapshot"
+            )
+        finally:
+            other.close()
         for n in range(3, 8):
             agents.sessions.heard("paper", line("delta", message="msg_1", part="prt_1", field="text", text=str(n)))
         behind = client.stream("agents/conversation/stream", folder=folder, after=version, quiet=15)

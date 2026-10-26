@@ -162,3 +162,53 @@ test("the agent panel draws the conversation as the owner chose it, in each them
     removeFolder(folder);
   }
 });
+
+test("the page redraws only the blocks that changed, keeps the scroll, shows a pending message and stops on Escape", { skip: EDGE ? false : "no Edge here" }, async () => {
+  const folder = mkdtempSync(path.join(tmpdir(), "clank-agent-"));
+  const files = {
+    css: "agent.css", script: "agent.js", marked: `${LIB}/marked.min.js`, katex: `${LIB}/katex.min.js`,
+    katexCss: `${LIB}/katex.min.css`,
+  };  // prettier-ignore
+  const browser = await Browser.open(webviewPage(folder, "agent.html", files), path.join(folder, "profile"));
+  const post = (message: unknown): Promise<unknown> => browser.evaluate(`window.postMessage(${JSON.stringify(message)}, "*")`);
+  const text = (id: string, words: string): unknown => ({ kind: "text", id, text: words, split: splitMath(words) });
+  const shown = (blocks: unknown[], state = "working"): unknown => ({
+    type: "conversation", title: "A session", subtitle: "", state, model: "", foot: null, older: false, empty: "", blocks,
+  });  // prettier-ignore
+  try {
+    await browser.until("document.readyState === 'complete' && Array.isArray(window.posted) && window.posted.length > 0");
+    const many = Array.from({ length: 30 }, (_, n) => text(`t${n}`, `Paragraph ${n} of the answer, long enough to need room on the page as it is drawn.`));
+    await post(shown([{ kind: "owner", id: "msg_1", text: "Plot it." }, ...many]));
+    await browser.until("document.querySelectorAll('#items .item').length === 31");
+    await browser.evaluate("document.querySelector('[data-id=\"msg_1\"]').dataset.mark = 'kept'");
+    await browser.evaluate("document.querySelector('[data-id=\"t3\"]').dataset.mark = 'kept'");
+    assert.equal(await browser.evaluate("(() => { const m = document.getElementById('conversation'); return m.scrollHeight - m.scrollTop - m.clientHeight < 48; })()"), true, "drawn at the bottom");
+
+    await browser.evaluate("document.getElementById('conversation').scrollTop = 0");
+    await browser.until("document.getElementById('conversation').scrollTop === 0");
+    const changed = [...many];
+    changed[3] = text("t3", "Paragraph 3, said again with more words as the model writes on.");
+    await post(shown([{ kind: "owner", id: "msg_1", text: "Plot it." }, ...changed, text("t30", "One more.")]));
+    await browser.until("document.querySelectorAll('#items .item').length === 32");
+    assert.equal(await browser.evaluate("document.querySelector('[data-id=\"msg_1\"]').dataset.mark"), "kept", "an unchanged block keeps its element");
+    assert.equal(await browser.evaluate("document.querySelector('[data-id=\"t3\"]').dataset.mark"), undefined, "a changed block is drawn again");
+    assert.ok((await browser.evaluate<string>("document.querySelector('[data-id=\"t3\"]').textContent")).includes("said again"));
+    assert.equal(await browser.evaluate("document.getElementById('new').hidden"), false, "more came while the owner read above");
+    assert.equal(await browser.evaluate("document.getElementById('conversation').scrollTop"), 0, "and the page did not jump");
+    await browser.evaluate("document.getElementById('new').click()");
+    await browser.until("document.getElementById('new').hidden");
+    assert.equal(await browser.evaluate("(() => { const m = document.getElementById('conversation'); return m.scrollHeight - m.scrollTop - m.clientHeight < 48; })()"), true);
+
+    await post(shown([{ kind: "owner", id: "msg_1", text: "Plot it." }, ...changed, { kind: "owner", id: "p1", text: "And a log scale.", pending: true }]));
+    await browser.until("!!document.querySelector('.item.owner.pending')");
+    assert.equal(await browser.evaluate("document.querySelector('.item.owner.pending .sending').textContent"), "sending…");
+
+    await browser.evaluate("document.getElementById('input').focus()");
+    await browser.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+    await browser.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape" });
+    await browser.until(`${lastPost} === '{"type":"act","act":"stop"}'`);
+  } finally {
+    await browser.close();
+    removeFolder(folder);
+  }
+});
