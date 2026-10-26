@@ -272,7 +272,10 @@ class Runtime:
     def usable(self) -> dict[str, Any]:
         """Whether a model is usable (design 0016 §14, decision 0105): the main slot is ready, or a preset for it can
         load now (an engine preset whose engine is installed and whose model is downloaded on a host; a cloud preset
-        whose provider is agreed and whose key is set); the main slot, and the presets that can load now."""
+        whose provider is agreed and whose key is set); the main slot, and the presets that can load now, looked for
+        only while the main slot is not ready: each engine preset asks its host for its model's files (through WSL,
+        seconds each), and every `clank work`, `clank code` and console start waited 22-32 s on it with a model
+        loaded."""
         slot = self.state.slot("main")
         views = {view["id"]: view for view in self.presets()}
         running = views.get(slot.preset or "")
@@ -281,7 +284,7 @@ class Runtime:
             "provider": running["provider"] if running else "",
         }  # fmt: skip
         candidates = []
-        for view in views.values():
+        for view in views.values() if slot.status != "ready" else ():
             if view["slot"] != "main" or view["problems"]:
                 continue
             if not view["endpoint"]:
