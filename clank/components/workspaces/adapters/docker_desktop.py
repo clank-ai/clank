@@ -18,7 +18,10 @@ container's other networks), `docker run --rm` followed line by line for a works
 inspect`, `start`, `stop`, `rm`, `volume rm`, and `docker exec` for a terminal. The listing and the inspection both say
 the networks a container is on (`docker ps` joins their names with commas, which a network's name never holds), so the
 edge's place on each workspace's network is read with what is read anyway; a start Docker refuses because a network the
-container was on is gone ("network ... not found") is a `NetworkGone`.
+container was on is gone ("network ... not found") is a `NetworkGone`. The files an agent's start writes go in one
+`docker exec` of a few lines of Python reading them from its input (`PUT_FILES`; each exec is a fifth of a second on
+Windows, and nine of them made most of the agent's wait in VS Code, 2026-10-26), one by one in a container without
+Python.
 """
 
 import json
@@ -60,6 +63,16 @@ ONE = (
     '"labels":{{json .Config.Labels}},"networks":{{json .NetworkSettings.Networks}}}'
 )
 RUN_SECONDS = 120.0
+# Several files written in one `docker exec` (`put_files`): each [path, text] of the JSON list on its input, its folder
+# made, its text as UTF-8 with its line ends as given.
+PUT_FILES = (
+    "import json, os, sys\n"
+    "for path, text in json.loads(sys.stdin.buffer.read().decode('utf-8')):\n"
+    "    os.makedirs(os.path.dirname(path) or '.', exist_ok=True)\n"
+    "    with open(path, 'w', encoding='utf-8', newline='') as file:\n"
+    "        file.write(text)\n"
+)
+NOT_FOUND = (126, 127)  # `docker exec`'s status when the container cannot run the program (python3 is not there)
 MISSING = re.compile(r"no such (container|volume|network)|not found|is not connected", re.IGNORECASE)
 JOINED = re.compile(r"already exists in network", re.IGNORECASE)
 GONE = re.compile(r"network \S+ not found", re.IGNORECASE)  # a start refused: a network it was on is gone
@@ -334,6 +347,17 @@ class DockerDesktop(ContainerPlatform):
         put = self._answer("exec", "--interactive", name, "sh", "-c", script, "sh", path, input=text.encode("utf-8"))
         if not put.ok:
             raise PlatformError(f"{path} could not be written in {name}: {_words(put)}")
+
+    def put_files(self, name: str, files: Sequence[tuple[str, str]]) -> None:
+        """One `docker exec --interactive` of Python that writes the files it reads, as the container's own user; one
+        by one (`put_file`) in a container without Python."""
+        given = json.dumps([[path, text] for path, text in files]).encode("utf-8")
+        put = self._answer("exec", "--interactive", name, "python3", "-c", PUT_FILES, input=given)
+        if put.status in NOT_FOUND:
+            super().put_files(name, files)
+        elif not put.ok:
+            paths = ", ".join(path for path, _ in files)
+            raise PlatformError(f"{paths} could not be written in {name}: {_words(put)}")
 
     def run_in(
         self, name: str, argv: Sequence[str], *, workdir: str, input: bytes | None = None, timeout: float = 30.0

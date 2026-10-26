@@ -475,16 +475,17 @@ class Agents:
         """Write the program's configuration into the workspace's container; the command that starts it there. With one
         window at a time (the workspace's record, design 0004 §5), the OpenCode windows open there are closed first.
         The edge, the agent's way to the model, is put right first (design 0004 §3), and what was put right is said in
-        the notes."""
+        the notes. The container is asked of Docker once and every file goes in one `docker exec` (a VS Code window
+        waits for this answer before OpenCode starts: nine writes of one `docker exec` each took most of it,
+        2026-10-26)."""
         workspaces: Workspaces = self.kernel.parts["workspaces"]
         adapter = self._adapter(program)
         container = workspaces.container_of(workspace)
         model, notes = self._model(workspace)
         notes += workspaces.reach(workspace)
         servers = self._given(workspace, model.key)
-        self._write_agent_files(workspace)
-        path, text = adapter.configuration(model, servers, self._read_only(workspace))
-        workspaces.put_file(workspace, path, text)
+        configuration = adapter.configuration(model, servers, self._read_only(workspace))
+        workspaces.put_files(workspace, [*self._agent_files(), configuration], container=container)
         with self._notices_lock:  # its configuration has the model's limits now: nothing more to tell its window
             self._notices.pop(workspace, None)
         one_window = bool(self.kernel.settings.get("workspace", workspace).record.model_dump().get("one_window", True))
@@ -494,7 +495,7 @@ class Agents:
             notes.append(f"closed {windows} open in {workspace} first: one at a time (w on This folder changes that)")
         port = self._port(workspace, notes)
         env = {**adapter.env(), **workspaces.agent_env(workspace)}
-        argv = workspaces.exec_argv(workspace, adapter.argv(port), env)
+        argv = workspaces.exec_argv(workspace, adapter.argv(port), env, container=container)
         if port is not None:
             for told in list(self._prepared):
                 told(workspace, port)
@@ -523,19 +524,17 @@ class Agents:
         workspaces: Workspaces = self.kernel.parts["workspaces"]
         adapter = self._adapter(program)
         model, _ = self._model(workspace)
-        self._write_agent_files(workspace)  # refused first when its container does not run
+        container = workspaces.container_of(workspace)  # refused first when its container does not run
         workspaces.reach(workspace)
-        path, text = adapter.configuration(model, self._given(workspace, model.key), self._read_only(workspace))
-        workspaces.put_file(workspace, path, text)
+        configuration = adapter.configuration(model, self._given(workspace, model.key), self._read_only(workspace))
+        workspaces.put_files(workspace, [*self._agent_files(), configuration], container=container)
         return self.agent_env(workspace, program)
 
-    def _write_agent_files(self, workspace: str) -> None:
-        """Clank's MCP server and instructions, as this Clank has them, into the agent's home in the container."""
+    def _agent_files(self) -> list[tuple[str, str]]:
+        """Clank's MCP server and instructions, as this Clank has them, for the agent's home in the container."""
         from clank.components.workspaces.service import agent_files
 
-        workspaces: Workspaces = self.kernel.parts["workspaces"]
-        for path, text in agent_files():
-            workspaces.put_file(workspace, path, text)
+        return list(agent_files())
 
     def _port(self, workspace: str, notes: list[str]) -> int | None:
         """A port of its own for the program's API, so its session can be reached (design 0005 §2); None, and why in

@@ -22,7 +22,8 @@ when it does not.
 import logging
 import os
 import threading
-from collections.abc import Callable
+import time
+from collections.abc import Callable, Sequence
 from datetime import timedelta
 from typing import Any, Literal
 
@@ -56,6 +57,7 @@ from clank.kernel.questions import EXPIRY, Option, QuestionDraft
 log = logging.getLogger(__name__)
 Owner = Literal["clank", "other"]
 WAIT_SECONDS = 1.0
+LIMITS_SECONDS = 300.0  # Docker's CPUs and memory, as an agent's start reads them, are read again after this long
 WORKSPACES = Actor(kind="clank", via="workspaces")
 BOUND = ("models", "cloud_answered", "cloud_question", "cloud_said", "cloud_confirm")  # a workspace's bound, in views
 
@@ -136,6 +138,7 @@ class Workspaces:
         self._status: PlatformStatus | None = None  # the last reading, as the platform gave it
         self._fingerprint: tuple[Any, ...] | None = None
         self._lock = threading.Lock()
+        self._limits: tuple[str, float, tuple[int, int] | None] | None = None  # adapter, when read, what it said
         self.cloud = CloudBounds(kernel)  # where each workspace's requests may go (design 0016 §9)
         self.network = HostAsks(kernel, self.allow_host)  # the hosts its agent asks for (design 0024 §3)
         self.edge = Edge(self)  # the edge on every workspace's network (design 0004 §3)
@@ -444,11 +447,22 @@ class Workspaces:
         except PlatformError as error:
             raise WorkspaceUnavailable(str(error)) from error
 
-    def exec_argv(self, workspace: str, argv: list[str], env: dict[str, str], *, terminal: bool = True) -> list[str]:
+    def put_files(self, workspace: str, files: Sequence[tuple[str, str]], *, container: str = "") -> None:
+        """Write several files in a workspace's running container, as its user, in one go (an agent's start, design
+        0004 §5); `container`, when the caller has just found it running, is not asked of Docker again."""
+        try:
+            self.platform.put_files(container or self.container_of(workspace), files)
+        except PlatformError as error:
+            raise WorkspaceUnavailable(str(error)) from error
+
+    def exec_argv(
+        self, workspace: str, argv: list[str], env: dict[str, str], *, terminal: bool = True, container: str = ""
+    ) -> list[str]:
         """The command that runs `argv` in a workspace's container, in its folder, with `env`: in a terminal, else
-        talked to over its input and output (an MCP server)."""
+        talked to over its input and output (an MCP server); `container`, when the caller has just found it running,
+        is not asked of Docker again."""
         return self.platform.exec_argv(
-            self.container_of(workspace), argv, workdir=WORKSPACE, env=env, terminal=terminal
+            container or self.container_of(workspace), argv, workdir=WORKSPACE, env=env, terminal=terminal
         )
 
     def run_in(self, workspace: str, argv: list[str], input: bytes | None = None, timeout: float = 30.0) -> Answer:
@@ -468,9 +482,20 @@ class Workspaces:
         says the same to every program in it, but one made before it did still needs it said here."""
         from clank.components.workspaces.folders import chosen_limits
 
-        loaded = self.kernel.settings.get("workspace", workspace)
-        cpus, _ = chosen_limits(Workspace.model_validate(loaded.record.model_dump()), self.platform.limits())
+        loaded = Workspace.model_validate(self.kernel.settings.get("workspace", workspace).record.model_dump())
+        cpus, _ = chosen_limits(loaded, self.platform_limits() if loaded.cpus is None else None)
         return dict(thread_env(cpus))
+
+    def platform_limits(self) -> tuple[int, int] | None:
+        """The CPUs and memory Docker's engine has, read at most once in `LIMITS_SECONDS` (they change only when Docker
+        restarts with other settings, and `docker info` took 0.7 s of every agent's start, 2026-10-26)."""
+        platform = self.platform  # the settings' adapter, made again when they name another
+        adapter, now, kept = self._adapter, time.monotonic(), self._limits
+        if kept is not None and kept[0] == adapter and now - kept[1] < LIMITS_SECONDS:
+            return kept[2]
+        found = platform.limits()
+        self._limits = (adapter, now, found)
+        return found
 
     def gateway_port(self) -> int:
         """The port the gateway listens on, which the edge forwards."""

@@ -83,7 +83,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.6 | Policy | none yet |
 | 2.7 | Callers and access | `tests/console/test_home.py` (14), `tests/kernel/test_access.py` (5), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (5), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (17), `vscode/test/live.test.ts` (1) |
 | 2.8 | Secrets | `tests/components/tools/test_servers.py` (7), `tests/kernel/test_secrets.py` (4) |
-| 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (11), `tests/components/workspaces/test_sandbox.py` (7), `tests/kernel/test_processes.py` (8) |
+| 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_sandbox.py` (7), `tests/kernel/test_processes.py` (8) |
 | 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (7), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
 | 2.11 | The library: what the user installs | `tests/components/tools/test_servers.py` (7) |
 | 2.12 | Files for the user | none yet |
@@ -132,11 +132,11 @@ Each test file begins with a docstring naming the design sections it verifies (d
 
 | § | Section | Tests |
 | --- | --- | --- |
-| 1 | What the owner does | `tests/components/agents/test_work.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (9), `tests/console/test_folder.py` (24), `tests/console/test_terminal.py` (5) |
+| 1 | What the owner does | `tests/components/agents/test_work.py` (8), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (9), `tests/console/test_folder.py` (24), `tests/console/test_terminal.py` (5) |
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (7), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
-| 3 | Workspaces, the image and the container | `tests/components/workspaces/test_docker_containers.py` (11), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (9), `tests/console/test_folder.py` (24), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (7), `tests/docker/test_escape.py` (3) |
-| 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (7), `tests/console/test_folder.py` (24), `tests/contract/test_agent_program.py` (2) |
-| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_vscode.py` (8), `vscode/test/agent.test.ts` (5) |
+| 3 | Workspaces, the image and the container | `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (9), `tests/console/test_folder.py` (24), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (7), `tests/docker/test_escape.py` (3) |
+| 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (8), `tests/console/test_folder.py` (24), `tests/contract/test_agent_program.py` (2) |
+| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (8), `tests/components/workspaces/test_docker_containers.py` (13), `vscode/test/agent.test.ts` (5) |
 | 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (9) |
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (3) |
@@ -422,7 +422,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7.4 | Finding figures | `tests/components/agents/test_find_figures_tool.py` (5), `tests/components/workspaces/test_figure_geometry.py` (4) |
 | 7.5 | The agent's tools are this Clank's | `tests/components/agents/test_agent_files.py` (3), `tests/components/agents/test_opencode.py` (8), `tests/docker/test_agent_files_live.py` (1) |
 | 8 | VS Code on another computer | see its subsections |
-| 8.1 | Where the window opens | `tests/components/agents/test_remote_code.py` (5), `tests/components/agents/test_work.py` (7), `tests/console/test_folder.py` (24), `tests/kernel/test_where.py` (11) |
+| 8.1 | Where the window opens | `tests/components/agents/test_remote_code.py` (5), `tests/components/agents/test_work.py` (8), `tests/console/test_folder.py` (24), `tests/kernel/test_where.py` (11) |
 | 8.2 | Setting the PC's side up | `tests/components/agents/test_remote_code.py` (5) |
 | 8.3 | What the PC no longer does | none yet |
 | 8.4 | How it is built | none yet |
@@ -1494,6 +1494,7 @@ Design 0004 §1 and §4: making a workspace's agent ready writes the program's c
 
 - prepare writes the programs configuration and answers its command
 - prepare refuses a workspace that is not there or does not run
+- prepare writes every file in one go and reads dockers limits once in a while
 - clank work starts docker opens the folder and runs the agent here
 - with no model running clank loads the slots last good one and says why it cannot
 - clank code gets the folder ready then opens it in clanks vs code window
@@ -3237,6 +3238,8 @@ Design 0004 §3 and design 0002 §2.9: the Docker Desktop adapter's container co
 - a file is written in a container as its user
 - a container says its networks and joining one says whether it joined now
 - a start refused because a network is gone says so
+- several files are written in a container in one command
+- a container without python gets its files one by one
 
 ### `tests/components/workspaces/test_docker_desktop.py`
 

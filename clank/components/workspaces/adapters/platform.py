@@ -210,6 +210,11 @@ class ContainerPlatform(Adapter):
     def put_file(self, name: str, path: str, text: str) -> None:
         """Write a file in a running container, as the container's user, making its folder when it is not there."""
 
+    def put_files(self, name: str, files: Sequence[tuple[str, str]]) -> None:
+        """Write several files in a running container as `put_file` does each (a platform may do it in one go)."""
+        for path, text in files:
+            self.put_file(name, path, text)
+
     @abstractmethod
     def run_in(
         self, name: str, argv: Sequence[str], *, workdir: str, input: bytes | None = None, timeout: float = 30.0

@@ -4,6 +4,9 @@ answers the command that starts it there; a workspace that is not there, or whos
 saying how to open it. `clank work` starts Docker when it is stopped, opens the folder's workspace,
 loads the slot's last configuration that worked when no model runs, and runs the agent in this terminal.
 
+Design 0004 §5 (revised 2026-10-26): preparing asks Docker for the container once, writes every file in one go and
+reads Docker's limits once in a while, since a VS Code window waits for it before OpenCode starts.
+
 Design 0018 §8.1: `clank code` over SSH gets the folder ready and opens nothing on the PC's screen, saying the command
 for the other computer; in a terminal of VS Code's Remote-SSH it opens the other computer's VS Code."""
 
@@ -103,6 +106,46 @@ def test_prepare_refuses_a_workspace_that_is_not_there_or_does_not_run(kernel: K
     kernel.settings.write("workspace", "idle", {"path": str(tmp_path)}, base=None, actor=YOU)
     with pytest.raises(WorkspaceUnavailable, match="idle's container does not run: `clank workspace open` starts it"):
         agents.prepare("idle")
+
+
+def test_prepare_writes_every_file_in_one_go_and_reads_dockers_limits_once_in_a_while(
+    kernel: Kernel, platform: FakePlatform, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ran(platform, kernel, "paper", tmp_path)
+    platform.inside = lambda argv, given: Answer(1, "", "")  # no OpenCode window to close, no port said
+    workspaces = kernel.parts["workspaces"]
+    looked: list[str] = []
+    written: list[list[str]] = []
+    limits: list[int] = []
+    find, put, read = workspaces.container_of, platform.put_files, platform.limits
+
+    def looking(name: str) -> str:
+        looked.append(name)
+        found: str = find(name)
+        return found
+
+    def putting(name: str, files: Sequence[tuple[str, str]]) -> None:
+        written.append([path for path, _ in files])
+        put(name, files)
+
+    def reading() -> tuple[int, int] | None:
+        limits.append(1)
+        return read()
+
+    monkeypatch.setattr(workspaces, "container_of", looking)
+    monkeypatch.setattr(platform, "put_files", putting)
+    monkeypatch.setattr(platform, "limits", reading)
+    agents: Agents = kernel.parts["agents"]
+    agents.prepare("paper")
+    assert written == [[*(path for path, _ in workspaces_service.agent_files()), CONFIG]], (
+        "Clank's files and OpenCode's configuration in one docker exec: each one took a fifth of a second (2026-10-26)"
+    )
+    assert len(looked) == 3, "the container is asked of Docker once by prepare, and once by each of the bridge's runs"
+    agents.prepare("paper")
+    agents.configure("paper")
+    assert len(limits) == 1, "Docker's CPUs are read once in a while, not at each start: `docker info` took 0.7 s"
+    assert len(written) == 3, "an agent started without a terminal writes them in one go too"
+    assert written[2][-1] == CONFIG
 
 
 def test_clank_work_starts_docker_opens_the_folder_and_runs_the_agent_here(
