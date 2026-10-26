@@ -226,7 +226,15 @@ def watched(kernel: Kernel, clock: FakeClock, folder: Path, monkeypatch: pytest.
     with pytest.raises(BuildError):
         building.draft(WORKSPACE, draft, actor=AGENT)
     agents = kernel.parts["agents"]
-    step = {"kind": "step", "finish": "tool-calls", "ended": "finished", "together": 2}
+    step = {
+        "id": "msg_plan_3",
+        "kind": "step",
+        "at": [0, "msg_plan_3", 0],
+        "n": 3,
+        "finish": "tool-calls",
+        "ended": "finished",
+        "together": 2,
+    }  # shaped as the session flow's, the Guide reads it too
     monkeypatch.setattr(
         agents.flows,
         "view",
