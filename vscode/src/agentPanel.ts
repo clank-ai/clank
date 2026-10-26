@@ -15,14 +15,16 @@ import * as vscode from "vscode";
 import type { ArtifactMade } from "./core/artifacts";
 import type { ClankClient } from "./core/client";
 import {
+  type Block,
+  blocks,
   type Conversation,
   conversationItems,
-  type Item,
   type PageMessage,
   splitMath,
   waitingItems,
 } from "./core/conversation";
 import type { Choice } from "./core/presenter";
+import { type FootLine, footLine, type Readout } from "./core/readout";
 
 export const AGENT = "clank.agent";
 const AGENT_TERMINAL = "OpenCode · ";
@@ -40,6 +42,18 @@ export interface AgentHost {
   pick<T>(items: Array<Choice<T>>, placeholder: string): Promise<T | undefined>;
   openArtifact(made: ArtifactMade): Promise<void>;
   filesColumn(): vscode.ViewColumn;
+}
+
+/** What the page is sent to draw. */
+interface Drawn {
+  title: string;
+  subtitle?: string;
+  state?: "working" | "idle" | "waiting" | "none";
+  model?: string;
+  foot?: FootLine | null;
+  older?: boolean;
+  blocks?: Block[];
+  empty?: string;
 }
 
 interface Received {
@@ -149,6 +163,12 @@ export class AgentPanel implements vscode.Disposable {
         void this.tick();
       }
     });
+    const watching = vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("clank.agentPanel.theme")) {
+        this.theme();
+      }
+    });
+    panel.onDidDispose(() => watching.dispose());
     panel.onDidDispose(() => {
       if (this.panel === panel) {
         this.panel = undefined;
@@ -159,7 +179,8 @@ export class AgentPanel implements vscode.Disposable {
     return panel;
   }
 
-  /** Read the conversation and draw it when it changed; again in a while, while the panel shows. */
+  /** Read the conversation (and the model's readout, for the panel's foot) and draw it when it changed; again in a
+   * while, while the panel shows. */
   private async tick(): Promise<void> {
     clearTimeout(this.timer);
     if (!this.panel || this.reading) {
@@ -171,7 +192,7 @@ export class AgentPanel implements vscode.Disposable {
       const folder = this.folder();
       const client = this.host.connect();
       if (!folder || !client) {
-        this.draw(folder ? "The Clank service does not run: `clank serve --background` starts it" : "Open a folder first", "", false, []);
+        this.draw({ title: "Clank", empty: folder ? "The Clank service does not run: `clank serve --background` starts it." : "Open a folder first." });
         return;
       }
       const found = await client.get<Conversation>("agents/conversation", { folder, session: this.pinned, limit: PAGE });
@@ -184,17 +205,30 @@ export class AgentPanel implements vscode.Disposable {
       this.conversation = found;
       busy = Boolean(found.session?.busy);
       if (!found.workspace) {
-        this.draw("This folder has no Clank workspace: open it with `clank code` first", "", false, []);
+        this.draw({ title: "Clank", empty: "This folder has no Clank workspace: open it with `clank code` first." });
         return;
+      }
+      let readout: Readout | undefined;
+      try {
+        readout = await client.get<Readout>("agents/readout", { folder, session: found.session?.id ?? "" });
+      } catch {
+        readout = undefined; // the foot is left out; the conversation still shows
       }
       const newest = new Set(found.messages.map((each) => each.info.id));
       const messages = [...this.older.filter((each) => !newest.has(each.info.id)), ...found.messages];
       const waiting = waitingItems(found.waiting);
-      const state = waiting.length ? "waits for you" : busy ? "working" : found.session ? "idle" : "";
-      this.draw(found.session?.title || (found.session ? "A session" : "No session yet: write to start one"), state,
-                busy, [...conversationItems(messages), ...waiting], Boolean(this.cursor));  // prettier-ignore
+      const state = waiting.length ? "waiting" : busy ? "working" : found.session ? "idle" : "none";
+      const foot = readout ? footLine(readout) : null;
+      const doing = state === "working" ? foot?.phase || "Working" : state === "waiting" ? "Waits for you" : state === "idle" ? "Idle" : "";
+      this.draw({
+        title: found.session ? found.session.title || "A session" : "A new conversation",
+        subtitle: [doing, readout?.slot.title, found.workspace].filter(Boolean).join(" · "),
+        state, model: readout?.slot.title ?? "", foot, older: Boolean(this.cursor),
+        blocks: blocks([...conversationItems(messages), ...waiting]),
+        empty: "Write to the agent to start a conversation in this folder.",
+      });  // prettier-ignore
     } catch (error) {
-      this.draw(`The conversation cannot be read: ${error instanceof Error ? error.message : String(error)}`, "", false, []);
+      this.draw({ title: "Clank", empty: `The conversation cannot be read: ${error instanceof Error ? error.message : String(error)}` });
     } finally {
       this.reading = false;
       if (this.panel?.visible) {
@@ -203,23 +237,30 @@ export class AgentPanel implements vscode.Disposable {
     }
   }
 
-  private draw(title: string, state: string, busy: boolean, items: Item[], older = false): void {
+  private draw(shown: Drawn): void {
     const webview = this.panel?.webview;
     const folder = this.folder();
     if (!webview) {
       return;
     }
-    const shown = items.map((item) => {
-      if (item.kind === "text") {
-        return { ...item, split: splitMath(item.text) };
+    const ready = (block: Block): unknown => {
+      if (block.kind === "text") {
+        return { ...block, split: splitMath(block.text) };
       }
-      if (item.kind === "image" && folder) {
-        const file = path.isAbsolute(item.path) ? item.path : path.join(folder, ...item.path.split("/"));
-        return { ...item, src: webview.asWebviewUri(vscode.Uri.file(file)).toString() };
+      if (block.kind === "image" && folder) {
+        const file = path.isAbsolute(block.path) ? block.path : path.join(folder, ...block.path.split("/"));
+        return { ...block, src: webview.asWebviewUri(vscode.Uri.file(file)).toString() };
       }
-      return item;
-    });
-    const message = { type: "conversation", title, state, busy, older, items: shown };
+      if (block.kind === "steps") {
+        return { ...block, steps: block.steps.map(ready) };
+      }
+      return block;
+    };
+    const message = {
+      type: "conversation", title: shown.title, subtitle: shown.subtitle ?? "", state: shown.state ?? "none",
+      model: shown.model ?? "", foot: shown.foot ?? null, older: shown.older ?? false, empty: shown.empty ?? "",
+      blocks: (shown.blocks ?? []).map(ready),
+    };  // prettier-ignore
     const text = JSON.stringify(message);
     if (text !== this.sent) {
       this.sent = text;
@@ -227,9 +268,16 @@ export class AgentPanel implements vscode.Disposable {
     }
   }
 
+  /** Tell the page the theme the setting names (`clank.agentPanel.theme`: VS Code's, or one of Clank's). */
+  private theme(): void {
+    const theme = vscode.workspace.getConfiguration("clank").get<string>("agentPanel.theme") ?? "vscode";
+    void this.panel?.webview.postMessage({ type: "theme", theme });
+  }
+
   private async received(message: Received): Promise<void> {
     if (message.type === "ready") {
       this.sent = "";
+      this.theme();
       await this.tick();
       return;
     }
@@ -282,6 +330,14 @@ export class AgentPanel implements vscode.Disposable {
         case "paste":
           await this.paste(folder, message.mime ?? "image/png", message.data ?? "");
           break;
+        case "pickImage":
+          await this.pickImage(folder);
+          break;
+        case "open": {
+          const file = path.join(folder, ...(message.path ?? "").split("/"));
+          await vscode.commands.executeCommand("vscode.open", vscode.Uri.file(file), this.host.filesColumn());
+          break;
+        }
       }
     } catch (error) {
       this.host.warn(error instanceof Error ? error.message : String(error));
@@ -372,6 +428,26 @@ export class AgentPanel implements vscode.Disposable {
     const name = `${stamp}.${kind === "jpeg" ? "jpg" : kind}`;
     const target = vscode.Uri.file(path.join(folder, ...PASTED.split("/"), name));
     await vscode.workspace.fs.writeFile(target, Buffer.from(data, "base64"));
+    void this.panel?.webview.postMessage({ type: "insert", text: `/workspace/${PASTED}/${name} ` });
+  }
+
+  /** An image picked from the disk: one in the folder is named where it is, another is copied into `.clank/pasted/`
+   * (the agent's container sees only the folder). */
+  private async pickImage(folder: string): Promise<void> {
+    const [picked] = (await vscode.window.showOpenDialog({
+      canSelectMany: false, defaultUri: vscode.Uri.file(folder), openLabel: "Add for the agent",
+      filters: { Images: ["png", "jpg", "jpeg", "gif", "webp", "svg"] },
+    })) ?? [];  // prettier-ignore
+    if (!picked) {
+      return;
+    }
+    const inside = path.relative(folder, picked.fsPath);
+    if (inside && !inside.startsWith("..") && !path.isAbsolute(inside)) {
+      void this.panel?.webview.postMessage({ type: "insert", text: `/workspace/${inside.split(path.sep).join("/")} ` });
+      return;
+    }
+    const name = `${new Date().toISOString().replace(/[-:]/g, "").replace(/\..*$/, "").replace("T", "-")}-${path.basename(picked.fsPath)}`;
+    await vscode.workspace.fs.copy(picked, vscode.Uri.file(path.join(folder, ...PASTED.split("/"), name)), { overwrite: false });
     void this.panel?.webview.postMessage({ type: "insert", text: `/workspace/${PASTED}/${name} ` });
   }
 }

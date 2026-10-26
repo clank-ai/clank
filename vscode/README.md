@@ -31,6 +31,7 @@ where the service answers and the local token from CLANK_HOME each time it conne
 | Setting | `clank.changes.showInAuto`: in auto mode, open each change the agent makes (on by default) |
 | Setting | `clank.readout.openWithAgent`: open the model's readout under the agent when it starts (on by default) |
 | Setting | `clank.agentPanel.openWithAgent`: open the agent panel beside the agent's terminal when it starts (on by default) |
+| Setting | `clank.agentPanel.theme`: the agent panel's colors, `vscode` (the window's VS Code theme, the default) or `clank-night` (Clank's console) |
 
 What you do here is recorded as you (vscode), and every other client shows it.
 

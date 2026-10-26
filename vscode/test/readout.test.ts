@@ -10,7 +10,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { type Readout, panelRows, sparkline, statusText, tokens } from "../src/core/readout";
+import { footLine, type Readout, panelRows, sparkline, statusText, tokens } from "../src/core/readout";
 
 const WRITING: Readout = {
   folder: "D:\\work\\paper",
@@ -163,4 +163,11 @@ test("parts the service could not read say so, never a number", () => {
   assert.equal(rows.context, "the context shows once the agent has answered");
   assert.deepEqual(rows.bar, []);
   assert.equal(rows.machine, "the GPU's meters are not read");
+});
+
+test("the agent panel's foot says the speed, the context used of the window, the drafts and the GPU in one line", () => {
+  assert.deepEqual(footLine(WRITING), {
+    speed: "63 tok/s", used: "161K", window: "262K", share: 161000 / 262144, drafts: "drafts 56 %",
+    gpu: "GPU 15.1 / 16.0 GB", model: "frontier 262K fast (trial)", phase: "Thinking",
+  });
 });

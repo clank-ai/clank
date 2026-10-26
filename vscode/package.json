@@ -2,7 +2,7 @@
   "name": "clank",
   "displayName": "Clank",
   "description": "Clank in VS Code: the service and Docker in the status bar, the questions Clank asks you, the agent beside your files, each change it makes for you to review, completion as you type, figures to mark up for the agent, the agent's proposals for your Notion to review, and the gates of your flows.",
-  "version": "0.9.8",
+  "version": "0.9.9",
   "publisher": "clank",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -185,6 +185,13 @@
           "type": "boolean",
           "default": true,
           "description": "Open the model's readout (its speed, its context window part by part, what it does now, the GPU) in a panel under the agent's terminal when the agent starts. The status bar shows its line either way."
+        },
+        "clank.agentPanel.theme": {
+          "type": "string",
+          "enum": ["vscode", "clank-night"],
+          "enumDescriptions": ["The colors of the window's VS Code theme, whichever it is", "Clank Night: the colors of Clank's console"],
+          "default": "vscode",
+          "description": "The agent panel's colors: the window's VS Code theme, or one of Clank's."
         },
         "clank.agentPanel.openWithAgent": {
           "type": "boolean",

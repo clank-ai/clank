@@ -3,8 +3,11 @@
 // turns them into the owner's messages (OpenCode's synthetic parts left out), the model's text and thinking, each tool
 // call with a one-line summary (`callSummary`, Clank's tools named without their server's prefix), a figure the agent
 // looked at or showed (inline, as a path in the folder), an artifact it made (a card, §5), a step that failed and a
-// compaction. `splitMath` sets math aside before Markdown reads a text, so its underscores stay math; `waitingItems`
-// makes what waits in the session into items too. Pure: `agentPanel.ts` asks the route and the webview draws.
+// compaction. Clank's own message that a job ended is a notice (design 0021 §6), and an owner's comment on an
+// artifact that Clank relays is the owner's words (§5). `callView` says what each call did as the panel shows it (an
+// icon, a verb, what it was done to); `blocks` folds three calls or more in a row under one line of how many and how
+// long. `splitMath` sets math aside before Markdown reads a text, so its underscores stay math; `waitingItems` makes
+// what waits in the session into items too. Pure: `agentPanel.ts` asks the route and the webview draws.
 
 /** A message as the page gives it. */
 export interface PageMessage {
@@ -33,6 +36,7 @@ export interface PagePart {
   input?: unknown;
   output?: string;
   error?: string;
+  time?: { start?: number; end?: number };
 }
 
 export interface Permission {
@@ -59,8 +63,16 @@ export interface Conversation {
   waiting: { permissions: Permission[]; questions: Question[] };
 }
 
+/** What a call did, as the panel shows it: an icon's name, a verb and what it was done to. */
+export interface CallView {
+  icon: string;
+  verb: string;
+  detail: string;
+}
+
 export type Item =
-  | { kind: "owner"; id: string; text: string }
+  | { kind: "owner"; id: string; text: string; about?: string }
+  | { kind: "notice"; id: string; title: string; detail: string; log?: string }
   | { kind: "text"; id: string; text: string }
   | { kind: "thinking"; id: string; text: string }
   | {
@@ -69,9 +81,12 @@ export type Item =
       tool: string;
       status: string;
       summary: string;
+      view: CallView;
       input: string;
       output: string;
       error: string;
+      started?: number;
+      ended?: number;
     }
   | { kind: "image"; id: string; path: string }
   | { kind: "artifact"; id: string; name: string; title: string; version: number }
@@ -86,6 +101,23 @@ const CONTAINER = "/workspace/";
 // what a call was given, by its tool, when OpenCode gave it no title
 const GIVEN = ["command", "filePath", "path", "pattern", "url", "name", "query", "description"];
 const MATH = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\$([^$\n]+?)\$|\\\(([\s\S]+?)\\\)/g;
+// Clank's messages to the agent (agents/jobs.py, agents/artifacts.py), read back for what the owner should see
+const JOB_ENDED = /^Job (\d+) \((.*?)\) (.+?) after ([^.\n]+)\.(?: The last lines of its log, (\S+?):| Its log, (\S+?), is empty\.)?/;
+const JOB_WROTE = /Files written in the folder while it ran, newest first: ([^\n]+?)\.\n/;
+const COMMENTED = /^The owner commented on the artifact (.+) \(([\w-]+), version (\d+)\):\n\n([\s\S]*?)\n\nIts files are in /;
+// each tool's icon and verb, and the field of its input that says what it was done to
+const VIEWS: Record<string, [string, string, string]> = {
+  read: ["file", "Read", "filePath"], edit: ["edit", "Edited", "filePath"], multiedit: ["edit", "Edited", "filePath"],
+  write: ["edit", "Wrote", "filePath"], patch: ["edit", "Edited", "filePath"], apply_patch: ["edit", "Edited", "filePath"],
+  bash: ["terminal", "Ran", "command"], glob: ["search", "Searched", "pattern"], grep: ["search", "Searched", "pattern"],
+  list: ["folder", "Listed", "path"], webfetch: ["globe", "Fetched", "url"], websearch: ["globe", "Searched the web", "query"],
+  todowrite: ["list", "Updated the plan", ""], todoread: ["list", "Read the plan", ""],
+  task: ["agent", "Asked a subagent", "description"], clank_run_job: ["terminal", "Started a job", "command"],
+  clank_job_status: ["clock", "Checked on a job", "job"], clank_job_stop: ["stop", "Stopped a job", "job"],
+  clank_make_artifact: ["sparkle", "Made an artifact", "name"], clank_look_at_figure: ["image", "Looked at", "path"],
+  clank_show_files: ["eye", "Showed you", "files"], clank_find_figures: ["image", "Found figures", ""],
+};  // prettier-ignore
+const PATHS = new Set(["filePath", "path", "files"]);
 
 /** What a call was given, as fields: the page gives it as JSON text, cut past the bridge's limit (then each whole
  * `"key": "text"` before the cut is read). */
@@ -132,6 +164,37 @@ export function callSummary(tool: string, input: unknown, title: string): string
   return said ? `${name}: ${String(said).split("\n")[0]}` : name;
 }
 
+/** What a call did (module comment): its icon, its verb, and the path, command or name it was given. */
+export function callView(tool: string, input: unknown, title: string): CallView {
+  const given = givenFields(input);
+  const known = VIEWS[tool];
+  const [icon, verb, field] = known ?? ["tool", tool.replace(CLANK_TOOL, ""), ""];
+  const value = field ? given[field] : GIVEN.map((key) => given[key]).find((each) => typeof each === "string" && each);
+  const named = Array.isArray(value) ? value.join(", ") : value === undefined || value === null ? "" : String(value);
+  const detail = (named || (known ? "" : title)).split("\n")[0];
+  const shown = PATHS.has(field) ? detail.split(", ").map((each) => inFolder(each).replace(/^workspace\//, "")).join(", ") : detail;
+  return { icon, verb, detail: shown };
+}
+
+/** A message the owner sent, or Clank sent the agent: a job's end as a notice, a relayed comment as the owner's words. */
+function userItem(id: string, text: string): Item {
+  const job = JOB_ENDED.exec(text);
+  if (job) {
+    const wrote = JOB_WROTE.exec(text)?.[1];
+    const log = job[5] ?? job[6];
+    return {
+      kind: "notice", id, title: `Job ${job[1]} ended`,
+      detail: [job[2], `${job[3]} after ${job[4]}`, ...(wrote ? [`wrote ${wrote}`] : [])].join(" · "),
+      ...(log ? { log } : {}),
+    };  // prettier-ignore
+  }
+  const comment = COMMENTED.exec(text);
+  if (comment) {
+    return { kind: "owner", id, text: comment[4], about: `on ${comment[1]}, version ${comment[3]}` };
+  }
+  return { kind: "owner", id, text };
+}
+
 /** The items a page of messages makes (module comment). */
 export function conversationItems(messages: PageMessage[]): Item[] {
   const items: Item[] = [];
@@ -142,7 +205,7 @@ export function conversationItems(messages: PageMessage[]): Item[] {
         .map((part) => part.text)
         .join("\n\n");
       if (text) {
-        items.push({ kind: "owner", id: message.info.id, text });
+        items.push(userItem(message.info.id, text));
       }
       continue;
     }
@@ -175,9 +238,9 @@ function partItems(part: PagePart): Item[] {
   const input = givenFields(part.input);
   const items: Item[] = [{
     kind: "call", id: part.id, tool: tool.replace(CLANK_TOOL, ""), status,
-    summary: callSummary(tool, part.input, part.title ?? ""),
-    input: inputShown(part.input),
-    output: part.output ?? "", error: part.error ?? "",
+    summary: callSummary(tool, part.input, part.title ?? ""), view: callView(tool, part.input, part.title ?? ""),
+    input: inputShown(part.input), output: part.output ?? "", error: part.error ?? "",
+    ...(part.time?.start ? { started: part.time.start } : {}), ...(part.time?.end ? { ended: part.time.end } : {}),
   }];  // prettier-ignore
   if (status !== "completed") {
     return items;
@@ -205,6 +268,52 @@ function asList(value: unknown): unknown[] {
 /** A path as the agent sees it (`/workspace/...`), as a path in the folder. */
 function inFolder(path: string): string {
   return path.startsWith(CONTAINER) ? path.slice(CONTAINER.length) : path.replace(/^\.\//, "");
+}
+
+/** A run of steps (thinking and calls) folded under one line: how many calls, how long, whether one still runs. */
+export interface Steps {
+  kind: "steps";
+  id: string;
+  steps: Item[];
+  calls: number;
+  seconds: number | null;
+  running: boolean;
+}
+
+export type Block = Item | Steps;
+
+const FOLDED_FROM = 3; // calls in a row folded under one line
+
+/** The items as the panel lays them out: each run of thinking and calls with three calls or more folded under one
+ * line (from its first call's start to its last one's end), the other items as they are. */
+export function blocks(items: Item[]): Block[] {
+  const laid: Block[] = [];
+  let run: Item[] = [];
+  const close = (): void => {
+    const calls = run.filter((each): each is Extract<Item, { kind: "call" }> => each.kind === "call");
+    if (calls.length >= FOLDED_FROM) {
+      const starts = calls.map((each) => each.started).filter((each): each is number => each !== undefined);
+      const ends = calls.map((each) => each.ended ?? each.started).filter((each): each is number => each !== undefined);
+      laid.push({
+        kind: "steps", id: `${run[0].id}-steps`, steps: run, calls: calls.length,
+        seconds: starts.length && ends.length ? Math.round((Math.max(...ends) - Math.min(...starts)) / 1000) : null,
+        running: calls.some((each) => each.status === "running" || each.status === "pending"),
+      });  // prettier-ignore
+    } else {
+      laid.push(...run);
+    }
+    run = [];
+  };
+  for (const item of items) {
+    if (item.kind === "thinking" || item.kind === "call") {
+      run.push(item);
+    } else {
+      close();
+      laid.push(item);
+    }
+  }
+  close();
+  return laid;
 }
 
 /** What waits in the session, as items: each permission with what it asks, then each question. */

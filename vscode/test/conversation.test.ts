@@ -10,8 +10,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  blocks,
   type Conversation,
   callSummary,
+  callView,
   conversationItems,
   type PageMessage,
   splitMath,
@@ -122,4 +124,55 @@ test("what waits in the session comes as items: each permission with what it ask
     { kind: "permission", id: "per_1", permission: "bash", patterns: ["rm -r out"] },
     { kind: "question", id: "que_1", questions: [{ question: "Which plot?", options: [{ label: "Both" }] }] },
   ]);
+});
+
+test("Clank's message that a job ended is a notice, and the owner's comment it relays is the owner's words", () => {
+  const job = "Job 1 (Pendulum simulation, 8 amplitudes) exited 0 after 2 minutes. The last lines of its log, .clank/jobs/agent/1/log:\n```\ndone\n```\nFiles written in the folder while it ran, newest first: data/simulated.csv.\nGo on from here: read what you need of its output.";
+  const comment = "The owner commented on the artifact Pendulum period vs amplitude (pendulum, version 1):\n\nThe points are missing.\n\nIts files are in /workspace/.clank/artifacts/pendulum/v1/. To answer, change its files and call make_artifact with the name pendulum: that makes version 2.";
+  const items = conversationItems([
+    { info: { id: "msg_1", role: "user" }, parts: [{ id: "prt_1", type: "text", text: job }] },
+    { info: { id: "msg_2", role: "user" }, parts: [{ id: "prt_2", type: "text", text: comment }] },
+  ]);
+  assert.deepEqual(items, [
+    { kind: "notice", id: "msg_1", title: "Job 1 ended", detail: "Pendulum simulation, 8 amplitudes · exited 0 after 2 minutes · wrote data/simulated.csv", log: ".clank/jobs/agent/1/log" },
+    { kind: "owner", id: "msg_2", text: "The points are missing.", about: "on Pendulum period vs amplitude, version 1" },
+  ]);
+});
+
+test("each call says what it did: an icon, a verb and what it was done to, as a path in the folder", () => {
+  const view = (tool: string, input: unknown, title = ""): string => {
+    const shown = callView(tool, input, title);
+    return `${shown.icon} ${shown.verb} ${shown.detail}`;
+  };
+  assert.equal(view("read", { filePath: "/workspace/data/sweep.csv" }, "workspace/data/sweep.csv"), "file Read data/sweep.csv");
+  assert.equal(view("edit", { filePath: "/workspace/pendulum.html" }), "edit Edited pendulum.html");
+  assert.equal(view("bash", { command: "python3 simulate.py\necho done" }), "terminal Ran python3 simulate.py");
+  assert.equal(view("clank_run_job", '{"command": "python3 simulate.py"}'), "terminal Started a job python3 simulate.py");
+  assert.equal(view("clank_make_artifact", { name: "pendulum" }), "sparkle Made an artifact pendulum");
+  assert.equal(view("clank_look_at_figure", { path: "/workspace/fig.png" }), "image Looked at fig.png");
+  assert.equal(view("grep", { pattern: "TODO" }), "search Searched TODO");
+  assert.equal(view("clank_find_figures", {}), "image Found figures ");
+  assert.equal(view("mystery_tool", { query: "x" }), "tool mystery_tool x");
+});
+
+test("three calls or more in a row fold under one line that says how many and how long; fewer stay in line", () => {
+  const call = (id: string, start: number, end: number | undefined, status = "completed"): PageMessage["parts"][number] => ({
+    id, type: "tool", tool: "read", status, title: "", input: { filePath: `/workspace/${id}.txt` },
+    time: end === undefined ? { start } : { start, end },
+  });  // prettier-ignore
+  const items = conversationItems([
+    step("msg_1", [{ id: "prt_0", type: "reasoning", text: "First." }, call("a", 1000, 1400), { id: "prt_1", type: "text", text: "One done." }]),
+    step("msg_2", [call("b", 2000, 3000), { id: "prt_2", type: "reasoning", text: "Next." }, call("c", 3000, 9000), call("d", 9000, 13000)]),
+    step("msg_3", [call("e", 14000, undefined, "running")], { finish: null }),
+  ]);
+  const shown = blocks(items);
+  assert.deepEqual(shown.map((block) => block.kind), ["thinking", "call", "text", "steps"]);
+  const steps = shown[3];
+  assert.equal(steps.kind, "steps");
+  if (steps.kind === "steps") {
+    assert.equal(steps.calls, 4, "the calls counted, not the thinking");
+    assert.equal(steps.seconds, 12, "from the first call's start to the last one's end");
+    assert.equal(steps.running, true);
+    assert.deepEqual(steps.steps.map((each) => each.kind), ["call", "thinking", "call", "call", "call"]);
+  }
 });

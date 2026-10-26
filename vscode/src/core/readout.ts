@@ -105,6 +105,37 @@ export function statusText(readout: Readout | undefined): string {
   return `$(pulse) ${[speed, used, now.phase].filter(Boolean).join(" · ")}`;
 }
 
+/** The agent panel's foot (design 0021 §4): the speed, the context used of the window (and its share), the drafted
+ * tokens accepted, the GPU's memory, the model, and what it does now; a figure not read is left empty. */
+export interface FootLine {
+  speed: string;
+  used: string;
+  window: string;
+  share: number;
+  drafts: string;
+  gpu: string;
+  model: string;
+  phase: string;
+}
+
+export function footLine(readout: Readout): FootLine {
+  const { now, context, gpu, drafts, slot } = readout;
+  const speed = now?.speed.now ? `${WRITING.has(now.state) ? "" : "last "}${Math.round(now.speed.now)} tok/s` : "";
+  const phase = now?.phase ?? "";
+  return {
+    speed,
+    used: context?.used ? tokens(context.used) : "",
+    window: context?.window ? tokens(context.window) : "",
+    share: context?.used && context.window ? context.used / context.window : 0,
+    drafts: drafts?.share === null || drafts?.share === undefined ? "" : `drafts ${Math.round(drafts.share * 100)} %`,
+    gpu: gpu?.memory_used && gpu.memory_total
+      ? `GPU ${(gpu.memory_used / GB).toFixed(1)} / ${(gpu.memory_total / GB).toFixed(1)} GB`
+      : "",
+    model: slot.title,
+    phase: phase ? phase[0].toUpperCase() + phase.slice(1) : "",
+  };
+}
+
 /** The panel's rows (module comment). */
 export function panelRows(readout: Readout): PanelRows {
   const { now, context, slot, gpu } = readout;
