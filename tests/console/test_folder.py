@@ -235,7 +235,9 @@ async def test_e_installs_the_folders_software_and_m_gives_the_agent_the_folders
         await pilot.press("e")
         await settle(pilot, lambda: isinstance(app.screen, FormScreen))
         await pilot.press("enter")
-        await settle(pilot, lambda: "installed: python3 -m venv --system-site-packages ~/.venv" in text(app), seconds=20)
+        await settle(
+            pilot, lambda: "installed: python3 -m venv --system-site-packages ~/.venv" in text(app), seconds=20
+        )
         await settle(pilot, lambda: "Install a workspace's software: done" in message(app), seconds=20)
         assert "✓ clank" in text(app), "Clank's own server (send_to_phone) is given to every agent"
         await pilot.press("m")

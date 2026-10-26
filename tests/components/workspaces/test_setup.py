@@ -39,12 +39,18 @@ dev = ["paper[test]"]
 
 def test_a_pyproject_with_a_dev_extra_is_installed_editable_with_it(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text(PYPROJECT, encoding="utf-8")
-    assert proposed_setup(str(tmp_path)) == f"python3 -m venv --system-site-packages {VENV} && {VENV}/bin/python -m pip install -e '.[dev]'"
+    assert (
+        proposed_setup(str(tmp_path))
+        == f"python3 -m venv --system-site-packages {VENV} && {VENV}/bin/python -m pip install -e '.[dev]'"
+    )
 
 
 def test_a_pyproject_without_a_dev_extra_is_installed_editable(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text('[project]\nname = "paper"\nversion = "1.0"\n', encoding="utf-8")
-    assert proposed_setup(str(tmp_path)) == f"python3 -m venv --system-site-packages {VENV} && {VENV}/bin/python -m pip install -e ."
+    assert (
+        proposed_setup(str(tmp_path))
+        == f"python3 -m venv --system-site-packages {VENV} && {VENV}/bin/python -m pip install -e ."
+    )
 
 
 def test_requirements_are_installed_and_a_folder_with_neither_needs_nothing(tmp_path: Path) -> None:
@@ -57,7 +63,10 @@ def test_requirements_are_installed_and_a_folder_with_neither_needs_nothing(tmp_
 
 def test_an_unreadable_pyproject_is_installed_without_extras(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text("[project\nname=", encoding="utf-8")
-    assert proposed_setup(str(tmp_path)) == f"python3 -m venv --system-site-packages {VENV} && {VENV}/bin/python -m pip install -e ."
+    assert (
+        proposed_setup(str(tmp_path))
+        == f"python3 -m venv --system-site-packages {VENV} && {VENV}/bin/python -m pip install -e ."
+    )
 
 
 def test_the_setup_container_reaches_the_internet_is_removed_after_and_is_contained_like_the_workspaces() -> None:
