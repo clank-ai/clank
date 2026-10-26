@@ -1,13 +1,14 @@
 // Clank's phone app (design 0025, decision 0143; the page of design 0005 made an installed app): live from one stream
-// of events, it shows Now (the model, the machine, what waits for you, what works), Flows (what waits in them; the Flow
-// view comes with the next step), Work (every workspace and its sessions, a new task), Files (what the agents sent),
-// and More (this phone's log of exchanges, settings); says when the stream drops and when the PC cannot be reached;
-// and looks like the console: monospace, thin rules, rows to tap. Everything comes from this page's own address;
-// every action carries the X-Clank-Phone header. The logic that needs no browser is `model.mjs`.
+// of events, it shows Now (the model, the machine, what waits for you, what works), Flows (every flow, a flow's screen
+// on the Flow view, building one), a session on the conversation stream (the words as the model writes them, the Guide
+// and the context as sheets), Work (every workspace and its sessions, a new task), Files (what the agents sent), and
+// More (this phone's log of exchanges, settings); says when the stream drops and when the PC cannot be reached; and
+// looks like the console: monospace, thin rules, rows to tap. Everything comes from this page's own address; every
+// action carries the X-Clank-Phone header. The logic that needs no browser is `model.mjs`.
 
 import {
-  RECONNECT_SECONDS, allSessions, boxGlyph, clockText, flowFilter, lastKnown, machineGauges, modelLine, runControls,
-  streamState, waitingCount, workingRows,
+  RECONNECT_SECONDS, allSessions, applyTalk, boxGlyph, clockText, emptyTalk, failedTalk, flowFilter, lastKnown, liveIndex,
+  machineGauges, modelLine, phaseWords, runControls, sentTalk, streamState, talkItems, waitingCount, workingRows,
 } from "./model.mjs";
 
 const view = document.getElementById("view");
@@ -18,16 +19,15 @@ const tabs = document.getElementById("tabs");
 const toast = document.getElementById("toast");
 const attention = document.getElementById("attention");
 const waitingBadge = document.getElementById("count-now");
-const BUSY_SECONDS = 2;
-const IDLE_SECONDS = 8;
 const LOG_LIMIT = 100;
 const KNOWN = "clank-last-known"; // the offline screen's summary, kept on the phone: names and numbers only
 const ATTENTION_SECONDS = 20;
 
-// tab: now, flows, work, files or more; place: a workspace's page, a session's or More's log, over the tab; overview:
-// the last `now` the stream sent; link: the stream's state; events: the stream's events this visit, newest first.
+// tab: now, flows, work, files or more; place: a workspace's page, a flow's, a session's or More's log, over the tab;
+// overview: the last `now` the stream sent; link: the stream's state; events: the stream's events this visit, newest
+// first; talk: the session shown, built from its conversation stream (talkSource).
 const state = {
-  tab: "now", place: null, overview: null, messages: [], timer: null, task: "", files: null,
+  tab: "now", place: null, overview: null, talk: null, talkSource: null, sessionTimer: null, task: "", files: null,
   log: { items: [], open: {} }, notes: {}, reads: {}, events: [], known: null,
   flows: { rows: null, plannings: {}, filter: "all", view: null, building: false, timer: null },
   link: { connected: false, failedSince: null, tries: 0, lastEventAt: null, source: null },
@@ -670,67 +670,304 @@ function moreView() {
   ];
 }
 
-function messageView(message) {
-  const parts = [];
-  for (const part of message.parts) {
-    if (part.type === "text" && part.text.trim()) parts.push(rich(part.text));
-    else if (part.type === "tool") {
-      const mark = part.status === "completed" ? "✓" : part.status === "error" ? "✗" : "…";
-      const kind = part.status === "error" ? " error" : part.status === "completed" ? " done" : "";
-      parts.push(el("div", { class: "tool" + kind }, `${mark} ${part.tool}${part.title ? "  " + part.title : ""}`));
-    } else if (part.type === "reasoning" && part.length) {
-      parts.push(el("div", { class: "tool" }, `· thought it over (${part.length.toLocaleString()} characters)`));
-    }
-  }
-  if (message.error) parts.push(el("div", { class: "tool error" }, `✗ ${message.error}`));
-  if (!parts.length) return null;
-  const you = message.role === "user";
-  return el("div", { class: "msg" }, el("div", { class: "who " + (you ? "you" : "agent") }, you ? "› you" : "◆ agent"), parts);
-}
+// A session (design 0025 §7) on the conversation stream (design 0023 §3): the header from the readout (the model's
+// phase and speed, the window's share), the conversation's items (the owner's words, the model's text, its thinking
+// folded with its length, each call one line that opens on its result, a failed step, a compaction; the live item marked
+// LIVE while the session works), what waits in the session answered in place, and a composer whose message shows at
+// once as pending. The Guide and the Context open as sheets over the composer; every action is the device's.
+const SHEET_ITEMS = 8; // the biggest items the Context sheet lists
+const GUIDE_WORDS = { stop: "now; the files stay", note: "read at the next step", compact: "at the next step" };
 
-// A session's page keeps its composer from the moment it opens: the redraws change the conversation above it, never the
-// box being typed in (a phone's keyboard would close).
+// A session's page keeps its composer from the moment it opens: the redraws change the conversation above it, never
+// the box being typed in (a phone's keyboard would close).
 function sessionParts(place) {
-  const where = `api/sessions/${encodeURIComponent(place.workspace)}/${place.port}/${place.session}`;
   const text = el("textarea", { placeholder: "Tell the agent…" });
-  const stop = el("button", {
-    class: "btn no hidden", onclick: async () => {
-      try { await api(`${where}/stop`, {}); say("stopped", true); }
-      catch (error) { say(error.message); }
-    },
-  }, "stop");
+  const where = `api/sessions/${encodeURIComponent(place.workspace)}/${place.port}/${place.session}`;
   const send = el("button", {
     class: "btn go", onclick: async () => {
-      if (!text.value.trim()) return;
-      try { await api(`${where}/message`, { text: text.value }); text.value = ""; place.stick = true; say("sent", true); loadMessages(); }
-      catch (error) { say(error.message); }
+      const words = text.value.trim();
+      if (!words) return;
+      const id = `pending-${Date.now()}`;
+      state.talk = sentTalk(state.talk, id, words);
+      text.value = "";
+      place.stick = true;
+      drawSession();
+      try { await api(`${where}/message`, { text: words }); say("sent", true); }
+      catch (error) {
+        const [back, talk] = failedTalk(state.talk, id);
+        state.talk = talk;
+        if (!text.value) text.value = back;
+        say(error.message);
+        drawSession();
+      }
     },
   }, "send");
-  return { head: el("div"), thread: el("div"), text, stop,
-    composer: el("div", { class: "composer" }, text, el("div", { class: "btns" }, send, stop)) };
+  const stop = el("button", { class: "btn no hidden", onclick: () => guideAct(place, { action: "stop", title: "Stop", confirm: false }) }, "stop");
+  const guide = el("button", { class: "btn", onclick: () => openSheet(place, "guide") }, "Guide");
+  const context = el("button", { class: "btn", onclick: () => openSheet(place, "context") }, "Context");
+  return { head: el("div"), thread: el("div"), text, stop, context, sheet: el("div", { class: "sheet hidden" }),
+    composer: el("div", { class: "composer" }, text, el("div", { class: "btns" }, send, stop, guide, context)) };
+}
+
+function openSession(workspace, port, session, name) {
+  closeSession();
+  state.place = { workspace, port, session, title: name, stick: true, from: state.place, open: {}, sheet: null, guide: null, context: null };
+  state.place.parts = sessionParts(state.place);
+  state.talk = emptyTalk();
+  draw();
+  window.scrollTo(0, 0);
+  followSession();
+}
+
+// The conversation stream of the session shown: opened when its screen opens and when the app comes back to the front,
+// closed when the screen closes; the browser resumes it from the last event it saw (Last-Event-ID), and a stream the
+// browser gave up on is opened again after a few seconds while the screen still shows.
+function followSession() {
+  const place = state.place;
+  if (!place || !place.session || document.visibilityState !== "visible" || state.talkSource) return;
+  const query = `workspace=${encodeURIComponent(place.workspace)}&session=${encodeURIComponent(place.session)}&limit=40`;
+  const source = new EventSource(`api/conversation/stream?${query}`);
+  state.talkSource = source;
+  for (const name of ["snapshot", "message", "part", "delta", "removed", "status", "waiting", "readout", "session"]) {
+    source.addEventListener(name, (message) => {
+      if (state.place !== place) return;
+      const id = /^\d+$/.test(message.lastEventId) ? Number(message.lastEventId) : undefined;
+      state.talk = applyTalk(state.talk, name, JSON.parse(message.data), id);
+      scheduleSessionDraw();
+    });
+  }
+  const again = () => {
+    if (state.talkSource === source) state.talkSource = null;
+    setTimeout(() => { if (state.place === place) followSession(); }, RECONNECT_SECONDS * 1000);
+  };
+  source.addEventListener("closing", () => { source.close(); again(); });
+  source.addEventListener("error", () => {
+    if (source.readyState === EventSource.CLOSED) again(); // else the browser tries again by itself, from the last event
+  });
+}
+
+function closeSession() {
+  if (state.talkSource) { state.talkSource.close(); state.talkSource = null; }
+  if (state.sessionTimer) cancelAnimationFrame(state.sessionTimer);
+  state.sessionTimer = null;
+}
+
+// The deltas come many times a second: the screen is drawn once a frame.
+function scheduleSessionDraw() {
+  if (state.sessionTimer) return;
+  state.sessionTimer = requestAnimationFrame(() => { state.sessionTimer = null; if (state.place && state.place.session) drawSession(); });
+}
+
+function shareWords(context) {
+  return context && context.window && context.used !== null && context.used !== undefined
+    ? `${Math.round((context.used / context.window) * 100)}%` : "";
+}
+
+// The header's line from the readout while the session works: its phase, its speed, the window's share.
+function sessionHead(place) {
+  const talk = state.talk;
+  const session = talk.conversation && talk.conversation.session;
+  const readout = talk.readout || {};
+  const now = readout.now || {};
+  const busy = session ? session.busy : false;
+  const doing = busy ? (phaseWords(now.phase) || "working") : session ? "idle" : "connecting…";
+  const speed = busy && now.speed && now.speed.now ? `${Math.round(now.speed.now)} tok/s` : "";
+  const share = shareWords(readout.context) || (place.context ? shareWords(place.context) : "");
+  const rows = [["state", el("span", { class: busy ? "good" : "dim" }, [doing, speed].filter(Boolean).join(" · "))],
+    ["where", `${place.workspace}${session && session.title ? " · " + session.title : place.title ? " · " + place.title : ""}`]];
+  if (share) rows.push(["context", `${share} of the window${readout.slot && readout.slot.title ? " · " + readout.slot.title : ""}`]);
+  return kv(rows);
+}
+
+function openSheet(place, which) {
+  place.sheet = place.sheet === which ? null : which;
+  drawSession();
+  if (place.sheet === "guide") loadGuide(place);
+  if (place.sheet === "context") loadContext(place);
+}
+
+async function loadGuide(place) {
+  try {
+    const found = await api(`api/guide/${encodeURIComponent(place.workspace)}/${encodeURIComponent(place.session)}`);
+    if (state.place === place) { place.guide = found; drawSession(); }
+  } catch (error) { if (state.place === place) { place.guide = { missing: error.message }; drawSession(); } }
+}
+
+async function loadContext(place) {
+  try {
+    const found = await api(`api/context/${encodeURIComponent(place.workspace)}/${encodeURIComponent(place.session)}`);
+    if (state.place === place) { place.context = found; drawSession(); }
+  } catch (error) { if (state.place === place) { place.context = { missing: error.message }; drawSession(); } }
+}
+
+// An action of the Guide, the device's: Stop at once, the others once more confirmed as the offer says; Note sends the
+// composer's text; Undo sends the revert the offer names and what it takes back; Pause resumes while paused; Drop goes
+// to the Context sheet, where each result has its own. The Guide is read again after.
+async function guideAct(place, action, body = {}) {
+  const where = `api/guide/${encodeURIComponent(place.workspace)}/${encodeURIComponent(place.session)}`;
+  let route = action.action;
+  if (action.action === "note") {
+    const words = place.parts.text.value.trim();
+    if (!words) { say("type the note in the box first"); return; }
+    body = { text: words };
+  } else if (action.action === "undo") {
+    if (action.mode === "redo") route = "redo";
+    else body = { message: action.revert.message, part: action.revert.part, steps: action.takes.steps.filter((n) => n !== null), said: action.takes.said };
+  } else if (action.action === "pause" && action.paused) route = "resume";
+  if (action.action === "drop" && !body.part) { openSheet(place, "context"); return; }
+  const cost = action.cost && action.cost.words ? ` ${action.cost.words}.` : "";
+  if (action.confirm && !window.confirm(`${action.title}: ${action.brief || ""}.${cost}`)) return;
+  try {
+    await api(`${where}/${route}`, body);
+    if (action.action === "note") place.parts.text.value = "";
+    say(`${action.title.toLowerCase()}: asked`, true);
+  } catch (error) { say(error.message); }
+  if (place.sheet === "guide") loadGuide(place);
+  if (place.sheet === "context") loadContext(place);
+}
+
+function stateWords(found) {
+  if (!found || !found.state) return "";
+  return [found.state, found.by, found.time ? ago(found.time) + " ago" : "", found.why].filter(Boolean).join(" · ");
+}
+
+// The Guide sheet (design 0012 §9 on the phone): each action a button with its title, what it does in brief and what it
+// costs; disabled with why when it cannot run now; its last run's state under it.
+function guideSheet(place) {
+  const guide = place.guide;
+  const parts = [el("div", { class: "sheet-head" }, el("span", {}, "the Guide"), el("button", { class: "btn small", onclick: () => openSheet(place, null) }, "close"))];
+  if (!guide) return [...parts, el("div", { class: "empty" }, "Reading…")];
+  if (guide.missing) return [...parts, el("div", { class: "empty" }, guide.missing)];
+  for (const action of guide.actions) {
+    const words = action.action === "pause" ? action.brief : GUIDE_WORDS[action.action] ? `${action.brief} · ${GUIDE_WORDS[action.action]}` : action.brief;
+    const last = stateWords(action.state);
+    parts.push(el("div", { class: "action" + (action.can ? "" : " off") },
+      el("div", { class: "btns" },
+        el("button", { class: "btn small" + (action.action === "stop" ? " no" : ""), disabled: action.can ? null : "disabled",
+          onclick: () => guideAct(place, action) }, action.title),
+        el("span", { class: "muted" }, words)),
+      action.can ? null : el("div", { class: "dim" }, action.why),
+      action.cost && action.cost.words ? el("div", { class: "dim" }, action.cost.words) : null,
+      last ? el("div", { class: "dim" }, `last: ${last}`) : null));
+  }
+  parts.push(el("div", { class: "btns" }, el("button", { class: "btn small", onclick: () => loadGuide(place) }, "read again")));
+  return parts;
+}
+
+// The Context sheet (design 0012 §4 on the phone): the window used of the whole with the compaction line, what fills it
+// (each part's share), the biggest items with Drop for a finished call's result.
+function contextSheet(place) {
+  const context = place.context;
+  const parts = [el("div", { class: "sheet-head" }, el("span", {}, "the context"), el("button", { class: "btn small", onclick: () => openSheet(place, null) }, "close"))];
+  if (!context) return [...parts, el("div", { class: "empty" }, "Reading…")];
+  if (context.missing) return [...parts, el("div", { class: "empty" }, context.missing)];
+  const window_ = context.window;
+  const used = context.used;
+  const share = shareWords(context);
+  const line = context.line && window_ ? `compacts at ${Math.round((context.line / window_) * 100)}%` : "";
+  const rows = [["window", window_ ? `${window_.toLocaleString()} tokens` : "not known"],
+    ["used", used !== null && used !== undefined ? `${used.toLocaleString()} tokens${share ? " · " + share : ""}` : "not measured yet"]];
+  if (line) rows.push(["rule", `${line}${context.left !== null && context.left !== undefined ? " · " + context.left.toLocaleString() + " left" : ""}`]);
+  if (context.slot && context.slot.title) rows.push(["model", context.slot.title]);
+  parts.push(kv(rows));
+  if (share) {
+    const full = Math.min(100, Math.round((used / window_) * 100));
+    parts.push(el("div", { class: "bar wide" }, el("i", { class: full > 80 ? "bad" : full > 60 ? "warn" : "", style: `width:${full}%` })));
+  }
+  const estimate = context.parts;
+  if (!estimate) { parts.push(el("div", { class: "empty" }, "What fills it is counted at the session's next step.")); return parts; }
+  parts.push(section("what fills it"));
+  for (const part of estimate.parts || []) {
+    parts.push(el("div", { class: "share" },
+      el("span", { class: "k" }, part.label), el("span", { class: "v" }, `${part.tokens.toLocaleString()} · ${Math.round(part.share * 100)}%`),
+      el("div", { class: "bar" }, el("i", { style: `width:${Math.round(part.share * 100)}%` }))));
+  }
+  const items = (estimate.items || []).slice(0, SHEET_ITEMS);
+  if (items.length) parts.push(section("the biggest items", items.length));
+  for (const item of items) {
+    const what = [item.step ? `step ${item.step}` : "", item.tool || item.what || item.part, `${item.tokens.toLocaleString()} tokens`].filter(Boolean).join(" · ");
+    const mark = item.cleared ? el("span", { class: "dim" }, item.cleared_by ? `cleared by ${item.cleared_by}` : "cleared")
+      : item.node ? el("button", { class: "btn small", onclick: () => guideAct(place, { action: "drop", title: "Drop", confirm: true,
+        brief: `clears ${what}'s result`, cost: null }, { part: item.node }) }, "Drop") : null;
+    parts.push(el("div", { class: "btns item" }, el("span", { class: "muted" }, what), mark));
+  }
+  return parts;
+}
+
+// One item of the conversation; a call opens on its result when tapped, the thinking on its words.
+function itemView(item, place, live) {
+  const open = place.open[item.id];
+  const toggle = () => { place.open[item.id] = !open; drawSession(); };
+  const tag = live ? el("span", { class: "live" }, "LIVE") : null;
+  if (item.kind === "text") return el("div", { class: "text" }, rich(item.text), tag);
+  if (item.kind === "thinking") {
+    return el("div", { class: "fold" + (open ? " open" : "") },
+      el("div", { class: "tool", onclick: toggle }, `· thought · ${item.length.toLocaleString()} characters · ${open ? "hide" : "show"}`, tag),
+      open ? el("pre", {}, item.text) : null);
+  }
+  if (item.kind === "call") {
+    const mark = item.status === "completed" ? "✓" : item.status === "error" ? "✗" : "…";
+    const kind = item.status === "error" ? " error" : item.status === "completed" ? " done" : "";
+    const facts = [item.chars ? size(item.chars) : "", item.seconds !== null ? `${item.seconds} s` : ""].filter(Boolean).join(" · ");
+    return el("div", { class: "fold" + (open ? " open" : "") },
+      el("div", { class: "tool" + kind, onclick: toggle }, `${mark} ${item.line}${facts ? "  · " + facts : ""}`, tag),
+      open ? el("pre", {}, item.error || item.output || `(${item.status})`) : null);
+  }
+  if (item.kind === "error") return el("div", { class: "tool error" }, `✗ ${item.text}`, tag);
+  if (item.kind === "compaction") return el("div", { class: "tool" }, "— compacted: the model reads a summary of what came before —");
+  return null;
+}
+
+// The conversation as blocks: one per message, headed by who spoke; the pending messages as the owner's, dimmed.
+function threadView(place) {
+  const items = talkItems(state.talk);
+  const live = liveIndex(state.talk, items);
+  const blocks = [];
+  let block = null;
+  items.forEach((item, index) => {
+    if (item.kind === "owner" || item.kind === "notice") {
+      const who = item.kind === "notice" ? el("div", { class: "who agent" }, "◆ clank") : el("div", { class: "who you" }, item.pending ? "› you · sending…" : item.about ? `› you · ${item.about}` : "› you");
+      const body = item.kind === "notice" ? el("div", {}, el("strong", {}, item.title), el("div", { class: "dim" }, item.detail)) : rich(item.text);
+      blocks.push(el("div", { class: "msg" + (item.pending ? " pending" : "") }, who, body));
+      block = null;
+      return;
+    }
+    if (!block || block.dataset.message !== item.message) {
+      block = el("div", { class: "msg" });
+      block.dataset.message = item.message;
+      block.append(el("div", { class: "who agent" }, "◆ agent"));
+      blocks.push(block);
+    }
+    const shown = itemView(item, place, index === live);
+    if (shown) block.append(shown);
+  });
+  return blocks;
 }
 
 function drawSession() {
   const place = state.place;
   const parts = place.parts;
-  const workspace = state.overview.workspaces.find((each) => each.name === place.workspace);
-  const found = workspace && workspace.servers.flatMap((server) => server.sessions).find((session) => session.id === place.session);
-  const busy = found && found.status === "busy";
-  parts.head.replaceChildren(kv([["state", el("span", { class: busy ? "good" : "dim" }, busy ? "working" : "idle")],
-    ["where", place.workspace]]));
+  const talk = state.talk;
+  const session = talk.conversation && talk.conversation.session;
+  const busy = Boolean(session && session.busy);
+  parts.head.replaceChildren(sessionHead(place));
   parts.text.placeholder = busy ? "The agent is working; a message waits for its turn" : "Tell the agent…";
   parts.stop.classList.toggle("hidden", !busy);
-  if (!view.contains(parts.composer)) view.replaceChildren(parts.head, parts.thread, parts.composer);
+  const share = shareWords((talk.readout || {}).context) || (place.context ? shareWords(place.context) : "");
+  parts.context.textContent = share ? `Context ${share}` : "Context";
+  parts.sheet.classList.toggle("hidden", !place.sheet);
+  if (place.sheet) parts.sheet.replaceChildren(...(place.sheet === "guide" ? guideSheet(place) : contextSheet(place)));
+  if (!view.contains(parts.composer)) view.replaceChildren(parts.head, parts.thread, parts.composer, parts.sheet);
   const typing = parts.thread.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
   if (typing) return;
-  const shown = state.messages.map(messageView).filter(Boolean);
-  const waiting = waitingBoxes(state.overview, place.workspace);
+  const shown = threadView(place);
+  const waiting = state.overview ? waitingBoxes(state.overview, place.workspace) : [];
   if (waiting.length) shown.push(section("waiting for you", waiting.length), ...waiting);
-  if (!shown.length) shown.push(el("div", { class: "empty" }, "No message yet."));
+  if (!shown.length) shown.push(el("div", { class: "empty" }, talk.conversation ? "No message yet." : "Connecting to the session…"));
   const bottom = document.documentElement.scrollHeight - window.innerHeight;
   const near = window.scrollY >= bottom - 120;
   parts.thread.replaceChildren(...shown);
-  if (state.messages.length && (place.stick || near)) {
+  if (talk.conversation && (place.stick || near)) {
     place.stick = false;
     window.scrollTo(0, document.documentElement.scrollHeight);
   }
@@ -788,39 +1025,10 @@ function draw() {
   view.replaceChildren(paused, ...parts);
 }
 
-async function loadMessages() {
-  const place = state.place;
-  if (!place || !place.session) return;
-  try {
-    const found = await api(`api/sessions/${encodeURIComponent(place.workspace)}/${place.port}/${place.session}?limit=40`);
-    if (state.place === place) { state.messages = found.messages; draw(); }
-  } catch (error) { say(error.message); }
-}
-
-function openSession(workspace, port, session, name) {
-  state.place = { workspace, port, session, title: name, stick: true, from: state.place };
-  state.place.parts = sessionParts(state.place);
-  state.messages = [];
-  draw();
-  loadMessages();
-  followSession();
-}
-
 function openWorkspace(name) {
   state.place = { workspace: name, from: null };
   draw();
   window.scrollTo(0, 0);
-}
-
-// A session's messages are read every few seconds while its page shows (the conversation stream comes with the next
-// step of design 0025); everything else moves with the live stream.
-function followSession() {
-  clearTimeout(state.timer);
-  const place = state.place;
-  if (!place || !place.session || document.visibilityState !== "visible") return;
-  const open = state.overview && allSessions(state.overview).find((session) => session.id === place.session);
-  const seconds = open && open.status === "busy" ? BUSY_SECONDS : IDLE_SECONDS;
-  state.timer = setTimeout(() => { loadMessages().then(followSession); }, seconds * 1000);
 }
 
 function pairView() {
@@ -909,12 +1117,14 @@ async function start() {
 }
 
 back.addEventListener("click", () => {
+  closeSession();
   state.place = state.place ? state.place.from || null : null;
   draw();
   followSession();
 });
 for (const button of tabs.querySelectorAll("button")) {
   button.addEventListener("click", () => {
+    closeSession();
     state.tab = button.dataset.tab;
     state.place = null;
     draw();
@@ -925,7 +1135,7 @@ for (const button of tabs.querySelectorAll("button")) {
 }
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") { if (!state.link.source) stream(); followSession(); }
-  else { clearTimeout(state.timer); if (state.link.source) { state.link.source.close(); state.link.source = null; } }
+  else { closeSession(); if (state.link.source) { state.link.source.close(); state.link.source = null; } }
 });
 setInterval(() => { if (!document.hidden) drawHeader(); if (!document.hidden && streamState(state.link, Date.now()).state !== "live") draw(); }, 1000);
 start();

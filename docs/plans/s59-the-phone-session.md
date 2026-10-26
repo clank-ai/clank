@@ -58,19 +58,23 @@ sessions here.
   `steps`, `said`), redo, drop (`part`), each the device's; `GET /api/context/{workspace}/{session}` (the totals).
   Tests on the flows rig (a box's session): the offer lists the actions; a stop from the phone is recorded as the
   device's; the totals pass through; an unknown action is 404.
-- [ ] 3. **The client's logic** (`page/model.mjs`: `emptyTalk`, `applyTalk(talk, name, data, id)`, `sentTalk`,
+- [x] 3. **The client's logic** (`page/model.mjs`: `emptyTalk`, `applyTalk(talk, name, data, id)`, `sentTalk`,
   `failedTalk`, `talkItems(talk)`; `liveIndex(talk)` the part marked LIVE). Node tests (`tests/phone/talk.test.mjs`):
   a snapshot replaces the conversation; a delta appends to its part as the model writes; a part replaces the part;
   removed takes a part or a message; status and waiting change theirs; a message sent shows at once and settles when
   the mirror heard it; `session` names the one to open.
-- [ ] 4. **The screen** (`page/app.js`, `page/style.css`): the session opened from Now, Work, a flow's box or a planning
+- [x] 4. **The screen** (`page/app.js`, `page/style.css`): the session opened from Now, Work, a flow's box or a planning
   draws from the stream (the header with the model's phase, speed and the window's share from the readout; the
   conversation's items; what waits in the session answered in place; the composer with Send, the message pending at
   once); the Guide sheet and the Context sheet (`Guide`, `Context 16%` buttons); the stream closed when the screen
   closes; `loadMessages` and `followSession` go.
-- [ ] 5. **Docs**: design 0025 §7 built and §11 step 2 whole; the roadmap (M9); the plan index; the generated pages.
+- [x] 5. **Docs**: design 0025 §7 built and §11 step 2 whole; the roadmap (M9); the plan index; the generated pages.
 
 ## Progress
 
-Written 2026-10-26. Tasks 1 and 2 built 2026-10-26 (the Guide's own rules stay its tests'; the listener's test cans
-the offer and checks the route's part). Tasks 3 to 5, the client's logic, the screen and the documents, are next.
+Written 2026-10-26. Built whole 2026-10-26: tasks 1 and 2 (the Guide's own rules stay its tests'; the listener's test
+cans the offer and checks the route's part), then the client's logic (`tests/phone/talk.test.mjs` mirrors the
+extension's cases, with the items and the live item), the screen (the Guide and the Context as sheets over the
+composer; the Guide's Drop opens the Context sheet, where each result has its own; the thought is folded by its
+characters, the Monitor's length; the figures and artifacts an agent shows wait for the file screen, step 3) and the
+documents. Its live look on the phone waits for the owner's pairing.

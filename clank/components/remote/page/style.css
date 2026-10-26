@@ -159,3 +159,28 @@ main.stale > *:not(.paused) { opacity: 0.55; }
 .steps { display: grid; gap: 2px; font-size: 12px; margin-top: 4px; }
 .step { overflow-wrap: anywhere; }
 .open-box { margin-top: 0; border-top: 0; }
+/* A session (design 0025 §7): the conversation's items, the live mark, the Guide and Context sheets over the composer. */
+.msg.pending { opacity: 0.6; }
+.fold .tool { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fold.open .tool { -webkit-line-clamp: unset; }
+.live {
+  margin-left: 1ch; padding: 0 5px; font-size: 10px; font-weight: 700; color: var(--deep); background: var(--good);
+  vertical-align: middle;
+}
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: calc(var(--bar) + env(safe-area-inset-bottom)); z-index: 4; max-height: 70vh;
+  overflow: auto; padding: 8px 12px 12px; background: var(--raised); border-top: 1px solid var(--accent);
+}
+.sheet-head { display: flex; align-items: center; justify-content: space-between; color: var(--accent); font-weight: 700; }
+.action { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.action .btns { align-items: center; margin-top: 0; }
+.action.off .muted { color: var(--dim); }
+.action .btn[disabled] { opacity: 0.5; }
+.bar.wide { height: 6px; background: var(--line); margin: 4px 0 8px; }
+.bar.wide i { display: block; height: 100%; background: var(--accent); }
+.bar.wide i.warn { background: var(--warn); } .bar.wide i.bad { background: var(--bad); }
+.share { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 1ch; padding: 3px 0; font-size: 12px; }
+.share .k { color: var(--muted); } .share .v { color: var(--dim); }
+.share .bar { grid-column: 1 / -1; height: 3px; background: var(--line); }
+.share .bar i { display: block; height: 100%; background: var(--accent); }
+.item { align-items: center; justify-content: space-between; margin-top: 4px; }

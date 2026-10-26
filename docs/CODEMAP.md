@@ -196,7 +196,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/remote/kinds.py` | The remote component's kind of record: how the phone reaches Clank (`config/remote.json`, design 0005 §4). |
 | `clank/components/remote/outbox.py` | The files the agents sent to the phone (design 0005 §3): each workspace's `.clank/outbox/`, where Clank's own MCP |
 | `clank/components/remote/page/app.js` | Clank's phone app (design 0025, decision 0143; the page of design 0005 made an installed app): live from one stream |
-| `clank/components/remote/page/model.mjs` | The phone app's logic that needs no browser (design 0025 §3 and §5): the live stream's state (live, reconnecting with |
+| `clank/components/remote/page/model.mjs` | The phone app's logic that needs no browser (design 0025 §3, §5, §6 and §7): the live stream's state (live, |
 | `clank/components/remote/page/sw.js` | The phone app's service worker (design 0025 §3): it keeps the app's shell (the page, its script, its style, its icon) |
 | `clank/components/remote/qr.py` | The QR code the console shows for the phone's pair link (design 0025 §2, decision 0144), drawn as text. |
 | `clank/components/remote/service.py` | The remote component's part in the service (design 0005, decision 0012): the phone page and who may reach it. |

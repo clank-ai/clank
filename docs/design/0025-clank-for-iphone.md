@@ -21,11 +21,11 @@ page and push alerts, a service the owner switches on and off) and design 0023 �
 | 4 | Notifications | Approved 2026-10-21 (the canvas); written 2026-10-26; its dependency decided when built |
 | 5 | Now | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)) on the live stream; the Flows tab shows the flows' questions until step 2 brings the Flow view |
 | 6 | Flows: the list, a flow, building one, a gate | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s58](../plans/s58-the-phone-flows.md)): the list from the service's summaries with its filters, a flow with its controls, boxes, proposals and planning steps, a gate as its question with the files it shows; the deliverables' sizes wait for the file screen (step 3) |
-| 7 | A session, the Guide, its context | Approved 2026-10-21 (the canvas); written 2026-10-26 |
+| 7 | A session, the Guide, its context | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s59](../plans/s59-the-phone-session.md)): the session's screen on the conversation stream (the words as the model writes them, the live item marked, a message shown at once), the Guide and the context as sheets, every action the device's; the thought is folded by its characters (the Monitor's length); the figures and artifacts an agent shows wait for the file screen (step 3) |
 | 8 | Work and Files | Approved 2026-10-21 (the canvas); written 2026-10-26 |
 | 9 | More: activity, models, cost, settings | Approved 2026-10-21 (the canvas); written 2026-10-26 |
 | 10 | Choices made since the canvas | Proposed 2026-10-26 (the owner may change any) |
-| 11 | Order of work | Proposed 2026-10-26; step 1 built 2026-10-26; step 2's flows half built 2026-10-26 |
+| 11 | Order of work | Proposed 2026-10-26; step 1 built 2026-10-26; step 2 built 2026-10-26 (its flows half, then its session half) |
 
 ## 1. What it is, and what leaves the PC
 
@@ -206,7 +206,8 @@ The canvas left these to the owner; Clank takes the canvas's defaults until the 
    Now with its cards, the tabs, the reconnecting and offline screens; the console's Phone page shows the QR.
    Built 2026-10-26.
 2. Flows, a flow, building one, a gate (§6; built 2026-10-26, [plan s58](../plans/s58-the-phone-flows.md)); a session with
-   the Guide and its context (§7), on the conversation stream (plan s59).
+   the Guide and its context (§7), on the conversation stream (built 2026-10-26,
+   [plan s59](../plans/s59-the-phone-session.md)).
 3. Work, a workspace, New task, Files and a file (§8).
 4. Notifications (§4): the dependency decision, the VAPID keys, the subscriptions per device, the sender, Settings.
 5. More: Activity, Models with the switch, Cost with Raise (§9).

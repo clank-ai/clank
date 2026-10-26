@@ -513,7 +513,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner felt, measured | none yet |
 | 2 | The conversation is read from the service's mirror | `tests/components/agents/test_conversation_mirror.py` (1), `tests/components/agents/test_mirror.py` (7), `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_monitor_watch.py` (12) |
-| 3 | Pushed, not polled: the conversation stream | `tests/components/agents/test_conversation_stream.py` (4), `tests/components/remote/test_phone_session.py` (3), `vscode/test/talking.test.ts` (4) |
+| 3 | Pushed, not polled: the conversation stream | `tests/components/agents/test_conversation_stream.py` (4), `tests/components/remote/test_phone_session.py` (3), `vscode/test/talking.test.ts` (4), `tests/phone/talk.test.mjs` (6) |
 | 4 | Acting without waiting: the resident bridge | `tests/components/agents/test_conversation_mirror.py` (1), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_watch_channel.py` (4) |
 | 5 | What the owner sees | `vscode/test/following.test.ts` (3), `vscode/test/talking.test.ts` (4) |
 | 6 | Measurements that hold it to its word | `tests/components/agents/test_conversation_stream.py` (4) |
@@ -543,7 +543,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | Notifications | `tests/components/remote/test_phone_shell.py` (4) |
 | 5 | Now | `tests/phone/model.test.mjs` (5) |
 | 6 | Flows: the list, a flow, building one, a gate | `tests/components/flows/test_summaries.py` (9), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/phone/flows.test.mjs` (3) |
-| 7 | A session, the Guide, its context | `tests/components/remote/test_phone_session.py` (3) |
+| 7 | A session, the Guide, its context | `tests/components/remote/test_phone_session.py` (3), `tests/phone/talk.test.mjs` (6) |
 | 8 | Work and Files | none yet |
 | 9 | More: activity, models, cost, settings | none yet |
 | 10 | Choices made since the canvas | none yet |
@@ -5053,3 +5053,14 @@ Design 0025 §3 and §5: the phone app's logic that needs no browser. The stream
 - the machine is four gauges, those it reports
 - what waits is counted across the asks, the marks and Clank's questions; what works is listed newest first
 - the offline screen's summary holds names and numbers only
+
+### `tests/phone/talk.test.mjs`
+
+Design 0025 §7: a session's talk on the phone, built from the conversation stream's events as the extension's client builds it (design 0023 §3). A snapshot replaces the conversation and its version; a message, a part, a delta and a removal change one thing each, a delta appending to its part's text as the model writes; the status says whether the session works; the waits replace the waits; the readout is kept for the header; `session` names the session to open instead. A message sent shows at once as pending, settles when its message arrives from the mirror, and is given back when the send fails. The items drawn are the conversation's (the owner's words, the model's text, its thinking with its length, each call in one line, a failed step, a compaction), then the pending ones; the live item is the last of the message the model writes, while the session works.
+
+- a snapshot replaces the conversation and its version
+- a message, a part, a delta and a removal change one thing each, in the message's order
+- the status, the waits, the readout and the session to open instead
+- a message sent shows at once, settles when its message arrives, and is given back when the send fails
+- the items are the owner's words, the text, the thinking with its length, each call in one line, a failed step and a compaction
+- the live item is the last of the model's newest message while the session works
