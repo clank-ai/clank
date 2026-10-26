@@ -206,3 +206,45 @@ def test_a_server_the_watch_no_longer_follows_leaves_its_sessions_without_a_port
     mirror.heard(W, {"type": "gone", "port": 4100})
     assert mirror.port(W, "ses_b") is None
     assert [each["id"] for each in mirror.sessions(W)] == ["ses_b", "ses_a"], "still known, newest first"
+
+
+def test_each_change_is_kept_with_its_version_and_subscribers_hear_each_new_one(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Design 0023 §3: the stream sends what changed since a client's version, or a snapshot when it is behind."""
+    monkeypatch.setattr(mirror_module, "CHANGES", 6)
+    mirror = Mirror()
+    mirror.follow(W, S)
+    mirror.merge(W, S, {"messages": [], "next": ""})
+    heard: list[int] = []
+    stop = mirror.subscribe(W, S, heard.append)
+    v0 = mirror.version(W, S)
+    mirror.heard(W, status_line("busy"))
+    mirror.heard(W, message_line("msg_02", "user", 200))
+    mirror.heard(W, delta_line("prt_02b", "msg_02", "Hi"))
+    mirror.heard(W, {"type": "asked", "port": 4096, "request": {
+        "id": "per_1", "sessionID": S, "permission": "edit", "patterns": [], "metadata": {}}})  # fmt: skip
+    changes = mirror.changes_since(W, S, v0)
+    assert changes is not None
+    assert [event["type"] for _, event in changes] == ["status", "message", "delta", "waiting"]
+    assert changes[0][1] == {"type": "status", "busy": True, "status": "busy"}
+    assert changes[1][1]["message"]["id"] == "msg_02"
+    assert changes[2][1] == {"type": "delta", "message": "msg_02", "part": "prt_02b", "text": "Hi"}
+    assert changes[3][1]["waiting"]["permissions"][0]["id"] == "per_1"
+    assert [version for version, _ in changes] == list(range(v0 + 1, v0 + 5))
+    assert heard == [version for version, _ in changes], "each new version, told"
+    assert mirror.changes_since(W, S, mirror.version(W, S)) == []
+    mirror.merge(W, S, {"messages": [], "next": ""})
+    latest = mirror.changes_since(W, S, v0)
+    assert latest is not None
+    assert latest[-1][1] == {"type": "snapshot"}, "a merge changes more than one thing: read the whole again"
+    stop()
+    mirror.heard(W, status_line("idle"))
+    assert heard[-1] != mirror.version(W, S), "unsubscribed"
+    mirror.heard(W, status_line("busy"))
+    assert mirror.changes_since(W, S, v0) is None, "behind the six changes kept: a snapshot is due"
+    assert mirror.changes_since(W, S, -1) is None
+    kept = mirror.changes_since(W, S, mirror.version(W, S) - 2)
+    assert kept is not None
+    assert len(kept) == 2
+    assert mirror.changes_since("elsewhere", S, 0) is None, "not held: a snapshot says so"

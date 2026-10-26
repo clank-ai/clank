@@ -21,6 +21,7 @@ Bounded: past `FULL_BYTES` of text in one session, the oldest parts' text falls 
 """
 
 import threading
+from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from time import monotonic
@@ -29,8 +30,10 @@ from typing import Any
 FORGET_MINUTES = 30  # a session no client read for this long is forgotten
 FULL_BYTES = 4_000_000  # of a session's text and outputs held whole, at most
 TEXT = 6000  # the brief a part's text falls back to (the bridge's TEXT)
+CHANGES = 2000  # changes kept with their versions for the stream (design 0023 §3); a client behind them gets a snapshot
 AT_WORK = ("busy", "retry")  # a session's status while it works (as `sessions.py` says it)
 WAITS = ("asked", "replied", "question", "answered")
+Subscriber = Callable[[int], None]
 
 
 def _cut(text: str, limit: int) -> str:
@@ -50,6 +53,16 @@ class Conversation:
     history_next: str = ""  # OpenCode's cursor for what comes before the oldest message held ("" at the first)
     version: int = 0
     read_at: float = 0.0  # when a client last read it (the clock's seconds)
+    changes: deque[tuple[int, dict[str, Any]]] = field(default_factory=lambda: deque(maxlen=CHANGES))
+    log_from: int = 1  # the version of the oldest change the log could hold (older ones were dropped)
+
+    def changed(self, event: dict[str, Any]) -> int:
+        """One more change, kept with its new version; the version."""
+        self.version += 1
+        if self.changes.maxlen is not None and len(self.changes) == self.changes.maxlen:
+            self.log_from = self.changes[1][0]
+        self.changes.append((self.version, event))
+        return self.version
 
     def ordered(self) -> list[dict[str, Any]]:
         """The messages in time order, each with its parts."""
@@ -79,6 +92,8 @@ class Mirror:
         self._held: dict[tuple[str, str], Conversation] = {}
         self._permissions: dict[str, dict[str, dict[str, Any]]] = {}  # by workspace, then request id
         self._questions: dict[str, dict[str, dict[str, Any]]] = {}
+        self._subscribers: dict[tuple[str, str], list[Subscriber]] = {}
+        self._told: list[tuple[Subscriber, int]] = []  # versions to tell once the lock is released
 
     # -- following
 
@@ -145,6 +160,46 @@ class Mirror:
             held = self._held.get((workspace, session))
             return held.version if held is not None else 0
 
+    # -- the stream's part (design 0023 §3)
+
+    def subscribe(self, workspace: str, session: str, told: Subscriber) -> Callable[[], None]:
+        """Hear each new version of the conversation (told outside the mirror's lock); what unsubscribes."""
+        key = (workspace, session)
+        with self._lock:
+            self._subscribers.setdefault(key, []).append(told)
+
+        def stop() -> None:
+            with self._lock:
+                listeners = self._subscribers.get(key, [])
+                if told in listeners:
+                    listeners.remove(told)
+
+        return stop
+
+    def changes_since(self, workspace: str, session: str, version: int) -> list[tuple[int, dict[str, Any]]] | None:
+        """The changes after `version`, each with its own; None when the log no longer reaches back that far, or the
+        session is not held: a snapshot is due then."""
+        with self._lock:
+            held = self._held.get((workspace, session))
+            if held is None or version + 1 < held.log_from:
+                return None
+            return [(each, event) for each, event in held.changes if each > version]
+
+    def _changed(self, held: Conversation, event: dict[str, Any]) -> None:
+        """A change of a held conversation: kept, and its subscribers told once the lock is released."""
+        version = held.changed(event)
+        for told in self._subscribers.get((held.workspace, held.session), []):
+            self._told.append((told, version))
+
+    def _tell(self) -> None:
+        """Tell the subscribers what `_changed` gathered; outside the lock, so a subscriber may read the mirror."""
+        while True:
+            with self._lock:
+                if not self._told:
+                    return
+                told, version = self._told.pop(0)
+            told(version)
+
     # -- what the watchers say
 
     def heard(self, workspace: str, line: dict[str, Any]) -> None:
@@ -162,10 +217,12 @@ class Mirror:
             elif kind in ("message", "part", "delta", "removed"):
                 held = self._held.get((workspace, str(line.get("session") or "")))
                 if held is not None:
-                    getattr(self, f"_{kind}")(held, line)
-                    held.version += 1
-                    if kind in ("part", "delta"):
-                        self._bound(held)
+                    event = getattr(self, f"_{kind}")(held, line)
+                    if event is not None:
+                        self._changed(held, event)
+                    if kind in ("part", "delta") and self._bound(held):
+                        self._changed(held, {"type": "snapshot"})
+        self._tell()
 
     def _session(self, workspace: str, line: dict[str, Any]) -> None:
         info = line.get("session") or {}
@@ -191,7 +248,7 @@ class Mirror:
             record["port"] = line["port"]
         held = self._held.get((workspace, id))
         if held is not None:
-            held.version += 1
+            self._changed(held, {"type": "status", "busy": record["status"] in AT_WORK, "status": record["status"]})
 
     def _servers_left(self, workspace: str, line: dict[str, Any]) -> None:
         """A watch synced (the ports it follows now), or a server gone or its instance ended: the sessions of a server
@@ -222,42 +279,52 @@ class Mirror:
             self._permissions.get(workspace, {}).pop(str(request), None)
         elif kind == "answered":
             self._questions.get(workspace, {}).pop(str(request), None)
-        held = self._held.get((workspace, str(line.get("session") or "")))
+        session = str(line.get("session") or "")
+        if kind in ("asked", "question") and isinstance(request, dict):
+            session = str(request.get("sessionID") or request.get("session") or session)
+        held = self._held.get((workspace, session))
         if held is not None:
-            held.version += 1
+            self._changed(held, {"type": "waiting", "waiting": self.waiting(workspace, session)})
 
-    def _message(self, held: Conversation, line: dict[str, Any]) -> None:
+    def _message(self, held: Conversation, line: dict[str, Any]) -> dict[str, Any] | None:
         info = line.get("message") or {}
-        if info.get("id"):
-            held.messages[str(info["id"])] = {**held.messages.get(str(info["id"]), {}), **info}
+        if not info.get("id"):
+            return None
+        held.messages[str(info["id"])] = {**held.messages.get(str(info["id"]), {}), **info}
+        return {"type": "message", "message": held.messages[str(info["id"])]}
 
-    def _part(self, held: Conversation, line: dict[str, Any]) -> None:
+    def _part(self, held: Conversation, line: dict[str, Any]) -> dict[str, Any] | None:
         part = line.get("part") or {}
-        if part.get("id") and part.get("message"):
-            held.parts.setdefault(str(part["message"]), {})[str(part["id"])] = dict(part)
+        if not part.get("id") or not part.get("message"):
+            return None
+        held.parts.setdefault(str(part["message"]), {})[str(part["id"])] = dict(part)
+        return {"type": "part", "message": str(part["message"]), "part": dict(part)}
 
-    def _delta(self, held: Conversation, line: dict[str, Any]) -> None:
+    def _delta(self, held: Conversation, line: dict[str, Any]) -> dict[str, Any] | None:
         message, part_id, field_name = str(line.get("message") or ""), str(line.get("part") or ""), line.get("field")
         if not message or not part_id or field_name != "text":
-            return
+            return None
         parts = held.parts.setdefault(message, {})
         part = parts.setdefault(part_id, {"id": part_id, "message": message, "type": "text", "text": "", "whole": True})
-        part["text"] = str(part.get("text") or "") + str(line.get("text") or "")
+        text = str(line.get("text") or "")
+        part["text"] = str(part.get("text") or "") + text
         part["length"] = len(part["text"])
+        return {"type": "delta", "message": message, "part": part_id, "text": text}
 
-    def _removed(self, held: Conversation, line: dict[str, Any]) -> None:
+    def _removed(self, held: Conversation, line: dict[str, Any]) -> dict[str, Any] | None:
         message = str(line.get("message") or "")
         if line.get("part"):
             held.parts.get(message, {}).pop(str(line["part"]), None)
-        else:
-            held.messages.pop(message, None)
-            held.parts.pop(message, None)
+            return {"type": "removed", "message": message, "part": str(line["part"])}
+        held.messages.pop(message, None)
+        held.parts.pop(message, None)
+        return {"type": "removed", "message": message}
 
-    def _bound(self, held: Conversation) -> None:
-        """Past `FULL_BYTES`, the oldest parts' text falls back to its brief."""
+    def _bound(self, held: Conversation) -> bool:
+        """Past `FULL_BYTES`, the oldest parts' text falls back to its brief; whether anything fell back."""
         total = held.bytes_held()
         if total <= FULL_BYTES:
-            return
+            return False
         for message in held.ordered():
             for part in message["parts"]:
                 text = str(part.get("text") or "")
@@ -265,7 +332,8 @@ class Mirror:
                     part["text"], part["whole"] = _cut(text, TEXT), False
                     total -= len(text) - len(part["text"])
                     if total <= FULL_BYTES:
-                        return
+                        return True
+        return True
 
     # -- history
 
@@ -294,8 +362,9 @@ class Mirror:
             if not held.complete or oldest_held is None or (page_oldest is not None and page_oldest <= oldest_held):
                 held.history_next = str(page.get("next") or "")
             held.complete = True
-            held.version += 1
+            self._changed(held, {"type": "snapshot"})
             self._bound(held)
+        self._tell()
 
     # -- what clients read
 
