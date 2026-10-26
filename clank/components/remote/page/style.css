@@ -187,13 +187,12 @@ main.stale > *:not(.paused) { opacity: 0.55; }
 /* The app shell (design 0025 §3, revised 2026-10-26): the page never scrolls; the header, the attention line, the
    middle and the tab bar are rows of one column the size of what the screen shows, and only the middle scrolls. A bar
    fixed to the page sat higher on a page too short to scroll (every tab but Work, on the owner's iPhone); nothing is
-   fixed to the page any more. With the keyboard up the column shrinks to what stays visible and the tab bar steps
-   aside, so the composer stays above the keyboard. */
+   fixed to the page any more. At rest the column fills the screen by itself (inset 0: iOS reports a home screen app's
+   visible height short of the screen, which left the bar above the bottom); only while the keyboard is up does it
+   follow the visible part, so the composer stays above the keyboard, and the tab bar steps aside. */
 html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
-body {
-  position: fixed; left: 0; right: 0; top: var(--view-top, 0px); height: var(--view-height, 100%);
-  display: flex; flex-direction: column; padding: 0;
-}
+body { position: fixed; inset: 0; display: flex; flex-direction: column; padding: 0; }
+body.keyboard { bottom: auto; top: var(--view-top, 0px); height: var(--view-height, 100%); }
 .top { position: relative; flex: none; }
 .attention { position: relative; top: auto; flex: none; }
 main { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }

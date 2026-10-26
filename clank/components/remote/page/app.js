@@ -1102,15 +1102,18 @@ function stream(again = false) {
   });
 }
 
-// The column is the size of what the screen shows (style.css, the app shell): the visual viewport, which shrinks and
-// moves when the keyboard opens; with the keyboard up the tab bar steps aside.
+// The column fills the screen by itself (style.css, the app shell); while the keyboard is up (a field has the focus and
+// the visible part is much shorter than the page) it follows the visible part instead, and the tab bar steps aside.
 function fitView() {
   const seen = window.visualViewport;
-  const height = seen ? seen.height : window.innerHeight;
+  const field = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  const up = Boolean(seen) && field && window.innerHeight - seen.height > 120;
   const root = document.documentElement.style;
-  root.setProperty("--view-height", `${Math.round(height)}px`);
-  root.setProperty("--view-top", `${Math.round(seen ? seen.offsetTop : 0)}px`);
-  document.body.classList.toggle("keyboard", Boolean(seen) && window.innerHeight - height > 120);
+  if (up) {
+    root.setProperty("--view-height", `${Math.round(seen.height)}px`);
+    root.setProperty("--view-top", `${Math.round(seen.offsetTop)}px`);
+  }
+  document.body.classList.toggle("keyboard", up);
 }
 
 // The launch screen (index.html) says what the app waits for: the step it is at, how long it has waited and, past a
@@ -1193,5 +1196,7 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener("scroll", fitView);
 }
 window.addEventListener("resize", fitView);
+document.addEventListener("focusin", fitView);
+document.addEventListener("focusout", () => setTimeout(fitView, 60));
 fitView();
 start();
