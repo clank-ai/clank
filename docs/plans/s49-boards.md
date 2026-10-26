@@ -37,7 +37,7 @@ each kept in `.clank/boards/<name>/history/`); the owner's by the editor, saved 
 
 ## Tasks
 
-- [ ] 1. **Boards in the service** (`agents/boards.py`): the file read and checked, `new`, `describe` (the board in
+- [x] 1. **Boards in the service** (`agents/boards.py`): the file read and checked, `new`, `describe` (the board in
   words for the model: each item with its id, kind, place, size and what it shows, what each frame holds, the open
   slots and pins, and the owner's annotations said by what they are over), `add`, `update`, `remove`, with history;
   figures sized from their files (PNG, JPEG, GIF, WebP, SVG). Placement (`boards_place.py`, pure): `at` is
@@ -46,16 +46,16 @@ each kept in `.clank/boards/<name>/history/`); the owner's by the editor, saved 
   on until it overlaps nothing. Routes `POST /agents/boards` (new), `GET /agents/boards?workspace=`,
   `GET /agents/boards/read?workspace=&board=`, `POST /agents/boards/add|update|remove`; events
   `agents.board_changed`; `clank board new|list`.
-- [ ] 2. **The agent's tools**: `board_new`, `board_read`, `board_add`, `board_update`, `board_remove` in Clank's MCP
+- [x] 2. **The agent's tools**: `board_new`, `board_read`, `board_add`, `board_update`, `board_remove` in Clank's MCP
   server, forwarded by the gateway; the instructions (`boards.md`); the agent panel's line for each change.
-- [ ] 3. **The editor** (`clank.board`, a custom text editor for `*.board`): the pure part (`core/board.ts`: geometry,
+- [x] 3. **The editor** (`clank.board`, a custom text editor for `*.board`): the pure part (`core/board.ts`: geometry,
   snapping, what moves with what, the operations) with Node tests; the page (`media/board.{html,js,css}`) with its Edge
   test: pan and zoom, figures, notes (Markdown), math (KaTeX), frames, slots, select, move, resize (a figure keeps its
   aspect), snap, align, delete, duplicate, nudge, the toolbar's tools, files dropped and images pasted; saved as made;
   VS Code's undo and redo; the agent's changes drawn when the file changes.
-- [ ] 4. **Annotations and asking**: pen, arrow, highlight and pin; select-and-ask, Fill a slot, Send pins, each a
+- [x] 4. **Annotations and asking**: pen, arrow, highlight and pin; select-and-ask, Fill a slot, Send pins, each a
   message to the agent's session naming the items.
-- [ ] 5. **Compiled LaTeX**: `POST /agents/boards/latex` builds a `standalone` document with the board's preamble in
+- [x] 5. **Compiled LaTeX**: `POST /agents/boards/latex` builds a `standalone` document with the board's preamble in
   the folder's container (the TeX layer), pdfLaTeX then `pdftocairo -svg`, glyphs flattened, kept by the source's hash
   in `.clank/boards/<name>/latex/`; a LaTeX item in `compiled` mode shows it, or its error.
 - [ ] 6. **Export**: a frame or the selection to SVG and PNG (made in the page), and to PDF (a `standalone` LaTeX
@@ -67,3 +67,12 @@ each kept in `.clank/boards/<name>/history/`); the owner's by the editor, saved 
 ## Progress
 
 Written 2026-10-26.
+
+- Tasks 1-4 built and pushed 2026-10-26 (the service, the agent's tools, the editor, annotations and asking).
+- Task 7, first half: the real model made a board in a throwaway folder (two plots side by side, the period formula
+  under them, all framed as "Figure 1") with the tools alone. The editor had opened it at 10 %: it was fitted while its
+  tab was behind another and had no size. Now a fit waits for a size, and the view follows what the agent places until
+  the owner pans or zooms (fitting follows again).
+- Task 5 built: compiled LaTeX (`boardlatex.py`). Found while building: this TeX layer's `pdftocairo` writes sizes
+  without units (points still), and the agent should hear at once whether its TikZ builds, so `board_add` and
+  `board_update` of a compiled item build it, size it from its drawing and say so, or say LaTeX's error.

@@ -1,9 +1,10 @@
-// Design 0022 §2-§3: the board editor's pure core. A board is read from its file and written back in the same shape;
+// Design 0022 §2-§3 and §6: the board editor's pure core. A board is read from its file and written back in the same shape;
 // an item inside a frame moves with the frame, and the owner's pen strokes, highlights and pins over an item move with
 // the item; a move snaps the moved box's edges or center to another item's (within a few pixels) or else to the grid,
 // and says the guide it snapped to; a figure resized keeps its aspect; a selection aligns, takes one width, or spreads
 // evenly; new items get the next id and their kind's size; edits are operations (set, add, remove) applied in order;
-// and what the owner selects is named for the agent by id and what it shows.
+// what the owner selects is named for the agent by id and what it shows; and a compiled LaTeX item's drawing is asked
+// for once per source, keeping its last drawing while its source does not build.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -14,6 +15,7 @@ import {
   type BoardItem,
   applyOps,
   askMessage,
+  Drawings,
   fillMessage,
   overWords,
   pinsMessage,
@@ -136,4 +138,23 @@ test("a slot to fill and the open pins are each a message naming what the agent 
   );
   assert.equal(overWords(BOARD, 260, 125), "the upper middle of fig-1");
   assert.equal(overWords(BOARD, 2000, 2000), "the board");
+});
+
+test("a compiled drawing is asked for once per source, and a source that does not build keeps the last drawing", () => {
+  const drawings = new Drawings();
+  const board = (source: string): Board => ({ ...BOARD, items: [
+    { id: "latex-9", kind: "latex", x: 0, y: 0, w: 300, h: 200, source, mode: "compiled" },
+    { id: "latex-2", kind: "latex", x: 0, y: 0, w: 300, h: 80, source: "x", mode: "math" },
+  ] });  // prettier-ignore
+  const first = board("A");
+  assert.deepEqual(drawings.wanted(first).map((each) => each.id), ["latex-9"], "math is drawn at once, in the page");
+  assert.deepEqual(drawings.wanted(first), [], "asked once");
+  assert.deepEqual(drawings.shown(first), { "latex-9": {} }, "building");
+  drawings.answer(drawings.key(first, first.items[0]), { svg: "<svg>A</svg>" });
+  assert.deepEqual(drawings.shown(first), { "latex-9": { svg: "<svg>A</svg>" } });
+  const broken = board("A}");
+  const [asked] = drawings.wanted(broken);
+  drawings.answer(asked.key, { error: "Too many }'s." });
+  assert.deepEqual(drawings.shown(broken), { "latex-9": { svg: "<svg>A</svg>", error: "Too many }'s." } });
+  assert.deepEqual(drawings.wanted(first), [], "the first source is still drawn");
 });

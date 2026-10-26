@@ -753,6 +753,12 @@ def router(agents: "Agents") -> APIRouter:
         """Take an item away from a board (its history keeps it)."""
         return await boarded(lambda: agents.boards.remove(wanted.workspace, wanted.board, wanted.id))
 
+    @routes.post("/agents/boards/latex")
+    async def board_latex(wanted: BoardChange) -> dict[str, Any]:
+        """A compiled LaTeX item's drawing (design 0022 §6), built in the folder's container once for its source:
+        `file`, its SVG's path from the folder, or `error`, why it does not build. The owner's window asks for it."""
+        return await boarded(lambda: agents.boards.compile_latex(wanted.workspace, wanted.board, wanted.id))
+
     @routes.post("/agents/artifacts")
     async def make_artifact(wanted: ArtifactRequest) -> dict[str, Any]:
         """Make an artifact, or its next version, from files of the workspace's folder (design 0021 §5): the agent's,

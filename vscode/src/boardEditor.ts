@@ -12,7 +12,8 @@ import * as path from "node:path";
 
 import * as vscode from "vscode";
 
-import { applyOps, askMessage, type Board, fillMessage, type Op, parseBoard, pinsMessage, serializeBoard } from "./core/board";
+import type { AgentApi } from "./core/agent";
+import { applyOps, askMessage, type Board, type Drawing, Drawings, fillMessage, type Op, parseBoard, pinsMessage, serializeBoard } from "./core/board";
 
 export const BOARD_EDITOR = "clank.board";
 const IMAGE = /\.(png|jpe?g|gif|webp|svg)$/i;
@@ -21,6 +22,7 @@ const MEDIA_FOLDER = "board-media";
 /** What the editor needs of the rest of the extension. */
 export interface BoardHost {
   tell(text: string): Promise<void>; // a message to the agent's session
+  api(): AgentApi | undefined; // the service, when it runs
   info(text: string): void;
   warn(text: string): void;
 }
@@ -80,6 +82,8 @@ export class BoardEditor implements vscode.CustomTextEditorProvider {
         return EMPTY;
       }
     };
+    const drawings = new Drawings();
+    let workspace: string | undefined;
     let writing = 0; // the owner's own edits being written, which need no word
     let said = "";
     let posting: ReturnType<typeof setTimeout> | undefined;
@@ -103,8 +107,27 @@ export class BoardEditor implements vscode.CustomTextEditorProvider {
           // not in the folder: the page says so
         }
       }
-      void webview.postMessage({ type: "board", board, path: relative(), uris, said });
+      for (const wanted of drawings.wanted(board)) void draw(wanted);
+      void webview.postMessage({ type: "board", board, path: relative(), uris, said, compiled: drawings.shown(board) });
       said = "";
+    };
+    // A compiled LaTeX item's drawing, built by the service in the folder's container; the page draws it inline (so
+    // its black takes the board's text color) once it is here.
+    const draw = async (wanted: { id: string; key: string }): Promise<void> => {
+      let drawing: Drawing;
+      try {
+        const api = this.host.api();
+        if (!api) throw new Error("the Clank service does not run, so this LaTeX cannot be compiled: `clank serve --background` starts it");
+        workspace ??= (await api.get<{ workspace?: string }>("workspaces/folder", { folder: folder.fsPath })).workspace;
+        if (!workspace) throw new Error("this folder is not one of Clank's workspaces yet: `clank code` here makes it one");
+        const made = await api.post<{ file?: string; error?: string }>("agents/boards/latex", { workspace, board: relative(), id: wanted.id });
+        const file = made.file ? vscode.Uri.joinPath(folder, ...made.file.split("/")) : undefined;
+        drawing = file ? { svg: new TextDecoder().decode(await vscode.workspace.fs.readFile(file)) } : { error: made.error ?? "it did not build" };
+      } catch (error) {
+        drawing = { error: error instanceof Error ? error.message : String(error) };
+      }
+      drawings.answer(wanted.key, drawing);
+      later();
     };
     const later = (wait = 40): void => {
       clearTimeout(posting);

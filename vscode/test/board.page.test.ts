@@ -5,6 +5,9 @@
 // snapped (to another item's edge, or the grid); a box dragged on the empty canvas selects what it touches and the selection's bar aligns it; Delete
 // removes; a double click edits a note in place; the pen draws a stroke; Ctrl and the wheel zoom; the selection is
 // asked about, a slot is filled, and Clank Night is drawn when the extension says so. A screenshot is left in out/test/.
+// The view follows what the agent places until the owner pans or zooms (fitting follows again), and fits only once
+// the editor has a size (a tab behind another has none: it opened at 10 % before). A compiled LaTeX item shows that it
+// builds, then its drawing inline, with the error of a source that does not build under the last drawing (§6).
 
 import assert from "node:assert/strict";
 import { mkdtempSync, writeFileSync } from "node:fs";
@@ -140,6 +143,56 @@ test("the board's page draws a board and turns the owner's mouse and keys into e
     await browser.evaluate("document.getElementById('zoom-level').click()");
     const screenshot = (await browser.send("Page.captureScreenshot", { format: "png" })) as { data: string };
     writeFileSync(path.join(__dirname, "board.png"), Buffer.from(screenshot.data, "base64"));
+  } finally {
+    await browser.close();
+    removeFolder(folder);
+  }
+});
+
+test("the board's view follows what the agent places until the owner zooms, and waits for a size to fit", { skip: EDGE ? false : "no Edge here" }, async () => {
+  const folder = mkdtempSync(path.join(tmpdir(), "clank-board-"));
+  const files = {
+    css: "board.css", script: "board.js", core: "../out/src/core/board.js", marked: `${LIB}/marked.min.js`,
+    katex: `${LIB}/katex.min.js`, katexCss: `${LIB}/katex.min.css`,
+  };  // prettier-ignore
+  const browser = await Browser.open(webviewPage(folder, "board.html", files), path.join(folder, "profile"));
+  const post = (message: unknown): Promise<unknown> => browser.evaluate(`window.postMessage(${JSON.stringify(message)}, "*")`);
+  const zoom = (): Promise<string> => browser.evaluate<string>("document.getElementById('zoom-level').textContent");
+  const note = (id: string, x: number): Board["items"][number] => ({ id, kind: "note", x, y: 80, w: 280, h: 120, text: id });
+  const board = (...items: Board["items"]): Board => ({ board: 1, title: "t", settings: { grid: 20, preamble: "" }, items });
+  try {
+    await browser.until("document.readyState === 'complete' && Array.isArray(window.posted) && window.posted.length > 0");
+    await browser.evaluate("document.getElementById('viewport').style.maxWidth = '40px'");
+    await post({ type: "board", board: board(note("note-1", 80)), path: "b.board" });
+    await browser.until("document.querySelectorAll('#items .item').length === 1");
+    assert.equal(await zoom(), "100 %", "no fit while the editor has no size (a tab behind another)");
+    await browser.evaluate("document.getElementById('viewport').style.maxWidth = ''");
+    await browser.until("document.getElementById('zoom-level').textContent !== '100 %'");
+    const near = await zoom();
+    assert.notEqual(near, "10 %", "fitted once it has a size");
+
+    await post({ type: "board", board: board(note("note-1", 80), note("note-2", 3000)), path: "b.board" });
+    await browser.until(`document.getElementById('zoom-level').textContent !== ${JSON.stringify(near)}`);
+    const far = await zoom();
+    assert.ok(Number.parseInt(far) < Number.parseInt(near), "the agent's far note brought into view");
+
+    const middle = await center(browser, "#viewport");
+    await browser.send("Input.dispatchMouseEvent", { type: "mouseWheel", x: middle.x, y: middle.y, deltaX: 0, deltaY: -240, modifiers: 2 });
+    await browser.until(`document.getElementById('zoom-level').textContent !== ${JSON.stringify(far)}`);
+    const chosen = await zoom();
+    await post({ type: "board", board: board(note("note-1", 80), note("note-2", 3000), note("note-3", 6000)), path: "b.board" });
+    await browser.until("document.querySelectorAll('#items .item').length === 3");
+    assert.equal(await zoom(), chosen, "the owner's zoom is kept");
+    await browser.evaluate("document.getElementById('zoom-level').click()");
+    assert.ok(Number.parseInt(await zoom()) < Number.parseInt(far), "fitting follows again");
+
+    const tikz = { id: "latex-4", kind: "latex", x: 80, y: 300, w: 200, h: 100, source: "\\tikz\\draw (0,0)--(1,0);", mode: "compiled" };
+    await post({ type: "board", board: board(tikz), path: "b.board", compiled: { "latex-4": {} } });
+    await browser.until("document.querySelector('.item.latex .missing')?.textContent === 'Compiling with TeX…'");
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="27" viewBox="0 0 72 20"><path d="M 0 5 L 72 5" stroke="currentColor"></path></svg>';
+    await post({ type: "board", board: board(tikz), path: "b.board", compiled: { "latex-4": { svg, error: "Too many }'s." } } });
+    await browser.until("!!document.querySelector('.item.latex .drawing svg path')");
+    assert.equal(await browser.evaluate("document.querySelector('.item.latex .problem').textContent"), "Too many }'s.", "the last drawing, and why the source does not build");
   } finally {
     await browser.close();
     removeFolder(folder);

@@ -338,3 +338,52 @@ export function pinsMessage(path: string, board: Board): string {
   return `On the board ${path}, the owner pinned comments:\n${lines.join("\n")}\n\n` +
     `Do what each asks, then close it with board_update(id=..., open=false).\n\n${TOOLS_SAID}`;  // prettier-ignore
 }
+
+/** A compiled LaTeX item as the page shows it: its drawing's SVG markup, why its source does not build, or neither
+ * while it builds. */
+export interface Drawing {
+  svg?: string;
+  error?: string;
+}
+
+/** The compiled LaTeX items' drawings (design 0022 §6), by their source and the board's preamble: which to ask the
+ * service for (each source once), and what each item shows: its source's drawing, or, while its source does not
+ * build, its last drawing with the error under it. */
+export class Drawings {
+  private readonly made = new Map<string, Drawing>(); // by key
+  private readonly asked = new Set<string>();
+  private readonly last = new Map<string, string>(); // an item's last drawing, by its id
+
+  key(board: Board, item: BoardItem): string {
+    return `${board.settings.preamble}\0${String(item.source ?? "")}`;
+  }
+
+  /** The compiled items whose source is neither drawn nor asked for yet; they count as asked from now. */
+  wanted(board: Board): { id: string; key: string }[] {
+    const wanted: { id: string; key: string }[] = [];
+    for (const item of board.items) {
+      const key = this.key(board, item);
+      if (item.kind !== "latex" || item.mode !== "compiled" || this.made.has(key) || this.asked.has(key)) continue;
+      this.asked.add(key);
+      wanted.push({ id: item.id, key });
+    }
+    return wanted;
+  }
+
+  answer(key: string, drawing: Drawing): void {
+    this.asked.delete(key);
+    this.made.set(key, drawing);
+  }
+
+  shown(board: Board): Record<string, Drawing> {
+    const shown: Record<string, Drawing> = {};
+    for (const item of board.items) {
+      if (item.kind !== "latex" || item.mode !== "compiled") continue;
+      const made = this.made.get(this.key(board, item));
+      if (made?.svg) this.last.set(item.id, made.svg);
+      const last = this.last.get(item.id);
+      shown[item.id] = { ...(last ? { svg: last } : {}), ...(made?.error ? { error: made.error } : {}) };
+    }
+    return shown;
+  }
+}

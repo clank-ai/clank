@@ -31,7 +31,11 @@
   let uris = {};
   let compiled = {};
   let view = state.view || { x: 60, y: 60, zoom: 1 };
-  let fitted = Boolean(state.view);
+  // Until the owner pans or zooms, the view follows the board: each change is fitted, so what the agent places is seen.
+  // Fitting (0, or a click on the zoom level) follows again.
+  let following = state.following ?? !state.view;
+  let fitWaiting = false; // a fit asked for while the editor had no size yet (its tab behind another)
+  let saidTimer;
   let selected = new Set();
   let tool = "select";
   let gesture = null;
@@ -102,11 +106,12 @@
     viewport.style.backgroundSize = `${step}px ${step}px`;
     viewport.style.backgroundPosition = `${view.x}px ${view.y}px`;
     $("zoom-level").textContent = `${Math.round(view.zoom * 100)} %`;
-    vscode.setState({ ...state, view });
+    vscode.setState({ ...state, view, following });
     drawSelection();
   }
 
   function zoomAt(factor, sx, sy) {
+    following = false;
     const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, view.zoom * factor));
     view = { x: sx - ((sx - view.x) * zoom) / view.zoom, y: sy - ((sy - view.y) * zoom) / view.zoom, zoom };
     applyView();
@@ -122,8 +127,10 @@
 
   function fit(items = board?.items || []) {
     const box = bounds(items);
-    const width = viewport.clientWidth || 800;
-    const height = viewport.clientHeight || 600;
+    const width = viewport.clientWidth;
+    const height = viewport.clientHeight;
+    fitWaiting = width < 160 || height < 120;
+    if (fitWaiting) return;
     if (!box) {
       view = { x: 60, y: 60, zoom: 1 };
     } else {
@@ -153,8 +160,13 @@
         const paper = el("div", { class: "paper" });
         const art = compiled[item.id];
         if (item.mode === "compiled") {
-          if (art?.uri) paper.append(el("img", { src: art.uri, alt: item.source }));
-          else paper.append(el("span", { class: "missing", text: art?.error ? "" : "Compiling with TeX…" }));
+          if (art?.svg) {
+            const drawing = el("div", { class: "drawing" });
+            drawing.innerHTML = art.svg; // built by Clank from the item's LaTeX: drawing elements only, ids of its own
+            paper.append(drawing);
+          } else if (!art?.error) {
+            paper.append(el("span", { class: "missing", text: "Compiling with TeX…" }));
+          }
           if (art?.error) paper.append(el("div", { class: "problem", text: art.error }));
         } else {
           const math = el("div", { class: "math" });
@@ -595,6 +607,7 @@
     switch (gesture.kind) {
       case "pan":
         view = { ...view, x: view.x + event.clientX - gesture.last.x, y: view.y + event.clientY - gesture.last.y };
+        following = false;
         gesture.last = { x: event.clientX, y: event.clientY };
         applyView();
         break;
@@ -708,6 +721,7 @@
       zoomAt(Math.exp(-event.deltaY * 0.0018), event.clientX - rect.left, event.clientY - rect.top);
     } else {
       view = { ...view, x: view.x - event.deltaX, y: view.y - event.deltaY };
+      following = false;
       applyView();
     }
   }, { passive: false });
@@ -746,6 +760,7 @@
       send(Core.moveOps(board, [...selected], dx, dy));
       event.preventDefault();
     } else if (!ctrl && key === "0") {
+      following = true;
       fit();
     } else if (!ctrl && key === "1") {
       zoomAt(1 / view.zoom, viewport.clientWidth / 2, viewport.clientHeight / 2);
@@ -825,7 +840,10 @@
   }
   $("zoom-in").addEventListener("click", () => zoomAt(1.25, viewport.clientWidth / 2, viewport.clientHeight / 2));
   $("zoom-out").addEventListener("click", () => zoomAt(0.8, viewport.clientWidth / 2, viewport.clientHeight / 2));
-  $("zoom-level").addEventListener("click", () => fit());
+  $("zoom-level").addEventListener("click", () => {
+    following = true;
+    fit();
+  });
   $("send-pins").addEventListener("click", () => vscode.postMessage({ type: "pins" }));
   $("export").addEventListener("click", () => vscode.postMessage({ type: "export", ids: [...selected] }));
   for (const button of bar.querySelectorAll("[data-align]")) {
@@ -856,14 +874,12 @@
       uris = message.uris || {};
       compiled = message.compiled || compiled;
       said = message.said || "";
+      clearTimeout(saidTimer);
+      if (said) saidTimer = setTimeout(() => ((said = ""), render()), 8000); // a word that fades back to the count
       selected = new Set([...selected].filter((id) => itemById(id)));
       render();
-      if (!fitted && board.items.length) {
-        fitted = true;
-        fit();
-      } else {
-        applyView();
-      }
+      if (following && board.items.length) fit();
+      else applyView();
     } else if (message.type === "theme") {
       document.body.className = message.theme && message.theme !== "vscode" ? `theme-${message.theme}` : "";
     } else if (message.type === "figure") {
@@ -880,11 +896,15 @@
       selected = new Set(message.ids || []);
       render();
       const chosen = (message.ids || []).map((id) => itemById(id)).filter(Boolean);
-      if (chosen.length) fit(chosen);
+      if (chosen.length) {
+        following = false;
+        fit(chosen);
+      }
     }
   });
 
   window.addEventListener("resize", () => positionBar());
+  new ResizeObserver(() => fitWaiting && fit()).observe(viewport);
   setTool("select");
   applyView();
   vscode.postMessage({ type: "ready" });

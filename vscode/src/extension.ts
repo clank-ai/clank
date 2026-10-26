@@ -754,7 +754,8 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
     vscode.commands.registerCommand("clank.showAgentPanel", () => agentPanel.show()),
     agentPanel,
     BoardEditor.register(context.extensionUri, {
-      tell: (text) => agentPanel.tell(text), info: (text) => presenter.info(text), warn: (text) => presenter.warn(text),
+      tell: (text) => agentPanel.tell(text), api: () => connect(), info: (text) => presenter.info(text),
+      warn: (text) => presenter.warn(text),
     }),
     vscode.commands.registerCommand("clank.newBoard", () => newBoard((text) => presenter.warn(text))),
     vscode.window.registerUriHandler({

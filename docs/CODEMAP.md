@@ -28,6 +28,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/artifactcli.py` | `clank artifact` (design 0021 §5): the artifacts the agent made in a folder's workspace, from the command line. |
 | `clank/components/agents/artifacts.py` | Artifacts (design 0021 §5): pages the agent makes for the owner (an interactive plot of results, a parameter |
 | `clank/components/agents/boardcli.py` | `clank board` (design 0022 §1): a folder's boards from the command line. `clank board new NAME [--in FOLDER] |
+| `clank/components/agents/boardlatex.py` | Compiled LaTeX on a board (design 0022 §6): what KaTeX cannot draw (TikZ, pgfplots, a `tabular`, a package of the |
 | `clank/components/agents/boardplace.py` | Where a new item goes on a board (design 0022 §4): the agent says where ("below fig-2", "in the frame Figure 3", "in |
 | `clank/components/agents/boards.py` | Boards (design 0022): a canvas the owner and the agent share, a `.board` file of the folder (JSON: its title, its |
 | `clank/components/agents/changes.py` | A change the agent asks to make to a file (design 0007 §5): the file as it would be after it, its diff, and where |

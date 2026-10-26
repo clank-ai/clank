@@ -16,6 +16,7 @@ takes the slot. Refused, saying why: a board that is not there or not a board, a
 kind the agent does not add, an item not on the board.
 """
 
+import hashlib
 import json
 import math
 import os
@@ -25,6 +26,7 @@ import struct
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Any
 
+from clank.components.agents.boardlatex import build, flatten
 from clank.components.agents.boardplace import GRID, INSET, TITLE, PlaceError, frame_of, place
 from clank.kernel.events import CLANK, EventType, Subject
 
@@ -38,6 +40,7 @@ FOLDER = ".clank/boards"
 HISTORY = 50
 CAPTION = 28  # a figure's caption line, under it
 FIGURE_WIDTH = 360
+LATEX_WIDEST = 720  # a compiled drawing wider than this is drawn narrower
 ASPECT = 4 / 3  # a figure whose file cannot be measured
 PREFIX = {"figure": "fig", "latex": "latex", "note": "note", "slot": "slot", "frame": "frame", "arrow": "arrow",
           "pen": "pen", "highlight": "mark", "pin": "pin"}  # fmt: skip
@@ -197,9 +200,14 @@ class Boards:
             raise BoardError(f"{path.name} is not a board: it has no items")
         return board
 
+    @staticmethod
+    def _kept(folder: Path, path: Path) -> Path:
+        """Where Clank keeps a board's own files: its history, its compiled LaTeX."""
+        return folder / FOLDER / path.relative_to(folder).with_suffix("").as_posix().replace("/", "-")
+
     def _save(self, folder: Path, path: Path, board: dict[str, Any], *, keep: bool) -> None:
         if keep and path.is_file():
-            kept = folder / FOLDER / path.relative_to(folder).with_suffix("").as_posix().replace("/", "-") / "history"
+            kept = self._kept(folder, path) / "history"
             kept.mkdir(parents=True, exist_ok=True)
             older = sorted(kept.glob(f"*{SUFFIX}"), key=lambda each: int(each.stem))
             number = int(older[-1].stem) + 1 if older else 1
@@ -375,7 +383,7 @@ class Boards:
         kept = self._checked(root, kind, fields)
         number = 1 + max((int(m[1]) for each in items if (m := re.search(r"-(\d+)$", str(each.get("id"))))), default=0)
         id = f"{PREFIX[kind]}-{number}"
-        said = ""
+        said = after = ""
         if kind == "arrow":
             for side in ("from", "to"):
                 end = fields.get(side)
@@ -397,6 +405,10 @@ class Boards:
             said = f'Framed {", ".join(str(each["id"]) for each in held)} as {id} "{kept["name"]}"'
         else:
             width, height = self._size(root, kind, fields)
+            if kind == "latex" and kept.get("mode") == "compiled":
+                built, error = self._compiled(workspace, root, path, loaded, str(kept.get("source", "")))
+                width, height = self._drawn(root, built) or (width, height)
+                after = self._build_words(error)
             try:
                 placed = place(items, width, height, at)
             except PlaceError as error:
@@ -415,7 +427,7 @@ class Boards:
         self._save(root, path, loaded, keep=True)
         relative = path.relative_to(root).as_posix()
         self._record(workspace, relative, "add", id, f"{relative}: {said}")
-        return {"board": relative, "id": id, "said": f"{said} on {relative}. The owner sees it at once."}
+        return {"board": relative, "id": id, "said": f"{said} on {relative}. The owner sees it at once.{after}"}
 
     @staticmethod
     def _at_words(at: dict[str, Any] | None) -> str:
@@ -468,6 +480,13 @@ class Boards:
             width, height = self._size(root, str(item["kind"]), {**item, "w": changes.get("w", item.get("w")),
                                                                  "h": changes.get("h")})  # fmt: skip
             item["w"], item["h"] = round(width), round(height)
+        after = ""
+        if item.get("kind") == "latex" and item.get("mode") == "compiled" and {"source", "mode"} & set(changes):
+            built, error = self._compiled(workspace, root, path, loaded, str(item.get("source", "")))
+            drawn = self._drawn(root, built)
+            if drawn and not {"w", "h"} & set(changes):
+                item["w"], item["h"] = drawn
+            after = self._build_words(error)
         if at:
             others = [each for each in items if each is not item]
             try:
@@ -482,7 +501,7 @@ class Boards:
         relative = path.relative_to(root).as_posix()
         said = f"Changed {id}" + (f", moved {self._at_words(at)}" if at else "")
         self._record(workspace, relative, "update", id, f"{relative}: {said}")
-        return {"board": relative, "id": id, "said": f"{said} on {relative}."}
+        return {"board": relative, "id": id, "said": f"{said} on {relative}.{after}"}
 
     def remove(self, workspace: str, board: str, id: str) -> dict[str, Any]:
         """Take an item away; the change in words."""
@@ -496,3 +515,46 @@ class Boards:
         relative = path.relative_to(root).as_posix()
         self._record(workspace, relative, "remove", id, f"{relative}: took {id} away")
         return {"board": relative, "id": id, "said": f"Took {id} away from {relative}; its history keeps it."}
+
+    # -- compiled LaTeX (design 0022 §6)
+
+    def compile_latex(self, workspace: str, board: str, id: str) -> dict[str, str]:
+        """A compiled LaTeX item's drawing: `file`, an SVG's path from the folder (built in the container once for
+        its source and the board's preamble), or `error`, why it did not build."""
+        root, path = self._board(workspace, board)
+        loaded = self._load(path)
+        item = next((each for each in loaded["items"] if each.get("id") == id), None)
+        if item is None:
+            raise BoardError(f"there is no item {id} on the board")
+        if item.get("kind") != "latex" or item.get("mode") != "compiled":
+            raise BoardError(f"{id} is not compiled LaTeX: math is drawn at once, in the owner's window")
+        built, error = self._compiled(workspace, root, path, loaded, str(item.get("source") or ""))
+        return {"error": error} if error else {"file": built.relative_to(root).as_posix()}
+
+    def _compiled(self, workspace: str, root: Path, path: Path, board: dict[str, Any], source: str) -> tuple[Path, str]:
+        """The drawing of `source` with the board's preamble, built once and kept by their hash; or why not."""
+        preamble = str((board.get("settings") or {}).get("preamble") or "")
+        key = hashlib.sha256(f"{preamble}\0{source}".encode()).hexdigest()[:16]
+        kept = self._kept(root, path) / "latex" / f"{key}.svg"
+        if not kept.is_file():
+            svg, error = build(self.kernel.parts["workspaces"].run_in, workspace, source, preamble)
+            if error:
+                return kept, error
+            kept.parent.mkdir(parents=True, exist_ok=True)
+            kept.write_text(flatten(svg, f"k{key[:8]}"), encoding="utf-8")
+        return kept, ""
+
+    @staticmethod
+    def _drawn(root: Path, built: Path) -> tuple[int, int] | None:
+        """A built drawing's size on the board: its own, made narrower than `LATEX_WIDEST` when it is wider."""
+        size = image_size(built) if built.is_file() else None
+        if not size or not size[0]:
+            return None
+        scale = min(1.0, LATEX_WIDEST / size[0])
+        return max(1, round(size[0] * scale)), max(1, round(size[1] * scale))
+
+    @staticmethod
+    def _build_words(error: str) -> str:
+        if error:
+            return f" It does not build: {error}. Change its source (clank_board_update) until it does."
+        return " It builds with TeX, and is drawn at its own size."
