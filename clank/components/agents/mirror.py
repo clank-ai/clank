@@ -157,6 +157,8 @@ class Mirror:
                 self._status(workspace, line)
             elif kind in WAITS:
                 self._wait(workspace, kind, line)
+            elif kind in ("synced", "gone", "disposed"):
+                self._servers_left(workspace, line)
             elif kind in ("message", "part", "delta", "removed"):
                 held = self._held.get((workspace, str(line.get("session") or "")))
                 if held is not None:
@@ -190,6 +192,18 @@ class Mirror:
         held = self._held.get((workspace, id))
         if held is not None:
             held.version += 1
+
+    def _servers_left(self, workspace: str, line: dict[str, Any]) -> None:
+        """A watch synced (the ports it follows now), or a server gone or its instance ended: the sessions of a server
+        no longer followed keep their place in the list but have no port and are idle."""
+        kept = {int(port) for port in line.get("ports") or []} if line.get("type") == "synced" else None
+        left = None if kept is not None else line.get("port")
+        for record in self._known.get(workspace, {}).values():
+            port = record.get("port")
+            if port is None:
+                continue
+            if (kept is not None and int(port) not in kept) or (left is not None and port == left):
+                record["port"], record["status"] = None, "idle"
 
     def _wait(self, workspace: str, kind: str, line: dict[str, Any]) -> None:
         request = line.get("request")

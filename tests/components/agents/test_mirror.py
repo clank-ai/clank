@@ -188,3 +188,20 @@ def test_the_mirror_is_bounded_old_text_falls_back_to_its_brief_and_sessions_unr
     assert mirror.forget() == [(W, S)], "no client read it for half an hour"
     assert mirror.conversation(W, S, 10) is None
     assert mirror.followed(W) == []
+
+
+def test_a_server_the_watch_no_longer_follows_leaves_its_sessions_without_a_port_and_idle() -> None:
+    """A container made again, or an instance ended: the sessions it ran are still known, but no server runs them,
+    so the route lists the servers again instead of reading from a port that answers no more."""
+    mirror = Mirror()
+    mirror.heard(W, session_line("ses_a", "First", updated=10, port=4096))
+    mirror.heard(W, {**status_line("busy", session="ses_a"), "port": 4096})
+    mirror.heard(W, session_line("ses_b", "Second", updated=20, port=4100))
+    assert (mirror.port(W, "ses_a"), mirror.port(W, "ses_b")) == (4096, 4100)
+    mirror.heard(W, {"type": "synced", "ports": [4100]})
+    assert mirror.port(W, "ses_a") is None, "its server is not followed any more"
+    assert mirror.sessions(W)[1]["status"] == "idle"
+    assert mirror.port(W, "ses_b") == 4100
+    mirror.heard(W, {"type": "gone", "port": 4100})
+    assert mirror.port(W, "ses_b") is None
+    assert [each["id"] for each in mirror.sessions(W)] == ["ses_b", "ses_a"], "still known, newest first"
