@@ -65,11 +65,12 @@ context (§7) is step 2b, plan s59, written when this plan is done.
   button; what the run waits for drawn under its box with `flowBox`; the proposals (title, type, why, *Accept*,
   *Reject*, and *Accept all*, *Reject all* while any waits); a planning's steps with the brief's first lines; a read
   again on each `flows.*` or `question.*` event. Node tests of `flowFilter`, `runControls`, `boxGlyph`.
-- [ ] 4. **Docs**: design 0025 §6 built (sizes waiting) and §11 step 2 half built; the roadmap (M9); the plan index;
+- [x] 4. **Docs**: design 0025 §6 built (sizes waiting) and §11 step 2 half built; the roadmap (M9); the plan index;
   the generated pages (the API page gains the summaries route).
 
 ## Progress
 
-Written 2026-10-26. Tasks 1 to 3 built 2026-10-26 (the summaries list a planning's flow as building before
-its file is written, and a flow's screen reads the planning's view then; `Flows.planning_view`); task 4, the
-documents, is next, with a live look at the Flows tab on the owner's phone.
+Written 2026-10-26. Built 2026-10-26: the summaries list a planning's flow as building before its file is written,
+and a flow's screen reads the planning's view then (`Flows.planning_view`, `Flows.plannings_open`); the phone's flow
+routes reach the flows through their service only (the architecture check). The live look at the Flows tab on the
+owner's phone waits for the owner's pairing.
