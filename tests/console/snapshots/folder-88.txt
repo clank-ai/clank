@@ -29,7 +29,7 @@ F12 Add a model    │ │  a OpenCode in this terminal; the menu comes back whe
                    │ │    tool results), 8,192 out                                    │
                    │ │    MCP servers: open the workspace (o) to choose which its     │
                    │ │    agent gets                                                  │
-                   │ │  m MCP servers  p plan  r review or auto                       │
+                   │ │  m MCP servers  h hosts  p plan  r review or auto              │
                    │ │  w one window or several  i implement a plan                   │
                    │ └────────────────────────────────────────────────────────────────┘
                    │

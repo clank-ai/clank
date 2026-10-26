@@ -24,7 +24,7 @@ coming                       │ │    tokens of context (the engine's 32,768 l
 Sampling              M3     │ │    kept for a step's tool results), 8,192 out        │  │                                    │
 Sessions              M3     │ │    MCP servers: open the workspace (o) to choose     │  │                                    │
 Keys                  M3     │ │    which its agent gets                              │  │                                    │
-Layout                M2     │ │  m MCP servers  p plan  r review or auto             │  │                                    │
+Layout                M2     │ │  m MCP servers  h hosts  p plan  r review or auto    │  │                                    │
 Tests and trials      M2     │ │  w one window or several  i implement a plan         │  │                                    │
 Agents                M5     │ └──────────────────────────────────────────────────────┘  └────────────────────────────────────┘
 Modes                 M5     │

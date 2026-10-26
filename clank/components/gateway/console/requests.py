@@ -26,6 +26,7 @@ from textual.content import Content
 from textual.widgets import Label, ListView
 
 from clank.client import ClientError, NotRunning
+from clank.components.gateway.networkcli import bytes_said, exchange_line
 from clank.console.data import ConsoleData
 from clank.console.gauges import spinner
 from clank.console.keys import PageKey
@@ -38,6 +39,7 @@ from clank.console.text import count, live_text, painted, time_of
 
 LIMIT = 100
 NONE = "No request kept yet."  # the list's panel says it while the gateway has kept none
+NETWORK_LIMIT = 40  # exchanges the Network view shows
 LIVE_SECONDS = 0.5
 ASKED = 1500  # characters of the question shown under the list
 ANSWERED = 3000
@@ -170,9 +172,12 @@ class RequestsPage(Page):
         "design 0001 §6",
         key="F7",
     )
-    PANELS = ("requests-list-panel", "requests-detail", "requests-live")
+    PANELS = ("requests-list-panel", "requests-detail", "requests-live", "requests-network")
     KEYS = (
         PageKey("v", "live", "live view or the list", "watch the newest request live, or show the list again"),
+        PageKey(
+            "n", "network", "the agent's internet", "the agent's exchanges through Clank's proxy, or the list again"
+        ),
         PageKey("r", "read", "reads the requests again"),
     )
 
@@ -182,6 +187,7 @@ class RequestsPage(Page):
         self.costs: dict[str, dict[str, Any]] = {}  # each cloud request's cost, by its id (design 0016 §11)
         self.served: int | None = None
         self.live = False
+        self.network = False  # the Network view (design 0024 §4) in place of the list
         self.live_id = ""
         self.live_parts: list[list[str]] = []
         self.live_length = 0
@@ -204,11 +210,17 @@ class RequestsPage(Page):
             yield Label(id="live-head")
             with VerticalScroll(id="live-scroll"):
                 yield Label(id="live-text")
+        with (
+            Panel(title="The agent's internet, through Clank's proxy", id="requests-network"),
+            VerticalScroll(id="network-scroll"),
+        ):
+            yield Label(id="network-text")
 
     def on_mount(self) -> None:
         """Follow the newest request twice a second while the live view shows."""
         super().on_mount()
         self.query_one("#requests-live").display = False
+        self.query_one("#requests-network").display = False
         self.set_interval(LIVE_SECONDS, self._read_live)
 
     def draw(self, data: ConsoleData, changed: set[str]) -> None:
@@ -217,6 +229,8 @@ class RequestsPage(Page):
         if "all" in changed or self.served is None or ("activity" in changed and served != self.served):
             self.served = served
             self._read()
+            if self.network:
+                self._read_network()
 
     def press(self, key: str) -> bool:
         """`r` reads the requests again; `v` switches between the list and the live view."""
@@ -224,13 +238,23 @@ class RequestsPage(Page):
             self._read()
             return True
         if key == "v":
-            self.live = not self.live
-            for name in ("#requests-list-panel", "#requests-detail"):
-                self.query_one(name).display = not self.live
-            self.query_one("#requests-live").display = self.live
+            self.live, self.network = not self.live, False
+            self._panels()
             self._read_live()
             return True
+        if key == "n":
+            self.network, self.live = not self.network, False
+            self._panels()
+            self._read_network()
+            return True
         return False
+
+    def _panels(self) -> None:
+        """The list and the detail, or the live view, or the Network view."""
+        for name in ("#requests-list-panel", "#requests-detail"):
+            self.query_one(name).display = not (self.live or self.network)
+        self.query_one("#requests-live").display = self.live
+        self.query_one("#requests-network").display = self.network
 
     def explain(self) -> tuple[str, list[str]]:
         """What a line says."""
@@ -248,6 +272,11 @@ class RequestsPage(Page):
             "beside the preset's values: those it sets, else the engine's own defaults (design 0003 §4.1).",
             "v shows the newest request live, as the model writes it: its thinking (dimmed), its answer and its tool "
             "calls (in color), with what it does now and its speed; v again goes back to the list.",
+            "n shows the agent's internet exchanges through Clank's proxy (design 0024): each with when, its "
+            "workspace, its host, its status, the bytes each way, its time and why it was let out or refused; today's "
+            "bytes by "
+            "host; and the hosts each workspace's agent may reach (clank workspace allow FOLDER --host NAME, or "
+            "--set NAME); n again goes back to the list.",
         ]
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
@@ -289,6 +318,46 @@ class RequestsPage(Page):
         self.query_one("#requests-list-panel", Panel).note = count(len(rows), "newest request") if rows else ""
         self.query_one("#requests-none", Label).display = not rows
         self._read_one()
+
+    def _read_network(self) -> None:
+        if not (self.display and self.network):
+            return
+        client = self.console.client
+
+        def work() -> None:
+            try:
+                found = client.get("gateway/network/log", limit=NETWORK_LIMIT)
+                hosts = client.get("gateway/network/hosts")
+            except (ClientError, NotRunning):
+                return
+            self.console.call_from_thread(self._show_network, found, hosts)
+
+        self.run_worker(work, thread=True, group="requests-network", exclusive=True, exit_on_error=False)
+
+    def _show_network(self, found: dict[str, Any], hosts: dict[str, dict[str, str]]) -> None:
+        exchanges = found.get("exchanges") or []
+        lines = [exchange_line(each) for each in exchanges] or [
+            "No exchange yet: the agent reached no host through the proxy."
+        ]
+        by_host = found.get("by_host") or {}
+        if by_host:
+            lines += ["", "Today, by host:"]
+            lines += [
+                f"  {host}: {bytes_said(summed.get('received', 0))} received, "
+                f"{bytes_said(summed.get('sent', 0))} sent, "
+                f"{summed.get('exchanges', 0)} exchange{'s' if summed.get('exchanges', 0) != 1 else ''}"
+                for host, summed in by_host.items()
+            ]
+        lines += [
+            "",
+            "Hosts each workspace's agent may reach (clank workspace allow FOLDER --host NAME, or --set NAME):",
+        ]
+        lines += [
+            f"  {workspace}: {', '.join(sorted(allowed)) if allowed else 'no host'}"
+            for workspace, allowed in hosts.items()
+        ] or ["  no workspace yet"]
+        self.query_one("#network-text", Label).update("\n".join(lines))
+        self.query_one("#requests-network", Panel).note = count(len(exchanges), "newest exchange") if exchanges else ""
 
     def _read_live(self) -> None:
         if not (self.display and self.live):

@@ -33,7 +33,7 @@ from tests.console.frames import FOLDER, focus_on, frame_when, settle
 pytestmark = pytest.mark.anyio
 
 EVERY_PAGE = [page.ENTRY.id for page in PAGES] + [entry.id for entry in PLANNED]  # as the menu lists them
-SHOWN_BY = {"requests-live": "v", "monitor-session-live": "l"}  # a panel a page shows only after one of its keys
+SHOWN_BY = {"requests-live": "v", "requests-network": "n", "monitor-session-live": "l"}  # shown only after a key
 
 
 def make(client: Client, home: Home) -> ClankConsole:

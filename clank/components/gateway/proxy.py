@@ -18,8 +18,8 @@ when the owner did not allow it, refused 403 with the words that say the host, t
 allowed (`clank workspace allow FOLDER --host NAME`); a name that cannot be resolved 502. Every exchange is one line of
 `NetworkLog` (`logs/network/<day>.jsonl`: time, workspace, host, port, method, the path of a plain request, status,
 bytes sent and received, seconds, why refused), never a body, never a tunnel's bytes; the days older than kept are
-removed when a day's first line is written. The resolver and the private check can be given (the tests reach upstreams
-on this machine).
+removed when a day's first line is written; `recent` and `by_host` read it back for the owner (design 0024 §4). The
+resolver and the private check can be given (the tests reach upstreams on this machine).
 """
 
 import asyncio
@@ -129,6 +129,40 @@ class NetworkLog:
                     file.write(line + "\n")
             except OSError as error:
                 log.warning("the network log could not be written: %s", error)
+
+    def recent(self, limit: int, workspace: str = "") -> list[dict[str, Any]]:
+        """The newest exchanges first, of one workspace when named, read from the files' ends (design 0024 §4)."""
+        from clank.components.gateway.records import _newest_first, _parsed
+
+        found: list[dict[str, Any]] = []
+        if not self.folder.is_dir():
+            return found
+        for line in _newest_first(self.folder):
+            record = _parsed(line)
+            if record is None or (workspace and record.get("workspace") != workspace):
+                continue
+            found.append(record)
+            if len(found) >= limit:
+                break
+        return found
+
+    def by_host(self) -> dict[str, dict[str, int]]:
+        """Today's exchanges summed by host: the bytes received and sent, and how many; the most received first."""
+        from clank.components.gateway.records import _parsed
+
+        file = self.folder / f"{self.today().isoformat()}.jsonl"
+        summed: dict[str, dict[str, int]] = {}
+        if not file.is_file():
+            return summed
+        for line in file.read_text(encoding="utf-8", errors="replace").splitlines():
+            record = _parsed(line)
+            if record is None or not record.get("host"):
+                continue
+            row = summed.setdefault(str(record["host"]), {"sent": 0, "received": 0, "exchanges": 0})
+            row["sent"] += int(record.get("sent") or 0)
+            row["received"] += int(record.get("received") or 0)
+            row["exchanges"] += 1
+        return dict(sorted(summed.items(), key=lambda item: -item[1]["received"]))
 
     def _prune(self, day: str) -> None:
         for file in self.folder.glob("*.jsonl"):

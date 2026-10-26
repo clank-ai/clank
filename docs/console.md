@@ -12,28 +12,34 @@ The console (`clank`, `clank console`) is a Textual app that is a client of the 
    spinner turns on the step being worked on, and "What runs from here" says how far it is.
 3. **Its software** (`e`): the folder's own packages, installed into the workspace so the agent can run its tests,
    scripts and MCP server. Clank proposes the command from `pyproject.toml` or `requirements.txt`; `e` shows it in a
-   form to change or take as it is. It downloads in a container of its own; the agent's never reaches the internet.
+   form to change or take as it is. It downloads in a container of its own; the agent's reaches the internet only
+   through Clank's proxy, host by host as you allow (below).
 4. **MCP servers** (`m`): listed under "Then work". Yours (F3) are given to the agent; a folder's own (its
    `.mcp.json`) only once you allow it. `m` gives one or takes it away, and checks one given in the workspace's
    container: its tools show beside it. The **MCP servers** page (F3) shows them all with their state (running,
    stopped or failed while an agent runs; on or off while none does) and their tools: Enter lists a server's tools
    with their parameters, `s` starts or stops it (at once in a running agent, and for its next start), `c` checks it.
-5. Then `a` starts OpenCode in this terminal (leave it with `/exit`: the console comes back), or `c`
+5. **Hosts** (`h`): the internet hosts the workspace's agent may reach through Clank's proxy, listed under "Then
+   work" (design 0024). `h` allows a named set (papers, python, code, data, docs: each says what it opens) or a
+   host by name, or takes one back; a host the agent reaches without an allowance holds its request while a
+   question waits for you (`y` always, `o` once, `n` no). **Requests** (F7) shows every exchange with `n`, and
+   `clank network log` and `clank network hosts` the same from the command line.
+6. Then `a` starts OpenCode in this terminal (leave it with `/exit`: the console comes back), or `c`
    opens the folder in Clank's VS Code window: your files on the left, OpenCode in a terminal at the right edge (kept
    there: a window that had it elsewhere moves it back, and a reloaded window never starts a second one).
-6. **The agent's changes** (`r`): in **review** (the default) the agent asks before it changes a file. In VS Code the
+7. **The agent's changes** (`r`): in **review** (the default) the agent asks before it changes a file. In VS Code the
    change opens beside your files (the file as it is, and as the agent would leave it), with **✓ Accept** and
    **✗ Reject** in the tab's title bar; a reject asks what to tell the agent. It can also be answered in the agent's
    terminal, under "Waiting for you" here (`y`, `n`, `v` shows the diff), or from the phone. In **auto** the agent
    changes files without asking, and VS Code shows each change after it is made. `r` switches; so does the **Review**
    / **Auto** item in VS Code's status bar.
-7. **CPU models** (F8): the small models on the CPU. Completion: gray text after the cursor in VS Code; `l` gets it
+8. **CPU models** (F8): the small models on the CPU. Completion: gray text after the cursor in VS Code; `l` gets it
    served (it installs llama.cpp's CPU build and downloads the model, about 506 MB, the first time), `u` stops it, `x`
    turns it off or on in VS Code; the page shows how fast the last completions were answered. Vision: the model that
    reads images (for a figure you marked up, when the agent's model cannot see it, and for the agent's
    `look_at_figure`); `v` switches it off, on demand (the default: loaded when needed, unloaded after 10 idle minutes)
    or always; `g` downloads its files (about 2.7 GB).
-8. **Figures**: in Clank's VS Code window a PNG or JPEG opens in the annotator: draw on it (pen, box, circle, arrow,
+9. **Figures**: in Clank's VS Code window a PNG or JPEG opens in the annotator: draw on it (pen, box, circle, arrow,
    note), say what to do, Enter sends it to the agent, with each mark said in the figure's own terms.
 9. Home (1) says what happens now; the panel on the right shows the machine; the menu's badges say what needs you
    (questions waiting, a model that stopped, an operation running).

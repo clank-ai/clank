@@ -144,6 +144,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/gateway/kinds.py` | The gateway component's kinds of record (design 0001 §6, design 0004 §2): its settings, from design 0006 how |
 | `clank/components/gateway/loops.py` | The loop guard (design 0004 §2, decision 0040): whether a streamed answer repeats itself. |
 | `clank/components/gateway/marks.py` | The sessions that used local-only content (design 0016 §10, decision 0111): a session is marked the first time any of |
+| `clank/components/gateway/networkcli.py` | The gateway component's commands for the agent's internet (design 0024 §4): `clank network log` (the newest |
 | `clank/components/gateway/proxy.py` | The forward proxy at the gateway (design 0024 §1, §2 and §7, decision 0141): the agent's only way to the internet, |
 | `clank/components/gateway/records.py` | The gateway's records (design 0001 §6.5): one JSON line per request, in one file per day. |
 | `clank/components/gateway/routing.py` | Where a request goes (design 0001 §6.1, steps 2 and 5; decision 0008): a role's slot, and the engine it runs now. |

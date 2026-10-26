@@ -45,7 +45,7 @@ F12 Add a model    │ │  7  The gateway                  │
                    │ │    MCP servers: open the         │
                    │ │    workspace (o) to choose which │
                    │ │    its agent gets                │
-                   │ │  m MCP servers  p plan           │
+                   │ │  m MCP servers  h hosts  p plan  │
                    │ │  r review or auto                │
                    │ │  w one window or several         │
                    │ │  i implement a plan              │

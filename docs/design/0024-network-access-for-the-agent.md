@@ -15,7 +15,7 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 | 1 | The rule: through Clank, by allowance | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)): the allowances, `clank workspace allow --host`; the console's and VS Code's keys with §4 |
 | 2 | The way out: a forward proxy at the gateway | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)) |
 | 3 | A host the agent asks for | Approved 2026-10-26; built 2026-10-26 ([plan s54](../plans/s54-the-ask.md)) |
-| 4 | What the owner sees | Approved 2026-10-26 |
+| 4 | What the owner sees | Approved 2026-10-26; built 2026-10-26 ([plan s56](../plans/s56-the-network-views.md)) but the Monitor's fetching line, which comes with the Monitor's move to the stream (design 0023 step 4) |
 | 5 | Packages, papers, data: the named sets | Approved 2026-10-26; built 2026-10-26 ([plan s55](../plans/s55-the-named-sets.md)): the file, `clank workspace allow --set`; the console's key with the views |
 | 6 | Search | Approved 2026-10-26; the literature calls built 2026-10-26 in the agent's instructions ([plan s55](../plans/s55-the-named-sets.md)); a web search provider is the owner's choice, when the need shows |
 | 7 | What is never reached | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)) |
@@ -128,7 +128,9 @@ Search is not a host but a provider, and a choice of the owner's:
    the quiet period; tested with a fake ask on the proxy and the kernel's questions on the service.
 3. **Built 2026-10-26** ([plan s55](../plans/s55-the-named-sets.md)). The named sets, their file
    (`config/network-sets.json`), `clank workspace allow --set`; the console's key with step 4.
-4. Requests · F7's Network view, the Now panel's fetching line, This folder's hosts.
+4. **Built 2026-10-26** ([plan s56](../plans/s56-the-network-views.md)) but the Now panel's fetching line, which comes
+   with the Monitor on the stream (design 0023 step 4). Requests · F7's Network view (`n`), `clank network log` and
+   `clank network hosts`, This folder's hosts line and `h`.
 5. **Built 2026-10-26** ([plan s55](../plans/s55-the-named-sets.md)). The instructions (`network.md`) and the
    literature calls; getting started: how to let the agent fetch.
 6. Search, when the owner chooses a way.

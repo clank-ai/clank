@@ -15,11 +15,12 @@ from clank.kernel.components import Component
 
 
 def commands() -> list[Any]:
-    """`clank gateway` and `clank cost`."""
+    """`clank gateway`, `clank cost` and `clank network`."""
     from clank.components.gateway.cli import gateway
     from clank.components.gateway.costcli import cost
+    from clank.components.gateway.networkcli import network
 
-    return [gateway, cost]
+    return [gateway, cost, network]
 
 
 def pages() -> list[Any]:

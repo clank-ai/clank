@@ -197,6 +197,17 @@ def server_lines(servers: list[dict[str, Any]] | None, checked: dict[str, str], 
     return lines
 
 
+def host_line(view: dict[str, Any] | None) -> Content | None:
+    """The hosts the workspace's agent may reach through Clank's proxy (design 0024 §1, §4), and `h`; none without a
+    workspace."""
+    if view is None or not view.get("workspace"):
+        return None
+    hosts = sorted(view.get("hosts") or {})
+    if not hosts:
+        return Content("Hosts its agent reaches: none (h allows a set or a host; one it needs, it may ask you for)")
+    return Content(f"Hosts its agent reaches: {', '.join(hosts)} (h allows a set or a host, or takes one back)")
+
+
 def review_line(review: dict[str, Any]) -> Content:
     """The workspace's mode for the agent's changes, what it means, and why its agent is not followed when it is not
     (design 0007)."""
@@ -234,10 +245,11 @@ WAYS = (  # Then work's column of buttons (board K2): its keys, with the panel's
     ("c", "VS Code on this folder, OpenCode beside your files (it gets every step above done first)"),
     ("f", "a flow built with the model, OpenCode beside this console: the Flow view shows it built"),
 )
-SETTINGS = ("m", "p", "r", "w", "i")  # the row of Then work's settings under it (board K2)
+SETTINGS = ("m", "h", "p", "r", "w", "i")  # the row of Then work's settings under it (board K2)
 WORKSPACE_FIRST = {  # the keys that work on the folder's workspace, and what each would do there
     "e": "its software is installed into its home",
     "m": "its agent's MCP servers are chosen for it",
+    "h": "the hosts its agent reaches are its own",
     "p": "how the agent works is set for it",
     "r": "how the agent works is set for it",
     "w": "its windows are its own",
@@ -333,7 +345,8 @@ class FolderPage(Page):
         "folder",
         "This folder",
         "Getting ready to work in the folder clank was started in, step by step (s Docker, o the workspace, e its "
-        "software, l a model, g every step; m the agent's MCP servers), then working there: a starts OpenCode here, "
+        "software, l a model, g every step; m the agent's MCP servers, h the hosts it may reach), then working there: "
+        "a starts OpenCode here, "
         "c opens VS Code with OpenCode beside your files; r switches between reviewing the agent's changes and auto.",
         "design 0004 §1",
         key="F4",
@@ -350,6 +363,7 @@ class FolderPage(Page):
         PageKey("p", "plan", "plan", "plan with the Planner (Markdown only, no code, no runs)"),
         PageKey("e", "software", "its software", "install the folder's software"),
         PageKey("m", "servers", "MCP servers", "give an MCP server to the agent or take it away"),
+        PageKey("h", "hosts", "hosts", "allow the agent a named set of hosts, or a host, or take one back"),
         PageKey("r", "review", "review or auto", "review each change the agent asks for (VS Code shows it), or let it "
                 "change files (auto)"),
         PageKey("i", "implement", "implement a plan", "hand a plan to the agent"),
@@ -492,6 +506,9 @@ class FolderPage(Page):
         lines += self._cloud_lines(data)
         for line in server_lines(self.servers, self.checked, (self.view or {}).get("workspace")):
             lines.append(line[SERVER_INDENT:] if line.plain.startswith(" " * SERVER_INDENT) else line)
+        hosts = host_line(self.view)
+        if hosts is not None:
+            lines.append(hosts)
         return Content("\n").join(lines)
 
     def unable(self, key: str) -> str:
@@ -538,6 +555,7 @@ class FolderPage(Page):
             "e": self._setup_form,
             "l": self._pick_model,
             "m": self._pick_server,
+            "h": self._pick_hosts,
             "c": lambda: self._run([*STEPS, "vscode"]),
             "r": self._switch_review,
             "w": self._switch_windows,
@@ -848,6 +866,85 @@ class FolderPage(Page):
                 self.console.call_from_thread(self._read)
 
         self.run_worker(work, thread=True, group="folder-steps", exclusive=True, exit_on_error=False)
+
+    def _pick_hosts(self) -> None:
+        """A named set of hosts to allow the agent or take back, or a host by name (design 0024 §4, §5)."""
+        workspace = (self.view or {}).get("workspace")
+        if not workspace:
+            self.console.say(f"open the workspace first (o): {WORKSPACE_FIRST['h']}", True)
+            return
+        client = self.console.client
+        hosts = dict((self.view or {}).get("hosts") or {})
+
+        def work() -> None:
+            try:
+                sets = client.get("workspaces/network-sets")
+            except (NotRunning, ClientError) as error:
+                self._say(str(error), True)
+                return
+            self.console.call_from_thread(self._show_hosts, workspace, sets, hosts)
+
+        self.run_worker(work, thread=True, group="folder-hosts", exclusive=True, exit_on_error=False)
+
+    def _show_hosts(self, workspace: str, sets: dict[str, dict[str, Any]], hosts: dict[str, str]) -> None:
+        """The picker: each set allowed or not, a host by name, and each host allowed (to take back)."""
+        allowed = {name: all(host in hosts for host in each.get("hosts") or []) for name, each in sets.items()}
+        choices = [
+            Choice(
+                f"set:{name}",
+                f"{name}: {', '.join(each.get('hosts') or [])}",
+                ("allowed: Enter takes it back" if allowed[name] else "not allowed: Enter allows it")
+                + (f" · {each['for']}" if each.get("for") else ""),
+            )
+            for name, each in sets.items()
+        ]
+        choices.append(
+            Choice("host", "a host by name", "Enter asks for it: pypi.org, or .arxiv.org for a site and all under it")
+        )
+        choices += [Choice(f"host:{host}", host, f"{hosts[host]}: Enter takes it back") for host in sorted(hosts)]
+
+        def picked(value: str | None) -> None:
+            if value is None:
+                return
+            if value == "host":
+                self._host_form(workspace)
+            elif value.startswith("set:"):
+                self._change_hosts(workspace, "sets", {"set": value[4:], "allow": not allowed[value[4:]]})
+            else:
+                self._change_hosts(workspace, "hosts", {"host": value[5:], "allow": False})
+
+        self.console.push_screen(PickScreen("Allow the agent hosts, or take them back", choices), picked)
+
+    def _host_form(self, workspace: str) -> None:
+        field = Field("host", "Host", "pypi.org, or .arxiv.org for a site and everything under it", "")
+        note = "The agent reaches it through Clank's proxy; every exchange is logged (clank network log)."
+
+        def given(values: dict[str, str] | None) -> None:
+            host = (values or {}).get("host", "").strip()
+            if host:
+                self._change_hosts(workspace, "hosts", {"host": host, "allow": True})
+
+        self.console.push_screen(FormScreen("Allow the agent a host", [field], note), given)
+
+    def _change_hosts(self, workspace: str, what: str, body: dict[str, Any]) -> None:
+        """Allow or take back, in a worker; the page reads the folder again after."""
+        client = self.console.client
+
+        def work() -> None:
+            try:
+                after = client.post(f"workspaces/{workspace}/{what}", body)
+                reached = ", ".join(sorted(after.get("hosts") or {}))
+                self._say(
+                    f"{workspace}: its agent may reach {reached}"
+                    if reached
+                    else f"{workspace}: its agent reaches no host"
+                )
+            except (NotRunning, ClientError) as error:
+                self._say(str(error), True)
+            finally:
+                self.console.call_from_thread(self._read)
+
+        self.run_worker(work, thread=True, group="folder-hosts", exclusive=True, exit_on_error=False)
 
     def _pick_model(self) -> None:
         """A preset to run in the main slot, the slot's last that worked first (else the default)."""

@@ -334,6 +334,21 @@ class Gateway:
             "network": self.network_routes(),
         }  # fmt: skip
 
+    def network_log(self, limit: int = 30, workspace: str = "") -> dict[str, Any]:
+        """The agent's newest internet exchanges (design 0024 §4), of one workspace when named, and today's bytes by
+        host, from the network log the gateway's process writes."""
+        from clank.components.gateway.proxy import NetworkLog
+
+        log = NetworkLog(self.kernel.home.logs / "network")
+        return {"exchanges": log.recent(max(1, min(limit, 500)), workspace), "by_host": log.by_host()}
+
+    def network_hosts(self) -> dict[str, dict[str, str]]:
+        """The hosts each workspace's agent may reach through the proxy, with when and how each was allowed."""
+        return {
+            loaded.id: dict(loaded.record.model_dump().get("hosts") or {})
+            for loaded in self.kernel.settings.records("workspace")
+        }
+
     def network_routes(self) -> dict[str, dict[str, Any]]:
         """Each workspace's hosts allowed through the proxy (design 0024 §1), from its record, as the gateway's
         routes carry them."""

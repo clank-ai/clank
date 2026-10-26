@@ -16,6 +16,7 @@ copy of the request."""
 import json
 import re
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -27,6 +28,7 @@ from clank.console.app import ClankConsole
 from clank.console.panel import Panel
 from clank.console.snapshot import render_text
 from clank.kernel.core import Kernel
+from clank.kernel.events import Actor
 from tests.components.gateway.test_recent_requests import record
 from tests.console.frames import settle, steady_frame
 from tests.support.cloud import CloudBench
@@ -220,3 +222,37 @@ async def test_f7_shows_the_sampling_a_request_sent_beside_its_presets(kernel: K
         "sampling  sent: temperature 0.55, which win over the preset's: temperature 1.0 thinking, 0.7 not thinking "
         "(the engine's own)"
     ) in shown
+
+
+async def test_n_shows_the_agents_internet_exchanges_through_the_proxy_and_the_hosts_allowed(
+    kernel: Kernel, client: Client, tmp_path: Path
+) -> None:
+    """Design 0024 §4: the Network view beside the model's requests."""
+    folder = kernel.home.logs / "network"
+    folder.mkdir(parents=True, exist_ok=True)
+    day = datetime.now(UTC).date().isoformat()
+    lines = [
+        {"time": f"{day}T08:00:05.000+00:00", "workspace": "paper", "host": "export.arxiv.org", "port": 443,
+         "method": "CONNECT", "status": 200, "sent": 500, "received": 30000, "seconds": 1.1, "why": "asked: once"},
+        {"time": f"{day}T08:00:09.000+00:00", "workspace": "paper", "host": "nope.test", "port": 80, "method": "GET",
+         "path": "/", "status": 403, "seconds": 0.001, "why": "not allowed"},
+    ]  # fmt: skip
+    (folder / f"{day}.jsonl").write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+    record = {"path": str(tmp_path), "hosts": {"export.arxiv.org": "allowed by you"}}
+    kernel.settings.write("workspace", "paper", record, base=None, actor=Actor(kind="user", via="console"))
+    app = ClankConsole(client, now=lambda: NOW, zone=UTC, home=kernel.home, page="requests")
+    async with app.run_test(size=(160, 50)) as pilot:
+        await settle(pilot, lambda: "requests-list-panel" in shown_panels(app))
+        await pilot.press("n")
+        await settle(pilot, lambda: "requests-network" in shown_panels(app) and "nope.test" in text(app), seconds=10)
+        shown = text(app)
+        assert "requests-list-panel" not in shown_panels(app)
+        assert "GET nope.test/" in shown
+        assert "403" in shown
+        assert "not allowed" in shown
+        assert "export.arxiv.org" in shown
+        assert "asked: once" in shown
+        assert "Today, by host" in shown
+        assert "paper: export.arxiv.org" in shown, "the hosts allowed, per workspace"
+        await pilot.press("n")
+        await settle(pilot, lambda: "requests-list-panel" in shown_panels(app))

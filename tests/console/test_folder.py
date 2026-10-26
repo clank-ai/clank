@@ -15,7 +15,10 @@ say so, and what its sessions cost today shows. Design 0011 §12.1: `u` is then 
 and a click on it does what the key does.
 
 Design 0018 §8.1: over SSH, outside VS Code's Remote-SSH, `c` gets everything ready, opens nothing on the PC's screen,
-and says the command to run on the other computer."""
+and says the command to run on the other computer.
+
+Design 0024 §4 and §5: the hosts the workspace's agent may reach show under its MCP servers, and `h` allows a named
+set of hosts or a host by name, or takes one back."""
 
 import contextlib
 from collections.abc import Callable, Sequence
@@ -603,3 +606,37 @@ async def test_u_changes_the_bound_asked_first_and_the_held_back_servers_and_the
         await settle(pilot, lambda: "held back: local only" in text(app))
         assert "its sessions: $0.84 today (Requests, F7, shows each)" in text(app)
     assert ("POST", "workspaces/paper/cloud", {"allow": True}) in cloud_api.calls
+
+
+async def test_h_allows_the_agent_a_named_set_of_hosts_or_a_host_and_takes_one_back(
+    kernel: Kernel, client: Client, platform: FakePlatform, gateway: None, project: Path
+) -> None:
+    """Design 0024 §4 and §5."""
+    kernel.settings.write("workspace", "paper", {"path": str(project)}, base=None, actor=YOU)
+    name = names(kernel.home.id).container("paper")
+    platform.containers.append(container(name, labels={"clank.home": kernel.home.id}))
+    platform.images.add(image_tag())
+    app = console(client, kernel, project)
+    async with app.run_test(size=(220, 50)) as pilot:
+        await settle(pilot, lambda: "Hosts its agent reaches: none" in text(app), seconds=20)
+        await pilot.press("h")
+        await settle(pilot, lambda: isinstance(app.screen, PickScreen))
+        await pilot.press("down")  # python first, then papers
+        await pilot.press("enter")
+        await settle(pilot, lambda: "api.crossref.org" in text(app), seconds=20)
+        assert "Hosts its agent reaches: api.crossref.org, api.openalex.org, api.semanticscholar.org" in text(app)
+        await pilot.press("h")
+        await settle(pilot, lambda: isinstance(app.screen, PickScreen))
+        await pilot.press("down")
+        await pilot.press("enter")  # papers again: taken back
+        await settle(pilot, lambda: "Hosts its agent reaches: none" in text(app), seconds=20)
+        await pilot.press("h")
+        await settle(pilot, lambda: isinstance(app.screen, PickScreen))
+        for _ in range(5):
+            await pilot.press("down")  # past the five sets: a host by name
+        await pilot.press("enter")
+        await settle(pilot, lambda: isinstance(app.screen, FormScreen))
+        await pilot.press(*"zenodo", "full_stop", *"org")
+        await pilot.press("enter")
+        await settle(pilot, lambda: "Hosts its agent reaches: zenodo.org" in text(app), seconds=20)
+    assert list(kernel.settings.get("workspace", "paper").record.model_dump()["hosts"]) == ["zenodo.org"]

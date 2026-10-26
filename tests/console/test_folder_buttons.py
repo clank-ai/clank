@@ -55,7 +55,7 @@ async def test_this_folders_groups_hold_its_declared_keys(client: Client, home: 
         assert keys_of(app, "folder-next") == ["l", "g"]
         assert app.query_one("#folder-next", Buttons).lead == "Next:"
         assert keys_of(app, "folder-ways") == ["a", "c", "f"]
-        assert keys_of(app, "folder-settings") == ["m", "p", "r", "w", "i"]
+        assert keys_of(app, "folder-settings") == ["m", "h", "p", "r", "w", "i"]
         declared = {key.key: key for key in FolderPage.KEYS}
         for group in app.query_one("#page-folder", Page).query(Buttons).results(Buttons):
             for each in group.buttons:

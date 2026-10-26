@@ -32,17 +32,21 @@ comes with the Monitor's move to the stream (design 0023 step 4), which changes 
 
 ## Tasks
 
-- [ ] 1. **The routes and the commands**: `NetworkLog.recent(folder, limit, workspace)` and `by_host(folder, day)` in
+- [x] 1. **The routes and the commands**: `NetworkLog.recent(folder, limit, workspace)` and `by_host(folder, day)` in
   `gateway/proxy.py`; `Gateway.network_log`, `network_hosts` in the gateway's service; the routes; `clank network log
   [--limit N] [--workspace NAME] [--json]` and `clank network hosts [--json]`. Tests over the service's test client
   with a log written by the tests (`test_network_views.py`).
-- [ ] 2. **This folder's hosts** (`agents/console/folder.py`): the line, the `h` key, the picker and the form; the
+- [x] 2. **This folder's hosts** (`agents/console/folder.py`): the line, the `h` key, the picker and the form; the
   page's help and keys bar; the snapshots rewritten and read. Console tests drive `h`.
-- [ ] 3. **Requests · F7's Network view** (`gateway/console/requests.py`): the `n` view with its lines, the day's bytes
+- [x] 3. **Requests · F7's Network view** (`gateway/console/requests.py`): the `n` view with its lines, the day's bytes
   by host, the hosts per workspace; its snapshot.
-- [ ] 4. **Docs**: design 0024 §4 built (the Monitor's line deferred to design 0023 step 4, said there); the console
+- [x] 4. **Docs**: design 0024 §4 built (the Monitor's line deferred to design 0023 step 4, said there); the console
   page (`docs/console.md`); the roadmap, the plan index, the generated pages.
 
 ## Progress
 
 Written 2026-10-26, after steps 1 to 3 and 5 were built.
+
+- All four tasks built 2026-10-26. This folder's frames changed by the `h` button in the settings' row (read and
+  rewritten); the Requests page's Network view is a panel shown only after `n`, named so to the console's test of
+  every page's panels.

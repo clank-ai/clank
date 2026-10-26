@@ -89,6 +89,19 @@ def router(gateway: "Gateway") -> APIRouter:
         found: dict[str, Any] = await anyio.to_thread.run_sync(gateway.holds)
         return found
 
+    @routes.get("/gateway/network/log")
+    async def network_log(limit: int = 30, workspace: str = "") -> dict[str, Any]:
+        """The agent's newest internet exchanges through the proxy (design 0024 §4), of one workspace when named, and
+        today's bytes by host."""
+        found: dict[str, Any] = await anyio.to_thread.run_sync(lambda: gateway.network_log(limit, workspace))
+        return found
+
+    @routes.get("/gateway/network/hosts")
+    async def network_hosts() -> dict[str, Any]:
+        """The hosts each workspace's agent may reach, with when and how each was allowed (design 0024 §1)."""
+        found: dict[str, Any] = await anyio.to_thread.run_sync(gateway.network_hosts)
+        return found
+
     @routes.get("/gateway/requests")
     async def requests(limit: int = 50) -> dict[str, Any]:
         """The newest model requests kept, newest first, each in brief: who asked, how it went, tokens and speed."""
