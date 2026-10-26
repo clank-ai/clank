@@ -560,7 +560,7 @@ async def test_with_a_provider_added_u_is_a_button_of_then_works_settings_that_a
         await settle(pilot, lambda: bool(app.query("#page-folder")))
         await settle(pilot, lambda: "(u allows it)" in text(app), seconds=20)
         settings = app.query_one("#folder-settings", Buttons)
-        await settle(pilot, lambda: [each.key.key for each in settings.buttons] == ["m", "p", "r", "w", "i", "u"])
+        await settle(pilot, lambda: [each.key.key for each in settings.buttons] == ["m", "h", "p", "r", "w", "i", "u"])
         assert settings.buttons[-1].said == "cloud or local"
         await settle(pilot, lambda: settings.size.height == len(settings.lines(settings.size.width)[0]))
         _, line, start, _ = settings.lines(settings.size.width)[1][-1]
