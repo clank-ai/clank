@@ -125,7 +125,8 @@ def test_permissions_and_questions_open_are_those_asked_and_not_yet_answered() -
         "id": "per_1", "sessionID": S, "permission": "edit", "patterns": ["a.py"], "metadata": {"diff": "+x"}},
         "input": None})  # fmt: skip
     mirror.heard(W, {"type": "asked", "port": 4096, "request": {
-        "id": "per_2", "sessionID": "ses_other", "permission": "bash", "patterns": ["rm"], "metadata": {}}})  # fmt: skip
+        "id": "per_2", "sessionID": "ses_other", "permission": "bash", "patterns": ["rm"], "metadata": {},
+    }})  # fmt: skip
     mirror.heard(W, {"type": "question", "port": 4096, "request": {"id": "que_1", "session": S, "questions": [
         {"question": "Which n?", "header": "n", "options": [{"label": "8"}]}]}})  # fmt: skip
     found = mirror.conversation(W, S, 30)
