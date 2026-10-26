@@ -184,3 +184,31 @@ main.stale > *:not(.paused) { opacity: 0.55; }
 .share .bar { grid-column: 1 / -1; height: 3px; background: var(--line); }
 .share .bar i { display: block; height: 100%; background: var(--accent); }
 .item { align-items: center; justify-content: space-between; margin-top: 4px; }
+/* The app shell (design 0025 §3, revised 2026-10-26): the page never scrolls; the header, the attention line, the
+   middle and the tab bar are rows of one column the size of what the screen shows, and only the middle scrolls. A bar
+   fixed to the page sat higher on a page too short to scroll (every tab but Work, on the owner's iPhone); nothing is
+   fixed to the page any more. With the keyboard up the column shrinks to what stays visible and the tab bar steps
+   aside, so the composer stays above the keyboard. */
+html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+body {
+  position: fixed; left: 0; right: 0; top: var(--view-top, 0px); height: var(--view-height, 100%);
+  display: flex; flex-direction: column; padding: 0;
+}
+.top { position: relative; flex: none; }
+.attention { position: relative; top: auto; flex: none; }
+main { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.tabs { position: relative; left: auto; right: auto; bottom: auto; flex: none; }
+.composer { bottom: 0; }
+body.keyboard .tabs { display: none; }
+body.keyboard .sheet { bottom: 0; }
+body.keyboard .toast { bottom: 8px; }
+/* The launch screen: a ring that turns while the app reaches the PC, the step it is at, how long it has waited. */
+.launch { justify-items: center; text-align: center; padding-top: 16vh; }
+.launch .step { color: var(--text); }
+.launch .known { text-align: left; width: 100%; border: 1px solid var(--line); padding: 8px 10px; display: grid; gap: 2px; }
+.spinner {
+  width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--brand);
+  animation: turn 0.9s linear infinite;
+}
+@keyframes turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
