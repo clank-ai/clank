@@ -18,11 +18,15 @@ A workspace's setup (design 0004 §10) runs in a container of its own, made for 
 contained and limited as the workspace's container, but on Docker's default network, which reaches the internet, so
 the folder's own software can be downloaded into the home without the workspace's container ever reaching out.
 
-All of them run Clank's sandbox image, built from the `image` folder beside this module; its tag is the checksum of that
-folder's files (`image_tag`), so a change to them builds a new image, and an image of that tag is the one they made. A
-workspace whose record names image layers (design 0020 §3: `tex`) runs an image built on it, a layer at a time in
-their order, each from its folder under `layers` with the image below as the build argument `BASE` (`layer_chain`);
-its tag names the layers and is the checksum of the base's tag and the layers' files (`layered_tag`).
+All of them run Clank's sandbox image, built from the Dockerfile in the `image` folder beside this module; its tag is
+the checksum of that Dockerfile (`image_tag`), so a change to it builds a new image, and an image of that tag is the one
+it made. Clank's own programs for the container (the edge's, the bridge, the MCP server, its `sitecustomize`) and its
+instructions live in the same folder and are mounted read-only at `/opt/clank` in every container Clank runs
+(`ContainerSpec.programs`, decision 0142), never copied into the image: a change to them rebuilds nothing, and each
+container runs the version the service runs. A workspace whose record names image layers (design 0020 §3: `tex`) runs
+an image built on it, a layer at a time in their order, each from its folder under `layers` with the image below as
+the build argument `BASE` (`layer_chain`); its tag names the layers and is the checksum of the base's tag and the
+layers' files (`layered_tag`).
 """
 
 import csv
@@ -39,9 +43,10 @@ AGENT_HOME = "/home/agent"
 PROCESSES = 1024
 EDGE_ALIAS = "edge"
 HOST = "host.docker.internal"
-EDGE_PROGRAM = "/opt/clank/edge.py"
-BRIDGE_PROGRAM = "/opt/clank/bridge.py"  # the session bridge to OpenCode's servers (design 0005 §2)
-PHONE_PROGRAM = "/opt/clank/phone_mcp.py"  # Clank's own MCP server for the agent: send_to_phone (design 0005 §3)
+PROGRAMS = "/opt/clank"  # Clank's programs and instructions, mounted read-only from `image_folder()` (0142)
+EDGE_PROGRAM = f"{PROGRAMS}/edge.py"
+BRIDGE_PROGRAM = f"{PROGRAMS}/bridge.py"  # the session bridge to OpenCode's servers (design 0005 §2)
+PHONE_PROGRAM = f"{PROGRAMS}/phone_mcp.py"  # Clank's own MCP server for the agent: send_to_phone (design 0005 §3)
 AGENT_CLANK = f"{AGENT_HOME}/.clank"  # Clank's files for the agent, written at each start (design 0018 §7.5)
 CURRENT_PHONE = f"{AGENT_CLANK}/mcp/phone_mcp.py"  # Clank's MCP server as this Clank has it
 CURRENT_INSTRUCTIONS = f"{AGENT_CLANK}/instructions/*.md"  # Clank's instructions to every agent (design 0020 §13)
@@ -116,6 +121,7 @@ class ContainerSpec:
     hosts: tuple[str, ...] = ()
     once: bool = False  # run in the foreground and removed when it ends, rather than detached
     env: tuple[tuple[str, str], ...] = ()  # what every program in it runs with
+    programs: str = ""  # the folder of Clank's programs, mounted read-only at `PROGRAMS` (decision 0142)
 
 
 def workspace_spec(home: str, name: str, folder: str, image: str, *, cpus: float, memory_mib: int) -> ContainerSpec:
@@ -133,6 +139,7 @@ def workspace_spec(home: str, name: str, folder: str, image: str, *, cpus: float
         cpus=cpus,
         memory_mib=memory_mib,
         env=thread_env(cpus),
+        programs=str(image_folder()),
     )
 
 
@@ -155,6 +162,7 @@ def setup_spec(
         memory_mib=memory_mib,
         once=True,
         env=thread_env(cpus),
+        programs=str(image_folder()),
     )
 
 
@@ -173,6 +181,7 @@ def edge_spec(home: str, image: str, *, gateway_port: int) -> ContainerSpec:
         processes=64,
         read_only=True,
         hosts=(f"{HOST}:host-gateway",),
+        programs=str(image_folder()),
     )
 
 
@@ -187,6 +196,8 @@ def run_arguments(spec: ContainerSpec) -> list[str]:
         arguments += ["--network-alias", alias]
     for source, target in spec.binds:
         arguments += ["--mount", _mount("bind", source, target)]
+    if spec.programs:
+        arguments += ["--mount", _mount("bind", spec.programs, PROGRAMS, readonly=True)]
     for source, target in spec.volumes:
         arguments += ["--mount", _mount("volume", source, target)]
     for host in spec.hosts:
@@ -206,10 +217,11 @@ def _labels(home: str, record: str) -> tuple[tuple[str, str], ...]:
     return (("clank.home", home), ("clank.component", "workspaces"), ("clank.record", record))
 
 
-def _mount(kind: str, source: str, target: str) -> str:
+def _mount(kind: str, source: str, target: str, *, readonly: bool = False) -> str:
     """A `--mount` value: Docker reads it as one line of CSV, so a field with a comma or a quote is quoted."""
     out = io.StringIO()
-    csv.writer(out, lineterminator="").writerow([f"type={kind}", f"source={source}", f"target={target}"])
+    fields = [f"type={kind}", f"source={source}", f"target={target}", *(["readonly"] if readonly else [])]
+    csv.writer(out, lineterminator="").writerow(fields)
     return out.getvalue()
 
 
@@ -219,7 +231,8 @@ def joined(spec: ContainerSpec) -> Sequence[tuple[str, str]]:
 
 
 def image_folder() -> Path:
-    """The folder Clank's sandbox image is built from: its Dockerfile and the edge's program."""
+    """The folder Clank's sandbox image is built from (its Dockerfile), which also holds the programs and instructions
+    mounted at `PROGRAMS` in every container (decision 0142)."""
     return Path(str(resources.files("clank.components.workspaces").joinpath("image")))
 
 
@@ -235,9 +248,9 @@ def agent_files() -> list[tuple[str, str]]:
 
 
 def image_tag() -> str:
-    """The sandbox image's tag: the checksum of its folder's files (Python's caches left out)."""
-    digest = hashlib.sha256()
-    _add_files(digest, image_folder())
+    """The sandbox image's tag: the checksum of its Dockerfile alone, since the folder's programs are mounted, not
+    copied (decision 0142)."""
+    digest = hashlib.sha256((image_folder() / "Dockerfile").read_bytes())
     return f"{IMAGE}:{digest.hexdigest()[:12]}"
 
 

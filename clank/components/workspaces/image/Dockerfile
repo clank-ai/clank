@@ -3,8 +3,10 @@
 # SymPy: decision 0138, so the agent plots and computes in any folder), Node.js 22, git, the build tools and ripgrep,
 # and OpenCode at the version Clank knows;
 # a user `agent` (uid 1000) whose home is a volume of each workspace's own, its ~/.venv (the folder's own software,
-# installed by a workspace's setup) first on the PATH. The edge runs from it too (edge.py). Its tag
-# is the checksum of this folder (`sandbox.image_tag`), so a change here builds a new image.
+# installed by a workspace's setup) first on the PATH. The edge runs from it too. Clank's programs for the container
+# (edge.py, bridge.py, phone_mcp.py, find_figures.py, python/sitecustomize.py) and its instructions are not copied in:
+# this folder is mounted read-only at /opt/clank in every container Clank runs (decision 0142), so a change to them
+# rebuilds nothing. The image's tag is the checksum of this Dockerfile (`sandbox.image_tag`).
 FROM ubuntu:24.04
 
 ARG OPENCODE_VERSION=1.19.4
@@ -29,10 +31,10 @@ RUN apt-get update \
 # Ubuntu's image has a user `ubuntu` with uid 1000; the agent takes its place.
 RUN userdel --remove ubuntu 2>/dev/null; useradd --create-home --uid 1000 --shell /bin/bash agent
 
-COPY edge.py bridge.py phone_mcp.py find_figures.py /opt/clank/
-# Every Python finds Clank's sitecustomize: when Matplotlib saves a raster figure in the folder, its geometry is written
-# under .clank/figures/ for the annotator (design 0008 §3); nothing else changes, and nothing at all without Matplotlib.
-COPY python/ /opt/clank/python/
+# /opt/clank is this folder, mounted at run time (decision 0142). Every Python finds Clank's sitecustomize there
+# (PYTHONPATH below): when Matplotlib saves a raster figure in the folder, its geometry is written under .clank/figures/
+# for the annotator (design 0008 §3); nothing else changes, and nothing at all without Matplotlib.
+RUN mkdir -p /opt/clank
 
 # A workspace's own software is installed into ~/.venv (design 0004 §10): first on the PATH, so the agent, its terminal
 # and the MCP servers it starts find it without being told; and `python` is Python 3 with or without it. The folder is
