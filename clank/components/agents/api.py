@@ -168,6 +168,28 @@ class JobRequest(BaseModel):
     minutes: int = Field(240, description="Its time limit, in minutes: then it is ended.")
 
 
+class BoardNew(BaseModel):
+    """A new board: its workspace, its name, the folder under the workspace's to make it in, and its title."""
+
+    workspace: str
+    name: str
+    folder: str = ""
+    title: str = ""
+
+
+class BoardChange(BaseModel):
+    """An item added to a board, changed, or taken away (design 0022 §4): the board, the item's kind and fields (to
+    add), its id (to change or take away), its changes, and where it goes (`at`)."""
+
+    workspace: str
+    board: str
+    kind: str = ""
+    fields: dict[str, Any] = {}
+    id: str = ""
+    changes: dict[str, Any] = {}
+    at: dict[str, Any] | None = None
+
+
 class ArtifactRequest(BaseModel):
     """An artifact the agent makes, or its next version (design 0021 §5)."""
 
@@ -239,6 +261,7 @@ def router(agents: "Agents") -> APIRouter:
         AgentError,
         AnnotationError,
         ArtifactError,
+        BoardError,
         CommentError,
         GuideError,
         JobsError,
@@ -689,6 +712,46 @@ def router(agents: "Agents") -> APIRouter:
             return {"jobs": await anyio.to_thread.run_sync(agents.all_jobs, workspace)}
         except JobsError as error:
             raise ApiError(409, "refused", str(error)) from error
+
+    async def boarded(work: Any) -> dict[str, Any]:
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(work)
+        except BoardError as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
+
+    @routes.post("/agents/boards")
+    async def board_new(wanted: BoardNew) -> dict[str, Any]:
+        """Make a board in the workspace's folder (design 0022 §1); its path from the folder."""
+        return await boarded(lambda: agents.boards.new(wanted.workspace, wanted.name, folder=wanted.folder,
+                                                       title=wanted.title))  # fmt: skip
+
+    @routes.get("/agents/boards")
+    async def boards(workspace: str) -> dict[str, Any]:
+        """The folder's boards, the newest changed first, each with its title and how many items it holds."""
+        return {"boards": (await boarded(lambda: {"boards": agents.boards.boards(workspace)}))["boards"]}
+
+    @routes.get("/agents/boards/read")
+    async def board_read(workspace: str, board: str) -> dict[str, Any]:
+        """A board whole, and in words for the model (design 0022 §4)."""
+        return await boarded(lambda: agents.boards.read(workspace, board))
+
+    @routes.post("/agents/boards/add")
+    async def board_add(wanted: BoardChange) -> dict[str, Any]:
+        """Add an item to a board, placed by where (design 0022 §4); its id and the change in words."""
+        return await boarded(lambda: agents.boards.add(wanted.workspace, wanted.board, wanted.kind, wanted.fields,
+                                                       wanted.at))  # fmt: skip
+
+    @routes.post("/agents/boards/update")
+    async def board_update(wanted: BoardChange) -> dict[str, Any]:
+        """Change an item of a board: its words, its size or its place."""
+        return await boarded(lambda: agents.boards.update(wanted.workspace, wanted.board, wanted.id, wanted.changes,
+                                                          wanted.at))  # fmt: skip
+
+    @routes.post("/agents/boards/remove")
+    async def board_remove(wanted: BoardChange) -> dict[str, Any]:
+        """Take an item away from a board (its history keeps it)."""
+        return await boarded(lambda: agents.boards.remove(wanted.workspace, wanted.board, wanted.id))
 
     @routes.post("/agents/artifacts")
     async def make_artifact(wanted: ArtifactRequest) -> dict[str, Any]:

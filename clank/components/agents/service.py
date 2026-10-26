@@ -67,6 +67,9 @@ from clank.components.agents.annotations import Annotations
 from clank.components.agents.artifacts import EVENT_TYPES as ARTIFACT_EVENTS
 from clank.components.agents.artifacts import ArtifactError as ArtifactError  # for the routes
 from clank.components.agents.artifacts import Artifacts
+from clank.components.agents.boards import EVENT_TYPES as BOARD_EVENTS
+from clank.components.agents.boards import BoardError as BoardError  # for the routes
+from clank.components.agents.boards import Boards
 from clank.components.agents.context import totals
 from clank.components.agents.guide import Guide, Ruled
 from clank.components.agents.guide import GuideError as GuideError  # for the routes
@@ -149,6 +152,7 @@ EVENT_TYPES = [
     *COMMENT_EVENTS,
     *JOB_EVENTS,
     *ARTIFACT_EVENTS,
+    *BOARD_EVENTS,
 ]
 ROLE = "agent"
 SESSION_MODEL = {"providerID": PROVIDER, "modelID": ROLE}  # the model a message names: the gateway's role
@@ -200,6 +204,7 @@ class Agents:
         self.showing = Showing(kernel)  # files opened for the owner (design 0018 §7)
         self.jobs = AgentJobs(kernel, self.sessions)  # long computations the agent starts (design 0021 §6)
         self.artifacts = Artifacts(kernel, self.sessions)  # pages the agent makes for the owner (design 0021 §5)
+        self.boards = Boards(kernel)  # canvases the owner and the agent share (design 0022)
         self.pages = PageMarks(self.review.latex.run)  # a PDF's pages to mark up (design 0020 §10)
         self.answers = Answers(self.sessions)  # every number answered (design 0020 §12)
         self.annotations.pages, self.annotations.answers = self.pages, self.answers

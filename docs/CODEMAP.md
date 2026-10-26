@@ -27,6 +27,9 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/api.py` | The agents component's routes (design 0004 §4): making a workspace's agent ready. |
 | `clank/components/agents/artifactcli.py` | `clank artifact` (design 0021 §5): the artifacts the agent made in a folder's workspace, from the command line. |
 | `clank/components/agents/artifacts.py` | Artifacts (design 0021 §5): pages the agent makes for the owner (an interactive plot of results, a parameter |
+| `clank/components/agents/boardcli.py` | `clank board` (design 0022 §1): a folder's boards from the command line. `clank board new NAME [--in FOLDER] |
+| `clank/components/agents/boardplace.py` | Where a new item goes on a board (design 0022 §4): the agent says where ("below fig-2", "in the frame Figure 3", "in |
+| `clank/components/agents/boards.py` | Boards (design 0022): a canvas the owner and the agent share, a `.board` file of the folder (JSON: its title, its |
 | `clank/components/agents/changes.py` | A change the agent asks to make to a file (design 0007 §5): the file as it would be after it, its diff, and where |
 | `clank/components/agents/cli.py` | `clank work [FOLDER]` (design 0004 §1): the agent, in a folder's container, in this terminal, at once; `clank code |
 | `clank/components/agents/component.py` | The agents component's declaration (design 0002 §1, design 0004 §4). |
