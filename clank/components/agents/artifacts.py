@@ -239,9 +239,7 @@ class Artifacts:
         if made is None:
             raise ArtifactError(f"the artifact {name} has no version {version}")
         session = str(made.get("session") or "")
-        port = self.sessions.runs(workspace, session) if session else None
-        if port is None and session:
-            port = self._server_for(workspace, session)
+        port = self.sessions.reach(workspace, session) if session else None
         if port is None:
             raise ArtifactError(
                 f"no session of the agent's that made {name} version {version} runs now: start the agent, then send "
@@ -299,18 +297,6 @@ class Artifacts:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(page, encoding="utf-8")
         return {"file": str(target), "said": f"{name} version {version} as one page: {target}"}
-
-    def _server_for(self, workspace: str, session: str) -> int | None:
-        """A server of the workspace that reaches the session when the service has not heard from it (after its own
-        restart, it knows none): the one that lists the session, else the first that runs, since every OpenCode server
-        of a folder reads the sessions it keeps on disk; None when none runs."""
-        try:
-            running = self.sessions.servers(workspace)
-        except Exception:  # the workspace's container does not answer: as if none ran
-            return None
-        listing = [each for each in running if any(one.get("id") == session for one in each.get("sessions", []))]
-        found = (listing or running)[:1]
-        return int(found[0]["port"]) if found else None
 
     def _folder(self, workspace: str) -> Path:
         workspaces: Workspaces = self.kernel.parts["workspaces"]

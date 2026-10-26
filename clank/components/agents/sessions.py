@@ -151,6 +151,22 @@ class Sessions:
             each = self._seen.get(workspace, {}).get(session)
             return each.port if each is not None else None
 
+    def reach(self, workspace: str, session: str) -> int | None:
+        """The port of a server that reaches the session: the one the watchers saw it on, else one of the workspace's
+        servers that lists it, else the first that runs, since every OpenCode server of a folder reads the sessions it
+        keeps on disk (after the service restarts it has seen none); None when none runs or the container does not
+        answer."""
+        known = self.runs(workspace, session)
+        if known is not None:
+            return known
+        try:
+            running = self.servers(workspace)
+        except Exception:  # the workspace's container does not answer: as if none ran
+            return None
+        listing = [each for each in running if any(one.get("id") == session for one in each.get("sessions") or [])]
+        found = (listing or running)[:1]
+        return int(found[0]["port"]) if found else None
+
     def seen(self, workspace: str) -> list[dict[str, Any]]:
         """Each session the workspace's watcher saw: its server, its status, its parent and its title."""
         with self._lock:

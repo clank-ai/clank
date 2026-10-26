@@ -97,9 +97,9 @@ from clank.components.agents.review import EVENT_TYPES as REVIEW_EVENTS
 from clank.components.agents.review import Review
 from clank.components.agents.review import ReviewError as ReviewError  # for the components that use this one
 from clank.components.agents.sessionflow.kept import SessionFlows, gateway_asker, plan_reader
+from clank.components.agents.sessions import AT_WORK, Sessions
 from clank.components.agents.sessions import EVENT_TYPES as SESSION_EVENTS
 from clank.components.agents.sessions import SessionError as SessionError  # for the components that use this one
-from clank.components.agents.sessions import Sessions
 from clank.components.agents.showing import EVENT_TYPES as SHOWING_EVENTS
 from clank.components.agents.showing import ShowError as ShowError  # for the routes
 from clank.components.agents.showing import Showing
@@ -308,6 +308,50 @@ class Agents:
             "gpu": gpu_view(machine.meters()),
             "drafts": runtime.drafts("main"),
             "jobs": [job for job in self.jobs.list(workspace) if job["state"] != "ended"] if workspace else [],
+        }
+
+    def conversation(self, folder: str, session: str = "", limit: int = 30, before: str = "") -> dict[str, Any]:
+        """The agent panel's conversation for a folder (design 0021 §4): its workspace's session (the one named, else
+        the newest kept, else the newest root session a server lists), the server that reaches it, a page of its
+        messages (the newest `limit`, or those before the cursor `before`) with the cursor of the page before, whether
+        it is busy, and the permissions and questions waiting in it."""
+        try:
+            workspace: str | None = self.annotations.workspace_of(folder)[0]
+        except AnnotationError:
+            workspace = None
+        nothing: dict[str, Any] = {"folder": folder, "workspace": workspace, "session": None, "messages": [],
+                                   "next": "", "waiting": {"permissions": [], "questions": []}}  # fmt: skip
+        if workspace is None:
+            return nothing
+        try:
+            running = self.sessions.servers(workspace)
+        except Exception:  # the container does not answer: the sessions kept still say which one
+            running = []
+        listed = sorted((each for server in running for each in server.get("sessions") or []),
+                        key=lambda each: each.get("updated") or 0, reverse=True)  # fmt: skip
+        kept = self.flows.flows(workspace)
+        chosen = session or str((kept[0] if kept else {}).get("session") or (listed[0]["id"] if listed else ""))
+        port = self.sessions.reach(workspace, chosen) if chosen else None
+        if port is None:
+            return nothing
+        seen: dict[str, Any] = next((each for each in listed if each.get("id") == chosen), {})
+        named: dict[str, Any] = next((flow for flow in kept if flow.get("session") == chosen), {})
+        page = self.sessions.page(workspace, port, chosen, limit=limit, before=before)
+        waits = [
+            each for server in running for each in server.get("permissions") or [] if each.get("session") == chosen
+        ]
+        asks = [each for server in running for each in server.get("questions") or [] if each.get("session") == chosen]
+        return {
+            **nothing,
+            "session": {
+                "id": chosen,
+                "title": str(seen.get("title") or named.get("title") or ""),
+                "port": port,
+                "busy": seen.get("status") in AT_WORK,
+            },
+            "messages": page.get("messages") or [],
+            "next": str(page.get("next") or ""),
+            "waiting": {"permissions": waits, "questions": asks},
         }
 
     def figures(self, workspace: str, session: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:

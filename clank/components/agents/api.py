@@ -373,6 +373,16 @@ def router(agents: "Agents") -> APIRouter:
         found: dict[str, Any] = await anyio.to_thread.run_sync(agents.readout, folder, session)
         return found
 
+    @routes.get("/agents/conversation")
+    async def conversation(folder: str, session: str = "", limit: int = 30, before: str = "") -> dict[str, Any]:
+        """The agent panel's conversation for a folder (design 0021 §4): its workspace's session (the one named, else
+        the newest kept, else the newest a server lists), the server that reaches it, a page of its messages in the
+        Monitor's shape (the newest `limit`, or those before the cursor `before`) with the cursor of the page before,
+        whether it is busy, and the permissions and questions waiting in it."""
+        shown = max(1, min(limit, 100))
+        found: dict[str, Any] = await bridged(lambda: agents.conversation(folder, session, shown, before))
+        return found
+
     @routes.get("/agents/now/{workspace}/{session}")
     async def doing_now(workspace: str, session: str) -> dict[str, Any]:
         """What a session does now (design 0012 §5): its phase, from the gateway or from OpenCode, with its detail; its
