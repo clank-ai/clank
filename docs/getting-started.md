@@ -151,7 +151,9 @@ session. [docs/console.md](console.md) explains every page and key.
 A workspace's container reaches nothing but Clank by itself. When the agent needs a host (a package index, a
 paper's site, a documentation site), allow that host for that workspace, and only it: `clank workspace allow
 FOLDER --host pypi.org --host .arxiv.org` (a name, or a suffix starting with a dot for a site and everything under
-it; `--no-host` takes one back). The agent's requests go through Clank's proxy, which lets them out to the hosts
+it; `--no-host` takes one back), or a named set with one word: `--set papers` (arXiv, Semantic Scholar, Crossref,
+OpenAlex, DOI), `--set python`, `--set code`, `--set data`, `--set docs` (`clank workspace sets` lists them; the file
+`config/network-sets.json` in your Clank home is yours to change). The agent's requests go through Clank's proxy, which lets them out to the hosts
 allowed; a host not allowed is asked for: the request waits up to a minute while the question shows under
 **Waiting for you** (`y` allows it always for the workspace, `o` once, `n` refuses it, and it is not asked again
 for ten minutes); refused, the agent reads why in plain words. Private addresses (your machine, your network) are

@@ -16,8 +16,8 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 | 2 | The way out: a forward proxy at the gateway | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)) |
 | 3 | A host the agent asks for | Approved 2026-10-26; built 2026-10-26 ([plan s54](../plans/s54-the-ask.md)) |
 | 4 | What the owner sees | Approved 2026-10-26 |
-| 5 | Packages, papers, data: the named sets | Approved 2026-10-26 |
-| 6 | Search | Approved 2026-10-26 |
+| 5 | Packages, papers, data: the named sets | Approved 2026-10-26; built 2026-10-26 ([plan s55](../plans/s55-the-named-sets.md)): the file, `clank workspace allow --set`; the console's key with the views |
+| 6 | Search | Approved 2026-10-26; the literature calls built 2026-10-26 in the agent's instructions ([plan s55](../plans/s55-the-named-sets.md)); a web search provider is the owner's choice, when the need shows |
 | 7 | What is never reached | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)) |
 | 8 | Order of work | Approved 2026-10-26 |
 
@@ -126,9 +126,11 @@ Search is not a host but a provider, and a choice of the owner's:
    gateway checks it without being handed anything; the allowances ride on the routes the gateway fetches.
 2. **Built 2026-10-26** ([plan s54](../plans/s54-the-ask.md)). The ask of §3: the hold, the question, its answers,
    the quiet period; tested with a fake ask on the proxy and the kernel's questions on the service.
-3. The named sets, their file, the console's key.
+3. **Built 2026-10-26** ([plan s55](../plans/s55-the-named-sets.md)). The named sets, their file
+   (`config/network-sets.json`), `clank workspace allow --set`; the console's key with step 4.
 4. Requests · F7's Network view, the Now panel's fetching line, This folder's hosts.
-5. The instructions (`network.md`) and the literature calls; getting started: how to let the agent fetch.
+5. **Built 2026-10-26** ([plan s55](../plans/s55-the-named-sets.md)). The instructions (`network.md`) and the
+   literature calls; getting started: how to let the agent fetch.
 6. Search, when the owner chooses a way.
 
 Decisions this design asks for, written when it is approved: the agent reaches the internet only through Clank's proxy,

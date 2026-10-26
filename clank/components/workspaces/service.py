@@ -30,7 +30,7 @@ from clank.components.workspaces.adapters.platform import Container, ContainerPl
 from clank.components.workspaces.cloud import EVENT_TYPES as CLOUD_EVENT_TYPES
 from clank.components.workspaces.cloud import CloudBounds
 from clank.components.workspaces.kinds import DockerSettings, Workspace
-from clank.components.workspaces.network import HostAsks
+from clank.components.workspaces.network import SETS_FILE, HostAsks, sets
 from clank.components.workspaces.sandbox import BRIDGE_PROGRAM as BRIDGE_PROGRAM  # for the agents (design 0005)
 from clank.components.workspaces.sandbox import CURRENT_INSTRUCTIONS as CURRENT_INSTRUCTIONS  # for the agents
 from clank.components.workspaces.sandbox import CURRENT_PHONE as CURRENT_PHONE  # (design 0018 §7.5)
@@ -211,10 +211,10 @@ class Workspaces:
         self.cloud.allow(name, allow, actor=actor)
         return next(row for row in self.records() if row["name"] == name)
 
-    def allow_host(self, name: str, host: str, allow: bool, *, actor: Actor) -> dict[str, Any]:
+    def allow_host(self, name: str, host: str, allow: bool, *, actor: Actor, set_name: str = "") -> dict[str, Any]:
         """Allow a workspace's agent a host through Clank's proxy (design 0024 §1: an exact name, or a suffix starting
-        with a dot), or take it back; its record keeps when and how; the gateway's next routes carry it; its view
-        after."""
+        with a dot), or take it back; its record keeps when and how (and the set it came with, `set_name`); the
+        gateway's next routes carry it; its view after."""
         from clank.kernel.api import ApiError
 
         self._named(name)
@@ -227,7 +227,8 @@ class Workspaces:
         values = loaded.record.model_dump()
         hosts = dict(values.get("hosts") or {})
         if allow:
-            hosts[wanted] = f"allowed {to_text(self.kernel.clock.now())} by {actor.describe()}"
+            marked = f" (set {set_name})" if set_name else ""
+            hosts[wanted] = f"allowed {to_text(self.kernel.clock.now())} by {actor.describe()}{marked}"
         else:
             hosts.pop(wanted, None)
         self.kernel.settings.write("workspace", name, {**values, "hosts": hosts}, base=loaded.revision, actor=actor)
@@ -239,6 +240,32 @@ class Workspaces:
             subject=Subject(kind="workspace", id=name),
             data={"workspace": name, "host": wanted, "allowed": allow, "who": actor.describe()},
         )
+        return next(row for row in self.records() if row["name"] == name)
+
+    def network_sets(self) -> dict[str, dict[str, Any]]:
+        """The named sets of hosts (design 0024 §5), as the owner's file has them."""
+        return sets(self.kernel.home)
+
+    def allow_set(self, name: str, set_name: str, allow: bool, *, actor: Actor) -> dict[str, Any]:
+        """Allow a workspace's agent a named set of hosts (design 0024 §5), each written into its record marked with
+        the set; or take the set back: the hosts still marked with it go, one the owner also allowed by name stays.
+        Its view after."""
+        from clank.components.workspaces.folders import WorkspaceError
+
+        self._named(name)
+        known = sets(self.kernel.home)
+        if set_name not in known:
+            raise WorkspaceError(
+                f"there is no set {set_name!r}: the sets are {', '.join(known)} (config/{SETS_FILE} holds them)"
+            )
+        if allow:
+            for host in known[set_name]["hosts"]:
+                self.allow_host(name, host, True, actor=actor, set_name=set_name)
+        else:
+            current = self.kernel.settings.get("workspace", name).record.model_dump().get("hosts") or {}
+            for host, how in current.items():
+                if f"(set {set_name})" in how:
+                    self.allow_host(name, host, False, actor=actor)
         return next(row for row in self.records() if row["name"] == name)
 
     def host_wanted(self, name: str, host: str) -> dict[str, Any]:

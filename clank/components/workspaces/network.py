@@ -9,8 +9,13 @@ no, the default when it expires after `ASK_SECONDS`). `decision(question)` says 
 into the record (the answerer the actor, so the record says who), and *no* or no answer starts the quiet period
 (`QUIET_MINUTES`), so a retrying program does not flood the owner; *once* leaves everything as it was: the next
 request asks again. The proxy's side is `gateway/proxy.py`; the routes are the workspaces' API.
+
+The named sets (design 0024 §5) are here too: `sets(home)` reads `config/network-sets.json` (written with the five
+default sets when missing: Python packages, papers, code, data and models, documentation), and the service allows a
+set by allowing each of its hosts, marked with the set's name.
 """
 
+import json
 import threading
 from collections.abc import Callable
 from datetime import datetime, timedelta
@@ -23,11 +28,63 @@ from clank.kernel.questions import Option, Question, QuestionDraft, QuestionErro
 
 if TYPE_CHECKING:
     from clank.kernel.core import Kernel
+    from clank.kernel.home import Home
 
 QUIET_MINUTES = 10  # how long a host refused is not asked for again, per workspace
+SETS_FILE = "network-sets.json"  # the named sets of hosts, in CLANK_HOME/config, the owner's to change (design 0024 §5)
+DEFAULT_SETS: dict[str, dict[str, Any]] = {
+    "python": {
+        "hosts": ["pypi.org", "files.pythonhosted.org"],
+        "for": "pip install into the workspace's environment while it works",
+    },
+    "papers": {
+        "hosts": ["arxiv.org", "export.arxiv.org", "api.semanticscholar.org", "api.crossref.org", "doi.org",
+                  "api.openalex.org"],
+        "for": "finding and reading papers, resolving references",
+    },
+    "code": {
+        "hosts": ["github.com", "raw.githubusercontent.com", "codeload.github.com", "api.github.com", "gitlab.com"],
+        "for": "reading and cloning public code",
+    },
+    "data": {
+        "hosts": ["zenodo.org", "huggingface.co", "cdn-lfs.huggingface.co", "osf.io"],
+        "for": "data sets and model files",
+    },
+    "docs": {
+        "hosts": ["docs.python.org", "numpy.org", "scipy.org", "matplotlib.org", "pandas.pydata.org"],
+        "for": "the documentation of what the container has",
+    },
+}  # fmt: skip
 ASKER = Actor(kind="clank", via="network")
 KIND = "workspace"
 Allow = Callable[..., Any]  # Workspaces.allow_host(name, host, allow, *, actor)
+
+
+def sets(home: "Home") -> dict[str, dict[str, Any]]:
+    """The named sets of hosts (design 0024 §5), from `config/network-sets.json`: written with the defaults when it is
+    missing, read each time (the owner edits it; nothing need restart); each set its hosts and what it opens."""
+    from clank.components.workspaces.folders import WorkspaceError
+
+    file = home.config / SETS_FILE
+    if not file.is_file():
+        file.parent.mkdir(parents=True, exist_ok=True)
+        file.write_text(json.dumps(DEFAULT_SETS, indent=2) + "\n", encoding="utf-8")
+        return {name: dict(each) for name, each in DEFAULT_SETS.items()}
+    try:
+        loaded = json.loads(file.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise WorkspaceError(f"the sets file {file} could not be read: {error}") from error
+    if not isinstance(loaded, dict):
+        raise WorkspaceError(
+            f"the sets file {file} should hold an object of sets, each with its hosts and what it is for"
+        )
+    found: dict[str, dict[str, Any]] = {}
+    for name, each in loaded.items():
+        hosts = each.get("hosts") if isinstance(each, dict) else None
+        if not isinstance(hosts, list):
+            raise WorkspaceError(f"the set {name!r} in {file} has no list of hosts")
+        found[str(name)] = {"hosts": [str(host) for host in hosts], "for": str(each.get("for") or "")}
+    return found
 
 
 class HostAsks:

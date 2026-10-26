@@ -120,24 +120,39 @@ def open_workspace(folder: str | None, yes: bool) -> None:
 @click.option("--host", "hosts", multiple=True, help="A host its agent may reach through Clank's proxy: a name "
               "(pypi.org) or a suffix (.arxiv.org); may be given more than once.")  # fmt: skip
 @click.option("--no-host", "no_hosts", multiple=True, help="A host its agent may not reach any more.")
+@click.option("--set", "sets", multiple=True, help="A named set of hosts its agent may reach (`clank workspace sets` "
+              "lists them: python, papers, code, data, docs); may be given more than once.")  # fmt: skip
+@click.option("--no-set", "no_sets", multiple=True, help="A named set its agent may not reach any more.")
 @click.option("--yes", is_flag=True, help="Change it without asking first.")
-def allow(folder: str, bound: str | None, hosts: tuple[str, ...], no_hosts: tuple[str, ...], yes: bool) -> None:
+def allow(
+    folder: str,
+    bound: str | None,
+    hosts: tuple[str, ...],
+    no_hosts: tuple[str, ...],
+    sets: tuple[str, ...],
+    no_sets: tuple[str, ...],
+    yes: bool,
+) -> None:
     """Where a workspace's requests may go: the cloud model too, or this machine only (design 0016 §9; asked first,
     in the service's words, unless `--yes`); and which internet hosts its agent may reach through Clank's proxy
-    (design 0024 §1), each allowed with `--host` or taken back with `--no-host`."""
-    if bound is None and not hosts and not no_hosts:
-        raise click.UsageError("say --cloud, --local, --host or --no-host")
+    (design 0024 §1), each allowed with `--host` or taken back with `--no-host`, or a named set of them (§5) with
+    `--set` and `--no-set`."""
+    if bound is None and not hosts and not no_hosts and not sets and not no_sets:
+        raise click.UsageError("say --cloud, --local, --host or --no-host (or --set, --no-set)")
     client = common.call(common.connect)
     path = str(Path(folder).resolve())
     view = common.call(lambda: client.get("workspaces/folder", folder=path))
     name = view.get("workspace")
     if not name:
         raise click.ClickException(f"{path} has no workspace yet: `clank workspace open` or This folder opens one")
-    if hosts or no_hosts:
+    if hosts or no_hosts or sets or no_sets:
         changed = view
         for host, allowed in [*((each, True) for each in hosts), *((each, False) for each in no_hosts)]:
             body = {"host": host, "allow": allowed}
             changed = common.call(partial(client.post, f"workspaces/{name}/hosts", body))
+        for named, allowed in [*((each, True) for each in sets), *((each, False) for each in no_sets)]:
+            body = {"set": named, "allow": allowed}
+            changed = common.call(partial(client.post, f"workspaces/{name}/sets", body))
         reached = ", ".join(sorted(changed.get("hosts") or {}))
         click.echo(f"{name}: its agent may reach {reached}" if reached else f"{name}: its agent reaches no host")
         if bound is None:
@@ -149,6 +164,23 @@ def allow(folder: str, bound: str | None, hosts: tuple[str, ...], no_hosts: tupl
             raise click.exceptions.Exit(1)
     changed = common.call(lambda: client.post(f"workspaces/{name}/cloud", {"allow": bound == "cloud"}))
     click.echo(f"{name}: {changed.get('cloud_said') or changed['models']}")
+
+
+@workspace.command("sets")
+@click.option("--json", "as_json", is_flag=True, help="Print JSON, for scripts and models.")
+def list_sets(as_json: bool) -> None:
+    """The named sets of hosts an agent may be allowed (design 0024 §5): each with its hosts and what it opens; the
+    file config/network-sets.json in your Clank home holds them, yours to change."""
+    client = common.call(common.connect)
+    found = common.call(lambda: client.get("workspaces/network-sets"))
+    if as_json:
+        click.echo(json.dumps(found, indent=2))
+        return
+    for name, each in found.items():
+        click.echo(f"{name}: {', '.join(each['hosts'])}")
+        if each.get("for"):
+            click.echo(f"    {each['for']}")
+    click.echo("Allow one with: clank workspace allow FOLDER --set NAME")
 
 
 @workspace.command("setup")

@@ -212,7 +212,7 @@ class Proxy:
             record["why"] = "failed"
         finally:
             if record and self.log is not None:
-                if "status" not in record:  # ended before an answer (the handler cancelled, the client gone)
+                if "status" not in record:  # ended before an answer (the handler canceled, the client gone)
                     record.update(status=0, why="ended")
                 record["seconds"] = round(time.monotonic() - began, 3)
                 self.log.write(record)

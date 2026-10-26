@@ -49,6 +49,13 @@ class HostWanted(BaseModel):
     host: str
 
 
+class SetAnswer(BaseModel):
+    """A named set of hosts a workspace's agent may reach (design 0024 §5), or may not any more."""
+
+    set: str
+    allow: bool = True
+
+
 class HostAnswer(BaseModel):
     """A host a workspace's agent may reach through Clank's proxy (design 0024 §1), or may not any more."""
 
@@ -148,6 +155,27 @@ def router(workspaces: "Workspaces") -> APIRouter:
         found: dict[str, Any] = await anyio.to_thread.run_sync(
             lambda: workspaces.allow_cloud(name, answer.allow, actor=actor)
         )
+        return found
+
+    @routes.get("/workspaces/network-sets")
+    async def network_sets() -> dict[str, Any]:
+        """The named sets of hosts (design 0024 §5): each its hosts and what it opens, from the owner's file."""
+        found: dict[str, Any] = await anyio.to_thread.run_sync(workspaces.network_sets)
+        return found
+
+    @routes.post("/workspaces/{name}/sets")
+    async def allow_set(name: str, answer: SetAnswer, request: Request) -> dict[str, Any]:
+        """Allow a workspace's agent a named set of hosts, or take it back (design 0024 §5); its view after."""
+        from clank.components.workspaces.folders import WorkspaceError
+        from clank.kernel.api import ApiError
+
+        actor = client_actor(request.headers.get(CLIENT_HEADER))
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(
+                lambda: workspaces.allow_set(name, answer.set, answer.allow, actor=actor)
+            )
+        except WorkspaceError as error:
+            raise ApiError(400, "refused", str(error)) from error
         return found
 
     @routes.get("/workspaces/hosts/wanted/{question}")
