@@ -204,9 +204,9 @@ def router(gateway: "Gateway") -> APIRouter:
 
     @routes.post("/gateway/restart")
     async def restart() -> dict[str, Any]:
-        """Stop the gateway and start it again (it picks up changed settings); its status."""
-        await anyio.to_thread.run_sync(gateway.stop)
-        found: dict[str, Any] = await anyio.to_thread.run_sync(gateway.ensure)
+        """Stop the gateway and start it again (it picks up changed settings); its status, with what went wrong said
+        (`problem`): never half done, whatever the stop met a start is tried."""
+        found: dict[str, Any] = await anyio.to_thread.run_sync(gateway.restart)
         return found
 
     @routes.post("/gateway/stop")

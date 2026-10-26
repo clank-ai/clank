@@ -6,15 +6,19 @@ session of its own and without a window, its output in `logs/gateway.log`; its i
 line) is kept in `state/gateway.json`, so after a restart of the service the one still running is adopted, not started
 again, and a restart of the service cuts no request in flight. While the service runs it checks every few seconds that
 the gateway runs, and starts it when it does not (unless its settings say not to); a port another program holds is
-said, never taken. `activity` asks the gateway what it does now, for the console. The vision model (design 0008 §7) is
-loaded when the gateway says it is wanted (`wanted`), and kept as its mode says (`keep_vision`: loaded when always,
-unloaded when off, and after its idle minutes when on demand). `routes` is what the gateway asks for every second: each
-slot as the runtime reports it (`Runtime.route`) and the roles (`agent` is the main slot's, and any other name too;
-`completion` is the fast slot's, design 0006; `vision` the vision slot's, loaded on demand), each with its preset's
-facts (design 0012 §4), and `facts` gives any preset's. `completion` asks the gateway for its last completions, for the
-CPU models page. `pause`, `resume` and `release` set a session's pause in the gateway (design 0012 §9.4, decision 0055),
-with the service's local token, which the gateway's routes for it take (decision 0084); `holds` says what is paused and
-held.
+said, never taken. The state file is changed through the kernel's `files` (Windows refuses a delete or a replace while
+a reader holds the file a moment): a stop that cannot delete it leaves it naming the process that ended, which says
+stopped; a start that cannot write it keeps the process in memory, so it is never started twice, and writes it at the
+next look. `restart` is never half done: whatever its stop met, a start is tried, and what went wrong is said in the
+status it answers (`problem`). `activity` asks the gateway what it does now, for the console. The vision model (design
+0008 §7) is loaded when the gateway says it is wanted (`wanted`), and kept as its mode says (`keep_vision`: loaded when
+always, unloaded when off, and after its idle minutes when on demand). `routes` is what the gateway asks for every
+second: each slot as the runtime reports it (`Runtime.route`) and the roles (`agent` is the main slot's, and any other
+name too; `completion` is the fast slot's, design 0006; `vision` the vision slot's, loaded on demand), each with its
+preset's facts (design 0012 §4), and `facts` gives any preset's. `completion` asks the gateway for its last
+completions, for the CPU models page. `pause`, `resume` and `release` set a session's pause in the gateway (design 0012
+§9.4, decision 0055), with the service's local token, which the gateway's routes for it take (decision 0084); `holds`
+says what is paused and held.
 """
 
 import base64
@@ -44,6 +48,7 @@ from clank.components.gateway.proxy import allowed_host as allowed_host  # throu
 from clank.components.gateway.proxy import network_token as network_token
 from clank.components.gateway.routing import NOTION_TOOLS
 from clank.components.runtime.service import ProcessIdentity
+from clank.kernel import files
 from clank.kernel.access import local_token
 from clank.kernel.clock import to_text
 from clank.kernel.core import Kernel
@@ -57,7 +62,6 @@ WATCH_SECONDS = 5.0
 DUE_SECONDS = 0.25  # how soon a change of a slot or a key reaches the gateway's keys
 SPEND_SECONDS = 2.0  # how often the gateway's spool of cloud requests is taken (design 0016 §12)
 STOP_SECONDS = 5.0
-FORGET_WAITS = (0.02, 0.05, 0.1, 0.2, 0.3, 0.3, None)  # seconds between tries to delete its state file, held open
 ASK_SECONDS = 2.0  # how long the gateway is given to say what it does
 LOOK_SECONDS = 300.0  # the vision model may be loaded first (design 0008 §7)
 ROLES = {"agent": "main", "completion": "fast", "vision": "vision"}
@@ -143,6 +147,7 @@ class Gateway:
         self.kernel = kernel
         self.problem = ""
         self._lock = threading.Lock()
+        self._unsaved: dict[str, Any] | None = None  # the process started, while its state file cannot be written
         self._used: float | None = None  # when the vision model was last wanted (design 0008 §7)
         self.keys_due = threading.Event()  # a slot or a key changed: the keys the gateway holds are looked at soon
         self.bounds = Bounds(kernel)  # each workspace's key at the gateway, and how far its requests may go
@@ -550,6 +555,7 @@ class Gateway:
         with self._lock:
             kept = self._kept()
             if kept is not None and self._host().alive(_identity(kept)) is not False:
+                self._save()  # one kept in memory only is written once its file can be
                 return self.status()  # running, or the host cannot say: it is left as it is
             port = self.settings().port
             holder = self._host().listener(port)
@@ -573,18 +579,25 @@ class Gateway:
             self._forget()
             return ended
 
+    def restart(self) -> dict[str, Any]:
+        """Stop the gateway and start it again (it picks up changed settings); its status. Never half done: whatever
+        the stop met, a start is tried (a gateway the stop left running is adopted as it is), and what went wrong is
+        said in the status (`problem`)."""
+        problem = ""
+        try:
+            self.stop()
+        except Exception as error:  # the host could not end it: it may still run, and is then adopted
+            log.warning("the gateway could not be stopped: %s", error)
+            problem = f"the gateway could not be stopped ({error}), so it runs on with the settings it started with"
+        found = self.ensure()
+        return {**found, "problem": problem or found["problem"]}
+
     def _forget(self) -> None:
-        """Delete the gateway's state file, again for a moment while another reader holds it open (Windows refuses
-        the delete then); still held, it is left, naming a process that has ended."""
-        for wait in FORGET_WAITS:
-            try:
-                self._file().unlink(missing_ok=True)
-                return
-            except PermissionError:
-                if wait is None:
-                    log.warning("the gateway's state file %s is held open: left as it is", self._file())
-                    return
-                time.sleep(wait)
+        """Delete the gateway's state file; one another program holds open even after a while is left, naming a
+        process that has ended, which says stopped."""
+        self._unsaved = None
+        if not files.remove(self._file()):
+            log.warning("the gateway's state file %s is held open by another program: left as it is", self._file())
 
     def activity(self, session: str = "", subagents: bool = False, ended: bool = False) -> dict[str, Any]:
         """What the gateway does now: whether it runs, its requests in flight and the last that ended (its
@@ -770,6 +783,10 @@ class Gateway:
         return self.kernel.home.state / "gateway.json"
 
     def _kept(self) -> dict[str, Any] | None:
+        """The gateway's process as last kept: in memory while its state file cannot be written, else in that file."""
+        unsaved = self._unsaved
+        if unsaved is not None:
+            return dict(unsaved)
         try:
             found = json.loads(self._file().read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -777,12 +794,24 @@ class Gateway:
         return found if isinstance(found, dict) and "pid" in found else None
 
     def _keep(self, identity: ProcessIdentity, port: int) -> None:
-        values = {
+        """Keep the process started: in its state file, else in memory until that file can be written."""
+        self._unsaved = {
             "host": identity.host, "pid": identity.pid, "started": identity.started, "command": identity.command,
             "port": port, "since": to_text(self.kernel.clock.now()),
         }  # fmt: skip
-        self._file().parent.mkdir(parents=True, exist_ok=True)
-        self._file().write_text(json.dumps(values) + "\n", encoding="utf-8")
+        self._save()
+
+    def _save(self) -> None:
+        """Write the process kept in memory to its state file, when one is; it stays in memory while it cannot be."""
+        unsaved = self._unsaved
+        if unsaved is None:
+            return
+        try:
+            files.replace(self._file(), json.dumps(unsaved) + "\n")
+        except OSError as error:
+            log.warning("the gateway's state file %s could not be written (%s): kept in memory", self._file(), error)
+            return
+        self._unsaved = None
 
 
 def _identity(kept: dict[str, Any]) -> ProcessIdentity:
