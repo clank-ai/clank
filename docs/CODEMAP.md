@@ -81,6 +81,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/now.py` | What a session does now (design 0012 §5, §11 step 7): the Monitor's Now panel, as the service says it, so the console |
 | `clank/components/agents/pausing.py` | The Guide's pause in the service (design 0012 §9.4, §11 step 11, decision 0055): **pause after this step** (`p`). |
 | `clank/components/agents/plans.py` | Plans (design 0009 §4): a plan is a Markdown file whose header says `kind: plan`, wherever the folder keeps it. |
+| `clank/components/agents/reach.py` | Whether a workspace's agent reaches its model now (design 0004 §5, revised after approval 2026-10-26). |
 | `clank/components/agents/readout.py` | The model's readout (design 0021 §3): what VS Code shows under OpenCode's terminal, and in its status bar, of the |
 | `clank/components/agents/remotecode.py` | VS Code on another computer (design 0018 §8): from a terminal of VS Code's Remote-SSH on this PC, a folder opens in |
 | `clank/components/agents/review.py` | Reviewing the agent's changes (design 0007): the workspace's mode, and what Clank does when the agent asks to change |
@@ -395,6 +396,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/core/pdf.ts` | "Annotate this PDF" (design 0020 §10): the service renders a PDF of the window's folder as pages (built by Clank first |
 | `vscode/src/core/plans.ts` | Plans in the editor (design 0009 §7, §8): a Markdown file whose header says `kind: plan` gets buttons that hand it to |
 | `vscode/src/core/presenter.ts` | What the controller asks of VS Code, and nothing more: the two status bar items, a question shown with its options, |
+| `vscode/src/core/reach.ts` | Whether OpenCode reaches the model from the window's folder (design 0004 §5, revised 2026-10-26): what the service's |
 | `vscode/src/core/readout.ts` | The model's readout (design 0021 §3): what the service's `GET /agents/readout` answers for the window's folder, put |
 | `vscode/src/core/review.ts` | Reviewing the agent's changes in VS Code (design 0007 §6). A question about a change in the window's folder opens as |
 | `vscode/src/core/show.ts` | The files the agent opens for the owner (design 0018 §7): the service's event `agents.shown` names a workspace's |
@@ -404,6 +406,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/figures.ts` | Clank's figure annotator in VS Code (design 0008 §6): a custom editor for PNG and JPEG files that shows the |
 | `vscode/src/notion.ts` | The Notion changes in VS Code (design 0010 §6), the glue over `core/notion.ts`: the "Notion changes" view (a tree in |
 | `vscode/src/readout.ts` | The model's readout in VS Code (design 0021 §3): the status bar item and the panel under the agent's terminal. The |
+| `vscode/src/starting.ts` | The agent's place at the right edge while OpenCode starts, and after it ended (design 0004 §5, revised 2026-10-26). |
 | `vscode/test/agent.page.test.ts` | Design 0021 §4, in a real browser: the agent panel's page (media/agent.html, as VS Code's webview shows it, with |
 | `vscode/test/agent.test.ts` | Design 0004 §5: in Clank's VS Code window the agent starts beside the files: for the folder the window has open, |
 | `vscode/test/annotator.page.test.ts` | Design 0008 §6, in a real browser: the annotator page (media/annotator.html, as VS Code's webview shows it) in |
@@ -427,6 +430,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/notion.test.ts` | Design 0010 §6: the Notion changes view lists each batch waiting with its databases and their entries (marked new, |
 | `vscode/test/pdf.test.ts` | Design 0020 §10: "Annotate this PDF" asks the service for a PDF's pages (from the window's folder), then opens the |
 | `vscode/test/plans.test.ts` | Design 0009 §7, §8: a Markdown file whose header says `kind: plan` (the same cases as Clank's own `is_plan` and |
+| `vscode/test/reach.test.ts` | Design 0004 §5 (revised 2026-10-26): whether OpenCode reaches the model from the window's folder, as the service's |
 | `vscode/test/readout.test.ts` | Design 0021 §3: the model's readout in VS Code. The status bar says the speed, the context used of the window and the |
 | `vscode/test/review.test.ts` | Design 0007 §6: a change the agent asks for, in the window's folder, opens as a diff beside the files instead of a |
 | `vscode/test/show.test.ts` | Design 0018 §7.2 and §7.3: the files the agent opened (the event `agents.shown`) are read from the event with their |

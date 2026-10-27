@@ -79,23 +79,23 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.2 | Records | `tests/components/flows/test_proposals_auto.py` (3), `tests/components/runtime/test_state.py` (4), `tests/console/test_records.py` (4), `tests/kernel/test_grouped_settings.py` (5), `tests/kernel/test_records.py` (5), `tests/kernel/test_settings.py` (15), `tests/kernel/test_settings_checks.py` (3), `tests/kernel/test_store.py` (9), `tests/tools/test_schemas.py` (1), `tests/tools/test_tstypes.py` (5), `vscode/test/kinds.test.ts` (1) |
 | 2.3 | Events | `tests/kernel/test_clock.py` (4), `tests/kernel/test_event_attention.py` (3), `tests/kernel/test_events.py` (9), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_eventsdoc.py` (1), `vscode/test/events.test.ts` (2), `vscode/test/state.test.ts` (1) |
 | 2.4 | Operations | `tests/components/workspaces/test_docker_operations.py` (13), `tests/console/test_pages.py` (10), `tests/kernel/test_operations.py` (15) |
-| 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (15), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (17), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
+| 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (15), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (18), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
 | 2.6 | Policy | none yet |
-| 2.7 | Callers and access | `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (5), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (17), `vscode/test/live.test.ts` (1) |
+| 2.7 | Callers and access | `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (7), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (18), `vscode/test/live.test.ts` (1) |
 | 2.8 | Secrets | `tests/components/tools/test_servers.py` (7), `tests/kernel/test_secrets.py` (4) |
 | 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_sandbox.py` (7), `tests/kernel/test_processes.py` (8) |
 | 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (7), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
 | 2.11 | The library: what the user installs | `tests/components/tools/test_servers.py` (7) |
 | 2.12 | Files for the user | none yet |
 | 2.13 | Clank's own traffic | none yet |
-| 2.14 | The API | `tests/kernel/test_api.py` (17), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_apidoc.py` (1), `vscode/test/client.test.ts` (5) |
+| 2.14 | The API | `tests/kernel/test_api.py` (17), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_apidoc.py` (1), `vscode/test/client.test.ts` (7) |
 | 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/console/test_command.py` (4), `tests/console/test_data.py` (17), `tests/console/test_shell.py` (19) |
 | 2.16 | Where things are | `tests/kernel/test_files.py` (8), `tests/kernel/test_home.py` (4) |
 | 2.17 | The kernel against every feature asked for | none yet |
 | 2.18 | Choices this section makes | none yet |
 | 3 | The skeleton (M0) and the order of milestones | see its subsections |
 | 3.1 | How the rest is designed and built | none yet |
-| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (4), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (15), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (19), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (6), `tests/tools/test_codemap.py` (10), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (17) |
+| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (4), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (15), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (19), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (6), `tests/tools/test_codemap.py` (10), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (18) |
 | 3.3 | The milestones after M0 | `tests/docker/test_escape.py` (3) |
 | 3.4 | Carried into the later milestones' designs | none yet |
 
@@ -124,7 +124,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 8 | The console, VS Code and the commands | `tests/components/runtime/test_runtime_api.py` (6) |
 | 8.1 | The models page (the menu's Models entry, now built) | `tests/components/runtime/test_console_models.py` (2) |
 | 8.2 | Presets, providers and models, launch options | `tests/components/runtime/test_console_options.py` (5), `tests/components/runtime/test_console_presets.py` (2), `tests/components/runtime/test_console_providers.py` (2) |
-| 8.3 | VS Code | `vscode/test/controller.test.ts` (17) |
+| 8.3 | VS Code | `vscode/test/controller.test.ts` (18) |
 | 8.4 | Commands | `tests/components/runtime/test_engine_commands.py` (3), `tests/components/runtime/test_model_commands.py` (3) |
 | 9 | Testing, and the order of work | `tests/components/runtime/test_fake_engine.py` (3), `tests/real/test_engines.py` (1) |
 
@@ -136,7 +136,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (11), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
 | 3 | Workspaces, the image and the container | `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (9), `tests/console/test_folder.py` (24), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (7), `tests/docker/test_escape.py` (3) |
 | 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (8), `tests/console/test_folder.py` (24), `tests/contract/test_agent_program.py` (2) |
-| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (8), `tests/components/workspaces/test_docker_containers.py` (13), `vscode/test/agent.test.ts` (5) |
+| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (8), `tests/components/workspaces/test_docker_containers.py` (13), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
 | 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (9) |
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (3) |
@@ -307,7 +307,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | A box's settings | `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_session_modes.py` (7), `tests/components/flows/test_accept_command.py` (10), `tests/components/flows/test_box_server.py` (7), `tests/components/flows/test_flow_file.py` (18), `tests/components/flows/test_runner_controls.py` (10) |
 | 5 | Running a box: a fresh session | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_monitor_watch.py` (12), `tests/components/agents/test_session_modes.py` (7), `tests/components/flows/test_accept_command.py` (10), `tests/components/flows/test_box_server.py` (7), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_first_prepared.py` (17), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_prepare.py` (8), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_controls.py` (10), `tests/components/flows/test_verify_loop.py` (6), `tests/components/runtime/test_count_tokens.py` (5) |
 | 6 | The runner, an operation of the service | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_prepare.py` (8), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_restart.py` (6), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_controls.py` (10), `tests/components/flows/test_runner_routes.py` (2), `tests/components/flows/test_runs.py` (7) |
-| 7 | A model per box, and what a switch costs | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_model_changed.py` (4), `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_watch.py` (12), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_model_per_box.py` (13), `tests/components/flows/test_models.py` (4), `tests/components/flows/test_prepare.py` (8), `tests/console/test_data.py` (17), `vscode/test/controller.test.ts` (17) |
+| 7 | A model per box, and what a switch costs | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_model_changed.py` (4), `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_watch.py` (12), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_model_per_box.py` (13), `tests/components/flows/test_models.py` (4), `tests/components/flows/test_prepare.py` (8), `tests/console/test_data.py` (17), `vscode/test/controller.test.ts` (18) |
 | 8 | Deliverables, tries and stale boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_deliverables.py` (3), `tests/components/flows/test_diffs.py` (5), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_runs.py` (7), `tests/components/flows/test_stale.py` (9), `tests/components/flows/test_verify.py` (8), `tests/components/flows/test_waiting.py` (9) |
 | 9 | The model proposes boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_tools.py` (9), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_proposals.py` (8), `tests/components/flows/test_proposals_again.py` (6), `tests/components/flows/test_proposals_auto.py` (3), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_proposals_join.py` (12), `tests/components/flows/test_proposals_routes.py` (2), `tests/components/flows/test_verify.py` (8), `tests/components/flows/test_waiting.py` (9), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12) |
 | 10 | Gates | `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_diffs.py` (5), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_routes.py` (2), `tests/components/flows/test_runs.py` (7), `tests/components/flows/test_verify_loop.py` (6), `tests/components/flows/test_waiting.py` (9), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12), `vscode/test/gates.test.ts` (16) |
@@ -376,7 +376,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 14 | The first run: Add a model | `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (16), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (17), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (19) |
 | 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_folder.py` (24), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
 | 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3) |
-| 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (17) |
+| 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (18) |
 | 18 | Tests, the fake OpenRouter, and the checks owed with a real key | `tests/contract/test_endpoint.py` (5), `tests/real/test_openrouter.py` (5), `tests/test_architecture.py` (7), `tests/tools/test_capture_endpoint.py` (2) |
 | 19 | Build steps | none yet |
 | 20 | What this design does not cover | none yet |
@@ -417,7 +417,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 6 | Order of work | none yet |
 | 7 | Showing files to the owner | see its subsections |
 | 7.1 | The agent opens files | `tests/components/agents/test_show_files_tool.py` (4), `tests/components/agents/test_showing.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3) |
-| 7.2 | The window opens them on the left | `vscode/test/controller.test.ts` (17), `vscode/test/show.test.ts` (4) |
+| 7.2 | The window opens them on the left | `vscode/test/controller.test.ts` (18), `vscode/test/show.test.ts` (4) |
 | 7.3 | Paths in the agent's terminal are links | `vscode/test/show.test.ts` (4) |
 | 7.4 | Finding figures | `tests/components/agents/test_find_figures_tool.py` (5), `tests/components/workspaces/test_figure_geometry.py` (4) |
 | 7.5 | The agent's tools are this Clank's | `tests/components/agents/test_agent_files.py` (3), `tests/components/agents/test_opencode.py` (8), `tests/docker/test_agent_files_live.py` (1) |
@@ -485,7 +485,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | Where Clank stands | none yet |
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (4), `vscode/test/readout.test.ts` (11) |
-| 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (2), `vscode/test/conversation.test.ts` (9) |
+| 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (3), `vscode/test/conversation.test.ts` (9) |
 | 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (11), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (5) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
@@ -1266,6 +1266,20 @@ Design 0009 §4: a plan is a Markdown file whose header (its front matter, betwe
 - anything else is not a plan
 - a markdown file in the folder may be a plan
 - no other file is one
+
+### `tests/components/agents/test_reach.py`
+
+Design 0004 §5 (revised 2026-10-26): whether a workspace's agent reaches its model now. `GET /agents/reach` follows the way OpenCode's requests take and says the first thing wrong, in words, with what fixes it: a folder with no workspace, or whose container does not run (open it); the gateway that does not run (start it); from inside the container, the gateway's host `edge` that does not resolve, or a gateway that does not answer through it (open the workspace again); each of these stops OpenCode at once, so a client does not start it. The model in the main slot comes last: loading is said, none running is said with loading the last that worked, and neither stops OpenCode from starting. Every check is kept with its words, a check that cannot be run is said as unknown, and nothing is written.
+
+- a workspace whose gateway answers through the edge with a model ready reaches it
+- a container that cannot resolve the edge is blocked with opening the workspace again
+- a gateway that does not answer through the edge is blocked too
+- a gateway that does not run is said first with its start and the container is not asked
+- a folder with no workspace or a container that does not run is blocked with opening it
+- no model in the main slot is said with loading the last that worked and does not block
+- a model loading is said and does not block
+- a look from inside that cannot run is unknown and stops nothing
+- the route answers by folder or by workspace
 
 ### `tests/components/agents/test_readout.py`
 
@@ -4874,10 +4888,11 @@ Design 0002 §2.5 and §2.7: the VS Code extension's client, run by Node against
 
 ### `vscode/test/agent.page.test.ts`
 
-Design 0021 §4, in a real browser: the agent panel's page (media/agent.html, as VS Code's webview shows it, with marked and KaTeX from Clank's libraries) in headless Edge, drawn as the owner chose it (direction A, 2026-10-26). A conversation sent to it is drawn: the owner's message (and a relayed comment's "on" line), Clank's notice that a job ended with its log to open, the thinking folded, three calls or more folded under "N steps · T s" with each call's verb and what it was done to, the model's Markdown with its math drawn by KaTeX (raw HTML in it shown as text), an artifact card whose Open says which version, and what waits with its buttons. A fold the owner opened stays open when the conversation is drawn again. While the agent works the send button stops it. Enter sends the message, Shift+Enter does not; @ asks for the folder's files and the one chosen is put as the agent sees it. The colors follow the VS Code theme's variables (a light one shows its owner bubble apart from its ground), or Clank Night when the extension says so. Screenshots are left in out/test/.
+Design 0021 §4, in a real browser: the agent panel's page (media/agent.html, as VS Code's webview shows it, with marked and KaTeX from Clank's libraries) in headless Edge, drawn as the owner chose it (direction A, 2026-10-26). A conversation sent to it is drawn: the owner's message (and a relayed comment's "on" line), Clank's notice that a job ended with its log to open, the thinking folded, three calls or more folded under "N steps · T s" with each call's verb and what it was done to, the model's Markdown with its math drawn by KaTeX (raw HTML in it shown as text), an artifact card whose Open says which version, and what waits with its buttons. A fold the owner opened stays open when the conversation is drawn again. While the agent works the send button stops it. Enter sends the message, Shift+Enter does not; @ asks for the folder's files and the one chosen is put as the agent sees it. The colors follow the VS Code theme's variables (a light one shows its owner bubble apart from its ground), or Clank Night when the extension says so. Screenshots are left in out/test/. Design 0004 §5 (revised 2026-10-26): what stands in OpenCode's way to the model shows under the header with its fix's button, and goes once it is gone.
 
 - the agent panel draws the conversation as the owner chose it, in each theme, and sends what the owner does
 - the page redraws only the blocks that changed, keeps the scroll, shows a pending message and stops on Escape
+- what stands in OpenCode's way to the model shows under the header with its fix's button, and goes when it is gone
 
 ### `vscode/test/agent.test.ts`
 
@@ -4886,6 +4901,13 @@ Design 0004 §5: in Clank's VS Code window the agent starts beside the files: fo
 - a folder whose container runs gets the agent's terminal, with the command the service answers
 - with one window per workspace the new terminal replaces the window's agent terminals, and otherwise adds one
 - a folder that is not ready says what is missing and how to get it ready, and writes nothing
+- OpenCode is not started while it cannot reach the model: the problem is said with its fix
+- a problem that does not stop OpenCode comes with its terminal, and a service without the check starts it as before
+- a slow check holds nothing up: the terminal starts, and the check's answer comes after
+- a service too slow to answer ends the start with its words, never a wait without end
+- the starting terminal says where OpenCode starts, each step, and a problem with its fix and what Enter does
+- OpenCode that ended by itself with an error is told apart from one quit, closed or ended with its window
+- the agent's place says that OpenCode ended, with what stops it and its fix, or where it said why
 - the agent's terminal counts as open when it runs, or when only its tab came back with a reloaded window
 - the agent's group is moved to the right edge, and the keyboard goes back to the group that had it
 
@@ -4931,13 +4953,15 @@ Design 0022 §2, §3, §6 and §7: the board editor's pure core. A board is read
 
 ### `vscode/test/client.test.ts`
 
-Design 0002 §2.7 and §2.14: the extension's client sends the local token and names itself `vscode` on every call, a request that starts an operation carries its request key, the API's error shape becomes a `ClankError` with the service's own words, and a service that does not answer is `NotRunning`.
+Design 0002 §2.7 and §2.14: the extension's client sends the local token and names itself `vscode` on every call, a request that starts an operation carries its request key, the API's error shape becomes a `ClankError` with the service's own words, and a service that does not answer is `NotRunning`. Design 0004 §5 (revised 2026-10-26): every call has a time limit, a slow answer ending as `TimedOut` in words that say which.
 
 - every call carries the token and names the client vscode
 - a request that starts an operation carries its request key and its body
 - the API's error shape becomes a ClankError with the service's own words
 - a service that does not answer is NotRunning
 - a stream route's messages come as they arrive, split or joined across the pieces read
+- a call the service does not answer in time ends, saying which and after how long
+- inTime ends a wait that takes too long, and passes on what comes in time
 
 ### `vscode/test/comments.test.ts`
 
@@ -4965,7 +4989,7 @@ Design 0002 §2.7: the extension finds the service through CLANK_HOME (its setti
 
 ### `vscode/test/controller.test.ts`
 
-Design 0002 §2.5, §2.7 and §3.2: the extension's controller keeps the status bar current (the service and the questions waiting, Docker's state), says when the service is not running and connects once one answers, shows a question asked, or one already waiting when VS Code opens, as a notification (each once) and answers it with the option chosen, says who answered when the question was answered elsewhere first, answers a question picked from the list, starts and stops Docker with a request key, and sends presence while the user types, at most once a minute. Design 0003 §8.3: the status bar shows what the main slot runs (or its state and why, in the tooltip), a slot's events keep it current, and Switch model picks a preset and switches the main slot with a request key; clicking the Clank item answers the questions when some wait, else switches the model. Design 0013 §7: when a flow's box switched the main slot, the window is told its model changed, once, as a notification in the service's words. Design 0016 §17: with a cloud model in the main slot, the Clank item says "cloud" and its tooltip today's and this month's spending in the service's words, and the pause; Switch model lists a cloud preset as its provider and model, with its price as the service says it. Design 0018 §7.2: the files the agent opened for the owner (`agents.shown`) go to the presenter, which opens them in a window on that folder.
+Design 0002 §2.5, §2.7 and §3.2: the extension's controller keeps the status bar current (the service and the questions waiting, Docker's state), says when the service is not running and connects once one answers, shows a question asked, or one already waiting when VS Code opens, as a notification (each once) and answers it with the option chosen, says who answered when the question was answered elsewhere first, answers a question picked from the list, starts and stops Docker with a request key, and sends presence while the user types, at most once a minute. Design 0003 §8.3: the status bar shows what the main slot runs (or its state and why, in the tooltip), a slot's events keep it current, and Switch model picks a preset and switches the main slot with a request key; clicking the Clank item answers the questions when some wait, else switches the model. Design 0013 §7: when a flow's box switched the main slot, the window is told its model changed, once, as a notification in the service's words. Design 0016 §17: with a cloud model in the main slot, the Clank item says "cloud" and its tooltip today's and this month's spending in the service's words, and the pause; Switch model lists a cloud preset as its provider and model, with its price as the service says it. Design 0018 §7.2: the files the agent opened for the owner (`agents.shown`) go to the presenter, which opens them in a window on that folder. Design 0004 §5 (revised 2026-10-26): on connecting, what the status bar shows is asked of the service all at once.
 
 - the status bar shows the service and the questions waiting, and Docker's state
 - with no service it says not running, and connects once one answers
@@ -4984,6 +5008,7 @@ Design 0002 §2.5, §2.7 and §3.2: the extension's controller keeps the status 
 - an artifact the agent made goes to the presenter, which opens it in a window on its folder
 - a cloud model's item says cloud, its tooltip the spending in the service's words, and the pause
 - Switch model lists a cloud preset as its provider and model, with its price
+- on connecting, the service's state is asked all at once: the status bar waits for the slowest route, not their sum
 
 ### `vscode/test/conversation.test.ts`
 
@@ -5105,6 +5130,15 @@ Design 0009 §7, §8: a Markdown file whose header says `kind: plan` (the same c
 - a window that never comes is waited for half a minute, then the plan is offered once more and the refusal said
 - a look at the servers that fails is one more look, not the end of the wait
 - the retry happens once, a declined offer stops, and other refusals are said as they come
+
+### `vscode/test/reach.test.ts`
+
+Design 0004 §5 (revised 2026-10-26): whether OpenCode reaches the model from the window's folder, as the service's `GET /agents/reach` says it, put in words: nothing when the way is fine; the problem with its fix's button in the status bar, a notification and the agent panel; OpenCode not started while it would fail at once (`blocked`). The fix is the route the service names, posted with a request key when the owner presses it. A service from before the route, or one too slow to say, gives nothing: the agent starts as before.
+
+- the way to the model is read for the folder, and a service that cannot say gives nothing
+- the status bar says what stops OpenCode, or a fix it offers, and nothing when the way is fine
+- the panel and the notification say the problem as a sentence, with the fix's button
+- a fix posts the route the service named, its body and a request key
 
 ### `vscode/test/readout.test.ts`
 
