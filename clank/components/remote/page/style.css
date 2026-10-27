@@ -146,7 +146,10 @@ textarea:focus, input:focus, select:focus { outline: 1px solid var(--accent); }
 .attention button { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 2px 8px; }
 .paused { color: var(--warn); font-size: 12px; padding: 4px 2px 0; }
 main.stale > *:not(.paused) { opacity: 0.55; }
-.status .live { color: var(--good); } .status .reconnecting { color: var(--warn); } .status .offline { color: var(--bad); }
+/* The header's word for the stream (linkBadge in model.mjs), in classes of its own: the bare `offline` is the
+   offline screen's below (and `live` was the LIVE mark's). */
+.status .link-live { color: var(--good); } .status .link-reconnecting { color: var(--warn); }
+.status .link-offline { color: var(--bad); }
 .offline { padding: 16px 4px; display: grid; gap: 10px; }
 .offline h2 { margin: 0; font-size: 16px; color: var(--bad); }
 .offline .why { color: var(--muted); }
@@ -163,8 +166,8 @@ main.stale > *:not(.paused) { opacity: 0.55; }
 .msg.pending { opacity: 0.6; }
 .fold .tool { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .fold.open .tool { -webkit-line-clamp: unset; }
-/* The session's LIVE mark: a class of its own, since the header's status says .live too (it drew a solid green
-   block there). */
+/* The session's LIVE mark: a class of its own, since the header's status said .live too (it drew a solid green
+   block there; the header's are .link-* now). */
 .live-mark {
   margin-left: 1ch; padding: 0 5px; font-size: 10px; font-weight: 700; color: var(--deep); background: var(--good);
   vertical-align: middle;
@@ -213,3 +216,11 @@ body.keyboard .toast { bottom: 8px; }
 }
 @keyframes turn { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+/* The page a pair link opens (install.html): the steps to add the app to the Home Screen, in the app's look. Its main
+   was the Flows tab's steps before: a grid of 12-pixel lines stretched over the whole screen. */
+.install main { display: grid; gap: 14px; align-content: start; padding: 16px 16px 24px; }
+.install .lead { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); }
+.install ol { margin: 0; padding-left: 1.6em; display: grid; gap: 10px; }
+.install li::marker { color: var(--accent); font-weight: 700; }
+.install .why, .install .note { margin: 0; font-size: 13px; color: var(--muted); }
+.install .note { color: var(--dim); }

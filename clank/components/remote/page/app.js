@@ -7,8 +7,9 @@
 // action carries the X-Clank-Phone header. The logic that needs no browser is `model.mjs`.
 
 import {
-  RECONNECT_SECONDS, allSessions, applyTalk, boxGlyph, clockText, emptyTalk, failedTalk, flowFilter, lastKnown, liveIndex,
-  machineGauges, modelLine, phaseWords, runControls, sentTalk, streamState, talkItems, waitingCount, workingRows,
+  RECONNECT_SECONDS, allSessions, applyTalk, boxGlyph, clockText, emptyTalk, failedTalk, flowFilter, lastKnown, linkBadge,
+  liveIndex, machineGauges, modelLine, phaseWords, present, runControls, sentTalk, streamState, talkItems, waitingCount,
+  workingRows,
 } from "./model.mjs";
 
 const view = document.getElementById("view");
@@ -48,10 +49,10 @@ function el(tag, props = {}, ...children) {
   return node;
 }
 
-// A node's children replaced by those given, leaving out the empty ones: replaceChildren writes null as the text
-// "null" (the Now screen showed it under the header).
+// A node's children replaced by those given, leaving out the empty ones (`present`, model.mjs): replaceChildren writes
+// null as the text "null" (the Now screen showed it under the header).
 function fill(node, ...children) {
-  node.replaceChildren(...children.flat().filter((child) => child !== null && child !== undefined && child !== false));
+  node.replaceChildren(...present(children.flat()));
 }
 
 function say(text, ok = false) {
@@ -982,8 +983,8 @@ function drawSession() {
 function drawHeader() {
   const link = streamState(state.link, Date.now());
   machineLabel.textContent = location.hostname.split(".")[0] || "";
-  const words = link.state === "live" ? "● live" : link.state === "reconnecting" ? `● reconnecting ${clockText(link.pausedSeconds)}` : "● offline";
-  status.replaceChildren(el("span", { class: link.state }, words));
+  const badge = linkBadge(link);
+  status.replaceChildren(el("span", { class: badge.kind }, badge.words));
   const waiting = state.overview ? waitingCount(state.overview) : 0;
   waitingBadge.textContent = waiting ? `(${waiting})` : "";
 }

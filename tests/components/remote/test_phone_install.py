@@ -3,7 +3,8 @@ the device that opens it (no typing); the page it gets pairs the device, keeps i
 the app to the Home Screen, with a one-time install claim in the icon's start link (the manifest's `start_url`); the
 installed app's first launch trades the claim for the device's token (the Safari tab's stops working: the pairing moved
 into the app), a claim is spent once and lapses after an hour; a device's token renews on each use and lapses only
-after thirty days unused (no ceiling from its pairing). The listener's log keeps where each request came from, as
+after thirty days unused (no ceiling from its pairing). The page the Home Screen icon is added from names the PNG
+icon, which iOS takes (it takes no SVG for one). The listener's log keeps where each request came from, as
 Tailscale's proxy says it (the address it names last, the login it vouches for, the browser's name), and why one was
 refused, for the checkup (when the page does not load); a pair link's code and an install claim are masked in it."""
 
@@ -74,6 +75,14 @@ def test_the_pair_link_pairs_the_device_by_its_code_and_shows_the_install_steps_
     again = phone.get("/pair", params={"code": made["code"]}, headers=THROUGH_TAILSCALE)
     assert again.status_code == 403, "a code pairs once"
     assert "does not pair" in again.text
+
+
+def test_the_page_the_icon_is_added_from_names_the_png_icon_that_ios_takes(kernel: Kernel, phone: TestClient) -> None:
+    made = kernel.parts["remote"].pair_link("my phone", actor=YOU)
+    page = phone.get("/pair", params={"code": made["code"]}, headers=THROUGH_TAILSCALE).text
+    icons = re.findall(r'rel="apple-touch-icon" href="([^"]+)"', page)
+    assert icons == ["icon-180.png"], "iOS takes a PNG for a Home Screen icon, never the SVG"
+    assert phone.get("/icon-180.png", headers=THROUGH_TAILSCALE).headers["content-type"] == "image/png"
 
 
 def test_the_installed_app_trades_its_claim_for_the_token_once_and_a_claim_lapses_after_an_hour(

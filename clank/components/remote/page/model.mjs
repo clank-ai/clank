@@ -1,5 +1,6 @@
 // The phone app's logic that needs no browser (design 0025 §3, §5, §6 and §7): the live stream's state (live,
-// reconnecting with the pause's age, offline after thirty seconds with the tries), what Now draws from the `now` payload
+// reconnecting with the pause's age, offline after thirty seconds with the tries) and the header's word for it, a
+// screen's parts without the absent ones, what Now draws from the `now` payload
 // (the model's line, the machine's gauges, what waits, what works, the summary kept for the offline screen), the Flows
 // tab's filters, controls and glyphs, and a session's talk built from the conversation stream (the extension's client,
 // ported). `app.js` draws from these; Node's test runner tests them (`tests/phone/`).
@@ -23,6 +24,20 @@ export function streamState(link, nowMs) {
   const nextTryIn = Math.max(0, RECONNECT_SECONDS - (paused % RECONNECT_SECONDS));
   if (paused < OFFLINE_AFTER_SECONDS) return { state: "reconnecting", pausedSeconds: paused, tries: link.tries, nextTryIn };
   return { state: "offline", pausedSeconds: paused, tries: link.tries, nextTryIn };
+}
+
+// The header's word for the stream's state, and its class: `link-<state>`, its own. The state's bare name took the looks
+// of a session's LIVE tag ("live": a green block in place of the words) and of the offline screen ("offline").
+export function linkBadge(link) {
+  const words = link.state === "live" ? "● live"
+    : link.state === "reconnecting" ? `● reconnecting ${clockText(link.pausedSeconds)}` : "● offline";
+  return { kind: `link-${link.state}`, words };
+}
+
+// The parts of a screen that are present. The DOM draws a null handed to replaceChildren as the text "null", so an absent
+// part (null, undefined, false: the paused line while the stream is live) is left out first (app.js's fill).
+export function present(parts) {
+  return parts.filter((part) => part !== null && part !== undefined && part !== false);
 }
 
 // Seconds as "0:14" or "1:02:03".

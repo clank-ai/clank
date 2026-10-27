@@ -28,6 +28,9 @@ Update this page in the same commit as the fix.
 | A new chat on a fresh OpenCode server failed with "timed out" | The server's first request, slow while OpenCode readies itself, had only 10 s | f1f7cf2 |
 | Every new OpenCode window waited a minute before its first answer | OpenCode's plugin install went to npm, and Clank's proxy held it while asking the owner | d5562fe |
 | The phone's tab bar sat higher on short tabs | A bar fixed to the page, which iOS places differently on a page too short to scroll | 93a8273, 4d8a823 |
+| The word "null" at the top of every phone tab | The app handed the page an absent line (the pause's, while live), which the browser draws as "null" | 4538ab2; tested on `design/one-look` |
+| The phone's header said "● live" as a solid green block, and would have drawn "● offline" as the offline screen's grid | Its state's class was the state's bare name, also the LIVE mark's and the offline screen's | d716f24 (the mark); the header's own classes on `design/one-look` |
+| The page the phone app is added from looked broken | Its lines took the Flows tab's step style (12 pixels, stretched over the screen), and it named an SVG icon, which iOS does not take for the Home Screen | On `design/one-look` |
 | The phone page did not load | With Funnel on, the PC's name resolves on the internet too, and iCloud Private Relay looked it up there, reaching Tailscale's relay | The iPhone's settings (Private Relay off); the diagnostics are on `fix/phone` |
 | The phone's first screen took 12 s | Each workspace's sessions were read one after another | dd6d3f0 |
 | A flows test failed on CI only | It checked the last event, which a planning's own status line could follow on a slow machine | dd6d3f0 |

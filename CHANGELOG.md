@@ -55,6 +55,9 @@ From the owner's first full day of use and an end-to-end test of a new user's fi
 - A closed OpenCode window's sessions were read again forever (half a CPU core), and requests waited 10 s on a dead
   OpenCode: fixed.
 - The phone: its tab bar sat higher on short tabs; its first screen took 12 s: fixed.
+- The phone: the word "null" stood at the top of every tab, the header's "● live" was a green block, and the page
+  you add the app from ran its lines down the whole screen and offered iOS an icon it does not take: fixed
+  (2026-10-27).
 - Removing a workspace while OpenCode was open in it gave no warning and left tracebacks in the service's log:
   the question now says that what runs in its container ends, and the service lets the workspace go quietly.
 - Words a new user did not understand: the clients connected, the models not loaded, the doctor's line, the tool

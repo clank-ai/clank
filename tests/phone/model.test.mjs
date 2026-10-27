@@ -1,13 +1,14 @@
 // Design 0025 §3 and §5: the phone app's logic that needs no browser. The stream is live while connected,
-// reconnecting while a drop is under thirty seconds old (with the pause's age and the next try), offline after; Now's
-// model line says what the model does and how fast, the machine is four gauges, what waits is counted across OpenCode's
-// asks, the marks and Clank's questions, and the offline screen's summary holds names and numbers only.
+// reconnecting while a drop is under thirty seconds old (with the pause's age and the next try), offline after; the
+// header says which in a class of its own; Now's model line says what the model does and how fast, the machine is four
+// gauges, what waits is counted across OpenCode's asks, the marks and Clank's questions, and the offline screen's
+// summary holds names and numbers only. A screen's absent parts are left out, never drawn as the word null.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-  allSessions, clockText, lastKnown, machineGauges, modelLine, streamState, waitingCount, workingRows,
+  allSessions, clockText, lastKnown, linkBadge, machineGauges, modelLine, present, streamState, waitingCount, workingRows,
 } from "../../clank/components/remote/page/model.mjs";
 
 const NOW = {
@@ -39,6 +40,24 @@ test("the stream is live, then reconnecting with the pause's age, then offline a
   assert.equal(old.tries, 2);
   assert.equal(clockText(14), "0:14");
   assert.equal(clockText(3723), "1:02:03");
+});
+
+test("the header says the stream's state in a class of its own, apart from a session's LIVE tag and the offline screen", () => {
+  // Its class was the state's bare name: "live" took the LIVE tag's look (a green block in place of "● live") and
+  // "offline" the offline screen's (2026-10-27).
+  assert.deepEqual(linkBadge(streamState({ connected: true }, 1000)), { kind: "link-live", words: "● live" });
+  const young = streamState({ connected: false, failedSince: 100_000, tries: 2 }, 114_000);
+  assert.deepEqual(linkBadge(young), { kind: "link-reconnecting", words: "● reconnecting 0:14" });
+  const old = streamState({ connected: false, failedSince: 100_000, tries: 2 }, 131_000);
+  assert.deepEqual(linkBadge(old), { kind: "link-offline", words: "● offline" });
+});
+
+test("a screen's absent parts are left out, never drawn as the word null", () => {
+  // The DOM draws a null handed to replaceChildren as the text "null": it stood at the top of every tab while the
+  // stream was live, where the paused line is absent (2026-10-27; app.js's fill() leaves them out through present()).
+  const paused = null;
+  assert.deepEqual(present([paused, "Now", undefined, false, "Flows"]), ["Now", "Flows"]);
+  assert.deepEqual(present([]), []);
 });
 
 test("the model's line says what it does, how fast and for how long", () => {

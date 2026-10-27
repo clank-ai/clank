@@ -538,10 +538,10 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What it is, and what leaves the PC | none yet |
-| 2 | Install once | `tests/components/machine/test_doctor.py` (4), `tests/components/remote/test_phone_checkup.py` (10), `tests/components/remote/test_phone_checkup_said.py` (4), `tests/components/remote/test_phone_install.py` (5), `tests/components/remote/test_phone_page.py` (3), `tests/components/remote/test_phone_probes.py` (3), `tests/components/remote/test_phone_qr.py` (1) |
-| 3 | Live: one stream, and when it drops | `tests/components/remote/test_phone_shell.py` (4), `tests/components/remote/test_phone_stream.py` (2), `tests/phone/model.test.mjs` (5) |
+| 2 | Install once | `tests/components/machine/test_doctor.py` (4), `tests/components/remote/test_phone_checkup.py` (10), `tests/components/remote/test_phone_checkup_said.py` (4), `tests/components/remote/test_phone_install.py` (6), `tests/components/remote/test_phone_page.py` (3), `tests/components/remote/test_phone_probes.py` (3), `tests/components/remote/test_phone_qr.py` (1) |
+| 3 | Live: one stream, and when it drops | `tests/components/remote/test_phone_shell.py` (4), `tests/components/remote/test_phone_stream.py` (2), `tests/phone/model.test.mjs` (7) |
 | 4 | Notifications | `tests/components/remote/test_phone_shell.py` (4) |
-| 5 | Now | `tests/phone/model.test.mjs` (5) |
+| 5 | Now | `tests/phone/model.test.mjs` (7) |
 | 6 | Flows: the list, a flow, building one, a gate | `tests/components/flows/test_summaries.py` (9), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/phone/flows.test.mjs` (3) |
 | 7 | A session, the Guide, its context | `tests/components/remote/test_phone_session.py` (3), `tests/phone/talk.test.mjs` (6) |
 | 8 | Work and Files | none yet |
@@ -2711,9 +2711,10 @@ Design 0013 §9, §10 and §14 step 7 (design 0005 §4, design 0002 §2.5): gate
 
 ### `tests/components/remote/test_phone_install.py`
 
-Design 0025 §2 (decision 0143): installing the phone app once. The console makes a pair link whose code is spent by the device that opens it (no typing); the page it gets pairs the device, keeps its cookie and shows the steps to add the app to the Home Screen, with a one-time install claim in the icon's start link (the manifest's `start_url`); the installed app's first launch trades the claim for the device's token (the Safari tab's stops working: the pairing moved into the app), a claim is spent once and lapses after an hour; a device's token renews on each use and lapses only after thirty days unused (no ceiling from its pairing). The listener's log keeps where each request came from, as Tailscale's proxy says it (the address it names last, the login it vouches for, the browser's name), and why one was refused, for the checkup (when the page does not load); a pair link's code and an install claim are masked in it.
+Design 0025 §2 (decision 0143): installing the phone app once. The console makes a pair link whose code is spent by the device that opens it (no typing); the page it gets pairs the device, keeps its cookie and shows the steps to add the app to the Home Screen, with a one-time install claim in the icon's start link (the manifest's `start_url`); the installed app's first launch trades the claim for the device's token (the Safari tab's stops working: the pairing moved into the app), a claim is spent once and lapses after an hour; a device's token renews on each use and lapses only after thirty days unused (no ceiling from its pairing). The page the Home Screen icon is added from names the PNG icon, which iOS takes (it takes no SVG for one). The listener's log keeps where each request came from, as Tailscale's proxy says it (the address it names last, the login it vouches for, the browser's name), and why one was refused, for the checkup (when the page does not load); a pair link's code and an install claim are masked in it.
 
 - the pair link pairs the device by its code and shows the install steps once
+- the page the icon is added from names the png icon that ios takes
 - the installed app trades its claim for the token once and a claim lapses after an hour
 - a devices token renews on use and lapses only after thirty days unused
 - the manifest carries the devices start link
@@ -5226,9 +5227,11 @@ Design 0025 §6: the Flows tab's logic that needs no browser. The filters keep t
 
 ### `tests/phone/model.test.mjs`
 
-Design 0025 §3 and §5: the phone app's logic that needs no browser. The stream is live while connected, reconnecting while a drop is under thirty seconds old (with the pause's age and the next try), offline after; Now's model line says what the model does and how fast, the machine is four gauges, what waits is counted across OpenCode's asks, the marks and Clank's questions, and the offline screen's summary holds names and numbers only.
+Design 0025 §3 and §5: the phone app's logic that needs no browser. The stream is live while connected, reconnecting while a drop is under thirty seconds old (with the pause's age and the next try), offline after; the header says which in a class of its own; Now's model line says what the model does and how fast, the machine is four gauges, what waits is counted across OpenCode's asks, the marks and Clank's questions, and the offline screen's summary holds names and numbers only. A screen's absent parts are left out, never drawn as the word null.
 
 - the stream is live, then reconnecting with the pause's age, then offline after thirty seconds
+- the header says the stream's state in a class of its own, apart from a session's LIVE tag and the offline screen
+- a screen's absent parts are left out, never drawn as the word null
 - the model's line says what it does, how fast and for how long
 - the machine is four gauges, those it reports
 - what waits is counted across the asks, the marks and Clank's questions; what works is listed newest first
