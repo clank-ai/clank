@@ -148,7 +148,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What the owner does | none yet |
-| 2 | Reaching OpenCode in a workspace: the session bridge | `tests/components/agents/test_sessions.py` (13) |
+| 2 | Reaching OpenCode in a workspace: the session bridge | `tests/components/agents/test_sessions.py` (14) |
 | 3 | Files for the phone: the agent's outbox | none yet |
 | 4 | The phone page and who may reach it | `tests/components/remote/test_phone.py` (9), `tests/components/remote/test_phone_flows.py` (9) |
 | 5 | The console's Phone page | `tests/components/remote/test_phone_page.py` (2) |
@@ -315,7 +315,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 12 | The Flow view in the Monitor | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_planning_view.py` (4), `tests/components/flows/test_summaries.py` (9), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_view.py` (12), `tests/console/test_monitor_flow_watch.py` (12), `tests/console/test_monitor_page.py` (16), `tests/console/test_orchestrator_panel.py` (6) |
 | 13 | What flows do not cover | none yet |
 | 14 | Build steps | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_runs.py` (7), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_view.py` (12), `tests/kernel/test_settings_checks.py` (3), `vscode/test/gates.test.ts` (16) |
-| 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/agents/test_flow_tools.py` (9), `tests/components/agents/test_sessions.py` (13), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (24), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (11) |
+| 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/agents/test_flow_tools.py` (9), `tests/components/agents/test_sessions.py` (14), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (24), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (11) |
 | 16 | The orchestrator: a model that steers the run | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/flows/test_orchestrator.py` (18), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_orchestrator_panel.py` (6) |
 | 17 | Jobs, and the work done while one runs | `tests/components/flows/test_box_jobs.py` (8), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_jobs.py` (9), `tests/components/flows/test_side_work.py` (7), `tests/console/test_side_work_panel.py` (3) |
 
@@ -1397,6 +1397,7 @@ Design 0005 §2-§3: the session bridge and the agent's outbox, run on this mach
 - send to phone puts a file of the folder in its outbox with its caption
 - the bridge waits for a window that answers late sends to the planner and shows the session again
 - a planning session waits for a new windows slow first answers and starts
+- a new session on a server just started waits for its slow first answer
 - the bridge shows a session on a window that answers late and again
 - a session the window does not show stands and says so
 

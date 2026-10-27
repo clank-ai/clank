@@ -44,9 +44,11 @@ def test_the_conversation_is_read_from_the_mirror_and_no_process_starts_after_th
     assert channel is not None
     requested: list[list[str]] = []  # what went through the watcher's own process (design 0023 §4)
 
-    def counted_request(workspace: str, action: str, args: list[str], body: dict[str, Any] | None) -> dict[str, Any]:
+    def counted_request(
+        workspace: str, action: str, args: list[str], body: dict[str, Any] | None, timeout: float | None = None
+    ) -> dict[str, Any]:
         requested.append([action, *args])
-        return channel(workspace, action, args, body)
+        return channel(workspace, action, args, body, timeout)
 
     agents.sessions.channel = counted_request
     first = agents.conversation(str(tmp_path))

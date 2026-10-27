@@ -38,7 +38,7 @@ import threading
 import time
 from collections.abc import Callable, Collection
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 from clank.components.agents.watch import NoChannel, Unanswered
 from clank.kernel.clock import to_text
@@ -50,12 +50,25 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 Heard = Callable[[str, dict[str, Any]], None]
-Channel = Callable[[str, str, list[str], dict[str, Any] | None], dict[str, Any]]  # workspace, action, args, body
+
+
+class Channel(Protocol):
+    """The watchers' request channel (design 0023 §4): a workspace, an action, its arguments and body, and how long to
+    wait for its answer (None: the channel's usual)."""
+
+    def __call__(
+        self, workspace: str, action: str, args: list[str], body: dict[str, Any] | None, timeout: float | None = None
+    ) -> dict[str, Any]:
+        """The action's answer, as a one-off run of the bridge would print it."""
+        ...
+
+
 # The actions the owner waits on: through the watcher's channel (decision 0140); the rest run a process of their own.
 CHANNELED = ("prompt", "new", "abort", "permission", "question", "summarize", "page", "part", "servers")
 RUNNING = ("status", "message", "part", "delta", "removed", "todo", "compacted", "error")  # lines of a session's run
 READ_SECONDS = 30.0
 SERVE_SECONDS = 60.0
+PATIENT_SECONDS = SERVE_SECONDS + 15.0  # a request given the whole wait of a start, with time to answer after it
 # An OpenCode window: OpenCode with a terminal, as its command line starts (`pgrep -f`'s extended regular expression);
 # OpenCode without one runs as `opencode serve`, which this leaves alone.
 WINDOW = "(^|/)opencode --port "
@@ -312,7 +325,12 @@ class Sessions:
         runs), with a first message; its port and id."""
         running = self.servers(workspace)
         port = int(running[0]["port"]) if running else self.serve(workspace, env)
-        session = str(self._bridge(workspace, ["new", str(port)], {"title": title})["session"])
+        if running:
+            session = str(self._bridge(workspace, ["new", str(port)], {"title": title})["session"])
+        else:  # a server just started readies itself on its first request: it is given the whole wait of a start
+            asked = {"title": title, "wait": SERVE_SECONDS}
+            found = self._bridge(workspace, ["new", str(port)], asked, timeout=PATIENT_SECONDS, waits=PATIENT_SECONDS)
+            session = str(found["session"])
         self._acted(workspace, port, session, "start", title or " ".join(text.split())[:80], actor)
         if text.strip():
             self.send(workspace, port, session, text, actor=actor)
@@ -488,15 +506,24 @@ class Sessions:
         return session, bool(found.get("shown", True))
 
     def _bridge(
-        self, workspace: str, argv: list[str], given: dict[str, Any] | None = None, timeout: float = READ_SECONDS
+        self,
+        workspace: str,
+        argv: list[str],
+        given: dict[str, Any] | None = None,
+        timeout: float = READ_SECONDS,
+        waits: float | None = None,
     ) -> dict[str, Any]:
         """A bridge action: through the watcher's channel for the actions the owner waits on (design 0023 §4), else,
         or when the channel is not there or did not answer, through a process of its own; what the bridge found or
-        did, `SessionError` with its words when it refused."""
+        did, `SessionError` with its words when it refused. `waits`: how long the channel waits for its answer, when
+        not its usual (an action known to be slow, which must not end a watcher that is well)."""
         found: dict[str, Any] | None = None
         if self.channel is not None and argv and argv[0] in CHANNELED:
             try:
-                found = self.channel(workspace, argv[0], argv[1:], given)
+                if waits is None:
+                    found = self.channel(workspace, argv[0], argv[1:], given)
+                else:
+                    found = self.channel(workspace, argv[0], argv[1:], given, timeout=waits)
             except (NoChannel, Unanswered) as why:
                 log.info("%s goes through a process of its own in %s: %s", argv[0], workspace, why)
         if found is None:
