@@ -43,12 +43,12 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 6.2 | Dialects | none yet |
 | 6.3 | Request options per serving setup | `tests/components/runtime/test_request_fields.py` (3) |
 | 6.4 | Queues and holds | `tests/components/gateway/test_titles.py` (3) |
-| 6.5 | Records | `tests/components/gateway/test_records.py` (3) |
-| 6.6 | Where it runs and who can reach it | `tests/components/gateway/test_service.py` (7) |
+| 6.5 | Records | `tests/components/gateway/test_records.py` (3), `tests/components/gateway/test_state_files.py` (4) |
+| 6.6 | Where it runs and who can reach it | `tests/components/gateway/test_service.py` (10) |
 | 6.7 | What comes from the prototype's gateway | none yet |
 | 7 | Setup and portability | see its subsections |
 | 7.1 | Where Clank runs | none yet |
-| 7.2 | The user's Clank folder | `tests/kernel/test_home.py` (4) |
+| 7.2 | The user's Clank folder | `tests/kernel/test_files.py` (8), `tests/kernel/test_home.py` (4) |
 | 7.3 | The first-run guide | `tests/components/machine/test_checks.py` (7), `tests/components/machine/test_detect.py` (5), `tests/components/machine/test_doctor.py` (3) |
 | 7.4 | Recipes for serving setups | `tests/components/runtime/test_install.py` (5) |
 | 7.5 | Models | `tests/components/runtime/test_download.py` (8) |
@@ -81,7 +81,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.4 | Operations | `tests/components/workspaces/test_docker_operations.py` (13), `tests/console/test_pages.py` (10), `tests/kernel/test_operations.py` (15) |
 | 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (14), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (17), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
 | 2.6 | Policy | none yet |
-| 2.7 | Callers and access | `tests/console/test_home.py` (14), `tests/kernel/test_access.py` (5), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (5), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (17), `vscode/test/live.test.ts` (1) |
+| 2.7 | Callers and access | `tests/console/test_home.py` (14), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (5), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (17), `vscode/test/live.test.ts` (1) |
 | 2.8 | Secrets | `tests/components/tools/test_servers.py` (7), `tests/kernel/test_secrets.py` (4) |
 | 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_sandbox.py` (7), `tests/kernel/test_processes.py` (8) |
 | 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (7), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
@@ -90,7 +90,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.13 | Clank's own traffic | none yet |
 | 2.14 | The API | `tests/kernel/test_api.py` (17), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_apidoc.py` (1), `vscode/test/client.test.ts` (5) |
 | 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (5), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/console/test_command.py` (4), `tests/console/test_data.py` (17), `tests/console/test_shell.py` (19) |
-| 2.16 | Where things are | `tests/kernel/test_home.py` (4) |
+| 2.16 | Where things are | `tests/kernel/test_files.py` (8), `tests/kernel/test_home.py` (4) |
 | 2.17 | The kernel against every feature asked for | none yet |
 | 2.18 | Choices this section makes | none yet |
 | 3 | The skeleton (M0) and the order of milestones | see its subsections |
@@ -133,7 +133,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What the owner does | `tests/components/agents/test_work.py` (8), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (9), `tests/console/test_folder.py` (24), `tests/console/test_terminal.py` (5) |
-| 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (7), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
+| 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (10), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
 | 3 | Workspaces, the image and the container | `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (9), `tests/console/test_folder.py` (24), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (7), `tests/docker/test_escape.py` (3) |
 | 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (8), `tests/console/test_folder.py` (24), `tests/contract/test_agent_program.py` (2) |
 | 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (8), `tests/components/workspaces/test_docker_containers.py` (13), `vscode/test/agent.test.ts` (5) |
@@ -264,7 +264,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | What the owner gets | none yet |
 | 2 | The page: its views, its panels and its keys | `tests/console/test_flow_panel.py` (8), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_flow_view.py` (12), `tests/console/test_monitor_guide.py` (7), `tests/console/test_monitor_live.py` (2), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_monitor_undo_and_drop.py` (5), `tests/console/test_monitor_watch_for.py` (2), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (19) |
 | 3 | Which session the page follows, and which the Guide acts on | `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_monitor_watch.py` (12), `tests/components/agents/test_pausing.py` (8), `tests/components/agents/test_watch_for_marks.py` (14), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_watch_for.py` (2) |
-| 4 | The context window | `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_service.py` (7), `tests/components/runtime/test_cloud_facts.py` (5), `tests/components/runtime/test_context_facts.py` (10), `tests/components/runtime/test_count_tokens.py` (5) |
+| 4 | The context window | `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_service.py` (10), `tests/components/runtime/test_cloud_facts.py` (5), `tests/components/runtime/test_context_facts.py` (10), `tests/components/runtime/test_count_tokens.py` (5) |
 | 4.1 | How full, and how much is left | `tests/components/agents/test_context_margin.py` (5), `tests/components/agents/test_monitor_context.py` (15), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_session_facts.py` (13), `tests/components/runtime/test_context_facts.py` (10), `tests/console/test_monitor_context.py` (15), `tests/console/test_requests_page.py` (11) |
 | 4.2 | The parts, estimated | `tests/components/agents/test_monitor_estimate.py` (11), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_census.py` (12), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14) |
 | 4.3 | Loop text | `tests/components/agents/test_monitor_estimate.py` (11), `tests/components/gateway/test_census.py` (12) |
@@ -283,13 +283,13 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 6.3 | How it is drawn | `tests/console/test_flow_chart.py` (6), `tests/console/test_flow_chart_edges.py` (3) |
 | 6.4 | Folds and dead ends | none yet |
 | 6.5 | Moving in it, and a step's details | `tests/console/test_flow_panel.py` (8) |
-| 7 | Tool calls and the live text | `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_service.py` (7), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_live.py` (2) |
+| 7 | Tool calls and the live text | `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_service.py` (10), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_live.py` (2) |
 | 8 | Watch for: rules the owner sets | `tests/components/agents/test_session_flow_pairing.py` (8), `tests/components/agents/test_watch_for_marks.py` (14), `tests/components/agents/test_watch_for_rules.py` (7), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/agents/test_watch_for_settings.py` (4), `tests/components/gateway/test_activity.py` (22), `tests/components/remote/test_phone_marks.py` (4), `tests/console/test_monitor_watch_for.py` (2) |
 | 9 | The Guide | `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/remote/test_phone_session.py` (3) |
 | 9.1 | What every action shows | `tests/components/agents/test_guide.py` (5), `tests/components/agents/test_guide_actions.py` (8), `tests/components/agents/test_guide_undo_actions.py` (12), `tests/components/agents/test_guide_undo_and_drop.py` (6), `tests/components/agents/test_pausing.py` (8), `tests/components/gateway/test_activity.py` (22), `tests/console/test_confirm.py` (6), `tests/console/test_monitor_guide.py` (7), `tests/console/test_monitor_undo_and_drop.py` (5) |
 | 9.2 | Stop now | `tests/components/agents/test_guide.py` (5), `tests/components/agents/test_guide_actions.py` (8), `tests/console/test_monitor_guide.py` (7) |
 | 9.3 | A note | `tests/components/agents/test_guide.py` (5), `tests/components/agents/test_guide_actions.py` (8), `tests/console/test_monitor_guide.py` (7) |
-| 9.4 | Pause after this step | `tests/components/agents/test_flow_tree.py` (19), `tests/components/agents/test_pausing.py` (8), `tests/components/agents/test_session_flow_pairing.py` (8), `tests/components/agents/test_session_flows_kept.py` (12), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_hold_gateway.py` (14), `tests/components/gateway/test_holds.py` (7), `tests/components/gateway/test_service.py` (7), `tests/console/test_monitor_guide.py` (7) |
+| 9.4 | Pause after this step | `tests/components/agents/test_flow_tree.py` (19), `tests/components/agents/test_pausing.py` (8), `tests/components/agents/test_session_flow_pairing.py` (8), `tests/components/agents/test_session_flows_kept.py` (12), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_hold_gateway.py` (14), `tests/components/gateway/test_holds.py` (7), `tests/components/gateway/test_service.py` (10), `tests/components/gateway/test_state_files.py` (4), `tests/console/test_monitor_guide.py` (7) |
 | 9.5 | Undo the last step | `tests/components/agents/test_flow_tree.py` (19), `tests/components/agents/test_guide_undo_actions.py` (12), `tests/components/agents/test_guide_undo_and_drop.py` (6), `tests/components/agents/test_session_flow_undo_and_drop.py` (3), `tests/console/test_monitor_undo_and_drop.py` (5) |
 | 9.6 | Compact now | `tests/components/agents/test_guide.py` (5), `tests/components/agents/test_guide_actions.py` (8), `tests/components/agents/test_session_flow.py` (17), `tests/console/test_monitor_guide.py` (7) |
 | 9.7 | Drop an item | `tests/components/agents/test_flow_tree.py` (19), `tests/components/agents/test_guide_undo_actions.py` (12), `tests/components/agents/test_guide_undo_and_drop.py` (6), `tests/components/agents/test_session_flow_undo_and_drop.py` (3), `tests/console/test_monitor_context_drop.py` (6), `tests/console/test_monitor_undo_and_drop.py` (5) |
@@ -369,9 +369,9 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7 | Cloud presets, and the main slot running one | `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (16) |
 | 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_openrouter.py` (14) |
 | 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (24) |
-| 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (24) |
+| 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (24) |
 | 11 | Cost: each request, session and flow, and the limits | `tests/cli/test_cloud_commands.py` (7), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_cost_limits.py` (8), `tests/components/gateway/test_cost_views.py` (8), `tests/console/test_add_model.py` (25), `tests/console/test_cost_pause.py` (2), `tests/console/test_data.py` (17), `tests/console/test_home.py` (14), `tests/console/test_monitor_cloud.py` (3), `tests/console/test_requests_page.py` (11), `tests/console/test_text.py` (4), `tests/kernel/test_event_attention.py` (3) |
-| 12 | How cost is known and kept | `tests/components/gateway/test_cloud_cost.py` (5), `tests/components/gateway/test_cost_views.py` (8) |
+| 12 | How cost is known and kept | `tests/components/gateway/test_cloud_cost.py` (5), `tests/components/gateway/test_cost_views.py` (8), `tests/components/gateway/test_state_files.py` (4) |
 | 13 | What the Monitor shows of a cloud model | `tests/components/runtime/test_cloud_facts.py` (5), `tests/console/test_monitor_cloud.py` (3) |
 | 14 | The first run: Add a model | `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (16), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (17), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (19) |
 | 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_folder.py` (24), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
@@ -2387,7 +2387,7 @@ Design 0001 §6.1-§6.5, design 0004 §2 and design 0016 §8: the gateway sends 
 
 ### `tests/components/gateway/test_service.py`
 
-Design 0004 §2 and design 0001 §6.6: the service tells the gateway its routes (the main slot's state, whether an operation is changing it, and while an engine runs, its port, its serving setup and version, the model name it answers to, its preset and the preset's context and output limits, and, design 0012 §4 and decision 0067, the preset's facts, its engine's and its model's; the role `agent` is the main slot's); it starts the gateway's process, and after a restart of the service it adopts the one still running instead of starting another; `clank gateway status` says where it listens and which process it is, and `GET /gateway/activity` what it does now. Design 0012 §7: `GET /gateway/activity` and `GET /gateway/live` follow the session they are asked for, and its subagents too when `subagents` asks for them. Design 0012 §9.4 (§11 step 11): the service pauses and resumes a session in the gateway with its local token, and `GET /gateway/holds` says what is paused and held; a gateway from before pausing, still running, is never taken for one that paused. A stop forgets the gateway's process though its state file is held open a moment by another reader (Windows refuses to delete it then: `clank gateway restart` answered 500 on 2026-10-23).
+Design 0004 §2 and design 0001 §6.6: the service tells the gateway its routes (the main slot's state, whether an operation is changing it, and while an engine runs, its port, its serving setup and version, the model name it answers to, its preset and the preset's context and output limits, and, design 0012 §4 and decision 0067, the preset's facts, its engine's and its model's; the role `agent` is the main slot's); it starts the gateway's process, and after a restart of the service it adopts the one still running instead of starting another; `clank gateway status` says where it listens and which process it is, and `GET /gateway/activity` what it does now. Design 0012 §7: `GET /gateway/activity` and `GET /gateway/live` follow the session they are asked for, and its subagents too when `subagents` asks for them. Design 0012 §9.4 (§11 step 11): the service pauses and resumes a session in the gateway with its local token, and `GET /gateway/holds` says what is paused and held; a gateway from before pausing, still running, is never taken for one that paused. A stop forgets the gateway's process though its state file is held open a moment by another reader (Windows refuses to delete it then: `clank gateway restart` answered 500 on 2026-10-23); one held open for good is left naming a process that ended, which says stopped. A restart is never half done: a stop that fails leaves the gateway running and says why, and a state file that cannot be written keeps the gateway's process in memory, so it is never started twice, until the file can be written.
 
 - the routes give the main slots engine its model name and its limits
 - a slot an operation is changing is busy
@@ -2396,6 +2396,9 @@ Design 0004 §2 and design 0001 §6.6: the service tells the gateway its routes 
 - the service pauses and resumes a session in the gateway with its token
 - a gateway from before pausing is never taken for one that paused
 - a stop forgets the gateway though its file is held open a moment
+- a restart whose stop fails leaves the gateway running and says why
+- a gateway whose state file cannot be written is kept in memory and never started twice
+- a stop whose state file stays held says stopped and the next start takes its place
 
 ### `tests/components/gateway/test_session_facts.py`
 
@@ -2414,6 +2417,15 @@ Design 0012 §3 and §11 step 2: the gateway names each model request's session,
 - the gateway makes a census of each request and keeps it out of its records
 - with records off the census the gateway keeps carries no text of the request
 - a census that fails never fails the request and is logged as a count without its text
+
+### `tests/components/gateway/test_state_files.py`
+
+Design 0012 §9.4, design 0016 §10 and §12, and design 0001 §6.5: what the gateway's process keeps in files (the pauses, the sessions kept from the cloud, the cloud spool, the day's records) is kept though another program holds a file for good, as Windows then refuses its replace or its delete: said in the gateway's log, kept in memory meanwhile, and a request never fails for it; the spool never gives a number twice in a run, though its counter could not be written.
+
+- a pause holds though its file cannot be written and says so
+- a session kept from the cloud is kept though its file cannot be written
+- the spool keeps its entries though its counter cannot be written and never gives a number twice
+- a days records are kept though an old days file to remove is held open
 
 ### `tests/components/gateway/test_titles.py`
 
@@ -4277,13 +4289,14 @@ Design 0002 §1: the service keeps answering. On Windows a client that drops its
 
 ### `tests/kernel/test_access.py`
 
-Design 0002 §2.7: local clients prove they are the user on this machine by reading the local token, find the service through its connection file, and what they do is recorded as the user, through that client.
+Design 0002 §2.7: local clients prove they are the user on this machine by reading the local token, find the service through its connection file, and what they do is recorded as the user, through that client. The connection file is written and removed though a client holds it open a moment (the gateway's process reads it every second, and Windows refuses a replace or a delete meanwhile).
 
 - the token is created once and then kept
 - the token is long and random
 - the token file is readable only by the user
 - the connection file round trips and is removed on stop
 - a clients name becomes the actor of what it does
+- the connection file is written and removed though a client holds it open a moment
 
 ### `tests/kernel/test_adapters.py`
 
@@ -4365,6 +4378,19 @@ Design 0002 §2.3: every event is kept with an id that only grows, is heard by l
 - an unsubscribed listener hears nothing more
 - the latest events come newest first a page at a time
 - a client behind the pruned events is told it missed some
+
+### `tests/kernel/test_files.py`
+
+Design 0002 §2.16 and design 0001 §7.2: a file of CLANK_HOME that another program may be reading while Clank changes it (the state folder's above all) is replaced whole and at once, never half written, and replaced or removed though a reader holds it for a moment, as Windows refuses both while one does (`clank gateway restart` answered 500 on 2026-10-23 when its stop could not delete `state/gateway.json`); one never let through is said, never half done.
+
+- a replace puts the whole new content in place and leaves nothing beside it
+- a replace waits while another program holds the file then puts it in place
+- a reader holding the file a moment delays a replace and a remove but never fails them
+- a replace never let through raises and leaves the file as it was with nothing beside it
+- an error that is not another programs hold is raised at once
+- a remove waits while another program holds the file
+- a remove never let through says so and leaves the file
+- a remove of a file that is not there is done
 
 ### `tests/kernel/test_grouped_settings.py`
 

@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pytest
 
-from clank.kernel import files
 from clank.kernel.access import (
     Connection,
     client_actor,

@@ -324,6 +324,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/kernel/console_kinds.py` | The console's settings kinds: its style, and which style it uses (design 0011 §2-§3). |
 | `clank/kernel/core.py` | The kernel assembled: every part of the kernel, wired together, with each component's declarations and parts. |
 | `clank/kernel/events.py` | Events: everything that happens is an event, kept in the state database as the history (design 0002 §2.3). |
+| `clank/kernel/files.py` | Files of CLANK_HOME that another program may be reading while Clank changes them (design 0002 §2.16: the state |
 | `clank/kernel/home.py` | CLANK_HOME: the one folder that holds everything of one user on one machine (design 0001 §7.2, design 0002 §2.16). |
 | `clank/kernel/kinds.py` | The kernel's own declarations: its kinds of record and its event types, collected for `clank.registry`. |
 | `clank/kernel/locks.py` | Locks a process holds on a file for as long as it runs, such as the one that keeps a second service off a |
