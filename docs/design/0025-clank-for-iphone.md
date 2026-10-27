@@ -16,7 +16,7 @@ page and push alerts, a service the owner switches on and off) and design 0023 ย
 | ยง | Section | Status |
 | --- | --- | --- |
 | 1 | What it is, and what leaves the PC | Approved 2026-10-21 (the canvas); written 2026-10-26 |
-| 2 | Install once | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)): the pair link's QR on the console, the code spent by scanning it, the install claim, tokens renewed on use |
+| 2 | Install once | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)): the pair link's QR on the console, the code spent by scanning it, the install claim, tokens renewed on use; revised after approval 2026-10-26: when the page does not load, the PC checks the phone's way in and says what to do (the owner's first scan loaded nothing, and nothing said why), and the keys as the console has them |
 | 3 | Live: one stream, and when it drops | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)): the stream, the shell and its service worker, the reconnecting and offline screens |
 | 4 | Notifications | Approved 2026-10-21 (the canvas); written 2026-10-26; its dependency decided when built |
 | 5 | Now | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)) on the live stream; the Flows tab shows the flows' questions until step 2 brings the Flow view |
@@ -53,7 +53,9 @@ page and push alerts, a service the owner switches on and off) and design 0023 ย
 About a minute, nothing to type.
 
 1. **The console shows a QR** (Phone, F9, `p`): a link to the listener's address that carries a one-time **pair
-   code**, single use, ten minutes; `r` makes a new one, `d` lists the devices. `clank remote pair` prints the link.
+   code**, single use, fifteen minutes; `p` again makes a new one, `c` cancels it, and the paired devices are listed
+   beside it. One line under the QR says what to check when the page will not load: "Page won't load? On the iPhone:
+   Tailscale on, iCloud Private Relay off." `clank remote pair` prints the link and the same line.
 2. **The camera opens it** in Safari, on the tailnet (Tailscale must be on). The page pairs the device by the code in
    the link (no typing), spends the code, and shows the steps for the iOS version it sees: Share, Add to Home Screen,
    keep *Open as Web App* on if shown, Add. Why: full screen, its own icon, notifications (iOS sends them only to Home
@@ -66,8 +68,38 @@ About a minute, nothing to type.
 
 **Staying paired**: the app holds one device token, a cookie only the PC reads; each use renews it; after thirty days
 unused it lapses (design 0005's 90-day ceiling is dropped: a device in use stays paired). Revoke it on the console (F9,
-`d`) or in the app (More, Settings, Sign out). **When a step fails**: QR expired, `r` on the console; the page does not
-load, turn on Tailscale on the iPhone; opened in Safari but never added, the claim lapses after an hour, scan a new QR.
+`d`) or in the app (More, Settings, Sign out). **When a step fails**: QR expired, `p` again on the console; the page
+does not load, see below; opened in Safari but never added, the claim lapses after an hour, scan a new QR.
+
+**When the page does not load** (revised after approval, 2026-10-26). The owner's first scan loaded nothing, and nothing
+on the PC said why: no request had reached the listener. The iPhone's Safari had asked public DNS for the PC's name,
+which Tailscale Funnel, on for another port of the PC, publishes on the internet, and was sent to Tailscale's relay,
+which does not carry the phone's port. So the PC checks the phone's way in and says each finding with what to do: on the
+console's Phone page under the QR (`r` checks again), in `clank remote status`, and in `clank doctor` while remote access
+is on (`checkup.py`).
+
+- **The owner's phones on the tailnet** (iOS and Android), from `tailscale status --json`: online; offline, with when
+  last seen ("open the Tailscale app on the iPhone and switch it on (it says Connected), then scan the QR again"); a
+  sign-in expired, or expiring within three days; none of the owner's, naming any phone of another account.
+- **What reached the listener today**, from its log, which now keeps where each request came from as Tailscale's proxy
+  says it (the address it names, the login it vouches for, the browser's name) and why one was refused: which device and
+  when, the last refusal in words with its fix (a code spent or expired: a new QR; another Tailscale account: sign in
+  with the PC's), or "no phone has reached Clank today" ("since the QR was made", while one waits). This PC's own
+  requests do not count. A pair link's code and the icon's install claim are masked in the log, as a typed code is.
+- **Funnel**: on for any port of this PC, it gives the PC's name public addresses (Tailscale's relays), which do not
+  carry the phone's port. A phone that does not ask Tailscale's DNS for the name (iCloud Private Relay does so for
+  Safari; or an answer kept from before Tailscale was on) loads for a while, then cannot connect, and nothing reaches the
+  PC. While Funnel is on, the checkup asks one public DNS server, Cloudflare's 1.1.1.1, what the internet is told for
+  the name (one UDP question carrying the name only, two seconds at most) and sets it beside the PC's tailnet address.
+  The fix: on the iPhone, iCloud Private Relay off (Settings, your name, iCloud, Private Relay), then Airplane Mode on
+  and off to clear its DNS cache; or Funnel off on the PC if nothing needs it.
+- **This PC's side**: Tailscale running and signed in here; the listener listening; the tailnet port published to it,
+  on the tailnet only; MagicDNS and HTTPS certificates on in the tailnet; and this PC opening its own published address
+  as a phone would (five seconds at most; one exchange in the log, at most every five minutes unless asked again).
+
+Nothing is asked while remote access is off, and nothing is changed: each fix is the owner's to make. What Tailscale
+says is kept fifteen seconds. The phone itself cannot be told, since its request never arrives; hence the line under
+the QR. A refused pair link still answers in JSON; a page in the app's look for it is left for later.
 
 ## 3. Live: one stream, and when it drops
 

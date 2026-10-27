@@ -71,3 +71,17 @@ def _colors_whatever_the_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
     """The console draws its colors in the tests whatever the terminal that runs them asks: with NO_COLOR set there,
     Textual drew gray, and the tests of the console's colors failed (2026-10-25); a test of NO_COLOR sets it."""
     monkeypatch.delenv("NO_COLOR", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _no_test_asks_tailscale_or_the_internet(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tailscale's command is never run for real (`tailscale serve` would change the owner's tailnet): Clank finds no
+    Tailscale unless a test fakes what it says. Nor does the phone's checkup open an address or ask public DNS: a test
+    of the checkup gives it answers of its own (design 0025 §2)."""
+
+    def refused(*args: object, **kwargs: object) -> None:
+        raise AssertionError("a test reached the network through the phone's checkup: give it answers of its own")
+
+    monkeypatch.setattr("clank.components.remote.tailnet.program", lambda: None)
+    monkeypatch.setattr("clank.components.remote.probes.reach", refused)
+    monkeypatch.setattr("clank.components.remote.probes.public_addresses", refused)

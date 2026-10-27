@@ -88,13 +88,15 @@ class Devices:
         return code, expires
 
     def waiting_code(self) -> dict[str, Any] | None:
-        """The code not used yet, if one is still good: its device's name and when it expires (never the code)."""
+        """The code not used yet, if one is still good: its device's name, when it was made and when it expires (never
+        the code)."""
         now = to_text(self.kernel.clock.now())
         rows = self._store.read(
-            "SELECT name, expires FROM pairings WHERE used IS NULL AND expires > ? ORDER BY created DESC LIMIT 1",
+            "SELECT name, created, expires FROM pairings WHERE used IS NULL AND expires > ? "
+            "ORDER BY created DESC LIMIT 1",
             (now,),
         )
-        return {"name": rows[0]["name"], "expires": rows[0]["expires"]} if rows else None
+        return {"name": rows[0]["name"], "made": rows[0]["created"], "expires": rows[0]["expires"]} if rows else None
 
     def cancel_code(self) -> dict[str, Any] | None:
         """Cancel the code not used yet: it no longer pairs; what it was for (None when no code was waiting)."""

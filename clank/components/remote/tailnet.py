@@ -1,9 +1,10 @@
 """Tailscale, through its command (design 0005 §4): this machine's name on the tailnet and its user's login, and
 publishing the phone's listener on the tailnet only (`tailscale serve --https=PORT`), or taking it down.
 
-Clank refuses to publish when Tailscale Funnel is on for that port: Funnel would face the internet. Every command runs
-without a window (`run_answer`) and within a short time; a Tailscale that is not installed, not running or not signed
-in is said, not raised.
+Clank refuses to publish when Tailscale Funnel is on for that port: Funnel would face the internet. The phone's checkup
+(design 0025 §2) reads Tailscale's whole status (`status`: the peers, MagicDNS, the certificates) and what it serves
+(`serve_config`: where each port goes, where Funnel is on). Every command runs without a window (`run_answer`) and
+within a short time; a Tailscale that is not installed, not running or not signed in is said, not raised.
 """
 
 import json
@@ -52,16 +53,30 @@ def _json(answer: Answer) -> dict[str, Any]:
     return found if isinstance(found, dict) else {}
 
 
-def read(run: Run = _run) -> Tailnet:
+def status(run: Run | None = None) -> tuple[dict[str, Any], str]:
+    """`tailscale status --json` as Tailscale wrote it; when it did not answer, {} and why."""
+    answer = (run or _run)(["status", "--json"])
+    found = _json(answer)
+    if not found:
+        return {}, (answer.errors or answer.output).strip()[:200] or "Tailscale did not answer"
+    return found, ""
+
+
+def serve_config(run: Run | None = None) -> dict[str, Any]:
+    """`tailscale serve status --json`: where each port of this machine goes on the tailnet, and where Funnel is on;
+    {} when nothing is served or Tailscale did not answer."""
+    return _json((run or _run)(["serve", "status", "--json"]))
+
+
+def read(run: Run | None = None) -> Tailnet:
     """This machine's name on the tailnet and its user's login; a problem when Tailscale cannot say."""
-    answer = run(["status", "--json"])
-    status = _json(answer)
-    if not status:
-        return Tailnet("", "", (answer.errors or answer.output).strip()[:200] or "Tailscale did not answer")
-    if status.get("BackendState") != "Running":
-        return Tailnet("", "", f"Tailscale is {status.get('BackendState') or 'not running'}: sign in (tailscale up)")
-    me = status.get("Self") or {}
-    user = (status.get("User") or {}).get(str(me.get("UserID", ""))) or {}
+    found, problem = status(run)
+    if not found:
+        return Tailnet("", "", problem)
+    if found.get("BackendState") != "Running":
+        return Tailnet("", "", f"Tailscale is {found.get('BackendState') or 'not running'}: sign in (tailscale up)")
+    me = found.get("Self") or {}
+    user = (found.get("User") or {}).get(str(me.get("UserID", ""))) or {}
     host = str(me.get("DNSName") or "").rstrip(".")
     login = str(user.get("LoginName") or "").lower()
     if not host or not login:
@@ -69,9 +84,9 @@ def read(run: Run = _run) -> Tailnet:
     return Tailnet(host, login)
 
 
-def funnel_on(host: str, port: int, run: Run = _run) -> bool:
+def funnel_on(host: str, port: int, run: Run | None = None) -> bool:
     """Whether Tailscale Funnel publishes this port to the internet."""
-    return bool((_json(run(["serve", "status", "--json"])).get("AllowFunnel") or {}).get(f"{host}:{port}"))
+    return bool((serve_config(run).get("AllowFunnel") or {}).get(f"{host}:{port}"))
 
 
 def publish(local_port: int, tailnet_port: int, run: Run = _run) -> str:
