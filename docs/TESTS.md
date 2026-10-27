@@ -266,7 +266,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 3 | Which session the page follows, and which the Guide acts on | `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_monitor_watch.py` (12), `tests/components/agents/test_pausing.py` (8), `tests/components/agents/test_watch_for_marks.py` (14), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_watch_for.py` (2) |
 | 4 | The context window | `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_service.py` (11), `tests/components/runtime/test_cloud_facts.py` (5), `tests/components/runtime/test_context_facts.py` (10), `tests/components/runtime/test_count_tokens.py` (5) |
 | 4.1 | How full, and how much is left | `tests/components/agents/test_context_margin.py` (5), `tests/components/agents/test_monitor_context.py` (15), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_session_facts.py` (13), `tests/components/runtime/test_context_facts.py` (10), `tests/console/test_monitor_context.py` (15), `tests/console/test_requests_page.py` (11) |
-| 4.2 | The parts, estimated | `tests/components/agents/test_monitor_estimate.py` (11), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_census.py` (12), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14) |
+| 4.2 | The parts, estimated | `tests/components/agents/test_monitor_estimate.py` (11), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_census.py` (12), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14), `vscode/test/readout.test.ts` (12) |
 | 4.3 | Loop text | `tests/components/agents/test_monitor_estimate.py` (11), `tests/components/gateway/test_census.py` (12) |
 | 4.4 | On the GPU exactly | `tests/components/agents/test_monitor_context.py` (15), `tests/components/runtime/test_context_facts.py` (10), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14) |
 | 4.5 | Growth over this session | `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14) |
@@ -484,7 +484,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | Where Clank stands | none yet |
 | 2 | What the review found | none yet |
-| 3 | The model's readout | `tests/components/agents/test_readout.py` (4), `vscode/test/readout.test.ts` (11) |
+| 3 | The model's readout | `tests/components/agents/test_readout.py` (4), `vscode/test/readout.test.ts` (12) |
 | 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (3), `vscode/test/conversation.test.ts` (9) |
 | 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (11), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (5) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/components/workspaces/test_jobs_runner.py` (2) |
@@ -5164,7 +5164,7 @@ Design 0004 §5 (revised 2026-10-26): whether OpenCode reaches the model from th
 
 ### `vscode/test/readout.test.ts`
 
-Design 0021 §3: the model's readout in VS Code. The status bar says the speed, the context used of the window and the phase ("63 tok/s · 161K/262K · thinking"), and with no session yet the model and its state. The panel's rows: the model and its speed options; writing speed (live while it writes, else the last step's), the prompt's reading speed for the last step, the drafted tokens accepted, and the recent steps as a small graph; what it does now and for how long (a tool or a call by its name); the context used of the window with the compaction line and the cache's share, part by part as a bar whose free room is the rest of the window; how much is attended exactly on the GPU and how much retrieved; whether the engine holds this session's conversation; the GPU's memory and use. A part the service could not read says so, never a number.
+Design 0021 §3: the model's readout in VS Code. The status bar says the speed, the context used of the window and the phase ("63 tok/s · 161K/262K · thinking"), and with no session yet the model and its state. The panel's rows: the model and its speed options; writing speed (live while it writes, else the last step's), the prompt's reading speed for the last step, the drafted tokens accepted, and the recent steps as a small graph; what it does now and for how long (a tool or a call by its name); the context used of the window with the compaction line and the cache's share, part by part as a bar whose free room is the rest of the window; how much is attended exactly on the GPU and how much retrieved; whether the engine holds this session's conversation; the GPU's memory and use. A part the service could not read says so, never a number. Each part of the bar names its kind, which colors it as the console colors that part (design 0012 §4.2), whatever its size: the bar is sorted by size, and its colors went by place before.
 
 - tokens are written as people read them
 - the speed graph scales the recent steps between the lowest and highest bar
@@ -5173,6 +5173,7 @@ Design 0021 §3: the model's readout in VS Code. The status bar says the speed, 
 - the reading speed is the last step's, once its prompt was read
 - the jobs running in the folder's workspace show with how long each has run
 - a prompt read mostly from the cache says how few tokens were new, not a speed of them
+- each part of the bar names its kind, the free room too, so a part keeps its color whatever its place
 - the bar leaves out the parts that hold nothing
 - a tool or a call is named, and an engine holding another conversation is said with its cost
 - parts the service could not read say so, never a number

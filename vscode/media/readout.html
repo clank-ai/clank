@@ -1,6 +1,7 @@
 <!doctype html>
 <!-- The model's readout (design 0021 §3), under the agent's terminal. The extension fills in the {{...}} fields: the
-     content security policy's sources, the nonce of the script, and the addresses of the style sheet and the script. -->
+     content security policy's sources, the nonce of the script, and the addresses of the style sheets (the extension's
+     tokens first, media/tokens.css) and the script. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -9,6 +10,7 @@
       content="default-src 'none'; style-src {{source}}; script-src 'nonce-{{nonce}}';"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{tokens}}" />
     <link rel="stylesheet" href="{{css}}" />
     <title>Clank · the model</title>
   </head>

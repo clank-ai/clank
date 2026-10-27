@@ -1,17 +1,20 @@
-/* The readout's page (design 0021 §3): small, dense, in the theme's colors. */
+/* The readout's page (design 0021 §3): small, dense, in the extension's tokens (media/tokens.css): the window's VS Code
+   theme, or Clank Night. Each part of the context bar in its kind's color, as the console draws it (design 0012 §4.2);
+   a part of a kind this page does not know takes a chart color by its place. */
 body {
   margin: 0;
   padding: 6px 10px;
-  color: var(--vscode-foreground);
-  background: var(--vscode-editor-background);
-  font-family: var(--vscode-font-family);
-  font-size: var(--vscode-font-size);
+  color: var(--c-text);
+  background: var(--c-bg);
+  font-family: var(--f-ui);
+  font-size: var(--vscode-font-size, 13px);
   line-height: 1.45;
 }
 
 .title {
   font-weight: 600;
   margin-bottom: 2px;
+  color: var(--c-strong);
 }
 
 .row {
@@ -21,12 +24,12 @@ body {
 }
 
 .now {
-  color: var(--vscode-textLink-foreground);
+  color: var(--c-link);
 }
 
 .muted,
 .hint {
-  color: var(--vscode-descriptionForeground);
+  color: var(--c-muted);
 }
 
 .hint {
@@ -35,7 +38,7 @@ body {
 }
 
 .graph {
-  font-family: var(--vscode-editor-font-family);
+  font-family: var(--f-mono);
   letter-spacing: 1px;
 }
 
@@ -43,8 +46,8 @@ body {
   display: flex;
   height: 10px;
   margin: 4px 0 2px;
-  border: 1px solid var(--vscode-panel-border);
-  border-radius: 2px;
+  border: 1px solid var(--c-border);
+  border-radius: 3px;
   overflow: hidden;
 }
 
@@ -69,37 +72,69 @@ body {
   width: 8px;
   height: 8px;
   margin-right: 4px;
-  border-radius: 1px;
+  border-radius: 2px;
+}
+
+.part-system {
+  background: var(--c-part-system);
+}
+
+.part-tools {
+  background: var(--c-part-tools);
+}
+
+.part-yours {
+  background: var(--c-part-yours);
+}
+
+.part-text {
+  background: var(--c-part-text);
+}
+
+.part-thinking {
+  background: var(--c-part-thinking);
+}
+
+.part-calls {
+  background: var(--c-part-calls);
+}
+
+.part-results {
+  background: var(--c-part-results);
+}
+
+.part-loop {
+  background: var(--c-part-loop);
 }
 
 .part0 {
-  background: var(--vscode-charts-blue);
+  background: var(--vscode-charts-blue, #3794ff);
 }
 
 .part1 {
-  background: var(--vscode-charts-orange);
+  background: var(--vscode-charts-orange, #d18616);
 }
 
 .part2 {
-  background: var(--vscode-charts-green);
+  background: var(--vscode-charts-green, #89d185);
 }
 
 .part3 {
-  background: var(--vscode-charts-purple);
+  background: var(--vscode-charts-purple, #b180d7);
 }
 
 .part4 {
-  background: var(--vscode-charts-yellow);
+  background: var(--vscode-charts-yellow, #cca700);
 }
 
 .part5 {
-  background: var(--vscode-charts-red);
+  background: var(--vscode-charts-red, #f14c4c);
 }
 
-.free {
+.part-free {
   background: transparent;
 }
 
-.swatch.free {
-  border: 1px solid var(--vscode-panel-border);
+.swatch.part-free {
+  border: 1px solid var(--c-border);
 }

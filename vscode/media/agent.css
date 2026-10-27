@@ -1,52 +1,6 @@
 /* The agent panel (design 0021 §4), direction A ("Quiet", the owner's choice, 2026-10-26). Every color is a token
-   (the --c-* below): by default each follows the window's VS Code theme, the quieter ones mixed from its text and
-   ground so they show in any theme; a theme of Clank's (`body.theme-clank-night`) sets them all. A new theme is one
-   more block of tokens; nothing else names a color. */
-
-:root {
-  --c-bg: var(--vscode-editor-background, #1f1f1f);
-  --c-text: var(--vscode-foreground, #cccccc);
-  --c-strong: var(--vscode-editor-foreground, var(--c-text));
-  --c-muted: var(--vscode-descriptionForeground, #9d9d9d);
-  --c-surface: color-mix(in srgb, var(--c-text) 4%, var(--c-bg));
-  --c-raised: color-mix(in srgb, var(--c-text) 9%, var(--c-bg));
-  --c-hover: color-mix(in srgb, var(--c-text) 6%, var(--c-bg));
-  --c-border: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
-  --c-rule: color-mix(in srgb, var(--c-text) 20%, var(--c-bg));
-  --c-input: var(--vscode-input-background, var(--c-surface));
-  --c-accent: var(--vscode-button-background, #0078d4);
-  --c-accent-text: var(--vscode-button-foreground, #ffffff);
-  --c-link: var(--vscode-textLink-foreground, #4daafc);
-  --c-focus: var(--vscode-focusBorder, var(--c-accent));
-  --c-ok: var(--vscode-testing-iconPassed, #89d185);
-  --c-warn: var(--vscode-editorWarning-foreground, #cca700);
-  --c-err: var(--vscode-errorForeground, #f48771);
-  --c-code: var(--vscode-textCodeBlock-background, var(--c-surface));
-  --f-ui: var(--vscode-font-family, "Segoe UI", system-ui, sans-serif);
-  --f-mono: var(--vscode-editor-font-family, "Cascadia Code", Consolas, monospace);
-  --radius: 10px;
-}
-
-body.theme-clank-night {
-  --c-bg: #1a1b26;
-  --c-text: #c0caf5;
-  --c-strong: #e0e6ff;
-  --c-muted: #9aa5ce;
-  --c-surface: #16161e;
-  --c-raised: #24283b;
-  --c-hover: #1f2335;
-  --c-border: #292e42;
-  --c-rule: #3b4261;
-  --c-input: #1f2335;
-  --c-accent: #7aa2f7;
-  --c-accent-text: #1a1b26;
-  --c-link: #7aa2f7;
-  --c-focus: #7aa2f7;
-  --c-ok: #9ece6a;
-  --c-warn: #e0af68;
-  --c-err: #f7768e;
-  --c-code: #16161e;
-}
+   of the extension's (--c-*, media/tokens.css, loaded first): the window's VS Code theme by default, or Clank Night;
+   nothing here names a color. */
 
 html,
 body {

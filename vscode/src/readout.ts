@@ -127,13 +127,24 @@ export class ReadoutPanel implements vscode.Disposable {
     const nonce = randomBytes(16).toString("base64");
     const file = (name: string): string => webview.asWebviewUri(vscode.Uri.joinPath(media, name)).toString();
     this.ready = false;
+    const theme = (): void => {
+      const named = vscode.workspace.getConfiguration("clank").get<string>("agentPanel.theme") ?? "vscode";
+      void webview.postMessage({ type: "theme", theme: named });
+    };
     webview.onDidReceiveMessage((message: { type?: string }) => {
       if (message.type === "ready") {
         this.ready = true;
+        theme(); // the agent panel's theme: the readout sits under it
         void this.tick();
       }
     });
+    const watching = vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("clank.agentPanel.theme")) {
+        theme();
+      }
+    });
     panel.onDidDispose(() => {
+      watching.dispose();
       if (this.panel === panel) {
         this.panel = undefined; // not a newer panel, made again under a new terminal
         this.ready = false;
@@ -142,6 +153,7 @@ export class ReadoutPanel implements vscode.Disposable {
     webview.html = template
       .replaceAll("{{source}}", webview.cspSource)
       .replaceAll("{{nonce}}", nonce)
+      .replace("{{tokens}}", file("tokens.css"))
       .replace("{{css}}", file("readout.css"))
       .replace("{{script}}", file("readout.js"));
     return panel;

@@ -1,0 +1,71 @@
+/* The extension's tokens: every color and face its pages draw with, named by role (--c-*, --f-*), loaded before each
+   page's own sheet (the agent panel, a board, the readout). By default each follows the window's VS Code theme, the
+   quieter ones mixed from its text and ground so they show in any theme; Clank Night (`body.theme-clank-night`, the
+   `clank.agentPanel.theme` setting) sets them all to the console's style (clank/kernel/console_kinds.py), so the pages
+   and the console draw the same thing in the same color. A page adds only its own tokens (a board's canvas and paper);
+   a new theme is one more block here (design 0027 §2). */
+
+:root {
+  --c-bg: var(--vscode-editor-background, #1f1f1f);
+  --c-text: var(--vscode-foreground, #cccccc);
+  --c-strong: var(--vscode-editor-foreground, var(--c-text));
+  --c-muted: var(--vscode-descriptionForeground, #9d9d9d);
+  --c-surface: color-mix(in srgb, var(--c-text) 4%, var(--c-bg));
+  --c-raised: color-mix(in srgb, var(--c-text) 9%, var(--c-bg));
+  --c-hover: color-mix(in srgb, var(--c-text) 6%, var(--c-bg));
+  --c-border: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
+  --c-rule: color-mix(in srgb, var(--c-text) 20%, var(--c-bg));
+  --c-input: var(--vscode-input-background, var(--c-surface));
+  --c-accent: var(--vscode-button-background, #0078d4);
+  --c-accent-text: var(--vscode-button-foreground, #ffffff);
+  --c-link: var(--vscode-textLink-foreground, #4daafc);
+  --c-focus: var(--vscode-focusBorder, var(--c-accent));
+  --c-ok: var(--vscode-testing-iconPassed, #89d185);
+  --c-warn: var(--vscode-editorWarning-foreground, #cca700);
+  --c-err: var(--vscode-errorForeground, #f48771);
+  --c-code: var(--vscode-textCodeBlock-background, var(--c-surface));
+  /* The context's parts (design 0012 §4.2), in the theme's chart colors: the system prompt blue and the tool
+     definitions a deeper blue, your messages yellow, the model's text the text's color, thinking purple, the calls a
+     blue-green and their results green, loop text red. */
+  --c-part-system: var(--vscode-charts-blue, #3794ff);
+  --c-part-tools: color-mix(in srgb, var(--c-part-system) 55%, var(--c-bg));
+  --c-part-yours: var(--vscode-charts-yellow, #cca700);
+  --c-part-text: var(--c-text);
+  --c-part-thinking: var(--vscode-charts-purple, #b180d7);
+  --c-part-calls: color-mix(in srgb, var(--vscode-charts-green, #89d185) 50%, var(--vscode-charts-blue, #3794ff));
+  --c-part-results: var(--vscode-charts-green, #89d185);
+  --c-part-loop: var(--vscode-charts-red, #f14c4c);
+  --f-ui: var(--vscode-font-family, "Segoe UI", system-ui, sans-serif);
+  --f-mono: var(--vscode-editor-font-family, "Cascadia Code", Consolas, monospace);
+  --radius: 10px;
+}
+
+/* Clank Night: the console's colors (design 0011 §6), each by the role it has there. */
+body.theme-clank-night {
+  --c-bg: #1a1b26; /* background */
+  --c-text: #c0caf5; /* text */
+  --c-strong: #e0e5ff; /* selected text */
+  --c-muted: #9aa5ce; /* quiet */
+  --c-surface: #16161e; /* inset */
+  --c-raised: #24283b; /* surface */
+  --c-hover: #1f2335;
+  --c-border: #292e42;
+  --c-rule: #3b4261;
+  --c-input: #1f2335;
+  --c-accent: #7aa2f7; /* key, focused button */
+  --c-accent-text: #1a1b26;
+  --c-link: #7aa2f7;
+  --c-focus: #7aa2f7; /* focused border */
+  --c-ok: #9ece6a; /* good */
+  --c-warn: #e0af68; /* attention */
+  --c-err: #f7768e; /* failed */
+  --c-code: #16161e; /* inset */
+  --c-part-system: #7aa2f7;
+  --c-part-tools: #3d59a1;
+  --c-part-yours: #e0af68;
+  --c-part-text: #c0caf5;
+  --c-part-thinking: #bb9af7;
+  --c-part-calls: #73daca;
+  --c-part-results: #9ece6a;
+  --c-part-loop: #f7768e;
+}

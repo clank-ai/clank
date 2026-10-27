@@ -74,6 +74,9 @@ From the owner's first full day of use and an end-to-end test of a new user's fi
   capitalized like every other client's.
 - The console's menu stands on the page's ground, as its design and the website draw it, so the page you are on shows
   clearly in it (Textual drew it on a lighter ground, where the highlight barely showed).
+- VS Code (extension 0.10.4): Clank Night, the console's colors, now reaches the model's readout under the agent panel,
+  and the readout colors each part of the context as the console does (by what it is, not by its place in the bar);
+  every page takes its colors from one sheet; an artifact's bar is drawn in the window's theme.
 
 ## 0.3.0b1: the first public beta (2026-10-21)
 

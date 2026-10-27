@@ -210,6 +210,7 @@ export class AgentPanel implements vscode.Disposable {
         .decode(bytes)
         .replaceAll("{{source}}", webview.cspSource)
         .replaceAll("{{nonce}}", nonce)
+        .replace("{{tokens}}", file("tokens.css"))
         .replace("{{css}}", file("agent.css"))
         .replace("{{script}}", file("agent.js"))
         .replace("{{marked}}", file("lib", "marked.min.js"))

@@ -41,8 +41,10 @@ export interface Readout {
   jobs?: Array<{ job: number; title: string; state: string; seconds: number }>; // absent from a service before jobs
 }
 
-/** One part of the context bar: its label, its tokens, and its share of the window. */
+/** One part of the context bar: its kind (the service's name for it, which colors it as the console colors that part,
+ * design 0012 §4.2; "free" for the room left), its label, its tokens, and its share of the window. */
 export interface Segment {
+  part: string;
   label: string;
   tokens: number;
   share: number;
@@ -232,9 +234,9 @@ function bar(context: ReadoutContext): Segment[] {
   const parts = [...context.parts.parts]
     .filter((part) => part.tokens > 0)
     .sort((a, b) => b.tokens - a.tokens)
-    .map((part) => ({ label: part.label, tokens: part.tokens, share: part.tokens / window }));
+    .map((part) => ({ part: part.part, label: part.label, tokens: part.tokens, share: part.tokens / window }));
   const free = Math.max(window - (context.used ?? context.parts.tokens), 0);
-  return [...parts, { label: "free", tokens: free, share: free / window }];
+  return [...parts, { part: "free", label: "free", tokens: free, share: free / window }];
 }
 
 function exactRow(context: ReadoutContext | null): string {

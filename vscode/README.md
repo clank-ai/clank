@@ -32,7 +32,7 @@ where the service answers and the local token from CLANK_HOME each time it conne
 | Setting | `clank.changes.showInAuto`: in auto mode, open each change the agent makes (on by default) |
 | Setting | `clank.readout.openWithAgent`: open the model's readout under the agent when it starts (on by default) |
 | Setting | `clank.agentPanel.openWithAgent`: open the agent panel beside the agent's terminal when it starts (on by default) |
-| Setting | `clank.agentPanel.theme`: the agent panel's colors, `vscode` (the window's VS Code theme, the default) or `clank-night` (Clank's console) |
+| Setting | `clank.agentPanel.theme`: the colors of Clank's pages here (the agent panel, boards and the model's readout), `vscode` (the window's VS Code theme, the default) or `clank-night` (Clank's console: the same color for the same thing as the console, a context part's included). Every page takes its colors from one sheet of tokens, `media/tokens.css` |
 
 What you do here is recorded as you (vscode), and every other client shows it.
 

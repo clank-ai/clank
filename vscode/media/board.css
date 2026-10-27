@@ -1,24 +1,10 @@
-/* A board (design 0022): the same theme tokens as the agent panel (media/agent.css), VS Code's theme by default or
-   Clank Night, plus the board's own: its canvas and grid, the paper figures and LaTeX sit on, and the ink of the
-   owner's marks. Items are placed in the world's pixels; the world is moved and zoomed as one. */
+/* A board (design 0022): the extension's tokens (--c-*, media/tokens.css, loaded first: VS Code's theme by default or
+   Clank Night), plus the board's own: its canvas and grid, the paper figures and LaTeX sit on, and the ink of the
+   owner's marks, and a stronger rule on the canvas. Items are placed in the world's pixels; the world is moved and
+   zoomed as one. */
 
 :root {
-  --c-bg: var(--vscode-editor-background, #1f1f1f);
-  --c-text: var(--vscode-foreground, #cccccc);
-  --c-strong: var(--vscode-editor-foreground, var(--c-text));
-  --c-muted: var(--vscode-descriptionForeground, #9d9d9d);
-  --c-surface: color-mix(in srgb, var(--c-text) 4%, var(--c-bg));
-  --c-raised: color-mix(in srgb, var(--c-text) 9%, var(--c-bg));
-  --c-hover: color-mix(in srgb, var(--c-text) 6%, var(--c-bg));
-  --c-border: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
   --c-rule: color-mix(in srgb, var(--c-text) 24%, var(--c-bg));
-  --c-input: var(--vscode-input-background, var(--c-surface));
-  --c-accent: var(--vscode-button-background, #0078d4);
-  --c-accent-text: var(--vscode-button-foreground, #ffffff);
-  --c-focus: var(--vscode-focusBorder, var(--c-accent));
-  --c-warn: var(--vscode-editorWarning-foreground, #cca700);
-  --c-err: var(--vscode-errorForeground, #f48771);
-  --c-code: var(--vscode-textCodeBlock-background, var(--c-surface));
   --c-canvas: color-mix(in srgb, var(--c-text) 2%, var(--c-bg));
   --c-dot: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
   --c-paper: #ffffff;
@@ -26,27 +12,9 @@
   --c-ink: #e8508a;
   --c-highlight: rgba(255, 213, 0, 0.32);
   --c-note: color-mix(in srgb, var(--c-text) 6%, var(--c-bg));
-  --f-ui: var(--vscode-font-family, "Segoe UI", system-ui, sans-serif);
-  --f-mono: var(--vscode-editor-font-family, "Cascadia Code", Consolas, monospace);
 }
 
 body.theme-clank-night {
-  --c-bg: #1a1b26;
-  --c-text: #c0caf5;
-  --c-strong: #e0e6ff;
-  --c-muted: #9aa5ce;
-  --c-surface: #16161e;
-  --c-raised: #24283b;
-  --c-hover: #1f2335;
-  --c-border: #292e42;
-  --c-rule: #3b4261;
-  --c-input: #1f2335;
-  --c-accent: #7aa2f7;
-  --c-accent-text: #1a1b26;
-  --c-focus: #7aa2f7;
-  --c-warn: #e0af68;
-  --c-err: #f7768e;
-  --c-code: #16161e;
   --c-canvas: #15161e;
   --c-dot: #2a2e42;
   --c-paper: #f5f6fa;

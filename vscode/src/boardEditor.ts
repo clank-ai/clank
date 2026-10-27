@@ -88,6 +88,7 @@ export class BoardEditor implements vscode.CustomTextEditorProvider {
     webview.html = template
       .replaceAll("{{source}}", webview.cspSource)
       .replaceAll("{{nonce}}", nonce)
+      .replace("{{tokens}}", file("tokens.css"))
       .replace("{{css}}", file("board.css"))
       .replace("{{script}}", file("board.js"))
       .replace("{{core}}", webview.asWebviewUri(vscode.Uri.joinPath(out, "src", "core", "board.js")).toString())

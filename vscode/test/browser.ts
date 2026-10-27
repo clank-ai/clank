@@ -135,6 +135,7 @@ export function webviewPage(folder: string, template: string, files: Record<stri
   const stub = '<script nonce="test">window.posted = []; window.acquireVsCodeApi = () => ' +
     "({ postMessage: (message) => window.posted.push(message), getState: () => undefined, setState: () => {} });</script>";
   let html = readFileSync(path.join(MEDIA, template), "utf-8").replaceAll("{{source}}", "file:").replaceAll("{{nonce}}", "test");
+  html = html.replace("{{tokens}}", pathToFileURL(path.join(MEDIA, "tokens.css")).toString()); // every page's tokens
   for (const [field, name] of Object.entries(files)) {
     html = html.replace(`{{${field}}}`, pathToFileURL(path.join(MEDIA, name)).toString());
   }

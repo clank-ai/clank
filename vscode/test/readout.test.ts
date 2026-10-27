@@ -5,7 +5,8 @@
 // long (a tool or a call by its name); the context used of the window with the compaction line and the cache's share,
 // part by part as a bar whose free room is the rest of the window; how much is attended exactly on the GPU and how much
 // retrieved; whether the engine holds this session's conversation; the GPU's memory and use. A part the service could
-// not read says so, never a number.
+// not read says so, never a number. Each part of the bar names its kind, which colors it as the console colors that part
+// (design 0012 §4.2), whatever its size: the bar is sorted by size, and its colors went by place before.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -134,6 +135,20 @@ test("a prompt read mostly from the cache says how few tokens were new, not a sp
     },
   };
   assert.equal(panelRows(cached).speed, "last step 63 tok/s · read 196 new tokens in 2.3 s · drafts 56% accepted");
+});
+
+test("each part of the bar names its kind, the free room too, so a part keeps its color whatever its place", () => {
+  const rows = panelRows(WRITING);
+  assert.deepEqual(
+    rows.bar.map((segment) => [segment.label, segment.part]),
+    [
+      ["tool results", "results"],
+      ["the model's text", "text"],
+      ["tool definitions", "tools"],
+      ["system prompt", "system"],
+      ["free", "free"],
+    ],
+  );
 });
 
 test("the bar leaves out the parts that hold nothing", () => {

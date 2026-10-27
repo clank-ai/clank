@@ -1,5 +1,6 @@
-// The readout's page (design 0021 §3): draws the rows the extension sends (`core/readout.ts` makes them), and says
-// when it is ready for them. Nothing here reads the service.
+// The readout's page (design 0021 §3): draws the rows the extension sends (`core/readout.ts` makes them), in the theme
+// the extension names (the window's VS Code theme, or Clank Night: media/tokens.css), and says when it is ready for
+// them. Each part of the context bar is colored by its kind, as the console colors it. Nothing here reads the service.
 (function () {
   const vscode = acquireVsCodeApi();
   const text = (id, value) => {
@@ -17,7 +18,7 @@
     box.replaceChildren();
     legend.replaceChildren();
     segments.forEach((segment, index) => {
-      const kind = segment.label === "free" ? "free" : `part${index % 6}`;
+      const kind = /^[a-z]+$/.test(segment.part || "") ? `part-${segment.part}` : `part${index % 6}`;
       const piece = document.createElement("span");
       piece.className = `piece ${kind}`;
       piece.style.width = `${Math.max(segment.share * 100, 0)}%`;
@@ -34,6 +35,10 @@
 
   window.addEventListener("message", (event) => {
     const message = event.data;
+    if (message.type === "theme") {
+      document.body.className = message.theme && message.theme !== "vscode" ? `theme-${message.theme}` : "";
+      return;
+    }
     if (message.type !== "rows") return;
     const rows = message.rows;
     text("title", rows.title);

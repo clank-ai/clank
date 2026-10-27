@@ -59,16 +59,23 @@ export function artifactPage(page: string, parts: PageParts): string {
 }
 
 /** Clank's bar over an artifact's page: its title, its versions, Comment and Open in browser, in a shadow root so its
- * styles and the page's never meet; it tells the extension what was chosen. */
+ * styles and the page's never meet; it tells the extension what was chosen. It is drawn as a widget of the window's VS
+ * Code theme (the find widget's ground, edge and shadow, the secondary buttons), whose variables reach into the shadow
+ * root, with the dark theme's colors where none is given. */
 export function artifactBar(title: string, versions: ReturnType<typeof versionsSaid>, nonce: string): string {
   const options = versions
     .map((each) => `<option value="${each.version}"${each.shown ? " selected" : ""}>${escaped(each.label)}</option>`)
     .join("");
   const inside =
-    "<style>.bar{display:flex;gap:6px;align-items:center;font:12px system-ui,sans-serif;padding:4px 8px;" +
-    "background:rgba(30,30,30,.86);color:#eee;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.4)}" +
-    "button,select{font:inherit;color:inherit;background:rgba(255,255,255,.12);border:0;border-radius:4px;" +
-    "padding:2px 6px;cursor:pointer}</style>" +
+    "<style>.bar{display:flex;gap:6px;align-items:center;font:12px var(--vscode-font-family,system-ui),sans-serif;" +
+    "padding:4px 6px 4px 10px;background:var(--vscode-editorWidget-background,#252526);" +
+    "color:var(--vscode-editorWidget-foreground,#cccccc);border:1px solid var(--vscode-widget-border,#454545);" +
+    "border-radius:8px;box-shadow:0 2px 8px var(--vscode-widget-shadow,rgba(0,0,0,.36))}" +
+    "button,select{font:inherit;color:var(--vscode-button-secondaryForeground,#cccccc);" +
+    "background:var(--vscode-button-secondaryBackground,#313131);border:0;border-radius:4px;padding:3px 8px;" +
+    "cursor:pointer}button:hover{background:var(--vscode-button-secondaryHoverBackground,#3c3c3c)}" +
+    "button:focus-visible,select:focus-visible{outline:1px solid var(--vscode-focusBorder,#0078d4);" +
+    "outline-offset:1px}</style>" +
     `<div class="bar"><b>${escaped(title)}</b><select>${options}</select>` +
     '<button data-act="comment">Comment</button><button data-act="browser">Open in browser</button></div>';
   return (
