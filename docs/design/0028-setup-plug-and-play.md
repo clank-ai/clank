@@ -17,11 +17,11 @@ Linux ([design 0014](0014-linux-and-small-machines.md) §2-§4, built at the own
 
 | § | Section | Status |
 | --- | --- | --- |
-| 1 | Who sets Clank up, and the one path each follows | Proposed 2026-10-27; built at the owner's instruction |
-| 2 | Rules every step of the setup keeps | Proposed 2026-10-27; built at the owner's instruction |
+| 1 | Who sets Clank up, and the one path each follows | Proposed 2026-10-27; being built at the owner's instruction |
+| 2 | Rules every step of the setup keeps | Proposed 2026-10-27; being built at the owner's instruction |
 | 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9) |
-| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; built at the owner's instruction |
-| 5 | Docker, configured correctly on each system | Proposed 2026-10-27; built at the owner's instruction |
+| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; being built at the owner's instruction |
+| 5 | Docker, configured correctly on each system | Proposed 2026-10-27; being built at the owner's instruction |
 | 6 | Clank's VS Code extension without building it | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction (S5) |
 | 7 | Local models: what is one step and what is not yet | Proposed 2026-10-27 |
 | 8 | Tests and build steps | Proposed 2026-10-27; the installers' tests built (the website's `installer` workflow) |
