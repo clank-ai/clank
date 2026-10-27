@@ -163,7 +163,9 @@ main.stale > *:not(.paused) { opacity: 0.55; }
 .msg.pending { opacity: 0.6; }
 .fold .tool { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .fold.open .tool { -webkit-line-clamp: unset; }
-.live {
+/* The session's LIVE mark: a class of its own, since the header's status says .live too (it drew a solid green
+   block there). */
+.live-mark {
   margin-left: 1ch; padding: 0 5px; font-size: 10px; font-weight: 700; color: var(--deep); background: var(--good);
   vertical-align: middle;
 }

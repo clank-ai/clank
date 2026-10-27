@@ -904,7 +904,7 @@ function contextSheet(place) {
 function itemView(item, place, live) {
   const open = place.open[item.id];
   const toggle = () => { place.open[item.id] = !open; drawSession(); };
-  const tag = live ? el("span", { class: "live" }, "LIVE") : null;
+  const tag = live ? el("span", { class: "live-mark" }, "LIVE") : null;
   if (item.kind === "text") return el("div", { class: "text" }, rich(item.text), tag);
   if (item.kind === "thinking") {
     return el("div", { class: "fold" + (open ? " open" : "") },
