@@ -30,7 +30,8 @@ recordings and the hand-run job, with Docker Engine 28.0.4's recording (run 4057
 docker CLI; L2, the docker-engine adapter; L3, the adapter chosen by platform and by what answers (`auto`), with no
 start where Clank cannot start; L4, the doctor and the meters asking Docker through it; L7, no workspace opening where
 Docker cannot limit memory, unless allowed and said; L8, a folder the agent's user (1000) may not write refused, saying
-how to let it. L5 and L6 (§3) are built beside lane L, on a branch of their own. The Pi's steps (P1-P6) wait.*
+how to let it; and, from L6, the workspaces' networks giving this computer no address on Docker Engine. L5 and L6 (§3)
+are built beside lane L, on a branch of their own. The Pi's steps (P1-P6) wait.*
 
 **The machine.** A Raspberry Pi 5: arm64, four Cortex-A76 cores, and 8 GB of memory, the size this design is checked
 against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engine from Docker's Debian packages
@@ -44,7 +45,7 @@ against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engi
 | 1 | What runs on Linux and arm64 today, and what this design refines | Proposed 2026-10-18 |
 | 2 | The container platform adapters | Proposed 2026-10-18; built at the owner's instruction, 2026-10-27 (plan s9 L0-L4): the `docker-engine` adapter on Docker Engine 28.0.4's recording, `auto`, the doctor and the meters through the adapter |
 | 3 | The edge's way to the gateway on Linux | Proposed 2026-10-18 |
-| 4 | A workspace's container on Docker Engine | Proposed 2026-10-18; its memory limits and the agent's user built at the owner's instruction, 2026-10-27 (plan s9 L7, L8); the host's own address comes with §3 (L6) |
+| 4 | A workspace's container on Docker Engine | Proposed 2026-10-18; its memory limits, the agent's user and the workspaces' networks without this computer's address built at the owner's instruction, 2026-10-27 (plan s9 L7, L8, and L6's networks); the escape test of the host's own address comes with §3 (L6) |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | Proposed 2026-10-18; Docker's checks built with L4 and L7 (2026-10-27); the Pi's profile and checks (P3) wait |
 | 6 | OpenCode on arm64 | Proposed 2026-10-18 |
 | 7 | CI on arm64 | Proposed 2026-10-18 |

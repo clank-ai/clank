@@ -9,7 +9,11 @@ joined now or was on it already, and a start refused because a network the conta
 (`NetworkGone`), so Clank makes the container again.
 
 Design 0004 §5: the files written when an agent starts go in one `docker exec` (a few lines of
-Python reading them from its input), one by one only in a container without Python."""
+Python reading them from its input), one by one only in a container without Python.
+
+Design 0014 §4: on Docker Engine a workspace's own network is made with the bridge's option that gives this computer no
+address on it (`com.docker.network.bridge.inhibit_ipv4`); Docker Desktop's are made as before; a network's options are
+read as it was made."""
 
 import json
 import subprocess
@@ -314,3 +318,30 @@ def test_whether_docker_can_limit_memory_is_read_in_its_words(adapter: Kind) -> 
 def test_a_docker_info_that_reached_no_engine_says_no_cpus_or_memory(adapter: Kind) -> None:
     unreached = Docker({("info", "--format", "{{.NCPU}} {{.MemTotal}}"): Answer(0, "0 0\n", UNREACHED)})
     assert adapter(unreached).limits() is None, "not a computer of no CPUs: the engine was not reached"
+
+
+def test_a_workspaces_network_gives_this_computer_no_address_on_docker_engine_and_is_as_before_elsewhere(
+    adapter: Kind,
+) -> None:
+    docker = Docker({("network", "inspect"): Answer(1, "", "Error: network x not found"), ("network", "create"): OK})
+    platform = adapter(docker)
+    options = platform.inner_network_options()
+    platform.ensure_network("clank-abc-x-net", internal=True, labels={"clank.home": "abc"}, options=options)
+    hidden = ["--opt", "com.docker.network.bridge.inhibit_ipv4=true"] if adapter.platform is DockerEngine else []
+    assert docker.calls[-1] == [
+        "network",
+        "create",
+        "--internal",
+        "--label",
+        "clank.home=abc",
+        *hidden,
+        "clank-abc-x-net",
+    ]
+
+
+def test_a_networks_options_are_read_as_it_was_made_and_a_missing_one_has_none(adapter: Kind) -> None:
+    made = '{"com.docker.network.bridge.inhibit_ipv4":"true"}\n'
+    docker = Docker({("network", "inspect", "--format", "{{json .Options}}", "clank-abc-x-net"): made})
+    assert adapter(docker).network_options("clank-abc-x-net") == {"com.docker.network.bridge.inhibit_ipv4": "true"}
+    missing = Docker({("network", "inspect"): Answer(1, "", "Error response from daemon: network x not found")})
+    assert adapter(missing).network_options("clank-abc-x-net") is None

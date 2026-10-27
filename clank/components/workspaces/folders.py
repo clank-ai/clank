@@ -13,7 +13,9 @@
     layers its record names (design 0020 §3), each built on the image below it when missing, asked first unless
     `yes`, saying what they add.
   - networks: the workspace's own internal one (no route out, so nothing but the edge answers from inside: not the
-    machine, not the internet, not another workspace) and the one that reaches the host, which only the edge joins.
+    machine, not the internet, not another workspace; on Docker Engine made with the bridge's option that gives this
+    computer no address on it, design 0014 §4, and one made before it made again while its container does not run)
+    and the one that reaches the host, which only the edge joins.
   - edge: the edge's container, forwarding the gateway's port and the proxy's, joined to the workspace's network as
     `edge`, and to the network of every other workspace whose container there is (`edge.py`: an edge made again is on
     its first network only, and the workspaces that ran would lose their way to the model).
@@ -37,12 +39,12 @@
 
 import os
 import re
-from collections.abc import Collection, Mapping
+from collections.abc import Collection, Mapping, Sequence
 from datetime import timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from clank.components.workspaces.adapters.platform import ContainerPlatform, NetworkGone
+from clank.components.workspaces.adapters.platform import Container, ContainerPlatform, NetworkGone
 from clank.components.workspaces.kinds import Workspace
 from clank.components.workspaces.memory import memory_refused, memory_said
 from clank.components.workspaces.sandbox import (
@@ -197,8 +199,7 @@ class Folders:
             found = names(home)
             labels = {"clank.home": home, "clank.component": "workspaces"}
             await context.run_blocking(lambda: platform.ensure_network(found.outer, internal=False, labels=labels))
-            inner = found.inner(name)
-            await context.run_blocking(lambda: platform.ensure_network(inner, internal=True, labels=labels))
+            await self._inner_network(context, platform, name, labels, status.containers)
         async with context.step("edge"):
             repair = await context.run_blocking(
                 lambda: self.workspaces.edge.ready(
@@ -412,6 +413,36 @@ class Folders:
             context.log(f"{spec.name} runs {was}: it is made again, told the proxy, once it is stopped")
         else:
             context.log(f"{spec.name} runs")
+
+    async def _inner_network(
+        self,
+        context: OperationContext,
+        platform: ContainerPlatform,
+        name: str,
+        labels: Mapping[str, str],
+        containers: Sequence[Container],
+    ) -> None:
+        """A workspace's own network, made with the platform's options that give this computer no address on it (Docker
+        Engine's, design 0014 §4). One made before them is made again while the workspace's container does not run (its
+        start then fails, a network it was on gone, so it is made again on the new one, its home kept; the edge joins it
+        again), and said while it runs, to be made again once the workspace is stopped and opened again."""
+        found = names(self.kernel.home.id)
+        network, options = found.inner(name), dict(platform.inner_network_options())
+        had = await context.run_blocking(platform.network_options, network) if options else None
+        if had is not None and any(had.get(key) != value for key, value in options.items()):
+            container = found.container(name)
+            if any(each.name == container and each.state == "running" for each in containers):
+                context.log(
+                    f"{network} gives this computer an address on it (made before Clank kept it off): it is made "
+                    "again without one once the workspace is stopped and opened again"
+                )
+            else:
+                await context.run_blocking(platform.leave_network, network, found.edge)
+                await context.run_blocking(platform.remove_network, network)
+                context.log(f"{network} gave this computer an address on it: made again without one")
+        await context.run_blocking(
+            lambda: platform.ensure_network(network, internal=True, labels=labels, options=options)
+        )
 
     async def _memory(self, context: OperationContext, platform: ContainerPlatform) -> None:
         """Whether Docker can limit the container's memory, read as the workspace opens (never in the regular check;

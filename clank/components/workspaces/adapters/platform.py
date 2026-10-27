@@ -174,8 +174,14 @@ class ContainerPlatform(Adapter):
         status, or None when it could not start or was canceled."""
 
     @abstractmethod
-    def ensure_network(self, name: str, *, internal: bool, labels: Mapping[str, str]) -> None:
-        """Make a network unless it is there (internal: no route out)."""
+    def ensure_network(
+        self, name: str, *, internal: bool, labels: Mapping[str, str], options: Mapping[str, str] | None = None
+    ) -> None:
+        """Make a network unless it is there (internal: no route out), with its driver's `options`."""
+
+    @abstractmethod
+    def network_options(self, name: str) -> dict[str, str] | None:
+        """A network's driver options, as it was made; None when it is not there."""
 
     @abstractmethod
     def join_network(self, network: str, container: str, alias: str) -> bool:
@@ -250,6 +256,12 @@ class ContainerPlatform(Adapter):
 
     def after_start(self, log: Callable[[str], None]) -> None:
         """Put right what starting the platform disturbed on this machine, saying what it does; most need nothing."""
+
+    def inner_network_options(self) -> Mapping[str, str]:
+        """The driver options a workspace's own network is made with, so this computer has no address on it: none
+        where the platform's networks give it none anyway (Docker Desktop's, in its virtual machine); Docker Engine's
+        bridge would give it one, which a workspace's container could reach (design 0014 §4)."""
+        return {}
 
     def agent_access(self, folder: str) -> str:
         """Why the agent (user 1000 in its container) could not read and write this folder as the platform mounts it,

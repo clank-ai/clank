@@ -97,6 +97,10 @@ class FakePlatform(ContainerPlatform):
         self.build_args: dict[str, dict[str, str]] = {}  # each image built: its build arguments
         self.build_folders: dict[str, str] = {}  # and the folder it was built from
         self.networks: dict[str, bool] = {}
+        self.options: dict[str, dict[str, str]] = {}  # each network's driver options, as it was made
+        self.inner_options: dict[
+            str, str
+        ] = {}  # what a workspace's own network is made with (Docker Engine's, as told)
         self.made: dict[str, int] = {}  # each network: how many times it was made, which stands for its id
         self.attached: dict[str, dict[str, int]] = {}  # each container: the networks it joined, as made then
         self.joined: set[tuple[str, str]] = set()
@@ -200,11 +204,20 @@ class FakePlatform(ContainerPlatform):
             self.images.add(tag)
         return self.build_status
 
-    def ensure_network(self, name: str, *, internal: bool, labels: Mapping[str, str]) -> None:
+    def ensure_network(
+        self, name: str, *, internal: bool, labels: Mapping[str, str], options: Mapping[str, str] | None = None
+    ) -> None:
         if name not in self.networks:
             self.calls.append(f"network {name}")
             self.networks[name] = internal
+            self.options[name] = dict(options or {})
             self.made[name] = self.made.get(name, 0) + 1
+
+    def network_options(self, name: str) -> dict[str, str] | None:
+        return dict(self.options.get(name, {})) if name in self.networks else None
+
+    def inner_network_options(self) -> dict[str, str]:
+        return dict(self.inner_options)
 
     def join_network(self, network: str, container: str, alias: str) -> bool:
         found = self._find(container)

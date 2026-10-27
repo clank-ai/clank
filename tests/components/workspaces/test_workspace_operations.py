@@ -11,7 +11,10 @@ memory limits are read as a workspace opens (never in the regular check, the las
 limit a container's memory no workspace opens, saying so in Docker's words with the fix (`cgroup_enable=memory` on a
 Raspberry Pi), unless `allow_unlimited_memory` is set, and then its log and Docker's summary say its memory is not
 limited. A folder the agent's user (1000 in its container) may not write, as the platform mounts it, is refused before
-its record is made, in the platform's words: whose folder it is, and how to let user 1000 write it."""
+its record is made, in the platform's words: whose folder it is, and how to let user 1000 write it. A workspace's own
+network is made with the platform's options that give this computer no address on it (Docker Engine's bridge would),
+the outer network keeping its address; one made before them is made again once the workspace's container does not
+run, and said until then."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -346,3 +349,53 @@ async def test_on_linux_a_folder_the_agent_cannot_write_is_refused_saying_why(
     async with kernel.operations.running():
         opened = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
     assert opened.status == "done", opened.error
+
+
+HOST_OFF = {"com.docker.network.bridge.inhibit_ipv4": "true"}  # Docker Engine's: no address of this computer's
+
+
+async def test_a_workspaces_own_network_gives_this_computer_no_address_where_the_platform_would(
+    kernel: Kernel, platform: FakePlatform, folder: Path
+) -> None:
+    platform.inner_options = dict(HOST_OFF)
+    platform.images.add(image_tag())
+    async with kernel.operations.running():
+        done = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+    assert done.status == "done", done.error
+    found = names(kernel.home.id)
+    assert platform.network_options(found.inner(str((done.result or {})["workspace"]))) == HOST_OFF
+    assert platform.network_options(found.outer) == {}, "the edge's way out keeps this computer's address"
+
+
+async def test_a_network_made_before_is_made_again_without_this_computers_address_once_its_container_does_not_run(
+    kernel: Kernel, platform: FakePlatform, folder: Path
+) -> None:
+    platform.images.add(image_tag())
+    async with kernel.operations.running():
+        first = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+        assert first.status == "done", first.error
+        name = str((first.result or {})["workspace"])
+        found = names(kernel.home.id)
+        inner = found.inner(name)
+        assert platform.network_options(inner) == {}, "made before the platform kept this computer off it"
+        platform.inner_options = dict(HOST_OFF)
+        running = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+        assert running.status == "done", running.error
+        said = " ".join(line.text for line in kernel.operations.log_lines(running.id))
+        assert f"{inner} gives this computer an address on it" in said
+        assert "once the workspace is stopped and opened again" in said
+        assert platform.network_options(inner) == {}, "what runs is left as it is"
+        stopped = await run(kernel, "workspaces.stop", {"name": name})
+        assert stopped.status == "done", stopped.error
+        again = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+    assert again.status == "done", again.error
+    assert platform.network_options(inner) == HOST_OFF, "made again, the host given no address on it"
+    told = " ".join(line.text for line in kernel.operations.log_lines(again.id))
+    assert f"{inner} gave this computer an address on it: made again without one" in told
+    container = platform.container(found.container(name))
+    assert container is not None
+    assert container.state == "running", "made again on it, its home kept"
+    assert f"remove {found.container(name)}" in platform.calls
+    edge = platform.container(found.edge)
+    assert edge is not None
+    assert inner in edge.networks, "the edge back on it"

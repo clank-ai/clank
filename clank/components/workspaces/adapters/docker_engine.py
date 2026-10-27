@@ -29,6 +29,10 @@ state Clank reads and never changes.
   user's runtime folder, or by a current context named `rootless` (`docker context show`, which reaches no engine).
   Where the system's own service exists too, its engine is used whatever the context, since every command names its
   socket.
+- *Workspaces' networks.* Docker Engine gives this computer an address on each bridge network, which a container
+  on it could reach, a server of this computer's listening there or on every address answering; a workspace's own
+  network is made with the bridge's `com.docker.network.bridge.inhibit_ipv4`, so it has none (`inner_network_options`,
+  design 0014 §4). The edge's network to the host keeps it: it is the edge's way out.
 - *The agent's folder.* A folder Docker Engine mounts shows the host's own owners, and the agent works as user 1000 in
   its container, so a folder user 1000 may not read, write and enter (by its mode's owner, group and others' bits, or
   its POSIX access control list, as Linux decides) is refused, saying whose it is and how to let user 1000 write it
@@ -59,6 +63,7 @@ CONTEXT_SECONDS = 5.0
 RUNNING = ("active", "reloading")  # systemd's words for a service that runs
 DENIED = re.compile(r"permission denied", re.IGNORECASE)
 START = "sudo systemctl start docker"
+HOST_OFF = {"com.docker.network.bridge.inhibit_ipv4": "true"}  # a bridge with no address of this computer's on it
 STOP = "sudo systemctl stop docker.socket docker.service"
 INSTALL = (
     "install Docker Engine from Docker's own packages (docs.docker.com/engine/install); Docker Desktop for Linux is "
@@ -316,6 +321,11 @@ class DockerEngine(DockerCli):
         """Why the agent could not use this folder as Docker Engine mounts it, with the host's own owners (design 0014
         §4); empty when it can."""
         return folder_access(folder)
+
+    def inner_network_options(self) -> dict[str, str]:
+        """A workspace's own network gives this computer no address on it (the bridge's `inhibit_ipv4`), so nothing
+        listening on this computer answers from inside it (design 0014 §4)."""
+        return dict(HOST_OFF)
 
     def _target(self) -> list[str]:
         """The system engine's socket, named on every command."""

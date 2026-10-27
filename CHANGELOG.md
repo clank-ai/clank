@@ -15,6 +15,15 @@ The next release. Its version is set when it is tagged; until then, a clone has 
   its SHA-256. Installed with the one-line installer, `clank code` (or `c` on This folder) downloads the extension of
   its own release the first time, checks it against that SHA-256, keeps it and installs it: no Node and no build. A
   clone still builds its own.
+- **Linux without Docker Desktop**: Docker Engine, the system's service from Docker's own packages, runs the workspaces'
+  containers (design 0014, decision 0070). Clank reads its state from systemd and never starts, stops or wakes it: where
+  it is stopped, `clank work`, `clank code`, the console and `clank doctor` say the command to run (`sudo systemctl
+  start docker`), and an account outside the docker group is told how to join it. The adapter is chosen on its own
+  (`"adapter": "auto"` in `config/docker.json`, the default; Docker's view says which and why). A workspace opens only
+  where Docker can limit its container's memory, unless `allow_unlimited_memory` is set, and a folder the agent's user
+  (1000) may not write is refused, saying how to let it. A workspace's own network gives this computer no address on it,
+  so nothing listening here answers its container. The agent's way to the model on Linux, the gateway's socket, comes
+  with design 0014 §3.
 
 ## 0.3.0b2: the installer, updates, and the agent beside VS Code (2026-10-27)
 

@@ -378,9 +378,17 @@ network before it starts the gateway (`workspaces/folders.py:170-175` moves to t
   the socket's folder checked against every workspace's folder; the edge with that folder; the health probe through
   the edge, and the edge made again when it fails); `workspaces/service.py:281-286` (`gateway_socket()`, from the
   gateway's service). Docs: design 0004 §3 points to design 0014 §3.
-- [ ] **If the host's own address answers:** the workspaces' networks are made with
+- [x] **If the host's own address answers:** the workspaces' networks are made with
   `com.docker.network.bridge.inhibit_ipv4`, and the docker-marked test proves the address no longer answers. The
-  outer network keeps its address: it is the edge's way out.
+  outer network keeps its address: it is the edge's way out. It answers (found on L5 and L6's branch, 2026-10-27), so
+  this part was built on lane L's branch, which moves `ensure_network` into `DockerCli`: `ensure_network(...,
+  options)`, `ContainerPlatform.network_options(name)` and `inner_network_options()` (Docker Engine's
+  `inhibit_ipv4`; none on Docker Desktop), with
+  `test_a_workspaces_network_gives_this_computer_no_address_on_docker_engine_and_is_as_before_elsewhere` and the
+  workspace's own tests. A network made before is made again when its workspace next opens while its container does
+  not run (its container is then made again on it, its home kept, and the edge joins it again); while the container
+  runs, the opening says so, and it is made again once the workspace is stopped and opened again. The docker-marked
+  test is L6's.
 - [ ] **Interfaces:** `edge_spec(home, image, *, gateway_port, socket_folder: str | None = None, user: str = USER)`;
   `ContainerPlatform.HOST_LOOPBACK: ClassVar[bool]`; `ensure_network(..., options: Mapping[str, str] | None = None)`;
   `checked_folder(given: str, clank_home: Path, socket_folder: Path | None = None) -> str`.

@@ -189,14 +189,28 @@ class DockerCli(ContainerPlatform):
         argv = self._argv("build", "--progress", "plain", "--tag", tag, *marks, *given, folder)
         return self.follow(argv, line, canceled)
 
-    def ensure_network(self, name: str, *, internal: bool, labels: Mapping[str, str]) -> None:
-        """`docker network create`, unless `docker network inspect` finds it."""
+    def ensure_network(
+        self, name: str, *, internal: bool, labels: Mapping[str, str], options: Mapping[str, str] | None = None
+    ) -> None:
+        """`docker network create`, with its driver's options (`--opt`), unless `docker network inspect` finds it."""
         if self._answer("network", "inspect", "--format", "{{.Name}}", name).ok:
             return
         marks = [part for key, value in labels.items() for part in ("--label", f"{key}={value}")]
-        made = self._answer("network", "create", *(["--internal"] if internal else []), *marks, name)
+        given = [part for key, value in (options or {}).items() for part in ("--opt", f"{key}={value}")]
+        made = self._answer("network", "create", *(["--internal"] if internal else []), *marks, *given, name)
         if not made.ok:
             raise PlatformError(f"the network {name} could not be made: {words(made)}")
+
+    def network_options(self, name: str) -> dict[str, str] | None:
+        """`docker network inspect`'s options of the network; None when it is not there."""
+        found = self._answer("network", "inspect", "--format", "{{json .Options}}", name)
+        if not found.ok:
+            return None
+        try:
+            options = json.loads(found.output or "null")
+        except ValueError:
+            return {}
+        return {str(key): str(value) for key, value in options.items()} if isinstance(options, dict) else {}
 
     def join_network(self, network: str, container: str, alias: str) -> bool:
         """`docker network connect --alias`: True when it joined now, False when it was on the network already."""
