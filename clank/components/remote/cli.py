@@ -61,7 +61,10 @@ def pair(name: str) -> None:
         click.echo(HINT)
     else:
         click.echo("Tailscale did not say this machine's address: the phone page's link cannot be made")
-    click.echo(f"Code for {name}: {found['code'][:4]} {found['code'][4:]}  (until {found['expires']}), to type instead")
+    click.echo(
+        f"Code for {name}: {found['code'][:4]} {found['code'][4:]}  "
+        f"(until {common.local_moment(found['expires'])}), to type instead"
+    )
     if not found["on"]:
         click.echo("Remote access is off: `clank remote on` publishes the page first.")
 
@@ -92,7 +95,7 @@ def _show(found: dict[str, Any]) -> None:
         click.echo(f"  {found['problem']}")
     devices = [device for device in found.get("devices") or [] if isinstance(device, dict) and not device["revoked"]]
     for device in devices:
-        click.echo(f"  {device['id']}  {device['name']}  last used {device['last_seen']}")
+        click.echo(f"  {device['id']}  {device['name']}  last used {common.local_moment(device['last_seen'])}")
     if not devices:
         click.echo("  No paired device: `clank remote pair` makes a code.")
 

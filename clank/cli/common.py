@@ -37,6 +37,15 @@ def local_time(time: str) -> str:
     return datetime.fromisoformat(time.replace("Z", "+00:00")).astimezone().strftime("%H:%M:%S")
 
 
+def local_moment(time: str) -> str:
+    """A time from the API, in this computer's time zone, to the minute, with its day when it is not today: "today
+    17:54", "2026-10-15 00:47"."""
+    moment = datetime.fromisoformat(time.replace("Z", "+00:00")).astimezone()
+    if moment.date() == datetime.now().astimezone().date():
+        return f"today {moment:%H:%M}"
+    return f"{moment:%Y-%m-%d %H:%M}"
+
+
 def describe(actor: dict[str, Any]) -> str:
     """Who did something, as people say it: "you (console)", "Clank (machine.doctor)"."""
     if actor["kind"] == "user":

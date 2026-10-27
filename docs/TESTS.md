@@ -89,7 +89,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.12 | Files for the user | none yet |
 | 2.13 | Clank's own traffic | none yet |
 | 2.14 | The API | `tests/kernel/test_api.py` (17), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_apidoc.py` (1), `vscode/test/client.test.ts` (5) |
-| 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (6), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/console/test_command.py` (4), `tests/console/test_data.py` (17), `tests/console/test_shell.py` (19) |
+| 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/console/test_command.py` (4), `tests/console/test_data.py` (17), `tests/console/test_shell.py` (19) |
 | 2.16 | Where things are | `tests/kernel/test_files.py` (8), `tests/kernel/test_home.py` (4) |
 | 2.17 | The kernel against every feature asked for | none yet |
 | 2.18 | Choices this section makes | none yet |
@@ -689,6 +689,7 @@ Design 0002 §2.15: `clank status` says whether the service runs and what waits 
 - a start in the background runs from clanks home never the current folder
 - a start in the background that fails says only what its own service said
 - status names the clients connected in words
+- an api time is said in this computers time with the day when it is not today
 
 ### `tests/cli/test_work_cloud.py`
 

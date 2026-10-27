@@ -34,7 +34,7 @@ from clank.console.menu import MenuEntry
 from clank.console.pages import Page
 from clank.console.panel import Panel
 from clank.console.style import mark
-from clank.console.text import painted, time_of
+from clank.console.text import moment, painted, time_of
 
 READ_SECONDS = 3.0
 TONES = {"passed": "$clank-good", "warning": "$clank-attention", "failed": "$clank-failed", "skipped": "$clank-quiet"}
@@ -222,8 +222,8 @@ class PhonePage(Page):
         kept = self._selected()
         devices = [device for device in found["devices"] if not device["revoked"]]
         lines = [
-            f"{device['name']:<20} paired {time_of(device['paired'], self.console.zone)}   last used "
-            f"{time_of(device['last_seen'], self.console.zone)}"
+            f"{device['name']:<20} paired {moment(device['paired'], self.console.zone)}   last used "
+            f"{moment(device['last_seen'], self.console.zone)}"
             for device in devices
         ]
         ids = [device["id"] for device in devices]
