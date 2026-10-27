@@ -73,7 +73,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 
 | § | Section | Tests |
 | --- | --- | --- |
-| 1 | The whole system | `tests/components/tools/test_mcp.py` (6), `tests/kernel/test_service.py` (7), `vscode/test/state.test.ts` (1) |
+| 1 | The whole system | `tests/components/tools/test_mcp.py` (6), `tests/kernel/test_accepting.py` (3), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `vscode/test/state.test.ts` (1) |
 | 2 | The kernel | see its subsections |
 | 2.1 | A component | `tests/console/test_pages.py` (10), `tests/kernel/test_core.py` (2), `tests/test_architecture.py` (7) |
 | 2.2 | Records | `tests/components/flows/test_proposals_auto.py` (3), `tests/components/runtime/test_state.py` (4), `tests/console/test_records.py` (4), `tests/kernel/test_grouped_settings.py` (5), `tests/kernel/test_records.py` (5), `tests/kernel/test_settings.py` (15), `tests/kernel/test_settings_checks.py` (3), `tests/kernel/test_store.py` (9), `tests/tools/test_schemas.py` (1), `tests/tools/test_tstypes.py` (5), `vscode/test/kinds.test.ts` (1) |
@@ -81,7 +81,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.4 | Operations | `tests/components/workspaces/test_docker_operations.py` (13), `tests/console/test_pages.py` (10), `tests/kernel/test_operations.py` (15) |
 | 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (14), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (17), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
 | 2.6 | Policy | none yet |
-| 2.7 | Callers and access | `tests/console/test_home.py` (14), `tests/kernel/test_access.py` (5), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (5), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (17), `vscode/test/live.test.ts` (1) |
+| 2.7 | Callers and access | `tests/console/test_home.py` (14), `tests/kernel/test_access.py` (5), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (5), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (17), `vscode/test/live.test.ts` (1) |
 | 2.8 | Secrets | `tests/components/tools/test_servers.py` (7), `tests/kernel/test_secrets.py` (4) |
 | 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_sandbox.py` (7), `tests/kernel/test_processes.py` (8) |
 | 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (7), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
@@ -4267,6 +4267,14 @@ Design 0001 §8.3: adapters are tested against what the real program answered at
 - an answer later than the time limit is lost and changes nothing
 - an application it launches answers by its name and moves it on
 
+### `tests/kernel/test_accepting.py`
+
+Design 0002 §1: the service keeps answering. On Windows a client that drops its connection while it is being accepted fails that accept with `WinError 64`, and asyncio's proactor accept loop then closed the server's listening socket for good: the service ran on without answering anyone (the owner's PC, 2026-10-26). Clank's accept loop logs such an accept and accepts the next; any other accept error still closes the socket as before; it is put in once, on Windows only.
+
+- an accept whose client dropped its connection is followed by the next accept
+- any other accept error still closes the socket as asyncio does
+- it is put in once and only on windows
+
 ### `tests/kernel/test_access.py`
 
 Design 0002 §2.7: local clients prove they are the user on this machine by reading the local token, find the service through its connection file, and what they do is recorded as the user, through that client.
@@ -4469,6 +4477,14 @@ Design 0002 §1 and §2.7, decision 0013: `clank serve` runs the Clank service: 
 - a port taken by another program is refused with a clear message
 - the housekeeping expires questions and reloads an edited settings file
 - an operation cut short by a stop is interrupted at the next start
+
+### `tests/kernel/test_service_silent.py`
+
+Design 0002 §1 and §2.7: a service that holds its home's lock but no longer answers (on the owner's PC, 2026-10-26, its socket closed by a dropped client) is not left in the way. The service says which process holds the lock, and when it started (`state/service.pid`); `clank stop` ends that process when the API does not answer, saying so; a second `clank serve` says the first runs without answering and how to end it, instead of "starting"; a process that ended, or another that took its number since, is never named.
+
+- the process holding the lock is known by its number and its start
+- clank stop ends a service that holds the lock but does not answer
+- a second serve says the first runs without answering and how to end it
 
 ### `tests/kernel/test_settings.py`
 

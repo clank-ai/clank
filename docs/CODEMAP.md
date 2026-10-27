@@ -315,6 +315,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/console/terminal.py` | Handing the console's terminal to a program and taking it back (design 0004 §1): the agent (OpenCode) is started |
 | `clank/console/text.py` | How the console writes times, durations, counts and states: in the user's own time zone, briefly, the same on every |
 | `clank/kernel/__init__.py` | The kernel: the parts every component is built from (design 0002 §2). |
+| `clank/kernel/accepting.py` | A server keeps accepting connections when a client drops one while it is being accepted (Windows). |
 | `clank/kernel/access.py` | Callers and access: who may call the Clank API, and how a local client finds it (design 0002 §2.7). |
 | `clank/kernel/adapters.py` | Adapters: how Clank uses programs it does not own, one module per program (design 0002 §2.10). |
 | `clank/kernel/api.py` | The Clank API: HTTP and JSON under `/api/v1/`, and the one event stream (design 0002 §2.14, decisions 0016, 0017). |
