@@ -10,7 +10,8 @@
 // cloud model in the main slot, the Clank item says "cloud" and its tooltip today's and this month's spending in the
 // service's words, and the pause; Switch model lists a cloud preset as its provider and model, with its price as the
 // service says it. Design 0018 §7.2: the files the agent opened for the owner (`agents.shown`) go to the presenter,
-// which opens them in a window on that folder.
+// which opens them in a window on that folder. Design 0004 §5 (revised 2026-10-26): on connecting, what the status bar
+// shows is asked of the service all at once.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -558,4 +559,25 @@ test("Switch model lists a cloud preset as its provider and model, with its pric
   } finally {
     running.stop();
   }
+});
+
+test("on connecting, the service's state is asked all at once: the status bar waits for the slowest route, not their sum", async () => {
+  const api = new FakeApi();
+  api.slots = [slot("ready", "small-32k", "answered")];
+  let open = 0;
+  let most = 0;
+  const answer = api.get.bind(api);
+  api.get = async <T>(path: string): Promise<T> => {
+    open += 1;
+    most = Math.max(most, open);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    open -= 1;
+    return answer<T>(path);
+  };
+  const presenter = new FakePresenter();
+  const controller = new Controller(presenter, () => api, { home: "C:/h", retryMs: 10 });
+  controller.start();
+  await until(() => presenter.dockerText.includes("running"));
+  controller.stop();
+  assert.equal(most, 7, "history, the service, Docker, the questions, the slots, the presets and the cost, together");
 });

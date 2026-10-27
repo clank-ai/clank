@@ -19,7 +19,10 @@
 // under `/workspace/` is a link in its terminal, opened the same way. "Annotate this PDF" (design 0020 §10,
 // `core/pdf.ts`): its pages rendered by the service, the one picked opened in the annotator beside the agent. Comments
 // for the agent on lines of .tex files (design 0020 §11, `comments.ts`), sent together. The model's readout (design
-// 0021 §3, `readout.ts`): its speed, context and phase in the status bar, and a panel under the agent's terminal.
+// 0021 §3, `readout.ts`): its speed, context and phase in the status bar, and a panel under the agent's terminal. The
+// agent's place (design 0004 §5, revised 2026-10-26, `starting.ts`): shown at the right edge at once, saying each step
+// until OpenCode's terminal takes it, and what stands in OpenCode's way to the model with its fix, in the place, the
+// status bar and the agent panel; the extension starts with the window (activation `*`), not after every other one.
 // Everything else is in `core/`, which is tested without VS Code. What the status bar shows is returned from
 // `activate`, for the suite that runs inside VS Code (decision 0029).
 
@@ -28,8 +31,8 @@ import { homedir } from "node:os";
 
 import * as vscode from "vscode";
 
-import { agentStart, agentTerminalOpen, rightward, type AgentStart } from "./core/agent";
-import { ClankClient, NotRunning } from "./core/client";
+import { agentTerminalOpen, rightward } from "./core/agent";
+import { ClankClient } from "./core/client";
 import { Completer, type CompletionPresenter } from "./core/completion";
 import { clankHome, readConnection } from "./core/connection";
 import { Controller } from "./core/controller";
@@ -41,7 +44,9 @@ import { ArtifactPanels } from "./artifacts";
 import { BoardEditor, newBoard } from "./boardEditor";
 import type { ArtifactMade } from "./core/artifacts";
 import { FIGURE_EDITOR, FigureEditor } from "./figures";
-import { closeEmptyGroups, isReadoutGroup, ReadoutPanel } from "./readout";
+import { isReadoutGroup, ReadoutPanel } from "./readout";
+import { reachNotice } from "./core/reach";
+import { AgentStarter } from "./starting";
 import { implement, type ImplementMode, type ImplementPresenter, lenses, planPath, relativePlan } from "./core/plans";
 import { NotionReviews, type TreeNode } from "./core/notion";
 import { type ChangeView, type ReviewPresenter, Reviews } from "./core/review";
@@ -514,79 +519,12 @@ function reviewedBy(uri?: vscode.Uri): string | undefined {
   return questionOf(vscode.window.tabGroups.activeTabGroup.activeTab);
 }
 
-const START_TRIES = 30; // when the window opens, the agent is tried this often, START_SECONDS apart
-const START_SECONDS = 2;
-
-/** Start the agent in a terminal beside the files, for the folder the window has open: false when the service does
- * not answer (said unless `quiet`), true otherwise (started, or what is missing said). */
-async function startAgent(
-  connect: () => ClankClient | undefined,
-  presenter: VsCodePresenter,
-  quiet: boolean,
-  started?: () => void,
-): Promise<boolean> {
-  const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (!folder) {
-    presenter.warn("open a folder first: the agent works in the folder the window has open");
-    return true;
-  }
-  const notRunning = (): boolean => {
-    if (!quiet) {
-      presenter.warn("the Clank service does not run: `clank serve --background` starts it");
-    }
-    return false;
-  };
-  const client = connect();
-  if (!client) {
-    return notRunning();
-  }
-  let found: AgentStart;
-  try {
-    found = await agentStart(client, folder);
-  } catch (error) {
-    if (error instanceof NotRunning) {
-      return notRunning();
-    }
-    presenter.warn(`the agent did not start: ${error instanceof Error ? error.message : String(error)}`);
-    return true;
-  }
-  if ("problem" in found) {
-    presenter.warn(`the agent is not started: ${found.problem}`);
-    return true;
-  }
-  if (found.terminal.replaces) {
-    // one OpenCode window per workspace: the service closed the others, so their tabs go too
-    vscode.window.terminals.filter((each) => each.name.startsWith(AGENT_TERMINAL)).forEach((each) => each.dispose());
-  }
-  await closeEmptyGroups(); // a reloaded window's empty places, so the terminal goes beside the files
-  const terminal = vscode.window.createTerminal({
-    name: found.terminal.name,
-    shellPath: found.terminal.program,
-    shellArgs: found.terminal.args,
-    location: { viewColumn: (vscode.window.tabGroups.all.length + 1) as vscode.ViewColumn }, // a group at the right edge
-    // Never revived by VS Code: a revived terminal ran its saved command again, with a port another OpenCode had by
-    // then, out of Clank's reach (2026-10-16). A reloaded window starts the agent afresh instead.
-    isTransient: true,
-  });
-  terminal.show();
-  started?.();
-  return true;
-}
-
-/** When the window opens: start the agent, unless a terminal of it is already there (a window from before 0.6.1 keeps
- * it through a reload, its tab first), trying again every few seconds while the service does not answer. */
-async function startOnOpen(start: () => Promise<boolean>): Promise<void> {
-  for (let tries = 0; tries < START_TRIES; tries++) {
-    const tabs = vscode.window.tabGroups.all.flatMap((group) => group.tabs);
-    const restored = tabs.filter((tab) => tab.input instanceof vscode.TabInputTerminal).map((tab) => tab.label);
-    if (agentTerminalOpen(vscode.window.terminals.map((terminal) => terminal.name), restored)) {
-      return;
-    }
-    if (await start()) {
-      return;
-    }
-    await new Promise((resolve) => setTimeout(resolve, START_SECONDS * 1000));
-  }
+/** Whether the window has the agent's terminal already: one of its terminals, or only its tab (a window from before
+ * 0.6.1 keeps it through a reload, its tab first). */
+function agentOpen(): boolean {
+  const tabs = vscode.window.tabGroups.all.flatMap((group) => group.tabs);
+  const restored = tabs.filter((tab) => tab.input instanceof vscode.TabInputTerminal).map((tab) => tab.label);
+  return agentTerminalOpen(vscode.window.terminals.map((terminal) => terminal.name), restored);
 }
 
 const FOCUS_GROUP = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth"].map(
@@ -699,9 +637,7 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
       return;
     }
     const mode: ImplementMode = chosen === "current" ? (reviews.view?.mode ?? "review") : chosen;
-    const opening = async (): Promise<void> => {
-      await startAgent(connect, presenter, false, agentStarted);
-    };
+    const opening = (): Promise<void> => starter.start();
     await implement(
       client,
       implementPresenter(document, presenter, opening),
@@ -721,7 +657,7 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
   const agentPanel = new AgentPanel(context.extensionUri, {
     connect, info: (text) => presenter.info(text), warn: (text) => presenter.warn(text),
     pick: (items, placeholder) => presenter.pick(items, placeholder), openArtifact: (made) => artifacts.show(made, made.version),
-    filesColumn,
+    filesColumn, fix: () => starter.fixShown(),
   });  // prettier-ignore
   const setting = (name: string): boolean => vscode.workspace.getConfiguration("clank").get<boolean>(name) ?? true;
   const agentStarted = (): void => {
@@ -732,6 +668,14 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
       setTimeout(() => void agentPanel.show(false), 2500); // a tab beside the terminal, which stays in front
     }
   };
+  const starter = new AgentStarter({
+    connect, home, info: (text) => presenter.info(text), warn: (text) => presenter.warn(text), placed: agentStarted,
+    reached: (reach) => {
+      readout.reach(reach);
+      agentPanel.notice(reachNotice(reach));
+    },
+    newKey: () => `vscode-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  });  // prettier-ignore
   const onTheRight = new AgentOnTheRight(() => readout.arranging);
   const latexComments = new LatexComments(connect, presenter);
   context.subscriptions.push(
@@ -749,7 +693,10 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
     vscode.commands.registerCommand("clank.dockerStart", () => controller.docker("start")),
     vscode.commands.registerCommand("clank.dockerStop", () => controller.docker("stop")),
     vscode.commands.registerCommand("clank.reconnect", () => controller.reconnect()),
-    vscode.commands.registerCommand("clank.openAgent", () => startAgent(connect, presenter, false, agentStarted)),
+    vscode.commands.registerCommand("clank.openAgent", () => starter.start()),
+    vscode.commands.registerCommand("clank.checkReach", () => starter.fixShown()),
+    vscode.window.onDidCloseTerminal((terminal) => void starter.ended(terminal)),
+    starter,
     vscode.commands.registerCommand("clank.showReadout", () => readout.show()),
     vscode.commands.registerCommand("clank.showAgentPanel", () => agentPanel.show()),
     agentPanel,
@@ -826,8 +773,8 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
   readoutItem.show();
   controller.start();
   readout.start();
-  if (vscode.workspace.getConfiguration("clank").get<boolean>("agent.openOnStart")) {
-    void startOnOpen(() => startAgent(connect, presenter, true, agentStarted)).then(() => onTheRight.keep());
+  if (vscode.workspace.getConfiguration("clank").get<boolean>("agent.openOnStart") && !agentOpen()) {
+    void starter.start().then(() => onTheRight.keep()); // its place shows at once; OpenCode takes it when ready
   } else {
     void onTheRight.keep();
   }

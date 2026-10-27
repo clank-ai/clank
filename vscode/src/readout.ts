@@ -6,18 +6,22 @@
 // nor counted when the agent's group is kept at the right edge (`isReadoutGroup`). When the agent starts afresh the
 // panel is made again under its new terminal (`show(true)`), and the groups a reloaded window left empty are closed
 // first (`closeEmptyGroups`): neither the terminal nor the panel is revived, so their places stayed, and the new
-// terminal went into a corner of them (2026-10-25).
+// terminal went into a corner of them (2026-10-25). While something stands in OpenCode's way to the model (design 0004
+// §5, revised 2026-10-26, `core/reach.ts`), the item says so in its place, and a click runs its fix. One reading at a
+// time, each within `READ_MS`: a slow service used to start a second loop of readings with each show of the panel.
 
 import { randomBytes } from "node:crypto";
 
 import * as vscode from "vscode";
 
 import type { ClankClient } from "./core/client";
+import { type Reach, reachStatus } from "./core/reach";
 import { panelRows, type Readout, statusText } from "./core/readout";
 
 export const READOUT = "clank.readout";
 const PANEL_MS = 1000;
 const STATUS_MS = 3000;
+const READ_MS = 10_000; // a reading the service does not answer in this long is given up
 const SHARE = 0.25; // of the right column's height
 
 /** Whether an editor group holds only the readout (or nothing yet: the group made for it, before its panel opens). */
@@ -47,6 +51,9 @@ export class ReadoutPanel implements vscode.Disposable {
   private ready = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private stopped = false;
+  private reading = false; // a reading is under way: another tick waits for its end
+  private again = false; // and one was asked meanwhile
+  private problem: Reach | undefined; // what stands in OpenCode's way to the model, said in the item's place
   /** The workspace of the window's folder, as the newest readout said (a job's end is said in its window). */
   workspace: string | undefined;
   arranging = false; // while the panel's group is made: the agent's group is not moved meanwhile
@@ -61,6 +68,12 @@ export class ReadoutPanel implements vscode.Disposable {
 
   /** Read the readout from now on: every few seconds for the item, every second while the panel shows. */
   start(): void {
+    void this.tick();
+  }
+
+  /** What stands in OpenCode's way to the model now (undefined: nothing): said by the item until it is gone. */
+  reach(reach: Reach | undefined): void {
+    this.problem = reach;
     void this.tick();
   }
 
@@ -147,18 +160,33 @@ export class ReadoutPanel implements vscode.Disposable {
   }
 
   private async tick(): Promise<void> {
+    if (this.reading) {
+      this.again = true; // the reading under way schedules the next one, sooner
+      return;
+    }
     clearTimeout(this.timer);
     if (this.stopped) {
       return;
     }
-    const readout = await this.read();
-    this.workspace = readout?.workspace ?? this.workspace;
-    this.item.text = statusText(readout);
-    this.item.tooltip = readout ? tooltip(readout) : "The Clank service does not answer, or this window has no folder.";
-    if (readout && this.panel && this.ready) {
-      await this.panel.webview.postMessage({ type: "rows", rows: panelRows(readout) });
+    this.reading = true;
+    try {
+      const readout = await this.read();
+      this.workspace = readout?.workspace ?? this.workspace;
+      const problem = reachStatus(this.problem);
+      this.item.text = problem?.text ?? statusText(readout);
+      this.item.tooltip =
+        problem?.tooltip ??
+        (readout ? tooltip(readout) : "The Clank service does not answer, or this window has no folder.");
+      this.item.command = problem ? "clank.checkReach" : "clank.showReadout";
+      if (readout && this.panel && this.ready) {
+        await this.panel.webview.postMessage({ type: "rows", rows: panelRows(readout) });
+      }
+    } finally {
+      this.reading = false;
     }
-    this.timer = setTimeout(() => void this.tick(), this.panel?.visible ? PANEL_MS : STATUS_MS);
+    const soon = this.again;
+    this.again = false;
+    this.timer = setTimeout(() => void this.tick(), soon ? 0 : this.panel?.visible ? PANEL_MS : STATUS_MS);
   }
 
   private async read(): Promise<Readout | undefined> {
@@ -168,7 +196,7 @@ export class ReadoutPanel implements vscode.Disposable {
       return undefined;
     }
     try {
-      return await client.get<Readout>("agents/readout", { folder, session: this.session() });
+      return await client.within(READ_MS).get<Readout>("agents/readout", { folder, session: this.session() });
     } catch {
       return undefined; // a service from before the readout, or one that stopped: the item says so
     }

@@ -10,7 +10,8 @@
 // messages: a message (to the session, or a new one after New), Sessions (pick another of the folder's), Stop and
 // Compact (the Guide's), Terminal (the session shown in OpenCode's terminal), an answer to a permission or a question,
 // an artifact or an image to open, the files @ lists, and an image pasted, saved in the folder's `.clank/pasted/` for
-// the agent to look at.
+// the agent to look at. What stands in OpenCode's way to the model (design 0004 §5, revised 2026-10-26) shows as a line
+// under the header, with the fix's button, until it is gone.
 
 import { randomBytes } from "node:crypto";
 import * as path from "node:path";
@@ -34,6 +35,7 @@ const PAGE = 30;
 const PASTED = ".clank/pasted";
 const SKIPPED = "{**/node_modules/**,**/.git/**,**/.clank/**,**/__pycache__/**}";
 const NOT_RUNNING = "The Clank service does not run: `clank serve --background` starts it.";
+const READ_MS = 30_000; // a read of the conversation (or the readout) the service does not answer in this long is given up
 const NO_WORKSPACE = "This folder has no Clank workspace: open it with `clank code` first.";
 
 /** What the panel needs of the rest of the extension. */
@@ -44,6 +46,8 @@ export interface AgentHost {
   pick<T>(items: Array<Choice<T>>, placeholder: string): Promise<T | undefined>;
   openArtifact(made: ArtifactMade): Promise<void>;
   filesColumn(): vscode.ViewColumn;
+  /** The fix of what stands in OpenCode's way to the model, pressed on the panel's line. */
+  fix(): Promise<void>;
 }
 
 /** What the page is sent to draw. */
@@ -119,6 +123,7 @@ export class AgentPanel implements vscode.Disposable {
   private older: PageMessage[] = []; // older messages the owner asked for, before the newest page
   private cursor = ""; // the message to read before, for the next older page ("" when there is none)
   private sent = ""; // what was last sent to the page, so the same is not drawn again
+  private shownNotice: { text: string; action: string } | undefined; // what stands in OpenCode's way, under the header
 
   constructor(
     private readonly extension: vscode.Uri,
@@ -130,6 +135,13 @@ export class AgentPanel implements vscode.Disposable {
     clearTimeout(this.drawTimer);
     this.stopStream();
     this.panel?.dispose();
+  }
+
+  /** What stands in OpenCode's way to the model now, with its fix's words (undefined: nothing): a line under the
+   * header until it is gone. */
+  notice(notice: { text: string; action: string } | undefined): void {
+    this.shownNotice = notice;
+    this.drawLive();
   }
 
   /** The session the panel shows ("" before it has read one), for the readout to follow the same. */
@@ -328,7 +340,7 @@ export class AgentPanel implements vscode.Disposable {
   /** The model's readout, for the foot and the header, when the stream does not carry it (the session idle). */
   private async refreshReadout(client: ClankClient, folder: string): Promise<void> {
     try {
-      const readout = await client.get<Readout>("agents/readout", { folder, session: this.shown() });
+      const readout = await client.within(READ_MS).get<Readout>("agents/readout", { folder, session: this.shown() });
       this.talk = { ...this.talk, readout };
       this.scheduleDraw();
     } catch {
@@ -396,13 +408,13 @@ export class AgentPanel implements vscode.Disposable {
         this.draw({ title: "Clank", empty: folder ? NOT_RUNNING : "Open a folder first." });
         return;
       }
-      const found = await client.get<Conversation>("agents/conversation", { folder, session: this.pinned, limit: PAGE });
+      const found = await client.within(READ_MS).get<Conversation>("agents/conversation", { folder, session: this.pinned, limit: PAGE });
       const before = this.talk.conversation?.session?.id;
       ({ older: this.older, cursor: this.cursor } = pagesAfterSnapshot(before, found, this.older, this.cursor));
       busy = Boolean(found.session?.busy);
       let readout: Readout | null = this.talk.readout;
       try {
-        readout = await client.get<Readout>("agents/readout", { folder, session: found.session?.id ?? "" });
+        readout = await client.within(READ_MS).get<Readout>("agents/readout", { folder, session: found.session?.id ?? "" });
       } catch {
         // the foot is left as it was; the conversation still shows
       }
@@ -440,7 +452,7 @@ export class AgentPanel implements vscode.Disposable {
     const message = {
       type: "conversation", title: shown.title, subtitle: shown.subtitle ?? "", state: shown.state ?? "none",
       model: shown.model ?? "", foot: shown.foot ?? null, older: shown.older ?? false, empty: shown.empty ?? "",
-      blocks: (shown.blocks ?? []).map(ready),
+      blocks: (shown.blocks ?? []).map(ready), reach: this.shownNotice ?? null,
     };  // prettier-ignore
     const text = JSON.stringify(message);
     if (text !== this.sent) {
@@ -479,6 +491,9 @@ export class AgentPanel implements vscode.Disposable {
           break;
         case "older":
           await this.readOlder(client, folder);
+          break;
+        case "fix":
+          await this.host.fix();
           break;
         case "act":
           await this.act(client, workspace, session, message.act ?? "");

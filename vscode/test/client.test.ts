@@ -1,11 +1,12 @@
 // Design 0002 §2.7 and §2.14: the extension's client sends the local token and names itself `vscode` on every call,
 // a request that starts an operation carries its request key, the API's error shape becomes a `ClankError` with the
-// service's own words, and a service that does not answer is `NotRunning`.
+// service's own words, and a service that does not answer is `NotRunning`. Design 0004 §5 (revised 2026-10-26): every
+// call has a time limit, a slow answer ending as `TimedOut` in words that say which.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { ClankClient, ClankError, NotRunning } from "../src/core/client";
+import { ClankClient, ClankError, inTime, NotRunning, TimedOut } from "../src/core/client";
 
 interface Call {
   url: string;
@@ -124,4 +125,34 @@ test("a stream route's messages come as they arrive, split or joined across the 
     calls[0],
     "http://127.0.0.1:7720/api/v1/agents/conversation/stream?folder=C%3A%2Fwork%2Fpaper&after=6",
   );
+});
+
+test("a call the service does not answer in time ends, saying which and after how long", async () => {
+  const signals: Array<AbortSignal | null | undefined> = [];
+  const waiting: typeof fetch = async (_url: string | URL | Request, init?: RequestInit) =>
+    new Promise<Response>((_resolve, reject) => {
+      signals.push(init?.signal);
+      init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+    });
+  const client = new ClankClient("http://127.0.0.1:7720", "t", waiting);
+  const quick = client.within(30);
+  assert.equal(quick.url, client.url);
+  await assert.rejects(quick.post("agents/prepare", { workspace: "paper" }), (error: unknown) => {
+    assert.ok(error instanceof TimedOut, "not NotRunning: the service runs, it is slow");
+    assert.equal(error.message, "the Clank service did not answer agents/prepare within 0.03 s");
+    return true;
+  });
+  assert.ok(signals[0] instanceof AbortSignal);
+  void client.get("service").catch(() => undefined);
+  assert.ok(signals[1] instanceof AbortSignal, "every call has a limit, the client's own unless one is asked");
+});
+
+test("inTime ends a wait that takes too long, and passes on what comes in time", async () => {
+  assert.equal(await inTime(Promise.resolve(7), 50, "the folder's workspace"), 7);
+  await assert.rejects(inTime(new Promise<never>(() => undefined), 20, "the folder's workspace"), (error: unknown) => {
+    assert.ok(error instanceof TimedOut);
+    assert.equal(error.message, "the Clank service did not answer the folder's workspace within 0.02 s");
+    return true;
+  });
+  await assert.rejects(inTime(Promise.reject(new NotRunning("down")), 50, "x"), NotRunning);
 });

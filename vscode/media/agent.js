@@ -6,7 +6,8 @@
 // reads the service. The conversation comes as the stream moves it (design 0023 §5): only the blocks whose content
 // changed are drawn again (each kept by its id), the scroll stays at the bottom while the owner is there and a "new ↓"
 // pill says when more came while they read above; a message of the owner's sent and not yet heard back shows as
-// pending; Escape stops the agent while it works.
+// pending; Escape stops the agent while it works. What stands in OpenCode's way to the model shows as a line under
+// the header, its button sending the fix (design 0004 §5, revised 2026-10-26).
 (function () {
   const vscode = acquireVsCodeApi();
   const main = document.getElementById("conversation");
@@ -250,6 +251,16 @@
     document.getElementById("gpu").textContent = foot.gpu;
   }
 
+  function showReach(reach) {
+    const box = document.getElementById("reach");
+    box.hidden = !reach;
+    if (!reach) return;
+    document.getElementById("reach-text").textContent = reach.text;
+    const fix = document.getElementById("reach-fix");
+    fix.textContent = reach.action || "";
+    fix.hidden = !reach.action;
+  }
+
   function showSend() {
     const working = state === "working";
     send.className = working ? "send stop" : "send";
@@ -298,6 +309,7 @@
       document.getElementById("title").textContent = message.title || "No session yet";
       document.getElementById("subtitle").textContent = message.subtitle || "";
       document.getElementById("model").textContent = message.model || "";
+      showReach(message.reach);
       older.hidden = !message.older;
       const next = new Map();
       const nodes = [];
@@ -405,6 +417,7 @@
   });
   document.getElementById("image").addEventListener("click", () => vscode.postMessage({ type: "pickImage" }));
   older.addEventListener("click", () => vscode.postMessage({ type: "older" }));
+  document.getElementById("reach-fix").addEventListener("click", () => vscode.postMessage({ type: "fix" }));
   document.querySelectorAll(".tools button").forEach((button) =>
     button.addEventListener("click", () => vscode.postMessage({ type: "act", act: button.dataset.act })),
   );

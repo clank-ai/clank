@@ -324,21 +324,27 @@ export class Controller {
     }
   }
 
+  /** What the status bar and the parts show, asked of the service all at once: the window waits for the slowest
+   * route, not for their sum (design 0004 §5, revised 2026-10-26). */
   private async load(api: Api): Promise<void> {
-    const newest = await api.get<Array<{ id: number }>>("history", { limit: 1 });
-    this.state.lastEvent = newest[0]?.id;
-    this.state.service = await api.get<ServiceInfo>("service");
-    this.state.docker = await api.get<DockerInfo>("docker");
-    this.state.questions = await api.get<Question[]>("questions");
-    this.state.slots = await api.get<SlotRecord[]>("runtime/slots");
-    this.state.presets = await api.get<PresetView[]>("runtime/presets");
-    this.state.cost = await optional<CostView>(api, "gateway/cost");
+    const [newest, service, docker, questions, slots, presets, cost] = await Promise.all([
+      api.get<Array<{ id: number }>>("history", { limit: 1 }),
+      api.get<ServiceInfo>("service"),
+      api.get<DockerInfo>("docker"),
+      api.get<Question[]>("questions"),
+      api.get<SlotRecord[]>("runtime/slots"),
+      api.get<PresetView[]>("runtime/presets"),
+      optional<CostView>(api, "gateway/cost"),
+    ]);
+    Object.assign(this.state, { lastEvent: newest[0]?.id, service, docker, questions, slots, presets, cost });
     this.state.connected = true;
     this.draw();
-    await this.options.reviews?.load(api, this.state.questions);
-    await this.options.completion?.load(api);
-    await this.options.notion?.load(api);
-    await this.options.gates?.load(api, this.state.questions);
+    await Promise.all([
+      this.options.reviews?.load(api, this.state.questions),
+      this.options.completion?.load(api),
+      this.options.notion?.load(api),
+      this.options.gates?.load(api, this.state.questions),
+    ]);
     for (const waiting of this.state.questions) {
       if (!(this.options.reviews && aboutChange(waiting)) && !(this.options.gates && aboutFlow(waiting))) {
         this.offer(api, waiting);

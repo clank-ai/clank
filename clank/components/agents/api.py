@@ -404,6 +404,17 @@ def router(agents: "Agents") -> APIRouter:
         found: dict[str, Any] = await anyio.to_thread.run_sync(agents.context, workspace, session)
         return found
 
+    @routes.get("/agents/reach")
+    async def reach(folder: str = "", workspace: str = "") -> dict[str, Any]:
+        """Whether a workspace's agent reaches its model now (design 0004 §5), by its folder or its name: each check on
+        the way (its workspace and container, the gateway, the gateway's host `edge` from inside the container, the
+        model), the first problem in words with the route that fixes it, and whether OpenCode would fail at once
+        (`blocked`). Nothing is written."""
+        if not folder and not workspace:
+            raise ApiError(400, "invalid", "name the folder or the workspace whose agent's way to the model to check")
+        found: dict[str, Any] = await anyio.to_thread.run_sync(lambda: agents.reach(folder, workspace))
+        return found
+
     @routes.get("/agents/readout")
     async def readout(folder: str, session: str = "") -> dict[str, Any]:
         """The model's readout for a folder (design 0021 §3): its workspace's session (the one named, else the newest),

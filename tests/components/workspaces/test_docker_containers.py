@@ -2,13 +2,20 @@
 command's exact arguments; its answer). It reads the platform's CPUs and memory; tells whether an image is built and
 builds one, each line as it comes; makes a network only when it is not there; runs a container from its spec, joining
 its other networks after it starts; reads, starts, stops and removes a container, and removes a volume, a missing one
-being no error; and says how a terminal enters a container. A command Docker refuses raises its own words."""
+being no error; and says how a terminal enters a container. A command Docker refuses raises its own words.
 
+Design 0004 §5 (revised 2026-10-26): the files written when an agent starts go in one `docker exec` (a few lines of
+Python reading them from its input), one by one only in a container without Python."""
+
+import json
+import subprocess
+import sys
 from collections.abc import Callable, Sequence
+from pathlib import Path
 
 import pytest
 
-from clank.components.workspaces.adapters.docker_desktop import DockerDesktop
+from clank.components.workspaces.adapters.docker_desktop import PUT_FILES, DockerDesktop
 from clank.components.workspaces.adapters.platform import PlatformError
 from clank.components.workspaces.sandbox import ContainerSpec, edge_spec, run_arguments
 from clank.kernel.processes import TIMEOUT_SECONDS, Answer
@@ -172,3 +179,31 @@ def test_a_file_is_written_in_a_container_as_its_user() -> None:
     refused = Docker({("exec",): Answer(1, "", "Error response from daemon: container is not running")})
     with pytest.raises(PlatformError, match=r"could not be written in clank-abc-x: .*not running"):
         adapter(refused).put_file("clank-abc-x", "/home/agent/x", "")
+
+
+def test_several_files_are_written_in_a_container_in_one_command(tmp_path: Path) -> None:
+    docker = Docker({("exec",): OK})
+    files = [("/home/agent/.clank/mcp/a.py", "print('a')\n"), ("/home/agent/.config/x.json", "{}\n")]
+    adapter(docker).put_files("clank-abc-x", files)
+    assert docker.calls == [["exec", "--interactive", "clank-abc-x", "python3", "-c", PUT_FILES]], (
+        "one docker exec for them all: each one is a fifth of a second on Windows (2026-10-26)"
+    )
+    assert json.loads(docker.input or b"") == [list(each) for each in files]
+    written = [(str(tmp_path / "deep" / "a.py"), "print('a')\n"), (str(tmp_path / "b.json"), "{ \"é\": 1 }\r\n")]
+    ran = subprocess.run(
+        [sys.executable, "-c", PUT_FILES], input=json.dumps(written).encode(), capture_output=True, check=False
+    )
+    assert ran.returncode == 0, ran.stderr
+    assert (tmp_path / "deep" / "a.py").read_bytes() == b"print('a')\n", "its folder made, its text as given"
+    assert (tmp_path / "b.json").read_bytes() == "{ \"é\": 1 }\r\n".encode(), "UTF-8, and its line ends untouched"
+    refused = Docker({("exec",): Answer(1, "", "Error response from daemon: container is not running")})
+    with pytest.raises(PlatformError, match=r"could not be written in clank-abc-x: .*not running"):
+        adapter(refused).put_files("clank-abc-x", files)
+
+
+def test_a_container_without_python_gets_its_files_one_by_one() -> None:
+    missing = Answer(127, "", 'OCI runtime exec failed: exec: "python3": executable file not found in $PATH')
+    docker = Docker({("exec", "--interactive", "clank-abc-x", "python3"): missing, ("exec",): OK})
+    adapter(docker).put_files("clank-abc-x", [("/home/agent/a", "1"), ("/home/agent/b", "2")])
+    assert [call[3] for call in docker.calls] == ["python3", "sh", "sh"]
+    assert docker.calls[-1][-1] == "/home/agent/b"

@@ -2,11 +2,35 @@
 // client `vscode`, so what it does is recorded as you (vscode); a request that starts an operation may carry a request
 // key, so a click sent twice starts one. The API's one error shape becomes a `ClankError` with the service's own
 // words, and a service that does not answer a `NotRunning`. `events` follows the event stream after a given event.
+// Every call has a time limit (design 0004 §5, revised 2026-10-26): the client's own, `CALL_MS` unless `within` asks
+// for a shorter one; one the service does not answer in time is aborted and ends as `TimedOut`, saying which. A stream
+// has none: it is open as long as its reader wants it. `inTime` puts a limit on any other wait.
 
 import { EventReader, type ServerEvent } from "./events";
 
 /** The service does not answer. */
 export class NotRunning extends Error {}
+
+/** The service runs, but did not answer in time. */
+export class TimedOut extends Error {}
+
+/** How long a call may take unless a caller asks for less: long enough for the slowest route (a batch written to
+ * Notion, a session started with its OpenCode), short enough that nothing waits forever. */
+export const CALL_MS = 300_000;
+
+/** The words of a wait that took too long. */
+function late(what: string, ms: number): TimedOut {
+  return new TimedOut(`the Clank service did not answer ${what} within ${ms / 1000} s`);
+}
+
+/** What `work` gives, or `TimedOut` once `ms` have passed (the work itself is left to end on its own). */
+export function inTime<T>(work: Promise<T>, ms: number, what: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const limit = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(late(what, ms)), ms);
+  });
+  return Promise.race([work, limit]).finally(() => clearTimeout(timer));
+}
 
 /** The service refused a request; the message is its own. */
 export class ClankError extends Error {
@@ -27,7 +51,13 @@ export class ClankClient {
     readonly url: string,
     private readonly token: string,
     private readonly fetcher: typeof fetch = fetch,
+    private readonly limitMs: number = CALL_MS,
   ) {}
+
+  /** The same connection, its calls limited to `ms` each. */
+  within(ms: number): ClankClient {
+    return new ClankClient(this.url, this.token, this.fetcher, ms);
+  }
 
   /** GET a route under /api/v1/. */
   get<T>(path: string, parameters: Parameters = {}): Promise<T> {
@@ -120,19 +150,32 @@ export class ClankClient {
     headers: Record<string, string> = {},
   ): Promise<T> {
     let answer: Response;
+    const limit = AbortSignal.timeout(this.limitMs);
+    const route = path.split("?")[0] ?? path;
     try {
       answer = await this.fetcher(`${this.url}/api/v1/${path}`, {
         method,
         headers: this.headers(headers),
+        signal: limit,
         ...(body === undefined ? {} : { body }),
       });
     } catch {
+      if (limit.aborted) {
+        throw late(route, this.limitMs);
+      }
       throw new NotRunning(`the Clank service at ${this.url} does not answer`);
     }
     if (!answer.ok) {
       throw await refusal(answer);
     }
-    return (await answer.json()) as T;
+    try {
+      return (await answer.json()) as T;
+    } catch (error) {
+      if (limit.aborted) {
+        throw late(route, this.limitMs);
+      }
+      throw error;
+    }
   }
 }
 

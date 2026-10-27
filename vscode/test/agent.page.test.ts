@@ -7,7 +7,8 @@
 // the conversation is drawn again. While the agent works the send button stops it. Enter sends the message, Shift+Enter
 // does not; @ asks for the folder's files and the one chosen is put as the agent sees it. The colors follow the VS Code
 // theme's variables (a light one shows its owner bubble apart from its ground), or Clank Night when the extension says
-// so. Screenshots are left in out/test/.
+// so. Screenshots are left in out/test/. Design 0004 §5 (revised 2026-10-26): what stands in OpenCode's way to the
+// model shows under the header with its fix's button, and goes once it is gone.
 
 import assert from "node:assert/strict";
 import { mkdtempSync, writeFileSync } from "node:fs";
@@ -207,6 +208,42 @@ test("the page redraws only the blocks that changed, keeps the scroll, shows a p
     await browser.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
     await browser.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape" });
     await browser.until(`${lastPost} === '{"type":"act","act":"stop"}'`);
+  } finally {
+    await browser.close();
+    removeFolder(folder);
+  }
+});
+
+test("what stands in OpenCode's way to the model shows under the header with its fix's button, and goes when it is gone", { skip: EDGE ? false : "no Edge here" }, async () => {
+  const folder = mkdtempSync(path.join(tmpdir(), "clank-agent-"));
+  const files = {
+    css: "agent.css", script: "agent.js", marked: `${LIB}/marked.min.js`, katex: `${LIB}/katex.min.js`,
+    katexCss: `${LIB}/katex.min.css`,
+  };  // prettier-ignore
+  const browser = await Browser.open(webviewPage(folder, "agent.html", files), path.join(folder, "profile"));
+  const post = (message: unknown): Promise<unknown> => browser.evaluate(`window.postMessage(${JSON.stringify(message)}, "*")`);
+  const shown = (reach: unknown, title: string): unknown => ({
+    type: "conversation", title, subtitle: "", state: "none", model: "", foot: null, older: false,
+    empty: "Write to the agent to start a conversation in this folder.", blocks: [], reach,
+  });  // prettier-ignore
+  const said = "OpenCode cannot reach the model: paper's container cannot find the gateway's host `edge`.";
+  try {
+    await browser.until("document.readyState === 'complete' && Array.isArray(window.posted) && window.posted.length > 0");
+    assert.equal(await browser.evaluate("document.getElementById('reach').hidden"), true, "nothing in the way: no line");
+    await post(shown({ text: said, action: "Open the workspace again" }, "Blocked"));
+    await browser.until("document.getElementById('title').textContent === 'Blocked'");
+    assert.equal(await browser.evaluate("document.getElementById('reach').hidden"), false);
+    assert.equal(await browser.evaluate("document.getElementById('reach-text').textContent"), said);
+    assert.equal(await browser.evaluate("document.getElementById('reach-fix').textContent"), "Open the workspace again");
+    await shot(browser, "agent-panel-reach.png");
+    await browser.evaluate(click("#reach-fix"));
+    assert.deepEqual(JSON.parse(await browser.evaluate<string>(lastPost)), { type: "fix" });
+    await post(shown({ text: "The model is loading: daily 262K.", action: "" }, "Loading"));
+    await browser.until("document.getElementById('title').textContent === 'Loading'");
+    assert.equal(await browser.evaluate("document.getElementById('reach-fix').hidden"), true, "no fix: no button");
+    await post(shown(null, "Fine"));
+    await browser.until("document.getElementById('title').textContent === 'Fine'");
+    assert.equal(await browser.evaluate("document.getElementById('reach').hidden"), true, "gone once nothing is in the way");
   } finally {
     await browser.close();
     removeFolder(folder);
