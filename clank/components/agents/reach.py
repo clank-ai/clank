@@ -60,12 +60,15 @@ class Found:
     fix: dict[str, Any] | None = None
 
     def fine(self, name: str, said: str) -> None:
+        """A check that passed, in words."""
         self.checks.append({"name": name, "ok": True, "said": said})
 
     def unknown(self, name: str, said: str) -> None:
+        """A check that could not be made, and why."""
         self.checks.append({"name": name, "ok": None, "said": said})
 
     def wrong(self, name: str, said: str, *, blocked: bool, fix: dict[str, Any] | None = None) -> None:
+        """A check that failed: the first one is the problem said, with whether OpenCode fails at once and its fix."""
         self.checks.append({"name": name, "ok": False, "said": said})
         if not self.problem:
             self.problem, self.blocked, self.fix = said, blocked, fix
@@ -97,7 +100,8 @@ def check(kernel: "Kernel", folder: str = "", workspace: str = "") -> dict[str, 
     status = gateway.status()
     if status.get("state") != "running":
         why = f": {status['problem']}" if status.get("problem") else ""
-        found.wrong("gateway", f"the gateway does not run{why}", blocked=True, fix=fix("Start the gateway", "gateway/restart"))  # fmt: skip
+        start = fix("Start the gateway", "gateway/restart")
+        found.wrong("gateway", f"the gateway does not run{why}", blocked=True, fix=start)
     else:
         found.fine("gateway", f"the gateway runs on port {status['port']}")
         if not found.blocked:  # a running container to look from
@@ -139,17 +143,18 @@ def _edge(found: Found, workspaces: "Workspaces", name: str, port: int, path: st
         why = words[-1] if words else f"exit {answer.status}"
         found.unknown("edge", f"the way to the gateway from {name}'s container could not be checked: {why}")
         return
-    step, error = said.get("step"), str(said.get("error") or "")
+    step, problem = said.get("step"), str(said.get("error") or "")
     if step == "resolve":
         found.wrong(
             "edge",
-            f"{name}'s container cannot find the gateway's host `{EDGE}` ({error}): its network lost the edge, so "
+            f"{name}'s container cannot find the gateway's host `{EDGE}` ({problem}): its network lost the edge, so "
             "OpenCode cannot reach the model",
             blocked=True,
             fix=again,
         )
     elif step == "connect":
-        found.wrong("edge", f"the gateway does not answer {name}'s container through the edge ({error})", blocked=True,
+        said_now = f"the gateway does not answer {name}'s container through the edge ({problem})"
+        found.wrong("edge", said_now, blocked=True,
                     fix=again)  # fmt: skip
     elif said.get("status") != 200:
         found.wrong("edge", f"the gateway answered {said.get('status')} through the edge", blocked=True, fix=again)

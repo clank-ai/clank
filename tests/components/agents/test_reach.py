@@ -57,7 +57,9 @@ def opened(kernel: Kernel, platform: FakePlatform, folder: Path) -> str:
     return name
 
 
-def probing(said: dict[str, Any] | None, seen: list[list[str]] | None = None) -> Callable[[list[str], bytes | None], Answer]:
+def probing(
+    said: dict[str, Any] | None, seen: list[list[str]] | None = None
+) -> Callable[[list[str], bytes | None], Answer]:
     """The container as the probe finds it: what the probe prints (None: python3 is not there)."""
 
     def inside(argv: list[str], given: bytes | None) -> Answer:
@@ -105,7 +107,8 @@ def test_a_container_that_cannot_resolve_the_edge_is_blocked_with_opening_the_wo
     ready(kernel)
     found = kernel.parts["agents"].reach(folder=str(folder))
     assert (found["ready"], found["blocked"]) == (False, True), "OpenCode would end at once: it is not started"
-    assert "cannot find the gateway's host `edge`" in found["problem"] and NOT_RESOLVED in found["problem"]
+    assert "cannot find the gateway's host `edge`" in found["problem"]
+    assert NOT_RESOLVED in found["problem"]
     assert found["fix"] == {
         "label": "Open the workspace again", "post": "workspaces/open", "body": {"folder": str(folder)},
     }  # fmt: skip
@@ -120,7 +123,8 @@ def test_a_gateway_that_does_not_answer_through_the_edge_is_blocked_too(
     ready(kernel)
     found = kernel.parts["agents"].reach(folder=str(tmp_path / "paper"))
     assert found["blocked"] is True
-    assert "does not answer" in found["problem"] and "Remote end closed" in found["problem"]
+    assert "does not answer" in found["problem"]
+    assert "Remote end closed" in found["problem"]
     assert found["fix"]["post"] == "workspaces/open"
 
 
@@ -136,7 +140,8 @@ def test_a_gateway_that_does_not_run_is_said_first_with_its_start_and_the_contai
     assert found["blocked"] is True
     assert found["problem"] == "the gateway does not run: port 18210 is held"
     assert found["fix"] == {"label": "Start the gateway", "post": "gateway/restart", "body": {}}
-    assert seen == [] and "edge" not in checks(found), "nothing to reach through the edge"
+    assert seen == [], "nothing to reach through the edge"
+    assert "edge" not in checks(found)
     assert checks(found)["model"] is False, "the model is still looked at, after the first problem"
 
 
@@ -153,7 +158,8 @@ def test_a_folder_with_no_workspace_or_a_container_that_does_not_run_is_blocked_
     kernel.settings.write("workspace", "paper", {"path": str(folder)}, base=None, actor=YOU)
     stopped = agents.reach(folder=str(folder))
     assert stopped["problem"] == "paper's container does not run"
-    assert stopped["fix"]["post"] == "workspaces/open" and stopped["blocked"] is True
+    assert stopped["fix"]["post"] == "workspaces/open"
+    assert stopped["blocked"] is True
 
 
 def test_no_model_in_the_main_slot_is_said_with_loading_the_last_that_worked_and_does_not_block(
@@ -209,6 +215,7 @@ def test_the_route_answers_by_folder_or_by_workspace(kernel: Kernel, platform: F
         by_folder = http.get("/api/v1/agents/reach", params={"folder": str(tmp_path / "paper")}, headers=headers)
         by_name = http.get("/api/v1/agents/reach", params={"workspace": "paper"}, headers=headers)
         neither = http.get("/api/v1/agents/reach", headers=headers)
-    assert by_folder.status_code == 200 and by_folder.json()["blocked"] is True
+    assert by_folder.status_code == 200
+    assert by_folder.json()["blocked"] is True
     assert by_name.json()["problem"] == by_folder.json()["problem"]
     assert neither.status_code == 400
