@@ -128,7 +128,7 @@ PowerShell:
 
 ### Or by hand, from a clone
 
-For working on Clank itself, or for building Clank's VS Code extension yourself (step 2b).
+For working on Clank itself. A clone builds its own VS Code extension (step 2b).
 
 <details>
 <summary><b>Windows</b></summary>
@@ -165,12 +165,16 @@ uv tool update-shell
 
 </details>
 
-## 2b. Build the VS Code extension (optional)
+## 2b. Clank's VS Code extension
 
 Clank's VS Code window (`c` on **This folder**, or `clank code`) shows the agent beside your files, its changes for
-you to review and figures to mark up. It needs Clank's extension, built once from a clone (step 2, the second way)
-and again after an update that changes it; until then, `c` says the extension is not built. It needs VS Code and
-Node.js 22 or newer.
+you to review and figures to mark up. It needs VS Code, and Clank's extension:
+
+- **Installed with the one-line installer**, Clank takes the extension its release carries the first time it opens the
+  window: downloaded from the release on GitHub, checked against the SHA-256 the release lists, kept in Clank's folder
+  and installed. Nothing to build. Without a network, it says so and opens the folder all the same.
+- **From a clone**, build it once, and again after an update that changes it; until then, `c` says the extension is
+  not built. It needs Node.js 22 or newer.
 
 <details>
 <summary><b>Windows</b></summary>
@@ -186,11 +190,12 @@ winget install --id OpenJS.NodeJS.LTS -e
 <summary><b>macOS and Linux</b></summary>
 
 VS Code from [its download page](https://code.visualstudio.com/download) (on Linux, its `.deb` or `.rpm`, which also
-puts `code` on your path), and Node.js 22 or newer from [nodejs.org](https://nodejs.org/) or your package manager.
+puts `code` on your path), and, for a clone, Node.js 22 or newer from [nodejs.org](https://nodejs.org/) or your package
+manager.
 
 </details>
 
-Open a new terminal, then in the `clank` folder:
+In a clone, open a new terminal, then in the `clank` folder:
 
 ```
 cd vscode
@@ -331,7 +336,7 @@ only its SSH server and Clank's service running.
 1. **On the PC, once:** turn on Windows' OpenSSH server (Settings → System → Optional features → OpenSSH Server, then
    start the `sshd` service and set it to start automatically) and add your laptop's public key to it, as
    [Microsoft's guide](https://learn.microsoft.com/windows-server/administration/openssh/openssh_install_firstuse)
-   says. Build Clank's extension there (step 2b), and start Clank's service at the PC itself (`clank serve
+   says. Install Clank there (step 2), and start Clank's service at the PC itself (`clank serve
    --background`): started over SSH, it runs where it cannot use Docker's sign-in.
 2. **On the laptop:** install VS Code and Microsoft's Remote-SSH extension; nothing of Clank. Connect to the PC (F1,
    **Remote-SSH: Connect to Host**).
@@ -407,7 +412,8 @@ goes to `~/.clank/logs/update.log`. `clank update --dry-run` says each step with
 everything in `~/.clank` stay as they are. Running the installer again does the same for a release.
 
 Run it at the computer itself, not over SSH (started from an SSH session, the service runs where it cannot use
-Docker's sign-in, on Windows and macOS). If the VS Code extension changed, build it again (step 2b). If Clank then says
+Docker's sign-in, on Windows and macOS). A release takes its own VS Code extension by itself; in a clone, build it again
+if it changed (step 2b). If Clank then says
 a workspace's container uses an older sandbox image, reopen that workspace: **Workspaces** (F6), `x` to stop it, then
 `o` to open it again.
 

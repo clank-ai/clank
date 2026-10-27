@@ -22,7 +22,7 @@ Linux ([design 0014](0014-linux-and-small-machines.md) §2-§4, built at the own
 | 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9) |
 | 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; built at the owner's instruction |
 | 5 | Docker, configured correctly on each system | Proposed 2026-10-27; built at the owner's instruction |
-| 6 | Clank's VS Code extension without building it | Proposed 2026-10-27 |
+| 6 | Clank's VS Code extension without building it | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction (S5) |
 | 7 | Local models: what is one step and what is not yet | Proposed 2026-10-27 |
 | 8 | Tests and build steps | Proposed 2026-10-27; the installers' tests built (the website's `installer` workflow) |
 
@@ -162,6 +162,16 @@ installed by the one-line installer has none. Each release carries it instead:
 - `clank code`, in a release install, downloads the extension of the release that matches Clank's own version, checks
   its SHA-256 against the release's, and installs it. A clone builds its own, as now.
 - No Node and no build are needed to use Clank's VS Code window.
+
+As built (2026-10-27): CI's job `release` (`.github/workflows/checks.yml`) runs once every check passed on a tag `v*`,
+builds the extension as a working copy does (`tools.extension`, `tools.vsix`), and makes the release with
+`tools/release.py`: the tag must be Clank's own version, the release carries `clank-<the extension's version>.vsix` and
+`SHA256SUMS`, a tag with a, b or rc is a pre-release, and its notes are the version's section of CHANGELOG.md (or a
+link to it). A release install is one whose folder has no extension's sources; `clank code` there reads the release
+`v<Clank's version>` from GitHub's API, refuses a file whose SHA-256 is not the one SHA256SUMS gives, keeps the
+extension under CLANK_HOME/vscode/cache/<tag>/ and uses that copy afterwards without asking GitHub
+(`clank/components/agents/extension.py`). No release, a release without the extension or its sums, or no answer from
+GitHub is said with what to do, and the folder opens all the same.
 
 ## 7. Local models: what is one step and what is not yet
 

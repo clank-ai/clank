@@ -5,6 +5,17 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
+## Unreleased: since 0.3.0b2
+
+The next release. Its version is set when it is tagged; until then, a clone has it (`git pull`, or `clank update`).
+
+### Added
+
+- **Clank's VS Code window without building its extension**: each release now carries Clank's VS Code extension, with
+  its SHA-256. Installed with the one-line installer, `clank code` (or `c` on This folder) downloads the extension of
+  its own release the first time, checks it against that SHA-256, keeps it and installs it: no Node and no build. A
+  clone still builds its own.
+
 ## 0.3.0b2: the installer, updates, and the agent beside VS Code (2026-10-27)
 
 The second public beta: the one-line installer and `clank update`; the agent beside VS Code; Clank for iPhone over

@@ -67,6 +67,18 @@ def _no_test_finds_vs_code(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture(autouse=True)
+def _no_test_asks_github_for_the_extension(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Clank's VS Code window never asks GitHub for a release's extension for real (design 0028 §6): a test of it gives
+    the fake GitHub of `tests/fakes/github.py`."""
+
+    def refused(url: str) -> bytes:
+        raise AssertionError(f"a test asked GitHub for {url}: give it the fake GitHub")
+
+    monkeypatch.setattr("clank.components.agents.extension.fetch", refused)
+    monkeypatch.setattr("clank.components.agents.extension.download", refused)
+
+
+@pytest.fixture(autouse=True)
 def _colors_whatever_the_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
     """The console draws its colors in the tests whatever the terminal that runs them asks: with NO_COLOR set there,
     Textual drew gray, and the tests of the console's colors failed (2026-10-25); a test of NO_COLOR sets it."""

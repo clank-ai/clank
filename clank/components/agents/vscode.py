@@ -12,9 +12,12 @@ profiles are untouched. Opening a folder in it is the operation `agents.vscode` 
   group (a change to review keeps its Accept and Reject while the agent's terminal has the keyboard), figures
   opened in Clank's annotator, and long lines wrapped (in a change's diff too); each only when missing, so a
   value the owner changed stays, and a settings file that is not plain JSON (comments) is left as it is.
-- extensions: Clank's own (`vscode/clank-<version>.vsix`, built from Clank's folder) when that version is not the one
-  installed, and each of the settings' extensions that is missing, from VS Code's marketplace. One that cannot be
-  installed is said and tried again the next time, and the folder opens all the same.
+- extensions: Clank's own when that version is not the one installed: in a clone, the one built from Clank's folder
+  (`vscode/clank-<version>.vsix`, `tools.vsix`); in a release install, which has no sources to build it from, the one
+  the GitHub release of Clank's version carries, downloaded once, checked against the release's SHA-256 and kept
+  under CLANK_HOME/vscode/cache (`extension.py`, design 0028 §6). Then each of the settings' extensions that is
+  missing, from VS Code's marketplace. One that cannot be had or installed is said with why and what to do, and tried
+  again the next time, and the folder opens all the same.
 - open: the folder, in a window of the instance, started on its own and not waited for. In it, Clank's extension opens
   OpenCode in a terminal beside the files (the setting `clank.agent.openOnStart`).
 
@@ -34,6 +37,7 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
+from clank.components.agents import extension
 from clank.components.agents.kinds import VsCodeSettings
 from clank.components.agents.remotecode import machine_settings, remote_command
 from clank.kernel.core import Kernel
@@ -75,6 +79,7 @@ SETTINGS: dict[str, Any] = {
 }
 CLI_JS = re.compile(r'"%~dp0\.\.\\([^"]*cli\.js)"')  # what code.cmd runs, under VS Code's folder
 VSIX = re.compile(r"clank-(\d+\.\d+\.\d+)\.vsix")
+SOURCES = Path(__file__).resolve().parents[3] / "vscode"  # the extension's sources, in a clone of Clank
 
 
 class WindowError(Exception):
@@ -162,13 +167,18 @@ def settings_text(existing: str | None, clank: str = "clank") -> str | None:
 def clank_vsix() -> Path | None:
     """Clank's own extension as built from Clank's folder (`vscode/clank-<version>.vsix`, the version its package.json
     says); None when it is not built."""
-    folder = Path(__file__).resolve().parents[3] / "vscode"
     try:
-        version = json.loads((folder / "package.json").read_text(encoding="utf-8"))["version"]
+        version = json.loads((SOURCES / "package.json").read_text(encoding="utf-8"))["version"]
     except (OSError, ValueError, KeyError):
         return None
-    found = folder / f"clank-{version}.vsix"
+    found = SOURCES / f"clank-{version}.vsix"
     return found if found.is_file() else None
+
+
+def in_a_clone() -> bool:
+    """Whether Clank runs from a clone, which has the extension's sources and builds its own (`tools.vsix`); a release
+    install has none, and takes the one its release carries (design 0028 §6)."""
+    return (SOURCES / "package.json").is_file()
 
 
 def installed_versions(output: str) -> dict[str, str]:
@@ -286,16 +296,12 @@ class Window:
             raise WindowError(f"VS Code did not list its extensions: {silent}")
         have = installed_versions(listed.output)
         wanted: list[tuple[list[str], str]] = []
-        vsix = clank_vsix()
-        if vsix is None:
-            context.log(
-                "Clank's extension is not built (`uv run python -m tools.vsix` in Clank's folder builds it): the "
-                "window opens without the agent beside the files"
-            )
-        elif (found := VSIX.fullmatch(vsix.name)) is None or have.get(CLANK) != found.group(1):
+        installed: list[str] = []
+        failed: list[str] = []
+        vsix = await self._clank_vsix(context, have, failed)
+        if vsix is not None and ((found := VSIX.fullmatch(vsix.name)) is None or have.get(CLANK) != found.group(1)):
             wanted.append((["--install-extension", str(vsix), "--force"], CLANK))
         wanted += [(["--install-extension", name], name) for name in extensions if name.lower() not in have]
-        installed, failed = [], []
         for arguments, name in wanted:
             answer = await context.run_blocking(self._run, program, arguments, INSTALL_SECONDS)
             if answer.ok:
@@ -307,9 +313,41 @@ class Window:
                 context.log(
                     f"{name} could not be installed ({why[-1] if why else answer.status}); tried again next time"
                 )
-        if not wanted:
+        if not wanted and not failed:
             context.log("every extension is installed")
         return installed, failed
+
+    async def _clank_vsix(self, context: OperationContext, have: Mapping[str, str], failed: list[str]) -> Path | None:
+        """Clank's own extension: a clone's build, else the one Clank's release carries, downloaded once and kept
+        (design 0028 §6); None, said (and in `failed` when the release's could not be had), when there is none."""
+        vsix = clank_vsix()
+        if vsix is not None:
+            return vsix
+        if in_a_clone():
+            context.log(
+                "Clank's extension is not built (`uv run python -m tools.vsix` in Clank's folder builds it): the "
+                "window opens without the agent beside the files"
+            )
+            return None
+        try:
+            got = await context.run_blocking(
+                extension.release_vsix, self.folder / "cache", extension.TAG, extension.fetch, extension.download
+            )
+        except extension.ReleaseError as error:
+            failed.append(CLANK)
+            window = (
+                f"The window keeps the extension it has ({have[CLANK]})"
+                if CLANK in have
+                else "The window opens without the agent beside the files"
+            )
+            context.log(f"Clank's extension: {error.why}. {window}; {error.todo}")
+            return None
+        if got.downloaded:
+            context.log(
+                f"Clank's extension downloaded from the release {extension.TAG} on GitHub, and its SHA-256 checked "
+                f"against the release's SHA256SUMS: kept as {got.path}"
+            )
+        return got.path
 
     def _run(self, program: Program, arguments: list[str], timeout: float) -> Answer:
         """VS Code's command line: the instance's on this PC, or the remote command, which has no instance."""

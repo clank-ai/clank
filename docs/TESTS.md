@@ -582,7 +582,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 3 | The installer on each system | none yet |
 | 4 | `clank setup`: the checklist, and the fixes it can make | none yet |
 | 5 | Docker, configured correctly on each system | none yet |
-| 6 | Clank's VS Code extension without building it | `tests/tools/test_release.py` (6) |
+| 6 | Clank's VS Code extension without building it | `tests/components/agents/test_vscode_release.py` (6), `tests/tools/test_release.py` (6) |
 | 7 | Local models: what is one step and what is not yet | none yet |
 | 8 | Tests and build steps | none yet |
 
@@ -1503,6 +1503,17 @@ Design 0004 §5: Clank's VS Code window is a separate instance of the same progr
 - without vs code opening fails saying how to name it
 - clanks vs code window opens a file of the folder
 - a file named with a drive or a root or out of the folder is refused
+
+### `tests/components/agents/test_vscode_release.py`
+
+Design 0028 §6: Clank's VS Code window without building its extension. In a release install (no extension's sources in Clank's folder), opening a folder takes the extension that the GitHub release of Clank's own version carries: it is downloaded, its SHA-256 checked against the release's SHA256SUMS, kept under CLANK_HOME/vscode/cache and installed; the next time, the kept copy is used without asking GitHub, once its SHA-256 is checked again. A file whose SHA-256 is not the release's is refused, neither kept nor installed. No such release, a release without the extension or its sums, or no answer from GitHub is said with what to do, and the folder opens all the same. A clone keeps its own build and never asks GitHub. GitHub is the fake of `tests/fakes/github.py`, never the network.
+
+- a releases extension is downloaded checked kept and the kept copy used next time
+- a file whose sha256 is not the releases is refused and not kept
+- no release one without the extension or its sums and no network each say why and what to do
+- in a release install the releases extension is installed and its kept copy used the next time
+- a refused extension no release or no network is said and the folder opens all the same
+- a clone uses its own build and never asks github
 
 ### `tests/components/agents/test_watch_channel.py`
 

@@ -63,6 +63,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/console/watchfor.py` | The Monitor's Watch for panel (design 0012 §2, §8): the newest marks the Watch for rules left, one line each: a mark |
 | `clank/components/agents/context.py` | A session's context totals (design 0012 §4.1 and §4.4, decision 0067): how much of the window the session uses, how |
 | `clank/components/agents/estimate.py` | The context's parts, estimated (design 0012 §4.2, §4.3, §4.6; decisions 0051, 0052 and 0067): what fills a |
+| `clank/components/agents/extension.py` | Clank's VS Code extension in a release install (design 0028 §6): the one its release carries, checked and kept. |
 | `clank/components/agents/figures.py` | A mark on a figure, in words (design 0008 §4): what an agent is told about each mark the owner drew. |
 | `clank/components/agents/guide.py` | The Guide (design 0012 §9.1-§9.7, §11 steps 9 to 11): what the owner, or a Watch for rule, does to the session the |
 | `clank/components/agents/jobs.py` | The agent's jobs (design 0021 §6): a long computation the agent the owner talks to starts and goes on from, instead |
