@@ -106,7 +106,11 @@ def prepare_folder(folder: Path) -> None:
     if sys.platform != "win32" and found.st_uid != os.getuid():
         raise SocketFolderError(f"the gateway's socket folder {folder} is another user's: {MOVE}")
     if stat.S_IMODE(found.st_mode) != FOLDER_MODE:
-        os.chmod(folder, FOLDER_MODE)
+        try:
+            os.chmod(folder, FOLDER_MODE)
+        except OSError as error:
+            raise SocketFolderError(f"the gateway's socket folder {folder} could not be made the owner's alone: "
+                                    f"{error}") from error  # fmt: skip
 
 
 def is_socket(path: Path) -> bool:
@@ -162,8 +166,8 @@ def remove_sockets(made: list[tuple[Path, os.stat_result]]) -> None:
 if sys.platform != "win32":  # Unix sockets: the type checker knows `AF_UNIX` only off Windows
 
     def listeners(port: int, folder: Path) -> Listeners:
-        """The TCP socket at the port (an `OSError` when it cannot be bound), then the folder made ready and the two
-        Unix sockets in it; a socket that cannot be made is left out, its log saying why."""
+        """The TCP socket at the port (an `OSError` when it cannot be bound, and only then), then the folder made ready
+        and the two Unix sockets in it; a socket that cannot be made is left out, its log saying why."""
         made = Listeners(tcp_listener(port))
         try:
             prepare_folder(folder)
@@ -177,7 +181,8 @@ if sys.platform != "win32":  # Unix sockets: the type checker knows `AF_UNIX` on
             except (OSError, SocketFolderError) as error:
                 log.warning("the gateway could not listen on %s: %s", path, error)
                 continue
-            made.made.append((path, os.lstat(path)))
+            with contextlib.suppress(OSError):  # gone already: nothing to remove when it stops
+                made.made.append((path, os.lstat(path)))
             if name == GATEWAY_SOCKET:
                 made.gateway = listener
             else:

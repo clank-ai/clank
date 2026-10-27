@@ -325,7 +325,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | none yet |
 | 2 | The container platform adapters | none yet |
-| 3 | The edge's way to the gateway on Linux | `tests/components/gateway/test_listeners.py` (10), `tests/components/gateway/test_service.py` (15), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_socket.py` (5), `tests/components/workspaces/test_sandbox.py` (10), `tests/docker/test_escape.py` (5) |
+| 3 | The edge's way to the gateway on Linux | `tests/components/gateway/test_listeners.py` (11), `tests/components/gateway/test_service.py` (15), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_socket.py` (5), `tests/components/workspaces/test_sandbox.py` (10), `tests/docker/test_escape.py` (5) |
 | 4 | A workspace's container on Docker Engine | `tests/docker/test_escape.py` (5) |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | none yet |
 | 6 | OpenCode on arm64 | none yet |
@@ -2370,6 +2370,7 @@ Design 0014 §3 (decision 0071, option (a)): on Linux the gateway also listens o
 - a port another program holds ends the gateway as before saying so
 - a stale socket is replaced and any other file is left saying why
 - a request on the socket has no client address and is answered as any other
+- a socket folder that cannot be made the owners alone is refused saying why
 
 ### `tests/components/gateway/test_local_only.py`
 

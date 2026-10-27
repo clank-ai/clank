@@ -37,6 +37,7 @@ from clank.components.gateway.sockets import (
     SocketFolderError,
     checked_socket_folder,
     default_folder,
+    prepare_folder,
     remove_sockets,
     socket_folder,
     tcp_listener,
@@ -305,3 +306,19 @@ def test_a_request_on_the_socket_has_no_client_address_and_is_answered_as_any_ot
         for line in file.read_text(encoding="utf-8").splitlines()
     ]
     assert [(each["client"], each["status"]) for each in records] == [("", 503)], "no client address, and recorded"
+
+
+def test_a_socket_folder_that_cannot_be_made_the_owners_alone_is_refused_saying_why(
+    short: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Said as such, never taken for a port another program holds: the gateway then listens on no socket."""
+    folder = short / "sockets"
+    folder.mkdir()
+    os.chmod(folder, 0o755)
+
+    def refused(path: object, mode: int) -> None:
+        raise PermissionError(1, "Operation not permitted")
+
+    monkeypatch.setattr(os, "chmod", refused)
+    with pytest.raises(SocketFolderError, match=r"could not be made the owner's alone: .*Operation not permitted"):
+        prepare_folder(folder)
