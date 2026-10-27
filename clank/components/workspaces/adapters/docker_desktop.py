@@ -12,7 +12,9 @@ stopped Docker Desktop, its own program is started instead, as the Start menu st
 Desktop.exe`, two folders above its command). On Windows, Docker Desktop started after WSL removes WSL's handler for
 Windows programs (PROTOTYPE.md), so after a start, if WSL runs and the handler is gone, the adapter registers it again
 and says so. Its container commands (design 0004 §3) are Docker's own, the base's (`docker_cli.py`, design 0014 §2),
-whose names stay importable from here.
+whose names stay importable from here. On Linux every command names Docker Desktop's own context (`--context
+desktop-linux`), so Docker Engine's containers are never read as its own once it has stopped and set the `default`
+context back; on Windows and macOS its commands do not change.
 """
 
 import json
@@ -31,6 +33,7 @@ from clank.kernel.adapters import Capability
 from clank.kernel.processes import Launch, TimedAnswer, TimedRun, launch_program, run_answer
 
 VERSIONS = "{{.Server.Platform.Name}}|{{.Server.Version}}"
+CONTEXT = "desktop-linux"  # Docker Desktop's own context on Linux, current while it runs
 STATUS_SECONDS = 2.0  # running, `docker desktop status` answers at once; stopped, never
 REQUEST_SECONDS = 60.0  # `docker desktop stop` answers once Docker Desktop has stopped
 PROGRAM = "Docker Desktop.exe"
@@ -112,6 +115,10 @@ class DockerDesktop(DockerCli):
         self._require()
         if self._docker("desktop", "stop", "--detach", timeout=REQUEST_SECONDS) is None:
             raise PlatformError("Docker Desktop did not take the request to stop: quit it from its icon in the taskbar")
+
+    def _target(self) -> list[str]:
+        """On Linux, Docker Desktop's own context; elsewhere, the docker command's own choice."""
+        return ["--context", CONTEXT] if self.platform == "linux" else []
 
     def _program(self) -> str | None:
         """Docker Desktop's own program: on Windows, two folders above its command (`resources/bin/docker.exe`); None

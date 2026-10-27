@@ -262,6 +262,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/tools/service.py` | The tools component's part (design 0002 §1; the M8.0 plan): the MCP servers Clank knows, and checking one. |
 | `clank/components/workspaces/__init__.py` | The workspaces component: where agents work. In M0 it holds Docker, the container platform, through its adapter; |
 | `clank/components/workspaces/adapters/__init__.py` | The workspaces component's kind of adapter, the container platform (design 0002 §2.9, §2.10): where Clank's |
+| `clank/components/workspaces/adapters/choose.py` | Which container platform adapter the setting `adapter` means on this computer (design 0014 §2, decision 0070). |
 | `clank/components/workspaces/adapters/docker_cli.py` | The plain docker CLI, which every container platform adapter shares (design 0014 §2, decision 0070). |
 | `clank/components/workspaces/adapters/docker_desktop.py` | The Docker Desktop adapter: Docker Desktop through its own commands (design 0002 §2.9, §2.10). |
 | `clank/components/workspaces/adapters/docker_engine.py` | The Docker Engine adapter, for Linux (design 0014 §2, decision 0070): Docker Engine, the system's service, whose |

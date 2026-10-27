@@ -16,8 +16,8 @@
       "type": "string"
     },
     "adapter": {
-      "default": "docker-desktop",
-      "description": "The adapter Clank uses for containers: docker-desktop, or docker-engine (Docker Engine on Linux, the system's service, which Clank never starts or stops).",
+      "default": "auto",
+      "description": "The adapter Clank uses for containers: auto (Docker Desktop on Windows and macOS; on Linux, the one of the engine the docker command would use, chosen without waking any: Docker's view says which and why), docker-desktop, or docker-engine (Docker Engine on Linux, the system's service, which Clank never starts or stops).",
       "title": "Container platform",
       "type": "string"
     },

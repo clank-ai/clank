@@ -4,7 +4,8 @@
   - record: the folder must be one whose container would see nothing more than it (not a drive's root, not the user's
     home folder, not one that holds CLANK_HOME or is inside it, whose secrets a container must never see); its record
     is found by its folder, else made, named after it (`workspace_name`), and given the image layers named in `layers`
-    that it does not have. Docker must run (`clank docker start`).
+    that it does not have. Docker must run: else the refusal says how to start it (`clank docker start`, or for the
+    system's Docker Engine, which Clank never starts, the command its owner runs: design 0014 §2).
   - image: Clank's sandbox image, built when no image of its tag is there, asked first unless `yes` (it downloads
     about a gigabyte), each line of the build in the operation's log; canceling the build ends it. Then the image
     layers its record names (design 0020 §3), each built on the image below it when missing, asked first unless
@@ -173,9 +174,7 @@ class Folders:
             platform = self.workspaces.platform
             status = await context.run_blocking(platform.status)
             if not status.running:
-                raise WorkspaceError(
-                    f"Docker is {status.state}: start it with `clank docker start`, or from the console's Docker page"
-                )
+                raise WorkspaceError(self.workspaces.not_running(status))
             name, workspace = self._record_for(folder, context)
             workspace = self._with_layers(name, workspace, list(context.params.get("layers") or []), context)
         async with context.step("image"):

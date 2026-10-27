@@ -4,10 +4,15 @@ what the start disturbed; a stop asks first when containers Clank did not start 
 leaves Docker running; a press sent twice starts one operation, and a second start while one runs is refused; the
 background check records `docker.changed` once per change (the first reading is what clients load, not a change);
 after a restart an interrupted operation is reconciled
-from Docker's state."""
+from Docker's state. Design 0014 §2: on Docker Engine, the system's service, a start or a stop is refused at once in
+the status's words (the command to run; the docker group when this account has no access), a stop before any question
+about other programs' containers; while it is stopped, a workspace's container is unavailable in those words, and
+nothing reaches the engine."""
 
+import contextlib
 from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
+from pathlib import Path
 
 import anyio
 import pytest
@@ -15,7 +20,8 @@ from fastapi.testclient import TestClient
 
 from clank import registry
 from clank.components.workspaces import service as workspaces_service
-from clank.components.workspaces.service import Workspaces
+from clank.components.workspaces.adapters.docker_engine import DockerEngine
+from clank.components.workspaces.service import Workspaces, WorkspaceUnavailable
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
 from clank.kernel.core import Kernel, open_kernel
@@ -23,6 +29,7 @@ from clank.kernel.events import Actor
 from clank.kernel.home import Home
 from clank.kernel.operations import Operation
 from tests.fakes.platform import FakePlatform, container
+from tests.fakes.recorded import FIXTURES, RecordedProgram
 
 pytestmark = pytest.mark.anyio
 
@@ -242,3 +249,83 @@ def test_the_routes_start_operations_that_record_the_client(kernel: Kernel, plat
         started = http.post("/api/v1/docker/start", headers=headers).json()
         assert (started["type"], started["started_by"]) == ("docker.start", {"kind": "user", "via": "vscode"})
         assert datetime.fromisoformat(started["created"]) == datetime(2026, 10, 11, 12, 0, tzinfo=UTC)
+
+
+RECORDED = FIXTURES / "docker-engine" / "28.0.4"
+
+
+@contextlib.contextmanager
+def on_docker_engine(
+    home: Home, clock: FakeClock, monkeypatch: pytest.MonkeyPatch, state: str, joined: bool = False
+) -> Iterator[tuple[Kernel, RecordedProgram]]:
+    """A kernel whose Docker is Docker Engine as recorded, in a state (design 0014 §2); the account in the docker group
+    or not."""
+    program = RecordedProgram.load(RECORDED, state=state)
+    engine = DockerEngine(
+        program, program.command, platform="linux", answer=program.answer, groups=lambda: (joined, False)
+    )
+    monkeypatch.setattr(workspaces_service, "make_platform", lambda name: engine)
+    kernel = open_kernel(home, clock, registry.components())
+    try:
+        yield kernel, program
+    finally:
+        kernel.close()
+
+
+async def test_starting_docker_engine_is_refused_at_once_with_the_command_to_run(
+    home: Home, clock: FakeClock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    with on_docker_engine(home, clock, monkeypatch, "stopped") as (kernel, program):
+        async with kernel.operations.running():
+            started = await kernel.operations.start("docker.start", actor=YOU)
+            done = await finished(kernel, started.id)
+    assert done.status == "failed"
+    assert done.error == (
+        "Docker Engine is stopped: start it with `sudo systemctl start docker`; Clank never starts or stops Docker "
+        "Engine"
+    )
+    assert [step.name for step in done.steps] == ["start"], "refused before any wait"
+    assert {call.split(" ", 1)[0] for call in program.calls} == {"systemctl"}, "no docker command woke it"
+
+
+async def test_without_access_a_start_names_the_docker_group_not_systemctl(
+    home: Home, clock: FakeClock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    with on_docker_engine(home, clock, monkeypatch, "no access") as (kernel, _):
+        async with kernel.operations.running():
+            started = await kernel.operations.start("docker.start", actor=YOU)
+            done = await finished(kernel, started.id)
+    assert done.status == "failed"
+    assert "sudo usermod -aG docker $USER" in (done.error or "")
+    assert "systemctl" not in (done.error or "")
+
+
+async def test_stopping_docker_engine_is_refused_before_any_question_about_other_containers(
+    home: Home, clock: FakeClock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    with on_docker_engine(home, clock, monkeypatch, "running") as (kernel, _):
+        async with kernel.operations.running():
+            started = await kernel.operations.start("docker.stop", actor=YOU)
+            done = await finished(kernel, started.id)
+        asked = kernel.questions.find()
+    assert done.status == "failed"
+    assert "`sudo systemctl stop docker.socket docker.service`" in (done.error or "")
+    assert asked == [], "the recording's running containers are none of Clank's, yet nothing was asked"
+
+
+async def test_a_workspaces_container_on_a_stopped_docker_engine_is_unavailable_saying_how_to_start_it(
+    home: Home, clock: FakeClock, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    with on_docker_engine(home, clock, monkeypatch, "stopped") as (kernel, program):
+        kernel.settings.write("workspace", "paper", {"path": str(tmp_path)}, base=None, actor=YOU)
+        part = workspaces(kernel)
+        asks: list[Callable[[], object]] = [
+            lambda: part.container_of("paper"),
+            lambda: part.exec_argv("paper", ["opencode"], {}),
+            lambda: part.run_in("paper", ["ls"]),
+        ]
+        for ask in asks:
+            with pytest.raises(WorkspaceUnavailable, match="sudo systemctl start docker"):
+                ask()
+        assert part.runs_current_image("paper") is None, "not known while Docker Engine is stopped"
+    assert {call.split(" ", 1)[0] for call in program.calls} == {"systemctl"}, "nothing reached the engine"

@@ -23,10 +23,12 @@ class DockerSettings(Settings):
     SINGLE = True
 
     adapter: str = Field(
-        "docker-desktop",
+        "auto",
         title="Container platform",
-        description="The adapter Clank uses for containers: docker-desktop, or docker-engine (Docker Engine on Linux, "
-        "the system's service, which Clank never starts or stops).",
+        description="The adapter Clank uses for containers: auto (Docker Desktop on Windows and macOS; on Linux, the "
+        "one of the engine the docker command would use, chosen without waking any: Docker's view says which and why), "
+        "docker-desktop, or docker-engine (Docker Engine on Linux, the system's service, which Clank never starts or "
+        "stops).",
     )
     poll_seconds: float = Field(
         5.0, ge=1, title="Checked every", description="How often, in seconds, Clank reads Docker's state."

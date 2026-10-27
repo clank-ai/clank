@@ -78,7 +78,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.1 | A component | `tests/components/machine/test_doctor.py` (4), `tests/console/test_pages.py` (10), `tests/kernel/test_core.py` (2), `tests/test_architecture.py` (7) |
 | 2.2 | Records | `tests/components/flows/test_proposals_auto.py` (3), `tests/components/runtime/test_state.py` (4), `tests/console/test_records.py` (4), `tests/kernel/test_grouped_settings.py` (5), `tests/kernel/test_records.py` (5), `tests/kernel/test_settings.py` (15), `tests/kernel/test_settings_checks.py` (3), `tests/kernel/test_store.py` (9), `tests/tools/test_schemas.py` (1), `tests/tools/test_tstypes.py` (5), `vscode/test/kinds.test.ts` (1) |
 | 2.3 | Events | `tests/kernel/test_clock.py` (4), `tests/kernel/test_event_attention.py` (3), `tests/kernel/test_events.py` (9), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_eventsdoc.py` (1), `vscode/test/events.test.ts` (2), `vscode/test/state.test.ts` (1) |
-| 2.4 | Operations | `tests/components/workspaces/test_docker_operations.py` (13), `tests/console/test_pages.py` (10), `tests/kernel/test_operations.py` (15) |
+| 2.4 | Operations | `tests/components/workspaces/test_docker_operations.py` (17), `tests/console/test_pages.py` (10), `tests/kernel/test_operations.py` (15) |
 | 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (15), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (18), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
 | 2.6 | Policy | none yet |
 | 2.7 | Callers and access | `tests/components/gateway/test_callers.py` (6), `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (7), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (18), `vscode/test/live.test.ts` (1) |
@@ -132,12 +132,12 @@ Each test file begins with a docstring naming the design sections it verifies (d
 
 | § | Section | Tests |
 | --- | --- | --- |
-| 1 | What the owner does | `tests/components/agents/test_work.py` (9), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (10), `tests/console/test_folder.py` (24), `tests/console/test_terminal.py` (5) |
+| 1 | What the owner does | `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (11), `tests/console/test_folder.py` (25), `tests/console/test_terminal.py` (5) |
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (11), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
-| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (14), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (10), `tests/console/test_folder.py` (24), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (8), `tests/docker/test_escape.py` (3) |
-| 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (9), `tests/console/test_folder.py` (24), `tests/contract/test_agent_program.py` (2) |
-| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (9), `tests/components/workspaces/test_docker_containers.py` (14), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
-| 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (10) |
+| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (14), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (11), `tests/console/test_folder.py` (25), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (8), `tests/docker/test_escape.py` (3) |
+| 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (11), `tests/console/test_folder.py` (25), `tests/contract/test_agent_program.py` (2) |
+| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_docker_containers.py` (14), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
+| 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (11) |
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (3) |
 | 9 | The console: easy to use, dynamic, the machine on the right | `tests/components/machine/test_meters.py` (7), `tests/console/test_machine_column.py` (14) |
@@ -242,7 +242,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 10 | What changes in the tests | none yet |
 | 11 | Build steps | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_keys_bar.py` (10), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_windows.py` (3) |
 | 12 | Every key a button | see its subsections |
-| 12.1 | What becomes a button | `tests/console/test_confirm.py` (6), `tests/console/test_folder.py` (24), `tests/console/test_folder_buttons.py` (5), `tests/console/test_home.py` (15), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_questions.py` (2), `tests/console/test_windows.py` (3) |
+| 12.1 | What becomes a button | `tests/console/test_confirm.py` (6), `tests/console/test_folder.py` (25), `tests/console/test_folder_buttons.py` (5), `tests/console/test_home.py` (15), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_questions.py` (2), `tests/console/test_windows.py` (3) |
 | 12.2 | One group, one cursor | `tests/console/test_button_groups.py` (9), `tests/console/test_buttons.py` (9) |
 | 12.3 | Pressing a button | `tests/console/test_button_groups.py` (9), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_one_door.py` (6) |
 | 12.4 | How the focus moves | `tests/console/test_button_groups.py` (9), `tests/console/test_button_hints.py` (5), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_monitor_flow_buttons.py` (4) |
@@ -315,7 +315,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 12 | The Flow view in the Monitor | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_planning_view.py` (4), `tests/components/flows/test_summaries.py` (9), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_view.py` (12), `tests/console/test_monitor_flow_watch.py` (12), `tests/console/test_monitor_page.py` (16), `tests/console/test_orchestrator_panel.py` (6) |
 | 13 | What flows do not cover | none yet |
 | 14 | Build steps | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_runs.py` (7), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_view.py` (12), `tests/kernel/test_settings_checks.py` (3), `vscode/test/gates.test.ts` (16) |
-| 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_flow_tools.py` (9), `tests/components/agents/test_sessions.py` (16), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (24), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (11) |
+| 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_flow_tools.py` (9), `tests/components/agents/test_sessions.py` (16), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (25), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (11) |
 | 16 | The orchestrator: a model that steers the run | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (9), `tests/components/flows/test_orchestrator.py` (18), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_orchestrator_panel.py` (6) |
 | 17 | Jobs, and the work done while one runs | `tests/components/flows/test_box_jobs.py` (8), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_jobs.py` (9), `tests/components/flows/test_side_work.py` (7), `tests/console/test_side_work_panel.py` (3) |
 
@@ -324,7 +324,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | none yet |
-| 2 | The container platform adapters | `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (14), `tests/components/workspaces/test_docker_engine.py` (12), `tests/contract/test_container_platform.py` (8), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
+| 2 | The container platform adapters | `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_choosing_a_platform.py` (11), `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (14), `tests/components/workspaces/test_docker_engine.py` (12), `tests/components/workspaces/test_docker_operations.py` (17), `tests/components/workspaces/test_workspace_operations.py` (11), `tests/console/test_folder.py` (25), `tests/contract/test_container_platform.py` (8), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
 | 3 | The edge's way to the gateway on Linux | none yet |
 | 4 | A workspace's container on Docker Engine | none yet |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | none yet |
@@ -366,15 +366,15 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | The provider's record, and its key | `tests/cli/test_endpoint_commands.py` (12), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/console/test_secret_field.py` (6) |
 | 5 | How the gateway gets the key | `tests/components/gateway/test_cloud_keys.py` (6) |
 | 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (14) |
-| 7 | Cloud presets, and the main slot running one | `tests/components/agents/test_work.py` (9), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17) |
+| 7 | Cloud presets, and the main slot running one | `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17) |
 | 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_openrouter.py` (14) |
-| 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (24) |
-| 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (24) |
+| 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
+| 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
 | 11 | Cost: each request, session and flow, and the limits | `tests/cli/test_cloud_commands.py` (7), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_cost_limits.py` (8), `tests/components/gateway/test_cost_views.py` (8), `tests/console/test_add_model.py` (25), `tests/console/test_cost_pause.py` (2), `tests/console/test_data.py` (17), `tests/console/test_home.py` (15), `tests/console/test_monitor_cloud.py` (3), `tests/console/test_requests_page.py` (11), `tests/console/test_text.py` (4), `tests/kernel/test_event_attention.py` (3) |
 | 12 | How cost is known and kept | `tests/components/gateway/test_cloud_cost.py` (5), `tests/components/gateway/test_cost_views.py` (8), `tests/components/gateway/test_state_files.py` (4) |
 | 13 | What the Monitor shows of a cloud model | `tests/components/runtime/test_cloud_facts.py` (5), `tests/console/test_monitor_cloud.py` (3) |
 | 14 | The first run: Add a model | `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (17), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (19) |
-| 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_folder.py` (24), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
+| 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_folder.py` (25), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
 | 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3) |
 | 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (18) |
 | 18 | Tests, the fake OpenRouter, and the checks owed with a real key | `tests/contract/test_endpoint.py` (5), `tests/real/test_openrouter.py` (5), `tests/test_architecture.py` (7), `tests/tools/test_capture_endpoint.py` (2) |
@@ -422,7 +422,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7.4 | Finding figures | `tests/components/agents/test_find_figures_tool.py` (5), `tests/components/workspaces/test_figure_geometry.py` (4) |
 | 7.5 | The agent's tools are this Clank's | `tests/components/agents/test_agent_files.py` (3), `tests/components/agents/test_opencode.py` (8), `tests/docker/test_agent_files_live.py` (1) |
 | 8 | VS Code on another computer | see its subsections |
-| 8.1 | Where the window opens | `tests/components/agents/test_remote_code.py` (5), `tests/components/agents/test_work.py` (9), `tests/console/test_folder.py` (24), `tests/kernel/test_where.py` (11) |
+| 8.1 | Where the window opens | `tests/components/agents/test_remote_code.py` (5), `tests/components/agents/test_work.py` (11), `tests/console/test_folder.py` (25), `tests/kernel/test_where.py` (11) |
 | 8.2 | Setting the PC's side up | `tests/components/agents/test_remote_code.py` (5) |
 | 8.3 | What the PC no longer does | none yet |
 | 8.4 | How it is built | none yet |
@@ -527,8 +527,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | The rule: through Clank, by allowance | `tests/components/gateway/test_proxy.py` (12), `tests/components/workspaces/test_workspace_commands.py` (5) |
 | 2 | The way out: a forward proxy at the gateway | `tests/components/gateway/test_proxy.py` (12), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7) |
 | 3 | A host the agent asks for | `tests/components/workspaces/test_host_asks.py` (3) |
-| 4 | What the owner sees | `tests/components/gateway/test_network_views.py` (3), `tests/console/test_folder.py` (24) |
-| 5 | Packages, papers, data: the named sets | `tests/components/workspaces/test_network_sets.py` (4), `tests/console/test_folder.py` (24) |
+| 4 | What the owner sees | `tests/components/gateway/test_network_views.py` (3), `tests/console/test_folder.py` (25) |
+| 5 | Packages, papers, data: the named sets | `tests/components/workspaces/test_network_sets.py` (4), `tests/console/test_folder.py` (25) |
 | 6 | Search | `tests/components/workspaces/test_network_sets.py` (4) |
 | 7 | What is never reached | `tests/components/gateway/test_proxy.py` (12) |
 | 8 | Order of work | none yet |
@@ -1586,6 +1586,8 @@ Design 0004 §1 and §4: making a workspace's agent ready writes the program's c
 - prepare refuses a workspace that is not there or does not run
 - prepare writes every file in one go and reads dockers limits once in a while
 - clank work starts docker opens the folder and runs the agent here
+- work never asks a docker the system runs to start
+- code never asks a docker the system runs to start
 - with no model running clank loads the slots last good one and says why it cannot
 - with no model running and none that worked clank loads the preset the runtimes settings name
 - clank code gets the folder ready then opens it in clanks vs code window
@@ -3362,6 +3364,22 @@ Design 0002 §2.8 and §2.11, and the M8.0 plan, task 1: an MCP server added for
 - removing a server removes its secrets
 - a check starts the server with its secrets asks for its tools and ends it
 
+### `tests/components/workspaces/test_choosing_a_platform.py`
+
+Design 0014 §2 (decision 0070): the container platform adapter is chosen by platform and by what answers, asking no engine. `auto`, the setting's default, is Docker Desktop on Windows and macOS. On Linux it is the adapter of the engine the docker command would use: Docker Desktop when the command's current context is Docker Desktop's (desktop-linux); else Docker Engine when systemd knows Docker's service; else Docker Desktop when its own command answers (a stopped Docker Desktop, with no Docker Engine beside it); else Docker Engine, which asks the engine directly, says that Docker from the snap and rootless Docker are unsupported, or says how to install Docker when there is no docker command. A name set in the settings wins. Each choice says why, and the platform made keeps it. Docker Desktop on Linux names its own context on every command; elsewhere its commands do not change. The workspaces say which adapter is in use, and Docker's view says which, why, and whether Clank starts it.
+
+- docker engine is used where docker desktop is not
+- docker desktop is used on windows and macos and where its context is current on linux
+- a stopped docker desktop is still chosen where no docker engine is installed
+- a docker command without dockers system service asks the engine directly
+- the snap and rootless docker go to docker engine which says they are unsupported
+- without a docker command docker engine says how to install it
+- an adapter named in the settings is used as named
+- choosing an adapter asks no engine
+- docker desktop on linux names its own context and elsewhere changes nothing
+- the platform made from the settings keeps why it was chosen
+- dockers view says which adapter was chosen why and whether clank starts it
+
 ### `tests/components/workspaces/test_cloud_bound.py`
 
 Design 0016 §9 (decisions 0103 and 0112): every workspace, new or existing, stays on this machine until the owner says otherwise; with a cloud model in the main slot, a workspace not yet answered is asked once whether its agent may use it (the open question given again while it waits), with words that say what goes, what never does and, for a workspace that existed before the provider was agreed, that its earlier sessions and folder may hold research; *allow* makes its bound `cloud` and gives it to the gateway, *keep local* is kept and not asked again; a question that expires leaves it unanswered, asked again next time; each answer is an event that says who gave it; and the bounds reach the gateway at every change and at each start of the service. Every answer of the question's route says whether the agent may start now (`start`), and a folder's view carries its workspace's bound beside its other facts.
@@ -3446,7 +3464,7 @@ Design 0014 §2 (decision 0070): the Docker Engine adapter reads Docker Engine's
 
 ### `tests/components/workspaces/test_docker_operations.py`
 
-Design 0002 §2.4-2.5 and §3.2: starting and stopping Docker are operations the service runs under one lock. A start asks the platform, waits for its engine within its time limit (and can be canceled while it waits), then puts right what the start disturbed; a stop asks first when containers Clank did not start are running, naming them, and "cancel" leaves Docker running; a press sent twice starts one operation, and a second start while one runs is refused; the background check records `docker.changed` once per change (the first reading is what clients load, not a change); after a restart an interrupted operation is reconciled from Docker's state.
+Design 0002 §2.4-2.5 and §3.2: starting and stopping Docker are operations the service runs under one lock. A start asks the platform, waits for its engine within its time limit (and can be canceled while it waits), then puts right what the start disturbed; a stop asks first when containers Clank did not start are running, naming them, and "cancel" leaves Docker running; a press sent twice starts one operation, and a second start while one runs is refused; the background check records `docker.changed` once per change (the first reading is what clients load, not a change); after a restart an interrupted operation is reconciled from Docker's state. Design 0014 §2: on Docker Engine, the system's service, a start or a stop is refused at once in the status's words (the command to run; the docker group when this account has no access), a stop before any question about other programs' containers; while it is stopped, a workspace's container is unavailable in those words, and nothing reaches the engine.
 
 - the check records docker changed once per change and not for the first reading
 - a start asks the platform waits for its engine then puts right what it disturbed
@@ -3461,6 +3479,10 @@ Design 0002 §2.4-2.5 and §3.2: starting and stopping Docker are operations the
 - after a restart an interrupted start is reconciled from dockers state
 - a press sent twice starts one operation and another start is refused as busy
 - the routes start operations that record the client
+- starting docker engine is refused at once with the command to run
+- without access a start names the docker group not systemctl
+- stopping docker engine is refused before any question about other containers
+- a workspaces container on a stopped docker engine is unavailable saying how to start it
 
 ### `tests/components/workspaces/test_edge.py`
 
@@ -3575,7 +3597,7 @@ Design 0004 §1 and design 0002 §2.15: `clank workspace open [FOLDER]` (this fo
 
 ### `tests/components/workspaces/test_workspace_operations.py`
 
-Design 0004 §1, §3 and §6: opening a folder makes it a workspace (a record naming it; nothing is written in the folder), builds Clank's sandbox image if it is not built (asked first: it downloads about a gigabyte), makes the internal network and the one that reaches the host, starts the edge and the folder's container, and the next time does nothing it already did (a stopped container is started, not made again). A container's limits are its record's, else half of what the platform has. A folder whose container would see more than itself (a drive's root, the user's home, one holding CLANK_HOME or inside it) is refused, as is opening with Docker stopped. Stopping a workspace stops its container; removing one asks first (saying, when its container runs, that what runs in it ends), then removes its container and its home, and leaves its folder as it was.
+Design 0004 §1, §3 and §6: opening a folder makes it a workspace (a record naming it; nothing is written in the folder), builds Clank's sandbox image if it is not built (asked first: it downloads about a gigabyte), makes the internal network and the one that reaches the host, starts the edge and the folder's container, and the next time does nothing it already did (a stopped container is started, not made again). A container's limits are its record's, else half of what the platform has. A folder whose container would see more than itself (a drive's root, the user's home, one holding CLANK_HOME or inside it) is refused, as is opening with Docker stopped. Stopping a workspace stops its container; removing one asks first (saying, when its container runs, that what runs in it ends), then removes its container and its home, and leaves its folder as it was. Design 0014 §2: on Docker Engine, which Clank never starts, opening while it is stopped is refused in the status's words, with the command that starts it.
 
 - opening a folder makes its workspace and its container and the next time does nothing again
 - the edge is made again when the ports it forwards change
@@ -3585,6 +3607,7 @@ Design 0004 §1, §3 and §6: opening a folder makes it a workspace (a record na
 - a second folder of the same name gets a name of its own and its record sets its limits
 - a folder whose container would see more than itself is refused
 - opening with docker stopped says how to start it
+- opening a workspace while docker engine is stopped names the command to start it
 - removing a workspace asks then removes its container and home and leaves its folder
 - removing a workspace whose container runs says that what runs in it ends
 
@@ -3822,6 +3845,7 @@ Design 0004 §1 and §4, and design 0013 §15: the console's page for the folder
 - f opens a planning and brings the console to the monitors flow view
 - the pages keys do nothing while a window is over it
 - a folder whose container would see more than it is refused saying why
+- the folder page shows the command for a docker clank does not start
 - readiness names each missing item with its key
 - a running workspace cut off from the model says so and the agent may still start
 - clank alone opens the console on this folders page

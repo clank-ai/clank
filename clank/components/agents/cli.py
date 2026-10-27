@@ -4,7 +4,8 @@
 opens VS Code.
 
 Each step is done only when it is needed, and followed as it goes: the service (started in the background when it
-does not run), Docker (started when it is stopped), the folder's workspace (opened: its container runs; the first time
+does not run), Docker (started when it is stopped, if Clank starts it: a Docker the system runs, Docker Engine, is
+shown with what to do, design 0014 §2), the folder's workspace (opened: its container runs; the first time
 it builds Clank's sandbox image, asked first unless `--yes`), a model in the main slot (when none runs: the slot's last
 configuration that worked, else `daily 262K`), the agent's configuration (written into the container), and then the
 agent itself, here. Leaving the agent stops nothing but the agent. `clank code` gets the folder ready the same way,
@@ -92,6 +93,9 @@ def _ready(client: Client, path: str, yes: bool) -> dict[str, Any]:
     """What the agent needs, each step only when needed: Docker, the folder's workspace, a model; the workspace."""
     docker = common.call(lambda: client.get("docker", refresh=True))
     if docker["state"] != "running":
+        if not docker.get("starts", True):  # the system's Docker Engine: Clank never starts it (design 0014 §2)
+            click.echo(docker.get("said") or f"Docker is {docker['state']}: {docker['detail']}")
+            raise click.exceptions.Exit(1)
         click.echo(f"Docker is {docker['state']}: starting it")
         _done(follow.follow(client, common.call(lambda: client.post("docker/start"))))
     opened = _done(

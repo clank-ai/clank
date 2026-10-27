@@ -5,7 +5,8 @@ does nothing it already did (a stopped container is started, not made again). A 
 else half of what the platform has. A folder whose container would see more than itself (a drive's root, the user's
 home, one holding CLANK_HOME or inside it) is refused, as is opening with Docker stopped. Stopping a workspace stops its
 container; removing one asks first (saying, when its container runs, that what runs in it ends), then removes its
-container and its home, and leaves its folder as it was."""
+container and its home, and leaves its folder as it was. Design 0014 §2: on Docker Engine, which Clank never starts,
+opening while it is stopped is refused in the status's words, with the command that starts it."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -16,6 +17,7 @@ import pytest
 
 from clank import registry
 from clank.components.workspaces import service as workspaces_service
+from clank.components.workspaces.adapters.docker_engine import DockerEngine
 from clank.components.workspaces.sandbox import image_tag, names
 from clank.kernel.clock import FakeClock
 from clank.kernel.core import Kernel, open_kernel
@@ -23,6 +25,7 @@ from clank.kernel.events import Actor
 from clank.kernel.home import Home
 from clank.kernel.operations import Operation
 from tests.fakes.platform import FakePlatform, container
+from tests.fakes.recorded import FIXTURES, RecordedProgram
 
 pytestmark = pytest.mark.anyio
 YOU = Actor(kind="user", via="console")
@@ -205,6 +208,26 @@ async def test_opening_with_docker_stopped_says_how_to_start_it(
         done = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
     assert done.status == "failed"
     assert "`clank docker start`" in (done.error or "")
+
+
+async def test_opening_a_workspace_while_docker_engine_is_stopped_names_the_command_to_start_it(
+    home: Home, clock: FakeClock, folder: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    program = RecordedProgram.load(FIXTURES / "docker-engine" / "28.0.4", state="stopped")
+    engine = DockerEngine(program, program.command, platform="linux", answer=program.answer)
+    monkeypatch.setattr(workspaces_service, "make_platform", lambda name: engine)
+    kernel = open_kernel(home, clock, registry.components())
+    try:
+        async with kernel.operations.running():
+            done = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+    finally:
+        kernel.close()
+    assert done.status == "failed"
+    assert done.error == (
+        "Docker Engine is stopped: start it with `sudo systemctl start docker`; Clank never starts or stops Docker "
+        "Engine"
+    )
+    assert "clank docker start" not in (done.error or ""), "Clank does not start the system's Docker"
 
 
 async def test_removing_a_workspace_asks_then_removes_its_container_and_home_and_leaves_its_folder(

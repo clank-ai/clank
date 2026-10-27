@@ -29,7 +29,7 @@ GitHub Actions' `ubuntu-24.04` and `ubuntu-24.04-arm` runners.
 **Status:** lane L for Linux x64 being built at the owner's instruction (2026-10-27: Clank on a Linux computer of the
 owner's, with OpenRouter's models; design 0014's status says so), with the recommended choices: the recording made by
 the hand-run job (design 0014 §2), and decision 0071's (a). Done: L0 (Docker Engine 28.0.4 recorded by the job on
-2026-10-27), L1 and L2. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for the owner. The
+2026-10-27), L1, L2 and L3. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for the owner. The
 places below were found at commit e90c51a; the code has moved since, and each task's commit names where it changed.
 
 A path such as `workspaces/sandbox.py:38` means `clank/components/workspaces/sandbox.py`, line 38, at commit e90c51a;
@@ -233,38 +233,51 @@ condition holds. Now: L0's tool, L1, P3 and P6.
 
 #### L3. The adapter chosen by platform and by what answers (B)
 
-- [ ] **Tests first:**
+- [x] **Tests first:**
   - `tests/components/workspaces/test_choosing_a_platform.py` (design 0014 §2):
     - `test_docker_engine_is_used_where_docker_desktop_is_not` (Linux; the docker command's context is not
       `desktop-linux`, and systemd knows Docker's service: `docker-engine`, with its reason);
     - `test_docker_desktop_is_used_on_windows_and_macos_and_where_its_context_is_current_on_linux`;
     - `test_a_stopped_docker_desktop_is_still_chosen_where_no_docker_engine_is_installed`;
     - `test_a_docker_command_without_dockers_system_service_asks_the_engine_directly`;
-    - `test_docker_from_the_snap_or_rootless_docker_is_unsupported_saying_how_to_install_docker_engine`;
+    - `test_docker_from_the_snap_or_rootless_docker_is_unsupported_saying_how_to_install_docker_engine` (built as
+      `test_the_snap_and_rootless_docker_go_to_docker_engine_which_says_they_are_unsupported`, the adapter's own
+      words being L2's);
     - `test_an_adapter_named_in_the_settings_is_used_as_named`;
     - `test_choosing_an_adapter_asks_no_engine` (only `docker context show`, `systemctl show` and `docker desktop
       version` are run, so a stopped engine is not woken);
-    - `test_docker_desktop_on_linux_names_its_own_context_and_elsewhere_changes_nothing`.
+    - `test_docker_desktop_on_linux_names_its_own_context_and_elsewhere_changes_nothing`;
+    - as built, also `test_without_a_docker_command_docker_engine_says_how_to_install_it`,
+      `test_the_platform_made_from_the_settings_keeps_why_it_was_chosen` and
+      `test_dockers_view_says_which_adapter_was_chosen_why_and_whether_clank_starts_it` (with the adapter in use,
+      for L6).
   - `tests/components/workspaces/test_docker_operations.py`:
     - `test_starting_docker_engine_is_refused_at_once_with_the_command_to_run`;
     - `test_without_access_a_start_names_the_docker_group_not_systemctl`;
-    - `test_stopping_docker_engine_is_refused_before_any_question_about_other_containers`.
+    - `test_stopping_docker_engine_is_refused_before_any_question_about_other_containers`;
+    - as built, also `test_a_workspaces_container_on_a_stopped_docker_engine_is_unavailable_saying_how_to_start_it`
+      (L2's guard reaches an agent's clients as `WorkspaceUnavailable`, in its words).
   - `tests/components/workspaces/test_workspace_operations.py`:
     `test_opening_a_workspace_while_docker_engine_is_stopped_names_the_command_to_start_it`.
   - `tests/components/agents/test_work.py`: `test_work_never_asks_a_docker_the_system_runs_to_start`. Docker's view
     says stopped, and `starts` is false: no `POST docker/start` is sent, the status's detail is printed, and the exit
     status is 1. Also `test_code_never_asks_a_docker_the_system_runs_to_start`.
   - The folder page: `test_the_folder_page_shows_the_command_for_a_docker_clank_does_not_start`.
-- [ ] **Files:** `workspaces/kinds.py:25-28` (`adapter`: `auto` by default; its description lists `auto`,
+- [x] **Files:** `workspaces/kinds.py:25-28` (`adapter`: `auto` by default; its description lists `auto`,
   `docker-desktop` and `docker-engine`); `workspaces/service.py:69-72` (`choose_platform`), `119-125` (the platform
   property uses it), `322-368` (start and stop refused at once, in the status's words), `459-469` (the view gains
   `chosen` and `starts`) and `494-498` (`_require_usable` refuses *no access* too); `workspaces/folders.py:157-160`
   (the status's detail); `workspaces/adapters/docker_desktop.py` (`--context desktop-linux` on Linux);
   `agents/cli.py:67-77`; `agents/console/folder.py:729-732`. Regenerated: `clank/schemas/docker.schema.json`,
-  `vscode/src/core/kinds.ts`.
-- [ ] **Interfaces:** `choose_platform(setting: str, platform: str = sys.platform, answer: TimedAnswer = run_answer,
+  `vscode/src/core/kinds.ts`. As built, the choice is a module of its own, `workspaces/adapters/choose.py`, which
+  `make_platform` asks, so tests that replace `make_platform` choose nothing; the platform made keeps why
+  (`ContainerPlatform.chosen`).
+- [x] **Interfaces:** `choose_platform(setting: str, platform: str = sys.platform, answer: TimedAnswer = run_answer,
   which: Callable[[str], str | None] = shutil.which, environ: Mapping[str, str] = os.environ) -> tuple[str, str]`:
-  the adapter's name, and why. `GET /docker` gains `chosen: str` and `starts: bool`.
+  the adapter's name, and why. `GET /docker` gains `chosen: str` and `starts: bool`, and as built `said: str`, the
+  state in a sentence with what to do (the words `clank work`, `clank code` and the folder page show). For L6:
+  `Workspaces.platform_adapter() -> str`, the adapter in use by name (`docker-desktop`, `docker-engine`), and
+  `Workspaces.platform_starts() -> bool`.
 
 #### L4. The doctor and the meters ask the platform (B)
 

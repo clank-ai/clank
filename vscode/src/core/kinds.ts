@@ -174,7 +174,7 @@ export interface MachineProfile {
 export interface DockerSettings {
   /** The name clients show for this record; the file's own name when empty. */
   title: string;
-  /** The adapter Clank uses for containers: docker-desktop, or docker-engine (Docker Engine on Linux, the system's service, which Clank never starts or stops). */
+  /** The adapter Clank uses for containers: auto (Docker Desktop on Windows and macOS; on Linux, the one of the engine the docker command would use, chosen without waking any: Docker's view says which and why), docker-desktop, or docker-engine (Docker Engine on Linux, the system's service, which Clank never starts or stops). */
   adapter: string;
   /** How often, in seconds, Clank reads Docker's state. */
   poll_seconds: number;

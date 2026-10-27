@@ -1006,8 +1006,12 @@ class FolderPage(Page):
         if step == "setup":
             return self._setup(command)
         if step == "docker":
-            if client.get("docker", refresh=True)["state"] == "running":
+            docker = client.get("docker", refresh=True)
+            if docker["state"] == "running":
                 return True
+            if not docker.get("starts", True):  # the system's Docker Engine: what to run, never a start (0014 §2)
+                self._say(docker.get("said") or f"Docker is {docker['state']}: {docker['detail']}", True)
+                return False
             return self._follow(client.post("docker/start"))
         if step == "workspace":
             view = client.get("workspaces/folder", folder=self.console.folder)

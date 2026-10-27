@@ -123,6 +123,7 @@ class ContainerPlatform(Adapter):
         self.launch = launch
         self.answer = answer
         self.follow = follow
+        self.chosen = ""  # why this adapter is the one in use, said by whoever chose it (design 0014 §2)
 
     @classmethod
     @abstractmethod
