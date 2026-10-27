@@ -12,6 +12,7 @@ import pytest
 
 from clank.components.workspaces.sandbox import layered_tag
 from clank.kernel.processes import background_flags
+from tests.docker.conftest import for_the_agent
 
 pytestmark = pytest.mark.docker
 MAIN = (
@@ -43,7 +44,7 @@ def folder(tmp_path: Path) -> Path:
     (paper / "results.tex").write_text(RESULTS, encoding="utf-8")
     (paper / "main.aux").write_text("% the owner's own\n", encoding="utf-8")
     (paper / "main.pdf").write_bytes(b"%PDF-1.4 the owner's own build\n")
-    return paper
+    return for_the_agent(paper)
 
 
 def files(folder: Path) -> dict[str, bytes]:

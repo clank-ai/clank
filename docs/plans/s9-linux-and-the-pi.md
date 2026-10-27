@@ -29,9 +29,9 @@ GitHub Actions' `ubuntu-24.04` and `ubuntu-24.04-arm` runners.
 **Status:** lane L for Linux x64 being built at the owner's instruction (2026-10-27: Clank on a Linux computer of the
 owner's, with OpenRouter's models; design 0014's status says so), with the recommended choices: the recording made by
 the hand-run job (design 0014 §2), and decision 0071's (a). Done: L0 (Docker Engine 28.0.4 recorded by the job on
-2026-10-27), L1, L2, L3, L4 and L7. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for the
-owner. The places below were found at commit e90c51a; the code has moved since, and each task's commit names where it
-changed.
+2026-10-27), L1, L2, L3, L4, L7 and L8: lane L but L5 and L6. L5 and L6 are built on a branch of their own. The Pi's
+steps (P1-P6) wait for the owner. The places below were found at commit e90c51a; the code has moved since, and each
+task's commit names where it changed.
 
 A path such as `workspaces/sandbox.py:38` means `clank/components/workspaces/sandbox.py`, line 38, at commit e90c51a;
 every other path starts at the repository's root.
@@ -415,14 +415,21 @@ network before it starts the gateway (`workspaces/folders.py:170-175` moves to t
 
 #### L8. A folder the agent cannot write is refused, saying why (C)
 
-Only if `id -u` on the Pi, or on CI's runner (P2), is not 1000.
+Only if `id -u` on the Pi, or on CI's runner (P2), is not 1000. Built: GitHub's runners run as user 1001, and the
+owner's Linux computer may use another.
 
-- [ ] **Test first** (`tests/components/workspaces/test_workspace_operations.py`, design 0014 §4):
+- [x] **Test first** (`tests/components/workspaces/test_workspace_operations.py`, design 0014 §4):
   `test_on_linux_a_folder_the_agent_cannot_write_is_refused_saying_why`. On Docker Engine, a folder that uid 1000 may
   not write is refused. The words say that the agent works as user 1000 in its container, whose folder it is, and how
-  to let it write.
-- [ ] **Files:** `workspaces/folders.py:150-161` (the record step asks the platform's rule; Docker Desktop's file
+  to let it write. As built, the rule's own tests are `tests/components/workspaces/test_agent_access.py`'s: what user
+  1000 may do comes from the folder's owner, group and others' bits and its POSIX access control list, as Linux
+  decides it; the words name the fix (`setfacl -R -m u:1000:rwX,d:u:1000:rwX FOLDER`, or `chmod -R a+rwX FOLDER`);
+  Docker Desktop's file sharing says nothing; and, on Linux only, a real private folder of another user's is refused.
+- [x] **Files:** `workspaces/folders.py:150-161` (the record step asks the platform's rule; Docker Desktop's file
   sharing has none); the tests' folders in `tests/docker/` are opened to uid 1000 where the runner's user is not 1000.
+  As built: `ContainerPlatform.agent_access(folder) -> str` (empty: the agent may use it), Docker Engine's from
+  `docker_engine.folder_access`, its words from `refusal`; `tests/docker/conftest.py`'s `for_the_agent(folder)` opens a
+  test's folders before a container sees them, where this machine's user is not 1000.
 
 ### Lane P: the Pi's own checks, and CI on arm64
 

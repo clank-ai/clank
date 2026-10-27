@@ -29,10 +29,16 @@ state Clank reads and never changes.
   user's runtime folder, or by a current context named `rootless` (`docker context show`, which reaches no engine).
   Where the system's own service exists too, its engine is used whatever the context, since every command names its
   socket.
+- *The agent's folder.* A folder Docker Engine mounts shows the host's own owners, and the agent works as user 1000 in
+  its container, so a folder user 1000 may not read, write and enter (by its mode's owner, group and others' bits, or
+  its POSIX access control list, as Linux decides) is refused, saying whose it is and how to let user 1000 write it
+  (`agent_access`, design 0014 §4).
 """
 
 import os
 import re
+import shlex
+import struct
 import sys
 import time
 from collections.abc import Callable, Mapping
@@ -40,6 +46,7 @@ from dataclasses import dataclass
 
 from clank.components.workspaces.adapters.docker_cli import DockerCli, find_docker, words
 from clank.components.workspaces.adapters.platform import Follow, PlatformError, PlatformStatus, follow_command
+from clank.components.workspaces.sandbox import USER
 from clank.kernel.adapters import Capability
 from clank.kernel.processes import Launch, TimedAnswer, TimedRun, launch_program, run_answer
 
@@ -145,6 +152,86 @@ def docker_group() -> tuple[bool, bool]:
     return listed, group == os.getegid() or group in os.getgroups()
 
 
+AGENT_UID, AGENT_GID = (int(part) for part in USER.split(":"))  # the agent's user and group in its container
+ACL = "system.posix_acl_access"  # where Linux keeps a file's POSIX access control list
+READ, WRITE, ENTER = 4, 2, 1
+OWNER_ENTRY, USER_ENTRY, GROUP_ENTRY, NAMED_GROUP_ENTRY, MASK_ENTRY, OTHER_ENTRY = 0x01, 0x02, 0x04, 0x08, 0x10, 0x20
+
+
+def granted(mode: int, owner: int, group: int, acl: bytes | None, uid: int = AGENT_UID, gid: int = AGENT_GID) -> int:
+    """What a user (`uid`, in its group `gid`) may do with a file of this mode and owners, as Linux decides it: read
+    (4), write (2) and enter (1), from its POSIX access control list when it has one, else its mode's owner, group and
+    others' bits."""
+    if uid == owner:
+        return (mode >> 6) & 7
+    entries = _acl_entries(acl)
+    if not entries:
+        return (mode >> 3) & 7 if gid == group else mode & 7
+    mask = next((perms for tag, perms, _ in entries if tag == MASK_ENTRY), 7)
+    named = [perms for tag, perms, id in entries if tag == USER_ENTRY and id == uid]
+    if named:
+        return named[0] & mask
+    matching = [
+        perms
+        for tag, perms, id in entries
+        if (tag == GROUP_ENTRY and group == gid) or (tag == NAMED_GROUP_ENTRY and id == gid)
+    ]
+    if matching:
+        found = 0
+        for perms in matching:
+            found |= perms
+        return found & mask
+    return next((perms for tag, perms, _ in entries if tag == OTHER_ENTRY), mode & 7)
+
+
+def _acl_entries(acl: bytes | None) -> list[tuple[int, int, int]]:
+    """A POSIX access control list's entries (tag, permissions, id), as Linux stores them: version 2, then eight bytes
+    each; none when there is no list."""
+    if not acl or len(acl) < 4 or struct.unpack_from("<I", acl)[0] != 2:
+        return []
+    return [struct.unpack_from("<HHI", acl, offset) for offset in range(4, len(acl) - 7, 8)]
+
+
+def refusal(folder: str, mode: int, owner: int, group: int, acl: bytes | None, owner_name: str) -> str:
+    """Why the agent (user 1000 in its container) could not read, write and enter a folder of these owners and mode as
+    Docker Engine mounts it, whose it is, and how to let it; empty when it can (design 0014 §4)."""
+    have = granted(mode, owner, group, acl)
+    missing = [word for bit, word in ((READ, "read"), (WRITE, "write"), (ENTER, "enter")) if not have & bit]
+    if not missing:
+        return ""
+    lacking = missing[0] if len(missing) == 1 else f"{', '.join(missing[:-1])} or {missing[-1]}"
+    whose = f"{owner_name}'s (user {owner}" if owner_name else f"user {owner}'s ("
+    quoted = shlex.quote(folder)
+    return (
+        f"the agent works as user {AGENT_UID} in its container, and {folder} is {whose}, mode {mode & 0o777:o}): user "
+        f"{AGENT_UID} may not {lacking} it. Let it, and what you make in it later: `setfacl -R -m "
+        f"u:{AGENT_UID}:rwX,d:u:{AGENT_UID}:rwX {quoted}`, or `chmod -R a+rwX {quoted}` (every user of this computer "
+        "may then change it)"
+    )
+
+
+def folder_access(folder: str) -> str:
+    """`refusal` for a folder of this computer, from its owners, its mode and its access control list; empty off
+    Linux."""
+    if sys.platform != "linux":
+        return ""
+    import pwd
+
+    try:
+        found = os.stat(folder)
+    except OSError as error:
+        return f"{folder} cannot be read: {error}"
+    try:
+        acl: bytes | None = os.getxattr(folder, ACL)
+    except OSError:
+        acl = None
+    try:
+        name = pwd.getpwuid(found.st_uid).pw_name
+    except KeyError:
+        name = ""
+    return refusal(folder, found.st_mode, found.st_uid, found.st_gid, acl, name)
+
+
 class DockerEngine(DockerCli):
     """Docker Engine on Linux, the system's service: its state read from systemd and the engine, never changed."""
 
@@ -224,6 +311,11 @@ class DockerEngine(DockerCli):
             f"Clank never stops Docker Engine, the system's service: stop it with `{STOP}` (stopped alone, the "
             "service is started again by its socket)"
         )
+
+    def agent_access(self, folder: str) -> str:
+        """Why the agent could not use this folder as Docker Engine mounts it, with the host's own owners (design 0014
+        §4); empty when it can."""
+        return folder_access(folder)
 
     def _target(self) -> list[str]:
         """The system engine's socket, named on every command."""

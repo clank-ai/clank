@@ -19,6 +19,7 @@ from clank.kernel.core import Kernel, open_kernel
 from clank.kernel.events import Actor
 from clank.kernel.home import Home
 from clank.kernel.processes import Answer, background_flags
+from tests.docker.conftest import for_the_agent
 from tests.fakes.platform import FakePlatform
 
 pytestmark = pytest.mark.docker
@@ -44,6 +45,7 @@ def kernel(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Iterator[Kernel]:
     kernel = open_kernel(home, FakeClock(datetime(2026, 10, 26, 12, 0, tzinfo=UTC)), registry.components())
     folder = tmp_path / "paper"
     (folder / "figures").mkdir(parents=True)
+    for_the_agent(folder)
     kernel.settings.write("workspace", "paper", {"path": str(folder)}, base=None, actor=YOU)
 
     def run(workspace: str, argv: list[str], input: bytes | None = None, timeout: float = 30.0) -> Answer:

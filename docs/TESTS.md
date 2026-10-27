@@ -132,12 +132,12 @@ Each test file begins with a docstring naming the design sections it verifies (d
 
 | § | Section | Tests |
 | --- | --- | --- |
-| 1 | What the owner does | `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (14), `tests/console/test_folder.py` (25), `tests/console/test_terminal.py` (5) |
+| 1 | What the owner does | `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (15), `tests/console/test_folder.py` (25), `tests/console/test_terminal.py` (5) |
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (11), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
-| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (17), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (14), `tests/console/test_folder.py` (25), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (8), `tests/docker/test_escape.py` (3) |
+| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (17), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (15), `tests/console/test_folder.py` (25), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (8), `tests/docker/test_escape.py` (3) |
 | 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (11), `tests/console/test_folder.py` (25), `tests/contract/test_agent_program.py` (2) |
 | 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_docker_containers.py` (17), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
-| 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (14) |
+| 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (15) |
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (3) |
 | 9 | The console: easy to use, dynamic, the machine on the right | `tests/components/machine/test_meters.py` (8), `tests/console/test_machine_column.py` (14) |
@@ -324,9 +324,9 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | none yet |
-| 2 | The container platform adapters | `tests/components/agents/test_work.py` (11), `tests/components/machine/test_checks.py` (10), `tests/components/machine/test_doctor.py` (4), `tests/components/machine/test_meters.py` (8), `tests/components/workspaces/test_choosing_a_platform.py` (11), `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (17), `tests/components/workspaces/test_docker_engine.py` (14), `tests/components/workspaces/test_docker_operations.py` (17), `tests/components/workspaces/test_workspace_operations.py` (14), `tests/console/test_folder.py` (25), `tests/contract/test_container_platform.py` (8), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
+| 2 | The container platform adapters | `tests/components/agents/test_work.py` (11), `tests/components/machine/test_checks.py` (10), `tests/components/machine/test_doctor.py` (4), `tests/components/machine/test_meters.py` (8), `tests/components/workspaces/test_choosing_a_platform.py` (11), `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (17), `tests/components/workspaces/test_docker_engine.py` (14), `tests/components/workspaces/test_docker_operations.py` (17), `tests/components/workspaces/test_workspace_operations.py` (15), `tests/console/test_folder.py` (25), `tests/contract/test_container_platform.py` (8), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
 | 3 | The edge's way to the gateway on Linux | none yet |
-| 4 | A workspace's container on Docker Engine | `tests/components/machine/test_checks.py` (10), `tests/components/workspaces/test_workspace_operations.py` (14) |
+| 4 | A workspace's container on Docker Engine | `tests/components/machine/test_checks.py` (10), `tests/components/workspaces/test_agent_access.py` (4), `tests/components/workspaces/test_workspace_operations.py` (15) |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | `tests/components/machine/test_checks.py` (10) |
 | 6 | OpenCode on arm64 | none yet |
 | 7 | CI on arm64 | `tests/tools/test_workflows.py` (1) |
@@ -3368,6 +3368,15 @@ Design 0002 §2.8 and §2.11, and the M8.0 plan, task 1: an MCP server added for
 - removing a server removes its secrets
 - a check starts the server with its secrets asks for its tools and ends it
 
+### `tests/components/workspaces/test_agent_access.py`
+
+Design 0014 §4: on Docker Engine a mounted folder shows the host's own owners, and the agent works as user 1000 in its container, so a folder that user may not read, write and enter is refused when its workspace opens, saying why: that the agent works as user 1000 in its container, whose folder it is, and how to let it write (an access control list for user 1000, or the folder opened to every user). The folder's owner bits, its group's (user 1000's group is 1000), the others' and a POSIX access control list all count, as Linux counts them. Docker Desktop's file sharing maps the folder's owner, so it says nothing.
+
+- what user 1000 may do comes from the owner the group the others and the acl
+- the refusal says the agent is user 1000 whose folder it is and how to let it write
+- docker desktops file sharing says nothing
+- on linux a folder of another user that user 1000 may not write is refused
+
 ### `tests/components/workspaces/test_choosing_a_platform.py`
 
 Design 0014 §2 (decision 0070): the container platform adapter is chosen by platform and by what answers, asking no engine. `auto`, the setting's default, is Docker Desktop on Windows and macOS. On Linux it is the adapter of the engine the docker command would use: Docker Desktop when the command's current context is Docker Desktop's (desktop-linux); else Docker Engine when systemd knows Docker's service; else Docker Desktop when its own command answers (a stopped Docker Desktop, with no Docker Engine beside it); else Docker Engine, which asks the engine directly, says that Docker from the snap and rootless Docker are unsupported, or says how to install Docker when there is no docker command. A name set in the settings wins. Each choice says why, and the platform made keeps it. Docker Desktop on Linux names its own context on every command; elsewhere its commands do not change. The workspaces say which adapter is in use, and Docker's view says which, why, and whether Clank starts it.
@@ -3606,7 +3615,7 @@ Design 0004 §1 and design 0002 §2.15: `clank workspace open [FOLDER]` (this fo
 
 ### `tests/components/workspaces/test_workspace_operations.py`
 
-Design 0004 §1, §3 and §6: opening a folder makes it a workspace (a record naming it; nothing is written in the folder), builds Clank's sandbox image if it is not built (asked first: it downloads about a gigabyte), makes the internal network and the one that reaches the host, starts the edge and the folder's container, and the next time does nothing it already did (a stopped container is started, not made again). A container's limits are its record's, else half of what the platform has. A folder whose container would see more than itself (a drive's root, the user's home, one holding CLANK_HOME or inside it) is refused, as is opening with Docker stopped. Stopping a workspace stops its container; removing one asks first (saying, when its container runs, that what runs in it ends), then removes its container and its home, and leaves its folder as it was. Design 0014 §2: on Docker Engine, which Clank never starts, opening while it is stopped is refused in the status's words, with the command that starts it. Design 0014 §4: Docker's memory limits are read as a workspace opens (never in the regular check, the last reading kept): where Docker cannot limit a container's memory no workspace opens, saying so in Docker's words with the fix (`cgroup_enable=memory` on a Raspberry Pi), unless `allow_unlimited_memory` is set, and then its log and Docker's summary say its memory is not limited.
+Design 0004 §1, §3 and §6: opening a folder makes it a workspace (a record naming it; nothing is written in the folder), builds Clank's sandbox image if it is not built (asked first: it downloads about a gigabyte), makes the internal network and the one that reaches the host, starts the edge and the folder's container, and the next time does nothing it already did (a stopped container is started, not made again). A container's limits are its record's, else half of what the platform has. A folder whose container would see more than itself (a drive's root, the user's home, one holding CLANK_HOME or inside it) is refused, as is opening with Docker stopped. Stopping a workspace stops its container; removing one asks first (saying, when its container runs, that what runs in it ends), then removes its container and its home, and leaves its folder as it was. Design 0014 §2: on Docker Engine, which Clank never starts, opening while it is stopped is refused in the status's words, with the command that starts it. Design 0014 §4: Docker's memory limits are read as a workspace opens (never in the regular check, the last reading kept): where Docker cannot limit a container's memory no workspace opens, saying so in Docker's words with the fix (`cgroup_enable=memory` on a Raspberry Pi), unless `allow_unlimited_memory` is set, and then its log and Docker's summary say its memory is not limited. A folder the agent's user (1000 in its container) may not write, as the platform mounts it, is refused before its record is made, in the platform's words: whose folder it is, and how to let user 1000 write it.
 
 - opening a folder makes its workspace and its container and the next time does nothing again
 - the edge is made again when the ports it forwards change
@@ -3622,6 +3631,7 @@ Design 0004 §1, §3 and §6: opening a folder makes it a workspace (a record na
 - a workspace does not open where docker cannot limit memory saying how to fix it
 - allowing unlimited memory opens it and every client is told
 - dockers memory limits are read when a workspace opens never in the regular check
+- on linux a folder the agent cannot write is refused saying why
 
 ### `tests/console/test_add_model.py`
 

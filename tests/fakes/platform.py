@@ -91,6 +91,8 @@ class FakePlatform(ContainerPlatform):
         self.stats_rows: list[dict[str, Any]] = []  # its containers' use, as `docker stats` gives it
         self.memory: tuple[bool | None, list[str]] = (True, [])  # whether it limits memory, and its words
         self.memory_asked = 0
+        self.access = ""  # why the agent could not use a folder as it mounts it (Docker Engine's rule, as told)
+        self.access_asked: list[str] = []
         self.images: set[str] = set()
         self.build_args: dict[str, dict[str, str]] = {}  # each image built: its build arguments
         self.build_folders: dict[str, str] = {}  # and the folder it was built from
@@ -159,6 +161,10 @@ class FakePlatform(ContainerPlatform):
     def after_start(self, log: Callable[[str], None]) -> None:
         self.calls.append("after start")
         log("nothing to put back")
+
+    def agent_access(self, folder: str) -> str:
+        self.access_asked.append(folder)
+        return self.access
 
     def limits(self) -> tuple[int, int] | None:
         return self.cpus_memory

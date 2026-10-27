@@ -1,10 +1,15 @@
 """The Docker tests' rules and kernel (design 0004 §8, design 0002 §3.3): they run only when asked (`-m docker`), with
 this machine's Docker running; they build Clank's sandbox image when it is not built (about a gigabyte, once), so they
 are run when the owner allows it. Their kernel has a CLANK_HOME of its own, so the containers, networks and volumes
-they make carry its id; each is removed after the test, whatever happened (the image is kept: workspaces use it)."""
+they make carry its id; each is removed after the test, whatever happened (the image is kept: workspaces use it).
+Design 0014 §4: on Docker Engine a folder shows the host's owners, and the agent works as user 1000, so where this
+machine's user is another (GitHub's runners are 1001) each test opens its folders to every user before a container
+sees them (`for_the_agent`)."""
 
 import json
+import os
 import subprocess
+import sys
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -34,6 +39,22 @@ def anyio_backend() -> str:
 def docker(*arguments: str, timeout: float = 120) -> subprocess.CompletedProcess[str]:
     """`docker` with these arguments, its output and errors as text."""
     return subprocess.run(["docker", *arguments], capture_output=True, text=True, timeout=timeout, check=False)
+
+
+AGENT = 1000  # the agent's user id in Clank's containers (sandbox.USER)
+
+
+def for_the_agent(folder: Path) -> Path:
+    """The folder, its folders and files opened to every user where this machine's user is not the agent's (design 0014
+    §4), so the agent may read and write them; elsewhere, and for links, as it is."""
+    if sys.platform == "win32":
+        return folder
+    if os.getuid() == AGENT:
+        return folder
+    for path in [folder, *folder.rglob("*")]:
+        if not path.is_symlink():
+            path.chmod(0o777 if path.is_dir() else 0o666)
+    return folder
 
 
 def gateway_port(home: Home, port: int) -> None:

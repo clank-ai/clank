@@ -250,3 +250,9 @@ class ContainerPlatform(Adapter):
 
     def after_start(self, log: Callable[[str], None]) -> None:
         """Put right what starting the platform disturbed on this machine, saying what it does; most need nothing."""
+
+    def agent_access(self, folder: str) -> str:
+        """Why the agent (user 1000 in its container) could not read and write this folder as the platform mounts it,
+        saying how to let it; empty when it can. Docker Desktop's file sharing maps the folder's owner, so it says
+        nothing; Docker Engine shows the host's own owners (design 0014 §4)."""
+        return ""

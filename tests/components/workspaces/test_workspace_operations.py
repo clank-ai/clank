@@ -10,7 +10,8 @@ opening while it is stopped is refused in the status's words, with the command t
 memory limits are read as a workspace opens (never in the regular check, the last reading kept): where Docker cannot
 limit a container's memory no workspace opens, saying so in Docker's words with the fix (`cgroup_enable=memory` on a
 Raspberry Pi), unless `allow_unlimited_memory` is set, and then its log and Docker's summary say its memory is not
-limited."""
+limited. A folder the agent's user (1000 in its container) may not write, as the platform mounts it, is refused before
+its record is made, in the platform's words: whose folder it is, and how to let user 1000 write it."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -21,7 +22,7 @@ import pytest
 
 from clank import registry
 from clank.components.workspaces import service as workspaces_service
-from clank.components.workspaces.adapters.docker_engine import DockerEngine
+from clank.components.workspaces.adapters.docker_engine import DockerEngine, refusal
 from clank.components.workspaces.sandbox import image_tag, names
 from clank.kernel.clock import FakeClock
 from clank.kernel.core import Kernel, open_kernel
@@ -325,3 +326,23 @@ async def test_dockers_memory_limits_are_read_when_a_workspace_opens_never_in_th
     assert done.status == "done", done.error
     assert platform.memory_asked == 1
     assert kernel.parts["workspaces"].docker(refresh=True)["memory_limits"] is True, "the last reading is kept"
+
+
+async def test_on_linux_a_folder_the_agent_cannot_write_is_refused_saying_why(
+    kernel: Kernel, platform: FakePlatform, folder: Path
+) -> None:
+    platform.access = refusal(str(folder), 0o40755, 1001, 1001, None, "owner")  # Docker Engine's words
+    async with kernel.operations.running():
+        done = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+    assert done.status == "failed"
+    error = done.error or ""
+    assert error.startswith("the agent works as user 1000 in its container"), error
+    assert "is owner's (user 1001" in error, "whose folder it is"
+    assert "may not write it" in error
+    assert "setfacl -R -m u:1000:rwX,d:u:1000:rwX" in error, "how to let it write"
+    assert platform.access_asked == [str(folder)]
+    assert kernel.settings.records("workspace") == [], "refused before its record is made"
+    platform.access = ""
+    async with kernel.operations.running():
+        opened = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+    assert opened.status == "done", opened.error

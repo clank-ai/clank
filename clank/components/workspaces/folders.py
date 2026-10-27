@@ -5,7 +5,9 @@
     home folder, not one that holds CLANK_HOME or is inside it, whose secrets a container must never see); its record
     is found by its folder, else made, named after it (`workspace_name`), and given the image layers named in `layers`
     that it does not have. Docker must run: else the refusal says how to start it (`clank docker start`, or for the
-    system's Docker Engine, which Clank never starts, the command its owner runs: design 0014 §2).
+    system's Docker Engine, which Clank never starts, the command its owner runs: design 0014 §2). Docker must limit
+    the container's memory, unless the owner allows otherwise, and the agent's user (1000) must be able to write the
+    folder as the platform mounts it (design 0014 §4: on Docker Engine it shows the host's own owners).
   - image: Clank's sandbox image, built when no image of its tag is there, asked first unless `yes` (it downloads
     about a gigabyte), each line of the build in the operation's log; canceling the build ends it. Then the image
     layers its record names (design 0020 §3), each built on the image below it when missing, asked first unless
@@ -177,6 +179,9 @@ class Folders:
             if not status.running:
                 raise WorkspaceError(self.workspaces.not_running(status))
             await self._memory(context, platform)
+            refused = await context.run_blocking(platform.agent_access, folder)
+            if refused:  # a folder the agent's user may not write, as the platform mounts it (design 0014 §4)
+                raise WorkspaceError(refused)
             name, workspace = self._record_for(folder, context)
             workspace = self._with_layers(name, workspace, list(context.params.get("layers") or []), context)
         async with context.step("image"):

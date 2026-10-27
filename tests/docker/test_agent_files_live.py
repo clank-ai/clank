@@ -13,6 +13,7 @@ import pytest
 from clank.components.workspaces.sandbox import CURRENT_PHONE, image_folder, names
 from clank.kernel.core import Kernel
 from clank.kernel.events import Actor
+from tests.docker.conftest import for_the_agent
 
 pytestmark = [pytest.mark.docker, pytest.mark.anyio]
 YOU = Actor(kind="user", via="console")
@@ -21,6 +22,7 @@ YOU = Actor(kind="user", via="console")
 async def test_starting_an_agent_gives_it_this_clanks_tools(machine: Kernel, tmp_path: Path) -> None:
     folder = tmp_path / "paper"
     folder.mkdir()
+    for_the_agent(folder)
     async with machine.operations.running():
         started = await machine.operations.start("workspaces.open", {"folder": str(folder), "yes": True}, actor=YOU)
         with anyio.fail_after(2400):

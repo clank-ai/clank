@@ -17,6 +17,7 @@ import pytest
 from clank.components.agents.latex.checks import LatexChecks
 from clank.kernel.core import Kernel
 from clank.kernel.events import Actor
+from tests.docker.conftest import for_the_agent
 
 pytestmark = [pytest.mark.docker, pytest.mark.anyio]
 YOU = Actor(kind="user", via="console")
@@ -68,7 +69,7 @@ def paper(tmp_path: Path) -> Path:
         (folder / name).write_bytes(text.encode())
     (folder / "runs").mkdir()
     (folder / "runs" / "fit.json").write_text("{}", encoding="utf-8")
-    return folder
+    return for_the_agent(folder)
 
 
 async def test_the_latex_checks_marked_pdf_pages_and_build_run_for_real(machine: Kernel, paper: Path) -> None:
