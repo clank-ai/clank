@@ -90,7 +90,9 @@ class SeenBody(BaseModel):
     ids: list[str] = Field(max_length=200)
 
 
-<<<<<<< HEAD
+OVERVIEW_READERS = 8  # workspaces whose sessions are read at once for the overview
+
+
 def origin_of(request: Request) -> dict[str, str]:
     """Where a request came from, as Tailscale's proxy says it: the address it names last in `X-Forwarded-For` (a
     client may send its own before it), the login it vouches for, and the browser's own name."""
@@ -100,9 +102,6 @@ def origin_of(request: Request) -> dict[str, str]:
         "login": request.headers.get("tailscale-user-login", "").strip().lower()[:200],
         "agent": request.headers.get("user-agent", "")[:200],
     }
-=======
-OVERVIEW_READERS = 8  # workspaces whose sessions are read at once for the overview
->>>>>>> main
 
 
 def page(name: str) -> bytes:
