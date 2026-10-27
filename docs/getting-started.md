@@ -302,5 +302,7 @@ Docker (Docker Desktop on macOS; [Docker Engine](https://docs.docker.com/engine/
 installs), installs Clank's latest release and runs `clank doctor`; run it again to update. Or install uv, Git and
 Docker the way your system does, then follow step 2 from `git clone`. Neither system has been tested beyond the
 installer.
-On Linux, the agent's container reaching Clank's gateway through Docker Engine is still being built
-([design 0014](design/0014-linux-and-small-machines.md)), so the agent may not reach the model there yet.
+On Linux, the gateway also listens on a socket in a folder of its own, `~/.cache/clank/<home id>` (yours alone;
+`clank gateway status` names it), and with Docker Engine the agent's container reaches the model through it. Clank's
+adapter for Docker Engine itself is still being built ([design 0014](design/0014-linux-and-small-machines.md)), so
+until it comes, no workspace opens there. Uninstalling on Linux, delete `~/.clank` and `~/.cache/clank` too.
