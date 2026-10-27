@@ -7,7 +7,8 @@ a failed health returns to the last configuration that worked. After a restart o
 its record, agreement and key remain; the watch asks for the key now and then, a refused key failing the slot and an
 unanswered one leaving it ready, marked. A model is usable when the main slot is ready, or a preset for it can load now:
 an engine preset whose engine is installed and whose model is downloaded, or a cloud preset whose provider is agreed and
-whose key is set; with none, the answer says to add one."""
+whose key is set; with none, the answer says to add one. The answer names the runtime's fallback preset, which loads
+when none has worked yet."""
 
 import json
 from collections.abc import Iterator
@@ -253,7 +254,16 @@ async def test_with_nothing_installed_and_no_provider_no_model_is_usable_and_it_
         "why": "no model runs in the main slot, and no preset for it can load here: add one (Add a model)",
         "main": {"status": "stopped", "preset": None, "title": "", "provider": ""},
         "candidates": [],
+        "fallback": "daily-262k",
     }
+
+
+async def test_the_answer_names_the_preset_the_runtimes_settings_fall_back_to(rig: Rig) -> None:
+    config = rig.kernel.home.config / "runtime.json"
+    values = json.loads(config.read_text(encoding="utf-8"))
+    config.write_text(json.dumps({**values, "fallback_preset": "fake-kvmem"}) + "\n", encoding="utf-8")
+    rig.kernel.settings.reload_changed()
+    assert usable(rig)["fallback"] == "fake-kvmem"
 
 
 async def test_a_cloud_preset_with_its_key_is_a_candidate(cloud: Rig) -> None:

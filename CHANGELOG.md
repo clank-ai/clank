@@ -63,6 +63,8 @@ From the owner's first full day of use and an end-to-end test of a new user's fi
 - Words a new user did not understand: the clients connected, the models not loaded, the doctor's line, the tool
   server's path, a refused request's fields, a waiting call's raw input, UTC times among local ones, log lines without
   times.
+- The runtime's `fallback_preset` setting did nothing: with no model that had worked yet, `clank work`, `clank code`
+  and This folder loaded the first preset that could load, or `daily-262k`. They now load the one it names (2026-10-27).
 
 ### Changed
 

@@ -302,7 +302,8 @@ class Runtime:
         else:
             why = "no model runs in the main slot, and no preset for it can load here: add one (Add a model)"
         usable = slot.status == "ready" or bool(candidates)
-        return {"usable": usable, "why": why, "main": main, "candidates": candidates}
+        fallback = self.settings().fallback_preset  # what loads when none has worked yet (design 0016 §7)
+        return {"usable": usable, "why": why, "main": main, "candidates": candidates, "fallback": fallback}
 
     def guide(
         self, *, servers: list[str], machine: str, docker: str, limits: dict[str, Any], preset: str = ""

@@ -8,8 +8,11 @@ Design 0004 §5 (revised 2026-10-26): preparing asks Docker for the container on
 reads Docker's limits once in a while, since a VS Code window waits for it before OpenCode starts.
 
 Design 0018 §8.1: `clank code` over SSH gets the folder ready and opens nothing on the PC's screen, saying the command
-for the other computer; in a terminal of VS Code's Remote-SSH it opens the other computer's VS Code."""
+for the other computer; in a terminal of VS Code's Remote-SSH it opens the other computer's VS Code.
 
+Design 0016 §7: with no model running and none that worked yet, `clank work` loads the runtime's fallback preset."""
+
+import json
 from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
 
@@ -187,6 +190,22 @@ def test_with_no_model_running_clank_loads_the_slots_last_good_one_and_says_why_
     assert "No model runs: loading daily-262k" in result.output
     assert result.exit_code == 1, "a test's home has no engine installed: the load fails, saying so"
     assert "is not installed" in result.output
+
+
+def test_with_no_model_running_and_none_that_worked_clank_loads_the_preset_the_runtimes_settings_name(
+    kernel: Kernel, http: TestClient, platform: FakePlatform, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    folder = tmp_path / "notes"
+    folder.mkdir()
+    monkeypatch.chdir(folder)
+    settings = {"schema": "runtime/1", "fallback_preset": "frontier-262k"}
+    (kernel.home.config / "runtime.json").write_text(json.dumps(settings) + "\n", encoding="utf-8")
+    kernel.settings.reload_changed()
+    ready = {"engine": {"installed": True}, "model": {"downloaded": True}}
+    monkeypatch.setattr(type(kernel.parts["runtime"]), "needs", lambda self, preset: ready)  # every preset can load
+    monkeypatch.setattr(agents_cli, "terminal", lambda argv: pytest.fail("the agent ran without a model"))
+    result = run("work", "--yes")
+    assert "No model runs: loading frontier-262k" in result.output, "the setting's, not the first that can load"
 
 
 def test_clank_code_gets_the_folder_ready_then_opens_it_in_clanks_vs_code_window(

@@ -955,10 +955,10 @@ class FolderPage(Page):
         self.run_worker(work, thread=True, group="folder-hosts", exclusive=True, exit_on_error=False)
 
     def _pick_model(self) -> None:
-        """A preset to run in the main slot, the slot's last that worked first (else the default)."""
+        """A preset to run in the main slot, the slot's last that worked first (else the runtime's fallback)."""
         data = self.console.data
         main = next((slot for slot in data.slots if slot["name"] == "main"), None)
-        first = ((main or {}).get("last_good") or {}).get("preset") or DEFAULT_PRESET
+        first = ((main or {}).get("last_good") or {}).get("preset") or _fallback(data.usable)
         choices = preset_choices(data.presets)
         choices.sort(key=lambda choice: choice.value != first)
         if not choices:
@@ -1066,7 +1066,7 @@ class FolderPage(Page):
             return True
         if preset is None and main["status"] in ("starting", "stopping"):
             return self._until_ready()
-        chosen = preset or (main.get("last_good") or {}).get("preset") or DEFAULT_PRESET
+        chosen = preset or (main.get("last_good") or {}).get("preset") or _fallback(self.console.data.usable)
         verb = "switch" if main["status"] == "ready" else "load"
         return self._follow(client.post(f"runtime/slots/main/{verb}", {"preset": chosen}))
 
@@ -1214,6 +1214,12 @@ class FolderPage(Page):
         ended = "ended" if outcome == 0 else f"ended: {outcome if isinstance(outcome, str) else f'exit {outcome}'}"
         self.console.say(f"{prepared['program']} {ended}", outcome != 0)
         self._read()
+
+
+def _fallback(usable: dict[str, Any] | None) -> str:
+    """What loads when the main slot's configuration never worked: the runtime's fallback preset (design 0016 §7),
+    Clank's own from a service that does not say it."""
+    return str((usable or {}).get("fallback") or DEFAULT_PRESET)
 
 
 def _cost(client: Any, workspace: str) -> dict[str, Any] | None:

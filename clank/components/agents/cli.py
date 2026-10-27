@@ -115,14 +115,17 @@ def _client() -> Client:
 
 
 def _model(client: Client) -> None:
-    """A model in the main slot: the one that runs, else its last configuration that worked, else the default."""
+    """A model in the main slot: the one that runs, else its last configuration that worked, else the runtime's
+    fallback preset (design 0016 §7) when it can load now or none can, else the first that can."""
     slots = {slot["name"]: slot for slot in common.call(lambda: client.get("runtime/slots"))}
     main = slots["main"]
     if main["status"] in ("ready", "starting"):
         return
     usable = _optional(client, "runtime/usable") or {}
     candidates = [each["preset"] for each in usable.get("candidates", [])]
-    preset = (main.get("last_good") or {}).get("preset") or (candidates[0] if candidates else DEFAULT_PRESET)
+    fallback = str(usable.get("fallback") or DEFAULT_PRESET)
+    first = fallback if fallback in candidates or not candidates else candidates[0]
+    preset = (main.get("last_good") or {}).get("preset") or first
     click.echo(f"No model runs: loading {preset}")
     _done(follow.follow(client, common.call(lambda: client.post("runtime/slots/main/load", {"preset": preset}))))
 
