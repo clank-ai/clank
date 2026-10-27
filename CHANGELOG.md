@@ -1,7 +1,8 @@
 # Changelog
 
 Every version of Clank, newest first: what it adds, what it fixes, and what it changes, in plain words. The one-line
-installer installs the latest release; `clank update` updates to it (or pulls a clone). Problems known now are in
+installer installs the latest release; from the release after 0.3.0b1, `clank update` updates to the next one (or pulls
+a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
 ## Unreleased: since 0.3.0b1
