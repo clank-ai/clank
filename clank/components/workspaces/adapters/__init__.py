@@ -1,6 +1,8 @@
 """The workspaces component's kind of adapter, the container platform (design 0002 §2.9, §2.10): where Clank's
 containers run. Docker Desktop is the first; Docker Engine on Linux comes later. The interface is in `platform.py`;
-each adapter is a module of its own, listed here, with its recordings in `tests/fixtures/<adapter>/`.
+the container commands, Docker's own CLI whatever program runs the engine, are one base's, `DockerCli` in
+`docker_cli.py` (design 0014 §2); each adapter is a module of its own that extends it, listed here, with its recordings
+in `tests/fixtures/<adapter>/`.
 """
 
 from clank.components.workspaces.adapters.docker_desktop import DockerDesktop

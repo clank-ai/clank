@@ -28,10 +28,10 @@ GitHub Actions' `ubuntu-24.04` and `ubuntu-24.04-arm` runners.
 
 **Status:** lane L for Linux x64 being built at the owner's instruction (2026-10-27: Clank on a Linux computer of the
 owner's, with OpenRouter's models; design 0014's status says so), with the recommended choices: the recording made by
-the hand-run job (design 0014 §2), and decision 0071's (a). Done: L0's tool, the errors in recordings and the job; the
-recording waits for the job's run. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for the
-owner. The places below were found at commit e90c51a; the code has moved since, and each task's commit names where it
-changed.
+the hand-run job (design 0014 §2), and decision 0071's (a). Done: L0's tool, the errors in recordings and the job (the
+recording waits for the job's run); L1. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for
+the owner. The places below were found at commit e90c51a; the code has moved since, and each task's commit names where
+it changed.
 
 A path such as `workspaces/sandbox.py:38` means `clank/components/workspaces/sandbox.py`, line 38, at commit e90c51a;
 every other path starts at the repository's root.
@@ -168,22 +168,24 @@ condition holds. Now: L0's tool, L1, P3 and P6.
 
 #### L1. One base class for the plain docker CLI (B)
 
-- [ ] **Test first** (`tests/components/workspaces/test_docker_cli.py`, design 0014 §2):
+- [x] **Test first** (`tests/components/workspaces/test_docker_cli.py`, design 0014 §2):
   `test_every_container_command_is_the_plain_docker_cli_both_adapters_share`. Each container method of the interface
   (`limits` to `exec_argv`, `workspaces/adapters/platform.py:128-215`) is `DockerCli`'s own, not overridden in
-  `DockerDesktop`. It fails today: there is no `DockerCli`.
-- [ ] **Files:** create `clank/components/workspaces/adapters/docker_cli.py`. Move into it the container commands
+  `DockerDesktop`. It fails today: there is no `DockerCli`. Built with
+  `test_every_command_starts_with_the_engine_its_adapter_names` (a command handed back, `exec_argv`, too).
+- [x] **Files:** create `clank/components/workspaces/adapters/docker_cli.py`. Move into it the container commands
   (`workspaces/adapters/docker_desktop.py:219-342`), the reading of containers and their labels' names
   (`workspaces/adapters/docker_desktop.py:145-167, 389-403`), `find_docker`
   (`workspaces/adapters/docker_desktop.py:71-95`) and the helpers (`_answer`, `_docker`, `_gone_or_done`, `_words`).
   `DockerDesktop` extends `DockerCli` and keeps `docker desktop` and its program
   (`workspaces/adapters/docker_desktop.py:123-143, 169-217, 351-365`). The docstrings of
   `workspaces/adapters/__init__.py` and `workspaces/adapters/platform.py` name the base.
-- [ ] **Interfaces:** `class DockerCli(ContainerPlatform)`, abstract in `find`, `status`, `request_start` and
+- [x] **Interfaces:** `class DockerCli(ContainerPlatform)`, abstract in `find`, `status`, `request_start` and
   `request_stop`; `DockerCli.containers() -> list[Container]` (the `docker ps` template and the labels' names), used
   by both adapters' `status`; one place where every command's arguments start (`_target()`, empty here), for L2's and
-  L3's pins. No public name changes.
-- [ ] **Done when:** the contract test, `tests/components/workspaces/test_docker_containers.py` and every workspace
+  L3's pins. No public name changes: `TEMPLATE`, `INSPECT`, `PUT_FILES` and `find_docker` stay importable from
+  `docker_desktop.py`; as built, Docker's words for a refusal are the base's public `words()`, which L2 reads too.
+- [x] **Done when:** the contract test, `tests/components/workspaces/test_docker_containers.py` and every workspace
   test pass unchanged.
 
 #### L2. A `docker-engine` adapter for Linux (B)

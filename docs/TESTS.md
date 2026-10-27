@@ -324,7 +324,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | none yet |
-| 2 | The container platform adapters | `tests/contract/test_container_platform.py` (7), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
+| 2 | The container platform adapters | `tests/components/workspaces/test_docker_cli.py` (2), `tests/contract/test_container_platform.py` (7), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
 | 3 | The edge's way to the gateway on Linux | none yet |
 | 4 | A workspace's container on Docker Engine | none yet |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | none yet |
@@ -3386,6 +3386,13 @@ Design 0002 §2.9 and §3.2: Clank tells its own containers from the others by t
 
 - a container is clanks only by this homes label whatever its name
 - the docker route shows the state and each container with its owner
+
+### `tests/components/workspaces/test_docker_cli.py`
+
+Design 0014 §2 (decision 0070): every container command Clank sends is Docker's own CLI, the same whichever program runs the engine, so the container methods of the interface are one base's, `DockerCli`, which every adapter extends without overriding any of them; and every command's arguments start in one place, where an adapter names the engine its commands go to.
+
+- every container command is the plain docker cli both adapters share
+- every command starts with the engine its adapter names
 
 ### `tests/components/workspaces/test_docker_containers.py`
 

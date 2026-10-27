@@ -19,6 +19,8 @@ there is no error. Each container it lists or reads says the networks it is on (
 place on every workspace's network is checked from the reading the service takes anyway (design 0004 §3, revised
 2026-10-26); joining a network says whether it joined now or was on it already, and a container that cannot start
 because a network it was on is gone (removed, or made again since) is a `NetworkGone`, so Clank makes it again.
+These container commands are Docker's own CLI whatever program runs the engine: one base, `DockerCli`
+(`docker_cli.py`, design 0014 §2), holds them for every adapter.
 """
 
 import sys
