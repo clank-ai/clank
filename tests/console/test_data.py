@@ -104,7 +104,7 @@ def test_a_doctor_run_brings_the_machine_profile_then_its_checks(client: Client,
         take(updates, lambda update: update.topic == "connection")
         client.post("machine/doctor")
         taken = take(updates, lambda update: update.topic == "machine" and update.data["doctor"] is not None)
-    assert taken[-1].data["doctor"]["of"] == 10
+    assert taken[-1].data["doctor"]["of"] == 11
     assert taken[-1].data["profile"]["cores"] == 16
     assert "operations" in {update.topic for update in taken}
 

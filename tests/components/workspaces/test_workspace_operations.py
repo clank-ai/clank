@@ -6,7 +6,11 @@ else half of what the platform has. A folder whose container would see more than
 home, one holding CLANK_HOME or inside it) is refused, as is opening with Docker stopped. Stopping a workspace stops its
 container; removing one asks first (saying, when its container runs, that what runs in it ends), then removes its
 container and its home, and leaves its folder as it was. Design 0014 §2: on Docker Engine, which Clank never starts,
-opening while it is stopped is refused in the status's words, with the command that starts it."""
+opening while it is stopped is refused in the status's words, with the command that starts it. Design 0014 §4: Docker's
+memory limits are read as a workspace opens (never in the regular check, the last reading kept): where Docker cannot
+limit a container's memory no workspace opens, saying so in Docker's words with the fix (`cgroup_enable=memory` on a
+Raspberry Pi), unless `allow_unlimited_memory` is set, and then its log and Docker's summary say its memory is not
+limited."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -268,3 +272,56 @@ async def test_removing_a_workspace_whose_container_runs_says_that_what_runs_in_
         assert "runs now" not in question.detail, "a stopped container ends nothing"
         kernel.questions.answer(question.id, by=YOU, option="cancel")
         await finish(kernel, waiting)
+
+
+NO_MEMORY_LIMITS = (False, ["WARNING: No memory limit support"])  # Docker's words on a Pi's default kernel
+
+
+async def test_a_workspace_does_not_open_where_docker_cannot_limit_memory_saying_how_to_fix_it(
+    kernel: Kernel, platform: FakePlatform, folder: Path
+) -> None:
+    platform.memory = NO_MEMORY_LIMITS
+    async with kernel.operations.running():
+        done = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+    assert done.status == "failed"
+    error = done.error or ""
+    assert "WARNING: No memory limit support" in error, "in Docker's words"
+    assert "`cgroup_enable=memory`" in error
+    assert "/boot/firmware/cmdline.txt" in error
+    assert "allow_unlimited_memory" in error
+    assert kernel.settings.records("workspace") == [], "refused before its record is made"
+    assert not [call for call in platform.calls if call.startswith(("run", "build"))]
+
+
+async def test_allowing_unlimited_memory_opens_it_and_every_client_is_told(
+    kernel: Kernel, platform: FakePlatform, folder: Path
+) -> None:
+    platform.memory = NO_MEMORY_LIMITS
+    platform.images.add(image_tag())
+    loaded = kernel.settings.get("docker", "docker")
+    allowed = {**loaded.record.model_dump(), "allow_unlimited_memory": True}
+    kernel.settings.write("docker", "docker", allowed, base=loaded.revision, actor=YOU)
+    async with kernel.operations.running():
+        done = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+    assert done.status == "done", done.error
+    said = " ".join(line.text for line in kernel.operations.log_lines(done.id))
+    assert "its memory is not limited" in said
+    assert "WARNING: No memory limit support" in said
+    view = kernel.parts["workspaces"].docker(refresh=True)
+    assert view["memory_limits"] is False
+    assert view["summary"].endswith(" · memory not limited"), "the summary every client shows says so"
+
+
+async def test_dockers_memory_limits_are_read_when_a_workspace_opens_never_in_the_regular_check(
+    kernel: Kernel, platform: FakePlatform, folder: Path
+) -> None:
+    platform.images.add(image_tag())
+    for _ in range(3):
+        await kernel.parts["workspaces"].check()
+    assert platform.memory_asked == 0, "never in the 5-second check"
+    assert kernel.parts["workspaces"].docker()["memory_limits"] is None, "not read yet"
+    async with kernel.operations.running():
+        done = await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+    assert done.status == "done", done.error
+    assert platform.memory_asked == 1
+    assert kernel.parts["workspaces"].docker(refresh=True)["memory_limits"] is True, "the last reading is kept"

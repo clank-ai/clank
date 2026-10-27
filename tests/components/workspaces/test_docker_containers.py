@@ -293,3 +293,24 @@ def test_each_running_containers_use_is_read_from_docker_stats_in_its_own_fields
     assert adapter(docker).stats() == [{"Name": "clank-abc-paper", "CPUPerc": "12.50%", "MemUsage": "1.2GiB / 4GiB"}]
     assert docker.calls == [["stats", "--no-stream", "--format", "{{json .}}"]]
     assert adapter(Docker({})).stats() == [], "Docker does not answer: no figures"
+
+
+MEMORY = '{"limit":{{json .MemoryLimit}},"warnings":{{json .Warnings}}}'
+UNREACHED = "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?\n"
+
+
+def test_whether_docker_can_limit_memory_is_read_in_its_words(adapter: Kind) -> None:
+    limited = Docker({("info", "--format", MEMORY): '{"limit":true,"warnings":null}\n'})
+    assert adapter(limited).memory_limits() == (True, [])
+    assert limited.calls == [["info", "--format", MEMORY]], "only the fields Clank reads, never the whole"
+    warned = '{"limit":false,"warnings":["WARNING: No memory limit support","WARNING: No swap limit support"]}\n'
+    unlimited = Docker({("info", "--format", MEMORY): warned})
+    assert adapter(unlimited).memory_limits() == (False, ["WARNING: No memory limit support"]), "the memory's words"
+    unreached = Docker({("info", "--format", MEMORY): Answer(0, '{"limit":false,"warnings":null}\n', UNREACHED)})
+    assert adapter(unreached).memory_limits() == (None, []), "docker info answers 0 even when it reached no engine"
+    assert adapter(Docker({})).memory_limits() == (None, [])
+
+
+def test_a_docker_info_that_reached_no_engine_says_no_cpus_or_memory(adapter: Kind) -> None:
+    unreached = Docker({("info", "--format", "{{.NCPU}} {{.MemTotal}}"): Answer(0, "0 0\n", UNREACHED)})
+    assert adapter(unreached).limits() is None, "not a computer of no CPUs: the engine was not reached"

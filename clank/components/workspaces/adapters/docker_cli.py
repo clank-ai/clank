@@ -52,6 +52,9 @@ TEMPLATE = (
 INSPECT = '{"id":{{json .Id}},"labels":{{json .Config.Labels}}}'
 LIMITS = "{{.NCPU}} {{.MemTotal}}"
 STATS = "{{json .}}"  # each running container's use, in Docker's own fields
+MEMORY = '{"limit":{{json .MemoryLimit}},"warnings":{{json .Warnings}}}'  # of `docker info`, only what Clank reads
+# `docker info` answers 0 even when it reached no engine, its refusal on its errors (recorded on 2026-10-27)
+UNREACHED = re.compile(r"cannot connect to the docker daemon|permission denied|error during connect", re.IGNORECASE)
 STATS_SECONDS = 20.0  # `docker stats --no-stream` samples twice: a second or two
 ONE = (
     '{"id":{{json .Id}},"name":{{json .Name}},"image":{{json .Config.Image}},"state":{{json .State.Status}},'
@@ -131,11 +134,28 @@ class DockerCli(ContainerPlatform):
         return found
 
     def limits(self) -> tuple[int, int] | None:
-        """The CPUs and memory Docker's engine has (on Docker Desktop, its virtual machine's)."""
+        """The CPUs and memory Docker's engine has (on Docker Desktop, its virtual machine's); None when it does not
+        say, as when `docker info` reached no engine (it answers `0 0` then)."""
         found = (self._docker("info", "--format", LIMITS) or "").split()
-        if len(found) != 2 or not all(part.isdigit() for part in found):
+        if len(found) != 2 or not all(part.isdigit() and int(part) > 0 for part in found):
             return None
         return int(found[0]), int(found[1]) // (1024 * 1024)
+
+    def memory_limits(self) -> tuple[bool | None, list[str]]:
+        """`docker info`'s `MemoryLimit` and its warnings about memory, never the whole of it, which holds the host's
+        name; nothing said when it reached no engine."""
+        answer = self._answer("info", "--format", MEMORY)
+        if not answer.ok or UNREACHED.search(answer.errors):
+            return None, []
+        try:
+            found = json.loads(answer.output)
+        except ValueError:
+            return None, []
+        if not isinstance(found, dict):
+            return None, []
+        limit = found.get("limit")
+        warnings = [str(each) for each in found.get("warnings") or [] if "memory" in str(each).lower()]
+        return (limit if isinstance(limit, bool) else None), warnings
 
     def stats(self) -> list[dict[str, Any]]:
         """`docker stats --no-stream`: each running container's use of the CPU and memory, in Docker's own fields."""

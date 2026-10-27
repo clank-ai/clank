@@ -3,7 +3,8 @@ do about it, and the checks that belong to one platform are skipped on the other
 checks report what the container platform reports, in its words, read through the workspaces component: no access
 names the docker group, never `clank docker start`; a Docker Engine that is not installed names its install; a stopped
 one names `sudo systemctl start docker`, since Clank never starts it; Docker from the snap and rootless Docker are
-unsupported, saying how to install Docker Engine."""
+unsupported, saying how to install Docker Engine. Design 0014 §4 and §5: where Docker cannot limit a container's memory
+the doctor fails, in Docker's words, with the fix, or warns while `allow_unlimited_memory` allows it."""
 
 import sqlite3
 from dataclasses import replace
@@ -45,7 +46,7 @@ def docker(state: str = "running", *, engine: bool = False, detail: str = "") ->
         engine=("28.0.4" if engine else "29.6.2") if running else "",
         detail=detail,
     )
-    return DockerReading(status=status, starts=not engine)
+    return DockerReading(status=status, starts=not engine, memory=(True, []) if running else (None, []))
 
 
 @pytest.fixture
@@ -67,7 +68,7 @@ def test_a_well_set_up_machine_passes_every_check(facts: Facts, home: Home) -> N
     store.close()
     found = statuses(facts)
     assert set(found.values()) == {"passed"}, found
-    assert len(found) == 10
+    assert len(found) == 11
 
 
 def test_the_database_check_closes_the_database_it_read(
@@ -155,3 +156,20 @@ def test_the_doctor_names_docker_from_the_snap_and_rootless_docker_as_unsupporte
         assert found["docker_installed"].status == "warning"
         assert found["docker_installed"].fix == said
         assert "docs.docker.com/engine/install" in found["docker_installed"].fix
+
+
+def test_the_doctor_fails_when_docker_cannot_limit_memory_and_warns_when_it_is_allowed(facts: Facts) -> None:
+    linux = replace(facts, platform="linux")
+    words = ["WARNING: No memory limit support"]
+    refused = results(replace(linux, docker=replace(docker(engine=True), memory=(False, words))))
+    assert refused["docker_memory"].status == "failed"
+    assert "WARNING: No memory limit support" in refused["docker_memory"].detail
+    assert "`cgroup_enable=memory`" in refused["docker_memory"].fix
+    assert "/boot/firmware/cmdline.txt" in refused["docker_memory"].fix
+    allowing = replace(docker(engine=True), memory=(False, words), allow_unlimited_memory=True)
+    allowed = results(replace(linux, docker=allowing))
+    assert allowed["docker_memory"].status == "warning"
+    assert "allow_unlimited_memory" in allowed["docker_memory"].detail
+    assert results(replace(linux, docker=docker(engine=True)))["docker_memory"].status == "passed"
+    stopped = results(replace(linux, docker=docker("stopped", engine=True, detail=STOPPED)))
+    assert stopped["docker_memory"].status == "skipped", "read only while Docker runs"

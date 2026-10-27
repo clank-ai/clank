@@ -33,6 +33,13 @@ class DockerSettings(Settings):
     poll_seconds: float = Field(
         5.0, ge=1, title="Checked every", description="How often, in seconds, Clank reads Docker's state."
     )
+    allow_unlimited_memory: bool = Field(
+        False,
+        title="Allow unlimited memory",
+        description="Open workspaces even where Docker cannot limit a container's memory (a Raspberry Pi's default "
+        "kernel): an agent's runaway process could then take this computer's memory. Off: no workspace opens there, "
+        "saying how to turn the limits on.",
+    )
     start_timeout_seconds: int = Field(
         300, ge=10, title="Time to start", description="How long a start may take before it is reported as failed."
     )

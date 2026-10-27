@@ -152,6 +152,11 @@ class ContainerPlatform(Adapter):
         CPUPerc, MemUsage); none when it does not say."""
 
     @abstractmethod
+    def memory_limits(self) -> tuple[bool | None, list[str]]:
+        """Whether the platform can limit a container's memory (None: it does not say), and its warnings about it, in
+        its words (design 0014 §4: a Raspberry Pi's default kernel cannot)."""
+
+    @abstractmethod
     def image_exists(self, tag: str) -> bool:
         """Whether an image of this tag is built."""
 

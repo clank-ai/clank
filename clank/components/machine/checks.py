@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from clank.components.machine.kinds import MachineProfile
-from clank.components.workspaces.service import DockerReading
+from clank.components.workspaces.service import MEMORY_FIX, DockerReading, memory_said
 from clank.kernel.home import Home
 
 Status = Literal["passed", "warning", "failed", "skipped"]
@@ -173,6 +173,24 @@ def _docker_running(facts: Facts) -> tuple[Status, str, str]:
     return "warning", status.state, status.detail
 
 
+def _docker_memory(facts: Facts) -> tuple[Status, str, str]:
+    if facts.docker is None or not facts.docker.status.running:
+        return "skipped", "read while Docker runs", ""
+    limited, words = facts.docker.memory
+    if limited is None:
+        return "skipped", "Docker does not say", ""
+    if limited:
+        return "passed", "it limits each container's memory", ""
+    said = memory_said(words)
+    if facts.docker.allow_unlimited_memory:
+        return "warning", f"{said}: workspaces open without it, as allow_unlimited_memory allows", MEMORY_FIX
+    return (
+        "failed",
+        f"{said}, so no workspace opens",
+        f"{MEMORY_FIX} (or set allow_unlimited_memory in config/docker.json)",
+    )
+
+
 def _port(facts: Facts) -> tuple[Status, str, str]:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
         try:
@@ -192,6 +210,7 @@ CHECKS: list[tuple[str, str, Callable[[Facts], tuple[Status, str, str]]]] = [
     ("hags", "Hardware-accelerated GPU scheduling off", _hags),
     ("docker_installed", "Docker installed", _docker_installed),
     ("docker_running", "Docker running", _docker_running),
+    ("docker_memory", "Docker limits memory", _docker_memory),
     ("port", "The API's port", _port),
 ]
 

@@ -29,8 +29,9 @@ GitHub Actions' `ubuntu-24.04` and `ubuntu-24.04-arm` runners.
 **Status:** lane L for Linux x64 being built at the owner's instruction (2026-10-27: Clank on a Linux computer of the
 owner's, with OpenRouter's models; design 0014's status says so), with the recommended choices: the recording made by
 the hand-run job (design 0014 §2), and decision 0071's (a). Done: L0 (Docker Engine 28.0.4 recorded by the job on
-2026-10-27), L1, L2, L3 and L4. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for the owner.
-The places below were found at commit e90c51a; the code has moved since, and each task's commit names where it changed.
+2026-10-27), L1, L2, L3, L4 and L7. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for the
+owner. The places below were found at commit e90c51a; the code has moved since, and each task's commit names where it
+changed.
 
 A path such as `workspaces/sandbox.py:38` means `clank/components/workspaces/sandbox.py`, line 38, at commit e90c51a;
 every other path starts at the repository's root.
@@ -386,7 +387,7 @@ network before it starts the gateway (`workspaces/folders.py:170-175` moves to t
 
 #### L7. A workspace opens only with its memory limited (B)
 
-- [ ] **Tests first** (design 0014 §4, §5):
+- [x] **Tests first** (design 0014 §4, §5):
   - `tests/components/workspaces/test_workspace_operations.py`:
     `test_a_workspace_does_not_open_where_docker_cannot_limit_memory_saying_how_to_fix_it` (Docker's words, and
     `cgroup_enable=memory` in `/boot/firmware/cmdline.txt` on a Raspberry Pi);
@@ -394,14 +395,23 @@ network before it starts the gateway (`workspaces/folders.py:170-175` moves to t
     `test_dockers_memory_limits_are_read_when_a_workspace_opens_never_in_the_regular_check`.
   - `tests/components/machine/test_checks.py`:
     `test_the_doctor_fails_when_docker_cannot_limit_memory_and_warns_when_it_is_allowed`.
-- [ ] **Files:** `workspaces/adapters/docker_cli.py` (`memory_limits()` and `warnings()`, from `docker info
+  - As built, also `test_whether_docker_can_limit_memory_is_read_in_its_words` and
+    `test_a_docker_info_that_reached_no_engine_says_no_cpus_or_memory` (both adapters), and
+    `test_memory_limits_are_read_as_recorded_and_an_answer_that_reached_no_engine_says_nothing` on the recording:
+    `docker info --format` exits 0 even when it reached no engine, so an answer whose errors say so tells nothing,
+    and `limits()` no longer takes `0 0` for a computer's CPUs and memory. The doctor counts 11 checks; the
+    console's machine page shows the new one (its snapshot rewritten).
+- [x] **Files:** `workspaces/adapters/docker_cli.py` (`memory_limits()` and `warnings()`, from `docker info
   --format` with `MemoryLimit` and `Warnings` only); `workspaces/kinds.py` (`allow_unlimited_memory`, false by
   default); `workspaces/folders.py:150-183` (the refusal in the record step; the log line when allowed);
   `workspaces/service.py` (the summary says "memory not limited"); `machine/checks.py` (the check "Docker limits
-  memory"). Regenerated: `clank/schemas/docker.schema.json`, `vscode/src/core/kinds.ts`.
-- [ ] **Interfaces:** `ContainerPlatform.memory_limits() -> bool | None`; `ContainerPlatform.warnings() -> list[str]`;
+  memory"). Regenerated: `clank/schemas/docker.schema.json`, `vscode/src/core/kinds.ts`. As built, the words the
+  opening, Docker's view and the doctor share are `workspaces/memory.py`'s.
+- [x] **Interfaces:** `ContainerPlatform.memory_limits() -> bool | None`; `ContainerPlatform.warnings() -> list[str]`;
   `DockerSettings.allow_unlimited_memory: bool = False`; `GET /docker` gains `memory_limits: bool | None`, the last
-  reading.
+  reading. As built, one method gives both, from one `docker info`: `ContainerPlatform.memory_limits() -> tuple[bool
+  | None, list[str]]`, the warnings that speak of memory; `DockerReading` carries them and the allowance to the
+  doctor.
 
 #### L8. A folder the agent cannot write is refused, saying why (C)
 

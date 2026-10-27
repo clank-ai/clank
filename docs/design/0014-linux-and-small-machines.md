@@ -28,8 +28,9 @@ ready for testing." It is built with the recommended choices: Docker Engine's fi
 job (§2), and decision 0071's (a). Decision 0070 is accepted. Built so far by plan s9: L0's capture tool, the errors in
 recordings and the hand-run job, with Docker Engine 28.0.4's recording (run 40578825917); L1, one base for the plain
 docker CLI; L2, the docker-engine adapter; L3, the adapter chosen by platform and by what answers (`auto`), with no
-start where Clank cannot start; L4, the doctor and the meters asking Docker through it. L5 and L6 (§3) are built beside
-lane L, on a branch of their own. The Pi's steps (P1-P6) wait.*
+start where Clank cannot start; L4, the doctor and the meters asking Docker through it; L7, no workspace opening where
+Docker cannot limit memory, unless allowed and said. L5 and L6 (§3) are built beside lane L, on a branch of their own.
+The Pi's steps (P1-P6) wait.*
 
 **The machine.** A Raspberry Pi 5: arm64, four Cortex-A76 cores, and 8 GB of memory, the size this design is checked
 against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engine from Docker's Debian packages

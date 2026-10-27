@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from clank.components.workspaces.adapters.docker_cli import INSPECT, LIMITS, STATS, TEMPLATE
+from clank.components.workspaces.adapters.docker_cli import INSPECT, LIMITS, MEMORY, STATS, TEMPLATE
 from clank.components.workspaces.adapters.docker_engine import SOCKET, SYSTEMD, VERSION, DockerEngine
 from clank.components.workspaces.adapters.platform import PlatformError
 from clank.components.workspaces.sandbox import ContainerSpec
@@ -243,7 +243,15 @@ def test_the_capture_tool_asks_what_the_adapter_asks() -> None:
     assert capture_tool.SYSTEMD == SYSTEMD
     assert capture_tool.SOCKET == SOCKET
     assert (capture_tool.VERSION, capture_tool.TEMPLATE, capture_tool.INSPECT) == (VERSION, TEMPLATE, INSPECT)
-    assert (capture_tool.LIMITS, capture_tool.STATS) == (LIMITS, STATS)
+    assert (capture_tool.LIMITS, capture_tool.STATS, capture_tool.MEMORY) == (LIMITS, STATS, MEMORY)
+
+
+def test_memory_limits_are_read_as_recorded_and_an_answer_that_reached_no_engine_says_nothing() -> None:
+    assert engine(RecordedProgram.load(RECORDING, state="running")).memory_limits() == (True, [])
+    assert engine(RecordedProgram.load(RECORDING, state="running")).limits() == (4, 15983)
+    denied = engine(RecordedProgram.load(RECORDING, state="no access"))
+    assert denied.memory_limits() == (None, []), "recorded: exit 0, limit false, and permission denied on its errors"
+    assert denied.limits() is None, "recorded: exit 0 and 0 0, and permission denied on its errors"
 
 
 def test_the_running_engines_containers_use_is_read_as_recorded() -> None:

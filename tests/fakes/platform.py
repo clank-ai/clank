@@ -89,6 +89,8 @@ class FakePlatform(ContainerPlatform):
         self._checks = 0
         self.cpus_memory: tuple[int, int] | None = (16, 32768)
         self.stats_rows: list[dict[str, Any]] = []  # its containers' use, as `docker stats` gives it
+        self.memory: tuple[bool | None, list[str]] = (True, [])  # whether it limits memory, and its words
+        self.memory_asked = 0
         self.images: set[str] = set()
         self.build_args: dict[str, dict[str, str]] = {}  # each image built: its build arguments
         self.build_folders: dict[str, str] = {}  # and the folder it was built from
@@ -164,6 +166,10 @@ class FakePlatform(ContainerPlatform):
     def stats(self) -> list[dict[str, Any]]:
         self.calls.append("stats")
         return self.stats_rows
+
+    def memory_limits(self) -> tuple[bool | None, list[str]]:
+        self.memory_asked += 1
+        return self.memory
 
     def image_exists(self, tag: str) -> bool:
         return tag in self.images

@@ -44,6 +44,8 @@ from clank.components.workspaces.cloud import CloudBounds
 from clank.components.workspaces.edge import EVENT_TYPES as EDGE_EVENT_TYPES
 from clank.components.workspaces.edge import Edge
 from clank.components.workspaces.kinds import DockerSettings, Workspace
+from clank.components.workspaces.memory import MEMORY_FIX as MEMORY_FIX  # for the doctor (design 0014 §5)
+from clank.components.workspaces.memory import memory_said as memory_said
 from clank.components.workspaces.network import SETS_FILE, HostAsks, sets
 from clank.components.workspaces.sandbox import BRIDGE_PROGRAM as BRIDGE_PROGRAM  # for the agents (design 0005)
 from clank.components.workspaces.sandbox import CURRENT_INSTRUCTIONS as CURRENT_INSTRUCTIONS  # for the agents
@@ -128,11 +130,14 @@ def status_said(status: PlatformStatus) -> str:
 
 @dataclass(frozen=True)
 class DockerReading:
-    """Docker as the doctor reads it, without the service (design 0014 §2, §5): the platform's status, and whether
-    Clank starts it."""
+    """Docker as the doctor reads it, without the service (design 0014 §2, §4, §5): the platform's status, whether
+    Clank starts it, and while it runs, whether it can limit a container's memory, in its words; and whether the owner
+    allows a workspace without that (`allow_unlimited_memory`)."""
 
     status: PlatformStatus
     starts: bool
+    memory: tuple[bool | None, list[str]] = (None, [])
+    allow_unlimited_memory: bool = False
 
 
 def docker_settings(home: Home) -> DockerSettings:
@@ -145,8 +150,15 @@ def docker_settings(home: Home) -> DockerSettings:
 def read_platform(home: Home) -> DockerReading:
     """Docker as the platform the settings choose reports it now, read without the service (`clank doctor`, and the
     doctor's operation, which does not need this component's part)."""
-    platform = make_platform(docker_settings(home).adapter)
-    return DockerReading(status=platform.status(), starts=starts(platform))
+    settings = docker_settings(home)
+    platform = make_platform(settings.adapter)
+    status = platform.status()
+    return DockerReading(
+        status=status,
+        starts=starts(platform),
+        memory=platform.memory_limits() if status.running else (None, []),
+        allow_unlimited_memory=settings.allow_unlimited_memory,
+    )
 
 
 def owner(container: Container, home_id: str) -> Owner:
@@ -161,19 +173,24 @@ def image_name(name: str) -> str:
     return name[: len("sha256:") + 12] if name.startswith("sha256:") else name
 
 
-def summary(status: PlatformStatus, owners: list[Owner]) -> str:
-    """One line on the platform: "Docker Desktop · running · 3 containers running, none of them Clank's"."""
+def summary(status: PlatformStatus, owners: list[Owner], unlimited: bool = False) -> str:
+    """One line on the platform: "Docker Desktop · running · 3 containers running, none of them Clank's", and
+    " · memory not limited" while Docker's last reading says it cannot limit a container's memory (design 0014 §4)."""
     text = f"{status.label} · {status.state}"
     if not status.running:
         return text
+    return f"{text} · {_running(status, owners)}" + (" · memory not limited" if unlimited else "")
+
+
+def _running(status: PlatformStatus, owners: list[Owner]) -> str:
     running = [mine for container, mine in zip(status.containers, owners, strict=True) if container.state == "running"]
     if not running:
-        return f"{text} · no container running"
+        return "no container running"
     clanks = running.count("clank")
     if len(running) == 1:
-        return f"{text} · 1 container running, {'Clank' if clanks else 'not Clank'}'s"
+        return f"1 container running, {'Clank' if clanks else 'not Clank'}'s"
     whose = "none" if clanks == 0 else "all" if clanks == len(running) else str(clanks)
-    return f"{text} · {len(running)} containers running, {whose} of them Clank's"
+    return f"{len(running)} containers running, {whose} of them Clank's"
 
 
 class Workspaces:
@@ -188,6 +205,7 @@ class Workspaces:
         self._fingerprint: tuple[Any, ...] | None = None
         self._lock = threading.Lock()
         self._limits: tuple[str, float, tuple[int, int] | None] | None = None  # adapter, when read, what it said
+        self._memory: bool | None = None  # whether Docker limits a container's memory, as last read (an opening's)
         self.cloud = CloudBounds(kernel)  # where each workspace's requests may go (design 0016 §9)
         self.network = HostAsks(kernel, self.allow_host)  # the hosts its agent asks for (design 0024 §3)
         self.edge = Edge(self)  # the edge on every workspace's network (design 0004 §3)
@@ -214,6 +232,11 @@ class Workspaces:
         """Whether Clank starts and stops the platform in use, read from it each time (Docker Desktop's own command
         may answer later than its first asking; Docker Desktop keeps its answer once it has one)."""
         return starts(self.platform)
+
+    def note_memory(self, limited: bool | None) -> None:
+        """Keep the last reading of whether Docker can limit a container's memory (an opening reads it, design 0014
+        §4), which Docker's view says."""
+        self._memory = limited
 
     def not_running(self, status: PlatformStatus) -> str:
         """Why Docker cannot be used now and what to do, for one that does not run: the status's own words, or, for a
@@ -790,8 +813,9 @@ class Workspaces:
         return {
             **status.model_dump(mode="json", exclude={"containers"}),
             "checked": to_text(self.kernel.clock.now()),
-            "summary": summary(status, owners),
+            "summary": summary(status, owners, unlimited=self._memory is False),
             "said": status_said(status),
+            "memory_limits": self._memory,
             "chosen": self.platform.chosen,
             "starts": self.platform_starts(),
             "containers": [

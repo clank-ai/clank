@@ -48,6 +48,7 @@ RUNNING = DockerReading(
         adapter="docker-desktop", label="Docker Desktop", state="running", version="4.85.0", engine="29.6.2"
     ),
     starts=True,
+    memory=(True, []),
 )
 READ: list[Path] = []  # the homes whose Docker the doctor read
 
@@ -70,7 +71,7 @@ def test_doctor_prints_each_check_and_how_many_passed(home: Home) -> None:
     result = CliRunner().invoke(main, ["doctor"], env={"CLANK_HOME": str(home.root)})
     assert "NVIDIA GeForce RTX 5080" in result.output
     assert "Docker running" in result.output
-    assert " of 10 checks passed" in result.output
+    assert " of 11 checks passed" in result.output
     assert [home.root] == READ, "Docker as the platform the settings choose reports it"
 
 
@@ -78,7 +79,7 @@ def test_doctor_prints_json_for_scripts_and_models(home: Home) -> None:
     result = CliRunner().invoke(main, ["doctor", "--json"], env={"CLANK_HOME": str(home.root)})
     report = json.loads(result.output)
     assert report["profile"]["cores"] == 16
-    assert len(report["checks"]) == 10
+    assert len(report["checks"]) == 11
 
 
 @pytest.mark.anyio
@@ -90,7 +91,7 @@ async def test_the_doctor_operation_records_the_profile_and_the_checks(home: Hom
             done = await kernel.operations.wait(started.id)
         assert done.status == "done", done.error
         assert done.result is not None
-        assert len(done.result["checks"]) == 10
+        assert len(done.result["checks"]) == 11
         assert [home.root] == READ, "read without the workspaces component's part, as the doctor must"
         saved = kernel.settings.get("machine", "machine")
         assert (saved.source, saved.record.model_dump()["cores"]) == ("user", 16)

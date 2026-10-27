@@ -42,6 +42,7 @@ from typing import TYPE_CHECKING, Any
 
 from clank.components.workspaces.adapters.platform import ContainerPlatform, NetworkGone
 from clank.components.workspaces.kinds import Workspace
+from clank.components.workspaces.memory import memory_refused, memory_said
 from clank.components.workspaces.sandbox import (
     PROXY_LABEL,
     ContainerSpec,
@@ -175,6 +176,7 @@ class Folders:
             status = await context.run_blocking(platform.status)
             if not status.running:
                 raise WorkspaceError(self.workspaces.not_running(status))
+            await self._memory(context, platform)
             name, workspace = self._record_for(folder, context)
             workspace = self._with_layers(name, workspace, list(context.params.get("layers") or []), context)
         async with context.step("image"):
@@ -405,6 +407,21 @@ class Folders:
             context.log(f"{spec.name} runs {was}: it is made again, told the proxy, once it is stopped")
         else:
             context.log(f"{spec.name} runs")
+
+    async def _memory(self, context: OperationContext, platform: ContainerPlatform) -> None:
+        """Whether Docker can limit the container's memory, read as the workspace opens (never in the regular check;
+        the reading kept for Docker's view): where it cannot, no workspace opens unless the owner allows it, and then
+        its log says so (design 0014 §4)."""
+        limited, words = await context.run_blocking(platform.memory_limits)
+        self.workspaces.note_memory(limited)
+        if limited is not False:
+            return
+        if not self.workspaces.settings().allow_unlimited_memory:
+            raise WorkspaceError(memory_refused(words))
+        context.log(
+            f"its memory is not limited: Docker cannot limit it ({memory_said(words)}); allow_unlimited_memory in "
+            "config/docker.json allows it"
+        )
 
     async def _limits(
         self, context: OperationContext, platform: ContainerPlatform, workspace: Workspace

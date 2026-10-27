@@ -178,6 +178,8 @@ export interface DockerSettings {
   adapter: string;
   /** How often, in seconds, Clank reads Docker's state. */
   poll_seconds: number;
+  /** Open workspaces even where Docker cannot limit a container's memory (a Raspberry Pi's default kernel): an agent's runaway process could then take this computer's memory. Off: no workspace opens there, saying how to turn the limits on. */
+  allow_unlimited_memory: boolean;
   /** How long a start may take before it is reported as failed. */
   start_timeout_seconds: number;
   /** How long a stop may take before it is reported as failed. */

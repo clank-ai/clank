@@ -28,6 +28,12 @@
       "title": "Checked every",
       "type": "number"
     },
+    "allow_unlimited_memory": {
+      "default": false,
+      "description": "Open workspaces even where Docker cannot limit a container's memory (a Raspberry Pi's default kernel): an agent's runaway process could then take this computer's memory. Off: no workspace opens there, saying how to turn the limits on.",
+      "title": "Allow unlimited memory",
+      "type": "boolean"
+    },
     "start_timeout_seconds": {
       "default": 300,
       "description": "How long a start may take before it is reported as failed.",
