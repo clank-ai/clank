@@ -10,6 +10,10 @@ runs the model one of three ways:
 Clank runs on Windows, macOS and Linux. Where a step differs by system, it says so, with a block for each: open
 yours. Every step says what it does before it does it, and asks before it installs anything.
 
+> **Linux, for now:** the installer sets Docker Engine up today, but the agent reaching its model through Docker
+> Engine comes with Clank's next release (design 0014, being built). Until it is out, the agent works on Windows and
+> macOS, with Docker Desktop.
+
 ## 1. What you need
 
 | | Windows | macOS | Linux |
