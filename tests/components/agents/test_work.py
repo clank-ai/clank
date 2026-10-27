@@ -39,6 +39,7 @@ from tests.fakes.platform import FakePlatform
 from tests.support.vscode import asked, fake_vscode
 
 YOU = Actor(kind="user", via="console")
+NPMRC = "/home/agent/.config/opencode/.npmrc"  # OpenCode's own installs kept offline
 CONFIG = "/home/agent/.config/opencode/opencode.json"
 
 
@@ -137,7 +138,7 @@ def test_prepare_writes_every_file_in_one_go_and_reads_dockers_limits_once_in_a_
     monkeypatch.setattr(platform, "limits", reading)
     agents: Agents = kernel.parts["agents"]
     agents.prepare("paper")
-    assert written == [[*(path for path, _ in workspaces_service.agent_files()), CONFIG]], (
+    assert written == [[*(path for path, _ in workspaces_service.agent_files()), NPMRC, CONFIG]], (
         "Clank's files and OpenCode's configuration in one docker exec: each one took a fifth of a second (2026-10-26)"
     )
     assert len(looked) == 3, "the container is asked of Docker once by prepare, and once by each of the bridge's runs"

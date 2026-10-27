@@ -485,7 +485,7 @@ class Agents:
         notes += workspaces.reach(workspace)
         servers = self._given(workspace, model.key)
         configuration = adapter.configuration(model, servers, self._read_only(workspace))
-        workspaces.put_files(workspace, [*self._agent_files(), configuration], container=container)
+        workspaces.put_files(workspace, [*self._agent_files(), *adapter.files(), configuration], container=container)
         with self._notices_lock:  # its configuration has the model's limits now: nothing more to tell its window
             self._notices.pop(workspace, None)
         one_window = bool(self.kernel.settings.get("workspace", workspace).record.model_dump().get("one_window", True))
@@ -527,7 +527,7 @@ class Agents:
         container = workspaces.container_of(workspace)  # refused first when its container does not run
         workspaces.reach(workspace)
         configuration = adapter.configuration(model, self._given(workspace, model.key), self._read_only(workspace))
-        workspaces.put_files(workspace, [*self._agent_files(), configuration], container=container)
+        workspaces.put_files(workspace, [*self._agent_files(), *adapter.files(), configuration], container=container)
         return self.agent_env(workspace, program)
 
     def _agent_files(self) -> list[tuple[str, str]]:
