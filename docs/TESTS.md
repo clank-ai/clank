@@ -132,12 +132,12 @@ Each test file begins with a docstring naming the design sections it verifies (d
 
 | § | Section | Tests |
 | --- | --- | --- |
-| 1 | What the owner does | `tests/components/agents/test_work.py` (8), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (9), `tests/console/test_folder.py` (24), `tests/console/test_terminal.py` (5) |
+| 1 | What the owner does | `tests/components/agents/test_work.py` (8), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (10), `tests/console/test_folder.py` (24), `tests/console/test_terminal.py` (5) |
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (11), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
-| 3 | Workspaces, the image and the container | `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (9), `tests/console/test_folder.py` (24), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (7), `tests/docker/test_escape.py` (3) |
+| 3 | Workspaces, the image and the container | `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (10), `tests/console/test_folder.py` (24), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (7), `tests/docker/test_escape.py` (3) |
 | 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (8), `tests/console/test_folder.py` (24), `tests/contract/test_agent_program.py` (2) |
 | 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (8), `tests/components/workspaces/test_docker_containers.py` (13), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
-| 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (9) |
+| 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (10) |
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (3) |
 | 9 | The console: easy to use, dynamic, the machine on the right | `tests/components/machine/test_meters.py` (7), `tests/console/test_machine_column.py` (14) |
@@ -3488,7 +3488,7 @@ Design 0004 §1 and design 0002 §2.15: `clank workspace open [FOLDER]` (this fo
 
 ### `tests/components/workspaces/test_workspace_operations.py`
 
-Design 0004 §1, §3 and §6: opening a folder makes it a workspace (a record naming it; nothing is written in the folder), builds Clank's sandbox image if it is not built (asked first: it downloads about a gigabyte), makes the internal network and the one that reaches the host, starts the edge and the folder's container, and the next time does nothing it already did (a stopped container is started, not made again). A container's limits are its record's, else half of what the platform has. A folder whose container would see more than itself (a drive's root, the user's home, one holding CLANK_HOME or inside it) is refused, as is opening with Docker stopped. Stopping a workspace stops its container; removing one asks first, then removes its container and its home, and leaves its folder as it was.
+Design 0004 §1, §3 and §6: opening a folder makes it a workspace (a record naming it; nothing is written in the folder), builds Clank's sandbox image if it is not built (asked first: it downloads about a gigabyte), makes the internal network and the one that reaches the host, starts the edge and the folder's container, and the next time does nothing it already did (a stopped container is started, not made again). A container's limits are its record's, else half of what the platform has. A folder whose container would see more than itself (a drive's root, the user's home, one holding CLANK_HOME or inside it) is refused, as is opening with Docker stopped. Stopping a workspace stops its container; removing one asks first (saying, when its container runs, that what runs in it ends), then removes its container and its home, and leaves its folder as it was.
 
 - opening a folder makes its workspace and its container and the next time does nothing again
 - the edge is made again when the ports it forwards change
@@ -3499,6 +3499,7 @@ Design 0004 §1, §3 and §6: opening a folder makes it a workspace (a record na
 - a folder whose container would see more than itself is refused
 - opening with docker stopped says how to start it
 - removing a workspace asks then removes its container and home and leaves its folder
+- removing a workspace whose container runs says that what runs in it ends
 
 ### `tests/console/test_add_model.py`
 
