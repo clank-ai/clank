@@ -34,7 +34,7 @@ recommendation, built as recommended so the owner can try it, and changed if the
 | 6 | The desktop stays responsive | Proposed 2026-10-13 |
 | 7 | NInfer's context | Retired 2026-10-13 with NInfer (decision 0034) |
 | 8 | What the tests must prove, and what waits | Proposed 2026-10-13 |
-| 9 | The console: easy to use, dynamic, the machine on the right | Built 2026-10-14 |
+| 9 | The console: easy to use, dynamic, the machine on the right | Built 2026-10-14; revised 2026-10-26 (a GPU whose handle its driver dropped) |
 | 10 | A project's own software and MCP servers | Built 2026-10-14 as proposed; verified on a simulator |
 
 ## 1. What the owner does
@@ -263,7 +263,11 @@ of the terminal"; and an indicator that cycles while things load, as OpenCode's 
   whole and per logical processor), the memory and page file, the disks' and the network's rates, each fixed drive's
   space, and each NVIDIA GPU's use, memory, temperature and power from NVIDIA's management library (NVML, which comes
   with the driver), read through ctypes: no program is started each second and no dependency is added. The last five
-  minutes are kept (`GET /machine/meters`) and each reading is sent live (`machine.meters`, never stored).
+  minutes are kept (`GET /machine/meters`) and each reading is sent live (`machine.meters`, never stored). A GPU whose
+  handle its driver dropped (an update, a reset: an access violation, which ctypes raises as `OSError`) is read again
+  from a fresh start of the library, or else left out of the readings until the service starts again, said once in the
+  log, while the rest of each reading goes on (revised 2026-10-26: every reading failed, each second for hours, its
+  traceback logged each time).
 - **The panel on the right** (`clank/console/machine.py`, `MachineColumn`, the machine column since design 0011's R2,
   two panels): "machine" (bars colored by load, the last minute as
   sparklines, each CPU thread as a cell in its load's color, the GPU's clocks and fan, VRAM, each drive, the network,

@@ -16,7 +16,11 @@ with its caption beside it and a `.gitignore` that keeps git out; a file outside
 Design 0013 §15: the bridge starts a planning session on a window still starting, waiting for its server, sends its
 first message to the agent asked for (the planner), shows the session there, then again; a window that never answers is
 said. It shows a session that runs already on a window still starting (`clank flow attach`), and again, starting
-none."""
+none.
+
+Design 0023 §4: an action on a server that ended is refused at once, saying so (`ServerGone`), never after a wait; a
+page read whole names its cursor (empty) before `--whole`, so a bridge from before the flag (in a container made before
+Clank's programs were mounted) reads no cursor from it and answers its page."""
 
 import importlib.util
 import json
@@ -32,7 +36,7 @@ from typing import Any, ClassVar
 import pytest
 
 from clank import registry
-from clank.components.agents.sessions import SessionError
+from clank.components.agents.sessions import ServerGone, SessionError
 from clank.components.workspaces import service as workspaces_service
 from clank.components.workspaces.sandbox import image_folder, names
 from clank.kernel.clock import FakeClock
@@ -296,6 +300,62 @@ def test_the_service_drives_a_session_through_the_bridge_and_records_who_did_wha
     )
     with pytest.raises(SessionError, match=r"older sandbox image.*x, then o"):
         sessions.servers("paper")
+
+
+def running_bridge(kernel: Kernel, folder: Path, ports: str, monkeypatch: pytest.MonkeyPatch) -> FakePlatform:
+    """Workspace paper on `folder`, its container running, each action a run of the bridge on this machine."""
+    kernel.settings.write("workspace", "paper", {"path": str(folder)}, base=None, actor=PHONE_USER)
+    platform: FakePlatform = kernel.parts["workspaces"].platform
+    platform.containers.append(container(names(kernel.home.id).container("paper")))
+    monkeypatch.setenv("CLANK_BRIDGE_PORTS", ports)
+
+    def inside(argv: list[str], given: bytes | None) -> Answer:
+        done = subprocess.run([sys.executable, str(BRIDGE), *argv[2:]], input=given or b"", capture_output=True,
+                              timeout=60, creationflags=background_flags())  # fmt: skip
+        return Answer(done.returncode, done.stdout.decode(), done.stderr.decode())
+
+    platform.inside = inside
+    return platform
+
+
+def test_an_action_on_a_server_that_ended_is_refused_at_once_saying_so(
+    kernel: Kernel, opencode: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    running_bridge(kernel, tmp_path, f"{opencode}-{opencode}", monkeypatch)
+    sessions = kernel.parts["agents"].sessions
+    ended = free_port()  # its OpenCode was closed: nothing listens there
+    began = time.monotonic()
+    with pytest.raises(ServerGone) as refused:
+        sessions.page("paper", ended, "ses_1")
+    assert time.monotonic() - began < 10, "at once: no request's wait"
+    assert str(refused.value) == f"no OpenCode runs on port {ended} any more: it was closed or it ended"
+    with pytest.raises(ServerGone):
+        sessions.send("paper", ended, "ses_1", "go on", actor=PHONE_USER)
+    assert sessions.page("paper", opencode, "ses_1")["messages"], "a server that runs still answers"
+
+
+def test_a_page_read_whole_names_its_cursor_first_so_an_older_bridge_reads_none_from_the_flag(
+    kernel: Kernel, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A bridge from before `--whole` took the fourth argument as the cursor, so OpenCode answered the flag as one
+    with 400 (`{"_tag":"BadRequest"}`) and the agent panel's stream broke (the owner's log, 2026-10-26)."""
+    platform = running_bridge(kernel, tmp_path, "4096-4096", monkeypatch)
+    asked: list[list[str]] = []
+
+    def older(argv: list[str], given: bytes | None) -> Answer:
+        action, rest = argv[2], argv[3:]
+        asked.append(argv[2:])
+        cursor = rest[3] if action == "page" and len(rest) > 3 else ""  # the older bridge's own reading of them
+        if cursor == "--whole":
+            return Answer(0, json.dumps({"ok": False, "error": 'OpenCode answered 400: {"_tag":"BadRequest"}'}), "")
+        return Answer(0, json.dumps({"ok": True, "messages": [], "next": ""}), "")
+
+    platform.inside = older
+    sessions = kernel.parts["agents"].sessions
+    assert sessions.page("paper", 4096, "ses_1", limit=30, whole=True) == {"ok": True, "messages": [], "next": ""}
+    assert asked == [["page", "4096", "ses_1", "30", "", "--whole"]]
+    sessions.page("paper", 4096, "ses_1", limit=30, before="cur_1", whole=True)
+    assert asked[-1] == ["page", "4096", "ses_1", "30", "cur_1", "--whole"]
 
 
 def test_an_mcp_server_is_stopped_and_started_while_the_agent_runs_and_kept_for_its_next_start(

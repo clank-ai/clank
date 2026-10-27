@@ -16,8 +16,10 @@ gateway holds (design 0012 §9.4) closes the request it held before the message 
 OpenCode reads it next, while the pause stays (the request that carries it is held until the owner resumes); the pause
 and the resume themselves are the gateway's, recorded here too (`acted`). The actions the owner waits on (`CHANNELED`:
 a message, a new session, a stop, an answer, a compaction, a page, a part, the servers) go through the watcher's own
-process (`channel`, design 0023 §4) and through a process of their own only when no watcher carries them or it did not
-answer in time.
+process (`channel`, design 0023 §4) and through a process of their own only when no watcher carries them (its bridge
+from before the channel reads none) or it did not answer in time. An action on a server that ended is refused at once
+(`ServerGone`, the bridge's words naming its port), never after a wait; a page read whole names its cursor before
+`--whole`, empty when there is none, so a bridge from before that flag reads no cursor from it.
 
 A container may run several OpenCode servers (a window's, the phone's, a flow's) that list the same sessions, since
 their storage is shared, while only one runs each (design 0012 §3). So the service keeps, from its watchers' lines
@@ -87,6 +89,10 @@ EVENT_TYPES = [
 
 class SessionError(Exception):
     """An action on a session that could not be done, and why (in the bridge's or OpenCode's words)."""
+
+
+class ServerGone(SessionError):
+    """The OpenCode server the action was for no longer runs: nothing listens on its port (the bridge's words)."""
 
 
 @dataclass
@@ -372,9 +378,11 @@ class Sessions:
         self, workspace: str, port: int, session: str, *, limit: int = 50, before: str = "", whole: bool = False
     ) -> dict[str, Any]:
         """A page of the session's messages, oldest first, in the Monitor's shape, and the cursor of the page before
-        it ("" at its first message)."""
+        it ("" at its first message). Read whole, the cursor is named before `--whole` even when there is none, since a
+        bridge from before that flag takes its fourth argument for the cursor (OpenCode then refuses the page)."""
         port = self._server(workspace, session, port)
-        return self._bridge(workspace, ["page", str(port), session, str(limit), *([before] if before else []),
+        cursor = [before] if before or whole else []
+        return self._bridge(workspace, ["page", str(port), session, str(limit), *cursor,
                                         *(["--whole"] if whole else [])])  # fmt: skip
 
     def part(self, workspace: str, port: int, session: str, message: str, part: str) -> dict[str, Any]:
@@ -492,7 +500,7 @@ class Sessions:
     ) -> dict[str, Any]:
         """A bridge action: through the watcher's channel for the actions the owner waits on (design 0023 §4), else,
         or when the channel is not there or did not answer, through a process of its own; what the bridge found or
-        did, `SessionError` with its words when it refused."""
+        did, `SessionError` with its words when it refused (`ServerGone` when its server no longer runs)."""
         found: dict[str, Any] | None = None
         if self.channel is not None and argv and argv[0] in CHANNELED:
             try:
@@ -508,6 +516,8 @@ class Sessions:
                     f"{workspace}'s container runs an older sandbox image: stop the workspace and open it again "
                     "(Workspaces, F6: x, then o) for this"
                 )
+            if found.get("gone") is not None:
+                raise ServerGone(said)
             raise SessionError(said)
         return found
 

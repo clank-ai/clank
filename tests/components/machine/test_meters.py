@@ -3,8 +3,11 @@ all the time). The service reads them once a second: each reading has the CPU's 
 processor), the memory and page file in use, the disks' and the network's rates since the reading before, each fixed
 drive's space and each NVIDIA GPU's use, memory, temperature and power (none without NVIDIA's library); the last
 readings are kept, the oldest dropped past five minutes, and answered at `GET /machine/meters`; each new one is sent to
-the clients live."""
+the clients live. A GPU whose handle its driver dropped is read again from a fresh start of NVIDIA's library, or else
+left out of the readings, said once, while the rest of each reading goes on."""
 
+import ctypes
+import logging
 import time
 from collections.abc import Iterator
 from typing import Any
@@ -13,7 +16,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from clank import registry
-from clank.components.machine import service
+from clank.components.machine import meters, service
 from clank.components.machine.meters import KEPT, TOP, Containers, Meters, Nvml, Processes
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
@@ -98,6 +101,71 @@ def test_without_nvidias_library_there_are_no_gpus() -> None:
         raise OSError(f"{name} is not there")
 
     assert Nvml(missing).gpus() == []
+
+
+class Driver:
+    """NVIDIA's library as ctypes calls it, with one GPU whose handle the driver can drop (`drop`: an update, a reset):
+    a call with a handle given out before then raises what ctypes raises for an access violation; a fresh start of the
+    library gives a handle that works, unless nothing works any more (`broken`)."""
+
+    VIOLATION = "exception: access violation reading 0x000002B49D5127C8"
+
+    def __init__(self) -> None:
+        self.starts = 0
+        self.valid = 0  # the handle that works now
+        self.broken = False
+
+    def drop(self) -> None:
+        self.valid = -1
+
+    def nvmlInit_v2(self) -> int:
+        self.starts += 1
+        return 0
+
+    def nvmlDeviceGetCount_v2(self, count: Any) -> int:
+        count._obj.value = 1
+        return 0
+
+    def nvmlDeviceGetHandleByIndex_v2(self, index: int, handle: Any) -> int:
+        self.valid = handle._obj.value = 1000 + self.starts
+        return 0
+
+    def nvmlDeviceGetName(self, handle: ctypes.c_void_p, buffer: Any, size: int) -> int:
+        buffer.value = b"NVIDIA GeForce RTX 5080"
+        return 0
+
+    def nvmlDeviceGetUtilizationRates(self, handle: ctypes.c_void_p, use: Any) -> int:
+        if self.broken or handle.value != self.valid:
+            raise OSError(self.VIOLATION)
+        use._obj.gpu = 12
+        return 0
+
+    def __getattr__(self, name: str) -> Any:
+        return lambda *args: 999  # every other reading: not supported (NVML_ERROR_UNKNOWN)
+
+
+def test_a_gpu_whose_handle_its_driver_dropped_is_read_from_a_fresh_start_or_else_left_out_and_said_once(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """On the owner's machine (2026-10-26), once the driver dropped the GPU's handle, every reading raised an access
+    violation: the whole reading failed, each second for hours, its traceback logged each time."""
+    driver = Driver()
+    nvml = Nvml(lambda name: driver)
+    [gpu] = nvml.gpus()
+    assert (gpu["name"], gpu["use"], gpu["memory_used"]) == ("NVIDIA GeForce RTX 5080", 12.0, None)
+    driver.drop()
+    with caplog.at_level(logging.WARNING, logger=meters.__name__):
+        [again] = nvml.gpus()
+        assert again["use"] == 12.0, "read again from a fresh start of the library"
+        assert driver.starts == 2
+        driver.broken = True
+        assert nvml.gpus() == [], "left out: the rest of the reading goes on"
+        assert nvml.gpus() == []
+        assert driver.starts == 3, "one fresh start each time it fails, then no more"
+    assert [record.getMessage() for record in caplog.records] == [
+        f"the GPU's meters stopped: NVIDIA's library failed ({Driver.VIOLATION}); they come back when the service "
+        "starts again"
+    ]
 
 
 @pytest.mark.skipif(not Nvml().gpus(), reason="no NVIDIA GPU on this machine")

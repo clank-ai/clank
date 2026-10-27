@@ -55,13 +55,18 @@ only), or without a terminal (`serve`). Actions:
                                      interface, which then takes that agent (design 0009 §8); with "wait", a window
                                      still starting is waited for that many seconds, and the session shown again a
                                      few seconds later (a planning session, design 0013 §15); its id
+    hello                            how soon a request on the watch's input is answered (`within`, in seconds): the
+                                     service asks it first, so a bridge from before the requests (one that reads only
+                                     `shown`) is known by its silence (design 0023 §4)
     watch                            follow every server's events until standard input closes, a JSON line for each
                                      thing the service needs (design 0007 §4): `asked` (a permission, those waiting
                                      when a server is first followed too; a change with its tool call's input),
                                      `replied`, `edited` (a file written), `agent` (the agent a message was sent to,
-                                     and whether its server runs a terminal interface; design 0009 §7), `gone` (a
-                                     server stopped), `synced` (the servers running at its start were read) and
-                                     `alive` now and then; and the Monitor's (design 0012 §6.1), each with its port:
+                                     and whether its server runs a terminal interface; design 0009 §7), `server` (a
+                                     server followed, from its start or once it started: its port, and whether it
+                                     runs a terminal interface), `gone` (a server stopped), `synced` (the servers
+                                     running at its start were read) and `alive` now and then; and the Monitor's
+                                     (design 0012 §6.1), each with its port:
                                      `status` (a session's: idle, busy, or retry; those it runs when a server is first
                                      followed too), `session` (created, updated or deleted; a subagent's with its
                                      parent), `message`, `part`, `removed`, `todo`, `compacted`, `error`, `question`
@@ -71,10 +76,14 @@ only), or without a terminal (`serve`). Actions:
                                      input names them, answered `shown`. What a burst changes many times is said once,
                                      with its last state. A request on standard input, {"id", "action", "args",
                                      "body"}, does that action here (design 0023 §4: the actions the owner waits on
-                                     need no process of their own) and is answered at once, among the events, by a
-                                     line {"type": "answer", "id", "ok", ...} as a one-off run would print it
+                                     need no process of their own), in a thread of its own so a slow one holds up no
+                                     other, and is answered among the events by a line {"type": "answer", "id", "ok",
+                                     ...} as a one-off run would print it, within `ANSWER_SECONDS`: in words when
+                                     OpenCode has not answered by then (the action may still be done later)
 
-It uses Python's standard library only, so it runs in any workspace's container, whatever the folder installs.
+An action on a port where no OpenCode listens any more is refused at once, its answer naming the port (`gone`), never
+after a request's wait. It uses Python's standard library only, so it runs in any workspace's container, whatever the
+folder installs.
 """
 
 import contextlib
@@ -126,16 +135,35 @@ BURST_QUIET, BURST_MOST = (float(part) for part in os.environ.get("CLANK_BRIDGE_
 # held: at most four times a second while the model writes, as the console redraws (design 0012 §2)
 WAIT_SECONDS = 1.0  # how long `held` waits for OpenCode's answer before saying it holds the request
 HELD_SECONDS = 12 * 3600.0  # how long it holds one at most
+ANSWER_SECONDS = float(os.environ.get("CLANK_BRIDGE_ANSWER", "7"))  # a request on the watch's input is answered within
+# this, below the service's own wait for it (`REQUEST_SECONDS` in its watch.py): in words when OpenCode has not answered
+READS = ("servers", "messages", "page", "part", "mcp", "agents", "free-port", "hello")  # actions that change nothing
+
+
+class Gone(OSError):
+    """No OpenCode listens on the port any more: said at once, never after a request's wait."""
+
+    def __init__(self, port: int) -> None:
+        super().__init__(f"no OpenCode runs on port {port} any more: it was closed or it ended")
+        self.port = port
 
 
 def fetch(port: int, method: str, path: str, body: Any = None, timeout: float | None = TIMEOUT) -> tuple[Any, Any]:
-    """One request to the server on `port`: its answer read as JSON (None when it has none), and its headers."""
+    """One request to the server on `port`: its answer read as JSON (None when it has none), and its headers; `Gone`
+    when nothing listens there."""
+    if not listening(port):
+        raise Gone(port)
     data = json.dumps(body).encode() if body is not None else None
     headers = {"Content-Type": "application/json"} if data is not None else {}
     request = urllib.request.Request(f"http://127.0.0.1:{port}{path}", data=data, method=method, headers=headers)
-    with urllib.request.urlopen(request, timeout=timeout) as answer:
-        raw = answer.read()
-        said = answer.headers
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as answer:
+            raw = answer.read()
+            said = answer.headers
+    except urllib.error.URLError as error:
+        if isinstance(error.reason, ConnectionRefusedError):  # it ended since it was looked at
+            raise Gone(port) from error
+        raise
     return (json.loads(raw) if raw.strip() else None), said
 
 
@@ -734,17 +762,18 @@ class Watch:
     """`watch`: every OpenCode server's events, as the service needs them, one JSON line each, until standard input
     closes (the service stopped, or ended the exec).
 
-    The review's lines (`asked`, `replied`, `edited`, `agent`, `question`, `answered`, `gone`, `disposed`, `synced`)
-    are said at once. The Monitor's (design 0012 §6.1) are held in a table keyed by what each says (a part, a message,
-    a session's status), a new value replacing the old one and moving to the table's end, and the table is written
-    once the stream has been quiet for `BURST_QUIET` seconds, or `BURST_MOST` after its first line, and before any line
-    said at once: a part updated a hundred times in a burst is said once, with its last state, and a status that went
-    busy, then idle, after the step's parts. The text as it is written (`delta`) is joined per part and field, and
-    only for the sessions the service says are shown (a line `{"shown": [...]}` on the input) or followed. A followed
-    session's parts are said whole (a line `{"followed": [...]}`, design 0023 §2: the mirror keeps them), the others
-    in the Monitor's brief. A request on the input (`{"id", "action", "args", "body"}`, design 0023 §4) is done
-    here, in a thread of its own, and answered at once (`{"type": "answer", "id", "ok", ...}`), so the actions the
-    owner waits on need no process of their own."""
+    The review's lines (`asked`, `replied`, `edited`, `agent`, `question`, `answered`, `server`, `gone`, `disposed`,
+    `synced`) are said at once. The Monitor's (design 0012 §6.1) are held in a table keyed by what each says (a part, a
+    message, a session's status), a new value replacing the old one and moving to the table's end, and the table is
+    written once the stream has been quiet for `BURST_QUIET` seconds, or `BURST_MOST` after its first line, and before
+    any line said at once: a part updated a hundred times in a burst is said once, with its last state, and a status
+    that went busy, then idle, after the step's parts. The text as it is written (`delta`) is joined per part and
+    field, and only for the sessions the service says are shown (a line `{"shown": [...]}` on the input) or followed. A
+    followed session's parts are said whole (a line `{"followed": [...]}`, design 0023 §2: the mirror keeps them), the
+    others in the Monitor's brief. A request on the input (`{"id", "action", "args", "body"}`, design 0023 §4) is done
+    here, in a thread of its own, and answered as soon as it is done (`{"type": "answer", "id", "ok", ...}`), within
+    `ANSWER_SECONDS` whatever OpenCode does, so the actions the owner waits on need no process of their own and one
+    OpenCode that hangs holds up no other request."""
 
     def __init__(self) -> None:
         self.lock = threading.RLock()  # what is written, and what is held
@@ -857,10 +886,21 @@ class Watch:
 
     def _request(self, told: dict[str, Any]) -> None:
         """A request of the service's (design 0023 §4, decision 0140): `{"id", "action", "args", "body"}` on the
-        input, its action done here as a one-off run would do it, its answer said at once with its id."""
+        input, its action done here as a one-off run would do it, in a thread of its own, its answer said with its id
+        as soon as it is done, and within `ANSWER_SECONDS` whatever OpenCode does: an OpenCode that does not answer
+        is said in words, and what it answers later is dropped."""
+        action = str(told["action"])
         args = [str(each) for each in told.get("args") or []]
         body: dict[str, Any] = told["body"] if isinstance(told.get("body"), dict) else {}
-        result = answered(lambda: act([str(told["action"]), *args], lambda: body))
+        found: list[dict[str, Any]] = []
+        done = threading.Event()
+
+        def work() -> None:
+            found.append(answered(lambda: act([action, *args], lambda: body)))
+            done.set()
+
+        threading.Thread(target=work, daemon=True).start()
+        result = found[0] if done.wait(ANSWER_SECONDS) else {"ok": False, "error": late(action)}
         self.say({"type": "answer", "id": told["id"], **result})
 
     def _new_ports(self) -> list[int]:
@@ -871,8 +911,11 @@ class Watch:
         ]
 
     def _follow(self, port: int) -> threading.Event:
+        """Follow a server that listens (from the watch's start, or once it started): said at once (`server`), so the
+        service knows it answers again on a port whose server it was told is gone."""
         ready = threading.Event()
         self.terminals[port] = port in terminal_ports()
+        self.say({"type": "server", "port": port, "terminal": self.terminals[port]})
         self.followed[port] = threading.Thread(target=self._server, args=(port, ready), daemon=True)
         self.followed[port].start()
         return ready
@@ -1171,19 +1214,29 @@ def act(argv: list[str], asked: Callable[[], dict[str, Any]] = given) -> dict[st
         given_now = asked()
         agent, wait = str(given_now.get("agent") or BUILD), float(given_now.get("wait") or 0)
         return implement(int(rest[0]), str(given_now.get("text") or ""), str(given_now.get("title") or ""), agent, wait)
+    if action == "hello":
+        return {"within": ANSWER_SECONDS}
     raise ValueError(f"no action {action!r}")
 
 
 def answered(run: Callable[[], dict[str, Any]]) -> dict[str, Any]:
     """What `run` found or did, as the service reads it: `ok` and the result, or `ok` false and the error's words
-    (OpenCode's own for an answer of its own)."""
+    (OpenCode's own for an answer of its own; the port, `gone`, when no OpenCode listens there any more)."""
     try:
         return {"ok": True, **run()}
     except urllib.error.HTTPError as error:
         said = cut(error.read().decode(errors="replace"), 500)
         return {"ok": False, "error": f"OpenCode answered {error.code}: {said}"}
+    except Gone as error:
+        return {"ok": False, "error": str(error), "gone": error.port}
     except (OSError, ValueError, RuntimeError, IndexError, KeyError, urllib.error.URLError) as error:
         return {"ok": False, "error": str(error) or type(error).__name__}
+
+
+def late(action: str) -> str:
+    """What a request's answer says when OpenCode has not answered within `ANSWER_SECONDS`."""
+    said = f"OpenCode did not answer {action} within {ANSWER_SECONDS:g} seconds: it may be starting, busy or stuck"
+    return said if action in READS else f"{said}; it may still do it"
 
 
 def main() -> int:

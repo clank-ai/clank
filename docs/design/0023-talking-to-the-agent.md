@@ -16,7 +16,7 @@ the experience; this document says what holds it up.
 | 1 | What the owner felt, measured | Approved 2026-10-26 |
 | 2 | The conversation is read from the service's mirror | Approved 2026-10-26; built 2026-10-26 ([plan s50](../plans/s50-the-mirror.md)) |
 | 3 | Pushed, not polled: the conversation stream | Approved 2026-10-26; built 2026-10-26 ([plan s51](../plans/s51-the-stream.md)); revised 2026-10-26: the batch window is 50 ms, not 100 (with 100, a change was on the stream 111 ms behind the mirror, §6) |
-| 4 | Acting without waiting: the resident bridge | Approved 2026-10-26; built 2026-10-26 ([plan s52](../plans/s52-the-resident-bridge.md)) |
+| 4 | Acting without waiting: the resident bridge | Approved 2026-10-26; built 2026-10-26 ([plan s52](../plans/s52-the-resident-bridge.md)); revised 2026-10-26 after the owner's lag: a bridge from before the channel is known by its silence to `hello`, the bridge answers within its own deadline, a server that ended is said at once |
 | 5 | What the owner sees | Approved 2026-10-26; built 2026-10-26 for the agent panel ([plan s51](../plans/s51-the-stream.md)); the Monitor and the phone with steps 4 and 5 |
 | 6 | Measurements that hold it to its word | Approved 2026-10-26 |
 | 7 | What else it mends | Approved 2026-10-26 |
@@ -109,6 +109,29 @@ actions the owner waits on go through it:
 - Goal: a message reaches OpenCode's `prompt_async` in under 150 ms, an answer to a permission or a question in
   under 150 ms, where each takes a second or more today.
 
+*Revised after approval, 2026-10-26.* The owner found VS Code's agent panel lagging badly. The service's log said why:
+`smallworldmipt's watcher did not answer page within 10 seconds` 117 times in a day, each followed by the watcher ended
+and started again and a process of its own. That workspace's container was made before Clank's programs were mounted
+(decision 0142): its image's copy of the bridge reads only `shown` on the watch's input, so no request was ever
+answered, and every one waited its ten seconds; each restart of the watcher also made every session's history due to
+be read again (design 0012 §6.1), through more requests. So:
+
+- **The watcher asks `hello` once its watch synced.** A bridge that answers (a refusal too) carries requests; one that
+  says nothing within `PROBE_SECONDS` (5) reads none: its requests go through a process of their own at once, never
+  after a request's wait, the watcher is left as it is, and the log says once that the workspace is to be stopped and
+  opened again (Workspaces, F6: `x`, then `o`), which mounts the current bridge.
+- **The bridge answers each request within its own deadline**, `ANSWER_SECONDS` (7, `CLANK_BRIDGE_ANSWER`), below the
+  service's `REQUEST_SECONDS` (10): each request runs in a thread of its own, so one OpenCode that hangs holds up no
+  other, and an OpenCode that has not answered by then is said in words ("OpenCode did not answer page within 7
+  seconds: it may be starting, busy or stuck"; for an action that changes something, "it may still do it"). It is
+  never sent again on its own: a request the bridge holds is not lost, and a message sent twice would be.
+- **A server that ended is said at once.** Every call to OpenCode first looks whether its port still listens: when
+  nothing does, the answer says so in words, naming the port (`gone`), and the service raises `ServerGone`.
+- So a request still unanswered after `REQUEST_SECONDS` means the watch itself no longer answers: only then is the
+  watcher ended and started again, and the request sent once more through a process of its own, as above.
+- The watch names each server it follows (`server`, design 0007 §4), so the service knows when a server answers again
+  on a port whose server it was told is gone.
+
 ## 5. What the owner sees
 
 Drawn on the design canvas "Clank · Talking to the agent" (its boards: the path before and after, the panel while it
@@ -196,3 +219,13 @@ actions the owner waits on: the history's page comes through the watcher too.
 
 Decisions this design asks for, written when it is approved: the conversation is read from the service's mirror and
 never from the container at each read; one resident process a container, carrying its requests. No new dependency.
+
+## Revision log
+
+- **2026-10-26, §4 revised after approval, after the owner's lag in VS Code** (Claude's call): a container made
+  before Clank's programs were mounted (decision 0142) runs a bridge that reads no request, so each one waited its ten
+  seconds and the watcher was ended and started again, 117 times in a day. The watcher now asks `hello` once its
+  watch synced and sends nothing to a bridge that does not answer; the bridge answers each request within its own
+  deadline, below the service's wait, in words when OpenCode does not answer, a slow request holding up no other; a
+  server that ended is said at once (`gone`, the service's `ServerGone`); only a watch that itself stops answering is
+  ended and started again. §4 says it whole.

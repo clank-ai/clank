@@ -295,7 +295,7 @@ class Agents:
     def readout(self, folder: str, session: str = "") -> dict[str, Any]:
         """The model's readout for a folder (design 0021 §3; `readout.py`): its workspace's session (the one named,
         else the newest kept), that session's `now` and context totals, and the machine: the main slot, the GPU, the
-        drafts."""
+        drafts; and the workspace's jobs running, none when the workspace was removed while it was read."""
         try:
             workspace: str | None = self.annotations.workspace_of(folder)[0]
         except AnnotationError:
@@ -317,8 +317,18 @@ class Agents:
             "slot": slot_view(slot, runtime.title(slot.preset), options),
             "gpu": gpu_view(machine.meters()),
             "drafts": runtime.drafts("main"),
-            "jobs": [job for job in self.jobs.list(workspace) if job["state"] != "ended"] if workspace else [],
+            "jobs": self._running_jobs(workspace),
         }
+
+    def _running_jobs(self, workspace: str | None) -> list[dict[str, Any]]:
+        """A workspace's jobs that have not ended; none for no workspace, nor for one removed meanwhile (its jobs'
+        folder is its own: `JobsError`)."""
+        if workspace is None:
+            return []
+        try:
+            return [job for job in self.jobs.list(workspace) if job["state"] != "ended"]
+        except JobsError:
+            return []
 
     def conversation_stream(
         self,
