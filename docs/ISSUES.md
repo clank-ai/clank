@@ -15,7 +15,6 @@ Update this page in the same commit as the fix.
 | pytest is not in the sandbox image | The agent's test runs fail with "No module named pytest" while This folder says nothing needs installing | `workspaces/image/Dockerfile` | Add it at the next change of the image |
 | No scriptable way to give the agent a task | `opencode run` rejects every edit under review mode, and Clank does not see its session | `clank work` | `clank work --message`, on the start route Clank already has |
 | The phone's chat (design 0025 §12) | Not built yet: a normal chat, the workspaces with the saved ones first, any session picked up, figures and the agent's questions in place | `remote/page/` | Plan s60 (branch `feature/phone-chat`, begun) |
-| VS Code does not say when the agent cannot reach the model | OpenCode fails in its terminal with network errors | `agents/`, `vscode/` | Branch `fix/vscode`: a check of the path to the model, shown in the panel |
 | No update command | Updating means running the installer again | `clank/cli/` | The update feature (not begun) |
 
 ## Fixed on 2026-10-26
@@ -38,4 +37,5 @@ Update this page in the same commit as the fix.
 | The phone page did not say why it could not connect | Nothing on the PC said whether the iPhone was on the tailnet, that Funnel made the PC's name public, or that iCloud Private Relay bypassed Tailscale's DNS | 8aadc4b |
 | Confusing words: the clients connected, the slots not loaded, the doctor's line, the tool server's path, a refused request's fields, a waiting call's raw input, the network log's UTC times, log lines without times | Words written for Clank's makers | b08023e, a1f54b7, fa7a784, 7010ec0, 0772ff0 |
 | A console test failed each evening | It named its log file by UTC's date while the proxy uses this computer's | 7f8dd9d |
-| Times in UTC in the phone's commands and page | The device and code times were printed as UTC text | (this commit) |
+| Times in UTC in the phone's commands and page | The device and code times were printed as UTC text | 7f42a2a |
+| VS Code did not say when the agent could not reach the model | OpenCode failed in its terminal with network errors; the panel waited on slow routes before OpenCode opened | fix/vscode, merged with 2fef8fc (extension 0.10.3) |
