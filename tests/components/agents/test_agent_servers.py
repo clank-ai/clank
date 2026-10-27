@@ -227,3 +227,12 @@ def test_a_workspace_terminal_free_command_has_no_terminal(
     workspaces = kernel.parts["workspaces"]
     assert "--tty" in workspaces.exec_argv("paper", ["opencode"], {})
     assert "--tty" not in workspaces.exec_argv("paper", ["myproject-mcp"], {}, terminal=False)
+
+
+def test_clanks_own_server_is_shown_as_opencode_runs_it(kernel: Kernel, platform: FakePlatform, folder: Path) -> None:
+    """This folder named `/opt/clank/phone_mcp.py`, where a container made before the mount has nothing; OpenCode runs
+    the copy written into the agent's home at each start (2026-10-26)."""
+    opened(kernel, platform, folder)
+    agents: Agents = kernel.parts["agents"]
+    [clank, *_] = agents.servers("paper")
+    assert clank["shown"] == "python3 /home/agent/.clank/mcp/phone_mcp.py"

@@ -87,3 +87,13 @@ def test_a_start_in_the_background_that_fails_says_only_what_its_own_service_sai
     message = str(raised.value)
     assert f"port {port} is in use" in message
     assert "LocalProtocolError" not in message
+
+
+def test_status_names_the_clients_connected_in_words() -> None:
+    """The owner's status said "clients following it: vscode, vscode": nothing to someone new (2026-10-26)."""
+    from clank.cli.service import clients_said
+
+    assert clients_said([]) == "nothing"
+    assert clients_said(["vscode", "vscode"]) == "2 VS Code windows"
+    assert clients_said(["vscode", "console", "phone"]) == "1 VS Code window, the console, the phone"
+    assert clients_said(["mystery"]) == "mystery"

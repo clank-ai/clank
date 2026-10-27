@@ -89,7 +89,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.12 | Files for the user | none yet |
 | 2.13 | Clank's own traffic | none yet |
 | 2.14 | The API | `tests/kernel/test_api.py` (17), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_apidoc.py` (1), `vscode/test/client.test.ts` (5) |
-| 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (5), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/console/test_command.py` (4), `tests/console/test_data.py` (17), `tests/console/test_shell.py` (19) |
+| 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (6), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/console/test_command.py` (4), `tests/console/test_data.py` (17), `tests/console/test_shell.py` (19) |
 | 2.16 | Where things are | `tests/kernel/test_files.py` (8), `tests/kernel/test_home.py` (4) |
 | 2.17 | The kernel against every feature asked for | none yet |
 | 2.18 | Choices this section makes | none yet |
@@ -141,7 +141,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (3) |
 | 9 | The console: easy to use, dynamic, the machine on the right | `tests/components/machine/test_meters.py` (7), `tests/console/test_machine_column.py` (14) |
-| 10 | A project's own software and MCP servers | `tests/components/agents/test_agent_servers.py` (8), `tests/components/tools/test_console_servers.py` (1), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_setup.py` (10), `tests/console/test_workspaces_page.py` (4) |
+| 10 | A project's own software and MCP servers | `tests/components/agents/test_agent_servers.py` (9), `tests/components/tools/test_console_servers.py` (1), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_setup.py` (10), `tests/console/test_workspaces_page.py` (4) |
 
 ## Design 0005: the phone (the first slice of M9)
 
@@ -197,7 +197,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner gets | none yet |
 | 2 | What OpenCode 1.19 offers, as measured | none yet |
-| 3 | The planner | `tests/components/agents/test_agent_servers.py` (8), `tests/components/agents/test_opencode.py` (8) |
+| 3 | The planner | `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_opencode.py` (8) |
 | 3.1 | The planner's instructions | none yet |
 | 4 | A plan | `tests/components/agents/test_plans.py` (4), `tests/components/agents/test_session_flow_branches.py` (8) |
 | 4.1 | Cost and data | none yet |
@@ -315,8 +315,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 12 | The Flow view in the Monitor | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_planning_view.py` (4), `tests/components/flows/test_summaries.py` (9), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_view.py` (12), `tests/console/test_monitor_flow_watch.py` (12), `tests/console/test_monitor_page.py` (16), `tests/console/test_orchestrator_panel.py` (6) |
 | 13 | What flows do not cover | none yet |
 | 14 | Build steps | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_runs.py` (7), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_view.py` (12), `tests/kernel/test_settings_checks.py` (3), `vscode/test/gates.test.ts` (16) |
-| 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/agents/test_flow_tools.py` (9), `tests/components/agents/test_sessions.py` (16), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (24), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (11) |
-| 16 | The orchestrator: a model that steers the run | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (8), `tests/components/flows/test_orchestrator.py` (18), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_orchestrator_panel.py` (6) |
+| 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_flow_tools.py` (9), `tests/components/agents/test_sessions.py` (16), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (24), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (11) |
+| 16 | The orchestrator: a model that steers the run | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (9), `tests/components/flows/test_orchestrator.py` (18), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_orchestrator_panel.py` (6) |
 | 17 | Jobs, and the work done while one runs | `tests/components/flows/test_box_jobs.py` (8), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_jobs.py` (9), `tests/components/flows/test_side_work.py` (7), `tests/console/test_side_work_panel.py` (3) |
 
 ## Design 0014: Linux without Docker Desktop, and small machines
@@ -688,6 +688,7 @@ Design 0002 §2.15: `clank status` says whether the service runs and what waits 
 - serve in the background says when a service already runs and starts no second one
 - a start in the background runs from clanks home never the current folder
 - a start in the background that fails says only what its own service said
+- status names the clients connected in words
 
 ### `tests/cli/test_work_cloud.py`
 
@@ -729,6 +730,7 @@ Design 0004 §10: the MCP servers a workspace's agent gets, and the threads it s
 - a server is checked in the workspaces container through docker exec without a terminal
 - clank mcp allow and hold give this folders agent a server or hold it back
 - a workspace terminal free command has no terminal
+- clanks own server is shown as opencode runs it
 
 ### `tests/components/agents/test_annotations.py`
 

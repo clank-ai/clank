@@ -558,14 +558,14 @@ class Agents:
     def servers(self, workspace: str) -> list[dict[str, Any]]:
         """The MCP servers of a workspace's agent: yours, then its folder's, each with whether the agent gets it and,
         when not, why (design 0004 §10)."""
-        from clank.components.workspaces.service import PHONE_PROGRAM
+        from clank.components.workspaces.service import CURRENT_PHONE
 
         loaded = self._workspace(workspace)
         record = loaded.record.model_dump()
         tools: Tools = self.kernel.parts["tools"]
         held = CLANK_SERVER in record["mcp_off"]
         rows: list[dict[str, Any]] = [{
-            "name": CLANK_SERVER, "scope": "clank", "transport": "stdio", "shown": f"python3 {PHONE_PROGRAM}",
+            "name": CLANK_SERVER, "scope": "clank", "transport": "stdio", "shown": f"python3 {CURRENT_PHONE}",
             "given": not held, "why": "held back from this workspace (m gives it)" if held else "",
         }]  # fmt: skip
         mine = {view["name"] for view in tools.servers() if view["scope"] == "user"} | {CLANK_SERVER}

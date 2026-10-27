@@ -85,8 +85,7 @@ def status(as_json: bool) -> None:
         f"Clank service: running ({service['version']}) at {service['url']}, process {service['pid']}, "
         f"up {_duration((datetime.now(UTC) - started).total_seconds())}"
     )
-    clients = ", ".join(service["clients"]) or "none"
-    click.echo(f"  clients following it: {clients}")
+    click.echo(f"  connected now: {clients_said(service['clients'])}")
     click.echo(f"  questions waiting for you: {len(waiting)}")
 
 
@@ -97,3 +96,19 @@ def _duration(seconds: float) -> str:
     if minutes < 60:
         return f"{minutes}m"
     return f"{minutes // 60}h {minutes % 60:02d}m"
+
+
+CLIENTS = {"vscode": ("VS Code window", "VS Code windows"), "console": ("the console", "consoles"),
+           "phone": ("the phone", "phones"), "cli": ("a command", "commands")}  # fmt: skip
+
+
+def clients_said(names: list[str]) -> str:
+    """The clients following the service, in words: how many of each kind ("2 VS Code windows, the console")."""
+    counts: dict[str, int] = {}
+    for name in names:
+        counts[name] = counts.get(name, 0) + 1
+    said = []
+    for name, count in counts.items():
+        one, many = CLIENTS.get(name, (name, name))
+        said.append(f"{count} {many}" if count > 1 else (f"1 {one}" if one.endswith("window") else one))
+    return ", ".join(said) or "nothing"

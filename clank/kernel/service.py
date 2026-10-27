@@ -139,6 +139,8 @@ class Service:
         """Run until stopped; raises `ServiceError` when it cannot start. On Windows a client that drops its connection
         while it is accepted no longer closes the API's socket (`accepting.py`)."""
         keep_accepting()
+        if not logging.getLogger().handlers:  # each line of the service's log with its time (its own run decides)
+            logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
         anyio.run(self._serve)
 
     async def _serve(self) -> None:
