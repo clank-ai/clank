@@ -5,7 +5,8 @@ and every label's name; stopped, no containers, read within a few seconds althou
 questions unanswered; a start and a stop are asked of the program and change its state, even when the program's own
 start does nothing; without its command it is not installed and refuses to start; what it supports is read from the
 program. Design 0004 §3 (revised 2026-10-26): each container's networks are read by name from the same listing, a
-stopped one's too, so the edge's place on every workspace's network costs no other question."""
+stopped one's too, so the edge's place on every workspace's network costs no other question. Design 0014 §2: an
+adapter that asks for a command's whole answer gets it as recorded, with its errors."""
 
 import sys
 from pathlib import Path
@@ -24,9 +25,11 @@ CASES = [
 
 
 def build(adapter: type[ContainerPlatform], program: RecordedProgram, installed: bool = True) -> ContainerPlatform:
-    """The adapter on the recorded program, as it ran where it was recorded."""
+    """The adapter on the recorded program, as it ran where it was recorded: a command's output, or its whole answer
+    with its errors (design 0014 §2)."""
     command = (program.command or "docker") if installed else None
-    return adapter(program, command, platform=program.platform or sys.platform, launch=program.launch)
+    platform = program.platform or sys.platform
+    return adapter(program, command, platform=platform, launch=program.launch, answer=program.answer)
 
 
 @pytest.mark.parametrize(("adapter", "folder"), CASES)

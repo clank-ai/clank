@@ -1,0 +1,50 @@
+# Docker Engine's recording (design 0014 §2, plan s9 L0), run only by hand: `gh workflow run record-docker-engine.yml`.
+# On GitHub's ubuntu-24.04 runner, whose Docker Engine comes from Docker's own packages, tools/capture_docker_engine.py
+# records what Clank's docker-engine adapter asks, in three states: running (with four example containers the tool
+# makes and removes), stopped (both of Docker's units stopped first, so the tool's commands wake nothing, and started
+# again after, whatever happened) and no access (as a user the job makes, outside the docker group). The recording is
+# printed in the log between two marker lines, for an agent to read (`gh run view --log`) and commit as
+# tests/fixtures/docker-engine/<version>/program.json; nothing else is kept, so no action is added. It takes a few of
+# the account's x64 minutes. The checkout is pinned as in checks.yml.
+name: record-docker-engine
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  record:
+    name: Record Docker Engine
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: What is recorded
+        run: |
+          docker version
+          systemctl show docker.service --property=LoadState --property=ActiveState
+          echo "the runner's user id: $(id -u)"
+          python3 --version
+      - name: Running, with the example containers
+        run: python3 tools/capture_docker_engine.py --state running --examples --out "$RUNNER_TEMP/running.json"
+      - name: Stopped, both of Docker's units
+        run: |
+          sudo systemctl stop docker.socket docker.service
+          python3 tools/capture_docker_engine.py --state stopped --out "$RUNNER_TEMP/stopped.json"
+      - name: Docker started again
+        if: always()
+        run: sudo systemctl start docker.socket docker.service
+      - name: No access, as a user outside the docker group
+        run: |
+          sudo useradd --create-home --shell /bin/bash recorder
+          sudo install -d -o recorder -m 0755 /tmp/clank-record
+          sudo cp tools/capture_docker_engine.py /tmp/clank-record/
+          cd /tmp/clank-record
+          sudo -u recorder python3 capture_docker_engine.py --state "no access" --out /tmp/clank-record/no-access.json
+      - name: The recording, between two marker lines
+        run: |
+          python3 tools/capture_docker_engine.py --out "$RUNNER_TEMP/program.json" \
+            --where "GitHub's ubuntu-24.04 runner (the hand-run job record-docker-engine.yml, run $GITHUB_RUN_ID)" \
+            --merge "$RUNNER_TEMP/running.json" "$RUNNER_TEMP/stopped.json" /tmp/clank-record/no-access.json

@@ -8,13 +8,16 @@ What real programs answered, at the versions Clank's adapters are tested against
 | `program`, `version` | The program and its version, as the program names them |
 | `recorded`, `how` | When, on what, and how it was recorded, including what was written by hand and why |
 | `initial` | The state a test starts in unless it asks for another |
-| `states` | For each state (such as running and stopped), each command with its exit status and its output |
+| `states` | For each state (such as running and stopped), each command with its exit status, its output, and, when they were recorded, its seconds and its errors |
 | `transitions` | The commands that move the program to another state |
 
-`tests/fakes/recorded.py` plays a recording back to an adapter, and fails the test on any command that was never
-recorded, so an adapter that starts asking something new is caught and the program recorded again. Every kind of
-adapter has one contract test file, `tests/contract/test_<kind>.py`, run against every recording of every adapter of
-the kind; a test fails when an adapter has no recording.
+An answer is `[status, output]`, `[status, output, seconds]` or `[status, output, seconds, errors]`: an exit status of
+null means no answer came, and the errors are what the program wrote to its error output (design 0014 §2: Docker's
+words for a user outside the docker group are there). `tests/fakes/recorded.py` plays a recording back to an adapter,
+as a command's output or as its whole answer, and fails the test on any command that was never recorded, so an adapter
+that starts asking something new is caught and the program recorded again. Every kind of adapter has one contract test
+file, `tests/contract/test_<kind>.py`, run against every recording of every adapter of the kind; a test fails when an
+adapter has no recording.
 
 Nothing personal is kept: names, ids, images, labels and paths are replaced by made-up ones of the same form, and the
 secrets check reads these files like every other.
@@ -22,6 +25,16 @@ secrets check reads these files like every other.
 Each recording of a container platform, while it runs, shows one container of each sort the contract checks: one of
 Clank's (its `clank.*` labels), one of another tool's (`toolbox.*` labels), one of another program's, and one that is
 not running.
+
+A platform Clank does not start (Docker Engine, a system service: design 0014 §2) has no transitions. Its recording
+holds three states instead, each made by the owner of the computer it was recorded on: `running`, `stopped` (both of
+Docker's units stopped, so no command woke the engine) and `no access` (as a user outside the docker group). It is made
+by `tools/capture_docker_engine.py`, which runs the commands the `docker-engine` adapter sends, as the tool lists
+them, keeps each one's status, output, seconds and errors, replaces the containers' ids and the computer's and user's
+names, and merges the three states into `program.json`. The hand-run job `.github/workflows/record-docker-engine.yml`
+does it all on GitHub's ubuntu-24.04 runner and prints the recording in its log between two marker lines; it becomes
+`docker-engine/<version>/program.json`. A recording written by hand before the real one came says so in its `how`
+and its `provisional`, and is replaced by the recording.
 
 An endpoint adapter (a provider reached at its URL, design 0016 §18) is recorded over HTTP instead: its folder holds
 one folder per recording, named by its date (or `documented`, the shapes its documentation describes, written by hand

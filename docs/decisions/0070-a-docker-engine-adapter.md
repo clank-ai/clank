@@ -1,9 +1,13 @@
 # 0070. A Docker Engine adapter: Clank reports the engine's state, never wakes or starts it, and never runs sudo
 
-- Status: Proposed
-- Date: 2026-10-18
+- Status: Accepted at the owner's instruction (2026-10-27), with design 0014's recommended choices: its first recording
+  is made by the hand-run job (design 0014 §2); built with plan s9's lane L
+- Date: 2026-10-18; accepted 2026-10-27
 - Decided by: proposed by Claude from the research of 2026-10-18 for running Clank on a Raspberry Pi 5
-  ([design 0014](../design/0014-linux-and-small-machines.md) §2); the owner decides
+  ([design 0014](../design/0014-linux-and-small-machines.md) §2); accepted when the owner told the agents to build
+  lane L for Linux x64 (2026-10-27: "I want to begin testing clank by itself on a completely separate linux computer
+  that I have where I will only be testing the integration with the API keys from openrouter, so we need to make sure
+  that this is completely set up and ready for testing")
 
 ## Context
 - Clank runs containers through one adapter, Docker Desktop's
