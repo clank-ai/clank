@@ -9,8 +9,6 @@ Update this page in the same commit as the fix.
 
 | Issue | What the owner sees | Where | Next |
 | --- | --- | --- | --- |
-| A session's history is read again forever after its OpenCode window closed | The service takes half a CPU core and answers slowly; its log fills with "could not be read: Connection refused" | `agents/sessionflow/kept.py`, `agents/watch.py` | Branch `fix/watcher` (four tests to finish): a closed window's sessions set aside until a server answers on its port again |
-| A request through the watcher waits 10 s for an OpenCode that is gone or stuck, then the watcher is started again | VS Code's agent panel, the console and the phone wait 10 s per request | `agents/watch.py`, `workspaces/image/bridge.py` | The same branch: the bridge answers at once for a server that is gone |
 | A new session's first answer reads the whole prompt anew | Up to 20-30 s before the first word of a new chat, while the local model reads about 18,000 tokens of OpenCode's tools and instructions (later steps take a second) | The engine's cache across sessions, OpenCode's tool set | Measure the cache across sessions; give the agent fewer tools |
 | Removing a workspace while OpenCode is open in VS Code | No warning; tracebacks in the service's log; the readout fails with "there is no workspace" | `agents/watch.py`, `agents/jobs.py` | Treat a workspace that is gone quietly; warn before removing one in use |
 | The console says confusing things | "Nothing runs from here" while OpenCode runs; the Monitor opens on an empty Flow view; Watch for shows another workspace's mark; "fast: stopped (unloaded (stopped))"; "doctor: not run" right after `clank doctor`; a dozen "coming" menu entries; This folder names `/opt/clank/phone_mcp.py`, which is elsewhere now | `agents/console/folder.py` and the other pages | A pass over the console's words |
@@ -39,3 +37,4 @@ Update this page in the same commit as the fix.
 | The phone page did not load | With Funnel on, the PC's name resolves on the internet too, and iCloud Private Relay looked it up there, reaching Tailscale's relay | The iPhone's settings (Private Relay off); the diagnostics are on `fix/phone` |
 | The phone's first screen took 12 s | Each workspace's sessions were read one after another | dd6d3f0 |
 | A flows test failed on CI only | It checked the last event, which a planning's own status line could follow on a slow machine | dd6d3f0 |
+| The service read a closed window's sessions again forever, and waited 10 s per request on a dead OpenCode | A closed window's sessions were retried without end, and the bridge did not answer while OpenCode did not | fix/watcher, merged after 7ab3d4a |
