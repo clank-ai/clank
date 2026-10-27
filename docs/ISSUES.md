@@ -9,7 +9,6 @@ Update this page in the same commit as the fix.
 
 | Issue | What the owner sees | Where | Next |
 | --- | --- | --- | --- |
-| A new session's first answer reads the whole prompt anew | 10 to 37 s before the first word of a new chat (62 s once), while the local model reads OpenCode's system prompt and tools again (17,000 to 29,000 tokens); later steps take a second | KVMem v0.16 resumes only from its four newest snapshots, all past the shared prompt after a few steps ([the measurement](measurements/2026-10-27-a-new-sessions-first-answer.md)) | A tested patch keeps one at the system prompt's end (10.34 s to 0.73 s): the owner decides ([0146](decisions/0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md)); then fewer tools where unused |
 | The console still says some confusing things | "Nothing runs from here" while OpenCode runs; the Monitor opens on an empty Flow view; Watch for shows another workspace's mark; a dozen "coming" menu entries | `agents/console/folder.py`, the Monitor, `console/app.py` | A pass over the console's words (the menu's entries change every frame's snapshot) |
 | pytest is not in the sandbox image | The agent's test runs fail with "No module named pytest" while This folder says nothing needs installing | `workspaces/image/Dockerfile` | Add it at the next change of the image |
 | No scriptable way to give the agent a task | `opencode run` rejects every edit under review mode, and Clank does not see its session | `clank work` | `clank work --message`, on the start route Clank already has |
@@ -19,6 +18,8 @@ Update this page in the same commit as the fix.
 
 | Issue | Cause | Commit |
 | --- | --- | --- |
+| A new chat waited 10 to 37 s for its first word on the local model | KVMem v0.16 resumes only from its four newest snapshots of the model's state, all past OpenCode's shared system prompt after a few steps ([the measurement](measurements/2026-10-27-a-new-sessions-first-answer.md)) | The patch of decision [0146](decisions/0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md), in frontier 262K's build since 2026-10-27: 0.5 to 1 s |
+| KVMem could resume a conversation from another conversation's snapshot (found by the patch's tests) | Restoring a snapshot left the snapshots past it, taken on rows the new prompt does not share | The same patch: a snapshot restored drops the ones past it |
 | `getaddrinfo EAI_AGAIN edge`, then OpenCode crashed | The edge container, made again when the proxy's port was added, joined only one workspace's network | 21fbe29 |
 | `clank code`, `clank work` and the console waited 22-32 s before anything | Whether a model is usable asked WSL for every model file's size, even with a model loaded | 5d3723c |
 | Each start of the agent took 16 s | Nine `docker exec` writes and a `docker info` at every start | 2c855f8 |

@@ -75,8 +75,49 @@ the GPU.
 An earlier run sent each session one step only: there both builds resumed every new session (0.5 to 0.6 s), which is
 why the order above matters.
 
+## The patch tested before it was built
+
+Before the owner's engine took it, the patch was tested against the build it patches, on the real model with frontier
+262K's flags, the main slot unloaded meanwhile. Three builds: the owner's, the patch as first proposed, and the patch
+revised by these tests. Each scenario started a fresh server and sent its requests in order: recorded OpenCode
+requests, and requests built from the recorded system prompt and tools (files read by a tool, follow-up messages, a
+revert into the history). Each was greedy (temperature 0) and 32 tokens long. Every checked answer was compared with
+the same request read whole from scratch (`cache_reset`), read twice: all 44 such reads repeated exactly.
+
+| Scenario | The owner's build | The revised patch |
+| --- | --- | --- |
+| A new session after a session of six steps | 12.21 s, nothing from the cache | 1.02 s, 17,630 from the cache |
+| A new session after a second session of six steps | 14.83 s, nothing | 0.92 s, 17,630 |
+| Each step of a session | 0.56 to 1.73 s | 0.63 to 1.51 s |
+| A conversation reverted into its history, after another conversation ran | resumed from the other's snapshot (row 19,397) | resumed from its own (row 17,632) |
+| A request broken off after its pinned snapshot was taken, then sent again | read again whole | read again whole; the broken one's snapshots dropped |
+| A session resumed from the pinned snapshot and broken off, then a new session | 1.18 s, from 17,632 | 1.11 s, from 17,632; the pinned snapshot kept |
+| A session of 77,789 tokens (past the exact window), then a new session | 0.90 s, from 17,632 | 1.04 s, from 17,632 |
+| Requests with no system message (the template adds one of 42 tokens) | the third read again | the third resumed from row 42 |
+| Workspaces with other instructions taking turns | each read once | each read once, pinned at its own end |
+
+Neither build failed a request, and the revised patch never kept more than one pinned snapshot and four others. Its
+snapshots took at most 750 MiB of system memory over all the scenarios, against 899 MiB for the owner's build, which
+kept snapshots of conversations it had left.
+
+The first patch failed the test it was made for: like the owner's build, it resumed the reverted conversation from a
+snapshot of the conversation before. Restoring a snapshot left the snapshots past it in place; one taken on another
+conversation's rows could then be restored. Here the 3,000 rows read after it pulled the answer back (its first words
+matched the reference), but it is the wrong state, and with fewer rows after it the answer would follow it. KVMem's
+later checkpoint design says "Restoring a prefix invalidates the edited suffix"; the revised patch drops them so.
+
+The answers. Of 26 checked answers in each build, 22 were the reference's word for word, in the owner's build and in
+the revised patch alike. The 4 others began the same thought in other words (for example, "Added a `mean` function"
+against "Added the `mean` function"): a request resumed from a snapshot is computed in other batches than one read
+whole, and greedy decoding follows the slightly different numbers. For the same reason, read whole, the patched build
+answered 5 of 22 requests in other words than the owner's: it reads the system prompt in a batch of its own.
+
+Then through Clank, on the owner's engine rebuilt with the patch, in the benchmark workspace: a session of four steps
+(its first request read 18,389 tokens in 16.0 s, its steps began in 0.37 to 0.39 s), then two new sessions, whose first
+words came in 0.66 s and 0.51 s, with 18,323 and 18,325 tokens from the cache.
+
 ## What it does not change
 
 Two sessions taking turns still read each other's part again: KVMem v0.16 keeps one conversation. A workspace with
-other instructions or tools has another system prompt, which its first session reads once. Whether the owner's engine
-runs the patch is decision [0146](../decisions/0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md).
+other instructions or tools has another system prompt, which its first session reads once. The owner's engine runs
+the revised patch since 2026-10-27 (decision [0146](../decisions/0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md)).

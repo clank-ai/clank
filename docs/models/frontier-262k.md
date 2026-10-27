@@ -47,15 +47,22 @@ Its program is `llama-kvmem-server`, run in a WSL distribution (Ubuntu 22.04 her
 [`clank/components/runtime/adapters/kvmem.py`](../../clank/components/runtime/adapters/kvmem.py) (design
 [0003](../design/0003-the-runtime.md) §4).
 
-The build Clank runs here, as its checkout and build folder said on 2026-10-20:
+The build Clank runs here, as its checkout and build folder said on 2026-10-20, rebuilt with Clank's patch on
+2026-10-27:
 
 - **Source**: the public repository <https://github.com/kvmem/kvmem-llama.cpp>, at its tag `v0.16.0-rc1` (commit
   `db4bc22ee6e8f4b590188dcc0457e72022eb1bbe`, "Pin shared-library mode for reproducible prebuilt builds").
 - **One upstream fix on top**: commit `7e20823` of KVMem's master, "fix: handle multimodal query replay exceeding KV
   budget" (2026-09-23, released in v0.17.0), cherry-picked onto the tag. Without it, one tool result larger than the
   exact window fails the request with HTTP 500
-  ([KVMem and a long tool result](../measurements/2026-10-15-kvmem-long-tool-results.md)). Nothing else in the
-  engine's source is changed.
+  ([KVMem and a long tool result](../measurements/2026-10-15-kvmem-long-tool-results.md)).
+- **Clank's patch on top of it**: [`kvmem-pin-the-system-prompt.patch`](kvmem-pin-the-system-prompt.patch) (decision
+  [0146](../decisions/0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md)). KVMem keeps a snapshot of the
+  model's state where the first message after the system prompt begins, so a new session resumes after OpenCode's
+  system prompt and tools (about 18,000 tokens) instead of reading them again: its first word in about a second, not
+  10 to 37. A snapshot restored also drops the snapshots past it, which belonged to the conversation before
+  ([the tests](../measurements/2026-10-27-a-new-sessions-first-answer.md#the-patch-tested-before-it-was-built)).
+  Nothing else in the engine's source is changed.
 - **llama.cpp**: the submodule is ggml-org's llama.cpp at KVMem's pin, `b81c99b`, with KVMem's own patch
   (`patches/llama-kvmem-current.patch`) applied by its `scripts/apply-patches.sh`, and nothing else.
 - **The build**: KVMem's `scripts/build-cuda.sh`. Its CMake settings: `CMAKE_BUILD_TYPE` Release, `GGML_CUDA` on,
@@ -157,11 +164,14 @@ commands run from its working copy.
    git submodule update --init     # llama.cpp at KVMem's pin, b81c99b
    git cherry-pick -n 7e20823      # the replay fix, from KVMem's master, left uncommitted
    scripts/apply-patches.sh        # KVMem's patch, into the llama.cpp submodule
+   git apply CLANK/docs/models/kvmem-pin-the-system-prompt.patch   # Clank's patch (decision 0146), uncommitted
    scripts/build-cuda.sh           # makes build/bin/llama-kvmem-server
    ```
 
-   `-n` leaves the fix uncommitted, so the checkout stays at `db4bc22`, the commit `clank engine adopt` checks; the
-   build here has it so. The fix's regression test, `tests/replay-budget-regression.py`, does not exist at the tag,
+   `CLANK` is Clank's working copy as the distribution sees it (`/mnt/c/...` for a folder on drive C). `-n` leaves the
+   fix uncommitted, so the checkout stays at `db4bc22`, the commit `clank engine adopt` checks, and `git apply`
+   leaves Clank's patch uncommitted too; the build here has them so (`git diff --cached` shows the fix, `git diff`
+   the patch). The fix's regression test, `tests/replay-budget-regression.py`, does not exist at the tag,
    so the pick adds it whole. When it was picked here, git stopped at one conflict, resolved to v0.17.0's form with
    v0.16's logging (`fprintf` for `kvmem_diag`;
    [the measurement](../measurements/2026-10-15-kvmem-long-tool-results.md)). A card other than the RTX 50-series
@@ -174,7 +184,7 @@ commands run from its working copy.
    ```
 
    Clank checks its flags and that its checkout is at `db4bc22`, and records the local changes it finds: the fix,
-   and the patched submodule.
+   Clank's patch and the patched submodule.
 4. **The model:** `uv run clank model download swift-1.5-qwen3.8-27b --format gguf --host ubuntu-22.04`. It resumes
    after an interruption and is used only once its SHA-256 is the catalog's. A copy you already have:
    `uv run clank model adopt swift-1.5-qwen3.8-27b --format gguf --host ubuntu-22.04 --path <where it is>`.
@@ -201,12 +211,10 @@ commands run from its working copy.
   within the reserve.
 - **KVMem keeps one conversation.** A request that shares nothing with the one it holds resets its store, so two
   sessions taking turns read their prompts again each time.
-- **A new chat reads the system prompt again.** After a session of a few steps, a new session's first step reads
-  OpenCode's system prompt and tools again (17,000 to 29,000 tokens, 10 to 37 s here): KVMem keeps four snapshots
-  of the model's state, the newest. [A patch](kvmem-pin-the-system-prompt.patch) that keeps one at the system
-  prompt's end brought it to 0.73 s ([the measurement](../measurements/2026-10-27-a-new-sessions-first-answer.md));
-  whether this build carries it is decision
-  [0146](../decisions/0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md).
+- **A new chat reads the system prompt once per workspace.** With Clank's patch, the first session reads OpenCode's
+  system prompt and tools (17,000 to 29,000 tokens, 10 to 37 s here), and each new session after it resumes there:
+  its first word in 0.5 to 1 s ([the measurement](../measurements/2026-10-27-a-new-sessions-first-answer.md)).
+  KVMem keeps one conversation, so another workspace's prompt, or two sessions taking turns, are read again.
 - **Past the window, recall is good but not perfect.** In its harness at about 220,000 tokens this file and
   these sizes (with a batch of 256) passed 5 of 6 probes: it missed a rule of the system prompt.
 - **A huge tool result** fills the window with itself: with the fix above the model answers, but about the data more

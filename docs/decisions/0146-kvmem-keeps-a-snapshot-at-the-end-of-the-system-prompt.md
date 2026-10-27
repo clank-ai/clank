@@ -1,6 +1,8 @@
 # 0146. KVMem keeps a snapshot at the end of the system prompt, for the next session
 
-- Status: Proposed
+- Status: Accepted for frontier 262K's build (the owner, 2026-10-27: "work on the patch that makes a new chat answer in
+  under a second, making sure that we rigorously test this"), revised by its tests before it was built (below);
+  offering it to KVMem's project waits for the owner
 - Date: 2026-10-27
 - Decided by: the owner, to answer: "Should frontier 262K's KVMem build carry the patch that keeps a snapshot at the
   end of the system prompt, and should the change be offered to KVMem?"
@@ -45,3 +47,23 @@ Measured on the same recorded requests: after a six-step session, a new session'
 - About 157 MB more of system memory for the extra snapshot; nothing more on the GPU.
 - The build has a second local change: `clank engine adopt` records it, and frontier 262K's page gains a step.
 - Until KVMem takes the change or an equivalent, each new KVMem release needs it again.
+
+## Revised by its tests (2026-10-27)
+
+Tested before it was built, against the owner's build, on the real model with frontier 262K's flags
+([the tests](../measurements/2026-10-27-a-new-sessions-first-answer.md#the-patch-tested-before-it-was-built)), the patch
+as first proposed showed a flaw it shares with KVMem v0.16 itself, and makes more likely: restoring a snapshot left the
+snapshots past it in place. Those were taken on the conversation before, on rows the new one does not share, and a
+later request could restore one, resuming one conversation with the model's state from another. The owner's build and
+the first patch both did, in the test that looked for it. The patch built adds:
+
+- restoring a snapshot drops every snapshot past it, as KVMem's later checkpoint design says ("Restoring a prefix
+  invalidates the edited suffix");
+- one snapshot is pinned at most: a new one unpins the one before, which then ages out like the others;
+- a log line after each answer and each rollback, listing the snapshots kept (`KVMEM_TRACE checkpoints`), which the
+  tests read.
+
+Built so on 2026-10-27, with the build before it kept beside it (`build/bin/llama-kvmem-server.before-0146`). Through
+Clank, after a session of four steps, the next two new sessions' first words came in 0.66 s and 0.51 s, against 10 to
+37 s before; in the engine's tests, 1.0 s and 0.9 s after sessions of six steps, against 12.2 s and 14.8 s on the
+owner's build.

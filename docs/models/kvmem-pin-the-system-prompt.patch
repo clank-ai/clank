@@ -10,9 +10,14 @@
  
 --- a/tools/kvmem-multimodal-server.h
 +++ b/tools/kvmem-multimodal-server.h
-@@ -66,13 +66,37 @@
+@@ -65,14 +65,54 @@
+     entries.erase(std::remove_if(entries.begin(), entries.end(), [&](const auto & entry) {
          return entry.row >= checkpoint.row;
      }), entries.end());
++    // One checkpoint is pinned at most: a new one unpins the one before, which then ages out like the others.
++    if (checkpoint.pinned) {
++        for (auto & entry : entries) entry.pinned = false;
++    }
      entries.push_back(std::move(checkpoint));
 -    if (entries.size() > 4) {
 +    // The pinned checkpoint (the end of the system prompt) is not one of the four, and is never the one evicted.
@@ -32,19 +37,31 @@
 +    }
 +}
 +
++// The rows of the checkpoints kept, a pinned one marked with *, for the log.
++static void multimodal_trace_checkpoints(const ServerState & st, const char * when) {
++    std::string rows;
++    for (const auto & entry : st.mm_checkpoints) {
++        if (!rows.empty()) rows += ',';
++        rows += std::to_string(entry.row);
++        if (entry.pinned) rows += '*';
++    }
++    fprintf(stderr, "KVMEM_TRACE checkpoints when=%s rows=%s\n", when, rows.c_str());
++}
++
 +// Where the first turn after the system message begins: the second <|im_start|>, when the prompt opens with a system
 +// message. Agents start many conversations with the same system prompt and tools; a checkpoint here lets each new one
 +// resume after them instead of evaluating them again. -1 when there is no system message.
-+static int kvmem_system_end(ServerState & st, const kvmem_prompt & prompt) {
-+    static llama_token im_start = -2, system = -2;
-+    if (im_start == -2) {
-+        const auto a = common_tokenize(st.vocab, "<|im_start|>", false, true);
-+        const auto b = common_tokenize(st.vocab, "system", false, true);
-+        im_start = a.size() == 1 ? a[0] : -1;
-+        system = b.size() == 1 ? b[0] : -1;
-+    }
++static int kvmem_system_end(const ServerState & st, const kvmem_prompt & prompt) {
++    auto single = [&](const char * text) {
++        const auto ids = common_tokenize(st.vocab, text, false, true);
++        return ids.size() == 1 ? ids[0] : LLAMA_TOKEN_NULL;
++    };
++    static const llama_token im_start = single("<|im_start|>");
++    static const llama_token system = single("system");
 +    const auto & t = prompt.tokens;
-+    if (im_start < 0 || system < 0 || t.size() < 3 || t[0] != im_start || t[1] != system) return -1;
++    if (im_start == LLAMA_TOKEN_NULL || system == LLAMA_TOKEN_NULL || t.size() < 3 || t[0] != im_start || t[1] != system) {
++        return -1;
++    }
 +    for (size_t i = 2; i < t.size(); ++i) {
 +        if (t[i] == im_start) return (int) i;
 +    }
@@ -52,7 +69,27 @@
  }
  
  static void multimodal_restore(ServerState & st, const MultimodalCheckpoint & checkpoint, bool truncate) {
-@@ -350,7 +374,15 @@
+@@ -121,6 +161,7 @@
+         st.cached_tokens.resize(std::min(st.cached_tokens.size(), (size_t) st.mm_live_row));
+         multimodal_remember(st, *st.mm_rollback);
+         fprintf(stderr, "KVMEM_TRACE multimodal_rollback context=%p row=%d\n", (void *) st.ctx, st.mm_live_row);
++        multimodal_trace_checkpoints(st, "rollback");
+         fprintf(stderr, "KVMEM_CHECKPOINT_ROLLBACK live_bytes=%zu peak_bytes=%zu\n",
+                 st.mm_checkpoint_accounting->live_bytes, st.mm_checkpoint_accounting->peak_bytes);
+         st.mm_committed = true;
+@@ -259,6 +300,11 @@
+             st.mm_lcp = 0; // No old rows survived the reset; count all evaluated rows as new.
+             base = multimodal_checkpoint(st, 0);
+         }
++        // Restoring a prefix invalidates what followed it: a checkpoint past base was taken on rows this prompt does
++        // not share, or past its end. Kept, it could be restored later, for a request whose common prefix with this
++        // conversation reaches it, with the recurrent state of the conversation before.
++        st.mm_checkpoints.erase(std::remove_if(st.mm_checkpoints.begin(), st.mm_checkpoints.end(),
++            [&](const auto & entry) { return entry.row > base.row; }), st.mm_checkpoints.end());
+         st.mm_rollback = std::make_shared<MultimodalCheckpoint>(base);
+         st.mm_rollback_prompt = st.cached_prompt ? st.cached_prompt->prefix(base.row) : nullptr;
+         st.mm_committed = false;
+@@ -350,7 +396,15 @@
          }
          if (all_resident) llama_kvmem_keep_selected();
          if (n_cache_hit) *n_cache_hit = base.row;
@@ -69,3 +106,11 @@
          auto query_checkpoint = multimodal_checkpoint(st, query);
          multimodal_remember(st, query_checkpoint);
          const auto probe_view = llama_kvmem_get_attention_view();
+@@ -497,6 +551,7 @@
+     st.mm_rollback_prompt.reset();
+     fprintf(stderr, "KVMEM_CHECKPOINT_COMMIT live_bytes=%zu peak_bytes=%zu\n",
+             st.mm_checkpoint_accounting->live_bytes, st.mm_checkpoint_accounting->peak_bytes);
++    multimodal_trace_checkpoints(st, "commit");
+ }
+ 
+ static int multimodal_decode_generated(ServerState & st, llama_token id, int row) {

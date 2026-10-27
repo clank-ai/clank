@@ -65,6 +65,12 @@ From the owner's first full day of use and an end-to-end test of a new user's fi
   times.
 - The runtime's `fallback_preset` setting did nothing: with no model that had worked yet, `clank work`, `clank code`
   and This folder loaded the first preset that could load, or `daily-262k`. They now load the one it names (2026-10-27).
+- A new chat waited 10 to 37 s for its first word on the local model, while it read OpenCode's system prompt and
+  tools again. Frontier 262K's KVMem build now carries a patch that keeps a snapshot of the model's state at the
+  system prompt's end ([decision 0146](docs/decisions/0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md)):
+  a new chat's first word comes in 0.5 to 1 s. The same patch keeps KVMem from resuming a conversation from
+  another one's snapshot. Clank does not build KVMem: [frontier 262K's page](docs/models/frontier-262k.md) says
+  how to build it with the patch (2026-10-27).
 
 ### Changed
 
