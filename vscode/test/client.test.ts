@@ -137,11 +137,18 @@ test("a call the service does not answer in time ends, saying which and after ho
   const client = new ClankClient("http://127.0.0.1:7720", "t", waiting);
   const quick = client.within(30);
   assert.equal(quick.url, client.url);
-  await assert.rejects(quick.post("agents/prepare", { workspace: "paper" }), (error: unknown) => {
-    assert.ok(error instanceof TimedOut, "not NotRunning: the service runs, it is slow");
-    assert.equal(error.message, "the Clank service did not answer agents/prepare within 0.03 s");
-    return true;
-  });
+  // AbortSignal.timeout's timer does not keep Node's event loop alive, and nothing else here does: without this the
+  // test runner sees the loop end while the call still waits, and cancels the file's remaining tests.
+  const alive = setInterval(() => undefined, 1_000);
+  try {
+    await assert.rejects(quick.post("agents/prepare", { workspace: "paper" }), (error: unknown) => {
+      assert.ok(error instanceof TimedOut, "not NotRunning: the service runs, it is slow");
+      assert.equal(error.message, "the Clank service did not answer agents/prepare within 0.03 s");
+      return true;
+    });
+  } finally {
+    clearInterval(alive);
+  }
   assert.ok(signals[0] instanceof AbortSignal);
   void client.get("service").catch(() => undefined);
   assert.ok(signals[1] instanceof AbortSignal, "every call has a limit, the client's own unless one is asked");

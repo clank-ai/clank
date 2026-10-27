@@ -349,7 +349,7 @@ class Gateway:
         host, from the network log the gateway's process writes."""
         from clank.components.gateway.proxy import NetworkLog
 
-        log = NetworkLog(self.kernel.home.logs / "network")
+        log = NetworkLog(self.kernel.home.logs / "network", today=lambda: self.kernel.clock.now().astimezone().date())
         return {"exchanges": log.recent(max(1, min(limit, 500)), workspace), "by_host": log.by_host()}
 
     def network_hosts(self) -> dict[str, dict[str, str]]:

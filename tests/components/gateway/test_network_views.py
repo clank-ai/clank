@@ -5,7 +5,7 @@ one is named; the day's bytes are summed by host; the hosts allowed are listed p
 
 import json
 from collections.abc import Iterator
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -85,9 +85,10 @@ def test_the_log_is_read_newest_first_for_one_workspace_or_all_and_the_days_byte
 
 
 def test_the_routes_and_the_commands_show_the_exchanges_and_the_hosts_allowed(
-    kernel: Kernel, http: TestClient, tmp_path: Path
+    kernel: Kernel, http: TestClient, clock: FakeClock, tmp_path: Path
 ) -> None:
     written(kernel.home.logs / "network")
+    clock.set(datetime(2026, 10, 26, 12, 0, tzinfo=UTC))  # "today" is the service's clock's day, not the computer's
     kernel.settings.write("workspace", "paper", {"path": str(tmp_path), "hosts": {"pypi.org": "allowed by you"}},
                           base=None, actor=OWNER)  # fmt: skip
     found = http.get("/api/v1/gateway/network/log", params={"limit": 3}, headers=AUTH).json()
