@@ -19,7 +19,9 @@ containers reach the gateway on Linux). Its plan is [s9](../plans/s9-linux-and-t
 **Status:** written 2026-10-18, every section *proposed*. The owner approves it, or tells the agents to build while
 the review goes on, as for designs 0003 and 0004. **Choice** marks what the owner decides: where Docker Engine's
 first recording is made (§2), the gateway's way in on Linux (§3, decision 0071), CI's minutes on arm64 (§7), and where
-VS Code runs on the Pi (§8). §1 lists the approved sections this design refines.
+VS Code runs on the Pi (§8). §1 lists the approved sections this design refines. On 2026-10-27 the owner asked for Clank
+ready on a Linux computer of their own, to test the cloud models through OpenRouter there; that is taken as the word to
+build steps L5 and L6 (§10) while the review goes on, with §3's recommended option, (a) (decision 0071, accepted).
 
 **The machine.** A Raspberry Pi 5: arm64, four Cortex-A76 cores, and 8 GB of memory, the size this design is checked
 against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engine from Docker's Debian packages
@@ -32,7 +34,7 @@ against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engi
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | Proposed 2026-10-18 |
 | 2 | The container platform adapters | Proposed 2026-10-18 |
-| 3 | The edge's way to the gateway on Linux | Proposed 2026-10-18 |
+| 3 | The edge's way to the gateway on Linux | Proposed 2026-10-18; option (a) chosen 2026-10-27 (decision 0071) |
 | 4 | A workspace's container on Docker Engine | Proposed 2026-10-18 |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | Proposed 2026-10-18 |
 | 6 | OpenCode on arm64 | Proposed 2026-10-18 |
@@ -205,7 +207,7 @@ Containers run through a container platform adapter
 
 ## 3. The edge's way to the gateway on Linux
 
-Decision 0071, a **Choice**; (a) is recommended. What must hold:
+Decision 0071, a **Choice**; (a) is recommended, and was chosen on 2026-10-27. What must hold:
 
 - The gateway asks no caller for credentials, and it forwards `/notion/...` to the service as the client `agent`
   (`gateway/server.py:134-143, 607`). Whatever reaches it may use the model, and may read the owner's Notion as the

@@ -1,9 +1,13 @@
 # 0071. How containers reach the gateway on Linux: a socket only the edge mounts, or a guarded listener; never 0.0.0.0
 
-- Status: Proposed: the owner chooses
-- Date: 2026-10-18
+- Status: Accepted: option (a), a socket only the edge mounts, as recommended (2026-10-27, at the owner's instruction,
+  while design 0014's review goes on)
+- Date: 2026-10-18; accepted 2026-10-27
 - Decided by: proposed by Claude from the research of 2026-10-18
-  ([design 0014](../design/0014-linux-and-small-machines.md) §3); the owner chooses (a) or (b), and (a) is recommended
+  ([design 0014](../design/0014-linux-and-small-machines.md) §3); decided by the owner's instruction of 2026-10-27,
+  taken as the word to build design 0014's steps L5 and L6 with the recommended option: "I want to begin testing clank
+  by itself on a completely separate linux computer that I have where I will only be testing the integration with the
+  API keys from openrouter, so we need to make sure that this is completely set up and ready for testing."
 
 ## Context
 - A workspace's agent reaches the gateway only through the edge. The edge is a container on Clank's outer network. It
@@ -94,7 +98,7 @@ gateway keeps its 127.0.0.1 listener for the host's own tools. On Linux, for Doc
   the user's last session ends, while the service may go on.
 
 ## Consequences
-If (a) is chosen:
+(a) was chosen (2026-10-27). If (a) is chosen:
 - On Linux the gateway has a second listener, and its process gets the socket's path from its service. Test:
   `test_on_linux_the_gateway_also_listens_where_only_the_edge_reaches_it`.
 - Only the owner's processes, root and the edge can open the socket. No network faces it, and no firewall rule is

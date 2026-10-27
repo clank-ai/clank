@@ -7,6 +7,11 @@
 > [decision 0071](../decisions/0071-how-containers-reach-the-gateway-on-linux.md). P1 and P2 wait for the owner's OK
 > on billed minutes. L8, P4 and P5 are built only if their condition holds. As for the earlier plans: the files,
 > interfaces and tests by name and intent; the code is in the commits.
+>
+> 2026-10-27: the owner asked for Clank ready on a Linux computer of their own, to test the cloud models through
+> OpenRouter there. Decision 0071 is accepted with option (a), and L5 and L6 are built now, before L2: L6 chooses the
+> edge's way by the platform adapter's name (`docker-engine` gets the socket, every other adapter today's way), the
+> name L2's adapter carries; L2 is built on another branch meanwhile.
 
 **Goal:** the agent works in a folder on a Raspberry Pi 5 with Docker Engine (lane L), and the Pi's own checks and CI
 on arm64 say what holds there (lane P).
