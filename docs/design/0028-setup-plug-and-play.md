@@ -19,12 +19,12 @@ Linux ([design 0014](0014-linux-and-small-machines.md) §2-§4, built at the own
 | --- | --- | --- |
 | 1 | Who sets Clank up, and the one path each follows | Proposed 2026-10-27; built at the owner's instruction |
 | 2 | Rules every step of the setup keeps | Proposed 2026-10-27; built at the owner's instruction |
-| 3 | The installer on each system | Proposed 2026-10-27; Linux first (§8) |
+| 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9) |
 | 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; built at the owner's instruction |
 | 5 | Docker, configured correctly on each system | Proposed 2026-10-27; built at the owner's instruction |
 | 6 | Clank's VS Code extension without building it | Proposed 2026-10-27 |
 | 7 | Local models: what is one step and what is not yet | Proposed 2026-10-27 |
-| 8 | Tests and build steps | Proposed 2026-10-27 |
+| 8 | Tests and build steps | Proposed 2026-10-27; the installers' tests built (the website's `installer` workflow) |
 
 ## 1. Who sets Clank up, and the one path each follows
 
@@ -87,7 +87,7 @@ to `clank setup`.
 - **Linux** (`install.sh`). Docker Engine is installed from Docker's own packages, never the snap's (design 0014 §2):
   - The distribution is read from `/etc/os-release` (`ID`, `ID_LIKE`, `VERSION_CODENAME`). Ubuntu, Debian and their
     derivatives get Docker's apt repository; Fedora, RHEL, CentOS Stream and Rocky get Docker's dnf repository; Arch
-    gets `pacman -S docker`. Each is the list of commands Docker's installation pages give
+    gets Arch's own `docker` package, with the full upgrade Arch asks for (`pacman -Syu`). Each is the list of commands Docker's installation pages give
     (https://docs.docker.com/engine/install/). Another distribution is told where those pages are, and the installer
     goes on.
   - Docker from the snap, or rootless Docker, found already: the installer says Clank does not support it and why
@@ -99,6 +99,13 @@ to `clank setup`.
     once before `clank`. `clank setup` notices when that is not done yet (§5).
   - Checked: `docker version` answers for the account, through the group.
 - **The last step** runs `clank setup --check` (§4) where it ran `clank doctor`: the checklist, with what to do next.
+  A Clank without `clank setup` (0.3.0b2 and older) gets `clank doctor`, as before.
+- **What building it found** (2026-10-27): Docker's packages start the service and enable it at boot by themselves on
+  Ubuntu, so that question is asked only where they do not; Fedora 41's dnf5 adds a repository with `addrepo
+  --from-repofile=`, older dnf with `--add-repo`; a fresh Arch has no package database until `pacman -Sy`, and Arch
+  forbids partial upgrades, hence `-Syu`. The Docker step ran for real, as root, in Ubuntu 24.04 and 22.04, Debian 12,
+  Fedora 41, Rocky 9 and Arch; and the whole installer on GitHub's Ubuntu 24.04 runner with its Docker removed first,
+  after which Docker ran, started at boot, and the account ran a container through the docker group.
 - **`CLANK_YES=1`** answers yes to every question, for a script; **`CLANK_DRY_RUN=1`** prints every command the
   installer would run and runs none, which the tests use (§8).
 
