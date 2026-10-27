@@ -25,6 +25,7 @@ import httpx2
 import pytest
 from fastapi.testclient import TestClient
 
+from clank.components.gateway import service as gateway_service
 from clank.components.gateway.kinds import GatewaySettings
 from clank.components.gateway.routing import Routes
 from clank.components.gateway.service import Gateway, HoldError
@@ -253,6 +254,7 @@ class FakeHost:
         self.running: set[int] = set()
         self.started = 0
         self.refused = ""
+        self.lingering = 0  # how many more times the port reads held after a stop (a process ending slowly)
 
     def spawn(self, argv: Sequence[str], env: Mapping[str, str], cwd: str, log: Path) -> ProcessIdentity:
         self.started += 1
@@ -270,6 +272,9 @@ class FakeHost:
         return "killed"
 
     def listener(self, port: int) -> str | None:
+        if self.lingering:
+            self.lingering -= 1
+            return "python.exe (process 24244)"
         return None
 
 
@@ -279,6 +284,7 @@ def host(monkeypatch: pytest.MonkeyPatch) -> FakeHost:
     found = FakeHost()
     monkeypatch.setattr(Gateway, "_host", lambda self: found)
     monkeypatch.setattr(files, "WAITS", (0.01, 0.01))
+    monkeypatch.setattr(gateway_service, "FREE_POLL_SECONDS", 0.01)
     return found
 
 
@@ -297,6 +303,20 @@ def test_a_restart_whose_stop_fails_leaves_the_gateway_running_and_says_why(
     again = gateway.restart()
     assert (again["state"], again["problem"], host.running) == ("running", "", {again["pid"]})
     assert again["pid"] != first["pid"]
+
+
+def test_a_restart_waits_for_the_stopped_gateways_port_to_be_free_before_it_starts_the_next(
+    rig: Rig, host: FakeHost
+) -> None:
+    """On Windows the stopped gateway's process lets go of its port a moment later: the owner's restart of 2026-10-26
+    found it held and failed, and model requests failed until the service started the gateway again by itself."""
+    gateway: Gateway = rig.kernel.parts["gateway"]
+    first = gateway.ensure()
+    host.lingering = 3
+    again = gateway.restart()
+    assert (again["state"], again["problem"]) == ("running", "")
+    assert again["pid"] != first["pid"]
+    assert host.lingering == 0, "it waited until the port was free"
 
 
 def test_a_gateway_whose_state_file_cannot_be_written_is_kept_in_memory_and_never_started_twice(

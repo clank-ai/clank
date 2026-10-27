@@ -62,6 +62,8 @@ WATCH_SECONDS = 5.0
 DUE_SECONDS = 0.25  # how soon a change of a slot or a key reaches the gateway's keys
 SPEND_SECONDS = 2.0  # how often the gateway's spool of cloud requests is taken (design 0016 §12)
 STOP_SECONDS = 5.0
+FREE_SECONDS = 15.0  # how long a restart waits for the stopped gateway's port to be free
+FREE_POLL_SECONDS = 0.25  # how often it looks
 ASK_SECONDS = 2.0  # how long the gateway is given to say what it does
 LOOK_SECONDS = 300.0  # the vision model may be loaded first (design 0008 §7)
 ROLES = {"agent": "main", "completion": "fast", "vision": "vision"}
@@ -584,13 +586,24 @@ class Gateway:
         the stop met, a start is tried (a gateway the stop left running is adopted as it is), and what went wrong is
         said in the status (`problem`)."""
         problem = ""
+        kept = self._kept()
         try:
             self.stop()
         except Exception as error:  # the host could not end it: it may still run, and is then adopted
             log.warning("the gateway could not be stopped: %s", error)
             problem = f"the gateway could not be stopped ({error}), so it runs on with the settings it started with"
+        else:
+            self._wait_free(int(kept["port"]) if kept else self.settings().port)
         found = self.ensure()
         return {**found, "problem": problem or found["problem"]}
+
+    def _wait_free(self, port: int) -> None:
+        """Until the stopped gateway's port is free, `FREE_SECONDS` at most: on Windows its process lets go of it a
+        moment after it was told to end (the owner's restart of 2026-10-26 found the port held, so it started nothing,
+        and every model request failed until the service started the gateway again by itself)."""
+        deadline = time.monotonic() + FREE_SECONDS
+        while self._host().listener(port) is not None and time.monotonic() < deadline:
+            time.sleep(FREE_POLL_SECONDS)
 
     def _forget(self) -> None:
         """Delete the gateway's state file; one another program holds open even after a while is left, naming a
