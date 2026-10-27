@@ -6,7 +6,7 @@ with a short design of its part (a document in [design/](design/README.md), revi
 of small steps, each starting with a failing test, and ends with something the owner can run and a version tag. The
 status column is updated in the same commit as the work.
 
-**Where Clank stands (2026-10-21):** the first public beta, version 0.3.0b1 ([CHANGELOG.md](../CHANGELOG.md)). On
+**Where Clank stands (2026-10-27):** the second public beta, version 0.3.0b2 ([CHANGELOG.md](../CHANGELOG.md)). On
 Windows, the first slices of M3, M4, M5 and M10 are built and in use: the console, the gateway, workspaces in Docker,
 OpenCode with review, auto and the Planner, the Monitor, flows, cloud models through OpenRouter, local models with
 llama.cpp and KVMem, and the VS Code extension. M2's console look is partly built; M7's network access and M9's

@@ -5,9 +5,12 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
-## Unreleased: since 0.3.0b1
+## 0.3.0b2: the installer, updates, and the agent beside VS Code (2026-10-27)
 
-The next release. Its version is set when it is tagged; until then, a clone has it (`git pull`, or `clank update`).
+The second public beta: the one-line installer and `clank update`; the agent beside VS Code; Clank for iPhone over
+your tailnet; network access through Clank's proxy; flows that steer themselves; a new chat's first word in about a
+second on frontier 262K; and the fixes of the owner's first full days of use and of a code review. From 0.3.0b1, run
+the installer again; from this release on, `clank update` updates Clank.
 
 ### Added
 
