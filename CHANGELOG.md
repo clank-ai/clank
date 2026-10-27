@@ -55,6 +55,8 @@ From the owner's first full day of use and an end-to-end test of a new user's fi
 - A closed OpenCode window's sessions were read again forever (half a CPU core), and requests waited 10 s on a dead
   OpenCode: fixed.
 - The phone: its tab bar sat higher on short tabs; its first screen took 12 s: fixed.
+- Removing a workspace while OpenCode was open in it gave no warning and left tracebacks in the service's log:
+  the question now says that what runs in its container ends, and the service lets the workspace go quietly.
 - Words a new user did not understand: the clients connected, the models not loaded, the doctor's line, the tool
   server's path, a refused request's fields, a waiting call's raw input, UTC times among local ones, log lines without
   times.

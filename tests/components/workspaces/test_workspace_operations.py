@@ -4,7 +4,8 @@ internal network and the one that reaches the host, starts the edge and the fold
 does nothing it already did (a stopped container is started, not made again). A container's limits are its record's,
 else half of what the platform has. A folder whose container would see more than itself (a drive's root, the user's
 home, one holding CLANK_HOME or inside it) is refused, as is opening with Docker stopped. Stopping a workspace stops its
-container; removing one asks first, then removes its container and its home, and leaves its folder as it was."""
+container; removing one asks first (saying, when its container runs, that what runs in it ends), then removes its
+container and its home, and leaves its folder as it was."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -225,3 +226,22 @@ async def test_removing_a_workspace_asks_then_removes_its_container_and_home_and
     assert (home.inner("my-project"), home.edge) not in platform.joined
     assert [loaded.id for loaded in kernel.settings.records("workspace")] == []
     assert (folder / "notes.md").read_text(encoding="utf-8") == "mine\n"
+
+
+async def test_removing_a_workspace_whose_container_runs_says_that_what_runs_in_it_ends(
+    kernel: Kernel, platform: FakePlatform, folder: Path
+) -> None:
+    async with kernel.operations.running():
+        await run(kernel, "workspaces.open", {"folder": str(folder), "yes": True})
+        waiting = await run(kernel, "workspaces.remove", {"name": "my-project"})
+        question = kernel.questions.get(waiting.waiting_on or "")
+        assert "runs now" in question.detail, question.detail
+        assert "OpenCode" in question.detail, "what ends: the agent in a window too"
+        kernel.questions.answer(question.id, by=YOU, option="cancel")
+        assert (await finish(kernel, waiting)).status == "canceled"
+        await run(kernel, "workspaces.stop", {"name": "my-project"})
+        waiting = await run(kernel, "workspaces.remove", {"name": "my-project"})
+        question = kernel.questions.get(waiting.waiting_on or "")
+        assert "runs now" not in question.detail, "a stopped container ends nothing"
+        kernel.questions.answer(question.id, by=YOU, option="cancel")
+        await finish(kernel, waiting)

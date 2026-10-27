@@ -257,13 +257,18 @@ class Folders:
         return {"workspace": name, "container": container}
 
     async def remove(self, context: OperationContext) -> dict[str, Any]:
-        """Asked first, its container and its home go, then its record; its folder stays."""
+        """Asked first (saying so when its container runs: what runs in it ends), its container and its home go, then
+        its record; its folder stays."""
         name = str(context.params["name"])
         async with context.step("plan"):
             loaded = self._loaded(name)
             folder = Workspace.model_validate(loaded.record.model_dump()).path
             if not context.params.get("yes"):
-                await self._ask_remove(context, name, folder)
+                container = await context.run_blocking(
+                    self.workspaces.platform.container, names(self.kernel.home.id).container(name)
+                )
+                running = container is not None and container.state == "running"
+                await self._ask_remove(context, name, folder, running)
         async with context.step("remove"):
             found = names(self.kernel.home.id)
             platform = self.workspaces.platform
@@ -440,8 +445,10 @@ class Folders:
         ]
         await self._ask(context, f"Install {name}'s software?", lines, "install", "Install it", "nothing is installed")
 
-    async def _ask_remove(self, context: OperationContext, name: str, folder: str) -> None:
+    async def _ask_remove(self, context: OperationContext, name: str, folder: str, running: bool) -> None:
+        ends = "Its container runs now: what runs in it ends, OpenCode in a VS Code window or a terminal too."
         lines = [
+            *([ends] if running else []),
             "Its container and its home (its agent's settings and sessions) are removed.",
             f"{folder} stays as it is.",
         ]

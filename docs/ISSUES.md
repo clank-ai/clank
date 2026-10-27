@@ -10,13 +10,12 @@ Update this page in the same commit as the fix.
 | Issue | What the owner sees | Where | Next |
 | --- | --- | --- | --- |
 | A new session's first answer reads the whole prompt anew | 10 to 37 s before the first word of a new chat (62 s once), while the local model reads OpenCode's system prompt and tools again (17,000 to 29,000 tokens); later steps take a second | KVMem v0.16 resumes only from its four newest snapshots, all past the shared prompt after a few steps ([the measurement](measurements/2026-10-27-a-new-sessions-first-answer.md)) | A tested patch keeps one at the system prompt's end (10.34 s to 0.73 s): the owner decides ([0146](decisions/0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md)); then fewer tools where unused |
-| Removing a workspace while OpenCode is open in VS Code | No warning; tracebacks in the service's log; the readout fails with "there is no workspace" | `agents/watch.py`, `agents/jobs.py` | Treat a workspace that is gone quietly; warn before removing one in use |
 | The console still says some confusing things | "Nothing runs from here" while OpenCode runs; the Monitor opens on an empty Flow view; Watch for shows another workspace's mark; a dozen "coming" menu entries | `agents/console/folder.py`, the Monitor, `console/app.py` | A pass over the console's words (the menu's entries change every frame's snapshot) |
 | pytest is not in the sandbox image | The agent's test runs fail with "No module named pytest" while This folder says nothing needs installing | `workspaces/image/Dockerfile` | Add it at the next change of the image |
 | No scriptable way to give the agent a task | `opencode run` rejects every edit under review mode, and Clank does not see its session | `clank work` | `clank work --message`, on the start route Clank already has |
 | The phone's chat (design 0025 §12) | Not built yet: a normal chat, the workspaces with the saved ones first, any session picked up, figures and the agent's questions in place | `remote/page/` | Plan s60 (branch `feature/phone-chat`, begun) |
 
-## Fixed on 2026-10-26
+## Fixed on 2026-10-26 and 10-27
 
 | Issue | Cause | Commit |
 | --- | --- | --- |
@@ -39,3 +38,5 @@ Update this page in the same commit as the fix.
 | Times in UTC in the phone's commands and page | The device and code times were printed as UTC text | 7f42a2a |
 | VS Code did not say when the agent could not reach the model | OpenCode failed in its terminal with network errors; the panel waited on slow routes before OpenCode opened | fix/vscode, merged with 2fef8fc (extension 0.10.3) |
 | No update command | Updating meant running the installer again | `clank update` (design 0026, plan s61) |
+| Removing a workspace while OpenCode was open in VS Code gave no warning, and tracebacks in the service's log | The watcher and the readout did not expect a workspace gone, and the removal's question did not say its container ran | feeb406 (handled quietly), and the question now says what runs in the container ends |
+| CI failed after midnight on 10-27 | Two tests and the network log read the computer's date where the service's clock is the day; a snapshot, a format and the extension's timer test lagged the code | a7eb653, 2fc8720 |
