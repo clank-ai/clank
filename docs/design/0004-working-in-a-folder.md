@@ -128,7 +128,10 @@ Design 0001 §6, the part the agent needs:
 - **The edge** is one small container (`clank-<home id>-edge`), the only one on a network that reaches the host, and
   joined to each workspace's network as `edge` when that workspace opens: it forwards the gateway's port and nothing
   else. From inside a workspace, nothing but the edge answers. (Built 2026-10-13: one network per workspace rather
-  than one shared, when the escape tests were written; their list asks that other workspaces not answer.)
+  than one shared, when the escape tests were written; their list asks that other workspaces not answer.) On Docker
+  Desktop it reaches the gateway at the host's loopback, as `host.docker.internal`; on Linux with Docker Engine, where
+  that name is the bridge's address, through the gateway's socket, whose folder it mounts (2026-10-27:
+  [design 0014 §3](0014-linux-and-small-machines.md#3-the-edges-way-to-the-gateway-on-linux), decision 0071).
 - **The edge stays on every workspace's network** (revised 2026-10-26). Docker keeps a container's place on a network
   with the container, so an edge made again is on its first network only. When the proxy's port was added (design
   0024 §2), opening a workspace made the edge again for its second port; it joined that workspace's network alone, and

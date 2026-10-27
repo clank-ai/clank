@@ -2,9 +2,10 @@
 
 - `workspaces.open` {folder, yes, layers}, under the lock `workspaces`:
   - record: the folder must be one whose container would see nothing more than it (not a drive's root, not the user's
-    home folder, not one that holds CLANK_HOME or is inside it, whose secrets a container must never see); its record
-    is found by its folder, else made, named after it (`workspace_name`), and given the image layers named in `layers`
-    that it does not have. Docker must run (`clank docker start`).
+    home folder, not one that holds CLANK_HOME or is inside it, whose secrets a container must never see, and on Linux
+    not one that holds the gateway's socket folder or is inside it, which only the edge sees, design 0014 §3); its
+    record is found by its folder, else made, named after it (`workspace_name`), and given the image layers named in
+    `layers` that it does not have. Docker must run (`clank docker start`).
   - image: Clank's sandbox image, built when no image of its tag is there, asked first unless `yes` (it downloads
     about a gigabyte), each line of the build in the operation's log; canceling the build ends it. Then the image
     layers its record names (design 0020 §3), each built on the image below it when missing, asked first unless
@@ -13,7 +14,9 @@
     machine, not the internet, not another workspace) and the one that reaches the host, which only the edge joins.
   - edge: the edge's container, forwarding the gateway's port and the proxy's, joined to the workspace's network as
     `edge`, and to the network of every other workspace whose container there is (`edge.py`: an edge made again is on
-    its first network only, and the workspaces that ran would lose their way to the model).
+    its first network only, and the workspaces that ran would lose their way to the model). On Docker Engine it
+    forwards to the gateway's socket (design 0014 §3), and while the gateway runs its health is asked through the edge,
+    which is made again when it does not answer; one that still does not answer refuses the opening, saying why.
   - container: the folder's container, from its image (with its layers), its limits its record's, else half the CPUs
     and a quarter of the memory the platform has.
   The edge and the container are each made when they are not there and started when they are stopped; a stopped one
@@ -92,8 +95,9 @@ def workspace_name(folder: str, taken: Collection[str]) -> str:
     return name
 
 
-def checked_folder(given: str, clank_home: Path) -> str:
-    """The folder, absolute, when its container would see nothing more than it; `WorkspaceError` saying why not."""
+def checked_folder(given: str, clank_home: Path, socket_folder: Path | None = None) -> str:
+    """The folder, absolute, when its container would see nothing more than it, nor the gateway's `socket_folder` (on
+    Linux, design 0014 §3); `WorkspaceError` saying why not."""
     path = Path(given).expanduser()
     if not path.is_absolute():
         raise WorkspaceError(f"{given} is not a full path")
@@ -111,6 +115,15 @@ def checked_folder(given: str, clank_home: Path) -> str:
         raise WorkspaceError(f"{path} holds Clank's own folder ({home}), with its secrets: open another folder")
     if path.is_relative_to(home):
         raise WorkspaceError(f"{path} is inside Clank's own folder ({home}): open another folder")
+    if socket_folder is not None:
+        sockets = socket_folder.resolve()
+        if sockets == path or sockets.is_relative_to(path):
+            raise WorkspaceError(
+                f"{path} holds the gateway's socket folder ({sockets}), which only the edge may see: open another "
+                "folder, or move the socket folder with socket_folder in config/gateway.json"
+            )
+        if path.is_relative_to(sockets):
+            raise WorkspaceError(f"{path} is inside the gateway's socket folder ({sockets}): open another folder")
     return str(path)
 
 
@@ -169,7 +182,9 @@ class Folders:
         """The record, the image, the networks, the edge, the container: each only when missing."""
         home = self.kernel.home.id
         async with context.step("record"):
-            folder = checked_folder(str(context.params["folder"]), self.kernel.home.root)
+            folder = checked_folder(
+                str(context.params["folder"]), self.kernel.home.root, self.workspaces.socket_folder()
+            )
             platform = self.workspaces.platform
             status = await context.run_blocking(platform.status)
             if not status.running:
@@ -201,6 +216,13 @@ class Folders:
             )
             if repair.problem:
                 raise WorkspaceError(repair.problem)
+            unreached = await context.run_blocking(
+                lambda: self.workspaces.edge.reached(
+                    name, status.containers, found_by=f"opening {name}", log=context.log
+                )
+            )
+            if unreached:
+                raise WorkspaceError(unreached)
         async with context.step("container"):
             cpus, memory_mib = await self._limits(context, platform, workspace)
             proxy = self.workspaces.proxy_url(name)
@@ -212,7 +234,9 @@ class Folders:
         """Install the folder's software into its workspace's home, asked first, in a container that reaches the
         internet; the record keeps a command given, and the command once it ran to its end."""
         async with context.step("plan"):
-            folder = checked_folder(str(context.params["folder"]), self.kernel.home.root)
+            folder = checked_folder(
+                str(context.params["folder"]), self.kernel.home.root, self.workspaces.socket_folder()
+            )
             found = self._found(folder)
             if found is None:
                 raise WorkspaceError(f"{folder} is not a workspace yet: open it first (`clank workspace open`, or o)")

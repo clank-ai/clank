@@ -12,7 +12,11 @@ every program in it told how many CPUs it has, which Docker's limit does not cha
 joins only an internal network of its own, where nothing answers but the edge: not the machine, not the internet, not
 another workspace. The edge is on the network that reaches the host and joins each workspace's network (as `edge`)
 when that workspace opens, and again whenever it is made or started (`edge.py`); it has a read-only root and small
-limits, and runs one program: it forwards the gateway's port and the proxy's to the host, and nothing else.
+limits, and runs one program: it forwards the gateway's port and the proxy's to the host, and nothing else. On Docker
+Desktop it reaches them at the host's loopback, as `host.docker.internal`; on Docker Engine, where that name is the
+bridge's address and nothing listens there, it reaches them through their sockets (design 0014 §3): it mounts the
+gateway's socket folder read-only at `/run/clank`, its only mount besides Clank's programs, and runs as the owner
+(`owner_ids`), so it may open them.
 
 A workspace's setup (design 0004 §10) runs in a container of its own, made for it and removed when it ends: mounted,
 contained and limited as the workspace's container, but on Docker's default network, which reaches the internet, so
@@ -32,6 +36,8 @@ layers' files (`layered_tag`).
 import csv
 import hashlib
 import io
+import os
+import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
 from importlib import resources
@@ -47,6 +53,7 @@ PROXY_LABEL = "clank.proxy"  # the proxy's port a workspace's container was told
 NO_PROXY = "edge,localhost,127.0.0.1"  # what a workspace's container reaches without the proxy
 HOST = "host.docker.internal"
 PROGRAMS = "/opt/clank"  # Clank's programs and instructions, mounted read-only from `image_folder()` (0142)
+SOCKETS = "/run/clank"  # the gateway's socket folder in the edge, on Docker Engine (design 0014 §3)
 EDGE_PROGRAM = f"{PROGRAMS}/edge.py"
 BRIDGE_PROGRAM = f"{PROGRAMS}/bridge.py"  # the session bridge to OpenCode's servers (design 0005 §2)
 PHONE_PROGRAM = f"{PROGRAMS}/phone_mcp.py"  # Clank's own MCP server for the agent: send_to_phone (design 0005 §3)
@@ -125,6 +132,7 @@ class ContainerSpec:
     once: bool = False  # run in the foreground and removed when it ends, rather than detached
     env: tuple[tuple[str, str], ...] = ()  # what every program in it runs with
     programs: str = ""  # the folder of Clank's programs, mounted read-only at `PROGRAMS` (decision 0142)
+    readonly_binds: tuple[tuple[str, str], ...] = ()  # folders of the machine it sees but cannot change
 
 
 def workspace_spec(
@@ -183,25 +191,55 @@ def edge_ports(gateway_port: int, proxy_port: int) -> str:
     return f"{gateway_port},{proxy_port}"
 
 
-def edge_spec(home: str, image: str, *, gateway_port: int, proxy_port: int) -> ContainerSpec:
+def edge_spec(
+    home: str, image: str, *, gateway_port: int, proxy_port: int, socket_folder: str | None = None, user: str = USER
+) -> ContainerSpec:
     """The edge: on the network that reaches the host (each workspace's own it joins as `edge`: `edge.py`); it
     forwards the gateway's port and the proxy's (design 0024 §2) to the host's and nothing else. Its label
-    `clank.ports` names the ports, so an edge forwarding others is made again (`edge.py`)."""
+    `clank.ports` names the ports, so an edge forwarding others is made again (`edge.py`). Given the gateway's
+    `socket_folder` (Docker Engine, design 0014 §3), it mounts that folder read-only at `SOCKETS` and forwards to the
+    gateway's socket and the proxy's there instead, adding no host; it runs as `user` then (the owner's ids, so it may
+    open them), else as the image's user."""
     found = names(home)
-    ports = (gateway_port, proxy_port)
+    targets: list[str] = []
+    for port in (gateway_port, proxy_port):
+        targets += [str(port), HOST, str(port)]
+    hosts: tuple[str, ...] = (f"{HOST}:host-gateway",)
+    readonly: tuple[tuple[str, str], ...] = ()
+    if socket_folder is not None:
+        from clank.components.gateway.service import GATEWAY_SOCKET, PROXY_SOCKET
+
+        targets = [
+            str(gateway_port),
+            f"unix:{SOCKETS}/{GATEWAY_SOCKET}",
+            str(proxy_port),
+            f"unix:{SOCKETS}/{PROXY_SOCKET}",
+        ]
+        hosts, readonly = (), ((socket_folder, SOCKETS),)
     return ContainerSpec(
         name=found.edge,
         image=image,
         labels=(*_labels(home, "edge"), (PORTS_LABEL, edge_ports(gateway_port, proxy_port))),
         networks=((found.outer, ""),),
-        command=("python3", EDGE_PROGRAM, *(part for port in ports for part in (str(port), HOST, str(port)))),
+        command=("python3", EDGE_PROGRAM, *targets),
+        user=user,
         cpus=0.5,
         memory_mib=128,
         processes=64,
         read_only=True,
-        hosts=(f"{HOST}:host-gateway",),
+        hosts=hosts,
         programs=str(image_folder()),
+        readonly_binds=readonly,
     )
+
+
+def owner_ids() -> str:
+    """The owner's user and group ids, as `docker run --user` takes them: the edge runs as the owner on Docker Engine,
+    so it may open the gateway's sockets, which are the owner's alone (design 0014 §3); the image's user where there
+    are none (Windows)."""
+    if sys.platform == "win32":
+        return USER
+    return f"{os.getuid()}:{os.getgid()}"
 
 
 def run_arguments(spec: ContainerSpec) -> list[str]:
@@ -217,6 +255,8 @@ def run_arguments(spec: ContainerSpec) -> list[str]:
         arguments += ["--mount", _mount("bind", source, target)]
     if spec.programs:
         arguments += ["--mount", _mount("bind", spec.programs, PROGRAMS, readonly=True)]
+    for source, target in spec.readonly_binds:
+        arguments += ["--mount", _mount("bind", source, target, readonly=True)]
     for source, target in spec.volumes:
         arguments += ["--mount", _mount("volume", source, target)]
     for host in spec.hosts:

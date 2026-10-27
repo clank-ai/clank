@@ -39,4 +39,7 @@ Clank is in beta: fixes go into the newest version only.
 
 - Commands the agent runs in its container change files in that folder without asking, in either mode: keep the
   folder under version control.
-- Linux and macOS are untested; on Linux, the container's way to the gateway is still being built.
+- Linux and macOS are untested. On Linux with Docker Engine, the container reaches the gateway through a socket only
+  you and the edge can open (`~/.cache/clank/<home id>`), but the container tests have not run there yet: among them,
+  whether a workspace's container reaches the computer's own address on its network, where a server listening on every
+  address would answer it. Docker Engine's own adapter is still being built.

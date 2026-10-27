@@ -328,7 +328,10 @@ network before it starts the gateway (`workspaces/folders.py:170-175` moves to t
 
 #### L6. The edge reaches that listener on Docker Engine (B)
 
-- [ ] **Tests first:**
+Built 2026-10-27, before L2, at the owner's instruction (the header): all but the networks without a host address,
+which wait for the docker-marked test's answer on Linux (below).
+
+- [x] **Tests first:**
   - `tests/components/workspaces/test_sandbox.py` (design 0014 §3):
     `test_on_docker_engine_the_edge_forwards_to_the_gateways_socket_and_mounts_nothing_else` (one read-only bind of
     the socket's folder at `/run/clank`; the owner's user id; no `--add-host`; the outer network as on Docker
@@ -344,20 +347,40 @@ network before it starts the gateway (`workspaces/folders.py:170-175` moves to t
     address there refuses the probe's bind, which passes too. The stand-in gateway (`tests/docker/test_escape.py:43-52`)
     listens where the gateway does on each platform: on Linux, on a socket in a short temporary folder named in the
     test's `config/gateway.json`.
-- [ ] **Files:** `workspaces/sandbox.py:92-111` (read-only binds in `ContainerSpec`) and `154-195` (`edge_spec`
+  - *As built:* the operations' tests are `tests/components/workspaces/test_edge_socket.py` (design 0014 §3), run on
+    every system with fake platforms under the adapters' names and the gateway told it is on Linux, with
+    `test_on_docker_engine_the_edge_forwards_to_the_gateways_socket_as_the_owner` and
+    `test_on_docker_desktop_the_edge_still_forwards_to_the_hosts_loopback` through an opening;
+    `test_sandbox.py` also has `test_the_edges_sockets_are_the_ones_the_gateway_makes`, and `test_edge.py`
+    `test_the_edge_reads_each_target_as_a_host_and_its_port_or_a_unix_socket` (every system). The stand-in gateway is
+    on a socket only on Docker Engine; Docker Desktop for Linux reaches the host's loopback. The docker-marked tests
+    have not run yet: they need Linux with Docker Engine (P2, or the owner's computer).
+- [x] **Files:** `workspaces/sandbox.py:92-111` (read-only binds in `ContainerSpec`) and `154-195` (`edge_spec`
   with `socket_folder` and `user`; `run_arguments`); `workspaces/image/edge.py` (a target `unix:<path>`, with
   `asyncio.open_unix_connection`); `workspaces/adapters/platform.py` (`HOST_LOOPBACK`: whether `host-gateway` reaches
   the host's loopback; True for Docker Desktop, False for Docker Engine); `workspaces/folders.py:77-96`
   (`checked_folder` refuses a folder that holds the socket's folder or is inside it) and `150-183` (on Docker Engine:
   the socket's folder checked against every workspace's folder; the edge with that folder; the health probe through
   the edge, and the edge made again when it fails); `workspaces/service.py:281-286` (`gateway_socket()`, from the
-  gateway's service). Docs: design 0004 §3 points to design 0014 §3.
+  gateway's service). Docs: design 0004 §3 points to design 0014 §3. *As built:* no `HOST_LOOPBACK`: the edge's way
+  is chosen by the platform adapter's name, `docker-engine` getting the socket and every other adapter today's way, so
+  the adapters are not changed (L2's is built on another branch meanwhile); `workspaces/service.py` gives
+  `edge_socket()` (the gateway's, after every workspace's folder is checked), `socket_folder()` and `gateway_runs()`;
+  `workspaces/edge.py` asks the health through the edge (`reached`, a few lines of Python run in the edge on the port
+  it forwards) and makes the edge again (`ready(..., again=why)`); the edge also mounts Clank's programs, as every
+  container since decision 0142, so the socket folder is its only mount besides them; and `edge.py` no longer changes
+  the sandbox image's tag (decision 0142: the programs are mounted, not copied), so no image is built again.
 - [ ] **If the host's own address answers:** the workspaces' networks are made with
   `com.docker.network.bridge.inhibit_ipv4`, and the docker-marked test proves the address no longer answers. The
-  outer network keeps its address: it is the edge's way out.
-- [ ] **Interfaces:** `edge_spec(home, image, *, gateway_port, socket_folder: str | None = None, user: str = USER)`;
+  outer network keeps its address: it is the edge's way out. *Waiting for the docker-marked test on Linux:* making
+  the networks so needs an option in `ensure_network`, the adapters' own, which L1 moves to the base class on another
+  branch; it is added once the test says the address answers.
+- [x] **Interfaces:** `edge_spec(home, image, *, gateway_port, socket_folder: str | None = None, user: str = USER)`;
   `ContainerPlatform.HOST_LOOPBACK: ClassVar[bool]`; `ensure_network(..., options: Mapping[str, str] | None = None)`;
-  `checked_folder(given: str, clank_home: Path, socket_folder: Path | None = None) -> str`.
+  `checked_folder(given: str, clank_home: Path, socket_folder: Path | None = None) -> str`. *As built:* `edge_spec`
+  and `checked_folder` as here (`edge_spec` also takes `proxy_port`); `owner_ids()`; `Workspaces.edge_socket()`,
+  `Workspaces.socket_folder()`, `Workspaces.gateway_runs()`; `Edge.reached()`, `Edge.reaches_gateway()`; no
+  `HOST_LOOPBACK` and no `ensure_network` options yet.
 
 #### L7. A workspace opens only with its memory limited (B)
 

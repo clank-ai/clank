@@ -16,7 +16,9 @@ service). The edge is kept on every workspace's network (`edge.py`, design 0004 
 check joins it back to the network of a running workspace it is not on, starts it or makes it, from the reading it
 takes anyway (the first one when the service starts); `reach` puts it right before an agent starts in a workspace; and
 each view of a workspace says, as `edge` and `edge_said`, whether its container reaches the edge, and what Clank does
-when it does not.
+when it does not. The platform adapter's name decides the edge's way to the gateway (design 0014 §3): `docker-engine`
+gets the gateway's socket (`edge_socket`, from the gateway's service), every other adapter the host's loopback; and on
+Linux no workspace's folder may hold the gateway's socket folder or be inside it (`socket_folder`).
 """
 
 import logging
@@ -25,6 +27,7 @@ import threading
 import time
 from collections.abc import Callable, Sequence
 from datetime import timedelta
+from pathlib import Path
 from typing import Any, Literal
 
 import anyio
@@ -59,6 +62,7 @@ Owner = Literal["clank", "other"]
 WAIT_SECONDS = 1.0
 LIMITS_SECONDS = 300.0  # Docker's CPUs and memory, as an agent's start reads them, are read again after this long
 WORKSPACES = Actor(kind="clank", via="workspaces")
+DOCKER_ENGINE = "docker-engine"  # the adapter whose edge reaches the gateway through its socket (design 0014 §3)
 BOUND = ("models", "cloud_answered", "cloud_question", "cloud_said", "cloud_confirm")  # a workspace's bound, in views
 
 EVENT_TYPES = [
@@ -343,7 +347,7 @@ class Workspaces:
 
         problem = ""
         try:
-            path = checked_folder(folder, self.kernel.home.root)
+            path = checked_folder(folder, self.kernel.home.root, self.socket_folder())
         except WorkspaceError as error:
             path, problem = folder, str(error)
         workspace = next(
@@ -510,6 +514,54 @@ class Workspaces:
 
         gateway: Gateway = self.kernel.parts["gateway"]
         return gateway.settings().proxy_port
+
+    def edge_socket(self) -> Path | None:
+        """Where the edge forwards on Docker Engine (design 0014 §3): the gateway's socket, its folder made ready, once
+        no workspace's folder holds that folder or is inside it; None on any other platform, whose edge reaches the
+        host's loopback. `SocketFolderError` (the gateway's), saying why, when the folder may not be used."""
+        if self.platform.NAME != DOCKER_ENGINE:
+            return None
+        from clank.components.gateway.service import Gateway, SocketFolderError
+
+        gateway: Gateway = self.kernel.parts["gateway"]
+        path = gateway.edge_socket()
+        if path is None:
+            raise SocketFolderError("on Docker Engine the edge needs the gateway's socket, made on Linux only")
+        folder = path.parent
+        for loaded in self.kernel.settings.records("workspace"):
+            name, place = loaded.id, Path(Workspace.model_validate(loaded.record.model_dump()).path)
+            if folder == place or folder.is_relative_to(place):
+                where = f"the gateway's socket folder {folder} is inside the folder of the workspace {name} ({place})"
+            elif place.is_relative_to(folder):
+                where = f"the folder of the workspace {name} ({place}) is inside the gateway's socket folder ({folder})"
+            else:
+                continue
+            raise SocketFolderError(
+                f"{where}: its container would see the gateway's socket, so no workspace opens on Docker Engine until "
+                "it moves: set socket_folder in config/gateway.json to a folder outside every workspace's, then clank "
+                f"gateway restart (or remove the workspace {name})"
+            )
+        return path
+
+    def socket_folder(self) -> Path | None:
+        """The gateway's socket folder on Linux, which no workspace's folder may hold or be inside (design 0014 §3);
+        None on any other system, and while the gateway may not use the folder its settings name (nothing listens there
+        then)."""
+        from clank.components.gateway.service import Gateway, SocketFolderError
+
+        gateway: Gateway = self.kernel.parts["gateway"]
+        try:
+            path = gateway.socket_path()
+        except SocketFolderError:
+            return None
+        return path.parent if path is not None else None
+
+    def gateway_runs(self) -> bool:
+        """Whether the gateway's process runs, as its status says."""
+        from clank.components.gateway.service import Gateway
+
+        gateway: Gateway = self.kernel.parts["gateway"]
+        return bool(gateway.status()["state"] == "running")
 
     def proxy_url(self, name: str) -> str:
         """The proxy as a workspace's container is told it: its URL through the edge, with the workspace's own token

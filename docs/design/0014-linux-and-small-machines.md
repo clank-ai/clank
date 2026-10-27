@@ -34,7 +34,7 @@ against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engi
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | Proposed 2026-10-18 |
 | 2 | The container platform adapters | Proposed 2026-10-18 |
-| 3 | The edge's way to the gateway on Linux | Proposed 2026-10-18; option (a) chosen 2026-10-27 (decision 0071); the gateway's socket (step L5) built 2026-10-27 |
+| 3 | The edge's way to the gateway on Linux | Proposed 2026-10-18; option (a) chosen 2026-10-27 (decision 0071); the gateway's socket (step L5) and the edge's way on Docker Engine (step L6) built 2026-10-27 |
 | 4 | A workspace's container on Docker Engine | Proposed 2026-10-18 |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | Proposed 2026-10-18 |
 | 6 | OpenCode on arm64 | Proposed 2026-10-18 |
@@ -303,7 +303,7 @@ Tests:
 The escape tests' stand-in gateway listens on 127.0.0.1 only (`tests/docker/test_escape.py:46`); it moves to where the
 gateway listens on each platform.
 
-**As built** (2026-10-27, option (a); [plan s9](../plans/s9-linux-and-the-pi.md) L5):
+**As built** (2026-10-27, option (a); [plan s9](../plans/s9-linux-and-the-pi.md) L5 and L6):
 
 - The gateway's process is given its socket folder (`--socket-folder`), which holds `gateway.sock` and the proxy's
   `proxy.sock`: the agent's internet goes through the proxy (design 0024, written after this design), so its port takes
@@ -316,6 +316,17 @@ gateway listens on each platform.
   process, which then ends at once.
 - A gateway without its socket is started again once, while no model request is in flight: one adopted from before, or
   one whose socket went; one that still has none after is left, its status saying so.
+- The edge's way is chosen by the platform adapter's name: `docker-engine` gets the socket; every other adapter, Docker
+  Desktop on every system, today's way, exactly. No capability was added to the adapters.
+- The edge also mounts Clank's programs at `/opt/clank`, as every container has since decision 0142 (written after
+  this design), so the socket folder is its only mount besides them. For the same reason a change to `edge.py`
+  rebuilds no image.
+- The health asked through the edge is a few lines of Python run in the edge (`docker exec`), asking the port it
+  forwards to the gateway, tried for a few seconds while a new edge starts; it is asked when a workspace opens on
+  Docker Engine while the gateway runs, and an edge still not answering once made again refuses the opening, saying
+  why. Starting an agent does not ask it.
+- The workspace's folder is checked against the socket folder whenever the gateway has one (Linux), whatever the
+  platform; a socket folder inside a workspace's folder keeps the edge from being made on Docker Engine.
 
 ## 4. A workspace's container on Docker Engine
 
@@ -328,6 +339,8 @@ gateway listens on each platform.
     only, read with `docker network inspect` (the network's gateway), never on every address: on a shared network a
     probe on every address would face the network while the test runs. A host with no address there refuses the
     probe's bind, which proves the same.
+  - As built (2026-10-27, step L6): the escape tests try it on Linux; they have not run yet, for want of Linux with
+    Docker Engine, so whether the address answers is still to be seen, and the networks are made as before.
   - If the address answers, Clank makes the workspaces' networks without a host address. Docker's bridge option
     `com.docker.network.bridge.inhibit_ipv4` makes "a network without the IPv4 gateway address being assigned to the
     bridge" (https://docs.docker.com/engine/network/drivers/bridge/), and the test then proves it.

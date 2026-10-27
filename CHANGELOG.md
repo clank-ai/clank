@@ -13,6 +13,11 @@ a clone). Problems known now are in
   agent's proxy on `proxy.sock`, in a folder of their own outside CLANK_HOME (`~/.cache/clank/<home id>`, the owner's
   alone; `socket_folder` in `config/gateway.json` moves it). `clank gateway status` names it. It is how the agent's
   container reaches the model on Docker Engine, where no new address is opened for it (decision 0071, 2026-10-27).
+- **On Linux with Docker Engine, the agent reaches the model**: the edge, the workspaces' one door, mounts that folder
+  read-only and forwards the gateway's port and the proxy's to the sockets, running as you. Opening a workspace asks
+  the gateway's health through the edge and makes the edge again when it does not answer; a folder that holds the
+  socket folder, or is inside it, is not opened as a workspace. Docker Desktop's way is unchanged. Docker Engine's own
+  adapter comes next (2026-10-27).
 
 ## 0.3.0b2: the installer, updates, and the agent beside VS Code (2026-10-27)
 

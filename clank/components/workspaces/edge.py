@@ -18,6 +18,12 @@ asks for the edge goes through `Edge.ready`, one at a time:
 - What it repaired for a workspace whose container ran (it could not reach the model, and now can) is said in the
   service's log and as the event `workspaces.edge_repaired`, in Clank's words, with what found it.
 
+On Docker Engine the edge reaches the gateway through its socket, in a folder it mounts (design 0014 §3, `sandbox.py`).
+It keeps the folder it mounted: if the folder is removed and made again while it runs, or moves, the edge no longer
+reaches the gateway, and nothing in a reading shows it. So while the gateway runs, opening a workspace asks the
+gateway's health through the edge (`reached`: a few lines of Python run in the edge, asking its own forwarded port),
+and makes the edge again when it does not answer; one that still does not answer is said, with the probe's words.
+
 `state` says from a reading how a workspace's container reaches the edge: `on`; `cut`, the edge not running on its
 network; `stale`, the edge forwarding other ports than the gateway's and the proxy's (made again by an opening or an
 agent's start); `proxy`, its container told another proxy port than the one the edge forwards (it reaches the model,
@@ -39,12 +45,14 @@ from clank.components.workspaces.sandbox import (
     EDGE_ALIAS,
     PORTS_LABEL,
     PROXY_LABEL,
+    USER,
     ContainerSpec,
     Names,
     edge_ports,
     edge_spec,
     image_tag,
     names,
+    owner_ids,
 )
 from clank.kernel.events import Actor, EventType
 
@@ -56,6 +64,23 @@ CLANK = Actor(kind="clank", via="workspaces")
 STOP_SECONDS = 10
 QUIET_SECONDS = 60  # how long the check of Docker leaves an edge it could not put right before it tries again
 CHECK = "Clank's check of Docker"  # what found a repair the background check made
+PROBE_SECONDS = 5  # how long the health asked through the edge is tried, an edge just made starting meanwhile
+# The gateway's health asked through the edge, from inside it (design 0014 §3): its own forwarded port, then the socket.
+PROBE = (
+    "import http.client, sys, time\n"
+    "port, ends = int(sys.argv[1]), time.monotonic() + float(sys.argv[2])\n"
+    "while True:\n"
+    "    try:\n"
+    "        connection = http.client.HTTPConnection('127.0.0.1', port, timeout=5)\n"
+    "        connection.request('GET', '/health', headers={'Host': f'edge:{port}'})\n"
+    "        status = connection.getresponse().status\n"
+    "        break\n"
+    "    except (OSError, http.client.HTTPException) as error:\n"
+    "        if time.monotonic() > ends:\n"
+    "            raise SystemExit(f'no answer: {error}')\n"
+    "        time.sleep(0.25)\n"
+    "raise SystemExit(0 if status == 200 else f'it answered {status}')\n"
+)
 EVENT_TYPES = [
     EventType(
         "workspaces.edge_repaired",
@@ -160,12 +185,17 @@ class Edge:
         return names(self.workspaces.kernel.home.id)
 
     def spec(self) -> ContainerSpec:
-        """The edge as Clank wants it now: forwarding the gateway's port and the proxy's."""
+        """The edge as Clank wants it now: forwarding the gateway's port and the proxy's, to the host's loopback, or on
+        Docker Engine to their sockets, as the owner (design 0014 §3). `SocketFolderError` (the gateway's) when their
+        folder may not be used."""
+        socket = self.workspaces.edge_socket()
         return edge_spec(
             self.workspaces.kernel.home.id,
             image_tag(),
             gateway_port=self.workspaces.gateway_port(),
             proxy_port=self.workspaces.proxy_port(),
+            socket_folder=str(socket.parent) if socket is not None else None,
+            user=owner_ids() if socket is not None else USER,
         )
 
     def ports(self) -> str:
@@ -222,17 +252,26 @@ class Edge:
         remake: bool,
         found_by: str,
         log: Callable[[str], None] = _quiet,
+        again: str = "",
     ) -> Repair:
-        """The edge made, started or made again as it must be, then on the network of `target` (a refusal to join it is
-        raised), of `others`, and, with `everyone` or once it made or started the edge, of every workspace whose
-        container is in the reading `containers`. `log` gets each line of what it does; what it repaired is recorded."""
+        """The edge made, started or made again as it must be (made again whatever it is, when `again` says why),
+        then on the network of `target` (a refusal to join it is raised), of `others`, and, with `everyone` or once it
+        made or started the edge, of every workspace whose container is in the reading `containers`. `log` gets each
+        line of what it does; what it repaired is recorded. An edge whose socket folder may not be used (Docker
+        Engine) is not made: its problem says why."""
+        from clank.components.gateway.service import SocketFolderError
+
         with self._lock:
             platform = self.workspaces.platform
-            spec, found = self.spec(), self.names
+            try:
+                spec = self.spec()
+            except SocketFolderError as error:
+                return Repair(problem=f"the edge, the agents' way to the model, cannot be made: {error}")
+            found = self.names
             repair = Repair()
             current = platform.container(spec.name)
             was_running = current is not None and current.state == "running"
-            current, fresh = self._put_right(spec, current, remake, repair, log)
+            current, fresh = self._put_right(spec, current, remake, repair, log, again)
             if repair.problem or current is None:
                 return repair
             boxes = {each.name: each for each in containers}
@@ -254,15 +293,69 @@ class Edge:
                 self._record(repair, found_by)
             return repair
 
+    def reached(
+        self, target: str, containers: Sequence[Container], *, found_by: str, log: Callable[[str], None] = _quiet
+    ) -> str:
+        """On Docker Engine, while the gateway runs (design 0014 §3): the gateway's health asked through the edge, and
+        the edge made again when it does not answer, then asked again (`ready` with `again`, for `target` and every
+        workspace in the reading `containers`); "" when it answers, or when nothing is asked (another platform, the
+        gateway stopped), else why not, in Clank's words and the probe's."""
+        from clank.components.gateway.service import SocketFolderError
+
+        try:
+            socket = self.workspaces.edge_socket()
+        except SocketFolderError as error:
+            return f"the edge, the agents' way to the model, cannot be made: {error}"
+        if socket is None or not self.workspaces.gateway_runs():
+            return ""
+        why = self.reaches_gateway()
+        if not why:
+            log("the edge reaches the gateway through its socket")
+            return ""
+        log(f"the edge does not reach the gateway ({why}): it is made again")
+        repair = self.ready(target, containers, everyone=True, remake=True, found_by=found_by, log=log, again=why)
+        if repair.problem:
+            return repair.problem
+        why = self.reaches_gateway()
+        if not why:
+            log("the edge made again reaches the gateway through its socket")
+            return ""
+        return (
+            f"the edge does not reach the gateway through its socket {socket}, even made again: {why}; `clank gateway "
+            "status` says whether the gateway listens there"
+        )
+
+    def reaches_gateway(self) -> str:
+        """Whether the gateway answers its health through the edge, asked from inside the edge on the port it forwards
+        to the gateway (design 0014 §3): "" when it does, else why not, in the probe's or Docker's words."""
+        argv = ["python3", "-c", PROBE, str(self.workspaces.gateway_port()), str(PROBE_SECONDS)]
+        answer = self.workspaces.platform.run_in(self.names.edge, argv, workdir="/", timeout=PROBE_SECONDS + 15)
+        if answer.ok:
+            return ""
+        return " ".join((answer.errors or answer.output).split()) or f"exit {answer.status}"
+
     def _put_right(
-        self, spec: ContainerSpec, current: Container | None, remake: bool, repair: Repair, log: Callable[[str], None]
+        self,
+        spec: ContainerSpec,
+        current: Container | None,
+        remake: bool,
+        repair: Repair,
+        log: Callable[[str], None],
+        again: str = "",
     ) -> tuple[Container | None, str]:
-        """The edge as the spec says, as far as `remake` allows; it as it is after, and whether it was `made` or
-        `started` now (empty: neither). The changes are said in `repair`."""
+        """The edge as the spec says, as far as `remake` allows, or made again whatever it is when `again` says why;
+        it as it is after, and whether it was `made` or `started` now (empty: neither). The changes are said in
+        `repair`."""
         platform = self.workspaces.platform
         wanted = dict(spec.labels)[PORTS_LABEL]
         if current is None:
             repair.did.append("the edge was not there: Clank made it")
+            return self._make(spec, repair, log), "made"
+        if again and platform.image_exists(spec.image):  # never removed before the new one can be made
+            if current.state == "running":
+                platform.stop_container(spec.name, STOP_SECONDS)
+            platform.remove_container(spec.name)
+            repair.did.append(f"the edge did not reach the gateway ({again}): Clank made it again")
             return self._make(spec, repair, log), "made"
         had = current.clank.get(PORTS_LABEL, "")
         stale = had != wanted and (remake or current.state != "running")

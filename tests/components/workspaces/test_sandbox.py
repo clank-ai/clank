@@ -6,7 +6,9 @@ limits, and a command that forwards the gateway's port and the proxy's (design 0
 container is told the proxy with its own token. A folder whose path has a comma or a quote
 still mounts as itself. Design 0004 §10: a workspace's container tells numerical libraries how many CPUs it has.
 Decision 0142 (design 0023 §7): Clank's programs are mounted read-only at /opt/clank in every container Clank runs,
-not copied into the image, whose tag follows its Dockerfile alone."""
+not copied into the image, whose tag follows its Dockerfile alone. Design 0014 §3: the edge's arguments on each
+platform: on Docker Engine it mounts the gateway's socket folder read-only at /run/clank, runs as the owner and forwards
+to the sockets; on Docker Desktop it is exactly as before."""
 
 from pathlib import Path
 
@@ -150,3 +152,50 @@ def test_the_names_of_one_homes_networks_volumes_and_containers() -> None:
         "clank-abc123-my-project",
         "clank-abc123-my-project-home",
     )
+
+
+def test_on_docker_engine_the_edge_forwards_to_the_gateways_socket_and_mounts_nothing_else() -> None:
+    """Design 0014 §3: on Docker Engine the edge mounts the gateway's socket folder at /run/clank, read-only, beside
+    Clank's programs as every container (decision 0142), and nothing else; it runs as the owner, so it may open the
+    sockets; it forwards the gateway's port and the proxy's to their sockets, adds no host, and is on the network that
+    reaches the host, as on Docker Desktop."""
+    folder = "/home/user/.cache/clank/abc123"
+    spec = edge_spec(HOME, IMAGE, gateway_port=18210, proxy_port=18211, socket_folder=folder, user="1001:1001")
+    arguments = run_arguments(spec)
+    assert values(arguments, "--mount") == [
+        f"type=bind,source={image_folder()},target=/opt/clank,readonly",
+        f"type=bind,source={folder},target=/run/clank,readonly",
+    ]
+    assert values(arguments, "--user") == ["1001:1001"], "the owner's ids"
+    assert values(arguments, "--add-host") == []
+    assert values(arguments, "--network") == ["clank-abc123-outer"]
+    assert "--read-only" in arguments
+    assert (values(arguments, "--cap-drop"), values(arguments, "--security-opt")) == (["ALL"], ["no-new-privileges"])
+    assert values(arguments, "--label") == [
+        "clank.home=abc123", "clank.component=workspaces", "clank.record=edge", "clank.ports=18210,18211",
+    ]  # fmt: skip
+    assert arguments[arguments.index(IMAGE) + 1 :] == [
+        "python3", "/opt/clank/edge.py", "18210", "unix:/run/clank/gateway.sock", "18211", "unix:/run/clank/proxy.sock",
+    ]  # fmt: skip
+
+
+def test_on_docker_desktop_the_edge_still_forwards_to_the_hosts_loopback() -> None:
+    """Design 0014 §3: without a socket folder (Docker Desktop, on every system) the edge is exactly as before: the
+    image's user, the host's loopback as `host.docker.internal`, no mount but Clank's programs."""
+    assert run_arguments(edge_spec(HOME, IMAGE, gateway_port=18210, proxy_port=18211)) == [
+        "run", "--detach", "--name", "clank-abc123-edge", "--label", "clank.home=abc123", "--label",
+        "clank.component=workspaces", "--label", "clank.record=edge", "--label", "clank.ports=18210,18211", "--network",
+        "clank-abc123-outer", "--mount", f"type=bind,source={image_folder()},target=/opt/clank,readonly", "--add-host",
+        "host.docker.internal:host-gateway", "--user", "1000:1000", "--cap-drop", "ALL", "--security-opt",
+        "no-new-privileges", "--init", "--cpus", "0.5", "--memory", "128m", "--pids-limit", "64", "--read-only", IMAGE,
+        "python3", "/opt/clank/edge.py", "18210", "host.docker.internal", "18210", "18211", "host.docker.internal",
+        "18211",
+    ]  # fmt: skip
+
+
+def test_the_edges_sockets_are_the_ones_the_gateway_makes() -> None:
+    """Design 0014 §3: the edge forwards to the names the gateway gives its sockets, in the folder it mounts."""
+    from clank.components.gateway.service import GATEWAY_SOCKET, PROXY_SOCKET
+
+    spec = edge_spec(HOME, IMAGE, gateway_port=1, proxy_port=2, socket_folder="/sockets")
+    assert spec.command[-3:] == (f"unix:/run/clank/{GATEWAY_SOCKET}", "2", f"unix:/run/clank/{PROXY_SOCKET}")

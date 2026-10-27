@@ -36,9 +36,12 @@ def docker(*arguments: str, timeout: float = 120) -> subprocess.CompletedProcess
     return subprocess.run(["docker", *arguments], capture_output=True, text=True, timeout=timeout, check=False)
 
 
-def gateway_port(home: Home, port: int) -> None:
-    """The port the edge forwards (the gateway's, which the test's own server takes); the gateway itself not started."""
-    settings = {"schema": "gateway/1", "start": False, "port": port}
+def gateway_port(home: Home, port: int, socket_folder: str = "") -> None:
+    """The port the edge forwards (the gateway's, which the test's own server takes), and on Docker Engine the folder of
+    the socket it forwards to (design 0014 §3); the gateway itself not started."""
+    settings: dict[str, object] = {"schema": "gateway/1", "start": False, "port": port}
+    if socket_folder:
+        settings["socket_folder"] = socket_folder
     (home.config / "gateway.json").write_text(json.dumps(settings) + "\n", encoding="utf-8")
 
 
