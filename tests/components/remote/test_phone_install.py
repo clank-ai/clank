@@ -3,8 +3,11 @@ the device that opens it (no typing); the page it gets pairs the device, keeps i
 the app to the Home Screen, with a one-time install claim in the icon's start link (the manifest's `start_url`); the
 installed app's first launch trades the claim for the device's token (the Safari tab's stops working: the pairing moved
 into the app), a claim is spent once and lapses after an hour; a device's token renews on each use and lapses only
-after thirty days unused (no ceiling from its pairing)."""
+after thirty days unused (no ceiling from its pairing). The listener's log keeps where each request came from, as
+Tailscale's proxy says it (the address it names last, the login it vouches for, the browser's name), and why one was
+refused, for the checkup (when the page does not load); a pair link's code and an install claim are masked in it."""
 
+import json
 import re
 from collections.abc import Iterator
 
@@ -121,3 +124,27 @@ def test_the_manifest_carries_the_devices_start_link(phone: TestClient) -> None:
     claimed = phone.get("/manifest.webmanifest", params={"claim": "abc-123"}, headers=THROUGH_TAILSCALE)
     assert claimed.json()["start_url"] == "./?claim=abc-123"
     assert claimed.json()["name"] == "Clank"
+
+
+def test_the_log_keeps_where_each_request_came_from_and_why_it_was_refused_never_a_links_code_or_claim(
+    kernel: Kernel, phone: TestClient
+) -> None:
+    made = kernel.parts["remote"].pair_link("my phone", actor=YOU)
+    iphone = {**THROUGH_TAILSCALE, "X-Forwarded-For": "100.64.0.7", "User-Agent": "Mozilla/5.0 (iPhone)"}
+    assert phone.get("/pair", params={"code": made["code"]}, headers=iphone).status_code == 200
+    phone.get("/", params={"claim": "a-claim-of-the-icon"}, headers=iphone)
+    stranger = {"Tailscale-User-Login": "someone@else.com", "X-Forwarded-For": "203.0.113.9, 100.64.0.9"}
+    assert phone.get("/", headers=stranger).status_code == 403
+    files = sorted((kernel.home.logs / "phone").glob("*.jsonl"))
+    kept = [json.loads(line) for file in files for line in file.read_text(encoding="utf-8").splitlines()]
+    pairing, launch, refused = kept[-3:]
+    assert (pairing["path"], pairing["query"]) == ("/pair", "code=••••••••")
+    assert (launch["path"], launch["query"]) == ("/", "claim=••••••••")
+    assert made["code"] not in json.dumps(kept)
+    assert "a-claim-of-the-icon" not in json.dumps(kept)
+    assert pairing["origin"] == {"address": "100.64.0.7", "login": OWNER, "agent": "Mozilla/5.0 (iPhone)"}
+    assert "refused" not in pairing
+    assert refused["origin"]["address"] == "100.64.0.9", "the address Tailscale's proxy named, not the one sent to it"
+    assert refused["refused"] == {
+        "kind": "account", "why": "this page answers only to this computer's own Tailscale user"
+    }  # fmt: skip

@@ -10,22 +10,28 @@ user, or when Funnel is on for the port (it would face the internet), and says w
 Pairing (`devices.py`): codes are made here, on the computer, by the local API's clients only; the device types the
 code on the phone page. The files the agents sent to the phone are read from the workspaces' outboxes (`outbox.py`),
 and each new one is recorded (`remote.file_sent`).
+
+How the phone reaches this PC is checked on request while remote access is on (`checkup`, `checkup.py`, design 0025
+§2): what Tailscale said is kept `FACTS_SECONDS`, what this PC's own address answered (an exchange in the log each time)
+and what public DNS said `OPENED_SECONDS`, unless asked afresh.
 """
 
 import logging
 import threading
 import time
 from collections.abc import Callable
+from datetime import datetime, tzinfo
 from typing import TYPE_CHECKING, Any
 
 import anyio
 import anyio.to_thread
 import uvicorn
 
-from clank.components.remote import outbox, tailnet
+from clank.components.remote import checkup, outbox, probes, tailnet
 from clank.components.remote.devices import Device, Devices, PairingError
 from clank.components.remote.kinds import RemoteSettings
-from clank.components.remote.traffic import Traffic
+from clank.components.remote.probes import Public, Reached
+from clank.components.remote.traffic import KEPT, Traffic
 from clank.kernel.clock import to_text
 from clank.kernel.events import Actor, EventType, Subject
 
@@ -36,6 +42,8 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 ROUND_SECONDS = 3.0
 LOGIN_SECONDS = 60.0  # this machine's Tailscale user is read again at most this often
+FACTS_SECONDS = 15.0  # the checkup asks Tailscale again at most this often, unless asked afresh
+OPENED_SECONDS = 300.0  # and opens this PC's own address (and asks public DNS) at most this often
 EVENT_TYPES = [
     EventType("remote.switched", "Remote access (the phone page) was turned on or off.", {"on": "Whether it is on."}),
     EventType(
@@ -100,6 +108,12 @@ class Remote:
         self._tailnet_at = 0.0
         self._seen: set[tuple[str, str]] | None = None
         self._lock = threading.Lock()
+        self.zone: tzinfo | None = None  # whose day the checkup's "today" is (None: this computer's; a test sets one)
+        self._said: tuple[dict[str, Any], str, dict[str, Any]] | None = None  # Tailscale's status, why not, its serving
+        self._said_at: datetime | None = None
+        self._opened: tuple[Reached | None, Public | None] = (None, None)
+        self._opened_at: datetime | None = None
+        self._checkup_lock = threading.Lock()
 
     def settings(self) -> RemoteSettings:
         """The remote settings now."""
@@ -121,6 +135,28 @@ class Remote:
             "devices": [device.view() for device in self.devices.all()],
             "pairing": self.devices.waiting_code(),
         }
+
+    def checkup(self, fresh: bool = False) -> dict[str, Any]:
+        """How the phone reaches this PC, checked from here (design 0025 §2): when, and each check with what to do;
+        none while remote access is off. `fresh` asks Tailscale, this PC's own address and public DNS again at once."""
+        settings = self.settings()
+        if not settings.on:
+            return {"on": False, "at": "", "checks": []}
+        with self._checkup_lock:
+            now = self.kernel.clock.now()
+            if fresh or self._said is None or self._said_at is None or _age(now, self._said_at) > FACTS_SECONDS:
+                status, problem = tailnet.status()
+                serve = tailnet.serve_config() if status.get("BackendState") == "Running" else {}
+                self._said, self._said_at = (status, problem, serve), now
+            status, problem, serve = self._said
+            if fresh or self._opened_at is None or _age(now, self._opened_at) > OPENED_SECONDS:
+                self._opened, self._opened_at = _opened(status, serve, settings), now
+            reached, public = self._opened
+        facts = checkup.Facts(
+            settings, status, now, problem, serve, self._listener(), reached, public,
+            self.traffic.recent(limit=KEPT), self.devices.waiting_code(), self.zone,
+        )  # fmt: skip
+        return {"on": True, "at": to_text(now), "checks": checkup.checks(facts)}
 
     def switch(self, on: bool, *, actor: Actor) -> dict[str, Any]:
         """Turn remote access on or off; the background task applies it within a few seconds."""
@@ -246,6 +282,14 @@ class Remote:
         if self._server is server and not server.started:
             self._server = None  # it never started (its port taken): the next round tries again
 
+    def _listener(self) -> tuple[str, str, str]:
+        """The listener's state for the checkup: listening, why not, or starting."""
+        if self._server is not None and self._server.started:
+            return "passed", "", ""
+        if self._problem:
+            return "failed", self._problem, checkup.TOGGLE
+        return "warning", "starting: it listens within a few seconds of remote access turning on", ""
+
     def _read_tailnet(self, fresh: bool = False) -> tailnet.Tailnet:
         if fresh or self._tailnet is None or time.monotonic() - self._tailnet_at > LOGIN_SECONDS:
             self._tailnet, self._tailnet_at = tailnet.read(), time.monotonic()
@@ -270,3 +314,20 @@ class Remote:
                 actor=Actor(kind="session", via=row["workspace"]),
                 data={"workspace": row["workspace"], "file": row["file"], "caption": row["caption"][:200]},
             )
+
+
+def _age(now: datetime, then: datetime) -> float:
+    return (now - then).total_seconds()
+
+
+def _opened(
+    status: dict[str, Any], serve: dict[str, Any], settings: RemoteSettings
+) -> tuple[Reached | None, Public | None]:
+    """What this PC's own published address answered, and, while Funnel is on for this machine, what public DNS says
+    for its name; neither asked when Tailscale does not run here."""
+    host = str((status.get("Self") or {}).get("DNSName") or "").rstrip(".")
+    if status.get("BackendState") != "Running" or not host:
+        return None, None
+    reached = probes.reach(f"https://{host}:{settings.tailnet_port}/")
+    public = probes.public_addresses(host) if checkup.funnel_ports(serve, host) else None
+    return reached, public

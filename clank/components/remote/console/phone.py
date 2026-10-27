@@ -3,13 +3,17 @@
 "Remote access": whether it is on, listening and published, its address on the tailnet, and why not when it cannot be
 (Tailscale not signed in, Funnel on for its port). `x` turns it on or off. `p` makes a pair link for a device (a form
 asks its name): its QR code shows here, drawn as text to scan with the phone's camera (design 0025 §2, `qr.py`), with
-the link and the code under it, good for fifteen minutes; `c` cancels it, `p` again makes a new one.
+the link and the code under it, good for fifteen minutes, and what to check on the iPhone when the page will not
+load; `c` cancels it, `p` again makes a new one. While remote access is on, under them: how the phone reaches this
+PC, checked from here (design 0025 §2, `checkup.py`): the phones on the tailnet, what reached the listener today,
+Funnel, then this PC's side, each with what to do; `r` reads and checks again at once.
 "Paired devices": each paired device with when it was paired and last used; Enter shows everything it and this
 computer exchanged (`traffic.py`); `d` revokes the highlighted one. "Sent to the phone": the newest files the agents
 sent. The page reads the remote component again every few seconds while it is on screen. Its panels, "Remote access",
 "Paired devices" and "Sent to the phone", are board E18's (design 0011 §8).
 """
 
+from datetime import tzinfo
 from typing import Any
 
 from textual.app import ComposeResult
@@ -17,6 +21,8 @@ from textual.content import Content
 from textual.widgets import Label, ListView
 
 from clank.client import ClientError, NotRunning
+from clank.components.machine.service import MARKS
+from clank.components.remote.checkup import HINT
 from clank.components.remote.console.traffic import TrafficScreen
 from clank.components.remote.qr import qr_lines
 from clank.console import actions
@@ -31,6 +37,7 @@ from clank.console.style import mark
 from clank.console.text import painted, time_of
 
 READ_SECONDS = 3.0
+TONES = {"passed": "$clank-good", "warning": "$clank-attention", "failed": "$clank-failed", "skipped": "$clank-quiet"}
 
 
 def status_lines(found: dict[str, Any]) -> list[Content]:
@@ -43,6 +50,22 @@ def status_lines(found: dict[str, Any]) -> list[Content]:
         lines = [painted("on, starting: Tailscale publishes it within a few seconds", "starting")]
     if found.get("problem"):
         lines.append(painted(f"not published: {found['problem']}", "failed"))
+    return lines
+
+
+def checkup_lines(checkup: dict[str, Any] | None, zone: tzinfo | None) -> list[Content]:
+    """How the phone reaches this PC, as the service checked it: when, then each check's mark in its color, its
+    title and what was found, and under one not passed what to do; nothing while remote access is off."""
+    if not checkup or not checkup.get("checks"):
+        return []
+    checks = checkup["checks"]
+    width = max(len(check["title"]) for check in checks)
+    lines = [Content(""), Content(f"How the phone reaches it, checked {time_of(checkup['at'], zone)} (r checks again)")]
+    for check in checks:
+        mark = (f"{MARKS[check['status']]:<4}", TONES[check["status"]])
+        lines.append(Content.assemble(mark, f"  {check['title']:<{width}}  {check['detail']}"))
+        if check["fix"] and check["status"] != "passed":
+            lines.append(Content(f"      {'':<{width}}  {check['fix']}"))
     return lines
 
 
@@ -64,7 +87,7 @@ class PhonePage(Page):
         PageKey("c", "cancel", "cancels the code"),
         PageKey("enter", "traffic", "what a device exchanged"),
         PageKey("d", "revoke", "revokes", "revoke the highlighted device"),
-        PageKey("r", "read", "reads again"),
+        PageKey("r", "read", "reads again", "read again, and check again how the phone reaches this PC"),
     )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -72,6 +95,7 @@ class PhonePage(Page):
         self.found: dict[str, Any] | None = None
         self.files: list[dict[str, Any]] = []
         self.code: dict[str, Any] | None = None
+        self.fresh = False  # the next read checks the phone's way in again at once (r)
 
     def badge(self, frame: int) -> Content | None:
         """A dot: green while the phone page is published, muted while it is off."""
@@ -87,6 +111,7 @@ class PhonePage(Page):
         with Panel(title="Remote access", id="phone-access"):
             yield Label(id="phone-status")
             yield Label(id="phone-code")
+            yield Label(id="phone-checkup")
         with Panel(title="Paired devices", id="phone-devices-panel"):
             yield ListView(id="phone-devices")
         with Panel(title="Sent to the phone", id="phone-sent"):
@@ -127,6 +152,7 @@ class PhonePage(Page):
                 self._read()
             return True
         if key == "r":
+            self.fresh = True
             self._read()
             return True
         return False
@@ -146,26 +172,34 @@ class PhonePage(Page):
             "Tailscale login, then only paired devices: a device is paired with a code made here (p), typed on it "
             "within fifteen minutes, once. A device's pairing lasts 30 days from its last use; d revokes it.",
             "x turns it on or off (config/remote.json); while it is off nothing listens for the phone.",
+            "While it is on, the page says how the phone reaches this PC, checked from here: the phones on your "
+            "tailnet (online, or when last seen), what reached the listener today and why it was refused, Funnel "
+            "(it gives this PC's name a public address that leads a phone not using Tailscale's DNS astray: iCloud "
+            "Private Relay off, then), Tailscale here, where the port goes, MagicDNS, the certificates, and this PC "
+            "opening its own address; r checks again.",
         ]
 
     def _read(self) -> None:
         if not self.display:
             return
         client = self.console.client
+        fresh, self.fresh = self.fresh, False
 
         def work() -> None:
             try:
                 found = client.get("remote")
                 files = client.get("remote/files", limit=8)["files"]
+                checkup = client.get("remote/checkup", fresh=fresh) if found["on"] else None
             except (NotRunning, ClientError):
                 return
-            self.console.call_from_thread(self._show, found, files)
+            self.console.call_from_thread(self._show, found, files, checkup)
 
         self.run_worker(work, thread=True, group="phone-read", exclusive=True, exit_on_error=False)
 
-    def _show(self, found: dict[str, Any], files: list[dict[str, Any]]) -> None:
+    def _show(self, found: dict[str, Any], files: list[dict[str, Any]], checkup: dict[str, Any] | None = None) -> None:
         self.found, self.files = found, files
         relabel(self.query_one("#phone-status", Label), Content("\n").join(status_lines(found)))
+        relabel(self.query_one("#phone-checkup", Label), Content("\n").join(checkup_lines(checkup, self.console.zone)))
         waiting = found.get("pairing")
         if self.code is not None and waiting is not None:
             code = self.code["code"]
@@ -178,6 +212,7 @@ class PhonePage(Page):
                 Content.assemble(
                     "or type the code ", (f"{code[:4]} {code[4:]}", "bold $clank-now"), " on the phone page"
                 ),
+                Content(HINT),
             ]  # fmt: skip
         else:
             self.code = None

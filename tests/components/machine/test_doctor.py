@@ -1,6 +1,7 @@
-"""Design 0001 §7.3 and design 0002 §3.2 (M0.3): `clank doctor` prints each check and how many passed, as text or JSON,
-and works without the service; inside the service, the doctor is an operation that records the machine profile and the
-checks."""
+"""Design 0001 §7.3 and design 0002 §2.1 and §3.2 (M0.3): `clank doctor` prints each check and how many passed, as text
+or JSON, and works without the service; inside the service, the doctor is an operation that records the machine profile
+and the checks. A component's declaration may name doctor checks of its own (the phone's way in, design 0025 §2):
+they run after the machine's, and one that fails to run is said as a failed check."""
 
 import json
 from collections.abc import Sequence
@@ -11,6 +12,7 @@ from click.testing import CliRunner
 
 from clank.cli.main import main
 from clank.components.machine import cli, service
+from clank.components.machine.checks import CHECKS, CheckResult, Facts, run_checks
 from clank.components.machine.component import COMPONENT
 from clank.components.machine.kinds import Gpu, MachineProfile
 from clank.kernel.clock import FakeClock
@@ -73,3 +75,18 @@ async def test_the_doctor_operation_records_the_profile_and_the_checks(home: Hom
         assert (saved.source, saved.record.model_dump()["cores"]) == ("user", 16)
     finally:
         kernel.close()
+
+
+def test_the_doctor_runs_the_checks_each_component_declares_after_its_own(home: Home) -> None:
+    def declared(given: Home) -> list[dict[str, str]]:
+        assert given == home
+        return [{"id": "x.one", "title": "X: one", "status": "warning", "detail": "said", "fix": "do this"}]
+
+    def broken(given: Home) -> list[dict[str, str]]:
+        raise RuntimeError("no answer")
+
+    results = run_checks(Facts(home=home, profile=PROFILE, run=fake_run, more=(declared, broken)))
+    assert [result.id for result in results[: len(CHECKS)]] == [id for id, _, _ in CHECKS]
+    assert results[len(CHECKS)] == CheckResult("x.one", "X: one", "warning", "said", "do this")
+    failed = results[len(CHECKS) + 1]
+    assert (failed.status, failed.detail) == ("failed", "the check itself failed: no answer")

@@ -7,6 +7,9 @@ internet is refused. But for the page itself and pairing, it must carry a paired
 keeps after pairing): the login is the first factor, the device the second. Every action carries the header
 `X-Clank-Phone`, which a page from elsewhere cannot send without asking first, and this app never says yes, so another
 site cannot act through the owner's browser. What a device does is recorded as that device (`Actor(kind="device")`).
+Every exchange is logged (`traffic.py`) with where it came from as Tailscale's proxy says it, never used to decide
+anything, and a refusal with its kind, so the phone's checkup can say which device reached the PC and what to do
+(design 0025 §2).
 """
 
 import json
@@ -38,6 +41,11 @@ STATIC = {  # the app's files, from the package (design 0025 §1: nothing fetche
     "app.js": "text/javascript", "model.mjs": "text/javascript", "sw.js": "text/javascript", "style.css": "text/css",
     "icon.svg": "image/svg+xml",
 }  # fmt: skip
+REFUSALS = (  # a refusal's kind, by its words: the checkup's fix for it (design 0025 §2)
+    ("only through Tailscale", "tailscale"), ("never from the internet", "funnel"), ("own Tailscale user", "account"),
+    ("pair this device first", "paired"), ("too many wrong codes", "tries"), ("does not pair", "code"),
+    ("own header", "header"),
+)  # fmt: skip
 CONTENT_POLICY = (
     "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; "
     "frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
@@ -85,6 +93,17 @@ class SeenBody(BaseModel):
 OVERVIEW_READERS = 8  # workspaces whose sessions are read at once for the overview
 
 
+def origin_of(request: Request) -> dict[str, str]:
+    """Where a request came from, as Tailscale's proxy says it: the address it names last in `X-Forwarded-For` (a
+    client may send its own before it), the login it vouches for, and the browser's own name."""
+    forwarded = request.headers.get("x-forwarded-for", "")
+    return {
+        "address": forwarded.split(",")[-1].strip()[:64],
+        "login": request.headers.get("tailscale-user-login", "").strip().lower()[:200],
+        "agent": request.headers.get("user-agent", "")[:200],
+    }
+
+
 def page(name: str) -> bytes:
     """One of the page's files, from Clank's package."""
     return resources.files("clank.components.remote").joinpath("page", name).read_bytes()
@@ -130,8 +149,19 @@ def create_phone_app(remote: "Remote") -> FastAPI:
         except (SessionError, AgentError, WorkspaceUnavailable) as error:
             raise HTTPException(409, str(error)) from error
 
+    def refusal_of(request: Request, why: str) -> dict[str, str]:
+        """A refusal's kind and words; refused as not the owner's login, whether none came, or the PC's own is not
+        known, or another account asked."""
+        kind = next((kind for words, kind in REFUSALS if words in why), "")
+        if kind == "account" and not request.headers.get("tailscale-user-login", "").strip():
+            kind = "login"
+        elif kind == "account" and not remote.owner_login():
+            kind = "owner"
+        return {"kind": kind, "why": why}
+
     @app.exception_handler(HTTPException)
     async def refused(request: Request, error: HTTPException) -> JSONResponse:
+        request.state.refused = refusal_of(request, str(error.detail))
         never_kept = {"Cache-Control": "no-store"}
         return JSONResponse({"error": error.detail}, status_code=error.status_code, headers=never_kept)
 
@@ -142,13 +172,14 @@ def create_phone_app(remote: "Remote") -> FastAPI:
         began, when = time.perf_counter(), kernel.clock.now()
         asked = await request.body()
         response: Response = await call_next(request)
+        origin, refused = origin_of(request), getattr(request.state, "refused", None)
         if request.url.path in STREAM_PATHS and response.status_code == 200:
             device = getattr(request.state, "device", None)
             await anyio.to_thread.run_sync(lambda: remote.traffic.record(
                 when=when, device=device, method=request.method, path=request.url.path, query=request.url.query,
                 status=response.status_code, ms=(time.perf_counter() - began) * 1000, request=asked,
                 request_type=request.headers.get("content-type", ""), response=b"(the live stream)",
-                response_type="text/event-stream",
+                response_type="text/event-stream", origin=origin,
             ))  # fmt: skip
             return response
         chunks = [chunk async for chunk in response.body_iterator]  # type: ignore[attr-defined]
@@ -162,7 +193,7 @@ def create_phone_app(remote: "Remote") -> FastAPI:
             when=when, device=device, method=request.method, path=request.url.path, query=request.url.query,
             status=response.status_code, ms=(time.perf_counter() - began) * 1000, request=asked,
             request_type=request.headers.get("content-type", ""), response=sent,
-            response_type=response.headers.get("content-type", ""),
+            response_type=response.headers.get("content-type", ""), origin=origin, refused=refused,
         ))  # fmt: skip
         whole = Response(sent, status_code=response.status_code)
         whole.raw_headers = response.raw_headers

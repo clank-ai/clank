@@ -1,5 +1,6 @@
 """The remote component's commands: `clank remote status|on|off|pair [NAME]|revoke ID` (design 0005 §5), each a client
-of the local API."""
+of the local API. `status` also says how the phone reaches this PC, checked afresh (design 0025 §2), and `pair` says
+under the QR what to check on the iPhone when the page will not load."""
 
 import json
 from typing import Any
@@ -7,6 +8,8 @@ from typing import Any
 import click
 
 from clank.cli import common
+from clank.components.machine.service import MARKS
+from clank.components.remote.checkup import HINT
 from clank.components.remote.qr import qr_lines
 
 
@@ -18,13 +21,16 @@ def remote() -> None:
 @remote.command()
 @click.option("--json", "as_json", is_flag=True, help="Print JSON, for scripts and models.")
 def status(as_json: bool) -> None:
-    """Whether the phone page is on and where, and the paired devices."""
+    """Whether the phone page is on and where, the paired devices, and how the phone reaches it (checked now)."""
     client = common.call(common.connect)
     found = common.call(lambda: client.get("remote"))
+    checkup = common.call(lambda: client.get("remote/checkup", fresh=True)) if found["on"] else None
     if as_json:
-        click.echo(json.dumps(found, indent=2))
+        click.echo(json.dumps({**found, **({"checkup": checkup} if checkup else {})}, indent=2))
         return
     _show(found)
+    if checkup and checkup["checks"]:
+        _checkup(checkup["checks"])
 
 
 @remote.command()
@@ -52,6 +58,7 @@ def pair(name: str) -> None:
         for line in qr_lines(found["link"]):
             click.echo(line)
         click.echo(f"Scan it with the iPhone's camera, or open {found['link']}")
+        click.echo(HINT)
     else:
         click.echo("Tailscale did not say this machine's address: the phone page's link cannot be made")
     click.echo(f"Code for {name}: {found['code'][:4]} {found['code'][4:]}  (until {found['expires']}), to type instead")
@@ -88,3 +95,13 @@ def _show(found: dict[str, Any]) -> None:
         click.echo(f"  {device['id']}  {device['name']}  last used {device['last_seen']}")
     if not devices:
         click.echo("  No paired device: `clank remote pair` makes a code.")
+
+
+def _checkup(checks: list[dict[str, Any]]) -> None:
+    """Each check as the doctor prints its own: its mark, its title, what was found, and what to do when not passed."""
+    click.echo("How the phone reaches it, checked from this PC:")
+    width = max(len(check["title"]) for check in checks)
+    for check in checks:
+        click.echo(f"  {MARKS[check['status']]}  {check['title'].ljust(width)}  {check['detail']}")
+        if check["fix"] and check["status"] != "passed":
+            click.echo(f"        {' ' * width}  -> {check['fix']}")

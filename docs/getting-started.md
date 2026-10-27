@@ -223,6 +223,23 @@ through your tailnet; nothing of it goes through anyone else's server, and the a
 4. **When the PC cannot be reached,** the app says so, shows the last it knew and tries again on its own. Check
    that Tailscale on the iPhone says Connected, and that the PC is awake.
 
+**If the page does not load** (Safari waits, then says it cannot connect to the server):
+
+1. **Tailscale on the iPhone says Connected**, signed in to the same Tailscale account as the PC.
+2. **Use Tailscale DNS settings is on** in the iPhone's Tailscale app, so the iPhone finds the PC's name through your
+   tailnet.
+3. **iCloud Private Relay is off** on the iPhone (Settings, your name, iCloud, Private Relay): with it on, Safari asks
+   Apple's servers for the PC's name instead. That matters when Tailscale Funnel is on for any port of the PC: the name
+   then also has a public address, Tailscale's relay, which does not carry the phone page's port. Turn Airplane Mode on
+   and off afterwards to clear the iPhone's DNS cache. Or, if nothing on the PC needs Funnel, turn it off there
+   (`tailscale funnel status` shows what it publishes).
+4. **Open the link in Safari** itself, the one under the QR.
+5. **Read the console's Phone page (F9)**: under the QR it says how the phone reaches the PC, checked from the PC: your
+   phones on the tailnet (online, or when last seen), whether anything from the phone reached Clank today and why it
+   was refused, Funnel, and the PC's side, each with what to do; `r` checks again. `clank remote status` and
+   `clank doctor` say the same.
+6. **Make a new QR** with `p` (a code works once, for fifteen minutes), and scan it.
+
 The console's Phone page lists the paired devices and everything each exchanged with the PC (Enter); `d` revokes
 one. The phone keeps only its token and the last summary, names and numbers. The app's Flows and session screens,
 its notifications and its settings come with design 0025's next steps.

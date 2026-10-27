@@ -17,6 +17,7 @@ from typing import Any
 import anyio
 import anyio.to_thread
 
+from clank.components.machine.checks import MARKS as MARKS  # the doctor's marks, which the phone's checkup shows too
 from clank.components.machine.checks import Facts, free_gb, hags_mode, run_checks
 from clank.components.machine.detect import detect
 from clank.components.machine.kinds import MachineProfile
@@ -134,6 +135,7 @@ class Machine:
                 port=service_port(self.kernel),
                 hags_mode=hags_mode(),
                 free_gb=free_gb(self.kernel.home),
+                more=tuple(each.checks for each in self.kernel.components if each.checks is not None),
             )
             results = await context.run_blocking(run_checks, facts)
         passed = sum(1 for result in results if result.status == "passed")

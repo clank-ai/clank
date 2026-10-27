@@ -1,6 +1,7 @@
 """The remote component's routes in the service's local API (design 0005 §5): whether remote access is on and where,
-turning it on and off, making a pairing code, the paired devices and revoking one, and the files the agents sent. Only
-the computer's own clients reach this API (the local token), so a code is never made from a device.
+turning it on and off, how the phone reaches it (the checkup, design 0025 §2), making a pairing code, the paired
+devices and revoking one, and the files the agents sent. Only the computer's own clients reach this API (the local
+token), so a code is never made from a device.
 """
 
 from typing import TYPE_CHECKING, Any
@@ -38,6 +39,13 @@ def router(remote: "Remote") -> APIRouter:
     async def status() -> dict[str, Any]:
         """Whether remote access is on, listening and published, its address, why not, and the paired devices."""
         found: dict[str, Any] = await anyio.to_thread.run_sync(remote.status)
+        return found
+
+    @routes.get("/remote/checkup")
+    async def checkup(fresh: bool = False) -> dict[str, Any]:
+        """How the phone reaches this PC, checked from here (design 0025 §2): each check with what to do, none while
+        remote access is off; `fresh` asks Tailscale, the published address and public DNS again at once."""
+        found: dict[str, Any] = await anyio.to_thread.run_sync(lambda: remote.checkup(fresh))
         return found
 
     @routes.post("/remote/switch")
