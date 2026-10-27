@@ -381,13 +381,15 @@ async def test_attach_to_a_planning_already_talking_shows_its_session_and_starts
     rig.bridge.window()
     first = await until(lambda: rig.bridge.prompted(TITLE))
     talking = await until(lambda: planning_of(rig).status == "talking" and planning_of(rig))
+    before = len(rig.events("flows.building"))
     again = building(rig).attach("myproject", actor=OWNER)  # its window closed meanwhile, or another terminal
     rig.bridge.window()
     await until(lambda: rig.bridge.done("show"))
     assert rig.bridge.done("show")[-1] == [str(again["port"]), talking.session]
     assert len([each for each in rig.bridge.prompts if each.title == TITLE]) == 1, "no second session"
     assert first.session == talking.session
-    assert [event.data["action"] for event in rig.events("flows.building")][-1] == "attached"
+    after = [event.data["action"] for event in rig.events("flows.building")[before:]]
+    assert "attached" in after, "the planning's own status lines may come after it on a slow machine (CI, 2026-10-26)"
     acted = rig.events("agents.acted")[-1]
     assert (acted.data["action"], acted.data["session"]) == ("show", talking.session)
     assert "showed a session of myproject's agent" in acted.summary, "nothing started"

@@ -2,9 +2,12 @@
 command's exact arguments; its answer). It reads the platform's CPUs and memory; tells whether an image is built and
 builds one, each line as it comes; makes a network only when it is not there; runs a container from its spec, joining
 its other networks after it starts; reads, starts, stops and removes a container, and removes a volume, a missing one
-being no error; and says how a terminal enters a container. A command Docker refuses raises its own words.
+being no error; and says how a terminal enters a container. A command Docker refuses raises its own words. Revised
+2026-10-26: a container read says the networks it is on, joining a network says whether it joined now or was on it
+already, and a start refused because a network the container was on is gone says so (`NetworkGone`), so Clank makes
+the container again.
 
-Design 0004 §5 (revised 2026-10-26): the files written when an agent starts go in one `docker exec` (a few lines of
+Design 0004 §5: the files written when an agent starts go in one `docker exec` (a few lines of
 Python reading them from its input), one by one only in a container without Python."""
 
 import json
@@ -16,7 +19,7 @@ from pathlib import Path
 import pytest
 
 from clank.components.workspaces.adapters.docker_desktop import PUT_FILES, DockerDesktop
-from clank.components.workspaces.adapters.platform import PlatformError
+from clank.components.workspaces.adapters.platform import NetworkGone, PlatformError
 from clank.components.workspaces.sandbox import ContainerSpec, edge_spec, run_arguments
 from clank.kernel.processes import TIMEOUT_SECONDS, Answer
 
@@ -181,6 +184,33 @@ def test_a_file_is_written_in_a_container_as_its_user() -> None:
         adapter(refused).put_file("clank-abc-x", "/home/agent/x", "")
 
 
+def test_a_container_says_its_networks_and_joining_one_says_whether_it_joined_now() -> None:
+    inspected = (
+        '{"id":"4f2a","name":"/clank-abc-edge","image":"clank-sandbox:abc","state":"running","labels":{},'
+        '"networks":{"clank-abc-x-net":{"Aliases":["edge"]},"clank-abc-outer":{"Aliases":null}}}\n'
+    )
+    docker = Docker({("container", "inspect"): inspected, ("network", "connect"): OK})
+    platform = adapter(docker)
+    found = platform.container("clank-abc-edge")
+    assert found is not None
+    assert found.networks == ["clank-abc-outer", "clank-abc-x-net"]
+    assert platform.join_network("clank-abc-y-net", "clank-abc-edge", "edge") is True
+    said = "Error response from daemon: endpoint with name clank-abc-edge already exists in network clank-abc-y-net"
+    already = Docker({("network", "connect"): Answer(1, "", said)})
+    assert adapter(already).join_network("clank-abc-y-net", "clank-abc-edge", "edge") is False
+
+
+def test_a_start_refused_because_a_network_is_gone_says_so() -> None:
+    """Docker keeps the id of each network a container is on: one made again since is another network."""
+    gone = "Error response from daemon: network 7e1f0c2b9a1d not found\nError: failed to start containers: clank-abc-x"
+    with pytest.raises(NetworkGone, match=r"clank-abc-x could not start: .*network 7e1f0c2b9a1d not found"):
+        adapter(Docker({("start",): Answer(1, "", gone)})).start_container("clank-abc-x")
+    paused = Docker({("start",): Answer(1, "", "Error response from daemon: cannot start a paused container")})
+    with pytest.raises(PlatformError) as refused:
+        adapter(paused).start_container("clank-abc-x")
+    assert not isinstance(refused.value, NetworkGone)
+
+
 def test_several_files_are_written_in_a_container_in_one_command(tmp_path: Path) -> None:
     docker = Docker({("exec",): OK})
     files = [("/home/agent/.clank/mcp/a.py", "print('a')\n"), ("/home/agent/.config/x.json", "{}\n")]
@@ -189,13 +219,13 @@ def test_several_files_are_written_in_a_container_in_one_command(tmp_path: Path)
         "one docker exec for them all: each one is a fifth of a second on Windows (2026-10-26)"
     )
     assert json.loads(docker.input or b"") == [list(each) for each in files]
-    written = [(str(tmp_path / "deep" / "a.py"), "print('a')\n"), (str(tmp_path / "b.json"), "{ \"é\": 1 }\r\n")]
+    written = [(str(tmp_path / "deep" / "a.py"), "print('a')\n"), (str(tmp_path / "b.json"), '{ "é": 1 }\r\n')]
     ran = subprocess.run(
         [sys.executable, "-c", PUT_FILES], input=json.dumps(written).encode(), capture_output=True, check=False
     )
     assert ran.returncode == 0, ran.stderr
     assert (tmp_path / "deep" / "a.py").read_bytes() == b"print('a')\n", "its folder made, its text as given"
-    assert (tmp_path / "b.json").read_bytes() == "{ \"é\": 1 }\r\n".encode(), "UTF-8, and its line ends untouched"
+    assert (tmp_path / "b.json").read_bytes() == '{ "é": 1 }\r\n'.encode(), "UTF-8, and its line ends untouched"
     refused = Docker({("exec",): Answer(1, "", "Error response from daemon: container is not running")})
     with pytest.raises(PlatformError, match=r"could not be written in clank-abc-x: .*not running"):
         adapter(refused).put_files("clank-abc-x", files)

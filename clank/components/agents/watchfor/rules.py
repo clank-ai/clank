@@ -134,19 +134,59 @@ def _of(nodes: list[dict[str, Any]], kind: str) -> list[dict[str, Any]]:
     return [node for node in nodes if node.get("kind") == kind]
 
 
+GIVEN = ("filePath", "path", "command", "pattern", "url", "query", "description", "name")  # what says most, in order
+GIVEN_FIELD = re.compile(r'"(\w+)":\s*"((?:[^"\\]|\\.)*)"')  # a whole "key": "text" in an input cut short
+
+
+def call_words(call: dict[str, Any]) -> str:
+    """What a call does, briefly: its title; else what its input touches (the file, as a path in the folder, the
+    command, the question asked), never the input whole ("(edit): {"filePath": ...}" in the events, 2026-10-26)."""
+    if call.get("title"):
+        return brief(str(call["title"]), WHY)
+    given = _given(call.get("input"))
+    questions = given.get("questions")
+    if isinstance(questions, list) and questions and isinstance(questions[0], dict):
+        return brief(str(questions[0].get("question") or ""), WHY)
+    for key in GIVEN:
+        value = given.get(key)
+        if isinstance(value, str) and value:
+            return brief(value.removeprefix("/workspace/"), WHY)
+    return ""
+
+
+def _given(found: Any) -> dict[str, Any]:
+    """A call's input as fields: as given, else its JSON text read, else each whole field before the text was cut."""
+    if isinstance(found, dict):
+        return found
+    if not isinstance(found, str):
+        return {}
+    try:
+        read = json.loads(found)
+    except ValueError:
+        fields: dict[str, Any] = {}
+        for match in GIVEN_FIELD.finditer(found):
+            try:
+                fields.setdefault(match.group(1), json.loads(f'"{match.group(2)}"'))
+            except ValueError:
+                continue
+        return fields
+    return read if isinstance(read, dict) else {}
+
+
 def _words(call: dict[str, Any]) -> str:
-    """What a call does, briefly: its title, else its input."""
-    return brief(call.get("title") or call.get("input") or "", WHY)
+    """What a call does, briefly, after a colon; nothing when nothing says it."""
+    words = call_words(call)
+    return f": {words}" if words else ""
 
 
 def _waiting_for_you(head: dict[str, Any], nodes: list[dict[str, Any]], facts: Facts) -> list[Hit]:
     hits: list[Hit] = []
     for call in _of(nodes, "call"):
         if call.get("asking") and call.get("permission") != "doom_loop":
-            why = f"{call['tool']} asks for your approval ({call.get('permission') or 'a permission'}): {_words(call)}"
+            why = f"{call['tool']} asks for your approval ({call.get('permission') or 'a permission'}){_words(call)}"
             hits.append((f"ask:{call['asking']}", call["id"], why, ""))
         elif call.get("tool") == "question" and call.get("status") in ("pending", "running"):
-            hits.append((f"question:{call['id']}", call["id"], f"the model asks you a question: {_words(call)}", ""))
+            hits.append((f"question:{call['id']}", call["id"], f"the model asks you a question{_words(call)}", ""))
     return hits
 
 
@@ -187,7 +227,8 @@ def _loop_guard_stopped(head: dict[str, Any], nodes: list[dict[str, Any]], facts
 def _asks_about_a_repeat(head: dict[str, Any], nodes: list[dict[str, Any]], facts: Facts) -> list[Hit]:
     return [
         (f"ask:{call['asking']}", call["id"],
-         f"OpenCode asks whether {call['tool']} may run again, the same call made again and again: {_words(call)}", "")
+         f"OpenCode asks whether {call['tool']} may run again, the same call made again and again: "
+         f"{call_words(call)}", "")
         for call in _of(nodes, "call")
         if call.get("asking") and call.get("permission") == "doom_loop"
     ]  # fmt: skip
@@ -279,7 +320,7 @@ def _call_then_step_failed(head: dict[str, Any], nodes: list[dict[str, Any]], fa
             continue
         ran = [calls[id] for id in step.get("calls") or [] if id in calls and calls[id].get("started")]
         if ran:
-            names = ", ".join(f"{call['tool']} {_words(call)}" for call in ran[:3])
+            names = ", ".join(f"{call['tool']} {call_words(call)}".rstrip() for call in ran[:3])
             why = (f"step {step['n']} ended in an error ({brief(step.get('error') or '', WHY)}) after its calls had "
                    f"started ({names}); the model is not told what they did")  # fmt: skip
             hits.append((f"ran:{step['id']}", step["id"], why, ""))
@@ -292,7 +333,7 @@ def _stopped_with_an_ask_waiting(head: dict[str, Any], nodes: list[dict[str, Any
     return [
         (f"stopped:{call['asking']}", call["id"],
          f"the session stopped while {call['tool']}'s ask ({call.get('permission') or 'a permission'}) waits: the ask "
-         f"stays, and a later answer could still let it run: {_words(call)}", "")
+         f"stays, and a later answer could still let it run: {call_words(call)}", "")
         for call in _of(nodes, "call")
         if call.get("asking")
     ]  # fmt: skip

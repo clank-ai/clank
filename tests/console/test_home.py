@@ -301,3 +301,13 @@ async def test_home_and_the_header_say_the_clouds_spending_and_a_pause_in_the_se
         paused = "cloud paused: today's limit of $5.00 reached ($5.44 spent) · L raise"
         await settle(pilot, lambda: paused in render_text(app))
         assert paused in render_text(app).splitlines()[0]
+
+
+def test_a_slot_that_does_not_run_reads_not_loaded_with_its_reason_only_when_it_says_more() -> None:
+    """The owner's Home said "fast: stopped (unloaded (stopped))" (the end-to-end test, 2026-10-26)."""
+    from clank.console.pages.home import slot_words
+
+    assert slot_words("stopped", "unloaded (stopped)") == "not loaded"
+    assert slot_words("stopped", "never started") == "not loaded (never started)"
+    assert slot_words("stopped", "") == "not loaded"
+    assert slot_words("failed", "out of memory") == "failed (out of memory)"

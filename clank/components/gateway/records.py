@@ -5,8 +5,9 @@ the preset and the engine, the model name sent, what the engine's fields changed
 status and the error (with what repeated, when the loop guard stopped the answer: `looped`), the ids of the calls the
 answer made (`calls`), and (unless turned off) the request and the answer. Any text longer than the limit is cut,
 saying how long it was; a header that carries a credential is never kept (its name is, its value is not). A day's file
-older than the days kept is removed when the first record of a day is written. Writes are serialized, so records from
-requests that end together never interleave. `recent` reads the newest records back, each summed up (who asked, in
+older than the days kept is removed when the first record of a day is written (one another program holds open then,
+which Windows refuses to delete, is left for the next day's look). Writes are serialized, so records from requests
+that end together never interleave. `recent` reads the newest records back, each summed up (who asked, in
 which session, how it went, its tokens and its speed), from the files' ends; `find` reads one with what was asked and
 answered (the console's Requests page), and the sampling it sent of its own (`sampling`: none when it sent none, `None`
 when its request was not kept; design 0003 §4.1).
@@ -63,10 +64,15 @@ class TrafficLog:
         return value
 
     def _prune(self) -> None:
+        """Remove the days older than kept; one another program holds open now (Windows refuses its delete) is left
+        for the next day's look, and the record is written all the same."""
         oldest = time.time() - self.keep_days * 86400
         for file in self.folder.glob("*.jsonl"):
-            if file.stat().st_mtime < oldest:
-                file.unlink(missing_ok=True)
+            try:
+                if file.stat().st_mtime < oldest:
+                    file.unlink(missing_ok=True)
+            except OSError:
+                continue
 
 
 def recent(folder: Path, limit: int) -> list[dict[str, Any]]:

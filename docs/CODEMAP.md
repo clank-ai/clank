@@ -185,6 +185,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/remote/__init__.py` | The remote component: the phone (design 0005, decision 0012). |
 | `clank/components/remote/api.py` | The remote component's routes in the service's local API (design 0005 §5): whether remote access is on and where, |
 | `clank/components/remote/app.py` | The phone's listener (design 0005 §4): its own FastAPI app, apart from the service's API, answering only the phone |
+| `clank/components/remote/checkup.py` | The phone's way in, checked from this PC (design 0025 §2, when the page does not load): what can be seen from here |
 | `clank/components/remote/cli.py` | The remote component's commands: `clank remote status\|on\|off\|pair [NAME]\|revoke ID` (design 0005 §5), each a client |
 | `clank/components/remote/component.py` | The remote component's declaration (design 0002 §1, design 0005, decision 0012). |
 | `clank/components/remote/console/__init__.py` | The remote component's console pages: the phone. |
@@ -198,6 +199,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/remote/page/app.js` | Clank's phone app (design 0025, decision 0143; the page of design 0005 made an installed app): live from one stream |
 | `clank/components/remote/page/model.mjs` | The phone app's logic that needs no browser (design 0025 §3, §5, §6 and §7): the live stream's state (live, |
 | `clank/components/remote/page/sw.js` | The phone app's service worker (design 0025 §3): it keeps the app's shell (the page, its script, its style, its icon) |
+| `clank/components/remote/probes.py` | The two questions the phone's checkup asks beyond Tailscale (design 0025 §2, when the page does not load). |
 | `clank/components/remote/qr.py` | The QR code the console shows for the phone's pair link (design 0025 §2, decision 0144), drawn as text. |
 | `clank/components/remote/service.py` | The remote component's part in the service (design 0005, decision 0012): the phone page and who may reach it. |
 | `clank/components/remote/sessionapi.py` | The phone's session routes (design 0025 §7; plan s59): the conversation stream, the Guide and the context of a |
@@ -265,6 +267,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/workspaces/console/__init__.py` | The workspaces component's console pages: Docker's (design 0002 §2.1, §2.15). |
 | `clank/components/workspaces/console/docker.py` | Docker's page in the console (design 0002 §3.2): its state and versions, a one-line summary, and every container |
 | `clank/components/workspaces/console/workspaces.py` | The Workspaces page (design 0004 §3, §10; built 2026-10-15): every workspace, its container, and what its agent has. |
+| `clank/components/workspaces/edge.py` | The edge on every workspace's network (design 0004 §3, design 0024 §2; revised 2026-10-26). Its program is |
 | `clank/components/workspaces/folders.py` | Workspaces: folders agents work in, each in a container of its own (design 0004 §1, §3 and §6; design 0002 §2.9). |
 | `clank/components/workspaces/image/bridge.py` | Clank's bridge to the OpenCode servers in this container (design 0005 §2): the Clank service runs it with `docker |
 | `clank/components/workspaces/image/edge.py` | The edge's one program (design 0004 §3): it forwards ports to the host, and nothing else. |
@@ -314,6 +317,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/console/terminal.py` | Handing the console's terminal to a program and taking it back (design 0004 §1): the agent (OpenCode) is started |
 | `clank/console/text.py` | How the console writes times, durations, counts and states: in the user's own time zone, briefly, the same on every |
 | `clank/kernel/__init__.py` | The kernel: the parts every component is built from (design 0002 §2). |
+| `clank/kernel/accepting.py` | A server keeps accepting connections when a client drops one while it is being accepted (Windows). |
 | `clank/kernel/access.py` | Callers and access: who may call the Clank API, and how a local client finds it (design 0002 §2.7). |
 | `clank/kernel/adapters.py` | Adapters: how Clank uses programs it does not own, one module per program (design 0002 §2.10). |
 | `clank/kernel/api.py` | The Clank API: HTTP and JSON under `/api/v1/`, and the one event stream (design 0002 §2.14, decisions 0016, 0017). |
@@ -322,6 +326,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/kernel/console_kinds.py` | The console's settings kinds: its style, and which style it uses (design 0011 §2-§3). |
 | `clank/kernel/core.py` | The kernel assembled: every part of the kernel, wired together, with each component's declarations and parts. |
 | `clank/kernel/events.py` | Events: everything that happens is an event, kept in the state database as the history (design 0002 §2.3). |
+| `clank/kernel/files.py` | Files of CLANK_HOME that another program may be reading while Clank changes them (design 0002 §2.16: the state |
 | `clank/kernel/home.py` | CLANK_HOME: the one folder that holds everything of one user on one machine (design 0001 §7.2, design 0002 §2.16). |
 | `clank/kernel/kinds.py` | The kernel's own declarations: its kinds of record and its event types, collected for `clank.registry`. |
 | `clank/kernel/locks.py` | Locks a process holds on a file for as long as it runs, such as the one that keeps a second service off a |

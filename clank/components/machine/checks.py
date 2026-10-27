@@ -5,7 +5,8 @@ Each check reads facts (`Facts`: CLANK_HOME, the machine profile, a way to run c
 Windows' GPU scheduling setting, the free disk space) and answers passed, warning, failed or skipped, with a detail
 and, when it is not passed, what to do. A warning means Clank can run but something will be missing or slow; failed
 means Clank cannot work as it is. Checks never change anything (design 0001 §4.7: Clank explains and offers, the
-user decides).
+user decides). After the machine's own, the checks other components declare run (`more`, design 0002 §2.1: the phone's
+way in, design 0025 §2); one that fails to run is said as a failed check.
 """
 
 import shutil
@@ -15,7 +16,7 @@ import sys
 from collections.abc import Callable
 from contextlib import closing
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 from clank.components.machine.kinds import MachineProfile
 from clank.kernel.home import Home
@@ -48,6 +49,7 @@ class Facts:
     port: int = 7720
     hags_mode: int | None = None
     free_gb: float | None = None
+    more: tuple[Callable[[Home], list[dict[str, Any]]], ...] = ()  # the checks the components declare
 
 
 def free_gb(home: Home) -> float | None:
@@ -191,4 +193,10 @@ def run_checks(facts: Facts) -> list[CheckResult]:
         except Exception as error:
             status, detail, fix = "failed", f"the check itself failed: {error}", ""
         results.append(CheckResult(id, title, status, detail, fix))
+    for declared in facts.more:
+        try:
+            results += [CheckResult(**found) for found in declared(facts.home)]
+        except Exception as error:
+            where = getattr(declared, "__module__", "a component")
+            results.append(CheckResult(where, f"The checks of {where}", "failed", f"the check itself failed: {error}"))
     return results

@@ -1,10 +1,13 @@
 """Design 0005 §5 (transparency): on the console's Phone page, Enter on a paired device opens everything it and this
 computer exchanged, newest first; the highlighted exchange shows what the device sent and what it was sent back. Design
 0011 §7: the window's list is a panel whose note counts the exchanges and what was sent to the device. Design 0025 §2:
-`p` shows a QR carrying the pair link, with the link and the code under it."""
+`p` shows a QR carrying the pair link, with the link and the code under it, and what to check on the iPhone when the
+page will not load; while remote access is on, the page says how the phone reaches it, checked from this PC, and `r`
+checks again."""
 
 from collections.abc import Iterator
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,9 +15,10 @@ from textual.widgets import Label, ListView
 
 from clank import registry
 from clank.client import Client
-from clank.components.remote import tailnet
+from clank.components.remote import probes, tailnet
 from clank.components.remote.app import create_phone_app
 from clank.components.remote.console.traffic import TrafficScreen
+from clank.components.remote.probes import Public, Reached
 from clank.components.workspaces import service as workspaces_service
 from clank.console.app import ClankConsole
 from clank.console.form import FormScreen
@@ -25,6 +29,7 @@ from clank.kernel.core import Kernel, open_kernel
 from clank.kernel.events import Actor
 from clank.kernel.home import Home
 from tests.console.frames import focus_on, settle
+from tests.fakes import tailscale as fake
 from tests.fakes.platform import FakePlatform
 from tests.support.live import live_service
 
@@ -98,3 +103,38 @@ async def test_p_shows_a_qr_that_carries_the_pair_link_with_the_link_and_the_cod
         assert "https://desk.tail0.ts.net:8445/pair?code=" in shown
         assert "or type the code" in shown
         assert "for phone, until" in shown
+        assert "Page won't load? On the iPhone: Tailscale on, iCloud Private Relay off." in shown
+
+
+async def test_the_page_says_how_the_phone_reaches_it_checked_from_this_pc_and_r_checks_again(
+    kernel: Kernel, served: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    asked: list[str] = []
+    seen = (NOW - timedelta(hours=3)).isoformat().replace("+00:00", "Z")
+
+    def said() -> tuple[dict[str, Any], str]:
+        asked.append("status")
+        return fake.status(fake.phone(LastSeen=seen)), ""
+
+    monkeypatch.setattr(tailnet, "status", said)
+    monkeypatch.setattr(tailnet, "serve_config", lambda: fake.served(funnel=(443,)))
+    monkeypatch.setattr(probes, "reach", lambda url, timeout=5.0: Reached(200, 240.0))
+    monkeypatch.setattr(probes, "public_addresses", lambda name, **options: Public(("203.0.113.5",)))
+    remote = kernel.parts["remote"]
+    remote.zone = UTC
+    remote.switch(True, actor=YOU)
+    app = ClankConsole(served, now=lambda: NOW, zone=UTC, home=kernel.home, page="phone")
+    async with app.run_test(size=(160, 60)) as pilot:
+        checkup = app.query_one("#phone-checkup", Label)
+        await settle(pilot, lambda: "my-iphone" in str(checkup.content), seconds=20)
+        shown = str(checkup.content)
+        assert "How the phone reaches it, checked 07:00:00 (r checks again)" in shown
+        assert "warn  my-iphone" in shown
+        assert "offline on your tailnet (last seen 3 h ago)" in shown
+        assert "open the Tailscale app on the iPhone and switch it on (it says Connected), then scan the QR again" in (
+            shown
+        )
+        assert "turn off iCloud Private Relay (Settings, your name, iCloud, Private Relay)" in shown
+        before = len(asked)
+        await pilot.press("r")
+        await settle(pilot, lambda: len(asked) > before, seconds=20)

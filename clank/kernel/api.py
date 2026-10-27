@@ -196,7 +196,13 @@ def _handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def invalid(request: Request, error: RequestValidationError) -> JSONResponse:
         fields = [".".join(str(part) for part in e["loc"]) for e in error.errors()]
-        return _error(422, "invalid", "the request is not what this route takes", {"fields": fields})
+        said = [  # each field by its name (where it came from left out) and why, as Pydantic says it
+            f"{'.'.join(str(part) for part in e['loc'] if part not in ('query', 'body', 'path')) or 'the body'}: "
+            f"{str(e['msg'])[:1].lower()}{str(e['msg'])[1:]}"
+            for e in error.errors()
+        ]
+        message = "the request is not what this route takes: " + "; ".join(said)
+        return _error(422, "invalid", message, {"fields": fields})
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, error: StarletteHTTPException) -> JSONResponse:

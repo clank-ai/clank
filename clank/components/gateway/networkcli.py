@@ -63,14 +63,16 @@ def hosts(as_json: bool) -> None:
 
 
 def exchange_line(each: dict[str, Any]) -> str:
-    """One exchange on a line: when, workspace, method and target, status, bytes each way, time, why."""
-    when = str(each.get("time") or "")[11:19]
+    """One exchange on a line: when (this computer's time), workspace, method and target, status (words when there is
+    none), bytes each way, time, why."""
+    when = common.local_time(str(each["time"])) if each.get("time") else ""
     target = f"{each.get('host')}{each.get('path') or ''}"
     size = f"{bytes_said(each.get('received') or 0)} in, {bytes_said(each.get('sent') or 0)} out"
     why = f"  {each['why']}" if each.get("why") else ""
+    status = "no status" if each.get("status") is None else str(each["status"])
     return (
-        f"{when}  {each.get('workspace')}  {each.get('method')} {target}  {each.get('status')}  {size}  "
-        f"{each.get('seconds', 0):g} s{why}"
+        f"{when}  {each.get('workspace')}  {each.get('method')} {target}  {status}  {size}  "
+        f"{each.get('seconds') or 0:g} s{why}"
     )
 
 

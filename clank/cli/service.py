@@ -14,7 +14,7 @@ from clank import registry
 from clank.client import Client, ClientError, NotRunning
 from clank.kernel.access import read_connection
 from clank.kernel.home import Home
-from clank.kernel.service import AlreadyRunning, Service, ServiceError, start_detached
+from clank.kernel.service import AlreadyRunning, Service, ServiceError, end_silent, start_detached
 
 
 @click.command()
@@ -49,7 +49,13 @@ def stop() -> None:
     try:
         with Client.connect(home) as client:
             client.post("service/stop")
-    except (NotRunning, ClientError) as error:
+    except NotRunning as error:
+        ended = end_silent(home)  # one that holds the lock without answering (design 0002 §1)
+        if ended is None:
+            raise click.ClickException(str(error)) from error
+        click.echo(f"The Clank service did not answer (process {ended}), so it was ended; `clank serve` starts one")
+        return
+    except ClientError as error:
         raise click.ClickException(str(error)) from error
     deadline = time.monotonic() + 15
     while read_connection(home) is not None and time.monotonic() < deadline:
@@ -79,8 +85,7 @@ def status(as_json: bool) -> None:
         f"Clank service: running ({service['version']}) at {service['url']}, process {service['pid']}, "
         f"up {_duration((datetime.now(UTC) - started).total_seconds())}"
     )
-    clients = ", ".join(service["clients"]) or "none"
-    click.echo(f"  clients following it: {clients}")
+    click.echo(f"  connected now: {clients_said(service['clients'])}")
     click.echo(f"  questions waiting for you: {len(waiting)}")
 
 
@@ -91,3 +96,19 @@ def _duration(seconds: float) -> str:
     if minutes < 60:
         return f"{minutes}m"
     return f"{minutes // 60}h {minutes % 60:02d}m"
+
+
+CLIENTS = {"vscode": ("VS Code window", "VS Code windows"), "console": ("the console", "consoles"),
+           "phone": ("the phone", "phones"), "cli": ("a command", "commands")}  # fmt: skip
+
+
+def clients_said(names: list[str]) -> str:
+    """The clients following the service, in words: how many of each kind ("2 VS Code windows, the console")."""
+    counts: dict[str, int] = {}
+    for name in names:
+        counts[name] = counts.get(name, 0) + 1
+    said = []
+    for name, count in counts.items():
+        one, many = CLIENTS.get(name, (name, name))
+        said.append(f"{count} {many}" if count > 1 else (f"1 {one}" if one.endswith("window") else one))
+    return ", ".join(said) or "nothing"

@@ -7,6 +7,7 @@ runs the checks itself. It exits with 1 when a check failed (a warning is not a 
 import json
 from dataclasses import asdict
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -23,8 +24,9 @@ def doctor(as_json: bool) -> None:
     home = Home.resolve()
     profile = detect(run_command)
     facts = Facts(
-        home=home, profile=profile, run=run_command, port=_port(home), hags_mode=hags_mode(), free_gb=free_gb(home)
-    )
+        home=home, profile=profile, run=run_command, port=_port(home), hags_mode=hags_mode(), free_gb=free_gb(home),
+        more=_declared(),
+    )  # fmt: skip
     results = run_checks(facts)
     if as_json:
         report = {"profile": profile.model_dump(mode="json"), "checks": [asdict(result) for result in results]}
@@ -45,6 +47,13 @@ def doctor(as_json: bool) -> None:
         click.echo(f"{passed} of {len(results)} checks passed" + (f", {warnings} warning(s)" if warnings else ""))
     if any(result.status == "failed" for result in results):
         raise SystemExit(1)
+
+
+def _declared() -> tuple[Any, ...]:
+    """The doctor checks the components declare (design 0002 §2.1): the phone's way in among them."""
+    from clank import registry
+
+    return tuple(component.checks for component in registry.components() if component.checks is not None)
 
 
 def _port(home: Home) -> int:

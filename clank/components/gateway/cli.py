@@ -43,6 +43,8 @@ def _say(found: dict[str, Any]) -> None:
     if found["state"] == "running":
         since = f", since {common.local_time(found['since'])}" if found.get("since") else ""
         click.echo(f"gateway: running at {found['url']} (process {found['pid']}{since}); its log: {found['log']}")
+        if found.get("problem"):  # a restart whose stop failed: the gateway runs on as it was
+            click.echo(f"gateway: {found['problem']}")
     elif found["state"] == "problem":
         click.echo(f"gateway: not running: {found['problem']}")
         raise click.exceptions.Exit(1)

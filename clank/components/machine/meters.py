@@ -8,15 +8,20 @@ in use; the disks' reads and writes and the network's traffic, in bytes a second
 drive's space (read again every `DRIVES_SECONDS`, which is slower); and each NVIDIA GPU's use, memory, temperature,
 power, clocks and fan, from NVIDIA's management library (NVML, which comes with the driver: `nvml.dll`,
 `libnvidia-ml.so.1`), read through ctypes, so no program is started each second and nothing is added to Clank's
-dependencies. Without an NVIDIA driver there are no GPUs; a GPU value its driver does not give is None. A reading costs
-about a millisecond. From 2026-10-15 (the owner: the panel did not say enough) a reading also has the busiest and the
-largest processes (`Processes`, read every few seconds) and the CPU and memory of Clank's containers (`Containers`,
-`docker stats` on a thread of its own every ten seconds, so a reading never waits for Docker).
+dependencies. Without an NVIDIA driver there are no GPUs; a GPU value its driver does not give is None. A GPU whose
+handle its driver dropped (an update, a reset: reading it raises an access violation, which ctypes gives as `OSError`)
+is read again from a fresh start of the library; when that fails too, the GPUs are left out of the readings until the
+service starts again, said once in the log, and the rest of each reading goes on (on the owner's machine, 2026-10-26,
+every reading failed, each second for hours, its traceback logged each time). A reading costs about a millisecond.
+From 2026-10-15 (the owner: the panel did not say enough) a reading also has the busiest and the largest processes
+(`Processes`, read every few seconds) and the CPU and memory of Clank's containers (`Containers`, `docker stats` on a
+thread of its own every ten seconds, so a reading never waits for Docker).
 """
 
 import contextlib
 import ctypes
 import json
+import logging
 import re
 import shutil
 import sys
@@ -29,6 +34,7 @@ import psutil
 
 from clank.kernel.processes import run_answer
 
+log = logging.getLogger(__name__)
 SECONDS = 1.0
 KEPT = 300  # five minutes of readings
 DRIVES_SECONDS = 60.0
@@ -48,34 +54,59 @@ class _Memory(ctypes.Structure):
 
 
 class Nvml:
-    """NVIDIA's management library: each GPU's use, memory, temperature and power; no GPUs when it cannot be loaded."""
+    """NVIDIA's management library: each GPU's use, memory, temperature and power; no GPUs when it cannot be loaded,
+    nor once it failed after a fresh start (the module's docstring says when)."""
 
     def __init__(self, load: Callable[[str], Any] = ctypes.CDLL) -> None:
         self._library: Any = None
         self._handles: list[ctypes.c_void_p] = []
         self._names: list[str] = []
+        self._failed = False  # it failed after a fresh start: no GPU is read until the service starts again
         for name in NVML_NAMES:
             with contextlib.suppress(OSError, AttributeError):
                 library = load(name)
                 if library.nvmlInit_v2() == 0:
                     self._library = library
                     break
-        if self._library is None:
-            return
-        count = ctypes.c_uint()
-        if self._library.nvmlDeviceGetCount_v2(ctypes.byref(count)) != 0:
-            return
-        for index in range(count.value):
-            handle = ctypes.c_void_p()
-            if self._library.nvmlDeviceGetHandleByIndex_v2(index, ctypes.byref(handle)) != 0:
-                continue
-            buffer = ctypes.create_string_buffer(96)
-            self._library.nvmlDeviceGetName(handle, buffer, 96)
-            self._handles.append(handle)
-            self._names.append(buffer.value.decode("utf-8", errors="replace"))
+        if self._library is not None:
+            self._find()
 
     def gpus(self) -> list[dict[str, Any]]:
         """Each GPU now: its name, its use (percent), its memory (bytes), its temperature (°C) and its power (W)."""
+        if self._failed:
+            return []
+        with contextlib.suppress(OSError):
+            return self._read()
+        try:  # its handle dropped: the library started afresh, its GPUs found again
+            if self._library.nvmlInit_v2() != 0:
+                raise OSError("it did not start again")
+            self._find()
+            return self._read()
+        except OSError as error:
+            self._failed = True
+            log.warning(
+                "the GPU's meters stopped: NVIDIA's library failed (%s); they come back when the service starts again",
+                error,
+            )
+            return []
+
+    def _find(self) -> None:
+        """The GPUs' handles and names, as the library gives them now."""
+        handles: list[ctypes.c_void_p] = []
+        names: list[str] = []
+        count = ctypes.c_uint()
+        if self._library.nvmlDeviceGetCount_v2(ctypes.byref(count)) == 0:
+            for index in range(count.value):
+                handle = ctypes.c_void_p()
+                if self._library.nvmlDeviceGetHandleByIndex_v2(index, ctypes.byref(handle)) != 0:
+                    continue
+                buffer = ctypes.create_string_buffer(96)
+                self._library.nvmlDeviceGetName(handle, buffer, 96)
+                handles.append(handle)
+                names.append(buffer.value.decode("utf-8", errors="replace"))
+        self._handles, self._names = handles, names
+
+    def _read(self) -> list[dict[str, Any]]:
         return [self._gpu(handle, name) for handle, name in zip(self._handles, self._names, strict=True)]
 
     def _gpu(self, handle: ctypes.c_void_p, name: str) -> dict[str, Any]:

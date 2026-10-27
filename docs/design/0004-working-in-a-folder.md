@@ -28,13 +28,13 @@ recommendation, built as recommended so the owner can try it, and changed if the
 | --- | --- | --- |
 | 1 | What the owner does | Proposed 2026-10-13 |
 | 2 | The gateway, first slice | Proposed 2026-10-13 |
-| 3 | Workspaces, the image and the container | Proposed 2026-10-13 |
+| 3 | Workspaces, the image and the container | Proposed 2026-10-13; revised 2026-10-26 (the edge kept on every workspace's network, whatever made it again) |
 | 4 | The agent: OpenCode in the container | Proposed 2026-10-13 |
 | 5 | The VS Code window | Built 2026-10-14 (the agent's status bar item waits) |
 | 6 | The desktop stays responsive | Proposed 2026-10-13 |
 | 7 | NInfer's context | Retired 2026-10-13 with NInfer (decision 0034) |
 | 8 | What the tests must prove, and what waits | Proposed 2026-10-13 |
-| 9 | The console: easy to use, dynamic, the machine on the right | Built 2026-10-14 |
+| 9 | The console: easy to use, dynamic, the machine on the right | Built 2026-10-14; revised 2026-10-26 (a GPU whose handle its driver dropped) |
 | 10 | A project's own software and MCP servers | Built 2026-10-14 as proposed; verified on a simulator |
 
 ## 1. What the owner does
@@ -129,6 +129,24 @@ Design 0001 §6, the part the agent needs:
   joined to each workspace's network as `edge` when that workspace opens: it forwards the gateway's port and nothing
   else. From inside a workspace, nothing but the edge answers. (Built 2026-10-13: one network per workspace rather
   than one shared, when the escape tests were written; their list asks that other workspaces not answer.)
+- **The edge stays on every workspace's network** (revised 2026-10-26). Docker keeps a container's place on a network
+  with the container, so an edge made again is on its first network only. When the proxy's port was added (design
+  0024 §2), opening a workspace made the edge again for its second port; it joined that workspace's network alone, and
+  the four that ran lost their way to the model (`getaddrinfo EAI_AGAIN edge`, then OpenCode gave up). Now:
+  - whenever the edge is made, made again or started, it joins the network of every workspace whose container there
+    is, running or stopped, and opening a workspace joins it to the network of every other one it is not on;
+  - the service's check of Docker (every few seconds, and when the service starts) finds a running workspace whose
+    network the edge is not on from the reading it takes anyway (the container listing says each container's
+    networks), so it asks Docker nothing more while there is none; it joins the edge back, starts a stopped edge, makes
+    a missing one (only when the sandbox image is built), and says what it repaired in the service's log and as the
+    event `workspaces.edge_repaired`. It never makes a running edge again for its ports: that cuts every request in
+    flight, so an opening or an agent's start does it;
+  - starting an agent in a workspace puts the edge right first, as an opening does, and says what it did in its notes;
+  - an edge, or a workspace's container, that cannot start because a network it was on is gone (removed and made
+    again, as `docker network prune` does to a stopped workspace's) is made again (a workspace's home is a volume);
+  - `clank workspace list`, the console's Workspaces page and This folder say a workspace cut off from the model
+    plainly, with what Clank does about it;
+  - a folder is never given the name `edge`, whose container would be the edge itself.
 - **Choice: the network.** Recommended for the first slice: the model only (no package downloads from inside; the
   image carries the common tools). Network grants (PyPI, GitHub pull and push) are M7.
 - Escape tests (design 0002 §3.3, M4): no file outside the folder can be read, through symlinks and subprocesses
@@ -263,7 +281,11 @@ of the terminal"; and an indicator that cycles while things load, as OpenCode's 
   whole and per logical processor), the memory and page file, the disks' and the network's rates, each fixed drive's
   space, and each NVIDIA GPU's use, memory, temperature and power from NVIDIA's management library (NVML, which comes
   with the driver), read through ctypes: no program is started each second and no dependency is added. The last five
-  minutes are kept (`GET /machine/meters`) and each reading is sent live (`machine.meters`, never stored).
+  minutes are kept (`GET /machine/meters`) and each reading is sent live (`machine.meters`, never stored). A GPU whose
+  handle its driver dropped (an update, a reset: an access violation, which ctypes raises as `OSError`) is read again
+  from a fresh start of the library, or else left out of the readings until the service starts again, said once in the
+  log, while the rest of each reading goes on (revised 2026-10-26: every reading failed, each second for hours, its
+  traceback logged each time).
 - **The panel on the right** (`clank/console/machine.py`, `MachineColumn`, the machine column since design 0011's R2,
   two panels): "machine" (bars colored by load, the last minute as
   sparklines, each CPU thread as a cell in its load's color, the GPU's clocks and fan, VRAM, each drive, the network,

@@ -153,8 +153,18 @@ def machine_line(machine: dict[str, Any] | None, width: int | None = None) -> Co
     ]
     parts.append(f"{profile['memory_gb']:.0f} GB RAM")
     doctor = machine["doctor"]
-    parts.append(f"doctor: {doctor['passed']} of {doctor['of']} passed" if doctor else "doctor: not run")
+    if doctor:  # none yet: `clank doctor` runs without the service and keeps nothing here; `d` runs it here
+        parts.append(f"doctor: {doctor['passed']} of {doctor['of']} passed")
     return row("machine", " · ".join(parts), "d runs the doctor", width)
+
+
+def slot_words(status: str, reason: str) -> str:
+    """A slot that does not run, in words a newcomer reads: "not loaded" for stopped, its reason when it says more than
+    that ("fast: stopped (unloaded (stopped))" read like a stutter, 2026-10-26)."""
+    reason = reason.removesuffix(" (stopped)")
+    if status != "stopped":
+        return f"{status} ({reason})" if reason else status
+    return f"not loaded ({reason})" if reason and reason != "unloaded" else "not loaded"
 
 
 def models_line(data: ConsoleData, width: int | None = None) -> Content:
@@ -169,8 +179,7 @@ def models_line(data: ConsoleData, width: int | None = None) -> Content:
         if slot["status"] in ("starting", "ready", "stopping") and title:
             parts.append((slot["status"], f"{slot['name']}: {title} · {slot['status']}"))
         else:
-            why = f" ({slot['reason']})" if slot["reason"] else ""
-            parts.append((slot["status"], f"{slot['name']}: {slot['status']}{why}"))
+            parts.append((slot["status"], f"{slot['name']}: {slot_words(slot['status'], slot['reason'] or '')}"))
     return row("models", parts, "8 opens Models", width)
 
 

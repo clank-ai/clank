@@ -2,15 +2,22 @@
 with its cost and how that is known, to `state/cloud-spool.jsonl`, so a restart of the gateway loses none; the service
 takes them every two seconds (`GET /spend?after=<n>`, behind its local token), and each take forgets the entries up to
 the last the service took. Each entry is named by the spool's run and its sequence number, both kept with the spool
-(`state/cloud-spool.json`), so the service, which keeps them by run and sequence, never counts one twice.
+(`state/cloud-spool.json`), so the service, which keeps them by run and sequence, never counts one twice; a number is
+never given twice in a run, though its counter could not be written (the entries' own numbers count too). The files are
+changed through the kernel's `files`, and one another program holds for good is said in the gateway's log, the
+entries kept in memory all the same: a request never fails for it.
 """
 
 import json
-import os
+import logging
 import secrets
 import threading
 from pathlib import Path
 from typing import Any
+
+from clank.kernel import files
+
+log = logging.getLogger(__name__)
 
 ENTRIES = "cloud-spool.jsonl"
 COUNTER = "cloud-spool.json"
@@ -35,9 +42,12 @@ class Spool:
             kept = {**entry, "seq": self._seq}
             self._entries.append(kept)
             if self._folder is not None:
-                self._folder.mkdir(parents=True, exist_ok=True)
-                with (self._folder / ENTRIES).open("a", encoding="utf-8", newline="\n") as file:
-                    file.write(json.dumps(kept, ensure_ascii=False) + "\n")
+                try:
+                    self._folder.mkdir(parents=True, exist_ok=True)
+                    with (self._folder / ENTRIES).open("a", encoding="utf-8", newline="\n") as file:
+                        file.write(json.dumps(kept, ensure_ascii=False) + "\n")
+                except OSError as error:
+                    log.warning("the cloud spool %s could not be written (%s): kept in memory", self._folder, error)
                 self._save_counter()
             return kept
 
@@ -72,17 +82,21 @@ class Spool:
                 continue  # a line cut by a crash as it was written
             if isinstance(entry, dict) and isinstance(entry.get("seq"), int):
                 self._entries.append(entry)
+                self._seq = max(self._seq, int(entry["seq"]))  # a counter that could not be written is behind
 
     def _save_counter(self) -> None:
         assert self._folder is not None
-        partial = self._folder / f".{COUNTER}.part"
-        partial.write_bytes(json.dumps({"run": self.run, "seq": self._seq}).encode("utf-8"))
-        os.replace(partial, self._folder / COUNTER)
+        self._replace(COUNTER, json.dumps({"run": self.run, "seq": self._seq}))
 
     def _rewrite(self) -> None:
         if self._folder is None:
             return
-        partial = self._folder / f".{ENTRIES}.part"
-        text = "".join(json.dumps(entry, ensure_ascii=False) + "\n" for entry in self._entries)
-        partial.write_bytes(text.encode("utf-8"))
-        os.replace(partial, self._folder / ENTRIES)
+        self._replace(ENTRIES, "".join(json.dumps(entry, ensure_ascii=False) + "\n" for entry in self._entries))
+
+    def _replace(self, name: str, text: str) -> None:
+        """One of the spool's files written whole; one another program holds for good is said, and left as it was."""
+        assert self._folder is not None
+        try:
+            files.replace(self._folder / name, text, files.MOMENT)
+        except OSError as error:
+            log.warning("the cloud spool's %s could not be written (%s): kept in memory", name, error)

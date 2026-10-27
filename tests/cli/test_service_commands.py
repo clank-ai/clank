@@ -87,3 +87,25 @@ def test_a_start_in_the_background_that_fails_says_only_what_its_own_service_sai
     message = str(raised.value)
     assert f"port {port} is in use" in message
     assert "LocalProtocolError" not in message
+
+
+def test_status_names_the_clients_connected_in_words() -> None:
+    """The owner's status said "clients following it: vscode, vscode": nothing to someone new (2026-10-26)."""
+    from clank.cli.service import clients_said
+
+    assert clients_said([]) == "nothing"
+    assert clients_said(["vscode", "vscode"]) == "2 VS Code windows"
+    assert clients_said(["vscode", "console", "phone"]) == "1 VS Code window, the console, the phone"
+    assert clients_said(["mystery"]) == "mystery"
+
+
+def test_an_api_time_is_said_in_this_computers_time_with_the_day_when_it_is_not_today() -> None:
+    """`clank remote status` said "last used 2026-10-26T21:54:30.558Z" among local times (2026-10-26)."""
+    from datetime import UTC, datetime, timedelta
+
+    from clank.cli.common import local_moment
+
+    now = datetime.now(UTC)
+    assert local_moment(now.isoformat()) == "today " + now.astimezone().strftime("%H:%M")
+    older = now - timedelta(days=11)
+    assert local_moment(older.isoformat().replace("+00:00", "Z")) == older.astimezone().strftime("%Y-%m-%d %H:%M")

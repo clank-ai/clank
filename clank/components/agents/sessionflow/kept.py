@@ -4,7 +4,8 @@ included, in memory, with no database table.
 `SessionFlows` listens to the watchers' lines (`Sessions.listen`): each line about a session goes to its flow, made the
 first time the session is heard. A flow just made is read from OpenCode's history (`Sessions.page`, a page at a time
 from the newest, up to `PAGES` pages), the steps finished by then marked done before Clank watched; it is read again, to
-fill in what no line said, after its server's instance ended (`disposed`) or its watcher started again (`started`).
+fill in what no line said, after its server's instance ended (`disposed`) or its watcher started again (`started`),
+once that watcher synced (`synced`, which lists the servers that still run).
 After a session's steps changed, the gateway is asked for its requests (its activity, with the requests that ended),
 which the flow pairs with its steps, and again each round while one of them is held (design 0012 §9.4: no line comes
 while the gateway holds a step's request); and the plan a session carries out is read from the workspace's folder when
@@ -16,11 +17,14 @@ None of this waits in the watcher's thread: a line only changes a flow and marks
 and reads the plans. A round reads at most `READS` flows, the others waiting for the next, and it stops between two
 of them when the service stops (`stop`), which does not wait for a `docker exec` under way. A reading that failed (the
 bridge's refusal, a container gone) is tried again, after `RETRY_SECONDS`, then twice as long each time up to
-`RETRY_MOST`; a flow's first reading stays its first (its finished steps then done before Clank watched) until it
-succeeds, whatever else made the flow due meanwhile. Once its server is gone, a flow waits until its watcher starts
-again or its session is heard again. The newest `KEPT` flows of each workspace are kept, those working before those
-idle; a flow dropped is made again, and read again, if its session is heard again. The flows whose version moved
-are given to the Watch for rules (`changed`, design 0012 §8).
+`RETRY_MOST`, and said in the log once until it succeeds; a flow's first reading stays its first (its finished steps
+then done before Clank watched) until it succeeds, whatever else made the flow due meanwhile. A flow whose server ended
+(the watcher's `gone`, a `synced` that no longer lists its port, a reading the bridge answered `ServerGone`) is set
+aside, neither read nor tried again, until a server answers on its port again (any line naming the port, the watch's
+`server` first) or its session is heard again, and the log says once for that port that the window closed (on the
+owner's machine, 2026-10-26, such histories were asked for over a thousand times in a day). The newest `KEPT` flows
+of each workspace are kept, those working before those idle; a flow dropped is made again, and read again, if its
+session is heard again. The flows whose version moved are given to the Watch for rules (`changed`, design 0012 §8).
 """
 
 import logging
@@ -37,6 +41,7 @@ import anyio.to_thread
 from clank.components.agents.plans import is_plan, plan_path
 from clank.components.agents.sessionflow.branches import same_file
 from clank.components.agents.sessionflow.flow import Flow
+from clank.components.agents.sessions import ServerGone
 
 if TYPE_CHECKING:
     from clank.kernel.core import Kernel
@@ -83,6 +88,10 @@ class SessionFlows:
         self._asking: set[Key] = set()  # sessions whose requests are due to be asked of the gateway
         self._planning: set[Key] = set()  # flows whose plan is due to be read
         self._told: dict[Key, dict[str, Any]] = {}  # what each subagent's flow last told its parent's
+        self._syncing: set[Key] = set()  # flows to read again once their watcher, started again, synced
+        self._gone: dict[str, set[int]] = {}  # each workspace's ports whose server ended, none heard there since
+        self._aside: dict[Key, int] = {}  # flows due to be read whose server ended: the port they wait for
+        self._said: set[tuple[str, int]] = set()  # the ports said closed in the log, until a server answers there
         self._stopped = threading.Event()
         sessions.listen(self.heard)
 
@@ -91,16 +100,19 @@ class SessionFlows:
         kind = str(line.get("type") or "")
         with self._lock:
             kept = self._flows.setdefault(workspace, {})
-            if kind == "started":
-                self._due((workspace, session) for session in kept)
+            port = line.get("port")
+            if kind != "gone" and isinstance(port, int):
+                self._back(workspace, port)  # a server speaks on that port: it runs
+            if kind == "started":  # read again once the watcher synced: it says then which servers still run
+                self._syncing.update((workspace, session) for session in kept)
+                for session in kept:
+                    self._reading.pop((workspace, session), None)
+            elif kind == "synced":
+                self._synced(workspace, {int(each) for each in line.get("ports") or []})
             elif kind == "disposed":
                 self._due((workspace, session) for session, flow in kept.items() if flow.port == line.get("port"))
-            elif kind == "gone":
-                for session, flow in kept.items():
-                    if flow.port == line.get("port"):
-                        flow.heard({"type": "status", "session": session, "status": "idle"})
-                        self._reading.pop((workspace, session), None)  # nothing to read it from now
-                        self._failed.pop((workspace, session), None)
+            elif kind == "gone" and isinstance(port, int):
+                self._ended(workspace, port)
             elif kind == "edited":
                 self._planning.update((workspace, session) for session, flow in kept.items()
                                       if flow.plan and same_file(str(line.get("file") or ""), flow.plan))  # fmt: skip
@@ -223,7 +235,7 @@ class SessionFlows:
         self._tell_parents()
 
     def _due(self, keys: Iterable[Key], *, again: bool = True) -> None:
-        """Flows due to be read from the history; told `again` (a watcher started, an instance ended), at once."""
+        """Flows due to be read from the history; told `again` (a watcher synced, an instance ended), at once."""
         for key in keys:
             self._reading[key] = None
             if again:
@@ -234,8 +246,67 @@ class SessionFlows:
         self._reading.pop(key, None)
         self._failed.pop(key, None)
         self._told.pop(key, None)
-        for each in (self._first, self._asking, self._planning):
+        self._aside.pop(key, None)
+        for each in (self._first, self._asking, self._planning, self._syncing):
             each.discard(key)
+
+    def _port(self, workspace: str, session: str, flow: Flow) -> int | None:
+        """The server a flow is read from: the one the watchers saw run its session, else the one it was last heard
+        on."""
+        return self.sessions.runs(workspace, session) or flow.port
+
+    def _synced(self, workspace: str, listed: set[int]) -> None:
+        """A watcher started again read every server that runs: the flows it held back are read again, those whose
+        server is not among them set aside, and that server's port is known to be gone."""
+        for each in listed:
+            self._back(workspace, each)
+        kept = self._flows.get(workspace, {})
+        ports = {session: self._port(workspace, session, flow) for session, flow in kept.items()}
+        self._gone.setdefault(workspace, set()).update(
+            port for port in ports.values() if port is not None and port not in listed
+        )
+        held = [key for key in self._syncing if key[0] == workspace]
+        self._syncing.difference_update(held)
+        for key in held:
+            if key[1] not in kept:
+                continue
+            port = ports[key[1]]
+            if port is not None and port not in listed:
+                self._set_aside(key, port)
+            else:
+                self._due([key])
+
+    def _ended(self, workspace: str, port: int) -> None:
+        """A server stopped (`gone`): its sessions are idle, and a flow due to be read from it is set aside."""
+        self._gone.setdefault(workspace, set()).add(port)
+        for session, flow in self._flows.get(workspace, {}).items():
+            if flow.port != port:
+                continue
+            flow.heard({"type": "status", "session": session, "status": "idle"})
+            key = (workspace, session)
+            if key in self._reading or key in self._syncing:  # nothing to read it from now
+                self._syncing.discard(key)
+                self._set_aside(key, port)
+
+    def _set_aside(self, key: Key, port: int) -> None:
+        """A flow due to be read whose server ended: it waits for that port to answer again (`_back`), or for its
+        session to be heard again; the log says once for the port that the window closed."""
+        self._aside[key] = port
+        self._reading.pop(key, None)
+        self._failed.pop(key, None)
+        self._gone.setdefault(key[0], set()).add(port)
+        if (key[0], port) not in self._said:
+            self._said.add((key[0], port))
+            log.warning("the OpenCode window of %s on port %d closed: its sessions are kept as they were", key[0], port)
+
+    def _back(self, workspace: str, port: int) -> None:
+        """A server answers on the port (a line names it): the flows set aside for it are due to be read again."""
+        self._gone.get(workspace, set()).discard(port)
+        self._said.discard((workspace, port))
+        waiting = [key for key, waited in self._aside.items() if key[0] == workspace and waited == port]
+        for key in waiting:
+            del self._aside[key]
+        self._due(waiting)
 
     def _heard(self, workspace: str, session: str, kind: str, line: dict[str, Any]) -> None:
         kept = self._flows[workspace]
@@ -245,6 +316,9 @@ class SessionFlows:
             flow = Flow(session, workspace)
             self._first.add(key)
             self._reading[key] = None
+        elif key in self._aside:  # its session speaks again: read from where it runs now
+            del self._aside[key]
+            self._due([key])
         elif key in self._first and key not in self._reading and key not in self._under_way:
             self._reading[key] = None  # its first reading waited for its server, which speaks again
         kept[session] = flow  # the newest heard last
@@ -261,13 +335,17 @@ class SessionFlows:
 
     def _read_history(self, workspace: str, session: str) -> None:
         """Read a flow from the session's history, a page at a time from the newest, on the server that runs it; its
-        first reading marks the steps finished by then done before Clank watched. One that failed is tried again."""
+        first reading marks the steps finished by then done before Clank watched. One that failed is tried again, said
+        once; one whose server ended is set aside instead."""
         key = (workspace, session)
         with self._lock:
             flow = self._flows.get(workspace, {}).get(session)
             if flow is None:
                 return
-            port = self.sessions.runs(workspace, session) or flow.port
+            port = self._port(workspace, session, flow)
+            if port is not None and port in self._gone.get(workspace, set()):
+                self._set_aside(key, port)
+                return
             since, joined = flow.mark(), key in self._first
             self._under_way.add(key)
         pages: list[dict[str, Any]] = []
@@ -284,13 +362,19 @@ class SessionFlows:
                 if not before:
                     break
         except Exception as error:  # the bridge's refusal, a container gone: tried again after a wait
-            log.warning("the history of %s in %s could not be read: %s", session, workspace, error)
+            tries = 0
             with self._lock:
                 self._under_way.discard(key)
                 if self._flows.get(workspace, {}).get(session) is flow:
-                    tries = self._failed.get(key, (0, 0.0))[0] + 1
-                    self._failed[key] = (tries, monotonic() + min(RETRY_SECONDS * 2 ** (tries - 1), RETRY_MOST))
-                    self._reading[key] = None
+                    if isinstance(error, ServerGone) and port is not None:
+                        self._set_aside(key, port)
+                    else:
+                        tries = self._failed.get(key, (0, 0.0))[0] + 1
+                        self._failed[key] = (tries, monotonic() + min(RETRY_SECONDS * 2 ** (tries - 1), RETRY_MOST))
+                        self._reading[key] = None
+            if tries == 1:
+                log.warning("the history of %s in %s could not be read: %s (tried again, a little later each time)",
+                            session, workspace, error)  # fmt: skip
             return
         with self._lock:
             self._under_way.discard(key)

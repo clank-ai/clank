@@ -4,7 +4,8 @@ whose id is its version: the status, a message, a part's text as it is written (
 works, a `readout` event each second; a change the mirror hears is on the stream within the gather window (design 0023
 §6); `after` (or `Last-Event-ID`) resumes from a version, and a client behind what the log keeps gets a snapshot again;
 when the folder's newest session changes and none was named, the stream says which and ends, so the client opens the
-new one. A folder with no session yet gets a snapshot saying so."""
+new one. A folder with no session yet gets a snapshot saying so. A conversation the bridge cannot read ends the stream
+with a `problem` event saying why, the response whole, so the client opens it again later."""
 
 import statistics
 import threading
@@ -19,6 +20,7 @@ from clank import registry
 from clank.client import ServerEvent
 from clank.components.agents import mirror as mirror_module
 from clank.components.agents.service import Agents
+from clank.components.agents.sessions import SessionError
 from clank.components.workspaces import service as workspaces_service
 from clank.kernel.clock import FakeClock
 from clank.kernel.core import Kernel, open_kernel
@@ -220,3 +222,27 @@ def test_a_folder_with_no_session_yet_gets_a_snapshot_saying_so(
             assert until(nowhere, "snapshot")[-1].data["workspace"] is None
         finally:
             nowhere.close()
+
+
+def test_a_conversation_the_bridge_cannot_read_ends_the_stream_saying_why_and_the_response_whole(
+    kernel: Kernel, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The owner's log, 2026-10-26: the bridge refused the session's history (OpenCode answered 400), the stream's
+    response broke in the middle and the service logged a traceback for each of the client's tries."""
+    agents = ready(kernel, tmp_path / "paper", monkeypatch)
+
+    def refused(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        raise SessionError('OpenCode answered 400: {"_tag":"BadRequest"}')
+
+    monkeypatch.setattr(agents.sessions, "page", refused)
+    with live_service(kernel) as client:
+        events = client.stream("agents/conversation/stream", folder=str(tmp_path / "paper"), quiet=15)
+        try:
+            found = until(events, "problem")
+            assert [event.name for event in found] == ["connected", "problem"]
+            assert found[-1].data == {
+                "reason": 'the conversation could not be read: OpenCode answered 400: {"_tag":"BadRequest"}'
+            }
+            assert next(events, None) is None, "the stream ends whole: the client opens it again later"
+        finally:
+            events.close()

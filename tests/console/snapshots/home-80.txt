@@ -15,7 +15,7 @@ F2 Launch optio…   │ │ docker     ● Fake Docker · running · 2 containe
 F3 MCP servers     │ │              running, none of them Clank's           │
 F6 Workspaces      │ │              s stops it                              │
 F7 Requests        │ │ workspace  ○ none running   F6 lists them            │
-F8 CPU models      │ │ models     ○ main: stopped (never started)           │
+F8 CPU models      │ │ models     ○ main: not loaded (never started)        │
 F9 Phone         ● │ │              8 opens Models                          │
 F10 Monitor        │ │ gpu        RTX 5080 · 3% busy · 2.0 GB of 15.9 GB in │
 F12 Add a model    │ │            use · 34°C                                │

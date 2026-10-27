@@ -36,7 +36,7 @@ each with a recommendation.
 | 3 | Which session the page follows, and which the Guide acts on | Approved 2026-10-18; revised 2026-10-19 with step 2 (what the gateway names; a session's subagents' requests only when asked) |
 | 4 | The context window | Approved 2026-10-18; revised 2026-10-18 at the owner's request (whatever model is loaded) and comment (§4.7: where the figures come from); revised 2026-10-20 after a session failed at the context's limit (§4.1: the margin OpenCode is not told of, and a full context answered as an overflow); revised 2026-10-20 with step 12 (§4.2: how the estimate was built) |
 | 5 | Now | Approved 2026-10-18; revised 2026-10-19 with step 2 (§5.2: the tokens counted by kind) |
-| 6 | The session's branching flow | Approved 2026-10-18; revised 2026-10-19 with step 6 (§6.3: how it is laid out, a band holds what it folds; §6.4: a fold opens for the newest node while it works) |
+| 6 | The session's branching flow | Approved 2026-10-18; revised 2026-10-19 with step 6 (§6.3: how it is laid out, a band holds what it folds; §6.4: a fold opens for the newest node while it works); revised 2026-10-26 (§6.1: a flow whose server ended is not read again until a server answers on its port; a watcher started again reads its flows once it synced) |
 | 7 | Tool calls and the live text | Approved 2026-10-18; revised 2026-10-19 with step 2 (the live text's route) |
 | 8 | Watch for: rules the owner sets | Approved 2026-10-18 |
 | 9 | The Guide | Approved 2026-10-18; revised 2026-10-20 with step 11 (§9.4: how the hold was built); revised 2026-10-20 with step 10 (§9.5 and §9.7: where undo cuts, its preview from the flow, the revert confirmed, what Drop refuses and estimates) |
@@ -447,6 +447,9 @@ without numbers so that OpenCode does not retry it.
   OpenCode's server ends (its `server.instance.disposed` event) and starts again, a flow is rebuilt from OpenCode's
   history, a page of messages at a time (how they page is *to measure*). No database table at first. A flow is never
   rebuilt from the gateway's records, which hold each request's whole body again.
+- **A flow whose server ended is left as it was** (revised after approval, 2026-10-26): it is neither read nor tried
+  again until a server answers on its port again or its session is heard again, and the log says once that the window
+  closed; a watcher started again has its flows read once it synced, which says which servers still run.
 
 ### 6.2 What branches
 
@@ -1046,3 +1049,11 @@ Numbered in this document's order, 0047 to 0056: after design 0011's 0041 to 004
   of any call made again with the same arguments.
 - **2026-10-22, the views revised after approval, at the owner's requests** (decisions 0129-0130): Esc goes to the
   menu, Backspace back from a view to the one before; the page opens on the Flow view the first time.
+- **2026-10-26, §6.1 revised after approval, after the owner's lag** (Claude's call): the service's log held over a
+  thousand lines in a day saying that the history of two sessions whose OpenCode had ended could not be read
+  ("Connection refused"), each reading tried again a little later, and all of them again each time the workspace's
+  watcher started again (which a bridge from before the request channel made happen every minute or so, design 0023
+  §4). A flow whose server ended (the watcher's `gone`, a `synced` that no longer lists its port, the bridge's answer
+  that nothing listens there) is now set aside until a server answers on its port again (the watch's `server` line,
+  any line naming the port) or its session is heard again, and the log says once that the window closed; a watcher
+  started again has its flows read once it synced, not before; and a reading that keeps failing is said once.

@@ -262,3 +262,15 @@ def test_an_answer_within_a_tenth_of_the_output_limit_is_marked_naming_the_limit
     for word in ("14,800", "the output limit", "16,384", "within a tenth"):
         assert word in near.why, f"{near.why!r} lacks {word!r}"
     assert found_by("budget_near", answering(14_700), LIMITS) == [], "below nine tenths of 16,384: quiet"
+
+
+def test_a_call_waiting_for_you_is_said_by_what_it_touches_never_by_its_raw_input() -> None:
+    """A mark said "(edit): {"filePath": "/workspace/stats.py", "newString": ...}" in the events (2026-10-26)."""
+    from clank.components.agents.watchfor.rules import call_words
+
+    assert call_words({"input": '{"filePath": "/workspace/stats.py", "newString": "x"}'}) == "stats.py"
+    assert call_words({"input": '{"filePath": "/workspace/src/a.py", "newString": "cut off before the e'}) == "src/a.py"
+    assert call_words({"input": {"command": "rm -r runs"}}) == "rm -r runs"
+    assert call_words({"input": '{"questions": [{"question": "Which run?", "options": []}]}'}) == "Which run?"
+    assert call_words({"title": "Edit stats.py", "input": "{}"}) == "Edit stats.py"
+    assert call_words({"input": "{}"}) == ""

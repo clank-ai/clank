@@ -15,7 +15,7 @@ copy of the request."""
 
 import json
 import re
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -230,7 +230,7 @@ async def test_n_shows_the_agents_internet_exchanges_through_the_proxy_and_the_h
     """Design 0024 §4: the Network view beside the model's requests."""
     folder = kernel.home.logs / "network"
     folder.mkdir(parents=True, exist_ok=True)
-    day = datetime.now(UTC).date().isoformat()
+    day = date.today().isoformat()  # the proxy names its files by this computer's date (UTC's failed each evening)
     lines = [
         {"time": f"{day}T08:00:05.000+00:00", "workspace": "paper", "host": "export.arxiv.org", "port": 443,
          "method": "CONNECT", "status": 200, "sent": 500, "received": 30000, "seconds": 1.1, "why": "asked: once"},

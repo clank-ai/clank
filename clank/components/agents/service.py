@@ -41,7 +41,9 @@ answers: `prepare` tells whoever asked (`on_prepared`) the workspace and port of
 
 Each time an agent starts in a workspace (`prepare`, `configure`), Clank's files for it are written into its home in
 the container first (design 0018 §7.5: Clank's MCP server and its instructions, as this Clank has them), so its tools
-are always this Clank's whatever image its container was made from.
+are always this Clank's whatever image its container was made from; and its way to the model is put right first (design
+0004 §3: the edge running, forwarding the gateway's and the proxy's ports, on the workspace's network), what was put
+right said in `prepare`'s notes.
 
 Each workspace's OpenCode, and Clank's MCP server in its container, send the workspace's own key to the gateway (design
 0016 §9, from the gateway's service); a workspace allowed the cloud gets no MCP server marked local only, and Clank's
@@ -300,7 +302,7 @@ class Agents:
     def readout(self, folder: str, session: str = "") -> dict[str, Any]:
         """The model's readout for a folder (design 0021 §3; `readout.py`): its workspace's session (the one named,
         else the newest kept), that session's `now` and context totals, and the machine: the main slot, the GPU, the
-        drafts."""
+        drafts; and the workspace's jobs running, none when the workspace was removed while it was read."""
         try:
             workspace: str | None = self.annotations.workspace_of(folder)[0]
         except AnnotationError:
@@ -322,8 +324,18 @@ class Agents:
             "slot": slot_view(slot, runtime.title(slot.preset), options),
             "gpu": gpu_view(machine.meters()),
             "drafts": runtime.drafts("main"),
-            "jobs": [job for job in self.jobs.list(workspace) if job["state"] != "ended"] if workspace else [],
+            "jobs": self._running_jobs(workspace),
         }
+
+    def _running_jobs(self, workspace: str | None) -> list[dict[str, Any]]:
+        """A workspace's jobs that have not ended; none for no workspace, nor for one removed meanwhile (its jobs'
+        folder is its own: `JobsError`)."""
+        if workspace is None:
+            return []
+        try:
+            return [job for job in self.jobs.list(workspace) if job["state"] != "ended"]
+        except JobsError:
+            return []
 
     def conversation_stream(
         self,
@@ -477,15 +489,18 @@ class Agents:
     def prepare(self, workspace: str, program: str = "opencode") -> dict[str, Any]:
         """Write the program's configuration into the workspace's container; the command that starts it there. With one
         window at a time (the workspace's record, design 0004 §5), the OpenCode windows open there are closed first.
-        The container is asked of Docker once and every file goes in one `docker exec` (a VS Code window waits for
-        this answer before OpenCode starts: 24 Docker commands took 5 s of it, 2026-10-26)."""
+        The edge, the agent's way to the model, is put right first (design 0004 §3), and what was put right is said in
+        the notes. The container is asked of Docker once and every file goes in one `docker exec` (a VS Code window
+        waits for this answer before OpenCode starts: nine writes of one `docker exec` each took most of it,
+        2026-10-26)."""
         workspaces: Workspaces = self.kernel.parts["workspaces"]
         adapter = self._adapter(program)
         container = workspaces.container_of(workspace)
         model, notes = self._model(workspace)
+        notes += workspaces.reach(workspace)
         servers = self._given(workspace, model.key)
         configuration = adapter.configuration(model, servers, self._read_only(workspace))
-        workspaces.put_files(workspace, [*self._agent_files(), configuration], container=container)
+        workspaces.put_files(workspace, [*self._agent_files(), *adapter.files(), configuration], container=container)
         with self._notices_lock:  # its configuration has the model's limits now: nothing more to tell its window
             self._notices.pop(workspace, None)
         one_window = bool(self.kernel.settings.get("workspace", workspace).record.model_dump().get("one_window", True))
@@ -520,19 +535,21 @@ class Agents:
 
     def configure(self, workspace: str, program: str = "opencode") -> dict[str, str]:
         """Write the program's configuration (the model, the MCP servers it gets) as `prepare` does, for one started
-        without a terminal (design 0005 §2); the environment it runs with."""
+        without a terminal (design 0005 §2), the edge put right first as there; the environment it runs with."""
         workspaces: Workspaces = self.kernel.parts["workspaces"]
         adapter = self._adapter(program)
         model, _ = self._model(workspace)
+        container = workspaces.container_of(workspace)  # refused first when its container does not run
+        workspaces.reach(workspace)
         configuration = adapter.configuration(model, self._given(workspace, model.key), self._read_only(workspace))
-        workspaces.put_files(workspace, [*self._agent_files(), configuration])
+        workspaces.put_files(workspace, [*self._agent_files(), *adapter.files(), configuration], container=container)
         return self.agent_env(workspace, program)
 
     def _agent_files(self) -> list[tuple[str, str]]:
         """Clank's MCP server and instructions, as this Clank has them, for the agent's home in the container."""
         from clank.components.workspaces.service import agent_files
 
-        return agent_files()
+        return list(agent_files())
 
     def _port(self, workspace: str, notes: list[str]) -> int | None:
         """A port of its own for the program's API, so its session can be reached (design 0005 §2); None, and why in
@@ -546,14 +563,14 @@ class Agents:
     def servers(self, workspace: str) -> list[dict[str, Any]]:
         """The MCP servers of a workspace's agent: yours, then its folder's, each with whether the agent gets it and,
         when not, why (design 0004 §10)."""
-        from clank.components.workspaces.service import PHONE_PROGRAM
+        from clank.components.workspaces.service import CURRENT_PHONE
 
         loaded = self._workspace(workspace)
         record = loaded.record.model_dump()
         tools: Tools = self.kernel.parts["tools"]
         held = CLANK_SERVER in record["mcp_off"]
         rows: list[dict[str, Any]] = [{
-            "name": CLANK_SERVER, "scope": "clank", "transport": "stdio", "shown": f"python3 {PHONE_PROGRAM}",
+            "name": CLANK_SERVER, "scope": "clank", "transport": "stdio", "shown": f"python3 {CURRENT_PHONE}",
             "given": not held, "why": "held back from this workspace (m gives it)" if held else "",
         }]  # fmt: skip
         mine = {view["name"] for view in tools.servers() if view["scope"] == "user"} | {CLANK_SERVER}

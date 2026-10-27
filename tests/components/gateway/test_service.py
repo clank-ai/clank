@@ -9,10 +9,13 @@ subagents too when `subagents` asks for them. Design 0012 §9.4 (§11 step 11): 
 in the gateway with its local token, and `GET /gateway/holds` says what is paused and held; a gateway from before
 pausing, still running, is never taken for one that paused. A stop forgets the gateway's process though its state file
 is held open a moment by another reader (Windows refuses to delete it then: `clank gateway restart` answered 500 on
-2026-10-23)."""
+2026-10-23); one held open for good is left naming a process that ended, which says stopped. A restart is never half
+done: a stop that fails leaves the gateway running and says why, and a state file that cannot be written keeps the
+gateway's process in memory, so it is never started twice, until the file can be written."""
 
 import json
-from collections.abc import Iterator
+import os
+from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -22,12 +25,14 @@ import httpx2
 import pytest
 from fastapi.testclient import TestClient
 
+from clank.components.gateway import service as gateway_service
 from clank.components.gateway.kinds import GatewaySettings
 from clank.components.gateway.routing import Routes
 from clank.components.gateway.service import Gateway, HoldError
 from clank.components.runtime.gpu import GpuMemory
-from clank.components.runtime.hosts.host import ProcessIdentity
+from clank.components.runtime.hosts.host import HostError, ProcessIdentity
 from clank.components.runtime.hosts.local import LocalHost
+from clank.kernel import files
 from clank.kernel.access import local_token
 from clank.kernel.api import create_app
 from clank.kernel.events import Actor
@@ -239,3 +244,118 @@ def test_a_stop_forgets_the_gateway_though_its_file_is_held_open_a_moment(
     monkeypatch.setattr(Path, "unlink", unlink)
     assert gateway.stop() == "stopped"
     assert not kept.exists()
+
+
+class FakeHost:
+    """This machine as the gateway's part sees it: each process it starts runs until it is stopped; a stop refused
+    when `refused` says why."""
+
+    def __init__(self) -> None:
+        self.running: set[int] = set()
+        self.started = 0
+        self.refused = ""
+        self.lingering = 0  # how many more times the port reads held after a stop (a process ending slowly)
+
+    def spawn(self, argv: Sequence[str], env: Mapping[str, str], cwd: str, log: Path) -> ProcessIdentity:
+        self.started += 1
+        pid = 4000 + self.started
+        self.running.add(pid)
+        return ProcessIdentity("local", pid, f"{pid}.0", "clank gateway")
+
+    def alive(self, identity: ProcessIdentity) -> bool:
+        return identity.pid in self.running
+
+    def stop(self, identity: ProcessIdentity, seconds: float) -> str:
+        if self.refused:
+            raise HostError(self.refused)
+        self.running.discard(identity.pid)
+        return "killed"
+
+    def listener(self, port: int) -> str | None:
+        if self.lingering:
+            self.lingering -= 1
+            return "python.exe (process 24244)"
+        return None
+
+
+@pytest.fixture
+def host(monkeypatch: pytest.MonkeyPatch) -> FakeHost:
+    """The fake machine every gateway part of the test starts its process on; the waits between tries short."""
+    found = FakeHost()
+    monkeypatch.setattr(Gateway, "_host", lambda self: found)
+    monkeypatch.setattr(files, "WAITS", (0.01, 0.01))
+    monkeypatch.setattr(gateway_service, "FREE_POLL_SECONDS", 0.01)
+    return found
+
+
+def test_a_restart_whose_stop_fails_leaves_the_gateway_running_and_says_why(
+    rig: Rig, http: TestClient, host: FakeHost
+) -> None:
+    gateway: Gateway = rig.kernel.parts["gateway"]
+    first = gateway.ensure()
+    host.refused = "the process could not be ended: access denied"
+    answer = http.post("/api/v1/gateway/restart", headers=AUTH)
+    assert answer.status_code == 200, answer.text
+    found = answer.json()
+    assert (found["state"], found["pid"]) == ("running", first["pid"])
+    assert "access denied" in found["problem"]
+    host.refused = ""
+    again = gateway.restart()
+    assert (again["state"], again["problem"], host.running) == ("running", "", {again["pid"]})
+    assert again["pid"] != first["pid"]
+
+
+def test_a_restart_waits_for_the_stopped_gateways_port_to_be_free_before_it_starts_the_next(
+    rig: Rig, host: FakeHost
+) -> None:
+    """On Windows the stopped gateway's process lets go of its port a moment later: the owner's restart of 2026-10-26
+    found it held and failed, and model requests failed until the service started the gateway again by itself."""
+    gateway: Gateway = rig.kernel.parts["gateway"]
+    first = gateway.ensure()
+    host.lingering = 3
+    again = gateway.restart()
+    assert (again["state"], again["problem"]) == ("running", "")
+    assert again["pid"] != first["pid"]
+    assert host.lingering == 0, "it waited until the port was free"
+
+
+def test_a_gateway_whose_state_file_cannot_be_written_is_kept_in_memory_and_never_started_twice(
+    rig: Rig, host: FakeHost, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    gateway: Gateway = rig.kernel.parts["gateway"]
+    kept, real, held = rig.kernel.home.state / "gateway.json", os.replace, [True]
+
+    def replace(source: str | Path, target: str | Path) -> None:
+        if held[0] and Path(target) == kept:
+            raise PermissionError(5, "Access is denied")
+        real(source, target)
+
+    monkeypatch.setattr(os, "replace", replace)
+    first = gateway.ensure()
+    assert (first["state"], kept.exists()) == ("running", False)
+    assert (gateway.ensure()["pid"], host.started) == (first["pid"], 1), "adopted from memory, not started again"
+    held[0] = False
+    gateway.ensure()  # the file is written at the next look
+    assert json.loads(kept.read_text(encoding="utf-8"))["pid"] == first["pid"]
+    assert (Gateway(rig.kernel).ensure()["pid"], host.started) == (first["pid"], 1), "a restarted service adopts it"
+
+
+def test_a_stop_whose_state_file_stays_held_says_stopped_and_the_next_start_takes_its_place(
+    rig: Rig, host: FakeHost, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    gateway: Gateway = rig.kernel.parts["gateway"]
+    kept, real = rig.kernel.home.state / "gateway.json", Path.unlink
+    first = gateway.ensure()
+
+    def unlink(self: Path, missing_ok: bool = False) -> None:
+        if self == kept:
+            raise PermissionError(32, "The process cannot access the file because it is being used by another process")
+        real(self, missing_ok=missing_ok)
+
+    monkeypatch.setattr(Path, "unlink", unlink)
+    assert gateway.stop() == "killed"
+    assert json.loads(kept.read_text(encoding="utf-8"))["pid"] == first["pid"], "left, naming the process that ended"
+    assert gateway.status()["state"] == "stopped"
+    second = gateway.ensure()
+    assert (second["state"], host.running) == ("running", {second["pid"]})
+    assert json.loads(kept.read_text(encoding="utf-8"))["pid"] == second["pid"]

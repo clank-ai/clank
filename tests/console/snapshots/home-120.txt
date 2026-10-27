@@ -10,7 +10,7 @@ F4 This folder         ✗ 4   │ ┌─ Happening now ────────
 8 Models               ●     │ │ docker     ● Fake Docker · running · 2 containers running, none of them Clank's      │
 9 Presets                    │ │              s stops it                                                              │
 0 Providers and models       │ │ workspace  ○ none running   F6 lists them                                            │
-F1 Help                      │ │ models     ○ main: stopped (never started)   8 opens Models                          │
+F1 Help                      │ │ models     ○ main: not loaded (never started)   8 opens Models                       │
 F2 Launch options            │ │ gpu        RTX 5080 · 3% busy · 2.0 GB of 15.9 GB in use · 34°C                      │
 F3 MCP servers               │ │ gateway    ○ stopped   F4, then g, starts it                                         │
 F6 Workspaces                │ │ machine    not detected yet   d runs the doctor, which detects it                    │

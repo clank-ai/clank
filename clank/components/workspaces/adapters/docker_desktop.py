@@ -15,9 +15,12 @@ handler for Windows programs (PROTOTYPE.md), so after a start, if WSL runs and t
 registers it again and says so. Its container commands (design 0004 §3) are Docker's own: `docker info` for the
 CPUs and memory its engine has, `docker build`, `docker network`, `docker run` (then `docker network connect` for a
 container's other networks), `docker run --rm` followed line by line for a workspace's setup, `docker container
-inspect`, `start`, `stop`, `rm`, `volume rm`, and `docker exec` for a terminal. The files an agent's start writes go in
-one `docker exec` of a few lines of Python reading them from its input (`PUT_FILES`; each exec is a fifth of a second
-on Windows, and nine of them made most of the agent's wait in VS Code, 2026-10-26), one by one in a container without
+inspect`, `start`, `stop`, `rm`, `volume rm`, and `docker exec` for a terminal. The listing and the inspection both say
+the networks a container is on (`docker ps` joins their names with commas, which a network's name never holds), so the
+edge's place on each workspace's network is read with what is read anyway; a start Docker refuses because a network the
+container was on is gone ("network ... not found") is a `NetworkGone`. The files an agent's start writes go in one
+`docker exec` of a few lines of Python reading them from its input (`PUT_FILES`; each exec is a fifth of a second on
+Windows, and nine of them made most of the agent's wait in VS Code, 2026-10-26), one by one in a container without
 Python.
 """
 
@@ -35,6 +38,7 @@ from clank.components.workspaces.adapters.platform import (
     Container,
     ContainerPlatform,
     Follow,
+    NetworkGone,
     PlatformError,
     PlatformStatus,
     follow_command,
@@ -47,7 +51,8 @@ TEMPLATE = (
     '{"id":{{json .ID}},"name":{{json .Names}},"image":{{json .Image}},"state":{{json .State}},'
     '"status":{{json .Status}},"clank.home":{{json (.Label "clank.home")}},'
     '"clank.component":{{json (.Label "clank.component")}},"clank.record":{{json (.Label "clank.record")}},'
-    '"clank.ports":{{json (.Label "clank.ports")}},"clank.proxy":{{json (.Label "clank.proxy")}}}'
+    '"clank.ports":{{json (.Label "clank.ports")}},"clank.proxy":{{json (.Label "clank.proxy")}},'
+    '"networks":{{json .Networks}}}'
 )
 # Each container's labels as Docker's own map: `docker ps` joins them with commas, which a value may also hold.
 INSPECT = '{"id":{{json .Id}},"labels":{{json .Config.Labels}}}'
@@ -55,7 +60,7 @@ VERSIONS = "{{.Server.Platform.Name}}|{{.Server.Version}}"
 LIMITS = "{{.NCPU}} {{.MemTotal}}"
 ONE = (
     '{"id":{{json .Id}},"name":{{json .Name}},"image":{{json .Config.Image}},"state":{{json .State.Status}},'
-    '"labels":{{json .Config.Labels}}}'
+    '"labels":{{json .Config.Labels}},"networks":{{json .NetworkSettings.Networks}}}'
 )
 RUN_SECONDS = 120.0
 # Several files written in one `docker exec` (`put_files`): each [path, text] of the JSON list on its input, its folder
@@ -70,6 +75,7 @@ PUT_FILES = (
 NOT_FOUND = (126, 127)  # `docker exec`'s status when the container cannot run the program (python3 is not there)
 MISSING = re.compile(r"no such (container|volume|network)|not found|is not connected", re.IGNORECASE)
 JOINED = re.compile(r"already exists in network", re.IGNORECASE)
+GONE = re.compile(r"network \S+ not found", re.IGNORECASE)  # a start refused: a network it was on is gone
 STATUS_SECONDS = 2.0  # running, `docker desktop status` answers at once; stopped, never
 REQUEST_SECONDS = 60.0  # `docker desktop stop` answers once Docker Desktop has stopped
 PROGRAM = "Docker Desktop.exe"
@@ -265,11 +271,14 @@ class DockerDesktop(ContainerPlatform):
         if not made.ok:
             raise PlatformError(f"the network {name} could not be made: {_words(made)}")
 
-    def join_network(self, network: str, container: str, alias: str) -> None:
-        """`docker network connect --alias`."""
+    def join_network(self, network: str, container: str, alias: str) -> bool:
+        """`docker network connect --alias`: True when it joined now, False when it was on the network already."""
         joined_it = self._answer("network", "connect", "--alias", alias, network, container)
-        if not joined_it.ok and not JOINED.search(joined_it.errors):
-            raise PlatformError(f"{container} could not join {network}: {_words(joined_it)}")
+        if joined_it.ok:
+            return True
+        if JOINED.search(joined_it.errors):
+            return False
+        raise PlatformError(f"{container} could not join {network}: {_words(joined_it)}")
 
     def leave_network(self, network: str, container: str) -> None:
         """`docker network disconnect --force`."""
@@ -293,6 +302,7 @@ class DockerDesktop(ContainerPlatform):
             state=raw["state"],
             clank={label: labels[label] for label in LABELS if labels.get(label)},
             label_keys=sorted(labels),
+            networks=_networks(raw.get("networks")),
         )
 
     def run_container(self, spec: ContainerSpec) -> None:
@@ -313,10 +323,11 @@ class DockerDesktop(ContainerPlatform):
         return status
 
     def start_container(self, name: str) -> None:
-        """`docker start`."""
+        """`docker start`; `NetworkGone` when a network it was on is gone."""
         started = self._answer("start", name, timeout=RUN_SECONDS)
         if not started.ok:
-            raise PlatformError(f"{name} could not start: {_words(started)}")
+            gone = NetworkGone if GONE.search(started.errors) else PlatformError
+            raise gone(f"{name} could not start: {_words(started)}")
 
     def stop_container(self, name: str, seconds: int) -> None:
         """`docker stop`."""
@@ -425,9 +436,20 @@ def _containers(rows: list[dict[str, Any]], labels: dict[str, list[str]]) -> lis
                 status=raw.get("status", ""),
                 clank={label: raw[label] for label in LABELS if raw.get(label)},
                 label_keys=labels.get(raw["id"], []),
+                networks=_networks(raw.get("networks")),
             )
         )
     return containers
+
+
+def _networks(raw: object) -> list[str]:
+    """The networks a container is on, by name: `docker ps` joins them with commas, `docker container inspect` gives
+    Docker's map of them."""
+    if isinstance(raw, dict):
+        return sorted(raw)
+    if isinstance(raw, str):
+        return [name.strip() for name in raw.split(",") if name.strip()]
+    return []
 
 
 def _words(answer: Answer) -> str:

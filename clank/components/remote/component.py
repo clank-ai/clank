@@ -11,6 +11,7 @@ from typing import Any
 from clank.components.remote.kinds import RemoteSettings
 from clank.components.remote.service import EVENT_TYPES, Remote
 from clank.kernel.components import Component
+from clank.kernel.home import Home
 
 
 def commands() -> list[Any]:
@@ -27,6 +28,13 @@ def pages() -> list[Any]:
     return [PhonePage]
 
 
+def checks(home: Home) -> list[dict[str, Any]]:
+    """`clank doctor`'s checks of the phone's way in, while remote access is on (design 0025 §2)."""
+    from clank.components.remote.checkup import doctor
+
+    return doctor(home)
+
+
 COMPONENT = Component(
     name="remote",
     summary="The phone: its page over the tailnet, paired devices, and the files the agents send to it.",
@@ -37,4 +45,5 @@ COMPONENT = Component(
     build=Remote,
     commands=commands,
     console=pages,
+    checks=checks,
 )

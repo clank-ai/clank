@@ -39,6 +39,7 @@ from tests.fakes.platform import FakePlatform
 from tests.support.vscode import asked, fake_vscode
 
 YOU = Actor(kind="user", via="console")
+NPMRC = "/home/agent/.config/opencode/.npmrc"  # OpenCode's own installs kept offline
 CONFIG = "/home/agent/.config/opencode/opencode.json"
 
 
@@ -65,12 +66,13 @@ def http(kernel: Kernel, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient
 
 
 def ran(platform: FakePlatform, kernel: Kernel, workspace: str, folder: Path) -> None:
-    """A workspace whose container runs, as `workspaces.open` leaves it."""
+    """A workspace whose container runs, as `workspaces.open` leaves it: the edge on its network."""
     kernel.settings.write("workspace", workspace, {"path": str(folder)}, base=None, actor=YOU)
     spec_name = names(kernel.home.id).container(workspace)
-    from tests.fakes.platform import container
+    from tests.fakes.platform import container, with_edge
 
     platform.containers.append(container(spec_name, labels={"clank.home": kernel.home.id}))
+    with_edge(platform, kernel.home.id, workspace)
 
 
 def test_prepare_writes_the_programs_configuration_and_answers_its_command(
@@ -117,19 +119,34 @@ def test_prepare_writes_every_file_in_one_go_and_reads_dockers_limits_once_in_a_
     written: list[list[str]] = []
     limits: list[int] = []
     find, put, read = workspaces.container_of, platform.put_files, platform.limits
-    monkeypatch.setattr(workspaces, "container_of", lambda name: looked.append(name) or find(name))
-    monkeypatch.setattr(platform, "put_files", lambda name, files: written.append([p for p, _ in files]) or put(name, files))  # fmt: skip
-    monkeypatch.setattr(platform, "limits", lambda: limits.append(1) or read())
+
+    def looking(name: str) -> str:
+        looked.append(name)
+        found: str = find(name)
+        return found
+
+    def putting(name: str, files: Sequence[tuple[str, str]]) -> None:
+        written.append([path for path, _ in files])
+        put(name, files)
+
+    def reading() -> tuple[int, int] | None:
+        limits.append(1)
+        return read()
+
+    monkeypatch.setattr(workspaces, "container_of", looking)
+    monkeypatch.setattr(platform, "put_files", putting)
+    monkeypatch.setattr(platform, "limits", reading)
     agents: Agents = kernel.parts["agents"]
     agents.prepare("paper")
-    assert written == [[*(path for path, _ in workspaces_service.agent_files()), CONFIG]], (
+    assert written == [[*(path for path, _ in workspaces_service.agent_files()), NPMRC, CONFIG]], (
         "Clank's files and OpenCode's configuration in one docker exec: each one took a fifth of a second (2026-10-26)"
     )
     assert len(looked) == 3, "the container is asked of Docker once by prepare, and once by each of the bridge's runs"
     agents.prepare("paper")
     agents.configure("paper")
     assert len(limits) == 1, "Docker's CPUs are read once in a while, not at each start: `docker info` took 0.7 s"
-    assert len(written) == 3 and written[2][-1] == CONFIG, "an agent started without a terminal writes them in one go too"
+    assert len(written) == 3, "an agent started without a terminal writes them in one go too"
+    assert written[2][-1] == CONFIG
 
 
 def test_clank_work_starts_docker_opens_the_folder_and_runs_the_agent_here(

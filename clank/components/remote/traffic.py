@@ -4,15 +4,19 @@ device, Enter) or from the phone itself (its log tab).
 
 An exchange is one request and its answer: when, which device (when the request named a paired one), the method, the
 path and the query, the status, how long it took, the bytes each way, and both bodies: JSON as it was, text as text, and
-for anything else (a picture sent) its type and size. Nothing secret is kept: the device's token never (it travels in
-a cookie, and no header is kept), and a pairing code is masked. An answer the same as the last one to the same request
-from the same device (the page asks every few seconds) is kept as `same_as` that one's id, so a page left open costs
-little. Each exchange is written as a line of `logs/phone/<day>.jsonl`, the last `KEPT` are also kept in memory, and
-files older than `KEEP_DAYS` are removed. A view of the log itself is kept without its answer (it is the log).
+for anything else (a picture sent) its type and size; where the request came from, as Tailscale's proxy says it (the
+tailnet address it names, the login it vouches for, the browser's name), and why it was refused, for the phone's
+checkup (design 0025 §2). Nothing secret is kept: the device's token never (it travels in a cookie, and no other header
+is kept), and a pairing code is masked, typed or in a pair link, as is an install claim in the icon's link. An answer
+the same as the last one to the same request from the same device (the page asks every few seconds) is kept as
+`same_as` that one's id, so a page left open costs little. Each exchange is written as a line of
+`logs/phone/<day>.jsonl`, the last `KEPT` are also kept in memory, and files older than `KEEP_DAYS` are removed. A
+view of the log itself is kept without its answer (it is the log).
 """
 
 import hashlib
 import json
+import re
 import secrets
 import threading
 from collections import deque
@@ -27,6 +31,7 @@ KEEP_DAYS = 7
 BODY = 64 * 1024  # the most of a body kept, in characters
 MASKED = "••••••••"
 LOG_PATH = "/api/traffic"
+SECRET_QUERY = re.compile(r"(^|&)(code|claim)=[^&]*")  # a pair link's code, the icon's claim
 
 
 class Traffic:
@@ -53,14 +58,21 @@ class Traffic:
         request_type: str,
         response: bytes,
         response_type: str,
+        origin: dict[str, str] | None = None,
+        refused: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        """Keep one exchange; it, as kept."""
+        """Keep one exchange, with where it came from and why it was refused when said; it, as kept."""
+        query = SECRET_QUERY.sub(lambda found: f"{found.group(1)}{found.group(2)}={MASKED}", query)
         exchange: dict[str, Any] = {
             "id": f"x-{secrets.token_hex(5)}", "time": to_text(when), "device": device[0] if device else "",
             "device_name": device[1] if device else "", "method": method, "path": path, "query": query,
             "status": status, "ms": round(ms, 1), "bytes_in": len(request), "bytes_out": len(response),
             "request": _body(request, request_type, path), "response_type": response_type,
         }  # fmt: skip
+        if origin is not None:
+            exchange["origin"] = origin
+        if refused is not None:
+            exchange["refused"] = refused
         if path.startswith(LOG_PATH):
             exchange["response"] = "(the log itself, not kept again)"
         else:

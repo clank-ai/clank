@@ -4,7 +4,8 @@ it was installed): running, it reports its version, its engine's and its contain
 and every label's name; stopped, no containers, read within a few seconds although the stopped program leaves some
 questions unanswered; a start and a stop are asked of the program and change its state, even when the program's own
 start does nothing; without its command it is not installed and refuses to start; what it supports is read from the
-program."""
+program. Design 0004 §3 (revised 2026-10-26): each container's networks are read by name from the same listing, a
+stopped one's too, so the edge's place on every workspace's network costs no other question."""
 
 import sys
 from pathlib import Path
@@ -53,6 +54,19 @@ def test_clanks_labels_are_read_exactly_and_every_labels_name_is_listed(
     assert all(len(container.clank["clank.home"]) == 12 for container in clanks)
     assert any(key.startswith("toolbox.") for container in containers for key in container.label_keys)
     assert any(not container.clank and not container.name.startswith("toolbox") for container in containers)
+
+
+@pytest.mark.parametrize(("adapter", "folder"), CASES)
+def test_each_containers_networks_are_read_by_name_a_stopped_ones_too(
+    adapter: type[ContainerPlatform], folder: Path
+) -> None:
+    program = RecordedProgram.load(folder, state="running")
+    containers = build(adapter, program).status().containers
+    assert all(container.networks for container in containers), "every container is on a network, Docker's own at least"
+    assert any(len(container.networks) > 1 for container in containers), "the recording shows one on several"
+    assert all("," not in network for container in containers for network in container.networks)
+    assert any(container.networks for container in containers if container.state != "running")
+    assert not [call for call in program.calls if call.startswith("docker network")], "no question of their own"
 
 
 @pytest.mark.parametrize(("adapter", "folder"), CASES)

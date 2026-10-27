@@ -11,7 +11,9 @@ carries the model's readout (`Agents.readout`: its speed, its context, what it d
 foot. When no session was named and the folder's newest session changes, the stream says `session` and ends: the
 client opens the new one. A folder with no session yet gets a snapshot saying so, and the stream looks for one every
 `WATCH_SECONDS`. A keepalive comment comes after `KEEPALIVE_SECONDS` of silence; `closing` when the service stops (the
-app's `closers`, as the kernel's event stream uses them).
+app's `closers`, as the kernel's event stream uses them). A conversation the bridge cannot read (its refusal, a server
+gone, a container stopped) ends the stream with `problem` and its words, the response whole, so the client opens it
+again later; a traceback for each of its tries told nobody more (the owner's log, 2026-10-26).
 """
 
 import json
@@ -23,6 +25,9 @@ from typing import TYPE_CHECKING, Any
 import anyio
 import anyio.lowlevel
 import anyio.to_thread
+
+from clank.components.agents.sessions import SessionError
+from clank.components.workspaces.service import WorkspaceUnavailable
 
 if TYPE_CHECKING:
     from clank.components.agents.service import Agents
@@ -149,6 +154,8 @@ async def conversation_stream(
                 if newest and newest != chosen:
                     yield _sse("session", {"id": newest})
                     return
+    except (SessionError, WorkspaceUnavailable) as error:  # the bridge's refusal: said, and the stream ends whole
+        yield _sse("problem", {"reason": f"the conversation could not be read: {error}"})
     finally:
         if stop is not None:
             stop()
