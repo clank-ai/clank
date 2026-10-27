@@ -49,7 +49,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7 | Setup and portability | see its subsections |
 | 7.1 | Where Clank runs | none yet |
 | 7.2 | The user's Clank folder | `tests/kernel/test_files.py` (8), `tests/kernel/test_home.py` (4) |
-| 7.3 | The first-run guide | `tests/components/machine/test_checks.py` (7), `tests/components/machine/test_detect.py` (5), `tests/components/machine/test_doctor.py` (3) |
+| 7.3 | The first-run guide | `tests/components/machine/test_checks.py` (7), `tests/components/machine/test_detect.py` (5), `tests/components/machine/test_doctor.py` (4) |
 | 7.4 | Recipes for serving setups | `tests/components/runtime/test_install.py` (5) |
 | 7.5 | Models | `tests/components/runtime/test_download.py` (8) |
 | 7.6 | Endpoints | none yet |
@@ -75,7 +75,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | The whole system | `tests/components/tools/test_mcp.py` (6), `tests/kernel/test_accepting.py` (3), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `vscode/test/state.test.ts` (1) |
 | 2 | The kernel | see its subsections |
-| 2.1 | A component | `tests/console/test_pages.py` (10), `tests/kernel/test_core.py` (2), `tests/test_architecture.py` (7) |
+| 2.1 | A component | `tests/components/machine/test_doctor.py` (4), `tests/console/test_pages.py` (10), `tests/kernel/test_core.py` (2), `tests/test_architecture.py` (7) |
 | 2.2 | Records | `tests/components/flows/test_proposals_auto.py` (3), `tests/components/runtime/test_state.py` (4), `tests/console/test_records.py` (4), `tests/kernel/test_grouped_settings.py` (5), `tests/kernel/test_records.py` (5), `tests/kernel/test_settings.py` (15), `tests/kernel/test_settings_checks.py` (3), `tests/kernel/test_store.py` (9), `tests/tools/test_schemas.py` (1), `tests/tools/test_tstypes.py` (5), `vscode/test/kinds.test.ts` (1) |
 | 2.3 | Events | `tests/kernel/test_clock.py` (4), `tests/kernel/test_event_attention.py` (3), `tests/kernel/test_events.py` (9), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_eventsdoc.py` (1), `vscode/test/events.test.ts` (2), `vscode/test/state.test.ts` (1) |
 | 2.4 | Operations | `tests/components/workspaces/test_docker_operations.py` (13), `tests/console/test_pages.py` (10), `tests/kernel/test_operations.py` (15) |
@@ -95,7 +95,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.18 | Choices this section makes | none yet |
 | 3 | The skeleton (M0) and the order of milestones | see its subsections |
 | 3.1 | How the rest is designed and built | none yet |
-| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (3), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (15), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (19), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (6), `tests/tools/test_codemap.py` (10), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (17) |
+| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (4), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (15), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (19), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (6), `tests/tools/test_codemap.py` (10), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (17) |
 | 3.3 | The milestones after M0 | `tests/docker/test_escape.py` (3) |
 | 3.4 | Carried into the later milestones' designs | none yet |
 
@@ -151,7 +151,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | Reaching OpenCode in a workspace: the session bridge | `tests/components/agents/test_sessions.py` (16) |
 | 3 | Files for the phone: the agent's outbox | none yet |
 | 4 | The phone page and who may reach it | `tests/components/remote/test_phone.py` (10), `tests/components/remote/test_phone_flows.py` (9) |
-| 5 | The console's Phone page | `tests/components/remote/test_phone_page.py` (2) |
+| 5 | The console's Phone page | `tests/components/remote/test_phone_page.py` (3) |
 | 6 | What waits | `tests/components/remote/test_phone_marks.py` (4) |
 
 ## Design 0006: completion in VS Code (the rest of M3's completion)
@@ -236,7 +236,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | The panel | `tests/components/tools/test_console_servers.py` (1), `tests/console/test_frames.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_windows.py` (3), `tests/console/test_workspaces_page.py` (4) |
 | 5 | Text never spills out of a panel | `tests/console/test_frames.py` (1), `tests/console/test_windows.py` (3) |
 | 6 | No color written in a page | `tests/test_repository.py` (11), `tests/tools/test_check_colors.py` (8) |
-| 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (2), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (19), `tests/console/test_windows.py` (3) |
+| 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (3), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (19), `tests/console/test_windows.py` (3) |
 | 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (5), `tests/components/tools/test_console_servers.py` (1), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_workspaces_page.py` (4) |
 | 9 | Narrow windows | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_machine_column.py` (14), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5) |
 | 10 | What changes in the tests | none yet |
@@ -538,7 +538,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What it is, and what leaves the PC | none yet |
-| 2 | Install once | `tests/components/remote/test_phone_install.py` (4), `tests/components/remote/test_phone_page.py` (2), `tests/components/remote/test_phone_qr.py` (1) |
+| 2 | Install once | `tests/components/machine/test_doctor.py` (4), `tests/components/remote/test_phone_checkup.py` (10), `tests/components/remote/test_phone_checkup_said.py` (4), `tests/components/remote/test_phone_install.py` (5), `tests/components/remote/test_phone_page.py` (3), `tests/components/remote/test_phone_probes.py` (3), `tests/components/remote/test_phone_qr.py` (1) |
 | 3 | Live: one stream, and when it drops | `tests/components/remote/test_phone_shell.py` (4), `tests/components/remote/test_phone_stream.py` (2), `tests/phone/model.test.mjs` (5) |
 | 4 | Notifications | `tests/components/remote/test_phone_shell.py` (4) |
 | 5 | Now | `tests/phone/model.test.mjs` (5) |
@@ -2501,11 +2501,12 @@ Design 0001 §2 and §7.3: Clank detects the machine it runs on (system, Python,
 
 ### `tests/components/machine/test_doctor.py`
 
-Design 0001 §7.3 and design 0002 §3.2 (M0.3): `clank doctor` prints each check and how many passed, as text or JSON, and works without the service; inside the service, the doctor is an operation that records the machine profile and the checks.
+Design 0001 §7.3 and design 0002 §2.1 and §3.2 (M0.3): `clank doctor` prints each check and how many passed, as text or JSON, and works without the service; inside the service, the doctor is an operation that records the machine profile and the checks. A component's declaration may name doctor checks of its own (the phone's way in, design 0025 §2): they run after the machine's, and one that fails to run is said as a failed check.
 
 - doctor prints each check and how many passed
 - doctor prints json for scripts and models
 - the doctor operation records the profile and the checks
+- the doctor runs the checks each component declares after its own
 
 ### `tests/components/machine/test_meters.py`
 
@@ -2626,6 +2627,30 @@ Design 0005 §4 (decision 0012): who may reach the phone page, pairing, and what
 - tailscale says this machines name and user or why not
 - remote access is off until turned on and a code comes with the pages address
 
+### `tests/components/remote/test_phone_checkup.py`
+
+Design 0025 §2 (when the page does not load): the phone's way in, checked from this PC, each finding in words with what to do. The owner's phones on the tailnet, online or offline and when last seen, a sign-in expired or about to; a phone of another account; which device reached the listener today, when, and why it was refused; Funnel on for this PC, which gives its name a public address that leads a phone not asking Tailscale's DNS to Tailscale's relay; Tailscale on this PC, the listener, where the tailnet port goes, MagicDNS and HTTPS certificates; and this PC opening its own published address. When Tailscale cannot say, only what does not need it is checked.
+
+- an offline phone is said with when it was last seen and how to bring it back
+- an online phone a sign in expired or about to and another accounts phone are each said
+- the listeners log says which device reached clank when and why it was refused
+- a refusal names the account a phone came with and a device tailscale does not list by its browser
+- no phone reaching clank today is said and this pcs own requests and unnamed old lines do not count
+- funnel on for this pc is said with its public address and how a phone gets past it
+- magicdns https certificates and where the tailnet port goes are each checked with their fix
+- this pc opening its own published address says whether and how it answered
+- the checks come in the order the owner reads them the phones first
+- tailscale not answering on this pc is said and the checks that need it are left out
+
+### `tests/components/remote/test_phone_checkup_said.py`
+
+Design 0025 §2 (when the page does not load): where the checkup is said. The service checks only while remote access is on; it keeps what Tailscale said for a few seconds and what its own address answered for a few minutes (each opening is an exchange in the listener's log), asks public DNS only while Funnel is on, and asks everything again at once when told to. Its local API serves it (`GET /remote/checkup`); `clank remote status` prints it under the status, `clank remote pair` says under the QR what to check on the iPhone when the page will not load, and `clank doctor` adds it while remote access is on, without the service.
+
+- the checkup runs only while remote access is on and keeps its answers until asked afresh
+- clank remote status prints the checkup under the status
+- clank remote pair says under the qr what to check on the iphone when the page will not load
+- the doctor adds the phones checkup while remote access is on without the service
+
 ### `tests/components/remote/test_phone_flow_screens.py`
 
 Design 0025 §6 (design 0013 §12 and §14 step 7): the phone's Flows screens, on the listener's flow routes. The list is the service's summaries, each flow with its state in words and the question it waits for, with the plannings open and a planning's flow listed as building before its file is written; a flow's screen is the Flow view's JSON, as the console draws it; run, pause and stop from the phone are recorded as the device's; a batch of proposals accepted from the phone joins the flow; a planning opened from the phone goes to Clank's VS Code window on the PC and waits for it when none runs there; the kernel's refusals reach the phone with their words. Run against the fake bridge and a synthetic folder.
@@ -2652,12 +2677,13 @@ Design 0013 §9, §10 and §14 step 7 (design 0005 §4, design 0002 §2.5): gate
 
 ### `tests/components/remote/test_phone_install.py`
 
-Design 0025 §2 (decision 0143): installing the phone app once. The console makes a pair link whose code is spent by the device that opens it (no typing); the page it gets pairs the device, keeps its cookie and shows the steps to add the app to the Home Screen, with a one-time install claim in the icon's start link (the manifest's `start_url`); the installed app's first launch trades the claim for the device's token (the Safari tab's stops working: the pairing moved into the app), a claim is spent once and lapses after an hour; a device's token renews on each use and lapses only after thirty days unused (no ceiling from its pairing).
+Design 0025 §2 (decision 0143): installing the phone app once. The console makes a pair link whose code is spent by the device that opens it (no typing); the page it gets pairs the device, keeps its cookie and shows the steps to add the app to the Home Screen, with a one-time install claim in the icon's start link (the manifest's `start_url`); the installed app's first launch trades the claim for the device's token (the Safari tab's stops working: the pairing moved into the app), a claim is spent once and lapses after an hour; a device's token renews on each use and lapses only after thirty days unused (no ceiling from its pairing). The listener's log keeps where each request came from, as Tailscale's proxy says it (the address it names last, the login it vouches for, the browser's name), and why one was refused, for the checkup (when the page does not load); a pair link's code and an install claim are masked in it.
 
 - the pair link pairs the device by its code and shows the install steps once
 - the installed app trades its claim for the token once and a claim lapses after an hour
 - a devices token renews on use and lapses only after thirty days unused
 - the manifest carries the devices start link
+- the log keeps where each request came from and why it was refused never a links code or claim
 
 ### `tests/components/remote/test_phone_marks.py`
 
@@ -2670,10 +2696,19 @@ Design 0012 §8 (decision 0053) and design 0005 §6: a Watch for rule set to tel
 
 ### `tests/components/remote/test_phone_page.py`
 
-Design 0005 §5 (transparency): on the console's Phone page, Enter on a paired device opens everything it and this computer exchanged, newest first; the highlighted exchange shows what the device sent and what it was sent back. Design 0011 §7: the window's list is a panel whose note counts the exchanges and what was sent to the device. Design 0025 §2: `p` shows a QR carrying the pair link, with the link and the code under it.
+Design 0005 §5 (transparency): on the console's Phone page, Enter on a paired device opens everything it and this computer exchanged, newest first; the highlighted exchange shows what the device sent and what it was sent back. Design 0011 §7: the window's list is a panel whose note counts the exchanges and what was sent to the device. Design 0025 §2: `p` shows a QR carrying the pair link, with the link and the code under it, and what to check on the iPhone when the page will not load; while remote access is on, the page says how the phone reaches it, checked from this PC, and `r` checks again.
 
 - enter on a device shows what it and this computer exchanged
 - p shows a qr that carries the pair link with the link and the code under it
+- the page says how the phone reaches it checked from this pc and r checks again
+
+### `tests/components/remote/test_phone_probes.py`
+
+Design 0025 §2 (when the page does not load): the two questions the checkup asks beyond Tailscale. This PC opens its own published address as a phone's browser would, naming itself, and says what answered and in how long, or why nothing did; while Funnel is on, one public DNS server is asked over UDP what the internet is told for the PC's name (its IPv4 addresses, none for a name it does not know), within a short time, and a server that does not answer is said, never raised.
+
+- public dns is asked for the names addresses and a name it does not know has none
+- a dns server that does not answer is said within the time given
+- this pc opens its address as a browser would and says what answered
 
 ### `tests/components/remote/test_phone_qr.py`
 
