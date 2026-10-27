@@ -227,7 +227,8 @@ class Service:
         try:
             await server.serve()
         finally:
-            remove_connection(self._home)
+            if not remove_connection(self._home):  # a client holds it open: the next one finds no service there
+                log.warning("the connection file is held open by another program: left, naming this stopped service")
             kernel.events.record("service.stopped", summary="service stopped", actor=CLANK)
 
     def _refuse_a_second_service(self) -> None:
