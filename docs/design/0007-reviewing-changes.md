@@ -16,7 +16,7 @@ review mode next"); **Choice** marks what the owner may decide otherwise.
 | 1 | What the owner gets | Proposed 2026-10-15 |
 | 2 | How OpenCode asks, as measured | Proposed 2026-10-15 |
 | 3 | Review and auto: Clank answers | Proposed 2026-10-15 |
-| 4 | The watcher | Proposed 2026-10-15 |
+| 4 | The watcher | Proposed 2026-10-15; revised 2026-10-26 (the `server` line; a watcher that cannot start) |
 | 5 | A change | Proposed 2026-10-15 |
 | 6 | VS Code | Proposed 2026-10-15 |
 | 7 | The console and the phone | Proposed 2026-10-15 |
@@ -75,6 +75,7 @@ process, kept open). In the container it follows the event stream of every OpenC
 | `asked` | A permission is asked (the ones waiting when a server is first followed too); for a change, with the tool call's input |
 | `replied` | A permission was answered, by anyone |
 | `edited` | A file was written |
+| `server` | A server is followed, from the watcher's start or once it started (its port, and whether it runs a terminal interface) |
 | `gone` | A server stopped |
 | `synced` | Every server running when the watcher started has been read |
 | `alive` | Every 15 seconds |
@@ -82,6 +83,10 @@ process, kept open). In the container it follows the event stream of every OpenC
 The watcher ends when its input closes (the service stopped or the exec was ended), and replaces an older one left in
 the container. The service starts it from the Docker state its background check already reads (no extra Docker calls)
 and starts it again if it ends while the container runs. Nothing polls: the service hears of a change as it is asked.
+A watcher that cannot start (its container no longer runs, though the last reading said it did) is said once in the
+log and leaves the other workspaces watched (revised 2026-10-26: it stopped the round, its traceback logged every three
+seconds); `server` lets the service know that a server answers again on a port whose server it was told is gone
+(design 0012 §6.1, design 0023 §4).
 
 A container made from an image before the watcher cannot be watched: its agent still asks, in its terminal, and the
 This folder page and VS Code say to reopen the workspace (F6: `x`, then `o`) to review in the editor.

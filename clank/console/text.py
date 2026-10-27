@@ -29,6 +29,7 @@ BAD = (
     "problem",
     "interrupted",
     "canceled",
+    "cut off",  # a workspace whose container runs without its way to the model, the edge (design 0004 §3)
 )
 
 

@@ -4,21 +4,22 @@ step, and then working.
 "Get ready to work here" is a numbered list: Docker, this folder (refused when its container would see more than it,
 saying why), its workspace (its container running), Clank's sandbox image, its software (design 0004 §10: the folder's
 own packages, installed into the workspace's home; offered, not required), a model in the main slot, and the gateway.
-Each step says what it is now (green when done, red when not, yellow while it changes) and, when it is not done, the
-key that does it: `s` starts Docker, `o` opens the workspace (it makes the record, builds the image the first time,
-asked first, and starts the container), `e` installs the software (a form with the command, proposed or kept, to
-change or take), `l` loads a model picked from the presets (the slot's last that worked first), and `g` does every
-step that is not done, in order. The line under the list says what to press next. "Then work" says how to start: `a`
-starts OpenCode in this terminal once every required step is done (the console steps aside while it runs and comes
-back when it is left: `clank.console.terminal`), with the model it will be given and that model's limits (and, after
-a flow's box switched the main slot, that the window's model changed, until OpenCode next starts here: design 0013
-§7), and lists the MCP servers: whether the agent gets each (yours unless taken away, the folder's own once allowed)
-and its tools once checked; `m` gives one or takes it away, and checks one given in the workspace's container. `f`
-builds a flow with the model (design 0013 §15, decision 0100; `f`, since `n` answers a question here): it brings the
-console to the Monitor's Flow view, which opens the planning beside the console as its own `n` does and shows the flow
-built. `c` does every step not done, then opens VS Code on the folder: Clank's window on the PC, or over SSH (design
-0018 §8) the other computer's from a terminal of VS Code's Remote-SSH, else nothing opens and the command to run there
-is said.
+Each step says what it is now (green when done, red when not, yellow while it changes) and, when it is not done, the key
+that does it: `s` starts Docker, `o` opens the workspace (it makes the record, builds the image the first time, asked
+first, and starts the container), `e` installs the software (a form with the command, proposed or kept, to change or
+take), `l` loads a model picked from the presets (the slot's last that worked first), and `g` does every step that is
+not done, in order. A running workspace cut off from the model (the edge not running on its network, design 0004 §3)
+says so in the service's words, in yellow: Clank puts it right within seconds, and `o` or the agent's start does at
+once, so it does not hold `a` back. The line under the list says what to press next. "Then work" says how to start: `a`
+starts OpenCode in this terminal once every required step is done (the console steps aside while it runs and comes back
+when it is left: `clank.console.terminal`), with the model it will be given and that model's limits (and, after a flow's
+box switched the main slot, that the window's model changed, until OpenCode next starts here: design 0013 §7), and lists
+the MCP servers: whether the agent gets each (yours unless taken away, the folder's own once allowed) and its tools once
+checked; `m` gives one or takes it away, and checks one given in the workspace's container. `f` builds a flow with the
+model (design 0013 §15, decision 0100; `f`, since `n` answers a question here): it brings the console to the Monitor's
+Flow view, which opens the planning beside the console as its own `n` does and shows the flow built. `c` does every step
+not done, then opens VS Code on the folder: Clank's window on the PC, or over SSH (design 0018 §8) the other computer's
+from a terminal of VS Code's Remote-SSH, else nothing opens and the command to run there is said.
 
 A step started here is followed here: the step being worked on has a turning spinner in place of its mark, its
 operation's step and last line show under "What runs from here" (with the spinner too), and its end, or why it failed,
@@ -100,6 +101,7 @@ ROWS = {
     "gateway": "The gateway",
 }  # fmt: skip
 Step = tuple[str, str, bool | None, str]  # its name, what it is now, done (None: not known yet), the key that does it
+MENDED = ("cut", "stale")  # a running workspace's way to the model as the service says it, put right by o or by `a`
 
 
 def slot_text(data: ConsoleData) -> tuple[str, bool]:
@@ -132,8 +134,11 @@ def checklist(data: ConsoleData, view: dict[str, Any] | None, gateway: dict[str,
         steps.append(("This folder", "ready: it can be a workspace", True, ""))
         if view["workspace"] is None:
             steps.append(("Its workspace", "not opened yet", False, "o"))
+        elif view["state"] == "running" and view.get("edge") in MENDED:
+            steps.append(("Its workspace", str(view["edge_said"]), None, "o"))  # its agent's start mends it first
         elif view["state"] == "running":
-            steps.append(("Its workspace", f"running: {view['workspace']}, its container up", True, "o"))
+            told = f"; {view['edge_said']}" if view.get("edge_said") else ""
+            steps.append(("Its workspace", f"running: {view['workspace']}, its container up{told}", True, "o"))
         else:
             steps.append(("Its workspace", f"stopped: {view['workspace']}, its container {view['state']}", False, "o"))
     image = view["image"] if view is not None else None
@@ -280,10 +285,13 @@ def missing(data: ConsoleData, view: dict[str, Any] | None, gateway: dict[str, A
     """What must be done before the agent can start, each with its key ("" when no key can do it)."""
     if not data.connected:
         return [("the Clank service", "")]
+    running = view is not None and view.get("state") == "running"  # the agent's start puts its edge right first
     return [
         (name.lower(), key)
         for name, _, done, key in checklist(data, view, gateway)
-        if done is not True and name != "The sandbox image"  # a running container has its image
+        if done is not True
+        and name != "The sandbox image"  # a running container has its image
+        and not (name == "Its workspace" and running)
     ]
 
 
@@ -1006,7 +1014,7 @@ class FolderPage(Page):
             if view["problem"]:
                 self._say(view["problem"], True)
                 return False
-            if view["state"] == "running":
+            if view["state"] == "running" and view.get("edge") not in MENDED:
                 return True
             return self._follow(client.post("workspaces/open", {"folder": self.console.folder, "yes": False}))
         if step == "image":  # o only: a newer image is built while the workspace runs on the one it has

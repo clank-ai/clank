@@ -1,15 +1,21 @@
 """The sessions that used local-only content (design 0016 §10, decision 0111): a session is marked the first time any of
 its requests shows a call to a tool that never goes to the cloud (Clank's Notion tools, a server marked local), whatever
 slot serves it; it and the subagents it starts are kept from the cloud from then on, even once a compaction folds the
-call into a summary. The marks are kept in `state/local-only.json`, so a restart of the gateway forgets none.
+call into a summary. The marks are kept in `state/local-only.json`, so a restart of the gateway forgets none; written
+through the kernel's `files`, and a file another program holds for good is said in the gateway's log, the marks held
+in memory all the same: a request never fails for it.
 """
 
 import json
-import os
+import logging
 import threading
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
+
+from clank.kernel import files
+
+log = logging.getLogger(__name__)
 
 
 class LocalMarks:
@@ -50,10 +56,11 @@ class LocalMarks:
     def _save(self) -> None:
         if self._file is None:
             return
-        self._file.parent.mkdir(parents=True, exist_ok=True)
-        partial = self._file.with_name(f".{self._file.name}.part")
-        partial.write_bytes((json.dumps({"sessions": self._sessions}, indent=1) + "\n").encode("utf-8"))
-        os.replace(partial, self._file)
+        try:
+            files.replace(self._file, json.dumps({"sessions": self._sessions}, indent=1) + "\n", files.MOMENT)
+        except OSError as error:
+            log.warning("the sessions kept from the cloud could not be written to %s (%s): kept in memory",
+                        self._file, error)  # fmt: skip
 
 
 def local_calls(messages: Iterable[Any], prefixes: Sequence[str]) -> list[str]:

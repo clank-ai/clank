@@ -14,7 +14,7 @@ from clank import registry
 from clank.client import Client, ClientError, NotRunning
 from clank.kernel.access import read_connection
 from clank.kernel.home import Home
-from clank.kernel.service import AlreadyRunning, Service, ServiceError, start_detached
+from clank.kernel.service import AlreadyRunning, Service, ServiceError, end_silent, start_detached
 
 
 @click.command()
@@ -49,7 +49,13 @@ def stop() -> None:
     try:
         with Client.connect(home) as client:
             client.post("service/stop")
-    except (NotRunning, ClientError) as error:
+    except NotRunning as error:
+        ended = end_silent(home)  # one that holds the lock without answering (design 0002 §1)
+        if ended is None:
+            raise click.ClickException(str(error)) from error
+        click.echo(f"The Clank service did not answer (process {ended}), so it was ended; `clank serve` starts one")
+        return
+    except ClientError as error:
         raise click.ClickException(str(error)) from error
     deadline = time.monotonic() + 15
     while read_connection(home) is not None and time.monotonic() < deadline:

@@ -23,9 +23,11 @@
   </header>
   <div id="attention" class="attention hidden" role="status"></div>
   <main id="view" aria-live="polite">
-    <div class="center launch">
+    <div class="center launch" id="launch">
       <div class="brand">◆ CLANK</div>
-      <div class="dim">connecting to the PC, through your tailnet</div>
+      <div class="spinner" aria-hidden="true"></div>
+      <div class="step" id="launch-step">Reaching the PC through Tailscale…</div>
+      <div class="dim" id="launch-time"></div>
     </div>
   </main>
   <nav id="tabs" class="tabs hidden">

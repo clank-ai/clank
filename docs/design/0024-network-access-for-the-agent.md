@@ -13,7 +13,7 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 | § | Section | Status |
 | --- | --- | --- |
 | 1 | The rule: through Clank, by allowance | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)): the allowances, `clank workspace allow --host`; the console's and VS Code's keys with §4 |
-| 2 | The way out: a forward proxy at the gateway | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)) |
+| 2 | The way out: a forward proxy at the gateway | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)); revised after approval 2026-10-26 (the edge made again joins every workspace's network back) |
 | 3 | A host the agent asks for | Approved 2026-10-26; built 2026-10-26 ([plan s54](../plans/s54-the-ask.md)) |
 | 4 | What the owner sees | Approved 2026-10-26; built 2026-10-26 ([plan s56](../plans/s56-the-network-views.md)) but the Monitor's fetching line, which comes with the Monitor's move to the stream (design 0023 step 4) |
 | 5 | Packages, papers, data: the named sets | Approved 2026-10-26; built 2026-10-26 ([plan s55](../plans/s55-the-named-sets.md)): the file, `clank workspace allow --set`; the console's key with the views |
@@ -52,6 +52,16 @@ This design opens the network the way Clank opens everything: visibly, by the ow
   tool's error and can say so, or ask.
 - **Recorded** (§4): every exchange's time, workspace, host, method, status, bytes each way and duration; for plain
   HTTP the path too; never the bodies, never the bytes of a tunnel.
+- **The edge made again keeps every workspace's way out** (revised after approval, 2026-10-26). An edge from before
+  the proxy forwards one port, so the next opening made it again with both; Docker drops a removed container's place
+  on every network, and the new edge joined only the network of the workspace being opened: the workspaces that ran
+  lost the gateway and the proxy (`getaddrinfo EAI_AGAIN edge`). The edge is now kept on every workspace's network
+  whatever makes it again (design 0004 §3, `workspaces/edge.py`): made, made again or started, it joins the network of
+  every workspace whose container there is; the service's check of Docker joins it back to a running workspace's
+  network it is not on; starting an agent puts it right first, making it again when it forwards other ports than the
+  gateway's and the proxy's (the check never does: it would cut every request in flight). A running container told
+  another proxy port than the one the edge forwards (the proxy's port changed) is said in its views: its agent reaches
+  the model, not the internet, until it is stopped and opened again.
 
 ## 3. A host the agent asks for
 
@@ -137,3 +147,12 @@ Search is not a host but a provider, and a choice of the owner's:
 
 Decisions this design asks for, written when it is approved: the agent reaches the internet only through Clank's proxy,
 by the owner's allowances per workspace and host; private addresses are refused always. No new dependency.
+
+## Revision log
+
+- **2026-10-26, §2 revised after approval** (a bug found live the day it was built): opening a workspace made the edge
+  again for the proxy's port, and the edge made again joined only that workspace's network; the four workspaces that
+  ran lost their way to the gateway and the proxy (`getaddrinfo EAI_AGAIN edge` in OpenCode, which then gave up). The
+  edge is now kept on every workspace's network whatever makes it again, the service's check of Docker puts it back
+  when it is not there, starting an agent puts it right first, and the views say a workspace cut off from the model
+  (design 0004 §3, revised the same day).

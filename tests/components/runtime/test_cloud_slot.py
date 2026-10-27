@@ -275,10 +275,18 @@ async def test_an_engine_preset_whose_model_is_downloaded_is_a_candidate(rig: Ri
     ]
 
 
-async def test_the_main_slot_ready_is_usable(cloud: Rig) -> None:
+async def test_the_main_slot_ready_is_usable_at_once_without_asking_any_host_for_its_files(
+    cloud: Rig, monkeypatch: pytest.MonkeyPatch
+) -> None:
     async with cloud.kernel.operations.running():
         await run(cloud, "runtime.load", preset="cloud-example-coder")
+
+    def asked(*_: Any, **__: Any) -> None:
+        raise AssertionError("a ready main slot asks no host for its presets' files (seconds each, through WSL)")
+
+    monkeypatch.setattr(type(cloud.runtime), "needs", asked)
     found = usable(cloud)
+    assert found["candidates"] == [], "looked for only while the main slot runs nothing"
     assert found["usable"] is True
     assert found["main"] == {"status": "ready", "preset": "cloud-example-coder", "title": "cloud: Example Coder",
                              "provider": "cloud openrouter"}  # fmt: skip

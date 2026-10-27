@@ -93,3 +93,8 @@ class AgentProgram(Adapter):
         """When it compacts a conversation for a model's window and output limit, told the window less `margin`, and
         what it keeps; None for a program that does not, or says nothing of when."""
         return None
+
+    def files(self) -> list[tuple[str, str]]:
+        """Other files it needs in the agent's home beside its configuration, each its path (under `HOME`) and its
+        text, written with it; none by default."""
+        return []

@@ -17,7 +17,7 @@ page and push alerts, a service the owner switches on and off) and design 0023 �
 | --- | --- | --- |
 | 1 | What it is, and what leaves the PC | Approved 2026-10-21 (the canvas); written 2026-10-26 |
 | 2 | Install once | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)): the pair link's QR on the console, the code spent by scanning it, the install claim, tokens renewed on use; revised after approval 2026-10-26: when the page does not load, the PC checks the phone's way in and says what to do (the owner's first scan loaded nothing, and nothing said why), and the keys as the console has them |
-| 3 | Live: one stream, and when it drops | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)): the stream, the shell and its service worker, the reconnecting and offline screens |
+| 3 | Live: one stream, and when it drops | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)): the stream, the shell and its service worker, the reconnecting and offline screens; revised after approval 2026-10-26: the app shell (one column the size of the screen, only its middle scrolls: the tab bar sat higher on every tab too short to scroll, on the owner's iPhone) and a launch screen that says what it waits for |
 | 4 | Notifications | Approved 2026-10-21 (the canvas); written 2026-10-26; its dependency decided when built |
 | 5 | Now | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)) on the live stream; the Flows tab shows the flows' questions until step 2 brings the Flow view |
 | 6 | Flows: the list, a flow, building one, a gate | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s58](../plans/s58-the-phone-flows.md)): the list from the service's summaries with its filters, a flow with its controls, boxes, proposals and planning steps, a gate as its question with the files it shows; the deliverables' sizes wait for the file screen (step 3) |
@@ -25,7 +25,8 @@ page and push alerts, a service the owner switches on and off) and design 0023 �
 | 8 | Work and Files | Approved 2026-10-21 (the canvas); written 2026-10-26 |
 | 9 | More: activity, models, cost, settings | Approved 2026-10-21 (the canvas); written 2026-10-26 |
 | 10 | Choices made since the canvas | Proposed 2026-10-26 (the owner may change any) |
-| 11 | Order of work | Proposed 2026-10-26; step 1 built 2026-10-26; step 2 built 2026-10-26 (its flows half, then its session half) |
+| 11 | Order of work | Proposed 2026-10-26; step 1 built 2026-10-26; step 2 built 2026-10-26 (its flows half, then its session half); chat (§12) comes next, before steps 3-5 |
+| 12 | Chat: with the model, in a workspace, in any session | Approved 2026-10-26 (the owner's request, after the first look on the iPhone); the asking rule built 2026-10-26; the rest next |
 
 ## 1. What it is, and what leaves the PC
 
@@ -227,7 +228,8 @@ The canvas left these to the owner; Clank takes the canvas's defaults until the 
 - Files are read only on the phone; a file's text is shown while the owner looks and never kept.
 - The install claim rides in the icon's start link (iOS keeps a Home Screen app's storage apart from Safari's).
 - The device token renews on each use and lapses after 30 days unused (no 90-day ceiling).
-- The type is the system's monospace (iOS has one); JetBrains Mono is not served by the PC.
+- The type is the system's monospace (iOS has one) for the app's frame, its numbers and code; a chat's words are in
+  the system's text face, easier to read at length (§12, 2026-10-26). JetBrains Mono is not served by the PC.
 - The app is served by the listener as today's page is, from Clank's package: no build step, no bundler.
 
 ## 11. Order of work
@@ -240,9 +242,38 @@ The canvas left these to the owner; Clank takes the canvas's defaults until the 
 2. Flows, a flow, building one, a gate (§6; built 2026-10-26, [plan s58](../plans/s58-the-phone-flows.md)); a session with
    the Guide and its context (§7), on the conversation stream (built 2026-10-26,
    [plan s59](../plans/s59-the-phone-session.md)).
-3. Work, a workspace, New task, Files and a file (§8).
-4. Notifications (§4): the dependency decision, the VAPID keys, the subscriptions per device, the sender, Settings.
-5. More: Activity, Models with the switch, Cost with Raise (§9).
+3. Chat (§12): a normal chat, the workspaces with the saved ones first, any session picked up, a chat's look with
+   its figures and the agent's questions in place. Asked for on 2026-10-26: before Work and Files.
+4. Work, a workspace, New task, Files and a file (§8).
+5. Notifications (§4): the dependency decision, the VAPID keys, the subscriptions per device, the sender, Settings.
+6. More: Activity, Models with the switch, Cost with Raise (§9).
 
 Design 0005's phone page is replaced screen by screen; its listener, pairing and traffic log stay. A decision record
 says the phone is an installed web app, not a native one (decision 0143).
+
+## 12. Chat: with the model, in a workspace, in any session
+
+Asked for by the owner on 2026-10-26, after their first look on the iPhone: "a normal chat with the model as well as
+open saved workspaces", a workspace's chat knowing it is in that workspace; the model pinning down an ambiguous request
+before it computes or plots; any session running in OpenCode, in VS Code or in the agent panel picked up from the phone
+while the model works; the look and the model's abilities first.
+
+- **Chat** takes the Work tab's place (Now · Chat · Flows · Files · More; §8's workspace facts move into a workspace's
+  page). At its top, **New chat**: a normal conversation with the model in the main slot, no folder and no tools, its
+  words streamed as the model writes them, kept on the PC and listed under it, newest first.
+- **Workspaces** follow, the saved ones first (a star saves one: SmallWorldMIPT is the owner's), each with its state,
+  its model and its sessions ("3 sessions · 1 works now"); a stopped one with Start, saying what starting does. A
+  workspace opens on its chats: **New chat in <workspace>** (the agent in the workspace's container, reading its
+  folder) and every session of its OpenCode servers, the working ones first, each with where it runs (VS Code, a
+  terminal, the phone), its title, its last line and whether it works now. Any of them opens as a chat, and a message
+  sent from the phone goes into that very session while the model runs, waiting for its turn as OpenCode queues it.
+- **A chat** looks like one: the owner's words on the right, the model's on the left, both in the system's text face
+  (code, tool lines and numbers in the monospace); the thought folded with its length; each tool call one quiet line
+  that opens on its result; a **figure shown in place**, full screen when tapped; the agent's **question as a card**
+  whose options are buttons, with a line for an answer of the owner's own; the composer at the bottom with Send and
+  Stop; the Guide and the Context (§7) from the chat's menu. A figure is read from the workspace's folder only while
+  the owner looks at it, as §1 allows, and only an image the agent showed in that session.
+- **Asking before guessing**: Clank's instructions to every agent (`asking.md`) say to pin down a request that could
+  mean different things in one question with two to four options taken from the folder (the data, the variables, the
+  range, the kind of plot), before computing or plotting; not to ask when the request is clear; and to show a figure it
+  made with `show_files`, so it appears in the chat. A normal chat's model gets the same rule in its own words.

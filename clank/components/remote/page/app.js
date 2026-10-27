@@ -366,7 +366,7 @@ function openFlow(workspace, name) {
   state.place = { flow: { workspace, name }, from: state.place };
   state.flows.view = null;
   draw();
-  window.scrollTo(0, 0);
+  view.scrollTo(0, 0);
   loadFlow();
 }
 
@@ -715,7 +715,7 @@ function openSession(workspace, port, session, name) {
   state.place.parts = sessionParts(state.place);
   state.talk = emptyTalk();
   draw();
-  window.scrollTo(0, 0);
+  view.scrollTo(0, 0);
   followSession();
 }
 
@@ -964,12 +964,11 @@ function drawSession() {
   const waiting = state.overview ? waitingBoxes(state.overview, place.workspace) : [];
   if (waiting.length) shown.push(section("waiting for you", waiting.length), ...waiting);
   if (!shown.length) shown.push(el("div", { class: "empty" }, talk.conversation ? "No message yet." : "Connecting to the session…"));
-  const bottom = document.documentElement.scrollHeight - window.innerHeight;
-  const near = window.scrollY >= bottom - 120;
+  const near = view.scrollTop >= view.scrollHeight - view.clientHeight - 120;
   parts.thread.replaceChildren(...shown);
   if (talk.conversation && (place.stick || near)) {
     place.stick = false;
-    window.scrollTo(0, document.documentElement.scrollHeight);
+    view.scrollTop = view.scrollHeight;
   }
 }
 
@@ -1028,7 +1027,7 @@ function draw() {
 function openWorkspace(name) {
   state.place = { workspace: name, from: null };
   draw();
-  window.scrollTo(0, 0);
+  view.scrollTo(0, 0);
 }
 
 function pairView() {
@@ -1051,7 +1050,7 @@ function pairView() {
 function noticed(event) {
   if (!event.attention) return;
   attention.replaceChildren(el("span", { class: "what" }, event.title),
-    el("button", { onclick: () => { state.tab = "now"; state.place = null; attention.classList.add("hidden"); draw(); window.scrollTo(0, 0); } }, "Open"));
+    el("button", { onclick: () => { state.tab = "now"; state.place = null; attention.classList.add("hidden"); draw(); view.scrollTo(0, 0); } }, "Open"));
   attention.classList.remove("hidden");
   clearTimeout(noticed.timer);
   noticed.timer = setTimeout(() => attention.classList.add("hidden"), ATTENTION_SECONDS * 1000);
@@ -1067,7 +1066,11 @@ function stream(again = false) {
   source.addEventListener("open", () => {
     state.link.connected = true; state.link.failedSince = null; state.link.tries = 0; drawHeader();
   });
-  source.addEventListener("connected", () => { state.link.connected = true; draw(); });
+  source.addEventListener("connected", () => {
+    state.link.connected = true;
+    if (!state.overview) launchStep("Connected · waiting for the PC's first reading…");
+    draw();
+  });
   source.addEventListener("now", (message) => {
     state.overview = JSON.parse(message.data);
     state.link.connected = true; state.link.failedSince = null; state.link.tries = 0;
@@ -1099,9 +1102,53 @@ function stream(again = false) {
   });
 }
 
+// The column fills the screen by itself (style.css, the app shell); while the keyboard is up (a field has the focus and
+// the visible part is much shorter than the page) it follows the visible part instead, and the tab bar steps aside.
+function fitView() {
+  const seen = window.visualViewport;
+  const field = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  const up = Boolean(seen) && field && window.innerHeight - seen.height > 120;
+  const root = document.documentElement.style;
+  if (up) {
+    root.setProperty("--view-height", `${Math.round(seen.height)}px`);
+    root.setProperty("--view-top", `${Math.round(seen.offsetTop)}px`);
+  }
+  document.body.classList.toggle("keyboard", up);
+}
+
+// The launch screen (index.html) says what the app waits for: the step it is at, how long it has waited and, past a
+// few seconds, why it may be slow; under it the last known summary kept on the phone (names and numbers only).
+const launchedAt = Date.now();
+
+function launchStep(words) {
+  const step = document.getElementById("launch-step");
+  if (step) step.textContent = words;
+}
+
+function launchTick() {
+  const time = document.getElementById("launch-time");
+  if (!time) return;
+  const seconds = Math.floor((Date.now() - launchedAt) / 1000);
+  time.textContent = seconds < 3 ? "" : seconds < 12 ? `${seconds} s`
+    : `${seconds} s · the PC answers slowly: Clank's service may be busy reading the workspaces`;
+}
+
+function launchKnown() {
+  const launch = document.getElementById("launch");
+  const known = state.known;
+  if (!launch || !known || launch.querySelector(".known")) return;
+  launch.append(el("div", { class: "known" },
+    el("div", { class: "dim" }, `Last known · ${clock(known.at)}, ${ago(known.at)} ago`),
+    el("div", {}, known.model),
+    el("div", {}, `${known.waiting} waiting for you`),
+    ...known.working.map((line) => el("div", {}, line))));
+}
+
 async function start() {
   if (location.search.includes("claim=")) history.replaceState(null, "", location.pathname); // the claim is spent
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => { /* an older iOS: the app still runs */ });
+  launchStep("Reaching the PC through Tailscale…");
+  launchKnown();
   try {
     await api("api/me");
   } catch (error) {
@@ -1112,6 +1159,7 @@ async function start() {
     setTimeout(start, RECONNECT_SECONDS * 1000);
     return;
   }
+  launchStep("Paired · reading what runs on the PC…");
   tabs.classList.remove("hidden");
   stream();
 }
@@ -1128,7 +1176,7 @@ for (const button of tabs.querySelectorAll("button")) {
     state.tab = button.dataset.tab;
     state.place = null;
     draw();
-    window.scrollTo(0, 0);
+    view.scrollTo(0, 0);
     if (state.tab === "files") loadFiles();
     if (state.tab === "flows") loadFlows();
   });
@@ -1137,5 +1185,18 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") { if (!state.link.source) stream(); followSession(); }
   else { closeSession(); if (state.link.source) { state.link.source.close(); state.link.source = null; } }
 });
-setInterval(() => { if (!document.hidden) drawHeader(); if (!document.hidden && streamState(state.link, Date.now()).state !== "live") draw(); }, 1000);
+setInterval(() => {
+  if (document.hidden) return;
+  drawHeader();
+  if (!state.overview) launchTick();
+  if (streamState(state.link, Date.now()).state !== "live") draw();
+}, 1000);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", fitView);
+  window.visualViewport.addEventListener("scroll", fitView);
+}
+window.addEventListener("resize", fitView);
+document.addEventListener("focusin", fitView);
+document.addEventListener("focusout", () => setTimeout(fitView, 60));
+fitView();
 start();

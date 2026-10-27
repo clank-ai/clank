@@ -1,13 +1,16 @@
 """Design 0012 §6.1 and §11 step 5 (decision 0049): the service keeps a flow for every session its watchers see, in
 memory. A session joined mid-run is read from OpenCode's history, its earlier steps marked done before Clank watched
 (run against the fake OpenCode with the bridge on this machine, and read through the API, whole or what changed); a
-flow is read again after its server's instance ended; the gateway is asked for a session's requests after its steps
-change, and they are paired with its steps; the plan a session carries out is read from the workspace's folder, and
-again when the agent edits it; a subagent's flow tells its parent's what it says; only the newest flows of a
-workspace are kept. Design 0012 §9.4 (§11 step 11): a session whose request the gateway holds is asked again each
-round until it goes on, since no line comes while it is held.
+flow is read again after its server's instance ended, and after its watcher started again once that watcher synced;
+the gateway is asked for a session's requests after its steps change, and they are paired with its steps; the plan a
+session carries out is read from the workspace's folder, and again when the agent edits it; a subagent's flow tells
+its parent's what it says; only the newest flows of a workspace are kept. Design 0012 §9.4 (§11 step 11): a session
+whose request the gateway holds is asked again each round until it goes on, since no line comes while it is held. A
+flow whose server ended is not read (nor tried again) until a server answers on its port again or its session is heard
+again, and the log says once that the window closed; a reading that keeps failing is said once.
 """
 
+import logging
 import threading
 import time
 from collections.abc import Callable
@@ -23,6 +26,7 @@ from clank.client import Client
 from clank.components.agents.adapters.opencode import prompt
 from clank.components.agents.sessionflow import kept as kept_module
 from clank.components.agents.sessionflow.kept import SessionFlows
+from clank.components.agents.sessions import ServerGone
 from clank.kernel.api import create_app
 from clank.kernel.core import Kernel
 from tests.components.agents.test_monitor_sessions import (  # noqa: F401  (fixtures, found by their names)
@@ -46,26 +50,32 @@ class FakeSessions:
         self.heard: list[Callable[[str, dict[str, Any]], None]] = []
         self.read: list[tuple[int, str, str]] = []
         self.failing = 0  # how many pages fail before one is read, as a container gone or a refusal would
+        self.failure: Exception = RuntimeError("the bridge refused: the container is not running")  # how they fail
         self.reading: Callable[[str], None] = lambda session: None  # what happens while a page is read
+        self.running: int | None = 4096  # the server the watchers saw run every session (None: its server ended)
 
     def listen(self, heard: Callable[[str, dict[str, Any]], None]) -> None:
         self.heard.append(heard)
 
     def runs(self, workspace: str, session: str) -> int | None:
-        return 4096
+        return self.running
 
     def page(self, workspace: str, port: int, session: str, *, limit: int = 50, before: str = "") -> dict[str, Any]:
         self.read.append((port, session, before))
         self.reading(session)
         if self.failing:
             self.failing -= 1
-            raise RuntimeError("the bridge refused: the container is not running")
+            raise self.failure
         return self.pages.get(session, {"messages": [], "next": ""})
 
-    def say(self, events: list[dict[str, Any]]) -> None:
-        for line in lines(events):
-            for heard in self.heard:
-                heard(WORKSPACE, line)
+    def say(self, events: list[dict[str, Any]], port: int = 4096) -> None:
+        for line in lines(events, port):
+            self.tell(line)
+
+    def tell(self, line: dict[str, Any]) -> None:
+        """One line of the watcher's own (`started`, `synced`, `gone`, `server`), as the keeper hears it."""
+        for heard in self.heard:
+            heard(WORKSPACE, line)
 
 
 def keeper(sessions: FakeSessions, asked: list[str] | None = None, found: dict[str, Any] | None = None,
@@ -137,10 +147,12 @@ def test_a_flow_is_read_again_after_its_servers_instance_ended() -> None:
     assert found is not None
     steps = {node["id"]: node["before"] for node in found["nodes"] if node["kind"] == "step"}
     assert steps == {"msg_02": True, "msg_03": True, "msg_05": False}, "what the instance missed is not 'before'"
-    for heard in sessions.heard:
-        heard(WORKSPACE, {"type": "started"})
+    sessions.tell({"type": "started"})
     flows.work()
-    assert len(sessions.read) == 3, "a watcher started again: read again"
+    assert len(sessions.read) == 2, "a watcher started again: it reads nothing before it synced"
+    sessions.tell({"type": "synced", "ports": [4096]})
+    flows.work()
+    assert len(sessions.read) == 3, "synced: read again"
 
 
 def befores(flows: SessionFlows) -> dict[str, bool]:
@@ -181,10 +193,116 @@ def test_a_watcher_started_again_leaves_a_new_flows_first_reading_its_own() -> N
     sessions = FakeSessions({SESSION: page(history())})
     flows = keeper(sessions)
     sessions.say([status("busy")])
-    for heard in sessions.heard:
-        heard(WORKSPACE, {"type": "started"})
+    sessions.tell({"type": "started"})
+    sessions.tell({"type": "synced", "ports": [4096]})
     flows.work()
     assert befores(flows) == {"msg_02": True, "msg_03": True, "msg_05": False}
+
+
+def closed(caplog: pytest.LogCaptureFixture) -> list[str]:
+    """What the keeper said of windows that closed."""
+    return [record.getMessage() for record in caplog.records if "closed" in record.getMessage()]
+
+
+def test_a_flow_whose_server_ended_is_read_no_more_until_its_server_is_back_and_that_is_said_once(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """On the owner's machine, 2026-10-26: the histories of two sessions whose OpenCode had ended were asked for more
+    than a thousand times in a day, each refusal logged ("Connection refused")."""
+    now = [100.0]
+    monkeypatch.setattr(kept_module, "monotonic", lambda: now[0])
+    sessions = FakeSessions({SESSION: page(history())})
+    sessions.failing = 1  # its server ends as it is first read
+    flows = keeper(sessions)
+    sessions.say([status("busy")])
+    with caplog.at_level(logging.WARNING, logger=kept_module.__name__):
+        flows.work()
+        assert len(sessions.read) == 1
+        sessions.running = None  # the watchers saw its server end
+        sessions.tell({"type": "gone", "port": 4096})
+        for _ in range(5):
+            now[0] += kept_module.RETRY_MOST
+            flows.work()
+        assert len(sessions.read) == 1, "nothing to read it from: not tried again"
+        sessions.tell({"type": "gone", "port": 4096})
+        sessions.tell({"type": "started"})
+        sessions.tell({"type": "synced", "ports": []})
+        flows.work()
+    assert len(sessions.read) == 1
+    assert closed(caplog) == ["the OpenCode window of paper on port 4096 closed: its sessions are kept as they were"]
+    sessions.tell({"type": "server", "port": 4096, "terminal": True})  # a window answers on its port again
+    flows.work()
+    assert len(sessions.read) == 2, "read once a server answers there again"
+    assert befores(flows) == {"msg_02": True, "msg_03": True, "msg_05": False}, "still its first reading"
+
+
+def test_a_watcher_started_again_reads_its_flows_once_it_synced_and_sets_aside_those_whose_server_ended(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    sessions = FakeSessions()
+    sessions.running = None  # each flow is read from the server its lines came from
+    flows = keeper(sessions)
+    sessions.say([status("busy")])
+    sessions.say([status("idle", session="ses_other")], port=4097)
+    flows.work()
+    assert sorted((port, session) for port, session, _ in sessions.read) == [(4096, SESSION), (4097, "ses_other")]
+    with caplog.at_level(logging.WARNING, logger=kept_module.__name__):
+        sessions.tell({"type": "started"})
+        flows.work()
+        assert len(sessions.read) == 2, "nothing read before the watcher synced"
+        sessions.tell({"type": "synced", "ports": [4096]})
+        flows.work()
+        flows.work()
+    assert sessions.read[2:] == [(4096, SESSION, "")], "the server that still runs: read again; the other: not"
+    assert closed(caplog) == ["the OpenCode window of paper on port 4097 closed: its sessions are kept as they were"]
+    sessions.say([status("busy", session="ses_other")], port=4098)  # its session goes on in another window
+    flows.work()
+    assert sessions.read[3:] == [(4098, "ses_other", "")], "heard again: read again, from where it runs now"
+
+
+def test_a_reading_that_finds_its_server_gone_is_not_tried_again_until_the_server_is_back(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    now = [100.0]
+    monkeypatch.setattr(kept_module, "monotonic", lambda: now[0])
+    sessions = FakeSessions({SESSION: page(history())})
+    sessions.failing = 1
+    sessions.failure = ServerGone("no OpenCode runs on port 4096 any more: it was closed or it ended")
+    flows = keeper(sessions)
+    sessions.say([status("busy")])
+    with caplog.at_level(logging.WARNING, logger=kept_module.__name__):
+        flows.work()
+        for _ in range(3):
+            now[0] += kept_module.RETRY_MOST
+            flows.work()
+    assert len(sessions.read) == 1, "the bridge said its server is gone: not tried again"
+    assert closed(caplog) == ["the OpenCode window of paper on port 4096 closed: its sessions are kept as they were"]
+    assert not [record for record in caplog.records if "could not be read" in record.getMessage()]
+    sessions.say([status("busy")])  # its server speaks again
+    flows.work()
+    assert len(sessions.read) == 2
+    assert befores(flows) == {"msg_02": True, "msg_03": True, "msg_05": False}
+
+
+def test_a_reading_that_keeps_failing_is_said_once_until_it_is_read(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    now = [100.0]
+    monkeypatch.setattr(kept_module, "monotonic", lambda: now[0])
+    sessions = FakeSessions({SESSION: page(history())})
+    sessions.failing = 4
+    flows = keeper(sessions)
+    sessions.say([status("busy")])
+    with caplog.at_level(logging.WARNING, logger=kept_module.__name__):
+        for _ in range(6):
+            flows.work()
+            now[0] += kept_module.RETRY_MOST
+    assert len(sessions.read) == 5, "tried again after each wait, then read"
+    said = [record.getMessage() for record in caplog.records]
+    assert said == [
+        "the history of ses_plan in paper could not be read: the bridge refused: the container is not running "
+        "(tried again, a little later each time)"
+    ]
 
 
 def test_a_round_reads_a_few_flows_and_stops_between_them_when_the_service_stops() -> None:

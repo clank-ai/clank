@@ -1668,8 +1668,10 @@ def main(argv: list[str] | None = None) -> int:
         agents=agents,
         proxy=proxy,
     )
+    from clank.kernel.accepting import keep_accepting
     from clank.kernel.service import server_config
 
+    keep_accepting()  # a client dropped while it is accepted never closes the gateway's socket (Windows)
     uvicorn.Server(server_config(app, "127.0.0.1", port)).run()
     stop.set()
     return 0

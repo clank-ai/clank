@@ -3,7 +3,8 @@ newest line counting; an engine that does not say it gives nothing. The runtime 
 a slot, and a slot never launched has none. `GET /agents/readout?folder=` composes, for the folder's workspace, its
 newest kept session (or the one named) with that session's `now` and context totals, the main slot (its state, its
 preset and title, and the options that change its speed), the GPU's newest meter and the drafts; a folder with no
-workspace, or a workspace with no session yet, answers what there is. Its jobs running (design 0021 §6) come with it."""
+workspace, or a workspace with no session yet, answers what there is. Its jobs running (design 0021 §6) come with it; a
+workspace removed while its readout is read answers what there is, without jobs."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -17,6 +18,7 @@ from clank.components.agents.service import Agents
 from clank.components.runtime.adapters.kvmem import KvmemLlamacpp
 from clank.components.runtime.adapters.llamacpp import LlamaCpp
 from clank.components.workspaces import service as workspaces_service
+from clank.components.workspaces.service import WorkspaceUnavailable
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
 from clank.kernel.core import Kernel, open_kernel
@@ -122,3 +124,32 @@ def test_the_readout_composes_the_folders_newest_session_its_now_its_context_the
     assert (nowhere["session"], nowhere["now"], nowhere["context"]) == (None, None, None)
     assert nowhere["slot"]["status"] == "ready", "the machine's figures whatever the folder"
     assert nowhere["jobs"] == []
+
+
+def test_a_workspace_removed_while_its_readout_is_read_answers_what_there_is_without_jobs(
+    kernel: Kernel, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The owner's log, 2026-10-26: a workspace removed while VS Code read its readout (an end-to-end run's) raised
+    from its jobs, and the route answered 500 with a traceback in the service's log."""
+    folder = tmp_path / "paper"
+    folder.mkdir()
+    kernel.settings.write("workspace", "paper", {"path": str(folder)}, base=None, actor=YOU)
+    log = tmp_path / "main-1.log"
+    log.write_text("\n".join(LOG) + "\n", encoding="utf-8")
+    launched(kernel, log)
+    agents: Agents = kernel.parts["agents"]
+    monkeypatch.setattr(agents, "now", lambda workspace, session: None)
+    monkeypatch.setattr(agents, "context", lambda workspace, session: None)
+
+    def removed(workspace: str) -> str:
+        raise WorkspaceUnavailable(f"there is no workspace {workspace!r}: `clank workspace open` makes one")
+
+    monkeypatch.setattr(kernel.parts["workspaces"], "folder_of", removed)
+    with TestClient(create_app(kernel, token="t", port=7727), base_url="http://127.0.0.1:7727") as client:
+        answer = client.get(
+            "/api/v1/agents/readout", params={"folder": str(folder)}, headers={"Authorization": "Bearer t"}
+        )
+    assert answer.status_code == 200
+    found = answer.json()
+    assert (found["workspace"], found["jobs"]) == ("paper", [])
+    assert found["slot"]["status"] == "ready", "the rest as it is"
