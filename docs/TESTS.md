@@ -150,7 +150,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | What the owner does | none yet |
 | 2 | Reaching OpenCode in a workspace: the session bridge | `tests/components/agents/test_sessions.py` (14) |
 | 3 | Files for the phone: the agent's outbox | none yet |
-| 4 | The phone page and who may reach it | `tests/components/remote/test_phone.py` (9), `tests/components/remote/test_phone_flows.py` (9) |
+| 4 | The phone page and who may reach it | `tests/components/remote/test_phone.py` (10), `tests/components/remote/test_phone_flows.py` (9) |
 | 5 | The console's Phone page | `tests/components/remote/test_phone_page.py` (2) |
 | 6 | What waits | `tests/components/remote/test_phone_marks.py` (4) |
 
@@ -2603,6 +2603,7 @@ Design 0005 §4 (decision 0012): who may reach the phone page, pairing, and what
 - a pairing code canceled on the computer no longer pairs
 - wrong codes are counted and an expired code does not pair
 - a paired device sees the model the workspaces and the files sent
+- the overview reads every running workspaces sessions at once
 - every exchange with a device is kept whole and shown to it and to the computer
 - tailscale says this machines name and user or why not
 - remote access is off until turned on and a code comes with the pages address
