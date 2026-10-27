@@ -3,7 +3,7 @@
 // the files) goes to the network only, never kept. Notifications come with a later step (design 0025 §4).
 "use strict";
 
-const SHELL = "clank-shell-v2";
+const SHELL = "clank-shell-v3";
 const FILES = ["./", "app.js", "model.mjs", "style.css", "icon.svg", "icon-180.png", "manifest.webmanifest"];
 const PAGE = "./"; // the page is served at the app's root: a launch with no network gets it from here
 

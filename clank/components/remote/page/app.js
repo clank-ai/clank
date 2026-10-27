@@ -48,6 +48,12 @@ function el(tag, props = {}, ...children) {
   return node;
 }
 
+// A node's children replaced by those given, leaving out the empty ones: replaceChildren writes null as the text
+// "null" (the Now screen showed it under the header).
+function fill(node, ...children) {
+  node.replaceChildren(...children.flat().filter((child) => child !== null && child !== undefined && child !== false));
+}
+
 function say(text, ok = false) {
   toast.textContent = text;
   toast.className = `toast ${ok ? "ok" : ""}`;
@@ -956,7 +962,7 @@ function drawSession() {
   const share = shareWords((talk.readout || {}).context) || (place.context ? shareWords(place.context) : "");
   parts.context.textContent = share ? `Context ${share}` : "Context";
   parts.sheet.classList.toggle("hidden", !place.sheet);
-  if (place.sheet) parts.sheet.replaceChildren(...(place.sheet === "guide" ? guideSheet(place) : contextSheet(place)));
+  if (place.sheet) fill(parts.sheet, place.sheet === "guide" ? guideSheet(place) : contextSheet(place));
   if (!view.contains(parts.composer)) view.replaceChildren(parts.head, parts.thread, parts.composer, parts.sheet);
   const typing = parts.thread.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
   if (typing) return;
@@ -965,7 +971,7 @@ function drawSession() {
   if (waiting.length) shown.push(section("waiting for you", waiting.length), ...waiting);
   if (!shown.length) shown.push(el("div", { class: "empty" }, talk.conversation ? "No message yet." : "Connecting to the session…"));
   const near = view.scrollTop >= view.scrollHeight - view.clientHeight - 120;
-  parts.thread.replaceChildren(...shown);
+  fill(parts.thread, shown);
   if (talk.conversation && (place.stick || near)) {
     place.stick = false;
     view.scrollTop = view.scrollHeight;
@@ -1021,7 +1027,7 @@ function draw() {
     : place && place.flow ? flowScreen(state.overview)
     : place ? workspaceView(state.overview) : state.tab === "flows" ? flowsView(state.overview) : state.tab === "work" ? workView(state.overview)
     : state.tab === "files" ? filesView() : state.tab === "more" ? moreView() : nowView(state.overview);
-  view.replaceChildren(paused, ...parts);
+  fill(view, paused, parts);
 }
 
 function openWorkspace(name) {
