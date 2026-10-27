@@ -69,6 +69,9 @@ From the owner's first full day of use and an end-to-end test of a new user's fi
 - Scientific Python in the sandbox image; Clank's programs mounted read-only into each container instead of copied.
 - The agent is told to ask one short question with options when a request could mean different things, and to show a
   figure it made.
+- The phone app looks as its design drew it (and as the website shows it): rounded cards and buttons, the first answer
+  filled, the tab on screen in blue, its quieter words readable on every ground (WCAG AA), and its buttons' words
+  capitalized like every other client's.
 
 ## 0.3.0b1: the first public beta (2026-10-21)
 

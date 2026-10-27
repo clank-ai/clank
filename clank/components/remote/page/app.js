@@ -172,7 +172,7 @@ function flowBox(question) {
     return el("div", {},
       el("div", { class: "btns" },
         el("span", {}, file.path, el("span", { class: "dim" }, file.box ? ` · from ${file.box}${tries}` : "")),
-        el("button", { class: "btn small", onclick: () => read(index) }, shown ? "hide" : "read")),
+        el("button", { class: "btn small", onclick: () => read(index) }, shown ? "Hide" : "Read")),
       text || null);
   });
   let note = null;
@@ -215,7 +215,7 @@ function markBox(mark) {
         try { await api("api/marks/seen", { ids: [mark.id] }); say("seen", true); }
         catch (error) { say(error.message); }
       },
-    }, "seen")));
+    }, "Seen")));
 }
 
 // What waits: OpenCode's permissions and questions (in one workspace, or in all), the Monitor's marks told to the phone,
@@ -236,9 +236,9 @@ function waitingBoxes(overview, only = null) {
           (asked.patterns || []).length ? el("div", { class: "dim" }, asked.patterns.join(", ")) : null,
           diff ? el("pre", {}, diff) : null,
           el("div", { class: "btns" },
-            el("button", { class: "btn ok", onclick: reply("once") }, "allow once"),
-            el("button", { class: "btn", onclick: reply("always") }, "always"),
-            el("button", { class: "btn no", onclick: reply("reject") }, "reject"))));
+            el("button", { class: "btn ok", onclick: reply("once") }, "Allow once"),
+            el("button", { class: "btn", onclick: reply("always") }, "Always"),
+            el("button", { class: "btn no", onclick: reply("reject") }, "Reject"))));
       }
       for (const asked of server.questions) {
         const answers = asked.questions.map(() => []);
@@ -253,7 +253,7 @@ function waitingBoxes(overview, only = null) {
           question.custom === false ? null : el("input", { placeholder: "or your own answer",
             oninput: (event) => { answers[index] = event.target.value ? [event.target.value] : []; } })));
         boxes.push(el("div", { class: "box waiting" }, el("div", { class: "head" }, `${workspace.name} · asks`), blocks,
-          el("div", { class: "btns" }, el("button", { class: "btn go", onclick: send }, "send the answer"))));
+          el("div", { class: "btns" }, el("button", { class: "btn go", onclick: send }, "Send the answer"))));
       }
     }
   }
@@ -309,7 +309,7 @@ function taskBox(workspaces) {
         openSession(workspace, started.port, started.session, "From the phone");
       } catch (error) { say(error.message); }
     },
-  }, running.length > 1 ? "start" : `start in ${running[0].name}`)));
+  }, running.length > 1 ? "Start" : `Start in ${running[0].name}`)));
 }
 
 // Now (design 0025 §5): the model and the machine, what waits for you, what works now.
@@ -405,7 +405,7 @@ function flowRow(line) {
 function buildBox(overview) {
   const flows = state.flows;
   const running = overview.workspaces.filter((workspace) => workspace.state === "running" && !workspace.problem);
-  const close = el("button", { class: "btn small", onclick: () => { flows.building = false; draw(); } }, "cancel");
+  const close = el("button", { class: "btn small", onclick: () => { flows.building = false; draw(); } }, "Cancel");
   if (!flows.building) {
     return el("div", { class: "btns" },
       el("button", { class: "btn go", onclick: () => { flows.building = true; draw(); } }, "Build a flow"));
@@ -430,7 +430,7 @@ function buildBox(overview) {
             : "planning opened in Clank's VS Code window on the PC", true);
           loadFlows();
         } catch (error) { say(error.message); }
-      } }, "open the planning"), close));
+      } }, "Open the planning"), close));
 }
 
 // A flow (design 0025 §6): its run's words and the controls its state allows, what it waits for, its planning while it
@@ -512,7 +512,7 @@ function planningParts(planning) {
       step.at ? el("span", { class: "dim" }, ` · ${ago(step.at)} ago`) : null))),
     planning.session ? el("div", { class: "btns" }, el("button", { class: "btn small",
       onclick: () => openSession(planning.session.workspace, planning.session.port, planning.session.session, planning.title),
-    }, "its session")) : null)];
+    }, "Its session")) : null)];
 }
 
 // The proposals of the run's batch (design 0013 §9): each with Accept and Reject while it waits; all at once.
@@ -628,7 +628,7 @@ function bodyText(value) {
 function logView() {
   const parts = [section("this phone and the PC", state.log.items.length),
     el("div", { class: "dim" }, "Everything this phone asked and was sent, newest first. Tap one to see it whole."),
-    el("div", { class: "btns" }, el("button", { class: "btn small", onclick: loadLog }, "read again"))];
+    el("div", { class: "btns" }, el("button", { class: "btn small", onclick: loadLog }, "Read again"))];
   for (const item of state.log.items) {
     const ok = item.status < 300;
     parts.push(row({
@@ -673,7 +673,7 @@ function moreView() {
     section("this phone"),
     el("div", { class: "btns" }, el("button", { class: "btn no", onclick: async () => {
       try { await api("api/signout", {}); location.reload(); } catch (error) { say(error.message); }
-    } }, "sign out: this phone forgets its pairing")),
+    } }, "Sign out: this phone forgets its pairing")),
   ];
 }
 
@@ -708,8 +708,8 @@ function sessionParts(place) {
         drawSession();
       }
     },
-  }, "send");
-  const stop = el("button", { class: "btn no hidden", onclick: () => guideAct(place, { action: "stop", title: "Stop", confirm: false }) }, "stop");
+  }, "Send");
+  const stop = el("button", { class: "btn no hidden", onclick: () => guideAct(place, { action: "stop", title: "Stop", confirm: false }) }, "Stop");
   const guide = el("button", { class: "btn", onclick: () => openSheet(place, "guide") }, "Guide");
   const context = el("button", { class: "btn", onclick: () => openSheet(place, "context") }, "Context");
   return { head: el("div"), thread: el("div"), text, stop, context, sheet: el("div", { class: "sheet hidden" }),
@@ -842,7 +842,7 @@ function stateWords(found) {
 // costs; disabled with why when it cannot run now; its last run's state under it.
 function guideSheet(place) {
   const guide = place.guide;
-  const parts = [el("div", { class: "sheet-head" }, el("span", {}, "the Guide"), el("button", { class: "btn small", onclick: () => openSheet(place, null) }, "close"))];
+  const parts = [el("div", { class: "sheet-head" }, el("span", {}, "the Guide"), el("button", { class: "btn small", onclick: () => openSheet(place, null) }, "Close"))];
   if (!guide) return [...parts, el("div", { class: "empty" }, "Reading…")];
   if (guide.missing) return [...parts, el("div", { class: "empty" }, guide.missing)];
   for (const action of guide.actions) {
@@ -857,7 +857,7 @@ function guideSheet(place) {
       action.cost && action.cost.words ? el("div", { class: "dim" }, action.cost.words) : null,
       last ? el("div", { class: "dim" }, `last: ${last}`) : null));
   }
-  parts.push(el("div", { class: "btns" }, el("button", { class: "btn small", onclick: () => loadGuide(place) }, "read again")));
+  parts.push(el("div", { class: "btns" }, el("button", { class: "btn small", onclick: () => loadGuide(place) }, "Read again")));
   return parts;
 }
 
@@ -865,7 +865,7 @@ function guideSheet(place) {
 // (each part's share), the biggest items with Drop for a finished call's result.
 function contextSheet(place) {
   const context = place.context;
-  const parts = [el("div", { class: "sheet-head" }, el("span", {}, "the context"), el("button", { class: "btn small", onclick: () => openSheet(place, null) }, "close"))];
+  const parts = [el("div", { class: "sheet-head" }, el("span", {}, "the context"), el("button", { class: "btn small", onclick: () => openSheet(place, null) }, "Close"))];
   if (!context) return [...parts, el("div", { class: "empty" }, "Reading…")];
   if (context.missing) return [...parts, el("div", { class: "empty" }, context.missing)];
   const window_ = context.window;
@@ -1050,7 +1050,7 @@ function pairView() {
         try { await api("api/pair", { code: code.value }); say("paired", true); start(); }
         catch (error) { say(error.message); }
       },
-    }, "pair"))));
+    }, "Pair"))));
 }
 
 // An event that asks for attention shows as a line under the header while it is fresh; Open goes to Now.

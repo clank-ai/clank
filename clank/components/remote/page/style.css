@@ -1,9 +1,12 @@
 /* Clank's phone page (design 0005 §4): the console's look on a phone: monospace, dark, thin rules, rows to tap; nothing
-   fetched from elsewhere. */
+   fetched from elsewhere. Its cards, buttons and tabs as the app's canvas drew them (design 0025; the website's iPhone):
+   rounded, the first answer filled, the tab shown in the accent. Each text color reads at WCAG AA on each of its grounds
+   (design 0027 §5); a control's edge is `--edge`, a row's rule `--line`. */
 :root {
-  --bg: #1a1b26; --deep: #16161e; --raised: #1f2335; --line: #292e42;
-  --text: #c0caf5; --muted: #a9b1d6; --dim: #646c94;
+  --bg: #1a1b26; --deep: #16161e; --raised: #1f2335; --line: #292e42; --edge: #3b4261;
+  --text: #c0caf5; --muted: #a9b1d6; --dim: #8a93bc;
   --accent: #7aa2f7; --brand: #ff9e64; --good: #9ece6a; --warn: #e0af68; --bad: #f7768e; --you: #7dcfff; --agent: #bb9af7;
+  --radius: 8px; --radius-small: 6px;
   --bar: 52px;
 }
 * { box-sizing: border-box; }
@@ -52,30 +55,33 @@ a.row { color: inherit; text-decoration: none; }
 .dim { color: var(--dim); } .muted { color: var(--muted); } .acc { color: var(--accent); }
 .empty { color: var(--dim); padding: 10px 2px; }
 
-.box { border: 1px solid var(--line); padding: 8px 10px; margin: 8px 0; }
+.box { border: 1px solid var(--edge); border-radius: var(--radius); padding: 10px 12px; margin: 8px 0; }
 .box.waiting { border-color: var(--warn); }
 .box .head { color: var(--warn); }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .btn {
-  background: var(--deep); color: var(--text); border: 1px solid var(--line); padding: 8px 12px; min-height: 40px;
-  border-radius: 0;
+  background: var(--raised); color: var(--text); border: 1px solid var(--edge); padding: 8px 12px; min-height: 40px;
+  border-radius: var(--radius-small); -webkit-tap-highlight-color: transparent;
 }
-.btn.ok { border-color: var(--good); color: var(--good); }
-.btn.no { border-color: var(--bad); color: var(--bad); }
-.btn.go { background: var(--accent); border-color: var(--accent); color: var(--deep); font-weight: 700; }
+.btn:active { filter: brightness(1.15); }
+.btn.ok, .btn.go { background: var(--accent); border-color: var(--accent); color: var(--deep); font-weight: 700; }
+.btn.no { background: transparent; border-color: var(--bad); color: var(--bad); }
 .btn.small { padding: 6px 10px; min-height: 34px; }
+.btn[disabled] { opacity: 0.5; }
 
 pre {
-  margin: 6px 0 0; padding: 8px; background: var(--deep); border: 1px solid var(--line); max-height: 260px;
+  margin: 6px 0 0; padding: 8px; background: var(--deep); border: 1px solid var(--line); border-radius: var(--radius-small);
+  max-height: 260px;
   overflow: auto; white-space: pre-wrap; word-break: break-word; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace;
 }
 code { color: var(--you); }
 textarea, input, select {
-  width: 100%; font: inherit; color: var(--text); background: var(--deep); border: 1px solid var(--line);
-  padding: 8px; border-radius: 0;
+  width: 100%; font: inherit; color: var(--text); background: var(--deep); border: 1px solid var(--edge);
+  padding: 8px; border-radius: var(--radius-small);
 }
 textarea { min-height: 60px; resize: vertical; }
-textarea:focus, input:focus, select:focus { outline: 1px solid var(--accent); }
+textarea::placeholder, input::placeholder { color: var(--dim); }
+textarea:focus, input:focus, select:focus { outline: none; border-color: var(--accent); }
 .task { display: grid; gap: 6px; margin-top: 6px; }
 
 .msg { padding: 8px 0; border-bottom: 1px dashed var(--line); }
@@ -94,14 +100,20 @@ textarea:focus, input:focus, select:focus { outline: 1px solid var(--accent); }
 }
 
 .files { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 8px; }
-.file { border: 1px solid var(--line); color: var(--text); text-decoration: none; display: grid; }
+.file {
+  border: 1px solid var(--edge); border-radius: var(--radius); overflow: hidden; color: var(--text); text-decoration: none;
+  display: grid;
+}
 .file img { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; background: #fff; }
 .file .doc { display: grid; place-items: center; aspect-ratio: 4 / 3; color: var(--dim); }
 .file .cap {
   padding: 6px 8px; font-size: 12px; overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden;
 }
-.thumb { flex: none; width: 52px; height: 39px; object-fit: contain; background: #fff; border: 1px solid var(--line); }
+.thumb {
+  flex: none; width: 52px; height: 39px; object-fit: contain; background: #fff; border: 1px solid var(--line);
+  border-radius: 4px;
+}
 .thumb.doc { display: grid; place-items: center; background: var(--deep); color: var(--dim); font-size: 12px; }
 .gauge { letter-spacing: -1px; }
 .gauge .rest { color: var(--line); }
@@ -111,14 +123,14 @@ textarea:focus, input:focus, select:focus { outline: 1px solid var(--accent); }
   height: calc(var(--bar) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
   background: var(--deep); border-top: 1px solid var(--line);
 }
-.tabs button { flex: 1; background: none; border: 0; color: var(--muted); }
-.tabs button.on { background: var(--accent); color: var(--deep); font-weight: 700; }
+.tabs button { flex: 1; background: none; border: 0; color: var(--muted); -webkit-tap-highlight-color: transparent; }
+.tabs button.on { color: var(--accent); font-weight: 700; box-shadow: inset 0 2px 0 var(--accent); }
 .count { margin-left: 4px; color: var(--warn); }
-.tabs button.on .count { color: var(--deep); }
 
 .toast {
   position: fixed; left: 12px; right: 12px; bottom: calc(var(--bar) + 8px + env(safe-area-inset-bottom)); z-index: 5;
-  background: var(--bad); color: var(--deep); padding: 10px 12px; font-weight: 700;
+  background: var(--bad); color: var(--deep); padding: 10px 12px; font-weight: 700; border-radius: var(--radius);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
 }
 .toast.ok { background: var(--good); }
 .center { padding: 28px 4px; display: grid; gap: 12px; }
@@ -132,10 +144,10 @@ textarea:focus, input:focus, select:focus { outline: 1px solid var(--accent); }
 .hero .doing { color: var(--muted); }
 .hero .doing .acc { font-weight: 700; }
 .gauges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 6px 0 2px; }
-.gauge-tile { border: 1px solid var(--line); padding: 6px 8px; display: grid; gap: 2px; }
+.gauge-tile { border: 1px solid var(--line); border-radius: var(--radius-small); padding: 6px 8px; display: grid; gap: 2px; }
 .gauge-tile .k { color: var(--dim); font-size: 11px; }
 .gauge-tile .v { font-weight: 700; }
-.gauge-tile .bar { height: 3px; background: var(--line); }
+.gauge-tile .bar { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
 .gauge-tile .bar i { display: block; height: 100%; background: var(--accent); }
 .gauge-tile .bar i.warn { background: var(--warn); } .gauge-tile .bar i.bad { background: var(--bad); }
 .attention {
@@ -143,7 +155,9 @@ textarea:focus, input:focus, select:focus { outline: 1px solid var(--accent); }
   padding: 6px 12px; background: var(--raised); border-bottom: 1px solid var(--warn); color: var(--text); font-size: 13px;
 }
 .attention .what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.attention button { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 2px 8px; }
+.attention button {
+  background: none; border: 1px solid var(--accent); border-radius: var(--radius-small); color: var(--accent); padding: 2px 8px;
+}
 .paused { color: var(--warn); font-size: 12px; padding: 4px 2px 0; }
 main.stale > *:not(.paused) { opacity: 0.55; }
 /* The header's word for the stream (linkBadge in model.mjs), in classes of its own: the bare `offline` is the
@@ -153,11 +167,14 @@ main.stale > *:not(.paused) { opacity: 0.55; }
 .offline { padding: 16px 4px; display: grid; gap: 10px; }
 .offline h2 { margin: 0; font-size: 16px; color: var(--bad); }
 .offline .why { color: var(--muted); }
-.offline .known { border: 1px solid var(--line); padding: 8px 10px; display: grid; gap: 2px; }
+.offline .known { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; display: grid; gap: 2px; }
 .launch .dim { font-size: 13px; }
 /* The Flows tab (design 0025 §6): the filters, a planning's steps, the running box open under its row. */
 .chips { display: flex; gap: 6px; margin: 8px 0 2px; flex-wrap: wrap; }
-.chip { background: var(--deep); border: 1px solid var(--line); color: var(--muted); padding: 4px 10px; font-size: 12px; }
+.chip {
+  background: var(--raised); border: 1px solid var(--edge); border-radius: var(--radius-small); color: var(--muted);
+  padding: 4px 10px; font-size: 12px;
+}
 .chip.on { background: var(--accent); border-color: var(--accent); color: var(--deep); font-weight: 700; }
 .steps { display: grid; gap: 2px; font-size: 12px; margin-top: 4px; }
 .step { overflow-wrap: anywhere; }
@@ -170,18 +187,19 @@ main.stale > *:not(.paused) { opacity: 0.55; }
    block there; the header's are .link-* now). */
 .live-mark {
   margin-left: 1ch; padding: 0 5px; font-size: 10px; font-weight: 700; color: var(--deep); background: var(--good);
-  vertical-align: middle;
+  border-radius: 3px; vertical-align: middle;
 }
 .sheet {
   position: fixed; left: 0; right: 0; bottom: calc(var(--bar) + env(safe-area-inset-bottom)); z-index: 4; max-height: 70vh;
-  overflow: auto; padding: 8px 12px 12px; background: var(--raised); border-top: 1px solid var(--accent);
+  overflow: auto; padding: 10px 12px 12px; background: var(--raised); border-top: 1px solid var(--accent);
+  border-radius: 12px 12px 0 0; box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
 }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; color: var(--accent); font-weight: 700; }
 .action { padding: 6px 0; border-bottom: 1px solid var(--line); }
 .action .btns { align-items: center; margin-top: 0; }
 .action.off .muted { color: var(--dim); }
 .action .btn[disabled] { opacity: 0.5; }
-.bar.wide { height: 6px; background: var(--line); margin: 4px 0 8px; }
+.bar.wide { height: 6px; background: var(--line); margin: 4px 0 8px; border-radius: 3px; overflow: hidden; }
 .bar.wide i { display: block; height: 100%; background: var(--accent); }
 .bar.wide i.warn { background: var(--warn); } .bar.wide i.bad { background: var(--bad); }
 .share { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 1ch; padding: 3px 0; font-size: 12px; }
@@ -209,7 +227,10 @@ body.keyboard .toast { bottom: 8px; }
 /* The launch screen: a ring that turns while the app reaches the PC, the step it is at, how long it has waited. */
 .launch { justify-items: center; text-align: center; padding-top: 16vh; }
 .launch .step { color: var(--text); }
-.launch .known { text-align: left; width: 100%; border: 1px solid var(--line); padding: 8px 10px; display: grid; gap: 2px; }
+.launch .known {
+  text-align: left; width: 100%; border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px;
+  display: grid; gap: 2px;
+}
 .spinner {
   width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--brand);
   animation: turn 0.9s linear infinite;
