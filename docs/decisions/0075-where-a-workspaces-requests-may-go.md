@@ -3,7 +3,9 @@
 - Status: Proposed: the owner chooses; for cloud models, answered by the owner's decision
   [0103](0103-the-cloud-is-agreed-once-and-asked-once-per-workspace.md) (per workspace, asked once; Notion never),
   built as decisions [0111](0111-local-only-content-is-kept-from-the-cloud-in-four-places.md) and
-  [0112](0112-a-workspace-is-asked-before-its-agent-starts-and-at-the-gateway.md) say
+  [0112](0112-a-workspace-is-asked-before-its-agent-starts-and-at-the-gateway.md) say; refined by
+  [0147](0147-the-gateway-answers-clanks-programs-and-each-agent-for-its-own-workspace.md) (every workspace's key
+  made, a cloud provider agreed or not, and the agent's calls bound to it)
 - Date: 2026-10-18
 - Decided by: not yet: the owner answers the question below; Claude recommends. Written with
   [design 0015](../design/0015-endpoints.md) §10, and revised after its review of 2026-10-19

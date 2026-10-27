@@ -82,7 +82,7 @@ and use the template below.
 | [0072](0072-the-tunnel-is-openssh-with-a-config-clank-writes.md) | The tunnel is the owner's own OpenSSH, run with a configuration file Clank writes | Proposed | 2026-10-18 |
 | [0073](0073-how-the-gateway-gets-an-endpoints-key.md) | How the gateway gets an endpoint's key: a process token, or the gateway reading the key's file | Proposed: the owner chooses; for cloud keys, 0106 proposes a third way | 2026-10-18 |
 | [0074](0074-thinking-streamed-as-reasoning-is-read-too.md) | Thinking streamed as `reasoning` is read like `reasoning_content`; the stream reaches the tool unchanged | Proposed | 2026-10-18 |
-| [0075](0075-where-a-workspaces-requests-may-go.md) | A workspace's requests stay on this machine until the owner widens its bound; each workspace has its own key, and each route a container reaches has its rule | Proposed: the owner chooses; for cloud models, answered by the owner's 0103 | 2026-10-18 |
+| [0075](0075-where-a-workspaces-requests-may-go.md) | A workspace's requests stay on this machine until the owner widens its bound; each workspace has its own key, and each route a container reaches has its rule | Proposed: the owner chooses; for cloud models, answered by the owner's 0103; its keys made for every workspace by 0147 | 2026-10-18 |
 | [0076](0076-an-endpoints-check-connects.md) | An endpoint's check connects: on a tunnel of its own, for the moment, with Clank's own made-up requests only | Proposed | 2026-10-18 |
 | [0077](0077-an-endpoint-serves-the-main-slot.md) | An endpoint serves the main slot in an engine's place, or a slot of its own beside it | Proposed: the owner chooses; for cloud models, 0107 proposes (a) | 2026-10-18 |
 | [0078](0078-frontier-262k-on-the-iq3-xxs-file.md) | "frontier 262K" runs the IQ3_XXS file with a 73,728-token window and a prompt batch of 256 | Accepted; superseded in part by 0088 (kept as "frontier 262K lean") | 2026-10-19 |
@@ -154,6 +154,7 @@ and use the template below.
 | [0144](0144-segno-draws-the-qr.md) | The QR code the console shows for the pair link is drawn by segno (a pure-Python library, no dependencies of its own), as text in the terminal | Accepted (Claude, with plan s57, 2026-10-26) |
 | [0145](0145-clank-update-finishes-in-a-helper.md) | `clank update` finishes in a helper process when the tool must be installed again: Windows keeps a running program's files, and the service, the gateway and the command run from the tool's | Accepted (Claude, with plan s61, 2026-10-26) |
 | [0146](0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md) | KVMem keeps a snapshot of the model's state at the end of the system prompt, so a new session resumes there instead of reading OpenCode's prompt and tools again (12.2 s to 1.0 s measured) | Accepted for frontier 262K's build; revised by its tests |
+| [0147](0147-the-gateway-answers-clanks-programs-and-each-agent-for-its-own-workspace.md) | The gateway answers only Clank's own programs, and an agent's calls through it act for its own workspace, by a key every workspace has | Accepted; refines 0075 | 2026-10-27 |
 
 ## Template
 
