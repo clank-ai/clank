@@ -287,8 +287,11 @@ def test_a_request_the_watcher_does_not_answer_goes_through_a_process_of_its_own
     monkeypatch.setattr(watch, "RETRY_SECONDS", (0.2,))
     deaf = (
         f"import sys, json; print(json.dumps({{'type': 'synced', 'ports': [{window.port}, {flow.port}]}}), flush=True)"
-        "\nfor _ in sys.stdin: pass\n"
-    )  # a watcher that says it is synced, then answers nothing
+        "\nfor line in sys.stdin:\n"
+        "    asked = json.loads(line) if line.strip().startswith('{') else {}\n"
+        "    if asked.get('action') == 'hello':\n"
+        "        print(json.dumps({'type': 'answer', 'id': asked['id'], 'ok': True}), flush=True)\n"
+    )  # a watcher that says it is synced and answers its hello (it reads requests), then answers nothing
     spawned: list[str] = []
 
     def spawn(workspace: str) -> "subprocess.Popen[bytes]":

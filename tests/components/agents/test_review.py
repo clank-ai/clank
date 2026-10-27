@@ -52,7 +52,18 @@ ASK = {
     "metadata": {"filepath": "/workspace/a.py", "diff": "@@ -1,1 +1,1 @@\n-x = 1\n+x = 2\n"},
     "tool": {"messageID": "msg_1", "callID": "call_1"},
 }  # fmt: skip
-SKIPPED = {"alive", "status", "session", "message", "part", "removed", "todo", "compacted", "error"}  # the Monitor's
+SKIPPED = {
+    "alive",
+    "status",
+    "session",
+    "message",
+    "part",
+    "removed",
+    "todo",
+    "compacted",
+    "error",
+    "server",
+}  # the Monitor's
 
 
 class OpenCode(BaseHTTPRequestHandler):
