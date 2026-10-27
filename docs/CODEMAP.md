@@ -63,6 +63,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/console/watchfor.py` | The Monitor's Watch for panel (design 0012 §2, §8): the newest marks the Watch for rules left, one line each: a mark |
 | `clank/components/agents/context.py` | A session's context totals (design 0012 §4.1 and §4.4, decision 0067): how much of the window the session uses, how |
 | `clank/components/agents/estimate.py` | The context's parts, estimated (design 0012 §4.2, §4.3, §4.6; decisions 0051, 0052 and 0067): what fills a |
+| `clank/components/agents/extension.py` | Clank's VS Code extension in a release install (design 0028 §6): the one its release carries, checked and kept. |
 | `clank/components/agents/figures.py` | A mark on a figure, in words (design 0008 §4): what an agent is told about each mark the owner drew. |
 | `clank/components/agents/guide.py` | The Guide (design 0012 §9.1-§9.7, §11 steps 9 to 11): what the owner, or a Watch for rule, does to the session the |
 | `clank/components/agents/jobs.py` | The agent's jobs (design 0021 §6): a long computation the agent the owner talks to starts and goes on from, instead |
@@ -356,6 +357,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `tools/__init__.py` | Tools for working on Clank: the generated code map and tests page, and the repository's own checks. |
 | `tools/apidoc.py` | Write `docs/API.md`: every route of the Clank API, with its method, path, access level and what it does. |
 | `tools/artifact_libs.py` | The artifact libraries (decision 0135): fetch them into `clank/components/agents/artifact_lib/`, or check the copy |
+| `tools/capture_docker_engine.py` | Record Docker Engine as Clank's `docker-engine` adapter asks it (design 0014 §2, plan s9 L0), for |
 | `tools/capture_endpoint.py` | Record what OpenRouter answers Clank's fixed made-up requests (design 0016 §18, design 0015 §14), with the owner's |
 | `tools/check.py` | Run every check that continuous integration runs, in one command: formatting, lint, types, the VS Code extension |
 | `tools/check_colors.py` | Refuse a color or a state's mark written in the console's code, where only the style's elements may be named |
@@ -368,6 +370,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `tools/files.py` | The repository's files as the checks see them: what git tracks or would track, read as text when they are text. |
 | `tools/generated.py` | Write a generated document, or check that the copy in the repository is up to date. |
 | `tools/markdown.py` | Read Markdown the way GitHub does, as far as the checks need: which lines are prose, and which are code. |
+| `tools/release.py` | Make the GitHub release of a version tag, with Clank's VS Code extension attached (design 0028 §6). |
 | `tools/schemas.py` | Write `clank/schemas/<kind>.schema.json`: the JSON Schema of every settings kind's files (decision 0015). |
 | `tools/testspage.py` | Write `docs/TESTS.md`: each section of each design, with the test files that hold it to its word. |
 | `tools/tstypes.py` | Write `vscode/src/core/kinds.ts`: the TypeScript types of Clank's kinds of record (decisions 0015, 0028). |

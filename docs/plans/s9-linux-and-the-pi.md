@@ -31,8 +31,12 @@ GitHub Actions' `ubuntu-24.04` and `ubuntu-24.04-arm` runners.
 **Spec:** design 0014 §1-§10; decisions 0070 and 0071; design 0004 §3 (the container, the edge, the escape tests),
 §6 and §8; design 0002 §1 (the edge), §2.6 (the floor), §2.9 and §2.10; design 0001 §6.6, §7.1-§7.2, §8.2-§8.4.
 
-**Status:** not started. It waits for the owner's approval of design 0014 and the choices above. L0's tool, L1, P3
-and P6 can start as soon as the design is approved.
+**Status:** lane L for Linux x64 being built at the owner's instruction (2026-10-27: Clank on a Linux computer of the
+owner's, with OpenRouter's models; design 0014's status says so), with the recommended choices: the recording made by
+the hand-run job (design 0014 §2), and decision 0071's (a). Done: L0's tool, the errors in recordings and the job; the
+recording waits for the job's run. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for the
+owner. The places below were found at commit e90c51a; the code has moved since, and each task's commit names where it
+changed.
 
 A path such as `workspaces/sandbox.py:38` means `clank/components/workspaces/sandbox.py`, line 38, at commit e90c51a;
 every other path starts at the repository's root.
@@ -116,25 +120,32 @@ condition holds. Now: L0's tool, L1, P3 and P6.
 
 #### L0. Docker Engine's recording (B)
 
-- [ ] **Tests first:**
+- [x] **Tests first:**
   - `tests/tools/test_capture_docker_engine.py` (design 0014 §2):
     `test_a_capture_keeps_each_commands_status_output_errors_and_time` (with a fake runner);
     `test_a_capture_replaces_ids_names_and_host_values_alike_everywhere`;
     `test_a_capture_runs_only_its_listed_commands_and_never_sudo` (and keeps only the fields of `docker info` that
-    Clank reads).
+    Clank reads); built with two more:
+    `test_three_captures_merge_into_the_recording_saying_where_which_version_and_what_was_replaced` and
+    `test_a_capture_whose_engine_was_not_in_the_state_it_names_is_refused_saying_so` (so a job whose engine was not
+    stopped, or whose user was in the docker group, fails saying so).
   - `tests/fakes/test_recorded.py` (design 0001 §8.3):
     `test_a_recorded_answer_gives_its_errors_to_a_caller_that_asks_for_the_whole_answer`.
   - `tests/tools/test_workflows.py` (design 0014 §2):
     `test_the_recording_job_runs_only_by_hand_and_prints_the_recording_between_markers`.
-- [ ] **Files:**
+- [x] **Files:**
   - Create `tools/capture_docker_engine.py` (development only). It uses the standard library only, so a user outside
     the docker group can run it with the system's `python3`. Its commands are exactly those the adapter will send
     (L2), and the contract test catches any that differ later:
     - `systemctl show docker.service --property=LoadState --property=ActiveState`;
-    - `docker -H unix:///var/run/docker.sock version --format …`;
+    - `docker -H unix:///var/run/docker.sock version --format {{.Server.Version}}`;
     - `… ps --all --no-trunc --format …` (the base's template), and `… container inspect --format …` of the ids it
       lists;
-    - `… info --format …`, with only the fields Clank reads: the CPUs and the memory, `MemoryLimit`, the warnings.
+    - `… info --format …`, with only the fields Clank reads: the CPUs and the memory (`{{.NCPU}} {{.MemTotal}}`, as
+      today), and `MemoryLimit` with the warnings (`{"limit":{{json .MemoryLimit}},"warnings":{{json .Warnings}}}`,
+      L7);
+    - as built, also `… stats --no-stream --format {{json .}}`, the meters' command, which goes through the adapter
+      from L4.
   - The tool's options: `--state` names the state captured (`running`, `stopped`, `no access`); `--merge` joins three
     captures into `program.json`, whose `how` says where, which version, and what was replaced; `--examples` makes,
     before `running`, four containers from a tiny public image, one of each sort the contract checks
@@ -151,7 +162,7 @@ condition holds. Now: L0's tool, L1, P3 and P6.
     starting Docker again after; then `no access`, the tool run by a user the job makes for it, outside the docker
     group, from a folder that user can read. It merges them and prints `program.json` between two marker lines in its
     log, so no action is added to keep it. The log shows `docker version`, so what was recorded is on record.
-- [ ] **Done when:** the tool, the fake's errors and the job are committed, and `tools.check` passes.
+- [x] **Done when:** the tool, the fake's errors and the job are committed, and `tools.check` passes.
 - [ ] **Then the recording**, made as the owner chose (design 0014 §2):
   - the job, once the owner approves its few x64 minutes: `gh workflow run record-docker-engine.yml`, then the
     recording taken from `gh run view --log`;

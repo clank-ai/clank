@@ -23,6 +23,14 @@ VS Code runs on the Pi (§8). §1 lists the approved sections this design refine
 ready on a Linux computer of their own, to test the cloud models through OpenRouter there; that is taken as the word to
 build steps L5 and L6 (§10) while the review goes on, with §3's recommended option, (a) (decision 0071, accepted).
 
+*2026-10-27: the owner told the agents to build lane L for Linux x64 while the review goes on, as for designs 0003 and
+0004: "I want to begin testing clank by itself on a completely separate linux computer that I have where I will only be
+testing the integration with the API keys from openrouter, so we need to make sure that this is completely set up and
+ready for testing." It is built with the recommended choices: Docker Engine's first recording is made by the hand-run
+job (§2), and decision 0071's (a). Decision 0070 is accepted. Built so far by plan s9: L0's capture tool, the errors in
+recordings and the hand-run job; its recording waits for the job's run. L5 and L6 (§3) are built beside lane L, on a
+branch of their own. The Pi's steps (P1-P6) wait.*
+
 **The machine.** A Raspberry Pi 5: arm64, four Cortex-A76 cores, and 8 GB of memory, the size this design is checked
 against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engine from Docker's Debian packages
 (https://docs.docker.com/engine/install/debian/). A 32-bit system cannot work: OpenCode ships no 32-bit ARM build, and
@@ -33,9 +41,9 @@ against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engi
 | § | Section | Status |
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | Proposed 2026-10-18 |
-| 2 | The container platform adapters | Proposed 2026-10-18 |
+| 2 | The container platform adapters | Proposed 2026-10-18; being built at the owner's instruction (2026-10-27, plan s9 lane L) |
 | 3 | The edge's way to the gateway on Linux | Proposed 2026-10-18; option (a) chosen 2026-10-27 (decision 0071); the gateway's socket (step L5) and the edge's way on Docker Engine (step L6) built 2026-10-27 |
-| 4 | A workspace's container on Docker Engine | Proposed 2026-10-18 |
+| 4 | A workspace's container on Docker Engine | Proposed 2026-10-18; being built at the owner's instruction (2026-10-27, plan s9 L7 and L8) |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | Proposed 2026-10-18 |
 | 6 | OpenCode on arm64 | Proposed 2026-10-18 |
 | 7 | CI on arm64 | Proposed 2026-10-18 |

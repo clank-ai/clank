@@ -5,10 +5,16 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
-## Unreleased
+## Unreleased: since 0.3.0b2
+
+The next release. Its version is set when it is tagged; until then, a clone has it (`git pull`, or `clank update`).
 
 ### Added
 
+- **Clank's VS Code window without building its extension**: each release now carries Clank's VS Code extension, with
+  its SHA-256. Installed with the one-line installer, `clank code` (or `c` on This folder) downloads the extension of
+  its own release the first time, checks it against that SHA-256, keeps it and installs it: no Node and no build. A
+  clone still builds its own.
 - **On Linux, the gateway's socket**: besides 127.0.0.1, the gateway listens on a socket, `gateway.sock`, and the
   agent's proxy on `proxy.sock`, in a folder of their own outside CLANK_HOME (`~/.cache/clank/<home id>`, the owner's
   alone; `socket_folder` in `config/gateway.json` moves it). `clank gateway status` names it. It is how the agent's

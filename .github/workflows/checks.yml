@@ -1,8 +1,9 @@
 # The repository's checks: formatting, lint, types, the VS Code extension, and the tests, which include the
 # documentation, secrets and spelling checks. They run by the same command as on a working copy, `uv run python -m tools.check` (design 0001
 # §8.4). Python 3.12, the oldest Clank supports, runs on every push; Python 3.14 on Linux and Windows runs for pull
-# requests, version tags and on demand (decision 0022). Each action is pinned to the commit of a release at least two
-# weeks old.
+# requests, version tags and on demand (decision 0022). A version tag whose checks all pass then gets its GitHub
+# release, carrying the VS Code extension (design 0028 §6). Each action is pinned to the commit of a release at least
+# two weeks old.
 name: checks
 
 on:
@@ -63,3 +64,35 @@ jobs:
       # The extension's suite inside a real VS Code (decision 0029), on Linux under a virtual display.
       - if: runner.os == 'Linux'
         run: uv run --locked python -m tools.extension --host
+
+  # The GitHub release of a version tag, once every check passed on it (design 0028 §6): the VS Code extension compiled,
+  # tested and packaged as on a working copy (tools.extension, tools.vsix), then attached with its SHA-256 by
+  # tools.release, so a release installed by the one-line installer gets the extension without Node. The only job that
+  # may write to the repository, and only its releases; it restores no cache that another run wrote, and its checkout
+  # keeps no token, so only the last step, which makes the release, holds one.
+  release:
+    name: GitHub release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [oldest-python, newest-python]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.3"
+          python-version: "3.12"
+          enable-cache: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - run: uv sync --locked
+      - run: uv run --locked python -m tools.extension
+      - run: uv run --locked python -m tools.vsix
+      - run: uv run --locked python -m tools.release "$GITHUB_REF_NAME"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
