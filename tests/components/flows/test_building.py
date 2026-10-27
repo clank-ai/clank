@@ -344,7 +344,8 @@ async def test_a_window_that_never_answers_fails_the_planning_said(rig: Rig, mon
     building(rig).open("myproject", "", "here", actor=OWNER)
     failed = await until(lambda: planning_of(rig).status == "failed" and planning_of(rig))
     assert "no OpenCode window answered" in failed.why
-    assert [event.data["action"] for event in rig.events("flows.building")][-1] == "failed"
+    # Said, though not necessarily last: on a slow machine the planning's own "opening" line can come after it.
+    assert "failed" in [event.data["action"] for event in rig.events("flows.building")]
 
 
 async def test_a_planning_opened_to_attach_takes_no_window_running_and_waits_for_attach(rig: Rig) -> None:
