@@ -85,7 +85,8 @@ def workspace() -> None:
 @workspace.command("list")
 @click.option("--json", "as_json", is_flag=True, help="Print JSON, for scripts and models.")
 def list_workspaces(as_json: bool) -> None:
-    """Each workspace, its container's state and its folder."""
+    """Each workspace, its container's state and its folder; under one whose container does not reach the edge as it
+    should (cut off from the model), what is wrong and what Clank does about it."""
     client = common.call(common.connect)
     rows = common.call(lambda: client.get("workspaces"))
     if as_json:
@@ -98,6 +99,8 @@ def list_workspaces(as_json: bool) -> None:
     states = max(len(row["state"]) for row in rows)
     for row in rows:
         click.echo(f"{row['name'].ljust(width)}  {row['state'].ljust(states)}  {row['path']}")
+        if row.get("edge_said"):  # absent from a service from before the edge was checked
+            click.echo(f"{' ' * width}  {row['edge_said']}")
 
 
 @workspace.command("open")

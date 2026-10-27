@@ -18,7 +18,11 @@ Design 0018 §8.1: over SSH, outside VS Code's Remote-SSH, `c` gets everything r
 and says the command to run on the other computer.
 
 Design 0024 §4 and §5: the hosts the workspace's agent may reach show under its MCP servers, and `h` allows a named
-set of hosts or a host by name, or takes one back."""
+set of hosts or a host by name, or takes one back.
+
+Design 0004 §3 (revised 2026-10-26): a workspace whose container runs cut off from the model (the edge not running on
+its network) says so in its step, in the service's words, marked as changing; the agent may still start (its start puts
+the edge right first), and `o` opens the workspace, which puts it right at once."""
 
 import contextlib
 from collections.abc import Callable, Sequence
@@ -33,7 +37,7 @@ from textual.widgets import Label
 from clank.cli import console as console_command
 from clank.cli.main import main
 from clank.client import Client
-from clank.components.agents.console.folder import Step, checklist_rows, missing, next_line, readiness
+from clank.components.agents.console.folder import Step, checklist, checklist_rows, missing, next_line, readiness
 from clank.components.agents.console.monitor import MonitorPage
 from clank.components.gateway.service import Gateway
 from clank.components.tools import service as tools_service
@@ -51,7 +55,7 @@ from clank.console.snapshot import render_text
 from clank.kernel.core import Kernel
 from clank.kernel.events import Actor
 from tests.console.frames import settle
-from tests.fakes.platform import FakePlatform, container
+from tests.fakes.platform import FakePlatform, container, with_edge
 from tests.support.cloud import CloudBench
 from tests.support.vscode import asked, fake_vscode
 
@@ -348,6 +352,7 @@ async def test_c_opens_the_folder_in_clanks_vs_code_window_with_opencode_beside_
     kernel.settings.write("workspace", "paper", {"path": str(project)}, base=None, actor=YOU)
     name = names(kernel.home.id).container("paper")
     platform.containers.append(container(name, labels={"clank.home": kernel.home.id}))
+    with_edge(platform, kernel.home.id, "paper")  # as an opening leaves it
     kernel.parts["runtime"].state.set_slot("main", "ready", "a test", actor=YOU, preset="daily-262k")
     state = fake_vscode(kernel, tmp_path, monkeypatch)
     app = console(client, kernel, project)
@@ -372,6 +377,7 @@ async def test_c_over_ssh_opens_nothing_on_the_pcs_screen_and_says_the_command_f
     kernel.settings.write("workspace", "paper", {"path": str(project)}, base=None, actor=YOU)
     name = names(kernel.home.id).container("paper")
     platform.containers.append(container(name, labels={"clank.home": kernel.home.id}))
+    with_edge(platform, kernel.home.id, "paper")  # as an opening leaves it
     kernel.parts["runtime"].state.set_slot("main", "ready", "a test", actor=YOU, preset="daily-262k")
     state = fake_vscode(kernel, tmp_path, monkeypatch)
     app = console(client, kernel, project)
@@ -462,6 +468,30 @@ def test_readiness_names_each_missing_item_with_its_key() -> None:
     )
     assert readiness([]) == "Ready: a starts OpenCode here; leaving it brings you back to this page."
     assert missing(ConsoleData(connected=False), None, None) == [("the Clank service", "")]
+
+
+def test_a_running_workspace_cut_off_from_the_model_says_so_and_the_agent_may_still_start() -> None:
+    said = (
+        "cut off from the model: the edge is not on its network; Clank joins it back within 5 seconds (opening the "
+        "workspace or starting its agent does it now)"
+    )
+    view = {
+        "problem": "",
+        "workspace": "paper",
+        "state": "running",
+        "edge": "cut",
+        "edge_said": said,
+        "image": {"tag": "clank-sandbox:abc", "built": True, "current": True},
+        "setup": {"command": None},
+    }
+    data = ConsoleData(connected=True, docker={"state": "running"}, slots=[])
+    gateway = {"state": "running", "port": 18210}
+    steps = {name: (now, done, key) for name, now, done, key in checklist(data, view, gateway)}
+    assert steps["Its workspace"] == (said, None, "o")
+    assert ("its workspace", "o") not in missing(data, view, gateway), "starting the agent puts the edge right first"
+    reached = {**view, "edge": "on", "edge_said": ""}
+    on = {name: (now, done) for name, now, done, _ in checklist(data, reached, gateway)}
+    assert on["Its workspace"] == ("running: paper, its container up", True)
 
 
 def test_clank_alone_opens_the_console_on_this_folders_page(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

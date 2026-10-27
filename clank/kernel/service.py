@@ -33,6 +33,7 @@ import psutil
 import uvicorn
 
 from clank import __version__
+from clank.kernel.accepting import keep_accepting
 from clank.kernel.access import Connection, local_token, read_connection, remove_connection, write_connection
 from clank.kernel.clock import Clock, SystemClock
 from clank.kernel.components import Component
@@ -48,6 +49,8 @@ HOUSEKEEPING_SECONDS = 2.0
 PRUNING_SECONDS = 3600.0
 CLOSING_SECONDS = 2
 LOCK = "service.lock"  # in state/: held by the service for its whole life, so one service runs per home
+PID = "service.pid"  # in state/: the lock's holder and its start, so one that holds it silent can be ended
+SILENT_SECONDS = 60.0  # a lock held this long with no connection written: its service does not answer
 
 
 def server_config(app: Any, host: str, port: int) -> uvicorn.Config:
@@ -133,7 +136,9 @@ class Service:
         self._port = port
 
     def run(self) -> None:
-        """Run until stopped; raises `ServiceError` when it cannot start."""
+        """Run until stopped; raises `ServiceError` when it cannot start. On Windows a client that drops its connection
+        while it is accepted no longer closes the API's socket (`accepting.py`)."""
+        keep_accepting()
         anyio.run(self._serve)
 
     async def _serve(self) -> None:
@@ -141,7 +146,9 @@ class Service:
             try:
                 held.enter_context(hold(self._home.state / LOCK))
             except LockHeld:
-                raise ServiceError(self._held_by_another()) from None
+                raise ServiceError(self.held_by_another()) from None
+            write_holder(self._home, os.getpid())
+            held.callback(lambda: (self._home.state / PID).unlink(missing_ok=True))
             self._refuse_a_second_service()
             kernel = open_kernel(self._home, self._clock, self._components)
             try:
@@ -152,8 +159,18 @@ class Service:
             finally:
                 kernel.close()
 
-    def _held_by_another(self) -> str:
+    def held_by_another(self, now: datetime | None = None) -> str:
+        """Why this service cannot take its home's lock: another starts, runs, or holds it without answering (its
+        lock held over `SILENT_SECONDS` with no connection written: `clank stop` ends it)."""
         existing = read_connection(self._home)
+        found = holder(self._home)
+        if existing is None and found is not None:
+            pid, started = found
+            if ((now or datetime.now(UTC)) - started).total_seconds() > SILENT_SECONDS:
+                return (
+                    f"a Clank service holds {self._home.root} (process {pid}, since {started.astimezone():%H:%M}) but "
+                    "does not answer: `clank stop` ends it, then `clank serve` starts one"
+                )
         if existing is None:
             return f"a Clank service is starting for {self._home.root}; wait a moment, then `clank status`"
         return (
@@ -210,7 +227,8 @@ class Service:
         try:
             await server.serve()
         finally:
-            remove_connection(self._home)
+            if not remove_connection(self._home):  # a client holds it open: the next one finds no service there
+                log.warning("the connection file is held open by another program: left, naming this stopped service")
             kernel.events.record("service.stopped", summary="service stopped", actor=CLANK)
 
     def _refuse_a_second_service(self) -> None:
@@ -238,6 +256,52 @@ def _holder(port: int) -> str:
     except (psutil.Error, OSError):
         pass
     return "another program"
+
+
+def started_at(pid: int) -> datetime:
+    """When a running process started, as the system says."""
+    return datetime.fromtimestamp(psutil.Process(pid).create_time(), UTC)
+
+
+def write_holder(home: Home, pid: int) -> None:
+    """Say which process holds the service's lock, with its start (a number the system may give another later)."""
+    (home.state / PID).write_text(f"{pid} {psutil.Process(pid).create_time()}", encoding="utf-8")
+
+
+def holder(home: Home) -> tuple[int, datetime] | None:
+    """The process that holds the service's lock as it said, with its start; None when it said none, when that process
+    no longer runs, or when another took its number since (its start differs)."""
+    try:
+        pid_text, created_text = (home.state / PID).read_text(encoding="utf-8").split()
+        pid, created = int(pid_text), float(created_text)
+        if abs(psutil.Process(pid).create_time() - created) > 1.0:
+            return None
+    except (OSError, ValueError, psutil.Error):
+        return None
+    return pid, datetime.fromtimestamp(created, UTC)
+
+
+def end_silent(home: Home) -> int | None:
+    """End a service that holds its home's lock but does not answer (`clank stop`, after the API did not answer): the
+    process it named, and the files it left behind; that process, or None when none holds the lock. Only that process
+    is ended: the gateway it may have started runs on, and the bridges it ran end with their input."""
+    found = holder(home)
+    if found is None:
+        return None
+    pid, _ = found
+    try:
+        process = psutil.Process(pid)
+        process.terminate()
+        process.wait(timeout=10)
+    except psutil.TimeoutExpired:
+        process.kill()
+    except psutil.Error:
+        pass
+    existing = read_connection(home)
+    if existing is not None and existing.pid == pid:
+        remove_connection(home)
+    (home.state / PID).unlink(missing_ok=True)
+    return pid
 
 
 def start_detached(home: Home, port: int | None = None, timeout: float = 30) -> Connection:

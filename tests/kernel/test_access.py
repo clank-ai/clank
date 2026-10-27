@@ -1,5 +1,7 @@
 """Design 0002 §2.7: local clients prove they are the user on this machine by reading the local token, find the
-service through its connection file, and what they do is recorded as the user, through that client."""
+service through its connection file, and what they do is recorded as the user, through that client. The connection
+file is written and removed though a client holds it open a moment (the gateway's process reads it every second, and
+Windows refuses a replace or a delete meanwhile)."""
 
 import os
 import sys
@@ -53,3 +55,33 @@ def test_a_clients_name_becomes_the_actor_of_what_it_does() -> None:
     assert client_actor("console") == Actor(kind="user", via="console")
     assert client_actor(None) == Actor(kind="user", via="api")
     assert client_actor("<script>vs code</script>") == Actor(kind="user", via="scriptvscodescript")
+
+
+def test_the_connection_file_is_written_and_removed_though_a_client_holds_it_open_a_moment(
+    home: Home, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    connection = Connection(
+        url="http://127.0.0.1:7720", pid=4242, started=datetime(2026, 10, 11, 12, 0, tzinfo=UTC), version="0.1.0.dev0"
+    )
+    refusals = {"replace": 2, "unlink": 2}
+    real_replace, real_unlink = os.replace, Path.unlink
+
+    def replace(source: str | Path, target: str | Path) -> None:
+        if refusals["replace"]:
+            refusals["replace"] -= 1
+            raise PermissionError(5, "Access is denied")
+        real_replace(source, target)
+
+    def unlink(self: Path, missing_ok: bool = False) -> None:
+        if self.name == "connection.json" and refusals["unlink"]:
+            refusals["unlink"] -= 1
+            raise PermissionError(32, "The process cannot access the file because it is being used by another process")
+        real_unlink(self, missing_ok=missing_ok)
+
+    monkeypatch.setattr(os, "replace", replace)
+    monkeypatch.setattr(Path, "unlink", unlink)
+    write_connection(home, connection)
+    assert read_connection(home) == connection
+    remove_connection(home)
+    assert (read_connection(home), refusals) == (None, {"replace": 0, "unlink": 0})
+    assert sorted(path.name for path in home.state.iterdir()) == [], "nothing left beside it"

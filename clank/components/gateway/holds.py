@@ -21,14 +21,16 @@ and an empty step in its place would end the run with the note unanswered. `keep
 ends that stream as an empty step. The pause stays, so the request that carries the note is held until the owner
 resumes.
 
-The pauses outlive a restart of the gateway (`file`, the home's `state/holds.json`), since a pause ends only when the
-owner resumes (decision 0055); the requests held do not, as a restart cuts every request in flight, and OpenCode's next
-asking is held again. Everything here runs on the gateway's event loop, so nothing is locked. At most `PAUSES_KEPT`
-pauses are kept; past that the oldest that holds nothing is let go.
+The pauses outlive a restart of the gateway (`file`, the home's `state/holds.json`, written through the kernel's
+`files`; one that cannot be written, another program holding it for good, is said in the gateway's log and the pause
+holds all the same), since a pause ends only when the owner resumes (decision 0055); the requests held do not, as a
+restart cuts every request in flight, and OpenCode's next asking is held again. Everything here runs on the gateway's
+event loop, so nothing is locked. At most `PAUSES_KEPT` pauses are kept; past that the oldest that holds nothing is
+let go.
 """
 
 import json
-import os
+import logging
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -36,8 +38,10 @@ from typing import Any
 
 import anyio
 
+from clank.kernel import files
 from clank.kernel.clock import Clock, SystemClock, from_text, to_text
 
+log = logging.getLogger(__name__)
 KEEP_SECONDS = 15.0  # a comment line at least this often while held: OpenCode gives up after 300 s without bytes
 PARENTS_KEPT = 4096  # sessions whose parent is kept, the newest heard
 PAUSES_KEPT = 256
@@ -267,10 +271,11 @@ class Holds:
             return {}
 
     def _write(self) -> None:
+        """Keep the pauses in their file; one that cannot be written is said, and the pauses hold all the same."""
         if self._file is None:
             return
         pauses = [{"session": each.session, "since": each.since, "by": each.by} for each in self._pauses.values()]
-        self._file.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self._file.with_name(f".{self._file.name}.writing")
-        temporary.write_text(json.dumps({"pauses": pauses}, indent=2) + "\n", encoding="utf-8")
-        os.replace(temporary, self._file)
+        try:
+            files.replace(self._file, json.dumps({"pauses": pauses}, indent=2) + "\n", files.MOMENT)
+        except OSError as error:
+            log.warning("the pauses could not be kept in %s (%s): they hold until the gateway stops", self._file, error)

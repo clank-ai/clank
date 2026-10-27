@@ -112,6 +112,13 @@ def planner_rules(servers: Sequence[str], read_only: Mapping[str, Sequence[str]]
     return rules
 
 
+# OpenCode installs its plugin package into its configuration folder at each start, from npm, in the background. A
+# workspace reaches the internet only through Clank's proxy, which held each such request a minute while it asked the
+# owner, and OpenCode's first answer waited for it (67 s against 6 s on the owner's machine, 2026-10-26). This `.npmrc`
+# keeps those installs offline, failing at once; the agent's own installs, in the workspace's folder, do not read it.
+NPMRC = "offline=true\nregistry=http://127.0.0.1:9/\nfetch-retries=0\nfetch-timeout=1000\n"
+
+
 class OpenCode(AgentProgram):
     """OpenCode, in the sandbox image."""
 
@@ -130,6 +137,10 @@ class OpenCode(AgentProgram):
     def env(self) -> dict[str, str]:
         """Offline: nothing fetched, nothing shared, nothing watched."""
         return dict(ENVIRONMENT)
+
+    def files(self) -> list[tuple[str, str]]:
+        """Its configuration folder's `.npmrc` (`NPMRC`): its own background installs offline, failing at once."""
+        return [(f"{self.HOME}/.config/opencode/.npmrc", NPMRC)]
 
     def compaction(self, window: int, output: int, margin: int = 0) -> Compaction:
         """Once a step's total reaches the window it is told (the window less `margin`) less the output limit

@@ -1160,9 +1160,11 @@ def act(argv: list[str], asked: Callable[[], dict[str, Any]] = given) -> dict[st
                     whole)  # fmt: skip
     if action == "prompt":
         return prompt(int(rest[0]), rest[1], asked())
-    if action == "new":
-        title = str(asked().get("title") or "")
-        session = call(int(rest[0]), "POST", "/session", {"title": title} if title else {})
+    if action == "new":  # with `wait`: a server just started readies itself on its first request, so it waits
+        given = asked()
+        title = str(given.get("title") or "")
+        patient = max(TIMEOUT, float(given.get("wait") or 0))
+        session = call(int(rest[0]), "POST", "/session", {"title": title} if title else {}, timeout=patient)
         return {"session": session["id"]}
     if action == "abort":
         return {"stopped": bool(call(int(rest[0]), "POST", f"/session/{rest[1]}/abort"))}

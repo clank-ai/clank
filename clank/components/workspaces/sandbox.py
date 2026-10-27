@@ -11,8 +11,8 @@ own (so OpenCode's sessions survive the container), it runs as the image's user 
 every program in it told how many CPUs it has, which Docker's limit does not change: `thread_env`), and it
 joins only an internal network of its own, where nothing answers but the edge: not the machine, not the internet, not
 another workspace. The edge is on the network that reaches the host and joins each workspace's network (as `edge`)
-when that workspace opens; it has a read-only root and small limits, and runs one program: it forwards the gateway's
-port to the host, and nothing else.
+when that workspace opens, and again whenever it is made or started (`edge.py`); it has a read-only root and small
+limits, and runs one program: it forwards the gateway's port and the proxy's to the host, and nothing else.
 
 A workspace's setup (design 0004 §10) runs in a container of its own, made for it and removed when it ends: mounted,
 contained and limited as the workspace's container, but on Docker's default network, which reaches the internet, so
@@ -178,16 +178,21 @@ def setup_spec(
     )
 
 
+def edge_ports(gateway_port: int, proxy_port: int) -> str:
+    """The ports the edge forwards, as its label `clank.ports` says them: "18210,18211"."""
+    return f"{gateway_port},{proxy_port}"
+
+
 def edge_spec(home: str, image: str, *, gateway_port: int, proxy_port: int) -> ContainerSpec:
-    """The edge: on the network that reaches the host (each workspace's own it joins as `edge` when it opens); it
+    """The edge: on the network that reaches the host (each workspace's own it joins as `edge`: `edge.py`); it
     forwards the gateway's port and the proxy's (design 0024 §2) to the host's and nothing else. Its label
-    `clank.ports` names the ports, so an edge forwarding others is made again (`folders.py`)."""
+    `clank.ports` names the ports, so an edge forwarding others is made again (`edge.py`)."""
     found = names(home)
     ports = (gateway_port, proxy_port)
     return ContainerSpec(
         name=found.edge,
         image=image,
-        labels=(*_labels(home, "edge"), (PORTS_LABEL, ",".join(str(port) for port in ports))),
+        labels=(*_labels(home, "edge"), (PORTS_LABEL, edge_ports(gateway_port, proxy_port))),
         networks=((found.outer, ""),),
         command=("python3", EDGE_PROGRAM, *(part for port in ports for part in (str(port), HOST, str(port)))),
         cpus=0.5,

@@ -5,7 +5,14 @@ instructions: the agent's tools are this Clank's, whatever image its container w
 a file is opened for the user (`show_files`; there is no `code` command in the container).
 
 Design 0021 §9: and that the agent's model reads no images, `look_at_figure` asking Clank's vision model, which is
-always there."""
+always there.
+
+Design 0025 §12: and that, asked in a few words for a figure or a number that could mean different things, the agent
+pins it down first in one question whose options a tap answers.
+
+Design 0018 §7.5: and that OpenCode's own installs into its configuration folder stay offline (its `.npmrc`): each
+start's plugin install went to npm through Clank's proxy, which held it a minute asking the owner, and OpenCode's first
+answer waited for it (67 s against 6 s, 2026-10-26)."""
 
 import json
 from pathlib import Path
@@ -40,6 +47,13 @@ def test_clanks_files_for_the_agent_are_its_mcp_server_and_its_instructions_as_t
         assert needed in images, needed  # design 0021 §9
 
 
+def test_the_agent_asks_one_question_with_options_from_the_folder_when_a_request_could_mean_different_things() -> None:
+    asking = dict(agent_files())[f"{AGENT_CLANK}/instructions/asking.md"]
+    for needed in ("`question` tool", "two to four", "Look in the folder first", "Do not ask when the request is clear",
+                   "`show_files`"):  # fmt: skip
+        assert needed in asking, needed
+
+
 def test_starting_an_agent_writes_them_and_its_configuration_runs_and_reads_them(
     kernel: Kernel,  # noqa: F811
     platform: FakePlatform,  # noqa: F811
@@ -51,6 +65,13 @@ def test_starting_an_agent_writes_them_and_its_configuration_runs_and_reads_them
     kernel.parts["agents"].prepare("paper")
     for path, text in agent_files():
         assert platform.files[(container_name, path)] == text, path
+    npmrc = platform.files[(container_name, "/home/agent/.config/opencode/.npmrc")]
+    assert npmrc.splitlines() == [
+        "offline=true",
+        "registry=http://127.0.0.1:9/",
+        "fetch-retries=0",
+        "fetch-timeout=1000",
+    ]
     config = json.loads(platform.files[(container_name, CONFIG)])
     assert config["mcp"]["clank"]["command"] == ["python3", CURRENT_PHONE]
     assert config["instructions"] == [CURRENT_INSTRUCTIONS]

@@ -15,7 +15,10 @@ From M4 a platform also runs the workspaces' containers (design 0004 §3): it sa
 once in the foreground, followed line by line (a workspace's setup),
 reads, starts, stops and removes one, removes a volume, and says how a terminal enters a container. These ask for the
 command's whole answer (`answer`), so a refusal is raised in the platform's own words; reading or removing what is not
-there is no error.
+there is no error. Each container it lists or reads says the networks it is on (a stopped one's too), so the edge's
+place on every workspace's network is checked from the reading the service takes anyway (design 0004 §3, revised
+2026-10-26); joining a network says whether it joined now or was on it already, and a container that cannot start
+because a network it was on is gone (removed, or made again since) is a `NetworkGone`, so Clank makes it again.
 """
 
 import sys
@@ -51,6 +54,11 @@ class PlatformError(Exception):
     """The platform cannot do what it was asked; the message says what to do."""
 
 
+class NetworkGone(PlatformError):
+    """A container that cannot start because a network it was on is gone: removed, or made again since (Docker keeps
+    the network's id, not its name); one made again from its spec starts."""
+
+
 class Container(BaseModel):
     """One container, as the platform lists it."""
 
@@ -64,6 +72,11 @@ class Container(BaseModel):
     )
     label_keys: list[str] = Field(
         default_factory=list, title="Labels", description="The name of every label it carries."
+    )
+    networks: list[str] = Field(
+        default_factory=list,
+        title="Networks",
+        description="The networks it is on, by name: a stopped one's too, which it rejoins when it starts.",
     )
 
 
@@ -152,8 +165,9 @@ class ContainerPlatform(Adapter):
         """Make a network unless it is there (internal: no route out)."""
 
     @abstractmethod
-    def join_network(self, network: str, container: str, alias: str) -> None:
-        """Join a running container to a network, where others call it `alias`; joined already is no error."""
+    def join_network(self, network: str, container: str, alias: str) -> bool:
+        """Join a container to a network, where others call it `alias`: True when it joined now, False when it was on
+        it already (no error)."""
 
     @abstractmethod
     def leave_network(self, network: str, container: str) -> None:
@@ -178,7 +192,7 @@ class ContainerPlatform(Adapter):
 
     @abstractmethod
     def start_container(self, name: str) -> None:
-        """Start a stopped container."""
+        """Start a stopped container; `NetworkGone` when a network it was on is gone."""
 
     @abstractmethod
     def stop_container(self, name: str, seconds: int) -> None:
@@ -195,6 +209,11 @@ class ContainerPlatform(Adapter):
     @abstractmethod
     def put_file(self, name: str, path: str, text: str) -> None:
         """Write a file in a running container, as the container's user, making its folder when it is not there."""
+
+    def put_files(self, name: str, files: Sequence[tuple[str, str]]) -> None:
+        """Write several files in a running container as `put_file` does each (a platform may do it in one go)."""
+        for path, text in files:
+            self.put_file(name, path, text)
 
     @abstractmethod
     def run_in(

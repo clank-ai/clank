@@ -489,6 +489,21 @@ def test_a_planning_session_waits_for_a_new_windows_slow_first_answers_and_start
     ]  # fmt: skip
 
 
+def test_a_new_session_on_a_server_just_started_waits_for_its_slow_first_answer(opencode: int) -> None:
+    """Design 0023 §4: a server Clank has just started readies itself on its first request, which took longer than a
+    request's usual wait on the owner's machine (2026-10-26: a new chat from Clank's start route failed, "timed out",
+    with OpenCode up a moment later). Asked with the wait the start gives it, the new session is made; without it, the
+    usual wait still applies."""
+    OpenCode.slow = 1.0
+    try:
+        found = bridge(opencode, "new", str(opencode), given={"title": "From the phone", "wait": 20}, answer="0.3")
+        hurried = bridge(opencode, "new", str(opencode), given={"title": "From the phone"}, answer="0.3")
+    finally:
+        OpenCode.slow = 0.0
+    assert found == {"ok": True, "session": "ses_2"}
+    assert hurried["ok"] is False, "the usual wait, for a server that runs already"
+
+
 def test_the_bridge_shows_a_session_on_a_window_that_answers_late_and_again() -> None:
     """Design 0013 §15 (decision 0100): `clank flow attach` to a planning already talking: its session shown on the new
     window once it answers, then again; no session started."""

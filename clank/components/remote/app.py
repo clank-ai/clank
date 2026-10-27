@@ -11,6 +11,7 @@ site cannot act through the owner's browser. What a device does is recorded as t
 
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor
 from importlib import resources
 from typing import TYPE_CHECKING, Any
 
@@ -79,6 +80,9 @@ class SeenBody(BaseModel):
     """Marks of the Monitor's Watch for seen on the phone, by their ids (design 0012 §8)."""
 
     ids: list[str] = Field(max_length=200)
+
+
+OVERVIEW_READERS = 8  # workspaces whose sessions are read at once for the overview
 
 
 def page(name: str) -> bytes:
@@ -424,13 +428,22 @@ def _overview(remote: "Remote", files: bool = True) -> dict[str, Any]:
     workspaces = []
     agents = kernel.parts["agents"]
     asks: set[str] = set()  # the asks shown in OpenCode's own boxes (or as Clank's question): permissions, questions
-    for row in kernel.parts["workspaces"].workspaces():
+    rows = kernel.parts["workspaces"].workspaces()
+    running = [str(row["name"]) for row in rows if row["state"] == "running"]
+
+    def servers_of(name: str) -> tuple[list[dict[str, Any]], str]:
+        try:
+            return agents.sessions.servers(name), ""
+        except SessionError as error:
+            return [], str(error)
+
+    # Each workspace's sessions are read side by side: one after another, five took 12 s of the phone's first screen.
+    with ThreadPoolExecutor(max_workers=max(1, min(OVERVIEW_READERS, len(running)))) as pool:
+        read = dict(zip(running, pool.map(servers_of, running), strict=True))
+    for row in rows:
         shown: dict[str, Any] = {"name": row["name"], "state": row["state"], "servers": [], "problem": ""}
         if row["state"] == "running":
-            try:
-                shown["servers"] = agents.sessions.servers(row["name"])
-            except SessionError as error:
-                shown["problem"] = str(error)
+            shown["servers"], shown["problem"] = read[str(row["name"])]
         for server in shown["servers"]:  # a change waiting for review shows as Clank's question, with its diff
             asks |= {f"ask:{each['id']}" for each in server["permissions"]}
             asks |= {f"question:{each.get('session')}" for each in server["questions"]}

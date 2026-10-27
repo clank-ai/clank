@@ -176,6 +176,32 @@ def test_a_paired_device_sees_the_model_the_workspaces_and_the_files_sent(
     assert "does not run" in refused.json()["error"]
 
 
+def test_the_overview_reads_every_running_workspaces_sessions_at_once(
+    kernel: Kernel, phone: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Design 0025 §3: the phone's first screen waited for one workspace after another (12 s on the owner's PC with five
+    running, 2026-10-26); their sessions are read side by side, a refusal said in its workspace."""
+    from clank.components.agents.service import SessionError
+
+    paired(kernel, phone)
+    rows = [{"name": name, "state": "running"} for name in ("a", "b", "c")]
+    monkeypatch.setattr(kernel.parts["workspaces"], "workspaces", lambda: rows)
+
+    def servers(name: str) -> list[dict[str, Any]]:
+        time.sleep(0.4)
+        if name == "c":
+            raise SessionError("c's watcher said nothing")
+        return [{"port": 4096, "sessions": [], "permissions": [], "questions": []}]
+
+    monkeypatch.setattr(kernel.parts["agents"].sessions, "servers", servers)
+    began = time.perf_counter()
+    found = phone.get("/api/overview", headers=THROUGH_TAILSCALE).json()
+    assert time.perf_counter() - began < 1.0, "side by side, not 1.2 s one after another"
+    assert [(each["name"], len(each["servers"]), each["problem"]) for each in found["workspaces"]] == [
+        ("a", 1, ""), ("b", 1, ""), ("c", 0, "c's watcher said nothing")
+    ]  # fmt: skip
+
+
 def test_every_exchange_with_a_device_is_kept_whole_and_shown_to_it_and_to_the_computer(
     kernel: Kernel, phone: TestClient, tmp_path: Path
 ) -> None:

@@ -45,7 +45,7 @@ each designed at the start of their own milestone (§3.1), in a design document 
 
 | § | Section | Status |
 | --- | --- | --- |
-| 1 | The whole system | Approved 2026-10-11; two terms renamed, the `machine` component listed, and two sentences aligned with the outside review after approval (revision log) |
+| 1 | The whole system | Approved 2026-10-11; two terms renamed, the `machine` component listed, and two sentences aligned with the outside review after approval (revision log); revised after approval 2026-10-26: a dropped client no longer closes a server's socket on Windows, and a service that holds its home's lock without answering is named in `state/service.pid` and ended by `clank stop` (the owner's service went deaf that day and could be neither stopped nor started) |
 | 2 | The kernel | Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021 |
 | 3 | The skeleton (M0) and the order of milestones | Approved 2026-10-11, after its revision for the outside review |
 

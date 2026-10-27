@@ -11,13 +11,19 @@ restart an interrupted one is reconciled by reading Docker's state. A background
 follow Docker without asking it themselves; the first reading after the service starts is what clients load, not a
 change. The platform is made by `make_platform` from the adapter the settings name, again when that setting changes;
 tests replace `make_platform`. From M4 the workspaces themselves are its too: opening, stopping and removing one are
-operations of `folders.py`, and the edge they share forwards the gateway's port (from the gateway's service).
+operations of `folders.py`, and the edge they share forwards the gateway's port and the proxy's (from the gateway's
+service). The edge is kept on every workspace's network (`edge.py`, design 0004 §3 revised 2026-10-26): the background
+check joins it back to the network of a running workspace it is not on, starts it or makes it, from the reading it
+takes anyway (the first one when the service starts); `reach` puts it right before an agent starts in a workspace; and
+each view of a workspace says, as `edge` and `edge_said`, whether its container reaches the edge, and what Clank does
+when it does not.
 """
 
 import logging
 import os
 import threading
-from collections.abc import Callable
+import time
+from collections.abc import Callable, Sequence
 from datetime import timedelta
 from typing import Any, Literal
 
@@ -29,6 +35,8 @@ from clank.components.workspaces.adapters import CONTAINER_PLATFORMS
 from clank.components.workspaces.adapters.platform import Container, ContainerPlatform, PlatformError, PlatformStatus
 from clank.components.workspaces.cloud import EVENT_TYPES as CLOUD_EVENT_TYPES
 from clank.components.workspaces.cloud import CloudBounds
+from clank.components.workspaces.edge import EVENT_TYPES as EDGE_EVENT_TYPES
+from clank.components.workspaces.edge import Edge
 from clank.components.workspaces.kinds import DockerSettings, Workspace
 from clank.components.workspaces.network import SETS_FILE, HostAsks, sets
 from clank.components.workspaces.sandbox import BRIDGE_PROGRAM as BRIDGE_PROGRAM  # for the agents (design 0005)
@@ -49,6 +57,7 @@ from clank.kernel.questions import EXPIRY, Option, QuestionDraft
 log = logging.getLogger(__name__)
 Owner = Literal["clank", "other"]
 WAIT_SECONDS = 1.0
+LIMITS_SECONDS = 300.0  # Docker's CPUs and memory, as an agent's start reads them, are read again after this long
 WORKSPACES = Actor(kind="clank", via="workspaces")
 BOUND = ("models", "cloud_answered", "cloud_question", "cloud_said", "cloud_confirm")  # a workspace's bound, in views
 
@@ -63,6 +72,7 @@ EVENT_TYPES = [
         },
     ),
     *CLOUD_EVENT_TYPES,
+    *EDGE_EVENT_TYPES,
     EventType(
         "workspaces.host_allowed",
         "A host was allowed to a workspace's agent through Clank's proxy, or taken back (design 0024 §1).",
@@ -125,10 +135,13 @@ class Workspaces:
         self._adapter = ""
         self._platform: ContainerPlatform | None = None
         self._last: dict[str, Any] | None = None
+        self._status: PlatformStatus | None = None  # the last reading, as the platform gave it
         self._fingerprint: tuple[Any, ...] | None = None
         self._lock = threading.Lock()
+        self._limits: tuple[str, float, tuple[int, int] | None] | None = None  # adapter, when read, what it said
         self.cloud = CloudBounds(kernel)  # where each workspace's requests may go (design 0016 §9)
         self.network = HostAsks(kernel, self.allow_host)  # the hosts its agent asks for (design 0024 §3)
+        self.edge = Edge(self)  # the edge on every workspace's network (design 0004 §3)
 
     def settings(self) -> DockerSettings:
         """How Clank uses Docker, as the settings say now."""
@@ -150,9 +163,18 @@ class Workspaces:
         return self._last
 
     async def check(self) -> dict[str, Any]:
-        """Read Docker's state once, recording `docker.changed` if what runs changed since the last reading."""
+        """Read Docker's state once, recording `docker.changed` if what runs changed since the last reading; then, from
+        that reading, put the edge back on the network of each running workspace it is not on (`Edge.check`: Docker is
+        asked nothing more while none is cut off)."""
         platform = self.platform
-        return self._observe(await anyio.to_thread.run_sync(platform.status))
+        status = await anyio.to_thread.run_sync(platform.status)
+        view = self._observe(status)
+        if status.running:
+            try:
+                await anyio.to_thread.run_sync(self.edge.check, status.containers)
+            except Exception:
+                log.exception("putting the edge right failed")
+        return view
 
     async def run(self) -> None:
         """Give the gateway each workspace's bound (design 0016 §9), then check Docker every `poll_seconds` while the
@@ -169,16 +191,18 @@ class Workspaces:
             await anyio.sleep(self.settings().poll_seconds)
 
     def workspaces(self) -> list[dict[str, Any]]:
-        """Each workspace: its name, folder and limits, its container, and the container's state as Docker says now."""
-        status = self.docker(refresh=True)
+        """Each workspace: its name, folder and limits, its container, the container's state as Docker says now, and
+        whether it reaches the edge (`edge`, `edge_said`: `Edge.view`)."""
+        reading = self.platform.status()
+        status = self._observe(reading)
         running = status["state"] == "running"
-        containers = {container["name"]: container for container in status["containers"]}
+        containers = {container.name: container for container in reading.containers}
         found = names(self.kernel.home.id)
         rows = []
         for loaded in self.kernel.settings.records("workspace"):
             workspace = Workspace.model_validate(loaded.record.model_dump())
             container = containers.get(found.container(loaded.id))
-            state = container["state"] if container else ("not made" if running else f"Docker is {status['state']}")
+            state = container.state if container else ("not made" if running else f"Docker is {status['state']}")
             rows.append(
                 {
                     "name": loaded.id,
@@ -188,6 +212,7 @@ class Workspaces:
                     "container": found.container(loaded.id),
                     "state": state,
                     "setup": _setup_view(workspace.path, workspace),
+                    **self.edge.view(loaded.id, containers),
                     **self.cloud.view(loaded.id),
                 }
             )
@@ -310,9 +335,10 @@ class Workspaces:
         """What working in a folder needs of the workspaces, read now: whether it may be a workspace (else why not),
         its workspace and its container's state, whether the sandbox image is built, and whether the container runs
         it (`current`: false for one made from an older image, which moves to it when it is next opened; None without
-        a container), and its workspace's bound (`models`, `cloud_answered`, `cloud_question`; None without one).
-        Docker's state is its last reading (the background check keeps it current); the container and the image are
-        asked of Docker."""
+        a container), whether its running container reaches the edge (`edge`, `edge_said`: `Edge.view`), and its
+        workspace's bound (`models`, `cloud_answered`, `cloud_question`; None without one). Docker's state is its last
+        reading (the background check keeps it current); the container, the edge (while the container runs) and the
+        image are asked of Docker."""
         from clank.components.workspaces.folders import WorkspaceError, checked_folder
 
         problem = ""
@@ -340,6 +366,10 @@ class Workspaces:
         state = known if running else f"Docker is {docker['state']}"
         tag = layered_tag(workspace[1].layers) if workspace else image_tag()
         built = self.platform.image_exists(tag) if running else None
+        reach: dict[str, Any] = {"edge": None, "edge_said": ""}
+        if name and found is not None and found.state == "running":
+            edge = self.platform.container(names(self.kernel.home.id).edge)
+            reach = self.edge.view(name, {each.name: each for each in (found, edge) if each is not None})
         return {
             "folder": path,
             "problem": problem,
@@ -349,6 +379,7 @@ class Workspaces:
             "image": {"tag": tag, "built": built, "current": found.image == tag if found is not None else None},
             "setup": None if problem else _setup_view(path, workspace[1] if workspace else None),
             "hosts": dict(workspace[1].hosts) if workspace else None,
+            **reach,
             **(self.cloud.view(name) if name else dict.fromkeys(BOUND)),
         }
 
@@ -394,6 +425,21 @@ class Workspaces:
             raise WorkspaceUnavailable(f"{workspace}'s container does not run: `clank workspace open` starts it")
         return name
 
+    def reach(self, workspace: str) -> list[str]:
+        """Before an agent starts in a workspace (design 0004 §3): the edge put right for it, as an opening does (made,
+        started or made again when it must be, on its network, and on every workspace's once it was made or started);
+        what was put right, each in words, for the agent's notes (empty when nothing was). `WorkspaceUnavailable` when
+        Docker refused, saying why."""
+        if self._status is None:
+            self.docker()
+        containers = self._status.containers if self._status is not None else []
+        try:
+            repair = self.edge.ready(workspace, containers, remake=True, found_by=f"starting the agent in {workspace}")
+        except PlatformError as error:
+            said = f"{workspace}'s way to the model, the edge, could not be put right: {error}"
+            raise WorkspaceUnavailable(said) from error
+        return [*repair.did, *([repair.problem] if repair.problem else [])]
+
     def put_file(self, workspace: str, path: str, text: str) -> None:
         """Write a file in a workspace's running container, as its user."""
         try:
@@ -401,11 +447,22 @@ class Workspaces:
         except PlatformError as error:
             raise WorkspaceUnavailable(str(error)) from error
 
-    def exec_argv(self, workspace: str, argv: list[str], env: dict[str, str], *, terminal: bool = True) -> list[str]:
+    def put_files(self, workspace: str, files: Sequence[tuple[str, str]], *, container: str = "") -> None:
+        """Write several files in a workspace's running container, as its user, in one go (an agent's start, design
+        0004 §5); `container`, when the caller has just found it running, is not asked of Docker again."""
+        try:
+            self.platform.put_files(container or self.container_of(workspace), files)
+        except PlatformError as error:
+            raise WorkspaceUnavailable(str(error)) from error
+
+    def exec_argv(
+        self, workspace: str, argv: list[str], env: dict[str, str], *, terminal: bool = True, container: str = ""
+    ) -> list[str]:
         """The command that runs `argv` in a workspace's container, in its folder, with `env`: in a terminal, else
-        talked to over its input and output (an MCP server)."""
+        talked to over its input and output (an MCP server); `container`, when the caller has just found it running,
+        is not asked of Docker again."""
         return self.platform.exec_argv(
-            self.container_of(workspace), argv, workdir=WORKSPACE, env=env, terminal=terminal
+            container or self.container_of(workspace), argv, workdir=WORKSPACE, env=env, terminal=terminal
         )
 
     def run_in(self, workspace: str, argv: list[str], input: bytes | None = None, timeout: float = 30.0) -> Answer:
@@ -425,9 +482,20 @@ class Workspaces:
         says the same to every program in it, but one made before it did still needs it said here."""
         from clank.components.workspaces.folders import chosen_limits
 
-        loaded = self.kernel.settings.get("workspace", workspace)
-        cpus, _ = chosen_limits(Workspace.model_validate(loaded.record.model_dump()), self.platform.limits())
+        loaded = Workspace.model_validate(self.kernel.settings.get("workspace", workspace).record.model_dump())
+        cpus, _ = chosen_limits(loaded, self.platform_limits() if loaded.cpus is None else None)
         return dict(thread_env(cpus))
+
+    def platform_limits(self) -> tuple[int, int] | None:
+        """The CPUs and memory Docker's engine has, read at most once in `LIMITS_SECONDS` (they change only when Docker
+        restarts with other settings, and `docker info` took 0.7 s of every agent's start, 2026-10-26)."""
+        platform = self.platform  # the settings' adapter, made again when they name another
+        adapter, now, kept = self._adapter, time.monotonic(), self._limits
+        if kept is not None and kept[0] == adapter and now - kept[1] < LIMITS_SECONDS:
+            return kept[2]
+        found = platform.limits()
+        self._limits = (adapter, now, found)
+        return found
 
     def gateway_port(self) -> int:
         """The port the gateway listens on, which the edge forwards."""
@@ -602,7 +670,7 @@ class Workspaces:
         with self._lock:
             first = self._fingerprint is None
             changed = fingerprint != self._fingerprint
-            self._last, self._fingerprint = view, fingerprint
+            self._last, self._status, self._fingerprint = view, status, fingerprint
         if changed and not first:
             self.kernel.events.record(
                 "docker.changed",
