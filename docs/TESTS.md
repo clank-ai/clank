@@ -324,7 +324,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | none yet |
-| 2 | The container platform adapters | `tests/components/agents/test_work.py` (11), `tests/components/machine/test_checks.py` (10), `tests/components/machine/test_doctor.py` (4), `tests/components/machine/test_meters.py` (8), `tests/components/workspaces/test_choosing_a_platform.py` (11), `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_docker_engine.py` (14), `tests/components/workspaces/test_docker_operations.py` (17), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (25), `tests/contract/test_container_platform.py` (8), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
+| 2 | The container platform adapters | `tests/components/agents/test_work.py` (11), `tests/components/machine/test_checks.py` (10), `tests/components/machine/test_doctor.py` (4), `tests/components/machine/test_meters.py` (8), `tests/components/workspaces/test_choosing_a_platform.py` (12), `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_docker_engine.py` (14), `tests/components/workspaces/test_docker_operations.py` (17), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (25), `tests/contract/test_container_platform.py` (8), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
 | 3 | The edge's way to the gateway on Linux | none yet |
 | 4 | A workspace's container on Docker Engine | `tests/components/machine/test_checks.py` (10), `tests/components/workspaces/test_agent_access.py` (4), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_workspace_operations.py` (17) |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | `tests/components/machine/test_checks.py` (10) |
@@ -3392,6 +3392,7 @@ Design 0014 §2 (decision 0070): the container platform adapter is chosen by pla
 - docker desktop on linux names its own context and elsewhere changes nothing
 - the platform made from the settings keeps why it was chosen
 - dockers view says which adapter was chosen why and whether clank starts it
+- dockers view asks nothing more where docker cannot be started at all
 
 ### `tests/components/workspaces/test_cloud_bound.py`
 

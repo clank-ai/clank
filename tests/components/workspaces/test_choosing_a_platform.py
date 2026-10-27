@@ -21,6 +21,7 @@ from clank.components.workspaces.adapters.choose import choose_platform
 from clank.components.workspaces.adapters.docker_desktop import DockerDesktop
 from clank.components.workspaces.adapters.docker_engine import SYSTEMD, DockerEngine
 from clank.components.workspaces.service import Workspaces, make_platform
+from clank.kernel.adapters import Capability
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
 from clank.kernel.core import open_kernel
@@ -193,3 +194,26 @@ def test_dockers_view_says_which_adapter_was_chosen_why_and_whether_clank_starts
     )
     assert view["said"] == "Fake Docker is stopped: start it with `sudo systemctl start docker`"
     assert workspaces.platform_adapter() == "fake", "the edge's way to the gateway depends on it (design 0014 §3)"
+
+
+@pytest.mark.parametrize("state", ["not installed", "unsupported"])
+def test_dockers_view_asks_nothing_more_where_docker_cannot_be_started_at_all(
+    home: Home, monkeypatch: pytest.MonkeyPatch, state: str
+) -> None:
+    platform = FakePlatform(state=state, detail="update it")
+    asked: list[str] = []
+    capabilities = platform.capabilities
+
+    def counted() -> list[Capability]:
+        asked.append("capabilities")
+        return capabilities()
+
+    monkeypatch.setattr(platform, "capabilities", counted)
+    monkeypatch.setattr(workspaces_service, "make_platform", lambda name: platform)
+    kernel = open_kernel(home, FakeClock(datetime(2026, 10, 27, 12, 0, tzinfo=UTC)), registry.components())
+    try:
+        view = kernel.parts["workspaces"].docker(refresh=True)
+    finally:
+        kernel.close()
+    assert view["starts"] is False
+    assert asked == [], "Docker Desktop's own command, which did not answer, is not asked again at each reading"

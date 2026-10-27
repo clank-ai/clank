@@ -274,11 +274,12 @@ condition holds. Now: L0's tool, L1, P3 and P6.
   `make_platform` asks, so tests that replace `make_platform` choose nothing; the platform made keeps why
   (`ContainerPlatform.chosen`).
 - [x] **Interfaces:** `choose_platform(setting: str, platform: str = sys.platform, answer: TimedAnswer = run_answer,
-  which: Callable[[str], str | None] = shutil.which, environ: Mapping[str, str] = os.environ) -> tuple[str, str]`:
-  the adapter's name, and why. `GET /docker` gains `chosen: str` and `starts: bool`, and as built `said: str`, the
-  state in a sentence with what to do (the words `clank work`, `clank code` and the folder page show). For L6:
+  which: Callable[[str], str | None] = shutil.which, environ: Mapping[str, str] = os.environ) -> tuple[str, str]`: the
+  adapter's name, and why. `GET /docker` gains `chosen: str` and `starts: bool`, and as built `said: str`, the state in
+  a sentence with what to do (the words `clank work`, `clank code` and the folder page show). For L6:
   `Workspaces.platform_adapter() -> str`, the adapter in use by name (`docker-desktop`, `docker-engine`), and
-  `Workspaces.platform_starts() -> bool`.
+  `Workspaces.platform_starts() -> bool`, which asks nothing more of a platform not installed or unsupported (no start
+  mends those, and Docker Desktop's own command, unanswered, would be asked again at each reading).
 
 #### L4. The doctor and the meters ask the platform (B)
 

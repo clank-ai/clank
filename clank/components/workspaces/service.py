@@ -228,9 +228,12 @@ class Workspaces:
         (design 0014 §3)."""
         return self.platform.NAME
 
-    def platform_starts(self) -> bool:
+    def platform_starts(self, status: PlatformStatus | None = None) -> bool:
         """Whether Clank starts and stops the platform in use, read from it each time (Docker Desktop's own command
-        may answer later than its first asking; Docker Desktop keeps its answer once it has one)."""
+        may answer later than its first asking; Docker Desktop keeps its answer once it has one); never where its
+        `status` says it is not installed or unsupported, which no start mends, so nothing more is asked of it."""
+        if status is not None and status.state in ("not installed", "unsupported"):
+            return False
         return starts(self.platform)
 
     def note_memory(self, limited: bool | None) -> None:
@@ -241,7 +244,7 @@ class Workspaces:
     def not_running(self, status: PlatformStatus) -> str:
         """Why Docker cannot be used now and what to do, for one that does not run: the status's own words, or, for a
         platform Clank starts that says nothing more, how to start it through Clank."""
-        if self.platform_starts() and not status.detail:
+        if self.platform_starts(status) and not status.detail:
             return f"Docker is {status.state}: start it with `clank docker start`, or from the console's Docker page"
         return status_said(status)
 
@@ -817,7 +820,7 @@ class Workspaces:
             "said": status_said(status),
             "memory_limits": self._memory,
             "chosen": self.platform.chosen,
-            "starts": self.platform_starts(),
+            "starts": self.platform_starts(status),
             "containers": [
                 {**container.model_dump(mode="json", exclude={"label_keys"}), "owner": mine}
                 for container, mine in zip(status.containers, owners, strict=True)
