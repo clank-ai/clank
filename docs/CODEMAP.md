@@ -368,6 +368,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `tools/files.py` | The repository's files as the checks see them: what git tracks or would track, read as text when they are text. |
 | `tools/generated.py` | Write a generated document, or check that the copy in the repository is up to date. |
 | `tools/markdown.py` | Read Markdown the way GitHub does, as far as the checks need: which lines are prose, and which are code. |
+| `tools/release.py` | Make the GitHub release of a version tag, with Clank's VS Code extension attached (design 0028 §6). |
 | `tools/schemas.py` | Write `clank/schemas/<kind>.schema.json`: the JSON Schema of every settings kind's files (decision 0015). |
 | `tools/testspage.py` | Write `docs/TESTS.md`: each section of each design, with the test files that hold it to its word. |
 | `tools/tstypes.py` | Write `vscode/src/core/kinds.ts`: the TypeScript types of Clank's kinds of record (decisions 0015, 0028). |
