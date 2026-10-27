@@ -72,6 +72,8 @@ From the owner's first full day of use and an end-to-end test of a new user's fi
 - The phone app looks as its design drew it (and as the website shows it): rounded cards and buttons, the first answer
   filled, the tab on screen in blue, its quieter words readable on every ground (WCAG AA), and its buttons' words
   capitalized like every other client's.
+- The console's menu stands on the page's ground, as its design and the website draw it, so the page you are on shows
+  clearly in it (Textual drew it on a lighter ground, where the highlight barely showed).
 
 ## 0.3.0b1: the first public beta (2026-10-21)
 

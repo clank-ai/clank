@@ -28,10 +28,14 @@ Screen {
     height: 1fr;
 }
 
+/* The menu is a column on the page's background (design 0011 §7, boards E1 to E18, the website): Textual draws a list
+   on `surface`, tinted while it has the focus, which the console has at start, so the menu stood on a lighter ground
+   than the page and its highlighted entry barely showed on it. */
 #menu {
     width: 30;
     height: 1fr;
     border-right: solid $clank-border;
+    background: transparent;
     color: $clank-text;
 }
 
