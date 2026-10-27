@@ -5,14 +5,18 @@ address of its container) to its TARGET, bytes both ways, until both sides are d
 says so to the other (half-close), so an answer still comes back to a request that has been sent whole. A TARGET is a
 host and its port, two words (`host.docker.internal 18210`, Docker Desktop's way to the host's loopback), or a Unix
 socket, one word (`unix:/run/clank/gateway.sock`, Docker Engine's way: the gateway's socket, in the folder mounted at
-/run/clank, design 0014 §3). A connection the target refuses is closed at once. The gateway's port is the first pair,
-the proxy's the second (design 0024 §2). It uses the standard library only, so it runs from any image with Python.
+/run/clank, design 0014 §3). A connection the target refuses is closed at once: its client hears the end, and what it
+sent is read and dropped first, since closing with it unread would reset the connection (a Unix socket refuses before
+anything is read). The gateway's port is the first pair, the proxy's the second (design 0024 §2). It uses the standard
+library only, so it runs from any image with Python.
 """
 
 import asyncio
+import contextlib
 import sys
 
 CHUNK = 65536
+DRAIN_SECONDS = 1.0  # how long a refused connection's client is read before it is closed anyway
 UNIX = "unix:"
 USAGE = "usage: edge.py LISTEN_PORT TARGET_HOST TARGET_PORT|LISTEN_PORT unix:SOCKET [...], each port to its target"
 Forward = tuple[int, str, int]  # the port listened on, its target (a host, or unix:PATH), the target's port (0: none)
@@ -46,11 +50,24 @@ async def join(
     try:
         target_reader, target_writer = await connect(target, port)
     except OSError:
-        client_writer.close()
+        await refuse(client_reader, client_writer)
         return
     await asyncio.gather(pipe(client_reader, target_writer), pipe(target_reader, client_writer))
     for writer in (target_writer, client_writer):
         writer.close()
+
+
+async def refuse(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    """A connection whose target cannot be reached, closed at once: the end said first, then what the client sent read
+    and dropped (for `DRAIN_SECONDS` at most), so the close does not reset it."""
+    with contextlib.suppress(OSError):
+        if writer.can_write_eof():
+            writer.write_eof()
+    with contextlib.suppress(OSError, TimeoutError):
+        async with asyncio.timeout(DRAIN_SECONDS):
+            while await reader.read(CHUNK):
+                pass
+    writer.close()
 
 
 def said(target: str, port: int) -> str:

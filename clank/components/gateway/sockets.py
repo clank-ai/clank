@@ -196,10 +196,15 @@ if sys.platform != "win32":  # Unix sockets: the type checker knows `AF_UNIX` on
         listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             listener.bind(str(path))
+        except OSError:
+            listener.close()
+            raise
+        try:
             os.chmod(path, SOCKET_MODE)
             listener.listen()
         except OSError:
             listener.close()
+            path.unlink(missing_ok=True)  # bound, so its file is this one's: not left behind
             raise
         return listener
 
