@@ -89,7 +89,7 @@ def test_the_models_row_has_a_mark_for_each_slot() -> None:
     )
     shown = models_line(data)
     assert shown.plain == (
-        "models     ● main: daily 262K · ready   ○ fast: stopped (unloaded)   ✗ vision: failed (out of memory)   "
+        "models     ● main: daily 262K · ready   ○ fast: not loaded   ✗ vision: failed (out of memory)   "
         "8 opens Models"
     )
     assert [part for part in colored(shown) if part[0] in "●○✗"] == [("●", GOOD), ("○", OFF), ("✗", FAILED)]
