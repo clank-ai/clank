@@ -1,12 +1,13 @@
 """The whole suite's rules about what is the owner's: no test may reach the owner's own Clank (its service, its records,
 its containers), and no test may run a program in the terminal it runs in.
 
-Before any test runs, CLANK_HOME points to an empty folder of the session's own, removed after it; the real-engine
-tests, which read this machine's records on purpose, find the real home in `tests.support.homes`. (Found 2026-10-13: a
-test of the bare `clank`, written when it printed its help, reached the owner's service once `clank` came to mean
-`clank work`, and opened the repository as a workspace.) A program a page or `clank work` would run in the terminal
-(the agent's `docker exec --tty`) fails the test that reaches it instead; tests give the console or the command a
-runner of their own."""
+Before any test runs, CLANK_HOME points to an empty folder of the session's own, removed after it, and so does
+XDG_CACHE_HOME (a short one: a socket's path holds 107 bytes), so no test makes the gateway's socket folder in the real
+home folder (`~/.cache/clank/`, design 0014 §3); the real-engine tests, which read this machine's records on purpose,
+find the real home in `tests.support.homes`. (Found 2026-10-13: a test of the bare `clank`, written when it printed its
+help, reached the owner's service once `clank` came to mean `clank work`, and opened the repository as a workspace.) A
+program a page or `clank work` would run in the terminal (the agent's `docker exec --tty`) fails the test that reaches
+it instead; tests give the console or the command a runner of their own."""
 
 import os
 import shutil
@@ -19,17 +20,20 @@ import pytest
 from tests.support.homes import REAL_HOME
 
 SESSION_HOME = Path(tempfile.mkdtemp(prefix="clank-tests-home-"))
+SESSION_CACHE = Path(tempfile.mkdtemp(prefix="clank-tests-cache-"))  # where the gateway's socket folders go
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    """Point CLANK_HOME at the session's own empty folder."""
+    """Point CLANK_HOME and XDG_CACHE_HOME at the session's own empty folders."""
     assert SESSION_HOME.resolve() != REAL_HOME.root.resolve()
     os.environ["CLANK_HOME"] = str(SESSION_HOME)
+    os.environ["XDG_CACHE_HOME"] = str(SESSION_CACHE)
 
 
 def pytest_unconfigure(config: pytest.Config) -> None:
-    """Remove the session's folder."""
+    """Remove the session's folders."""
     shutil.rmtree(SESSION_HOME, ignore_errors=True)
+    shutil.rmtree(SESSION_CACHE, ignore_errors=True)
 
 
 @pytest.fixture(autouse=True)

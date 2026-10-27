@@ -16,7 +16,7 @@ def gateway() -> None:
 @gateway.command()
 @click.option("--json", "as_json", is_flag=True, help="Print JSON, for scripts and models.")
 def status(as_json: bool) -> None:
-    """Whether the gateway runs, where tools reach it, and which process it is."""
+    """Whether the gateway runs, where tools reach it (on Linux, its socket too), and which process it is."""
     client = common.call(common.connect)
     found = common.call(lambda: client.get("gateway"))
     if as_json:
@@ -43,6 +43,10 @@ def _say(found: dict[str, Any]) -> None:
     if found["state"] == "running":
         since = f", since {common.local_time(found['since'])}" if found.get("since") else ""
         click.echo(f"gateway: running at {found['url']} (process {found['pid']}{since}); its log: {found['log']}")
+        if found.get("socket"):  # on Linux: the edge's way in on Docker Engine (design 0014 §3)
+            click.echo(f"gateway: its socket, the edge's way in on Docker Engine: {found['socket']}")
+        elif found.get("socket_problem"):
+            click.echo(f"gateway: no socket for the edge: {found['socket_problem']}")
         if found.get("problem"):  # a restart whose stop failed: the gateway runs on as it was
             click.echo(f"gateway: {found['problem']}")
     elif found["state"] == "problem":

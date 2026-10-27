@@ -422,6 +422,8 @@ export interface GatewaySettings {
   port: number;
   /** Where the agent's internet requests enter Clank's proxy (design 0024), on this machine only; the edge forwards it to the containers. */
   proxy_port: number;
+  /** On Linux, the folder of the gateway's socket and the proxy's, the edge's way to them on Docker Engine (design 0014 §3): the owner's alone, outside CLANK_HOME. Empty: ~/.cache/clank/<home id> (under $XDG_CACHE_HOME when that is set). */
+  socket_folder: string;
   /** How long a request waits, in seconds, for a slot that is starting or switching, before refusal. */
   hold_seconds: number;
   /** Answer OpenCode's session-title requests in the gateway, so they never take the place of the conversation the engine keeps cached (design 0001 §6.4). */

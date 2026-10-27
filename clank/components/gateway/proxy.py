@@ -19,7 +19,8 @@ allowed (`clank workspace allow FOLDER --host NAME`); a name that cannot be reso
 `NetworkLog` (`logs/network/<day>.jsonl`: time, workspace, host, port, method, the path of a plain request, status,
 bytes sent and received, seconds, why refused), never a body, never a tunnel's bytes; the days older than kept are
 removed when a day's first line is written; `recent` and `by_host` read it back for the owner (design 0024 §4). The
-resolver and the private check can be given (the tests reach upstreams on this machine).
+resolver and the private check can be given (the tests reach upstreams on this machine). On Linux it is served on its
+socket too (`serve_on`, design 0014 §3), the edge's way to it on Docker Engine.
 """
 
 import asyncio
@@ -30,6 +31,7 @@ import hmac
 import ipaddress
 import json
 import logging
+import socket
 import threading
 import time
 from collections.abc import Awaitable, Callable
@@ -207,6 +209,12 @@ class Proxy:
     async def serve(self, host: str, port: int) -> asyncio.AbstractServer:
         """Listen on `host:port`; the server returned is the caller's to run and to close."""
         return await asyncio.start_server(self.handle, host=host, port=port)
+
+    async def serve_on(self, listener: socket.socket) -> asyncio.AbstractServer:
+        """Serve on a socket made for it: on Linux, its Unix socket, the edge's way to it on Docker Engine (design 0014
+        §3); the server returned is the caller's to run and to close. A connection there has no peer address, which the
+        proxy never reads: the workspace is its token's."""
+        return await asyncio.start_server(self.handle, sock=listener)
 
     async def handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         """One connection: a request read, answered or carried; then closed."""

@@ -156,6 +156,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/gateway/server.py` | The gateway process (design 0001 §6, design 0004 §2): every model request of every tool, to the engine of its role's |
 | `clank/components/gateway/service.py` | The gateway component's part in the service (design 0001 §6.6, design 0004 §2): it keeps the gateway's process |
 | `clank/components/gateway/sessions.py` | Which session a model request belongs to (design 0012 §3, decision 0048): OpenCode sends its session's id with |
+| `clank/components/gateway/sockets.py` | The gateway's way in on Linux (design 0014 §3, decision 0071 (a)): its socket and the proxy's, in a folder of their |
 | `clank/components/gateway/spool.py` | The gateway's spool of cloud requests (design 0016 §12, decision 0108): each cloud request that ends is appended, |
 | `clank/components/gateway/titles.py` | OpenCode's session titles, answered by the gateway itself (design 0001 §6.4, design 0004 §2). |
 | `clank/components/machine/__init__.py` | The machine component: what Clank detected about the computer it runs on, and the checks of `clank doctor`. |

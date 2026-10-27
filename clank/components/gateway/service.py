@@ -19,15 +19,23 @@ preset's facts (design 0012 §4), and `facts` gives any preset's. `completion` a
 completions, for the CPU models page. `pause`, `resume` and `release` set a session's pause in the gateway (design 0012
 §9.4, decision 0055), with the service's local token, which the gateway's routes for it take (decision 0084); `holds`
 says what is paused and held.
+
+On Linux the gateway also listens on a socket, `gateway.sock`, in a folder of its own outside CLANK_HOME (design 0014
+§3, decision 0071, `sockets.py`): its start names the folder, checked and made the owner's alone; its status names the
+socket (`socket`), or says why it has none (`socket_problem`); a gateway that runs without it (one started before it
+had one, adopted as it is, or one whose folder was removed) is started again once no request is in flight
+(`keep_socket`), once. `socket_path` and `edge_socket` tell the workspaces component where the edge reaches it.
 """
 
 import base64
 import contextlib
 import json
 import logging
+import os
 import sys
 import threading
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
@@ -35,6 +43,7 @@ import anyio
 import anyio.to_thread
 import httpx2
 
+from clank.components.gateway import sockets
 from clank.components.gateway.activity import AGAIN as AGAIN  # the phases its activity says (the Monitor's Now)
 from clank.components.gateway.activity import ANSWERING as ANSWERING
 from clank.components.gateway.activity import HELD as HELD
@@ -47,6 +56,9 @@ from clank.components.gateway.proxy import HOLD_SECONDS as HOLD_SECONDS  # the w
 from clank.components.gateway.proxy import allowed_host as allowed_host  # through this service (design 0024 §3)
 from clank.components.gateway.proxy import network_token as network_token
 from clank.components.gateway.routing import NOTION_TOOLS
+from clank.components.gateway.sockets import GATEWAY_SOCKET as GATEWAY_SOCKET  # the edge's ways in (design 0014 §3)
+from clank.components.gateway.sockets import PROXY_SOCKET as PROXY_SOCKET
+from clank.components.gateway.sockets import SocketFolderError as SocketFolderError
 from clank.components.runtime.service import ProcessIdentity
 from clank.kernel import files
 from clank.kernel.access import local_token
@@ -154,6 +166,7 @@ class Gateway:
         self.bounds = Bounds(kernel)  # each workspace's key at the gateway, and how far its requests may go
         self._local_only: list[str] | None = None  # the tools never sent to the cloud, as the agents component gives
         self.costs = Costs(self)  # what the cloud cost, taken from the gateway's spool (design 0016 §12)
+        self._socket_again: int | None = None  # the process started again for its socket (design 0014 §3)
         kernel.events.subscribe(self._heard)
 
     def _heard(self, event: Any) -> None:
@@ -528,11 +541,14 @@ class Gateway:
         return bool(route["status"] == "failed")
 
     def status(self) -> dict[str, Any]:
-        """Whether the gateway runs, where it listens and which process it is; or why it does not run."""
+        """Whether the gateway runs, where it listens and which process it is; or why it does not run. On Linux, its
+        socket too, where the edge reaches it on Docker Engine (`socket`, design 0014 §3), or why it has none
+        (`socket_problem`)."""
         kept = self._kept()
         running = kept is not None and self._host().alive(_identity(kept)) is not False
         port = int(kept["port"]) if running and kept else self.settings().port
         state = "running" if running else ("problem" if self.problem else "stopped")
+        socket, socket_problem = self._socket_of(kept if running else None)
         return {
             "state": state,
             "port": port,
@@ -541,7 +557,103 @@ class Gateway:
             "since": kept.get("since") if running and kept else None,
             "problem": "" if running else self.problem,
             "log": str(self.kernel.home.logs / "gateway.log"),
+            "socket": socket,
+            "socket_problem": socket_problem,
         }
+
+    def socket_path(self) -> Path | None:
+        """Where the edge reaches the gateway on Linux (design 0014 §3): the running gateway's socket when it listens on
+        one, else where it listens once started, by its settings; None on any other system. `SocketFolderError`, saying
+        why, when the settings' folder may not be used."""
+        if not sockets.LINUX:
+            return None
+        kept = self._kept()
+        running = kept is not None and self._host().alive(_identity(kept)) is not False
+        found, _ = self._socket_of(kept if running else None)
+        if found:
+            return Path(found)
+        wanted, refused = self._wanted_socket()
+        if wanted is None:
+            raise SocketFolderError(refused)
+        return wanted
+
+    def edge_socket(self) -> Path | None:
+        """`socket_path`, its folder made the owner's alone when it is not there yet, so the edge can mount it before
+        the gateway listens: a gateway that starts makes its socket in the same folder, and the edge sees it (design
+        0014 §3). `SocketFolderError`, saying why, when the folder may not be used."""
+        path = self.socket_path()
+        if path is not None:
+            sockets.prepare_folder(path.parent)
+        return path
+
+    def keep_socket(self) -> str:
+        """On Linux, a gateway running without its socket (one started before it had one and adopted as it is, or one
+        whose folder was removed) started again once no request is in flight, the service's log saying why (design 0014
+        §3); once only, so one that cannot make it is not started again and again. What was done; "" for nothing."""
+        if not sockets.LINUX:
+            return ""
+        kept = self._kept()
+        if kept is None or self._host().alive(_identity(kept)) is False:
+            return ""
+        if self._socket_of(kept)[0]:
+            self._socket_again = None  # it has its socket: one lost later is worth one more start
+            return ""
+        why, again = self._without(kept)
+        if not again:
+            return ""
+        doing = self.activity()
+        if doing.get("problem") or doing.get("requests"):
+            return ""  # a request in flight, or the gateway does not say: the next look
+        log.warning("the gateway runs without its socket (%s): it is started again, no request being in flight", why)
+        found = self.restart()
+        self._socket_again = found.get("pid")
+        return f"started again without a request in flight: {why}"
+
+    def _wanted_socket(self) -> tuple[Path | None, str]:
+        """Where the gateway's socket goes by its settings now: its path, or None and why the folder may not be used;
+        (None, "") on any system but Linux, where the gateway listens on no socket."""
+        if not sockets.LINUX:
+            return None, ""
+        folder = sockets.socket_folder(self.settings().socket_folder, self.kernel.home.id)
+        try:
+            found = sockets.checked_socket_folder(folder, self.kernel.home.root, sockets.runs_from(), Path.home())
+        except SocketFolderError as error:
+            return None, str(error)
+        return found / GATEWAY_SOCKET, ""
+
+    def _socket_of(self, kept: dict[str, Any] | None) -> tuple[str | None, str]:
+        """The running gateway's socket when it listens there, else None and why it has none, in words; (None, "") on
+        any system but Linux, and while the gateway does not run (`kept` None)."""
+        if not sockets.LINUX or kept is None:
+            return None, ""
+        path = kept.get("socket")
+        if path and sockets.is_socket(Path(path)):
+            return str(path), ""
+        why, again = self._without(kept)
+        return None, f"{why}: it is started again once no request is in flight" if again else why
+
+    def _without(self, kept: dict[str, Any]) -> tuple[str, bool]:
+        """Why a running gateway listens on no socket, and whether starting it again would give it one: not when it was
+        started without one (its folder could not be used then), nor when something else is where the socket goes, nor
+        when its folder may not be used, nor once it was started again for it."""
+        had = kept.get("socket")
+        if "socket" not in kept:
+            why = "it was started before the gateway listened on a socket"
+        elif not had:
+            return f"it was started without one: {kept.get('socket_refused') or 'its folder could not be used'}", False
+        elif os.path.lexists(had):
+            return f"{had} is there and is not its socket: remove it, then clank gateway restart", False
+        else:
+            why = f"its socket {had} is not there"
+        wanted, refused = self._wanted_socket()
+        if wanted is None:
+            return f"{why}; {refused}", False
+        if os.path.lexists(wanted) and not sockets.is_socket(wanted):
+            return f"{why}; {wanted} is there and is not a socket: remove it, then clank gateway restart", False
+        if kept.get("pid") == self._socket_again:
+            told = self.kernel.home.logs / "gateway.log"
+            return f"{why}; started again for it, it still has none: {told} says why", False
+        return why, True
 
     def ensure(self) -> dict[str, Any]:
         """Adopt the gateway that runs, or start it; its status."""
@@ -556,11 +668,28 @@ class Gateway:
                 self.problem = f"port {port} is held by {holder}: give the gateway another port in config/gateway.json"
                 return self.status()
             argv = [sys.executable, "-m", "clank.components.gateway.server", "--port", str(port)]
+            socket, refused = self._ready_socket()
+            if socket is not None:
+                argv += ["--socket-folder", str(socket.parent)]
             env = {"CLANK_HOME": str(self.kernel.home.root)}
             identity = self._host().spawn(argv, env, str(self.kernel.home.root), self.kernel.home.logs / "gateway.log")
-            self._keep(identity, port)
+            self._keep(identity, port, socket, refused)
             self.problem = ""
             return self.status()
+
+    def _ready_socket(self) -> tuple[Path | None, str]:
+        """On Linux, where the gateway about to start makes its socket, its folder made ready; None and why, the
+        service's log saying it too, when the folder may not be used (it then listens on 127.0.0.1 alone); (None, "")
+        on any other system."""
+        wanted, refused = self._wanted_socket()
+        if wanted is not None:
+            try:
+                sockets.prepare_folder(wanted.parent)
+            except SocketFolderError as error:
+                wanted, refused = None, str(error)
+        if refused:
+            log.warning("%s; the gateway starts without its socket", refused)
+        return wanted, refused
 
     def stop(self) -> str:
         """Stop the gateway; what happened (stopped, killed, or gone when it did not run)."""
@@ -728,14 +857,15 @@ class Gateway:
         return False
 
     async def run(self) -> None:
-        """While the service runs: keep the gateway running, unless its settings say not to start it; keep the
-        vision model as its mode says (design 0008 §7); and hand the gateway the keys of the cloud models the slots
-        run (design 0016 §5): at once when a slot or a key changes, and at each watch, so a gateway started again gets
-        them within seconds."""
+        """While the service runs: keep the gateway running, unless its settings say not to start it, and on Linux with
+        its socket (`keep_socket`); keep the vision model as its mode says (design 0008 §7); and hand the gateway the
+        keys of the cloud models the slots run (design 0016 §5): at once when a slot or a key changes, and at each
+        watch, so a gateway started again gets them within seconds."""
         while True:
             try:
                 if self.settings().start:
                     await anyio.to_thread.run_sync(self.ensure)
+                    await anyio.to_thread.run_sync(self.keep_socket)
             except Exception:
                 log.exception("keeping the gateway running failed")
             try:
@@ -797,11 +927,13 @@ class Gateway:
             return None
         return found if isinstance(found, dict) and "pid" in found else None
 
-    def _keep(self, identity: ProcessIdentity, port: int) -> None:
-        """Keep the process started: in its state file, else in memory until that file can be written."""
+    def _keep(self, identity: ProcessIdentity, port: int, socket: Path | None = None, refused: str = "") -> None:
+        """Keep the process started, with its socket (None: it listens on none, and `refused` says why): in its state
+        file, else in memory until that file can be written."""
         self._unsaved = {
             "host": identity.host, "pid": identity.pid, "started": identity.started, "command": identity.command,
-            "port": port, "since": to_text(self.kernel.clock.now()),
+            "port": port, "since": to_text(self.kernel.clock.now()), "socket": str(socket) if socket else None,
+            "socket_refused": refused,
         }  # fmt: skip
         self._save()
 

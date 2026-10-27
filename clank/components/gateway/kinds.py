@@ -15,8 +15,8 @@ class GatewaySettings(Settings):
     KIND = "gateway"
     LABEL = "Gateway"
     HELP = (
-        "Where the gateway listens, how long a request waits for a model that is starting or switching, whether it "
-        "answers OpenCode's session titles itself, and what it keeps of each request."
+        "Where the gateway listens (on Linux, its socket's folder too), how long a request waits for a model that is "
+        "starting or switching, whether it answers OpenCode's session titles itself, and what it keeps of each request."
     )
     SINGLE = True
     ON_CHANGE = "next start"
@@ -37,6 +37,13 @@ class GatewaySettings(Settings):
         title="Proxy port",
         description="Where the agent's internet requests enter Clank's proxy (design 0024), on this machine only; "
         "the edge forwards it to the containers.",
+    )
+    socket_folder: str = Field(
+        "",
+        title="Socket folder",
+        description="On Linux, the folder of the gateway's socket and the proxy's, the edge's way to them on Docker "
+        "Engine (design 0014 §3): the owner's alone, outside CLANK_HOME. Empty: ~/.cache/clank/<home id> (under "
+        "$XDG_CACHE_HOME when that is set).",
     )
     hold_seconds: int = Field(
         300,

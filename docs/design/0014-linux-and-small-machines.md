@@ -34,7 +34,7 @@ against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engi
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | Proposed 2026-10-18 |
 | 2 | The container platform adapters | Proposed 2026-10-18 |
-| 3 | The edge's way to the gateway on Linux | Proposed 2026-10-18; option (a) chosen 2026-10-27 (decision 0071) |
+| 3 | The edge's way to the gateway on Linux | Proposed 2026-10-18; option (a) chosen 2026-10-27 (decision 0071); the gateway's socket (step L5) built 2026-10-27 |
 | 4 | A workspace's container on Docker Engine | Proposed 2026-10-18 |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | Proposed 2026-10-18 |
 | 6 | OpenCode on arm64 | Proposed 2026-10-18 |
@@ -302,6 +302,20 @@ Tests:
 
 The escape tests' stand-in gateway listens on 127.0.0.1 only (`tests/docker/test_escape.py:46`); it moves to where the
 gateway listens on each platform.
+
+**As built** (2026-10-27, option (a); [plan s9](../plans/s9-linux-and-the-pi.md) L5):
+
+- The gateway's process is given its socket folder (`--socket-folder`), which holds `gateway.sock` and the proxy's
+  `proxy.sock`: the agent's internet goes through the proxy (design 0024, written after this design), so its port takes
+  the same way. The folder, its checks and the listeners are `gateway/sockets.py`.
+- The service makes the folder ready (0700, the owner's) before it starts the gateway, and again when the workspaces
+  component asks where the socket is, so the edge can mount the folder before the gateway listens. A folder it may not
+  use starts the gateway without a socket; `GET /gateway` and `clank gateway status` say why (`socket_problem`). The
+  console's gateway row does not show the socket yet.
+- The gateway removes its sockets in Uvicorn's own stop: after a stop signal, Uvicorn hands the signal back to the
+  process, which then ends at once.
+- A gateway without its socket is started again once, while no model request is in flight: one adopted from before, or
+  one whose socket went; one that still has none after is left, its status saying so.
 
 ## 4. A workspace's container on Docker Engine
 

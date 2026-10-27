@@ -274,9 +274,9 @@ docker` alone (its socket still listening), within 10 seconds.
 
 #### L5. The gateway's Linux listener (B)
 
-Option (a), recommended in decision 0071:
+Option (a), recommended in decision 0071, and chosen on 2026-10-27. Built 2026-10-27 but the console's row (below).
 
-- [ ] **Tests first** (Linux only; `tests/components/gateway/test_listeners.py`, design 0014 §3):
+- [x] **Tests first** (Linux only; `tests/components/gateway/test_listeners.py`, design 0014 §3):
   - `test_on_linux_the_gateway_also_listens_where_only_the_edge_reaches_it`: the gateway's listeners are 127.0.0.1 at
     its port and `gateway.sock`. The socket is 0600, in a 0700 folder outside `CLANK_HOME`, and answers `/health`. No
     other address listens.
@@ -291,19 +291,34 @@ Option (a), recommended in decision 0071:
     `test_the_gateways_status_names_its_socket` (`GET /gateway` and `clank gateway status`);
     `test_a_gateway_running_without_its_socket_is_started_again_once_idle` (adopted from before, or its folder
     removed).
-  - The console: `test_the_gateway_row_names_the_socket_when_there_is_one`.
-- [ ] **Files:** `gateway/kinds.py` (`socket_folder`: empty means `$XDG_CACHE_HOME/clank/<home id>`, else
+  - The console: `test_the_gateway_row_names_the_socket_when_there_is_one`. *Not built yet: the console's gateway row
+    reads the gateway's activity, which does not carry the socket; `clank gateway status` and `GET /gateway` say it.*
+  - As built: the tests that make sockets run on Linux only (CI's ubuntu-24.04); the folder's place, its checks, the
+    path's length, the service's start, its status and the start again once idle also run on Windows, the service
+    told it is on Linux. Also `test_the_socket_folder_is_the_cache_folders_own_for_its_home_unless_the_settings_name_one`,
+    `test_a_request_on_the_socket_has_no_client_address_and_is_answered_as_any_other` and
+    `test_off_linux_the_gateway_has_no_socket`.
+- [x] **Files:** `gateway/kinds.py` (`socket_folder`: empty means `$XDG_CACHE_HOME/clank/<home id>`, else
   `~/.cache/clank/<home id>`; used on Linux only); `gateway/service.py:226-258` (`edge_socket()`, public; `--socket`
   in the gateway's command line on Linux; the status's `socket`; a gateway without its socket started again once
   idle); `gateway/server.py:571-612` (`listeners(port, socket)`, made before Uvicorn runs: the TCP socket with
   `SO_REUSEADDR`, its bind failure logged with exit status 3; the Unix socket bound in its folder, then set to 0600,
   then listening; `uvicorn.Server(...).run(sockets=...)`; the socket removed when the gateway stops; on other systems,
   unchanged); `gateway/cli.py:45`; `clank/console/pages/home.py:168-180`; `tests/conftest.py` (`XDG_CACHE_HOME`).
-  Regenerated: `clank/schemas/gateway.schema.json`, `vscode/src/core/kinds.ts`.
-- [ ] **Interfaces:** `Gateway.edge_socket() -> Path | None` (None off Linux); `checked_socket_folder(folder: Path,
+  Regenerated: `clank/schemas/gateway.schema.json`, `vscode/src/core/kinds.ts`. *As built:* the folder, its checks
+  and the listeners are a module of their own, `gateway/sockets.py`; the process is given the folder
+  (`--socket-folder FOLDER`), holding `gateway.sock` and the proxy's `proxy.sock` (the agent's internet goes through
+  the proxy, design 0024, which came after this plan); the service makes the folder ready before the start, so a
+  folder it may not use starts the gateway without a socket, saying why; the sockets are removed in Uvicorn's own
+  stop (`server.Serving`), since Uvicorn hands a stop signal back to the process, which then runs nothing after `run`.
+  The console's row (`clank/console/pages/home.py`) is not changed yet.
+- [x] **Interfaces:** `Gateway.edge_socket() -> Path | None` (None off Linux); `checked_socket_folder(folder: Path,
   clank_home: Path, runs_from: Path) -> Path`, refusing with the reason (`runs_from`: the folder Clank runs from,
   `Path(clank.__file__).resolve().parents[1]`); `listeners(port: int, socket: Path | None) -> list[socket.socket] |
-  None`; `GET /gateway` gains `socket: str | None`.
+  None`; `GET /gateway` gains `socket: str | None`. *As built:* `Gateway.socket_path()` (where, no folder made) and
+  `Gateway.edge_socket()` (the folder made ready), both raising `SocketFolderError` with the reason;
+  `Gateway.keep_socket()`; `checked_socket_folder(folder, clank_home, runs_from, user_home)`; `listeners(port, folder)
+  -> Listeners`; `Proxy.serve_on(listener)`; `GET /gateway` gains `socket` and `socket_problem`.
 
 Option (b), if chosen instead: `test_on_linux_the_gateway_also_listens_where_only_the_edge_reaches_it` (its listeners
 are 127.0.0.1 and the outer network's gateway address) and `test_a_peer_outside_clanks_network_is_refused` (a peer from

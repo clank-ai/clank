@@ -62,7 +62,8 @@ def router(gateway: "Gateway") -> APIRouter:
 
     @routes.get("/gateway")
     async def status() -> dict[str, Any]:
-        """Whether the gateway runs, where it listens and which process it is; or why it does not run."""
+        """Whether the gateway runs, where it listens and which process it is; or why it does not run. On Linux, its
+        socket (`socket`, where the edge reaches it on Docker Engine), or why it has none (`socket_problem`)."""
         found: dict[str, Any] = await anyio.to_thread.run_sync(gateway.status)
         return found
 

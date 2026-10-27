@@ -4,7 +4,8 @@ slot.
 It serves OpenAI's Chat Completions (`POST /v1/chat/completions`, streamed or not), `GET /v1/models` (the roles), `GET
 /activity` (each request in flight and the last that ended, of one session if it is named, and its subagents if they
 are asked for: `activity.py`) and `GET
-/health`, on 127.0.0.1 only (containers reach it through their edge). A request names a role as its model (decision
+/health`, on 127.0.0.1 only (containers reach it through their edge), and on Linux on its socket too, which only the
+edge reaches, on Docker Engine (`sockets.py`, design 0014 §3). A request names a role as its model (decision
 0008); the gateway waits while the role's slot starts or switches (`Routes.ready`), puts the request in the engine's own
 fields (`EngineAdapter.translate`), names the model as the runtime's settings say (`model_name`), and forwards it. A
 streamed answer is passed on as it comes, whole lines at a time, each token counted; when the client leaves, the gateway
@@ -66,22 +67,31 @@ so is one a browser made (403).
 
 Run as its own process (`python -m clank.components.gateway.server`), supervised by the service (`service.py`), so a
 restart of the service or of the console cuts no request in flight. It reads its settings from `config/gateway.json`
-and follows the service's routes, asking every second; while the service does not answer it keeps the last routes.
+and follows the service's routes, asking every second; while the service does not answer it keeps the last routes. On
+Linux the service names its socket folder (`--socket-folder`): the process then makes its listeners itself, the TCP
+socket and the Unix sockets, its own and the proxy's, before anything else runs, hands them to Uvicorn and the proxy,
+and removes the sockets when it stops (`sockets.py`); a port another program holds ends it as Uvicorn would, logged,
+with exit status 3.
 """
 
 import argparse
+import asyncio
 import contextlib
 import json
 import logging
 import math
+import os
 import re
 import secrets
+import socket
+import sys
 import threading
 import time
 import weakref
 from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable, Mapping
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple
 from urllib.parse import quote
 
@@ -91,6 +101,7 @@ import httpx2
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
+from uvicorn.config import STARTUP_FAILURE
 
 from clank.components.gateway import completion
 from clank.components.gateway.activity import Activity
@@ -106,6 +117,7 @@ from clank.components.gateway.proxy import HOLD_SECONDS, NetworkLog, Proxy, netw
 from clank.components.gateway.records import TrafficLog
 from clank.components.gateway.routing import NO_KEY, Routes, SlotRoute
 from clank.components.gateway.sessions import session_of
+from clank.components.gateway.sockets import Listeners, remove_sockets
 from clank.components.gateway.spool import Spool
 from clank.components.gateway.titles import local_title
 from clank.components.runtime.service import (
@@ -248,6 +260,7 @@ def create_gateway(
     agents: Forward | None = None,
     proxy: Proxy | None = None,
     port: int | None = None,
+    proxy_socket: socket.socket | None = None,
 ) -> FastAPI:
     """The gateway's application, over its routes, its settings and its records (None: none kept); `wake` asks the
     service for a role loaded on demand, and says why not when it is not loaded ("" when it is being); `notion`
@@ -259,9 +272,9 @@ def create_gateway(
     sessions that used local-only content (design 0016 §10), kept from the cloud; `spool` keeps each cloud request
     that ended, with its cost, until the service takes it (design 0016 §12); `agents` forwards the agent's request to
     open files for the owner (`agents_forwarder`, design 0018 §7); `proxy` is the agent's way to the internet (design
-    0024 §2), served on the settings' `proxy_port` with the application, and stopped with it. `port` is the one it
-    listens on (its settings' when none is given): it answers requests addressed to its host names with that port only
-    (`callers.py`)."""
+    0024 §2), served on the settings' `proxy_port` with the application, and on `proxy_socket` too when one is given
+    (its socket on Linux, design 0014 §3), and stopped with it. `port` is the one it listens on (its settings' when
+    none is given): it answers requests addressed to its host names with that port only (`callers.py`)."""
     clients: dict[str, httpx2.AsyncClient] = {}
     activity = Activity(generation=routes.generation)
     holds = holds if holds is not None else Holds()
@@ -282,21 +295,23 @@ def create_gateway(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         clients["engine"] = httpx2.AsyncClient(timeout=httpx2.Timeout(None, connect=10))
         clients["cloud"] = httpx2.AsyncClient(timeout=httpx2.Timeout(CLOUD_READ_SECONDS, connect=CLOUD_CONNECT_SECONDS))
-        proxied = None
+        proxied: list[asyncio.AbstractServer] = []
         if proxy is not None:
             try:
-                proxied = await proxy.serve("127.0.0.1", settings.proxy_port)
+                proxied.append(await proxy.serve("127.0.0.1", settings.proxy_port))
             except OSError as error:  # the port is taken: the gateway serves its models all the same, said in its log
                 logging.getLogger(__name__).warning(
                     "the agent's proxy could not listen on port %d (%s): the agent reaches no host until the gateway "
                     "starts again with a free proxy_port", settings.proxy_port, error,
                 )  # fmt: skip
+            if proxy_socket is not None:  # the edge's way to it on Docker Engine (design 0014 §3)
+                proxied.append(await proxy.serve_on(proxy_socket))
         try:
             yield
         finally:
-            if proxied is not None:
-                proxied.close()
-                await proxied.wait_closed()
+            for served in proxied:
+                served.close()
+                await served.wait_closed()
             await clients["engine"].aclose()
             await clients["cloud"].aclose()
 
@@ -1568,19 +1583,58 @@ def settings_of(raw: Mapping[str, Any] | None) -> GatewaySettings:
     return GatewaySettings.model_validate(values)
 
 
+class Serving(uvicorn.Server):
+    """Uvicorn serving the gateway, which removes the sockets it made (Linux, design 0014 §3) as it begins to stop:
+    after a stop signal, Uvicorn hands the signal back to the process, which then ends at once, running nothing after
+    `run`."""
+
+    def __init__(self, config: uvicorn.Config, made: list[tuple[Path, os.stat_result]]) -> None:
+        super().__init__(config)
+        self.made = made
+
+    async def shutdown(self, sockets: list[socket.socket] | None = None) -> None:
+        """Its sockets removed, then Uvicorn's own stop."""
+        remove_sockets(self.made)
+        await super().shutdown(sockets)
+
+
+def own_listeners(port: int, folder: str | None) -> Listeners | None:
+    """On Linux, given its socket folder, the listeners the gateway makes itself (`sockets.listeners`, design 0014 §3):
+    its TCP socket, its Unix socket and the proxy's; None otherwise, and Uvicorn makes the TCP socket as before. An
+    `OSError` when the port cannot be bound."""
+    if sys.platform != "win32" and folder:  # Unix sockets: the type checker knows them only off Windows
+        from clank.components.gateway.sockets import listeners
+
+        return listeners(port, Path(folder))
+    return None
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Run the gateway: `python -m clank.components.gateway.server [--port PORT]`, CLANK_HOME naming the home."""
+    """Run the gateway: `python -m clank.components.gateway.server [--port PORT] [--socket-folder FOLDER]`, CLANK_HOME
+    naming the home."""
     from clank.client import Client
     from clank.kernel.access import local_token
     from clank.kernel.home import Home
 
     parser = argparse.ArgumentParser(description="Clank's gateway: every model request, to the engine of its role.")
     parser.add_argument("--port", type=int, help="Where to listen (default: the gateway's settings).")
+    parser.add_argument(
+        "--socket-folder",
+        help="On Linux, the folder of its socket and the proxy's: the edge's way in on Docker Engine (design 0014 §3).",
+    )
     options = parser.parse_args(argv)
     home = Home.resolve()
     file = home.config / "gateway.json"
     settings = settings_of(json.loads(file.read_text(encoding="utf-8")) if file.is_file() else None)
     port = options.port or settings.port
+    try:
+        listening = own_listeners(port, options.socket_folder)
+    except OSError as error:  # another program holds the port: logged, and ended as Uvicorn ends then
+        logging.getLogger(__name__).error(
+            "[Errno %s] error while attempting to bind on address %r: %s",
+            error.errno, ("127.0.0.1", port), (error.strerror or str(error)).lower(),
+        )  # fmt: skip
+        return STARTUP_FAILURE
     routes = Routes()
     stop = threading.Event()
 
@@ -1673,13 +1727,18 @@ def main(argv: list[str] | None = None) -> int:
         agents=agents,
         proxy=proxy,
         port=port,
+        proxy_socket=listening.proxy if listening is not None else None,
     )
     from clank.kernel.accepting import keep_accepting
     from clank.kernel.service import server_config
 
     keep_accepting()  # a client dropped while it is accepted never closes the gateway's socket (Windows)
-    uvicorn.Server(server_config(app, "127.0.0.1", port)).run()
-    stop.set()
+    made = listening.made if listening is not None else []
+    try:
+        Serving(server_config(app, "127.0.0.1", port), made).run(sockets=listening.served if listening else None)
+    finally:
+        remove_sockets(made)  # when it ended without Uvicorn's stop (its start failed); else removed already
+        stop.set()
     return 0
 
 

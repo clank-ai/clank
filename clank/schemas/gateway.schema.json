@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Gateway",
-  "description": "Where the gateway listens, how long a request waits for a model that is starting or switching, whether it answers OpenCode's session titles itself, and what it keeps of each request.",
+  "description": "Where the gateway listens (on Linux, its socket's folder too), how long a request waits for a model that is starting or switching, whether it answers OpenCode's session titles itself, and what it keeps of each request.",
   "type": "object",
   "properties": {
     "schema": {
@@ -36,6 +36,12 @@
       "minimum": 1024,
       "title": "Proxy port",
       "type": "integer"
+    },
+    "socket_folder": {
+      "default": "",
+      "description": "On Linux, the folder of the gateway's socket and the proxy's, the edge's way to them on Docker Engine (design 0014 §3): the owner's alone, outside CLANK_HOME. Empty: ~/.cache/clank/<home id> (under $XDG_CACHE_HOME when that is set).",
+      "title": "Socket folder",
+      "type": "string"
     },
     "hold_seconds": {
       "default": 300,

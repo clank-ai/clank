@@ -1,5 +1,8 @@
-"""Shared fixtures for the components' tests: a fake clock and a temporary CLANK_HOME."""
+"""Shared fixtures for the components' tests: a fake clock, a temporary CLANK_HOME, and a short folder for sockets."""
 
+import shutil
+import tempfile
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -27,3 +30,12 @@ def home(tmp_path: Path) -> Home:
     home = Home(tmp_path / "clank-home")
     home.ensure()
     return home
+
+
+@pytest.fixture
+def short() -> Iterator[Path]:
+    """A short folder of the test's own, for the gateway's sockets (design 0014 §3): a socket's path holds 107 bytes,
+    more than a folder under `tmp_path` may leave."""
+    made = Path(tempfile.mkdtemp(prefix="clank-sock-"))
+    yield made
+    shutil.rmtree(made, ignore_errors=True)

@@ -11,10 +11,15 @@ pausing, still running, is never taken for one that paused. A stop forgets the g
 is held open a moment by another reader (Windows refuses to delete it then: `clank gateway restart` answered 500 on
 2026-10-23); one held open for good is left naming a process that ended, which says stopped. A restart is never half
 done: a stop that fails leaves the gateway running and says why, and a state file that cannot be written keeps the
-gateway's process in memory, so it is never started twice, until the file can be written."""
+gateway's process in memory, so it is never started twice, until the file can be written. Design 0014 §3: on Linux the
+service starts the gateway with its socket folder, its status names the socket (or why there is none), and a gateway
+running without its socket is started again once no request is in flight, once; elsewhere nothing changes."""
 
 import json
+import logging
 import os
+import stat
+import sys
 from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
 from types import SimpleNamespace
@@ -23,9 +28,14 @@ from typing import Any
 import anyio
 import httpx2
 import pytest
+from click.testing import CliRunner
 from fastapi.testclient import TestClient
 
+from clank.cli import common
+from clank.cli.main import main
+from clank.client import Client
 from clank.components.gateway import service as gateway_service
+from clank.components.gateway import sockets
 from clank.components.gateway.kinds import GatewaySettings
 from clank.components.gateway.routing import Routes
 from clank.components.gateway.service import Gateway, HoldError
@@ -255,8 +265,10 @@ class FakeHost:
         self.started = 0
         self.refused = ""
         self.lingering = 0  # how many more times the port reads held after a stop (a process ending slowly)
+        self.argv: list[list[str]] = []  # each process's command line, in the order started
 
     def spawn(self, argv: Sequence[str], env: Mapping[str, str], cwd: str, log: Path) -> ProcessIdentity:
+        self.argv.append(list(argv))
         self.started += 1
         pid = 4000 + self.started
         self.running.add(pid)
@@ -359,3 +371,118 @@ def test_a_stop_whose_state_file_stays_held_says_stopped_and_the_next_start_take
     second = gateway.ensure()
     assert (second["state"], host.running) == ("running", {second["pid"]})
     assert json.loads(kept.read_text(encoding="utf-8"))["pid"] == second["pid"]
+
+
+def gateway_settings(rig: Rig, **values: Any) -> None:
+    """The gateway's settings file with these values, read at once."""
+    (rig.kernel.home.config / "gateway.json").write_text(json.dumps({"schema": "gateway/1", **values}) + "\n")
+    rig.kernel.settings.reload_changed()
+
+
+def test_on_linux_the_service_starts_the_gateway_with_its_socket(
+    rig: Rig, host: FakeHost, short: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Design 0014 §3: on Linux the gateway's start names its socket folder, checked and made the owner's alone, and
+    its state keeps the socket; a folder that may not be used starts it without one, and its status says why."""
+    monkeypatch.setattr(sockets, "LINUX", True)  # what the service does on Linux, wherever the test runs
+    folder = short / "sockets"
+    gateway_settings(rig, socket_folder=str(folder))
+    gateway: Gateway = rig.kernel.parts["gateway"]
+    gateway.ensure()
+    assert host.argv[-1][-2:] == ["--socket-folder", str(folder.resolve())]
+    kept = json.loads((rig.kernel.home.state / "gateway.json").read_text(encoding="utf-8"))
+    assert kept["socket"] == str(folder.resolve() / "gateway.sock")
+    assert folder.is_dir(), "made before the gateway starts"
+    if sys.platform == "linux":
+        assert stat.S_IMODE(folder.stat().st_mode) == 0o700, "the owner's alone"
+    gateway.stop()
+    gateway_settings(rig, socket_folder=str(rig.kernel.home.root / "sockets"))
+    started = gateway.ensure()
+    assert "--socket-folder" not in host.argv[-1]
+    assert started["socket"] is None
+    assert "it was started without one: the gateway's socket folder" in started["socket_problem"]
+    assert "is inside Clank's own folder, CLANK_HOME" in started["socket_problem"]
+
+
+def test_the_gateways_status_names_its_socket(
+    rig: Rig, http: TestClient, host: FakeHost, short: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Design 0014 §3: `GET /gateway` and `clank gateway status` name the socket the edge reaches the gateway by, or
+    say why there is none."""
+    monkeypatch.setattr(sockets, "LINUX", True)
+    gateway_settings(rig, socket_folder=str(short))
+    there: set[Path] = set()
+    monkeypatch.setattr(sockets, "is_socket", lambda path: path in there)
+    gateway: Gateway = rig.kernel.parts["gateway"]
+    gateway.ensure()
+    path = short.resolve() / "gateway.sock"
+    waiting = http.get("/api/v1/gateway", headers=AUTH).json()
+    assert (waiting["socket"], waiting["socket_problem"]) == (
+        None, f"its socket {path} is not there: it is started again once no request is in flight"
+    )  # fmt: skip
+    there.add(path)  # the gateway made it
+    shown = http.get("/api/v1/gateway", headers=AUTH).json()
+    assert (shown["socket"], shown["socket_problem"]) == (str(path), "")
+    monkeypatch.setattr(common, "connect", lambda: Client("http://127.0.0.1:7725", "t", name="cli", http=http))
+    said = CliRunner().invoke(main, ["gateway", "status"])
+    assert said.exit_code == 0, said.output
+    assert f"gateway: its socket, the edge's way in on Docker Engine: {path}" in said.output
+    there.clear()
+    said = CliRunner().invoke(main, ["gateway", "status"])
+    assert f"gateway: no socket for the edge: its socket {path} is not there" in said.output
+
+
+def test_off_linux_the_gateway_has_no_socket(rig: Rig, host: FakeHost, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Design 0014 §3: Docker Desktop reaches the host's loopback, so on Windows and macOS nothing changes."""
+    monkeypatch.setattr(sockets, "LINUX", False)
+    gateway: Gateway = rig.kernel.parts["gateway"]
+    started = gateway.ensure()
+    assert "--socket-folder" not in host.argv[-1]
+    assert (started["socket"], started["socket_problem"]) == (None, "")
+    assert gateway.socket_path() is None
+    assert gateway.edge_socket() is None
+    assert gateway.keep_socket() == ""
+
+
+def test_a_gateway_running_without_its_socket_is_started_again_once_idle(
+    rig: Rig, host: FakeHost, short: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Design 0014 §3: one started before the gateway listened on a socket and adopted as it is, and one whose socket's
+    folder was removed while it ran, are started again once no request is in flight; once only, so one that cannot
+    make its socket is not started again and again, and a file where the socket goes is left, saying so."""
+    monkeypatch.setattr(sockets, "LINUX", True)
+    gateway_settings(rig, socket_folder=str(short))
+    path = short.resolve() / "gateway.sock"
+    there: set[Path] = set()
+    monkeypatch.setattr(sockets, "is_socket", lambda found: found in there)
+    gateway: Gateway = rig.kernel.parts["gateway"]
+    flying: list[dict[str, Any]] = [{"id": "r-1"}]
+    monkeypatch.setattr(gateway, "activity", lambda: {"state": "running", "problem": "", "requests": list(flying)})
+    host.running.add(4999)  # a gateway from before, adopted: its state names no socket
+    older = {"host": "local", "pid": 4999, "started": "4999.0", "command": "clank gateway", "port": 18210}
+    (rig.kernel.home.state / "gateway.json").write_text(json.dumps(older) + "\n", encoding="utf-8")
+    before = "it was started before the gateway listened on a socket"
+    assert gateway.status()["socket_problem"] == f"{before}: it is started again once no request is in flight"
+    assert (gateway.keep_socket(), host.started) == ("", 0), "a request in flight: not now"
+    flying.clear()
+    with caplog.at_level(logging.WARNING, logger="clank.components.gateway.service"):
+        assert gateway.keep_socket() == f"started again without a request in flight: {before}"
+    assert (host.started, 4999 in host.running) == (1, False)
+    assert f"the gateway runs without its socket ({before}): it is started again" in caplog.text
+    there.add(path)  # the gateway started again made its socket
+    assert (gateway.keep_socket(), gateway.status()["socket"]) == ("", str(path))
+    there.clear()  # its folder removed while it ran
+    assert gateway.keep_socket() == f"started again without a request in flight: its socket {path} is not there"
+    assert host.started == 2
+    assert gateway.keep_socket() == "", "started again for its socket, it still has none: not again"
+    assert host.started == 2
+    assert "started again for it, it still has none" in gateway.status()["socket_problem"]
+    gateway.stop()
+    gateway.ensure()
+    path.write_text("the owner's\n", encoding="utf-8")  # a file where the socket goes
+    assert gateway.keep_socket() == ""
+    assert host.started == 3
+    assert (
+        gateway.status()["socket_problem"]
+        == f"{path} is there and is not its socket: remove it, then clank gateway restart"
+    )

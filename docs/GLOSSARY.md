@@ -320,6 +320,10 @@ Words with a special meaning in Clank's documents and code, defined once. Alphab
   slot is served by one provider at a time; roles use slots.
 - **Snapshot**: one frame of the console as text (`clank console --snapshot`); the console's tests compare frames with
   the snapshots checked in under `tests/console/snapshots/` (decision [0027](decisions/0027-console-snapshots-are-text.md)).
+- **Socket folder**: on Linux, the folder of the gateway's socket and the proxy's (`gateway.sock`, `proxy.sock`),
+  outside CLANK_HOME (`~/.cache/clank/<home id>` unless `socket_folder` in `config/gateway.json` moves it) and the
+  owner's alone; on Docker Engine the edge mounts it, read-only, and reaches the gateway through it (decision
+  [0071](decisions/0071-how-containers-reach-the-gateway-on-linux.md)).
 - **Spending limit**: an optional daily or monthly amount for cloud requests (`config/cost.json`); when reached, the
   gateway holds each new cloud request and the owner is asked to raise it (design [0016](design/0016-cloud-models.md) §11).
 - **Stage** (of a flow, as the Flow view lays it out): one box, or a DECOMPOSE's tasks stacked as one fan; the stages

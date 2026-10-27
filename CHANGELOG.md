@@ -5,6 +5,15 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
+## Unreleased
+
+### Added
+
+- **On Linux, the gateway's socket**: besides 127.0.0.1, the gateway listens on a socket, `gateway.sock`, and the
+  agent's proxy on `proxy.sock`, in a folder of their own outside CLANK_HOME (`~/.cache/clank/<home id>`, the owner's
+  alone; `socket_folder` in `config/gateway.json` moves it). `clank gateway status` names it. It is how the agent's
+  container reaches the model on Docker Engine, where no new address is opened for it (decision 0071, 2026-10-27).
+
 ## 0.3.0b2: the installer, updates, and the agent beside VS Code (2026-10-27)
 
 The second public beta: the one-line installer and `clank update`; the agent beside VS Code; Clank for iPhone over
