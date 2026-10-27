@@ -527,7 +527,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | The rule: through Clank, by allowance | `tests/components/gateway/test_proxy.py` (12), `tests/components/workspaces/test_workspace_commands.py` (5) |
 | 2 | The way out: a forward proxy at the gateway | `tests/components/gateway/test_proxy.py` (12), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7) |
 | 3 | A host the agent asks for | `tests/components/workspaces/test_host_asks.py` (3) |
-| 4 | What the owner sees | `tests/components/gateway/test_network_views.py` (2), `tests/console/test_folder.py` (24) |
+| 4 | What the owner sees | `tests/components/gateway/test_network_views.py` (3), `tests/console/test_folder.py` (24) |
 | 5 | Packages, papers, data: the named sets | `tests/components/workspaces/test_network_sets.py` (4), `tests/console/test_folder.py` (24) |
 | 6 | Search | `tests/components/workspaces/test_network_sets.py` (4) |
 | 7 | What is never reached | `tests/components/gateway/test_proxy.py` (12) |
@@ -2317,6 +2317,7 @@ Design 0024 §4 (decision 0141): what the owner sees of the agent's internet exc
 
 - the log is read newest first for one workspace or all and the days bytes are summed by host
 - the routes and the commands show the exchanges and the hosts allowed
+- an exchange is said in local time with words for what it lacks
 
 ### `tests/components/gateway/test_notion_forwarding.py`
 

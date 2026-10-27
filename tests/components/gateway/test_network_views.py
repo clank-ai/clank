@@ -108,3 +108,17 @@ def test_the_routes_and_the_commands_show_the_exchanges_and_the_hosts_allowed(
     assert listed.exit_code == 0, listed.output
     assert "paper: pypi.org" in listed.output
     assert run("network", "log", "--json").exit_code == 0
+
+
+def test_an_exchange_is_said_in_local_time_with_words_for_what_it_lacks() -> None:
+    """The log keeps UTC times: the line cut its hours from the text, 21:06:30 for 17:06 on the owner's PC, and printed
+    a missing status as None (2026-10-26)."""
+    from clank.cli.common import local_time
+    from clank.components.gateway.networkcli import exchange_line
+
+    when = "2026-10-26T21:06:30.000+00:00"
+    line = exchange_line({"time": when, "workspace": "paper", "host": "registry.npmjs.org", "method": "CONNECT",
+                          "status": None, "seconds": None})  # fmt: skip
+    assert line.startswith(local_time(when))
+    assert "no status" in line
+    assert "None" not in line
