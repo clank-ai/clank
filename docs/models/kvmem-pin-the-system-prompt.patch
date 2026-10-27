@@ -1,0 +1,71 @@
+--- a/tools/llama-kvmem-server.cpp
++++ b/tools/llama-kvmem-server.cpp
+@@ -156,6 +156,7 @@
+ struct MultimodalCheckpoint {
+     int row = 0;
+     bool media_boundary = false;
++    bool pinned = false; // the end of the system prompt: kept for the next conversation
+     std::shared_ptr<const MultimodalCheckpointData> data;
+ };
+ 
+--- a/tools/kvmem-multimodal-server.h
++++ b/tools/kvmem-multimodal-server.h
+@@ -66,13 +66,37 @@
+         return entry.row >= checkpoint.row;
+     }), entries.end());
+     entries.push_back(std::move(checkpoint));
+-    if (entries.size() > 4) {
++    // The pinned checkpoint (the end of the system prompt) is not one of the four, and is never the one evicted.
++    const auto unpinned = std::count_if(entries.begin(), entries.end(), [](const auto & e) { return !e.pinned; });
++    if (unpinned > 4) {
+         const auto media_count = std::count_if(entries.begin(), entries.end(), [](const auto & e) { return e.media_boundary; });
+         auto victim = std::find_if(entries.begin(), entries.end(), [&](const auto & e) {
+-            return e.media_boundary == (media_count > 2);
++            return !e.pinned && e.media_boundary == (media_count > 2);
+         });
+-        entries.erase(victim == entries.end() ? entries.begin() : victim);
+-    }
++        if (victim == entries.end()) {
++            victim = std::find_if(entries.begin(), entries.end(), [](const auto & e) { return !e.pinned; });
++        }
++        if (victim != entries.end()) entries.erase(victim);
++    }
++}
++
++// Where the first turn after the system message begins: the second <|im_start|>, when the prompt opens with a system
++// message. Agents start many conversations with the same system prompt and tools; a checkpoint here lets each new one
++// resume after them instead of evaluating them again. -1 when there is no system message.
++static int kvmem_system_end(ServerState & st, const kvmem_prompt & prompt) {
++    static llama_token im_start = -2, system = -2;
++    if (im_start == -2) {
++        const auto a = common_tokenize(st.vocab, "<|im_start|>", false, true);
++        const auto b = common_tokenize(st.vocab, "system", false, true);
++        im_start = a.size() == 1 ? a[0] : -1;
++        system = b.size() == 1 ? b[0] : -1;
++    }
++    const auto & t = prompt.tokens;
++    if (im_start < 0 || system < 0 || t.size() < 3 || t[0] != im_start || t[1] != system) return -1;
++    for (size_t i = 2; i < t.size(); ++i) {
++        if (t[i] == im_start) return (int) i;
++    }
++    return -1;
+ }
+ 
+ static void multimodal_restore(ServerState & st, const MultimodalCheckpoint & checkpoint, bool truncate) {
+@@ -350,7 +374,15 @@
+         }
+         if (all_resident) llama_kvmem_keep_selected();
+         if (n_cache_hit) *n_cache_hit = base.row;
+-        if (multimodal_decode_span(st, base.row, query, false, io) != 0) throw std::runtime_error("multimodal prefill failed or cancelled");
++        const int system_end = ranges.empty() ? kvmem_system_end(st, prompt) : -1;
++        if (system_end > base.row && system_end < query) {
++            if (multimodal_decode_span(st, base.row, system_end, false, io) != 0) throw std::runtime_error("multimodal system prefill failed or cancelled");
++            auto system_checkpoint = multimodal_checkpoint(st, system_end);
++            system_checkpoint.pinned = true;
++            multimodal_remember(st, system_checkpoint);
++            fprintf(stderr, "KVMEM_TRACE system_checkpoint row=%d base=%d query=%d\n", system_end, base.row, query);
++            if (multimodal_decode_span(st, system_end, query, false, io) != 0) throw std::runtime_error("multimodal prefill failed or cancelled");
++        } else if (multimodal_decode_span(st, base.row, query, false, io) != 0) throw std::runtime_error("multimodal prefill failed or cancelled");
+         auto query_checkpoint = multimodal_checkpoint(st, query);
+         multimodal_remember(st, query_checkpoint);
+         const auto probe_view = llama_kvmem_get_attention_view();

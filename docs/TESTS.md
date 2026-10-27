@@ -95,7 +95,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.18 | Choices this section makes | none yet |
 | 3 | The skeleton (M0) and the order of milestones | see its subsections |
 | 3.1 | How the rest is designed and built | none yet |
-| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (4), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (15), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (19), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (6), `tests/tools/test_codemap.py` (10), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (18) |
+| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (4), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (15), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (19), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (7), `tests/tools/test_codemap.py` (10), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (18) |
 | 3.3 | The milestones after M0 | `tests/docker/test_escape.py` (3) |
 | 3.4 | Carried into the later milestones' designs | none yet |
 
@@ -4797,6 +4797,7 @@ Design 0002 §3.2 (M0.1): the spelling check finds British forms in code and doc
 - a line marked keep is left alone
 - markdown code blocks are skipped but code files are not
 - files that are not text are skipped
+- a patch for another project is left alone as it copies that projects code
 
 ### `tests/tools/test_codemap.py`
 

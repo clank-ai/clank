@@ -201,6 +201,12 @@ commands run from its working copy.
   within the reserve.
 - **KVMem keeps one conversation.** A request that shares nothing with the one it holds resets its store, so two
   sessions taking turns read their prompts again each time.
+- **A new chat reads the system prompt again.** After a session of a few steps, a new session's first step reads
+  OpenCode's system prompt and tools again (17,000 to 29,000 tokens, 10 to 37 s here): KVMem keeps four snapshots
+  of the model's state, the newest. [A patch](kvmem-pin-the-system-prompt.patch) that keeps one at the system
+  prompt's end brought it to 0.73 s ([the measurement](../measurements/2026-10-27-a-new-sessions-first-answer.md));
+  whether this build carries it is decision
+  [0146](../decisions/0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md).
 - **Past the window, recall is good but not perfect.** In its harness at about 220,000 tokens this file and
   these sizes (with a batch of 256) passed 5 of 6 probes: it missed a rule of the system prompt.
 - **A huge tool result** fills the window with itself: with the fix above the model answers, but about the data more

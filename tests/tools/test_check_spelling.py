@@ -39,3 +39,12 @@ def test_markdown_code_blocks_are_skipped_but_code_files_are_not() -> None:
 def test_files_that_are_not_text_are_skipped(tmp_path: Path) -> None:
     (tmp_path / "image.png").write_bytes(b"\x89PNG\x00" + BRITISH_COLOR.encode())
     assert scan(tmp_path, [Path("image.png")]) == []
+
+
+def test_a_patch_for_another_project_is_left_alone_as_it_copies_that_projects_code(tmp_path: Path) -> None:
+    (tmp_path / "docs").mkdir()
+    patch = f'-    throw "prefill failed or {BRITISH_CANCELED}";\n'
+    (tmp_path / "docs" / "fix.patch").write_text(patch, encoding="utf-8")
+    (tmp_path / "docs" / "fix.md").write_text(f"The prefill was {BRITISH_CANCELED}.\n", encoding="utf-8")
+    found = scan(tmp_path, [Path("docs/fix.patch"), Path("docs/fix.md")])
+    assert [finding.path for finding in found] == ["docs/fix.md"]

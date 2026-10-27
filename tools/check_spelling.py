@@ -5,7 +5,7 @@ The list holds the British forms most likely to slip in, each with the American 
 line that must keep a British form, such as a quotation or a name someone else owns, carries the marker
 `spelling: keep` and says why. Code blocks in Markdown are skipped, because they copy code and screens whose own files
 are checked; this file is skipped, because it holds the list; and so are the artifact libraries other authors wrote
-(decision 0135).
+(decision 0135) and the patches for other projects (`.patch`), which copy those projects' code as it is.
 """
 
 import re
@@ -18,6 +18,7 @@ from tools.markdown import prose_lines
 
 SELF = "tools/check_spelling.py"
 VENDORED = "clank/components/agents/artifact_lib/"  # other authors' libraries, kept as they are (decision 0135)
+PATCH = ".patch"  # a change to another project, in that project's own code and words
 KEEP = "spelling: keep"
 AMERICAN = {
     "aeroplane": "airplane",
@@ -166,11 +167,12 @@ def scan_text(path: str, text: str) -> list[Finding]:
 
 
 def scan(root: Path, files: list[Path]) -> list[Finding]:
-    """The British spellings in every text file of the list, except this one and the vendored libraries (decision
-    0135: their words are their authors')."""
+    """The British spellings in every text file of the list, except this one, the vendored libraries (decision 0135:
+    their words are their authors') and the patches for other projects (their code is those projects')."""
     findings: list[Finding] = []
     for file in files:
-        if file.as_posix() == SELF or file.as_posix().startswith(VENDORED):
+        name = file.as_posix()
+        if name == SELF or name.startswith(VENDORED) or name.endswith(PATCH):
             continue
         text = read_text(root / file)
         if text is not None:

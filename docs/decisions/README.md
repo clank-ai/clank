@@ -153,6 +153,7 @@ and use the template below.
 | [0143](0143-the-phone-is-an-installed-web-app.md) | The phone is an installed web app on the iPhone (a PWA from the PC's own QR, inside the tailnet), not a native app | Accepted (the owner, 2026-10-21) |
 | [0144](0144-segno-draws-the-qr.md) | The QR code the console shows for the pair link is drawn by segno (a pure-Python library, no dependencies of its own), as text in the terminal | Accepted (Claude, with plan s57, 2026-10-26) |
 | [0145](0145-clank-update-finishes-in-a-helper.md) | `clank update` finishes in a helper process when the tool must be installed again: Windows keeps a running program's files, and the service, the gateway and the command run from the tool's | Accepted (Claude, with plan s61, 2026-10-26) |
+| [0146](0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md) | KVMem keeps a snapshot of the model's state at the end of the system prompt, so a new session resumes there instead of reading OpenCode's prompt and tools again (10.34 s to 0.73 s measured) | Proposed (the owner decides) |
 
 ## Template
 
