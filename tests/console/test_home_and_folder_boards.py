@@ -128,7 +128,7 @@ THREE_SLOTS = ConsoleData(
 
 
 def test_a_row_that_wraps_keeps_each_mark_with_the_words_it_leads() -> None:
-    said = "models ● main: daily 262K · ready ○ fast: stopped (unloaded) ○ vision: stopped 8 opens Models"
+    said = "models ● main: daily 262K · ready ○ fast: not loaded ○ vision: not loaded 8 opens Models"
     for width in range(30, 141):
         lines = models_line(THREE_SLOTS, width).plain.splitlines()
         assert not [line for line in lines if line.rstrip().endswith(("●", "○", "✗"))], (width, lines)
