@@ -36,6 +36,7 @@ commit.
 | `docs/GLOSSARY.md` | Terms, defined once |
 | `docs/CODEMAP.md`, `docs/TESTS.md`, `docs/EVENTS.md`, `docs/API.md` | Generated: one line per module; the tests of each design section; every event type; every route of the API |
 | `docs/PROTOTYPE.md` | The earlier private prototype Clank began from, and the lessons measured there |
+| `docs/ISSUES.md` | Every confirmed problem: what the owner sees, where it comes from, what is next; the fixed ones with their commits, updated with each fix |
 | `docs/decisions/` | Decision records, numbered, never edited away |
 | `docs/design/` | Design documents, sections with review status |
 | `docs/plans/` | Implementation plans, one per milestone step, with their progress |
