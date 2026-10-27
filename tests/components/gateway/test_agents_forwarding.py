@@ -1,5 +1,6 @@
-"""Design 0018 §7.1: the agent asks the service to open files in the owner's VS Code window through the gateway, which
-forwards `POST /agents/show` to the service as the client `agent`, and refuses everything else under `/agents/`
+"""Design 0018 §7.1: the agent asks the service to open files in the owner's VS Code window through the gateway (with
+its workspace's key, as Clank's MCP server sends it), which forwards `POST /agents/show` to the service as the client
+`agent`, and refuses everything else under `/agents/`
 (403), forwarding none of it: opening the window, the review, the sessions, the annotations, the mode. A refusal of
 the service comes back with its words, and a service that does not answer is said so.
 
@@ -11,8 +12,8 @@ from typing import Any
 from fastapi.testclient import TestClient
 
 from clank.components.gateway.kinds import GatewaySettings
-from clank.components.gateway.routing import Routes
 from clank.components.gateway.server import create_gateway
+from tests.support.agentkeys import EDGE, agent_headers, keyed
 
 SHOW = {"workspace": "myproject", "paths": ["plots/residual.png"], "why": "asked for"}
 REFUSED = [
@@ -32,7 +33,9 @@ REFUSED = [
 
 
 def gateway(forward: Any) -> TestClient:
-    return TestClient(create_gateway(Routes(), GatewaySettings(), None, agents=forward))
+    """The gateway as myproject's container reaches it, with its workspace's key."""
+    app = create_gateway(keyed("myproject"), GatewaySettings(), None, agents=forward)
+    return TestClient(app, base_url=EDGE, headers=agent_headers("myproject"))
 
 
 def test_showing_files_is_forwarded_and_nothing_else_under_agents() -> None:

@@ -1,8 +1,9 @@
 """Design 0010 §3: the agent reaches Notion through the gateway, which forwards to the service the reading and proposing
 routes only (the shared databases, a query, a page, a search; a new entry, a change, a removal, submitting the batch)
-as the client `agent`, and refuses every other (approving, rejecting, connecting, the status, the batches); a refusal
-of the service comes back with its words, and a service that does not answer is said so. End to end, a proposal made
-through the gateway is staged as the agent's session's, and the agent cannot approve it."""
+as the client `agent`, each naming the workspace whose key it carries, and refuses every other (approving, rejecting,
+connecting, the status, the batches); a refusal of the service comes back with its words, and a service that does not
+answer is said so. End to end, a proposal made through the gateway is staged as the agent's session's, and the agent
+cannot approve it."""
 
 import hashlib
 from collections.abc import Iterator
@@ -24,6 +25,7 @@ from clank.kernel.core import Kernel, open_kernel
 from clank.kernel.events import Actor
 from clank.kernel.home import Home
 from tests.fakes.notion import SECRET, FakeNotion
+from tests.support.agentkeys import EDGE
 
 FORWARDED = [
     ("GET", "/notion/databases", None, "databases", {}),
@@ -62,6 +64,7 @@ def known() -> Routes:
 def gateway(forward: Any) -> TestClient:
     return TestClient(
         create_gateway(known(), GatewaySettings(), None, notion=forward),
+        base_url=EDGE,
         headers={"Authorization": f"Bearer {AGENTS_KEY}"},
     )
 
@@ -77,7 +80,10 @@ def test_the_agents_reading_and_proposing_are_forwarded_and_nothing_else() -> No
         for method, url, body, path, params in FORWARDED:
             answer = http.request(method, url, json=body)
             assert (answer.status_code, answer.json()) == (200, {"forwarded": path}), url
-            assert asked[-1] == (method, path, body, params)
+            if method == "GET":  # each names the workspace its key names: a GET in its query, a POST in its body
+                assert asked[-1] == (method, path, None, {**params, "workspace": "paper"})
+            else:
+                assert asked[-1] == (method, path, {**(body or {}), "workspace": "paper"}, params)
         count = len(asked)
         for method, url in REFUSED:
             answer = http.request(method, url, json={})

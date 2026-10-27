@@ -57,7 +57,12 @@ flow, design 0013 §15, and an orchestrator's decision, §16) the same way, and 
 owner's. The agent opens files for the owner to see in Clank's VS Code window (design 0018 §7), and starts, follows
 and stops its jobs (design 0021 §6) and makes its artifacts (§5), the same way: `POST /agents/show`, `/agents/jobs`,
 `/agents/jobs/status`, `/agents/jobs/stop` and `/agents/artifacts` are forwarded, and everything else under `/agents/`
-refused.
+refused. Each of these calls acts for the workspace whose key it carries, and for no other (`agentcalls.py`): without
+a key the routes know it is refused (401), and a workspace it names must be its key's (403).
+
+The gateway answers Clank's own programs only (`callers.py`): a request addressed to another host name than its own
+(`127.0.0.1`, `localhost` or `[::1]` with its port, and `edge` with its port for the containers) is refused (421), and
+so is one a browser made (403).
 
 Run as its own process (`python -m clank.components.gateway.server`), supervised by the service (`service.py`), so a
 restart of the service or of the console cuts no request in flight. It reads its settings from `config/gateway.json`
@@ -89,6 +94,8 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from clank.components.gateway import completion
 from clank.components.gateway.activity import Activity
+from clank.components.gateway.agentcalls import agent_call, key_of
+from clank.components.gateway.callers import OnlyClanksCallers
 from clank.components.gateway.census import census
 from clank.components.gateway.holds import Held, Holds, Released
 from clank.components.gateway.keys import Keys
@@ -186,10 +193,6 @@ SERVICE_SILENT = (
 )
 HELD_AT_LIMIT = b": held by Clank: the cloud spending limit is reached\n\n"
 HELD_FOR_ANSWER = ": held by Clank: waiting for your answer: may {workspace} use the cloud model?\n\n"
-NOTION_UNKNOWN = (
-    "Notion is read only by a workspace's agent kept on this machine, and this request names none: stop the workspace "
-    "and open it again, so its agent gets its key"
-)
 NOTION_CLOUD = (
     "{workspace} may use the cloud model, so its agent reads no Notion page (design 0016 §10): Notion pages never go "
     "to the cloud"
@@ -244,6 +247,7 @@ def create_gateway(
     spool: Spool | None = None,
     agents: Forward | None = None,
     proxy: Proxy | None = None,
+    port: int | None = None,
 ) -> FastAPI:
     """The gateway's application, over its routes, its settings and its records (None: none kept); `wake` asks the
     service for a role loaded on demand, and says why not when it is not loaded ("" when it is being); `notion`
@@ -255,7 +259,9 @@ def create_gateway(
     sessions that used local-only content (design 0016 §10), kept from the cloud; `spool` keeps each cloud request
     that ended, with its cost, until the service takes it (design 0016 §12); `agents` forwards the agent's request to
     open files for the owner (`agents_forwarder`, design 0018 §7); `proxy` is the agent's way to the internet (design
-    0024 §2), served on the settings' `proxy_port` with the application, and stopped with it."""
+    0024 §2), served on the settings' `proxy_port` with the application, and stopped with it. `port` is the one it
+    listens on (its settings' when none is given): it answers requests addressed to its host names with that port only
+    (`callers.py`)."""
     clients: dict[str, httpx2.AsyncClient] = {}
     activity = Activity(generation=routes.generation)
     holds = holds if holds is not None else Holds()
@@ -295,6 +301,7 @@ def create_gateway(
             await clients["cloud"].aclose()
 
     app = FastAPI(title="Clank gateway", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+    app.add_middleware(OnlyClanksCallers, port=port or settings.port)  # Clank's own programs only, never a web page
 
     @app.get("/health")
     async def health() -> dict[str, str]:
@@ -456,38 +463,42 @@ def create_gateway(
     async def to_notion(rest: str, request: Request) -> Response:
         if not agent_may(request.method, rest):
             return JSONResponse({"error": {"code": "forbidden", "message": NOT_THE_AGENTS}}, status_code=403)
-        named = routes.workspace(_key_of(request.headers.get("authorization")))
-        unknown = named is None and routes.any_cloud()  # with none allowed the cloud, no Notion page can reach it
-        if unknown or (named is not None and named.get("models") != "this-machine"):  # design 0016 §10
-            said = NOTION_UNKNOWN if named is None else NOTION_CLOUD.format(workspace=named.get("workspace"))
+        call = await agent_call(request, routes)  # its key's workspace, and only that one
+        if isinstance(call, JSONResponse):
+            return call
+        if call.bound.get("models") != "this-machine":  # design 0016 §10: no Notion page reaches the cloud
+            said = NOTION_CLOUD.format(workspace=call.workspace)
             return JSONResponse({"error": {"code": "notion_denied", "message": said}}, status_code=403)
         if notion is None:
             said = "Notion is reached through the Clank service, which this gateway was not given"
             return JSONResponse({"error": {"code": "unavailable", "message": said}}, status_code=503)
-        body = await request.json() if request.method == "POST" and await request.body() else None
-        status, found = await notion(request.method, rest, body, dict(request.query_params))
+        status, found = await notion(request.method, rest, call.body, call.params)
         return JSONResponse(found, status_code=status)
 
     @app.api_route("/flows/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     async def to_flows(rest: str, request: Request) -> Response:
         if (request.method, rest) not in FLOWS:
             return JSONResponse({"error": {"code": "forbidden", "message": NOT_THE_AGENTS_FLOW}}, status_code=403)
+        call = await agent_call(request, routes)  # its key's workspace, and only that one
+        if isinstance(call, JSONResponse):
+            return call
         if flows is None:
             said = "Flows are reached through the Clank service, which this gateway was not given"
             return JSONResponse({"error": {"code": "unavailable", "message": said}}, status_code=503)
-        body = await request.json() if await request.body() else None
-        status, found = await flows(request.method, rest, body, dict(request.query_params))
+        status, found = await flows(request.method, rest, call.body, call.params)
         return JSONResponse(found, status_code=status)
 
     @app.api_route("/agents/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     async def to_agents(rest: str, request: Request) -> Response:
         if (request.method, rest) not in AGENTS:
             return JSONResponse({"error": {"code": "forbidden", "message": NOT_THE_AGENTS_SHOW}}, status_code=403)
+        call = await agent_call(request, routes)  # its key's workspace, and only that one
+        if isinstance(call, JSONResponse):
+            return call
         if agents is None:
             said = "Showing files and jobs are reached through the Clank service, which this gateway was not given"
             return JSONResponse({"error": {"code": "unavailable", "message": said}}, status_code=503)
-        body = await request.json() if await request.body() else None
-        status, found = await agents(request.method, rest, body, dict(request.query_params))
+        status, found = await agents(request.method, rest, call.body, call.params)
         return JSONResponse(found, status_code=status)
 
     @app.post("/v1/chat/completions")
@@ -833,7 +844,7 @@ def create_gateway(
         label = endpoint_label(str(route.adapter))
         if route.agreed is False:
             return "refuse", 403, "model_send_denied", NOT_AGREED.format(provider=label)
-        named = routes.workspace(_key_of((record.get("headers") or {}).get("authorization")))
+        named = routes.workspace(key_of((record.get("headers") or {}).get("authorization")))
         if named is None:
             return "refuse", 403, "model_send_denied", UNKNOWN_KEY
         workspace = str(named.get("workspace"))
@@ -1470,12 +1481,6 @@ def _refuse(
     return JSONResponse({"error": {"message": message, "type": code, "code": code}}, status_code=status)
 
 
-def _key_of(authorization: str | None) -> str:
-    """The key a request names its workspace by: its bearer token (OpenCode's `apiKey`, design 0016 §9)."""
-    given = str(authorization or "")
-    return given[len("Bearer ") :].strip() if given.lower().startswith("bearer ") else ""
-
-
 def agent_may(method: str, path: str) -> bool:
     """Whether the agent may ask this of Notion: reading and proposing only."""
     if (method, path) in NOTION:
@@ -1667,6 +1672,7 @@ def main(argv: list[str] | None = None) -> int:
         spool=spool,
         agents=agents,
         proxy=proxy,
+        port=port,
     )
     from clank.kernel.accepting import keep_accepting
     from clank.kernel.service import server_config

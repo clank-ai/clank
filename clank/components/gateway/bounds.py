@@ -2,13 +2,13 @@
 the cloud).
 
 Each workspace's OpenCode, and Clank's MCP server in its container, send a key of the workspace's own to the gateway,
-its name there, once the cloud is in play (a provider agreed, or the workspace allowed the cloud; before, they send
-`local`, as they always did). The gateway's service makes it then, once (a secret, `workspace/<name>/gateway-key`), and
-keeps only its SHA-256 in its own table, with the workspace's bound, kept from the first (without a key until one is
-made): `this-machine` (every workspace, until the owner says otherwise)
-or `cloud`; when the owner last answered the cloud question for it; and the question open for it now. The workspaces
-component gives each bound (decision 0019: it uses the gateway), and the routes the gateway follows carry each key's
-hash with its bound, never a key."""
+its name there: the gateway's service makes it when its agent is first given it (a secret,
+`workspace/<name>/gateway-key`), for every workspace, a cloud provider agreed or not, since the agent's calls through
+the gateway to Notion, its flow and the agents' part are refused without it (`agentcalls.py`). It keeps only its
+SHA-256 in its own table, with the workspace's bound, kept from the first (without a key until one is made):
+`this-machine` (every workspace, until the owner says otherwise) or `cloud`; when the owner last answered the cloud
+question for it; and the question open for it now. The workspaces component gives each bound (decision 0019: it uses
+the gateway), and the routes the gateway follows carry each key's hash with its bound, never a key."""
 
 import hashlib
 import secrets

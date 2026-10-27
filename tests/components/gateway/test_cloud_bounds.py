@@ -3,8 +3,9 @@ its OpenCode sends (its SHA-256 in the routes), before anything is sent. A reque
 machine only, and to the cloud is refused saying to start OpenCode again; a workspace allowed the cloud goes; one not
 yet answered is held, its stream kept alive with comment lines while the service asks the question, and goes on on the
 same stream once allowed; one kept local is refused with words that say how to allow it. Notion answers only a known key
-whose bound is this machine, and, while no workspace may use the cloud, a request that names none too (a container
-started before workspaces had keys). The activity routes take the service's local token. While the service does not
+whose bound is this machine, and never a request that names none, even while no workspace may use the cloud (a
+container started before workspaces had keys is told to start its agent's window again). The activity routes take the
+service's local token. While the service does not
 answer, a cloud request waits for fresh routes, then is refused `service_silent`. Through the service, a request held
 asks the workspace's question once."""
 
@@ -29,6 +30,7 @@ from tests.components.gateway.test_cloud_forwarding import ASKS, SESSION, cloud_
 from tests.components.gateway.test_server import engine, table  # noqa: F401  (a fixture, found by its name)
 from tests.components.runtime.conftest import Rig
 from tests.fakes.openrouter import FakeOpenRouter
+from tests.support.agentkeys import EDGE, HERE
 
 NOTES = "clank-ws-made-up-notes-key"
 LAB = "clank-ws-made-up-lab-key"
@@ -149,28 +151,31 @@ def test_notion_answers_only_a_known_key_kept_on_this_machine() -> None:
 
     routes = Routes()
     routes.update({"slots": {}, "roles": {}, "workspaces": bounds({})})
-    with TestClient(create_gateway(routes, GatewaySettings(), None, notion=forward)) as http:
+    with TestClient(create_gateway(routes, GatewaySettings(), None, notion=forward), base_url=EDGE) as http:
         mine = http.get("/notion/databases", headers={"Authorization": f"Bearer {NOTES}"})
         assert (mine.status_code, mine.json()) == (200, {"forwarded": "databases"})
-        for key in (LAB, "local"):
-            refused = http.get("/notion/databases", headers={"Authorization": f"Bearer {key}"})
-            assert (refused.status_code, refused.json()["error"]["code"]) == (403, "notion_denied"), key
+        cloud = http.get("/notion/databases", headers={"Authorization": f"Bearer {LAB}"})
+        assert (cloud.status_code, cloud.json()["error"]["code"]) == (403, "notion_denied"), "lab may use the cloud"
+        unknown = http.get("/notion/databases", headers={"Authorization": "Bearer local"})
+        assert (unknown.status_code, unknown.json()["error"]["code"]) == (401, "unauthorized")
     assert forwarded == ["databases"]
 
 
-def test_while_no_workspace_may_use_the_cloud_notion_answers_a_container_started_before_the_keys() -> None:
+def test_even_while_no_workspace_may_use_the_cloud_notion_refuses_a_request_that_names_none() -> None:
     async def forward(method: str, path: str, body: Any, params: dict[str, str]) -> tuple[int, Any]:
         return 200, {"forwarded": path}
 
     routes = Routes()
     routes.update({"slots": {}, "roles": {}, "workspaces": bounds({}, {"models": "this-machine"})})
-    with TestClient(create_gateway(routes, GatewaySettings(), None, notion=forward)) as http:
-        assert http.get("/notion/databases").status_code == 200, "no key: Clank's server before the upgrade"
-        assert http.get("/notion/databases", headers={"Authorization": "Bearer local"}).status_code == 200
+    with TestClient(create_gateway(routes, GatewaySettings(), None, notion=forward), base_url=EDGE) as http:
+        for headers in ({}, {"Authorization": "Bearer local"}):  # Clank's server in a container started before keys
+            answer = http.get("/notion/databases", headers=headers)
+            assert (answer.status_code, answer.json()["error"]["code"]) == (401, "unauthorized"), headers
+            assert "start it again from Clank" in answer.json()["error"]["message"]
 
 
 def test_the_activity_routes_take_the_services_local_token() -> None:
-    with TestClient(create_gateway(Routes(), GatewaySettings(), None, token=TOKEN)) as http:
+    with TestClient(create_gateway(Routes(), GatewaySettings(), None, token=TOKEN), base_url=HERE) as http:
         for path in ("/activity", "/activity/live", "/completion"):
             assert http.get(path).status_code == 401, path
             assert http.get(path, headers={"Authorization": f"Bearer {TOKEN}"}).status_code == 200, path

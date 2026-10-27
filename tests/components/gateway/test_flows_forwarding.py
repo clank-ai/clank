@@ -2,7 +2,8 @@
 gateway, which forwards to the service only what the agent may ask (reading its flow, `GET /flows/read`; proposing a box
 and submitting its proposals, `POST /flows/propose` and `/flows/submit`; a VERIFY's verdict, `POST /flows/verdict`; a
 planning's draft of a whole flow, `POST /flows/draft`, design 0013 §15; an orchestrator's decision, `POST
-/flows/decide`, §16; a box's job, `POST /flows/job`, §17) as the client `agent`, and refuses everything else under
+/flows/decide`, §16; a box's job, `POST /flows/job`, §17), each with its workspace's key, as the client `agent`, and
+refuses everything else under
 `/flows/` (403), forwarding none of it: running, pausing or stopping a flow, its runs, checking it, changing it,
 deciding proposals, and opening a planning. A refusal of the service comes back with its words, and a service that does
 not answer is said so. End to end, a verdict given through the gateway is kept as the agent's session's, a criterion not
@@ -19,12 +20,12 @@ from fastapi.testclient import TestClient
 from clank.client import Client
 from clank.components.flows.verdicts import AGENT
 from clank.components.gateway.kinds import GatewaySettings
-from clank.components.gateway.routing import Routes
 from clank.components.gateway.server import create_gateway, flows_forwarder
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
 from clank.kernel.home import Home
 from tests.components.flows.rig import Rig, checked_study, is_sent, make_rig, question
+from tests.support.agentkeys import EDGE, agent_headers, keyed
 
 FORWARDED = [
     ("POST", "/flows/verdict", {"workspace": "myproject", "result": "pass", "findings": []}, "verdict"),
@@ -61,7 +62,9 @@ AUTH = {"Authorization": "Bearer t", "X-Clank-Client": "cli"}
 
 
 def gateway(forward: Any) -> TestClient:
-    return TestClient(create_gateway(Routes(), GatewaySettings(), None, flows=forward))
+    """The gateway as myproject's container reaches it, with its workspace's key."""
+    app = create_gateway(keyed("myproject"), GatewaySettings(), None, flows=forward)
+    return TestClient(app, base_url=EDGE, headers=agent_headers("myproject"))
 
 
 def test_the_agents_verdict_is_forwarded_and_nothing_else_under_flows() -> None:

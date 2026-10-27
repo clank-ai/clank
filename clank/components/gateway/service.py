@@ -132,7 +132,6 @@ EVENT_TYPES = [
 ]
 
 
-LOCAL_KEY = "local"  # what a workspace's agent sends the gateway while the cloud is not in play (decision 0075)
 NOT_PAUSED = "not_paused"  # the gateway's code for resuming a session that is not paused
 OLDER = ("the gateway that runs is from before pausing (it has no holds): restart it (clank gateway restart) and pause "
          "again")  # fmt: skip
@@ -378,20 +377,12 @@ class Gateway:
         component gives them (decision 0019: the gateway uses no tools component); the next routes carry them."""
         self._local_only = list(prefixes)
 
-    def cloud_in_play(self, workspace: str) -> bool:
-        """Whether a workspace's agent needs its own key (design 0016 §9): a cloud provider is agreed, or the workspace
-        may use the cloud."""
-        if any(loaded.record.model_dump().get("agreed") for loaded in self.kernel.settings.records("endpoint")):
-            return True
-        return (self.bounds.view(workspace) or {}).get("models") == "cloud"
-
     def workspace_key(self, workspace: str, *, why: str) -> str:
-        """A workspace's key at the gateway (design 0016 §9), made the first time it is asked for once the cloud is in
-        play; read through the kernel, recorded with why (the agents component writes it into OpenCode's
-        configuration). Before, `local`, as always: nothing is made or read among the secrets of an owner who never
-        agreed a cloud provider."""
-        if not self.cloud_in_play(workspace):
-            return LOCAL_KEY
+        """A workspace's key at the gateway (design 0016 §9), made the first time it is asked for; read through the
+        kernel, recorded with why (the agents component writes it into OpenCode's configuration and Clank's MCP
+        server's environment). Every workspace has one, a cloud provider agreed or not: the agent's calls through the
+        gateway to Notion, its flow and the agents' part act for the workspace their key names, and are refused
+        without one (`agentcalls.py`)."""
         return self.bounds.key(workspace, why=why)
 
     def set_bound(self, workspace: str, **values: Any) -> None:

@@ -44,7 +44,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 6.3 | Request options per serving setup | `tests/components/runtime/test_request_fields.py` (3) |
 | 6.4 | Queues and holds | `tests/components/gateway/test_titles.py` (3) |
 | 6.5 | Records | `tests/components/gateway/test_records.py` (3), `tests/components/gateway/test_state_files.py` (4) |
-| 6.6 | Where it runs and who can reach it | `tests/components/gateway/test_service.py` (11) |
+| 6.6 | Where it runs and who can reach it | `tests/components/gateway/test_callers.py` (6), `tests/components/gateway/test_service.py` (11) |
 | 6.7 | What comes from the prototype's gateway | none yet |
 | 7 | Setup and portability | see its subsections |
 | 7.1 | Where Clank runs | none yet |
@@ -81,7 +81,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.4 | Operations | `tests/components/workspaces/test_docker_operations.py` (13), `tests/console/test_pages.py` (10), `tests/kernel/test_operations.py` (15) |
 | 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (15), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (18), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
 | 2.6 | Policy | none yet |
-| 2.7 | Callers and access | `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (7), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (18), `vscode/test/live.test.ts` (1) |
+| 2.7 | Callers and access | `tests/components/gateway/test_callers.py` (6), `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (7), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (18), `vscode/test/live.test.ts` (1) |
 | 2.8 | Secrets | `tests/components/tools/test_servers.py` (7), `tests/kernel/test_secrets.py` (4) |
 | 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_sandbox.py` (7), `tests/kernel/test_processes.py` (8) |
 | 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (7), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
@@ -134,7 +134,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner does | `tests/components/agents/test_work.py` (9), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (10), `tests/console/test_folder.py` (24), `tests/console/test_terminal.py` (5) |
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (11), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
-| 3 | Workspaces, the image and the container | `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (10), `tests/console/test_folder.py` (24), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (7), `tests/docker/test_escape.py` (3) |
+| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (10), `tests/console/test_folder.py` (24), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (7), `tests/docker/test_escape.py` (3) |
 | 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (9), `tests/console/test_folder.py` (24), `tests/contract/test_agent_program.py` (2) |
 | 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (9), `tests/components/workspaces/test_docker_containers.py` (13), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
 | 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (10) |
@@ -216,7 +216,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner gets | none yet |
 | 2 | The Notion side, set up by the owner | `tests/components/notion/test_connection.py` (6) |
-| 3 | Only the service talks to Notion | `tests/components/gateway/test_notion_forwarding.py` (3) |
+| 3 | Only the service talks to Notion | `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_notion_forwarding.py` (3) |
 | 4 | Reading | `tests/components/agents/test_notion_tools.py` (4), `tests/components/notion/test_markdown.py` (3), `tests/components/notion/test_reading.py` (10) |
 | 5 | Staging | `tests/components/notion/test_staging.py` (8), `tests/components/notion/test_writing.py` (5) |
 | 6 | Review in VS Code | `tests/components/notion/test_review_service.py` (5), `vscode/test/notion.page.test.ts` (2), `vscode/test/notion.test.ts` (10) |
@@ -309,7 +309,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 6 | The runner, an operation of the service | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_prepare.py` (8), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_restart.py` (6), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_controls.py` (10), `tests/components/flows/test_runner_routes.py` (2), `tests/components/flows/test_runs.py` (7) |
 | 7 | A model per box, and what a switch costs | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_model_changed.py` (4), `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_watch.py` (12), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_model_per_box.py` (13), `tests/components/flows/test_models.py` (4), `tests/components/flows/test_prepare.py` (8), `tests/console/test_data.py` (17), `vscode/test/controller.test.ts` (18) |
 | 8 | Deliverables, tries and stale boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_deliverables.py` (3), `tests/components/flows/test_diffs.py` (5), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_runs.py` (7), `tests/components/flows/test_stale.py` (9), `tests/components/flows/test_verify.py` (8), `tests/components/flows/test_waiting.py` (9) |
-| 9 | The model proposes boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_tools.py` (9), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_proposals.py` (8), `tests/components/flows/test_proposals_again.py` (6), `tests/components/flows/test_proposals_auto.py` (3), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_proposals_join.py` (12), `tests/components/flows/test_proposals_routes.py` (2), `tests/components/flows/test_verify.py` (8), `tests/components/flows/test_waiting.py` (9), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12) |
+| 9 | The model proposes boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_tools.py` (9), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_proposals.py` (8), `tests/components/flows/test_proposals_again.py` (6), `tests/components/flows/test_proposals_auto.py` (3), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_proposals_join.py` (12), `tests/components/flows/test_proposals_routes.py` (2), `tests/components/flows/test_verify.py` (8), `tests/components/flows/test_waiting.py` (9), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12) |
 | 10 | Gates | `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_diffs.py` (5), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_routes.py` (2), `tests/components/flows/test_runs.py` (7), `tests/components/flows/test_verify_loop.py` (6), `tests/components/flows/test_waiting.py` (9), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12), `vscode/test/gates.test.ts` (16) |
 | 11 | Where a flow lives, and its file | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_flow_file.py` (18), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_next_flow.py` (11), `tests/kernel/test_grouped_settings.py` (5) |
 | 12 | The Flow view in the Monitor | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_planning_view.py` (4), `tests/components/flows/test_summaries.py` (9), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_view.py` (12), `tests/console/test_monitor_flow_watch.py` (12), `tests/console/test_monitor_page.py` (16), `tests/console/test_orchestrator_panel.py` (6) |
@@ -368,7 +368,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (14) |
 | 7 | Cloud presets, and the main slot running one | `tests/components/agents/test_work.py` (9), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17) |
 | 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_openrouter.py` (14) |
-| 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (24) |
+| 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (24) |
 | 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (24) |
 | 11 | Cost: each request, session and flow, and the limits | `tests/cli/test_cloud_commands.py` (7), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_cost_limits.py` (8), `tests/components/gateway/test_cost_views.py` (8), `tests/console/test_add_model.py` (25), `tests/console/test_cost_pause.py` (2), `tests/console/test_data.py` (17), `tests/console/test_home.py` (15), `tests/console/test_monitor_cloud.py` (3), `tests/console/test_requests_page.py` (11), `tests/console/test_text.py` (4), `tests/kernel/test_event_attention.py` (3) |
 | 12 | How cost is known and kept | `tests/components/gateway/test_cloud_cost.py` (5), `tests/components/gateway/test_cost_views.py` (8), `tests/components/gateway/test_state_files.py` (4) |
@@ -416,7 +416,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 5 | What the extension API allows, and what it does not | none yet |
 | 6 | Order of work | none yet |
 | 7 | Showing files to the owner | see its subsections |
-| 7.1 | The agent opens files | `tests/components/agents/test_show_files_tool.py` (4), `tests/components/agents/test_showing.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3) |
+| 7.1 | The agent opens files | `tests/components/agents/test_show_files_tool.py` (4), `tests/components/agents/test_showing.py` (4), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3) |
 | 7.2 | The window opens them on the left | `vscode/test/controller.test.ts` (18), `vscode/test/show.test.ts` (4) |
 | 7.3 | Paths in the agent's terminal are links | `vscode/test/show.test.ts` (4) |
 | 7.4 | Finding figures | `tests/components/agents/test_find_figures_tool.py` (5), `tests/components/workspaces/test_figure_geometry.py` (4) |
@@ -1570,9 +1570,9 @@ Design 0004 §1 and §4: making a workspace's agent ready writes the program's c
 
 ### `tests/components/agents/test_workspace_key_config.py`
 
-Design 0016 §9 and §10 (decisions 0075 and 0111): once the cloud is in play, each workspace's OpenCode sends its workspace's own key to the gateway, never `local`, and so does Clank's MCP server in its container (before, nothing changes: `local`, and no key made); a workspace allowed the cloud gets no MCP server marked local only (held back, saying why) and Clank's server lists no Notion tool there; a workspace kept on this machine gets them all; and the gateway's routes carry the names of the tools kept from the cloud: Clank's Notion tools always, and each server marked local, as OpenCode names them, once the agents component gave them (until then the routes say so, and the gateway sends nothing to the cloud).
+Design 0016 §9 and §10 (decisions 0075 and 0111): each workspace's OpenCode sends its workspace's own key to the gateway, never `local`, and so does Clank's MCP server in its container, whether a cloud provider was ever agreed or not (the agent's calls to Notion, its flow and the agents' part are refused without it); a workspace allowed the cloud gets no MCP server marked local only (held back, saying why) and Clank's server lists no Notion tool there; a workspace kept on this machine gets them all; and the gateway's routes carry the names of the tools kept from the cloud: Clank's Notion tools always, and each server marked local, as OpenCode names them, once the agents component gave them (until then the routes say so, and the gateway sends nothing to the cloud).
 
-- before any cloud provider is agreed opencode sends local and no key is made
+- before any cloud provider is agreed opencode and clanks server send the workspaces own key
 - opencode and clanks server send the workspaces own key
 - a workspace allowed the cloud gets no server marked local and no notion
 - a workspace kept on this machine gets them all
@@ -2158,13 +2158,33 @@ Design 0004 §2: the gateway says what it does now: each request in flight with 
 - a request a note released stays among its sessions ended but is never counted nor its last
 - a sessions requests that ended keep their census whole only from the newest that ended well
 
+### `tests/components/gateway/test_agent_calls.py`
+
+Design 0016 §9, design 0010 §3, design 0013 §9 and design 0018 §7.1: an agent's call through the gateway (to Notion, to its flow, to the agents' part) acts for the workspace its key names, and for no other. A call without a key the gateway's routes know (none, `local`, a key no workspace has) is refused (401), saying to start the agent's window again; one whose key names a workspace and whose body or query names another is refused (403); with its workspace's key it passes, the workspace filled in where the call left it out; a body that is not a JSON object is refused (400). Nothing refused is forwarded.
+
+- a call without a known key is refused saying to start the agents window again
+- a key of one workspace naming another is refused
+- with its workspaces key a call passes with its workspace bound
+- a body that is not a json object is refused
+
 ### `tests/components/gateway/test_agents_forwarding.py`
 
-Design 0018 §7.1: the agent asks the service to open files in the owner's VS Code window through the gateway, which forwards `POST /agents/show` to the service as the client `agent`, and refuses everything else under `/agents/` (403), forwarding none of it: opening the window, the review, the sessions, the annotations, the mode. A refusal of the service comes back with its words, and a service that does not answer is said so.
+Design 0018 §7.1: the agent asks the service to open files in the owner's VS Code window through the gateway (with its workspace's key, as Clank's MCP server sends it), which forwards `POST /agents/show` to the service as the client `agent`, and refuses everything else under `/agents/` (403), forwarding none of it: opening the window, the review, the sessions, the annotations, the mode. A refusal of the service comes back with its words, and a service that does not answer is said so.
 
 - showing files is forwarded and nothing else under agents
 - a refusal comes back with its words and a silent service is said so
 - the agents work on boards is forwarded
+
+### `tests/components/gateway/test_callers.py`
+
+Design 0001 §6.6, design 0002 §2.7 and design 0004 §3: the gateway answers Clank's own programs only. A request addressed to a host name other than the gateway's own is refused (421, as the service's API refuses one: a defense against DNS rebinding), whatever its route: the gateway answers `127.0.0.1`, `localhost` and `[::1]` with the port it listens on (the service, VS Code's completion) and `edge` with that port (a workspace's container, through the edge, which relays bytes and leaves the Host its client wrote). A request a browser made is refused (403): one with an `Origin` header, or with `Sec-Fetch-Site` other than `none`; what Clank's own callers send passes, the `Sec-Fetch-Mode` that Node's fetch adds included.
+
+- the gateway answers its own host names with its port
+- a request addressed to another host is refused whatever its route
+- the gateway answers the port it listens on
+- a request a browser made is refused
+- what clanks own callers send passes
+- a request without a host is refused before any route
 
 ### `tests/components/gateway/test_census.py`
 
@@ -2185,7 +2205,7 @@ Design 0012 §4.2, §4.3, §4.6 and §11 step 12 (decisions 0051 and 0052): the 
 
 ### `tests/components/gateway/test_cloud_bounds.py`
 
-Design 0016 §9 and §10 (decisions 0075, 0103, 0112): the gateway checks each cloud request's workspace, by the key its OpenCode sends (its SHA-256 in the routes), before anything is sent. A request with no known key goes to this machine only, and to the cloud is refused saying to start OpenCode again; a workspace allowed the cloud goes; one not yet answered is held, its stream kept alive with comment lines while the service asks the question, and goes on on the same stream once allowed; one kept local is refused with words that say how to allow it. Notion answers only a known key whose bound is this machine, and, while no workspace may use the cloud, a request that names none too (a container started before workspaces had keys). The activity routes take the service's local token. While the service does not answer, a cloud request waits for fresh routes, then is refused `service_silent`. Through the service, a request held asks the workspace's question once.
+Design 0016 §9 and §10 (decisions 0075, 0103, 0112): the gateway checks each cloud request's workspace, by the key its OpenCode sends (its SHA-256 in the routes), before anything is sent. A request with no known key goes to this machine only, and to the cloud is refused saying to start OpenCode again; a workspace allowed the cloud goes; one not yet answered is held, its stream kept alive with comment lines while the service asks the question, and goes on on the same stream once allowed; one kept local is refused with words that say how to allow it. Notion answers only a known key whose bound is this machine, and never a request that names none, even while no workspace may use the cloud (a container started before workspaces had keys is told to start its agent's window again). The activity routes take the service's local token. While the service does not answer, a cloud request waits for fresh routes, then is refused `service_silent`. Through the service, a request held asks the workspace's question once.
 
 - a workspace allowed the cloud goes
 - a request with no known key is refused for the cloud
@@ -2194,7 +2214,7 @@ Design 0016 §9 and §10 (decisions 0075, 0103, 0112): the gateway checks each c
 - a workspace kept local is refused with words that say how to allow it
 - a withdrawn agreement stops the next cloud request
 - notion answers only a known key kept on this machine
-- while no workspace may use the cloud notion answers a container started before the keys
+- even while no workspace may use the cloud notion refuses a request that names none
 - the activity routes take the services local token
 - with the service silent a cloud request waits then is refused service silent
 - a held request asks the workspaces question through the service
@@ -2290,7 +2310,7 @@ Design 0004 §2 (found by the model battery, 2026-10-15): an engine that fails m
 
 ### `tests/components/gateway/test_flows_forwarding.py`
 
-Design 0013 §9, §15 and §16 (decisions 0020, 0064, 0097 and 0123): a box's model reaches its flow through the gateway, which forwards to the service only what the agent may ask (reading its flow, `GET /flows/read`; proposing a box and submitting its proposals, `POST /flows/propose` and `/flows/submit`; a VERIFY's verdict, `POST /flows/verdict`; a planning's draft of a whole flow, `POST /flows/draft`, design 0013 §15; an orchestrator's decision, `POST /flows/decide`, §16; a box's job, `POST /flows/job`, §17) as the client `agent`, and refuses everything else under `/flows/` (403), forwarding none of it: running, pausing or stopping a flow, its runs, checking it, changing it, deciding proposals, and opening a planning. A refusal of the service comes back with its words, and a service that does not answer is said so. End to end, a verdict given through the gateway is kept as the agent's session's, a criterion not as `flow_verdict` takes it is refused naming its field, and a flow cannot be run, paused or stopped through the gateway.
+Design 0013 §9, §15 and §16 (decisions 0020, 0064, 0097 and 0123): a box's model reaches its flow through the gateway, which forwards to the service only what the agent may ask (reading its flow, `GET /flows/read`; proposing a box and submitting its proposals, `POST /flows/propose` and `/flows/submit`; a VERIFY's verdict, `POST /flows/verdict`; a planning's draft of a whole flow, `POST /flows/draft`, design 0013 §15; an orchestrator's decision, `POST /flows/decide`, §16; a box's job, `POST /flows/job`, §17), each with its workspace's key, as the client `agent`, and refuses everything else under `/flows/` (403), forwarding none of it: running, pausing or stopping a flow, its runs, checking it, changing it, deciding proposals, and opening a planning. A refusal of the service comes back with its words, and a service that does not answer is said so. End to end, a verdict given through the gateway is kept as the agent's session's, a criterion not as `flow_verdict` takes it is refused naming its field, and a flow cannot be run, paused or stopped through the gateway.
 
 - the agents verdict is forwarded and nothing else under flows
 - a refusal comes back with its words and a silent service is said so
@@ -2374,7 +2394,7 @@ Design 0024 §4 (decision 0141): what the owner sees of the agent's internet exc
 
 ### `tests/components/gateway/test_notion_forwarding.py`
 
-Design 0010 §3: the agent reaches Notion through the gateway, which forwards to the service the reading and proposing routes only (the shared databases, a query, a page, a search; a new entry, a change, a removal, submitting the batch) as the client `agent`, and refuses every other (approving, rejecting, connecting, the status, the batches); a refusal of the service comes back with its words, and a service that does not answer is said so. End to end, a proposal made through the gateway is staged as the agent's session's, and the agent cannot approve it.
+Design 0010 §3: the agent reaches Notion through the gateway, which forwards to the service the reading and proposing routes only (the shared databases, a query, a page, a search; a new entry, a change, a removal, submitting the batch) as the client `agent`, each naming the workspace whose key it carries, and refuses every other (approving, rejecting, connecting, the status, the batches); a refusal of the service comes back with its words, and a service that does not answer is said so. End to end, a proposal made through the gateway is staged as the agent's session's, and the agent cannot approve it.
 
 - the agents reading and proposing are forwarded and nothing else
 - a refusal comes back with its words and a silent service is said so
@@ -2520,9 +2540,9 @@ Design 0008 §7, in the gateway's process: a request for a role loaded on demand
 
 ### `tests/components/gateway/test_workspace_keys.py`
 
-Design 0016 §9 (decision 0075's keys, built for the cloud): each workspace has a key of its own at the gateway, made once by the gateway's service and kept with the secrets (`workspace/<name>/gateway-key`), its SHA-256 kept with the workspace's bound in the gateway's own state; the routes the gateway follows carry each key's hash with its workspace, its bound, whether it was answered and its open question, never the key; a bound changed is in the next routes. A key is made only once the cloud is in play (a provider agreed, or the workspace allowed the cloud): before, a workspace's agent is given `local` as before, and nothing is made or read among the secrets.
+Design 0016 §9 (decision 0075's keys, built for the cloud): each workspace has a key of its own at the gateway, made once by the gateway's service and kept with the secrets (`workspace/<name>/gateway-key`), its SHA-256 kept with the workspace's bound in the gateway's own state; the routes the gateway follows carry each key's hash with its workspace, its bound, whether it was answered and its open question, never the key; a bound changed is in the next routes. Every workspace has its key, the cloud in play or not: an agent's calls through the gateway to Notion, its flow and the agents' part are refused without it.
 
-- before the cloud is in play no key is made
+- every workspace has its own key the cloud in play or not
 - a workspaces key is made once and kept with the secrets
 - the routes carry each keys hash and bound never the key
 - a bound changed is in the next routes

@@ -1,9 +1,9 @@
 """Design 0016 §9 (decision 0075's keys, built for the cloud): each workspace has a key of its own at the gateway, made
 once by the gateway's service and kept with the secrets (`workspace/<name>/gateway-key`), its SHA-256 kept with the
 workspace's bound in the gateway's own state; the routes the gateway follows carry each key's hash with its workspace,
-its bound, whether it was answered and its open question, never the key; a bound changed is in the next routes. A key
-is made only once the cloud is in play (a provider agreed, or the workspace allowed the cloud): before, a workspace's
-agent is given `local` as before, and nothing is made or read among the secrets."""
+its bound, whether it was answered and its open question, never the key; a bound changed is in the next routes. Every
+workspace has its key, the cloud in play or not: an agent's calls through the gateway to Notion, its flow and the
+agents' part are refused without it."""
 
 import hashlib
 import json
@@ -15,23 +15,25 @@ from tests.components.runtime.conftest import Rig, add_openrouter
 YOU = Actor(kind="user", via="console")
 
 
-def test_before_the_cloud_is_in_play_no_key_is_made(rig: Rig) -> None:
+def test_every_workspace_has_its_own_key_the_cloud_in_play_or_not(rig: Rig) -> None:
     gateway: Gateway = rig.kernel.parts["gateway"]
     gateway.set_bound("notes", models="this-machine", answered=True)
-    assert gateway.workspace_key("notes", why="writing OpenCode's configuration") == "local"
-    assert not (rig.kernel.home.secrets / "workspace").exists()
-    assert [event for event in rig.kernel.events.latest(100) if event.type.startswith("secret.")] == []
-    assert gateway.routes()["workspaces"] == {}
+    assert gateway.routes()["workspaces"] == {}, "no key until its agent is given one"
     assert gateway.bound("notes") == {
         "workspace": "notes",
         "models": "this-machine",
         "answered": True,
         "question": None,
     }
-    gateway.set_bound("notes", models="cloud")
     key = gateway.workspace_key("notes", why="writing OpenCode's configuration")
-    assert key.startswith("clank-ws-"), "a workspace allowed the cloud has its key"
-    assert [each["workspace"] for each in gateway.routes()["workspaces"].values()] == ["notes"]
+    assert key.startswith("clank-ws-"), "no cloud provider agreed, and still its own key"
+    assert (rig.kernel.home.secrets / "workspace" / "notes" / "gateway-key").read_text(encoding="utf-8") == key
+    digest = hashlib.sha256(key.encode()).hexdigest()
+    assert gateway.routes()["workspaces"] == {
+        digest: {"workspace": "notes", "models": "this-machine", "answered": True, "question": None}
+    }
+    gateway.set_bound("notes", models="cloud")
+    assert gateway.workspace_key("notes", why="writing OpenCode's configuration") == key, "allowing keeps it"
 
 
 def test_a_workspaces_key_is_made_once_and_kept_with_the_secrets(rig: Rig) -> None:

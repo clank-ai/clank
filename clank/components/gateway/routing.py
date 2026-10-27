@@ -119,11 +119,6 @@ class Routes:
             return None
         return [str(each) for each in found.get("hosts") or []]
 
-    def any_cloud(self) -> bool:
-        """Whether any workspace may use the cloud model."""
-        with self._lock:
-            return any(each.get("models") == "cloud" for each in self._raw.get("workspaces", {}).values())
-
     def local_only(self) -> list[str]:
         """The names (prefixes) of the tools that never go to a cloud model (design 0016 §10): Clank's Notion tools
         always, whatever the routes name, and those the routes name."""

@@ -71,6 +71,10 @@ From the owner's first full day of use and an end-to-end test of a new user's fi
   a new chat's first word comes in 0.5 to 1 s. The same patch keeps KVMem from resuming a conversation from
   another one's snapshot. Clank does not build KVMem: [frontier 262K's page](docs/models/frontier-262k.md) says
   how to build it with the patch (2026-10-27).
+- One workspace's agent could, through the gateway, start a job in another workspace's container, read its flow or
+  open its files, and a web page could send the gateway requests: each agent's call now carries its workspace's key
+  and acts for that workspace only, and the gateway answers only Clank's own programs. Close and start again any
+  agent's window opened before this update, so its tools get the key (2026-10-27).
 
 ### Changed
 

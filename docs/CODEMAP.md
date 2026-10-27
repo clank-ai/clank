@@ -131,8 +131,10 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/flows/waiting.py` | What a flow waits for, told the same way to every client (design 0013 §10, §14 step 7). |
 | `clank/components/gateway/__init__.py` | The gateway component: every model request, to the engine of its role's slot (design 0001 §6, design 0004 §2). |
 | `clank/components/gateway/activity.py` | What the gateway does now (design 0004 §2): each request in flight and how far it is, and how the last one that |
+| `clank/components/gateway/agentcalls.py` | An agent's calls through the gateway act for its own workspace, and for no other (design 0016 §9's keys; design 0010 |
 | `clank/components/gateway/api.py` | The gateway component's routes in the service's API: its status, what it does now, the requests it kept (newest |
 | `clank/components/gateway/bounds.py` | Each workspace's key at the gateway and how far its requests may go (design 0016 §9; decision 0075's keys, built for |
+| `clank/components/gateway/callers.py` | Who the gateway answers (design 0001 §6.6, design 0002 §2.7): Clank's own programs, never a web page. |
 | `clank/components/gateway/census.py` | The census of a model request (design 0012 §4.2, §4.3, §4.6; decisions 0051 and 0052): what fills the context the |
 | `clank/components/gateway/cli.py` | The gateway component's commands: `clank gateway status\|restart\|stop` (design 0004 §2), clients of the API. |
 | `clank/components/gateway/completion.py` | Completion in the gateway (design 0006 §4): llama.cpp's fill in the middle, `POST /v1/infill`, for the role a request |

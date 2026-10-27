@@ -1,10 +1,10 @@
-"""Design 0016 §9 and §10 (decisions 0075 and 0111): once the cloud is in play, each workspace's OpenCode sends its
-workspace's own key to the gateway, never `local`, and so does Clank's MCP server in its container (before, nothing
-changes: `local`, and no key made); a workspace allowed the cloud gets no MCP
-server marked local only (held back, saying why) and Clank's server lists no Notion tool there; a workspace kept on this
-machine gets them all; and the gateway's routes carry the names of the tools kept from the cloud: Clank's Notion tools
-always, and each server marked local, as OpenCode names them, once the agents component gave them (until then the
-routes say so, and the gateway sends nothing to the cloud)."""
+"""Design 0016 §9 and §10 (decisions 0075 and 0111): each workspace's OpenCode sends its workspace's own key to the
+gateway, never `local`, and so does Clank's MCP server in its container, whether a cloud provider was ever agreed or
+not (the agent's calls to Notion, its flow and the agents' part are refused without it); a workspace allowed the cloud
+gets no MCP server marked local only (held back, saying why) and Clank's server lists no Notion tool there; a workspace
+kept on this machine gets them all; and the gateway's routes carry the names of the tools kept from the cloud: Clank's
+Notion tools always, and each server marked local, as OpenCode names them, once the agents component gave them (until
+then the routes say so, and the gateway sends nothing to the cloud)."""
 
 import json
 import subprocess
@@ -71,16 +71,18 @@ def agreed(kernel: Kernel) -> None:
     kernel.settings.write("endpoint", "openrouter", values, base=None, actor=YOU)
 
 
-def test_before_any_cloud_provider_is_agreed_opencode_sends_local_and_no_key_is_made(
+def test_before_any_cloud_provider_is_agreed_opencode_and_clanks_server_send_the_workspaces_own_key(
     kernel: Kernel, platform: FakePlatform, tmp_path: Path
 ) -> None:
     container_name = opened(kernel, platform, tmp_path)
     kernel.parts["agents"].prepare("paper")
     config = json.loads(platform.files[(container_name, CONFIG)])
-    assert config["provider"]["clank"]["options"]["apiKey"] == "local"
-    assert config["mcp"]["clank"]["environment"]["CLANK_GATEWAY_KEY"] == "local"
-    assert not (kernel.home.secrets / "workspace").exists()
-    assert [event for event in kernel.events.latest(200) if event.type.startswith("secret.")] == []
+    key = (kernel.home.secrets / "workspace" / "paper" / "gateway-key").read_text(encoding="utf-8")
+    assert key.startswith("clank-ws-")
+    assert config["provider"]["clank"]["options"]["apiKey"] == key
+    assert config["mcp"]["clank"]["environment"]["CLANK_GATEWAY_KEY"] == key
+    [made] = kernel.events.latest(200, types=["secret.set"])
+    assert made.data["scope"] == "workspace/paper", "made once, and said"
 
 
 def test_opencode_and_clanks_server_send_the_workspaces_own_key(

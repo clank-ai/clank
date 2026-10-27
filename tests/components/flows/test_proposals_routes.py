@@ -17,12 +17,12 @@ from clank.client import Client
 from clank.components.flows.kinds import Flow
 from clank.components.flows.verdicts import AGENT
 from clank.components.gateway.kinds import GatewaySettings
-from clank.components.gateway.routing import Routes
 from clank.components.gateway.server import create_gateway, flows_forwarder
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
 from clank.kernel.home import Home
 from tests.components.flows.rig import FLOW, Rig, decomposing, is_sent, make_rig, question, task
+from tests.support.agentkeys import EDGE, agent_headers, keyed
 
 AUTH = {"Authorization": "Bearer t", "X-Clank-Client": "console"}
 AS_AGENT = {"Authorization": "Bearer t", "X-Clank-Client": "agent"}
@@ -51,7 +51,8 @@ def test_a_decompose_proposes_through_the_gateway_and_only_the_owner_accepts(rig
     app = create_app(rig.kernel, token="t", port=7720, background=[rig.kernel.parts["flows"].run])
     with TestClient(app, base_url="http://127.0.0.1:7720") as service:
         forward = flows_forwarder(lambda: Client("http://127.0.0.1:7720", "t", name="agent", http=service), close=False)
-        with TestClient(create_gateway(Routes(), GatewaySettings(), None, flows=forward)) as gateway:
+        app = create_gateway(keyed("myproject"), GatewaySettings(), None, flows=forward)
+        with TestClient(app, base_url=EDGE, headers=agent_headers("myproject")) as gateway:
             assert service.post(f"{ROUTE}/run", headers=AUTH, json={}).status_code == 200
             brief = waits_for(lambda: question(rig, "Brief"))
             rig.write("BRIEF.md", "About 60 grid points.\n")
