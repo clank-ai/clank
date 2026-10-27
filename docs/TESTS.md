@@ -56,7 +56,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7.7 | Rules that keep Clank portable | none yet |
 | 8 | Testing | see its subsections |
 | 8.1 | Layers | none yet |
-| 8.2 | Contract tests make plug and play safe | `tests/contract/test_container_platform.py` (7), `tests/contract/test_engine.py` (4) |
+| 8.2 | Contract tests make plug and play safe | `tests/contract/test_container_platform.py` (8), `tests/contract/test_engine.py` (4) |
 | 8.3 | Fixtures recorded from the real engines | `tests/fakes/test_recorded.py` (7) |
 | 8.4 | Continuous integration | `tests/test_repository.py` (11), `tests/tools/test_check.py` (4), `tests/tools/test_check_docs.py` (12), `tests/tools/test_check_secrets.py` (9), `tests/tools/test_extension.py` (5), `tests/tools/test_files.py` (4), `tests/tools/test_markdown.py` (5) |
 | 8.5 | Tests say what they prove | `tests/tools/test_markdown.py` (5), `tests/tools/test_testspage.py` (12) |
@@ -83,8 +83,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.6 | Policy | none yet |
 | 2.7 | Callers and access | `tests/components/gateway/test_callers.py` (6), `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (7), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (18), `vscode/test/live.test.ts` (1) |
 | 2.8 | Secrets | `tests/components/tools/test_servers.py` (7), `tests/kernel/test_secrets.py` (4) |
-| 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_sandbox.py` (7), `tests/kernel/test_processes.py` (8) |
-| 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (7), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
+| 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (14), `tests/components/workspaces/test_sandbox.py` (7), `tests/kernel/test_processes.py` (8) |
+| 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (8), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
 | 2.11 | The library: what the user installs | `tests/components/tools/test_servers.py` (7) |
 | 2.12 | Files for the user | none yet |
 | 2.13 | Clank's own traffic | none yet |
@@ -134,9 +134,9 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner does | `tests/components/agents/test_work.py` (9), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (10), `tests/console/test_folder.py` (24), `tests/console/test_terminal.py` (5) |
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (11), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
-| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (13), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (10), `tests/console/test_folder.py` (24), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (7), `tests/docker/test_escape.py` (3) |
+| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (14), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (10), `tests/console/test_folder.py` (24), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (8), `tests/docker/test_escape.py` (3) |
 | 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (9), `tests/console/test_folder.py` (24), `tests/contract/test_agent_program.py` (2) |
-| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (9), `tests/components/workspaces/test_docker_containers.py` (13), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
+| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (9), `tests/components/workspaces/test_docker_containers.py` (14), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
 | 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (10) |
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (3) |
@@ -324,7 +324,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | none yet |
-| 2 | The container platform adapters | `tests/components/workspaces/test_docker_cli.py` (2), `tests/contract/test_container_platform.py` (7), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
+| 2 | The container platform adapters | `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (14), `tests/components/workspaces/test_docker_engine.py` (12), `tests/contract/test_container_platform.py` (8), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
 | 3 | The edge's way to the gateway on Linux | none yet |
 | 4 | A workspace's container on Docker Engine | none yet |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | none yet |
@@ -3396,7 +3396,7 @@ Design 0014 §2 (decision 0070): every container command Clank sends is Docker's
 
 ### `tests/components/workspaces/test_docker_containers.py`
 
-Design 0004 §3 and design 0002 §2.9: the Docker Desktop adapter's container commands, on a scripted `docker` (each command's exact arguments; its answer). It reads the platform's CPUs and memory; tells whether an image is built and builds one, each line as it comes; makes a network only when it is not there; runs a container from its spec, joining its other networks after it starts; reads, starts, stops and removes a container, and removes a volume, a missing one being no error; and says how a terminal enters a container. A command Docker refuses raises its own words. Revised 2026-10-26: a container read says the networks it is on, joining a network says whether it joined now or was on it already, and a start refused because a network the container was on is gone says so (`NetworkGone`), so Clank makes the container again.
+Design 0004 §3 and design 0002 §2.9: every adapter's container commands, on a scripted `docker` (each command's exact arguments; its answer): Docker Desktop's and Docker Engine's are the same CLI (design 0014 §2), Docker Engine's naming the system engine's socket first, once systemd says Docker's service is active. It reads the platform's CPUs and memory; tells whether an image is built and builds one, each line as it comes; makes a network only when it is not there; runs a container from its spec, joining its other networks after it starts; reads, starts, stops and removes a container, and removes a volume, a missing one being no error; and says how a terminal enters a container. A command Docker refuses raises its own words. Revised 2026-10-26: a container read says the networks it is on, joining a network says whether it joined now or was on it already, and a start refused because a network the container was on is gone says so (`NetworkGone`), so Clank makes the container again.
 
 - the platforms cpus and memory are read from its engine
 - an image is built only when asked and its lines come as written
@@ -3411,6 +3411,7 @@ Design 0004 §3 and design 0002 §2.9: the Docker Desktop adapter's container co
 - a start refused because a network is gone says so
 - several files are written in a container in one command
 - a container without python gets its files one by one
+- every container command names the engine its adapter names
 
 ### `tests/components/workspaces/test_docker_desktop.py`
 
@@ -3425,6 +3426,23 @@ Design 0002 §2.10 and PROTOTYPE.md: the Docker Desktop adapter finds the docker
 - a present handler is left alone and wsl is asked nothing when it does not run or elsewhere
 - label names come from dockers own map so a value holding a comma adds none
 - a container gone since it was listed has no labels and the others keep theirs
+
+### `tests/components/workspaces/test_docker_engine.py`
+
+Design 0014 §2 (decision 0070): the Docker Engine adapter reads Docker Engine's state and never changes it. It asks systemd first, which starts nothing, so a stopped engine is never woken: activating is starting, deactivating stopping, inactive stopped, failed failed (its detail naming `systemctl status docker`). No command reaches the engine while systemd says Docker's service is not active (a reading from the last second is reused): neither those it runs, nor those it follows (a build, a setup), nor those it hands back for another to run (`docker exec`); each is refused with the command that starts Docker. An active engine is asked `docker version`, its whole answer kept: "permission denied" is no access, whose detail says how to join the docker group (equivalent to root on that computer) and to restart Clank's service, or only to restart it when the account joined after the service started. Every command names the system engine's socket, whatever DOCKER_HOST and the current context say. Without systemd, the engine is asked directly. Where systemd knows no docker.service of the system's, Docker from the snap and rootless Docker are unsupported, saying to install Docker Engine from Docker's packages. The capture tool asks what the adapter asks.
+
+- a user outside the docker group is told how to join it
+- a service started before the user joined the docker group says to restart it
+- a stopped engine is read from systemd and never woken
+- no command reaches the engine while systemd says it is not active
+- a reading of systemd from the last second is reused
+- every command goes to the system engines socket
+- systemds word for dockers service gives its state
+- a failed engine says where to read why
+- without systemd the engine is asked directly
+- docker from the snap or rootless docker is unsupported saying how to install docker engine
+- where systemd knows dockers service its engine is used whatever the context
+- the capture tool asks what the adapter asks
 
 ### `tests/components/workspaces/test_docker_operations.py`
 
@@ -4357,7 +4375,7 @@ Design 0004 §4 and decision 0011: every agent program adapter meets the same co
 
 ### `tests/contract/test_container_platform.py`
 
-Design 0002 §2.10 and design 0001 §8.2-8.3: every container platform adapter meets the same contract, run against what its program answered at each recorded version, as it ran where it was recorded (that platform, its command where it was installed): running, it reports its version, its engine's and its containers, with Clank's labels read exactly and every label's name; stopped, no containers, read within a few seconds although the stopped program leaves some questions unanswered; a start and a stop are asked of the program and change its state, even when the program's own start does nothing; without its command it is not installed and refuses to start; what it supports is read from the program. Design 0004 §3 (revised 2026-10-26): each container's networks are read by name from the same listing, a stopped one's too, so the edge's place on every workspace's network costs no other question. Design 0014 §2: an adapter that asks for a command's whole answer gets it as recorded, with its errors.
+Design 0002 §2.10 and design 0001 §8.2-8.3: every container platform adapter meets the same contract, run against what its program answered at each recorded version, as it ran where it was recorded (that platform, its command where it was installed): running, it reports its version, its engine's and its containers, with Clank's labels read exactly and every label's name; stopped, no containers, read within a few seconds although the stopped program leaves some questions unanswered; a start and a stop are asked of the program and change its state, even when the program's own start does nothing; without its command it is not installed and refuses to start; what it supports is read from the program. Design 0004 §3 (revised 2026-10-26): each container's networks are read by name from the same listing, a stopped one's too, so the edge's place on every workspace's network costs no other question. Design 0014 §2: an adapter that asks for a command's whole answer gets it as recorded, with its errors; and a platform Clank does not start (a system service, whose recording has no transitions: Docker Engine) refuses a start and a stop with the command its owner runs, having run nothing, and its capabilities say so.
 
 - running it reports its version its engine and its containers
 - clanks labels are read exactly and every labels name is listed
@@ -4366,6 +4384,7 @@ Design 0002 §2.10 and design 0001 §8.2-8.3: every container platform adapter m
 - a start and a stop are asked of the program and change its state
 - without its command it is not installed and refuses to start
 - what it supports is read from the program
+- a platform clank does not start refuses with the command to run
 
 ### `tests/contract/test_endpoint.py`
 

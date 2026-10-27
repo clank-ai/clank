@@ -6,8 +6,11 @@ questions unanswered; a start and a stop are asked of the program and change its
 start does nothing; without its command it is not installed and refuses to start; what it supports is read from the
 program. Design 0004 §3 (revised 2026-10-26): each container's networks are read by name from the same listing, a
 stopped one's too, so the edge's place on every workspace's network costs no other question. Design 0014 §2: an
-adapter that asks for a command's whole answer gets it as recorded, with its errors."""
+adapter that asks for a command's whole answer gets it as recorded, with its errors; and a platform Clank does not
+start (a system service, whose recording has no transitions: Docker Engine) refuses a start and a stop with the
+command its owner runs, having run nothing, and its capabilities say so."""
 
+import re
 import sys
 from pathlib import Path
 
@@ -17,10 +20,16 @@ from clank.components.workspaces.adapters import CONTAINER_PLATFORMS
 from clank.components.workspaces.adapters.platform import ContainerPlatform, PlatformError
 from tests.fakes.recorded import RecordedProgram, recordings
 
-CASES = [
-    pytest.param(adapter, folder, id=f"{adapter.NAME}-{folder.name}")
-    for adapter in CONTAINER_PLATFORMS.all()
-    for folder in recordings(adapter.NAME)
+
+def starts(folder: Path) -> bool:
+    """Whether Clank starts and stops the recorded platform: its recording moves it between states."""
+    return bool(RecordedProgram.load(folder).transitions)
+
+
+RECORDED = [(adapter, folder) for adapter in CONTAINER_PLATFORMS.all() for folder in recordings(adapter.NAME)]
+CASES = [pytest.param(adapter, folder, id=f"{adapter.NAME}-{folder.name}") for adapter, folder in RECORDED]
+STARTED = [
+    pytest.param(adapter, folder, id=f"{adapter.NAME}-{folder.name}") for adapter, folder in RECORDED if starts(folder)
 ]
 
 
@@ -80,7 +89,7 @@ def test_stopped_it_reports_no_containers_within_a_few_seconds(adapter: type[Con
     assert program.waited <= 3, "a question the stopped program never answers is asked with a short time limit"
 
 
-@pytest.mark.parametrize(("adapter", "folder"), CASES)
+@pytest.mark.parametrize(("adapter", "folder"), STARTED)
 def test_a_start_and_a_stop_are_asked_of_the_program_and_change_its_state(
     adapter: type[ContainerPlatform], folder: Path
 ) -> None:
@@ -111,8 +120,26 @@ def test_what_it_supports_is_read_from_the_program(adapter: type[ContainerPlatfo
     installed = build(adapter, RecordedProgram.load(folder)).capabilities()
     assert {capability.name: capability.supported for capability in installed} == {
         "status": True,
-        "start": True,
-        "stop": True,
+        "start": starts(folder),
+        "stop": starts(folder),
     }
     missing = build(adapter, RecordedProgram.load(folder), installed=False).capabilities()
     assert not any(capability.supported for capability in missing)
+
+
+@pytest.mark.parametrize(("adapter", "folder"), CASES)
+def test_a_platform_clank_does_not_start_refuses_with_the_command_to_run(
+    adapter: type[ContainerPlatform], folder: Path
+) -> None:
+    program = RecordedProgram.load(folder, state="stopped")
+    platform = build(adapter, program)
+    refused = [capability for capability in platform.capabilities() if not capability.supported]
+    assert [capability.name for capability in refused] == ([] if starts(folder) else ["start", "stop"])
+    asked = len(program.calls)  # what it supports is read from the program
+    asks = {"start": platform.request_start, "stop": platform.request_stop}
+    for capability in refused:
+        command = re.search(r"`([^`]+)`", capability.how)
+        assert command is not None, f"{capability.name} names no command to run: {capability.how}"
+        with pytest.raises(PlatformError, match=re.escape(command.group(1))):
+            asks[capability.name]()
+    assert program.calls[asked:] == [], "asked anyway, it runs nothing"

@@ -1,14 +1,14 @@
 """The Docker Desktop adapter: Docker Desktop through its own commands (design 0002 §2.9, §2.10).
 
-Docker Desktop 4.37 and newer has the `docker desktop` command (start, stop, status), which this adapter needs; with
-an older one, or with Docker Engine alone (a later adapter), it says so. The status asks the engine first: `docker
-version` (Docker Desktop's version and its engine's), then its containers, as the base lists them. Only when the
-engine does not answer is `docker desktop status` asked, with a short time limit, to tell a Docker Desktop that is
-starting or stopping from a stopped one: stopped, Docker Desktop 4.85 never answers it (recorded on 2026-10-13). A
-start or a stop is asked with `--detach`, and the operation that asked waits for the engine; the stop answers only
-once Docker Desktop has stopped (13 seconds on 4.85), so both are given a minute. After `docker desktop stop`, Docker
-Desktop 4.85's `docker desktop start` answers that Docker Desktop already runs and starts nothing; when that happens
-to a stopped Docker Desktop, its own program is started instead, as the Start menu starts it (on Windows, `Docker
+Docker Desktop 4.37 and newer has the `docker desktop` command (start, stop, status), which this adapter needs; with an
+older one it says so (Docker Engine alone has an adapter of its own, `docker_engine.py`). The status asks the engine
+first: `docker version` (Docker Desktop's version and its engine's), then its containers, as the base lists them. Only
+when the engine does not answer is `docker desktop status` asked, with a short time limit, to tell a Docker Desktop that
+is starting or stopping from a stopped one: stopped, Docker Desktop 4.85 never answers it (recorded on 2026-10-13). A
+start or a stop is asked with `--detach`, and the operation that asked waits for the engine; the stop answers only once
+Docker Desktop has stopped (13 seconds on 4.85), so both are given a minute. After `docker desktop stop`, Docker Desktop
+4.85's `docker desktop start` answers that Docker Desktop already runs and starts nothing; when that happens to a
+stopped Docker Desktop, its own program is started instead, as the Start menu starts it (on Windows, `Docker
 Desktop.exe`, two folders above its command). On Windows, Docker Desktop started after WSL removes WSL's handler for
 Windows programs (PROTOTYPE.md), so after a start, if WSL runs and the handler is gone, the adapter registers it again
 and says so. Its container commands (design 0004 §3) are Docker's own, the base's (`docker_cli.py`, design 0014 §2),
@@ -39,7 +39,7 @@ REGISTER_WSL_HANDLER = "echo ':WSLInterop:M::MZ::/init:PF' > /proc/sys/fs/binfmt
 INSTALL = "install Docker Desktop (docker.com/products/docker-desktop)"
 UPDATE = (
     "Clank needs the `docker desktop` command, which Docker Desktop has from 4.37: update Docker Desktop (Docker "
-    "Engine alone is supported by a later adapter)"
+    "Engine alone has an adapter of its own: docker-engine)"
 )
 
 

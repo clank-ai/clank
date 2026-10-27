@@ -26,15 +26,15 @@ Each recording of a container platform, while it runs, shows one container of ea
 Clank's (its `clank.*` labels), one of another tool's (`toolbox.*` labels), one of another program's, and one that is
 not running.
 
-A platform Clank does not start (Docker Engine, a system service: design 0014 §2) has no transitions. Its recording
-holds three states instead, each made by the owner of the computer it was recorded on: `running`, `stopped` (both of
-Docker's units stopped, so no command woke the engine) and `no access` (as a user outside the docker group). It is made
-by `tools/capture_docker_engine.py`, which runs the commands the `docker-engine` adapter sends, as the tool lists
-them, keeps each one's status, output, seconds and errors, replaces the containers' ids and the computer's and user's
-names, and merges the three states into `program.json`. The hand-run job `.github/workflows/record-docker-engine.yml`
-does it all on GitHub's ubuntu-24.04 runner and prints the recording in its log between two marker lines; it becomes
-`docker-engine/<version>/program.json`. A recording written by hand before the real one came says so in its `how`
-and its `provisional`, and is replaced by the recording.
+A platform Clank does not start (Docker Engine, a system service: design 0014 §2) has no transitions, and the contract
+holds it to that: it refuses a start and a stop with the command its owner runs. Its recording holds three states
+instead, each made by the owner of the computer it was recorded on: `running`, `stopped` (both of Docker's units
+stopped, so no command woke the engine) and `no access` (as a user outside the docker group). It is made by
+`tools/capture_docker_engine.py`, which runs the commands the `docker-engine` adapter sends, as the tool lists them,
+keeps each one's status, output, seconds and errors, replaces the containers' ids and the computer's and user's names,
+and merges the three states into `program.json`. The hand-run job `.github/workflows/record-docker-engine.yml` does it
+all on GitHub's ubuntu-24.04 runner and prints the recording in its log between two marker lines; it becomes
+`docker-engine/<version>/program.json` (28.0.4 first, recorded on 2026-10-27).
 
 An endpoint adapter (a provider reached at its URL, design 0016 §18) is recorded over HTTP instead: its folder holds
 one folder per recording, named by its date (or `documented`, the shapes its documentation describes, written by hand

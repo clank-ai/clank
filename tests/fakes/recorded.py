@@ -36,7 +36,7 @@ class RecordedProgram:
         self.calls: list[str] = []
         self.waited = 0.0
         self._states: dict[str, dict[str, list[Any]]] = recording["states"]
-        self._transitions: dict[str, str] = recording["transitions"]
+        self.transitions: dict[str, str] = recording["transitions"]  # none: a platform Clank never starts
 
     @classmethod
     def load(cls, folder: Path, state: str | None = None) -> "RecordedProgram":
@@ -81,7 +81,7 @@ class RecordedProgram:
             self.waited += timeout if timeout is not None else seconds
             return None, "", errors if status is None else ""
         self.waited += seconds
-        self.state = self._transitions.get(command, self.state)
+        self.state = self.transitions.get(command, self.state)
         return int(status), str(output), errors
 
 

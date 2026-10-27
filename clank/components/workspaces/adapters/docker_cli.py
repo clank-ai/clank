@@ -17,7 +17,8 @@ made most of the agent's wait in VS Code, 2026-10-26), one by one in a container
 
 Every command's arguments start in one place (`_argv`): the docker command, then the engine the adapter names
 (`_target`: none here, so the docker command's own choice), then the command's own; a command handed back for another
-to run (`exec_argv`) starts there too.
+to run (`exec_argv`) starts there too. There an adapter may refuse first, sending nothing (`_ready`: Docker Engine
+while systemd says its service is not active, so a stopped engine is never woken).
 """
 
 import json
@@ -275,8 +276,14 @@ class DockerCli(ContainerPlatform):
         choice (its `DOCKER_HOST`, else its current context)."""
         return []
 
+    def _ready(self) -> None:
+        """Before any command is sent to the engine: `PlatformError` when none may be, saying why (none here; Docker
+        Engine sends none while systemd says its service is not active)."""
+
     def _argv(self, *arguments: str) -> list[str]:
-        """A command's whole arguments: the docker command, the engine the adapter names, then its own."""
+        """A command's whole arguments, once the engine may be asked (`_ready`): the docker command, the engine the
+        adapter names, then its own."""
+        self._ready()
         return [self.command or "docker", *self._target(), *arguments]
 
     def _gone_or_done(self, answer: Answer, name: str) -> None:

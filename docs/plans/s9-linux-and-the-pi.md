@@ -28,10 +28,9 @@ GitHub Actions' `ubuntu-24.04` and `ubuntu-24.04-arm` runners.
 
 **Status:** lane L for Linux x64 being built at the owner's instruction (2026-10-27: Clank on a Linux computer of the
 owner's, with OpenRouter's models; design 0014's status says so), with the recommended choices: the recording made by
-the hand-run job (design 0014 §2), and decision 0071's (a). Done: L0's tool, the errors in recordings and the job (the
-recording waits for the job's run); L1. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for
-the owner. The places below were found at commit e90c51a; the code has moved since, and each task's commit names where
-it changed.
+the hand-run job (design 0014 §2), and decision 0071's (a). Done: L0 (Docker Engine 28.0.4 recorded by the job on
+2026-10-27), L1 and L2. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for the owner. The
+places below were found at commit e90c51a; the code has moved since, and each task's commit names where it changed.
 
 A path such as `workspaces/sandbox.py:38` means `clank/components/workspaces/sandbox.py`, line 38, at commit e90c51a;
 every other path starts at the repository's root.
@@ -158,7 +157,10 @@ condition holds. Now: L0's tool, L1, P3 and P6.
     group, from a folder that user can read. It merges them and prints `program.json` between two marker lines in its
     log, so no action is added to keep it. The log shows `docker version`, so what was recorded is on record.
 - [x] **Done when:** the tool, the fake's errors and the job are committed, and `tools.check` passes.
-- [ ] **Then the recording**, made as the owner chose (design 0014 §2):
+- [x] **Then the recording**, made as the owner chose (design 0014 §2): by the job, run 40578825917 on 2026-10-27
+  (Docker Engine 28.0.4), committed with L2 as `tests/fixtures/docker-engine/28.0.4/program.json`. It showed that
+  `docker info --format` exits 0 even when the engine was not reached (`0 0`, `{"limit":false,...}`, the refusal
+  on its errors), which L7 heeds. The two ways it could be made:
   - the job, once the owner approves its few x64 minutes: `gh workflow run record-docker-engine.yml`, then the
     recording taken from `gh run view --log`;
   - or the owner on the Pi, during the dry run: `no access` before joining the docker group, then the other two.
@@ -190,7 +192,7 @@ condition holds. Now: L0's tool, L1, P3 and P6.
 
 #### L2. A `docker-engine` adapter for Linux (B)
 
-- [ ] **Tests first**, on L0's recording, committed with this task:
+- [x] **Tests first**, on L0's recording, committed with this task:
   - The contract cases on the new recording (`tests/contract/test_container_platform.py`). They fail: there is no
     adapter. The contract gains `test_a_platform_clank_does_not_start_refuses_with_the_command_to_run`, for every
     adapter: where a start or a stop is not supported, its capability is false and names the command, and asking
@@ -209,15 +211,25 @@ condition holds. Now: L0's tool, L1, P3 and P6.
     - `test_every_command_goes_to_the_system_engines_socket` (`-H unix:///var/run/docker.sock`, whatever
       `DOCKER_HOST` and the current context say);
     - `test_a_failed_engine_says_where_to_read_why`; `test_without_systemd_the_engine_is_asked_directly`.
-  - `tests/components/workspaces/test_docker_containers.py` runs for both adapters.
-- [ ] **Files:** create `clank/components/workspaces/adapters/docker_engine.py`. List it in
+  - `tests/components/workspaces/test_docker_containers.py` runs for both adapters, with
+    `test_every_container_command_names_the_engine_its_adapter_names`.
+  - As built, also: `test_systemds_word_for_dockers_service_gives_its_state`,
+    `test_a_reading_of_systemd_from_the_last_second_is_reused`,
+    `test_docker_from_the_snap_or_rootless_docker_is_unsupported_saying_how_to_install_docker_engine` (the adapter's
+    own words; L3 chooses it), `test_where_systemd_knows_dockers_service_its_engine_is_used_whatever_the_context`
+    and `test_the_capture_tool_asks_what_the_adapter_asks`. The contract tells a platform Clank starts by its
+    recording's transitions: Docker Engine's has none.
+- [x] **Files:** create `clank/components/workspaces/adapters/docker_engine.py`. List it in
   `workspaces/adapters/__init__.py:10-15`, and say "Docker Engine on Linux" in the kind's description. Update
   `docs/GLOSSARY.md` (*Container platform*: Docker Engine on Linux now).
-- [ ] **Interfaces:** `class DockerEngine(DockerCli)`: `NAME = "docker-engine"`, `LABEL = "Docker Engine"`,
+- [x] **Interfaces:** `class DockerEngine(DockerCli)`: `NAME = "docker-engine"`, `LABEL = "Docker Engine"`,
   `PLATFORMS = ("linux",)`. `status()` gives running, starting, stopping, stopped, failed, no access, unsupported or
   not installed. `capabilities()`: status is supported; start and stop are not, each naming its command.
   `request_start()` and `request_stop()` raise `PlatformError` with the command. Every engine command passes one
-  guard, `_active()`, which reads systemd (a reading from the last second is reused).
+  guard, `_active()`, which reads systemd (a reading from the last second is reused). As built, the guard is the
+  base's `_ready()`, which `_argv` asks before every command, so no container method is overridden; systemd's view
+  is `docker_service(answer) -> Service | None` and the groups `docker_group() -> tuple[bool, bool]`, both module
+  functions L3 and L4 read too.
 
 #### L3. The adapter chosen by platform and by what answers (B)
 
