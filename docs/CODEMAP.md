@@ -17,6 +17,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/cli/main.py` | The `clank` command's entry point: the top-level group that every component's commands join. |
 | `clank/cli/records.py` | The commands that read and act on what every client sees: `clank events`, `clank questions` (and answering one), |
 | `clank/cli/service.py` | The service's commands: `clank serve` (in this terminal, or in the background), `clank stop`, `clank status`. |
+| `clank/cli/update.py` | `clank update` (design 0026): what is installed and what is newer (`--check`), and the update itself, the way Clank |
 | `clank/client.py` | The client of the Clank API that Clank's Python clients share: the commands now, the console in M0.5. |
 | `clank/components/__init__.py` | The components of the Clank service (design 0002 §1), in the order the service builds them. |
 | `clank/components/agents/__init__.py` | The agents component: the programs that work in a workspace, OpenCode first (design 0002 §1, design 0004 §4). |
@@ -343,6 +344,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/kernel/where.py` | Where the owner is (design 0013 §15, decision 0099): what a client's own environment says of the terminal it runs in, |
 | `clank/money.py` | How Clank writes an amount of US dollars and a count of tokens (design 0016 §11), the same in the service's words |
 | `clank/registry.py` | Everything declared, in one place: the components, the kinds of record and event types of the kernel and of every |
+| `clank/updates.py` | Updating Clank (design 0026, decision 0145): what is installed, what is newer, and what updating does. |
 
 ## tools
 

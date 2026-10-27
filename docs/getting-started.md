@@ -246,17 +246,22 @@ its notifications and its settings come with design 0025's next steps.
 
 ## 5. Updating
 
-Clank has no update command yet. If you installed it with the one-line installer, run it again: it installs the
-latest release in place of the one you have. If you installed it by hand, run `git pull` in the `clank` folder. Then
-restart Clank's service, so it runs the new version:
+See what is newer, then update, the way Clank was installed:
 
 ```
-clank stop
-clank serve --background
-clank gateway restart
+clank update --check
+clank update
 ```
 
-Run these at the computer itself, not over SSH (started from an SSH session, the service runs where it cannot use
+`clank update --check` changes nothing: it says how Clank was installed (the installer's release, or a clone), what is
+newer (the latest release on GitHub, or the commits your clone's branch is behind), and what it asked to know it
+(GitHub's API, or your clone's own remote). `clank update` then installs the newer release as the installer does, or
+pulls your clone (refused while it has changes of its own). When the tool itself must be installed again, Clank stops
+its service and gateway, finishes in a small helper after the command ends, and starts the service again; each step
+goes to `~/.clank/logs/update.log`. `clank update --dry-run` says each step without doing it. Your settings and
+everything in `~/.clank` stay as they are.
+
+Run it at the computer itself, not over SSH (started from an SSH session, the service runs where it cannot use
 Docker's sign-in). If the VS Code extension changed, build it again (step 2b). If Clank then says a workspace's
 container uses an older sandbox image, reopen that workspace: **Workspaces** (F6), `x` to stop it, then `o` to open it
 again.
