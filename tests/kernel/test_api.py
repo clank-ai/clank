@@ -243,4 +243,6 @@ def test_a_page_size_outside_one_to_a_thousand_is_refused_in_the_one_error_shape
     assert answer.status_code == 422
     assert answer.json()["error"]["code"] == "invalid"
     assert answer.json()["error"]["where"] == {"fields": ["query.limit"]}
+    said = answer.json()["error"]["message"]
+    assert said.startswith("the request is not what this route takes: limit: "), "the field named, and why (2026-10-26)"
     assert api.get(route, params={"limit": 1000}, headers=AUTH).status_code == 200
