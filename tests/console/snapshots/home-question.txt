@@ -15,7 +15,7 @@ F2 Launch options            │ │ service    ● v0.0.0 · API on 127.0.0.1:4
 F3 MCP servers               │ │ docker     ● Fake Docker · running · 2 containers running, none of them Clank's      │
 F6 Workspaces                │ │              s stops it                                                              │
 F7 Requests                  │ │ workspace  ○ none running   F6 lists them                                            │
-F8 CPU models                │ │ models     ○ main: stopped (never started)   8 opens Models                          │
+F8 CPU models                │ │ models     ○ main: not loaded (never started)   8 opens Models                       │
 F9 Phone               ●     │ │ gpu        RTX 5080 · 3% busy · 2.0 GB of 15.9 GB in use · 34°C                      │
 F10 Monitor                  │ │ gateway    ○ stopped   F4, then g, starts it                                         │
 F12 Add a model              │ │ machine    not detected yet   d runs the doctor, which detects it                    │
