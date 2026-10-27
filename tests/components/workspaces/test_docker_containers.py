@@ -285,3 +285,11 @@ def test_every_container_command_names_the_engine_its_adapter_names(adapter: Kin
     platform.limits()
     assert len(docker.named) == 4
     assert all(named == list(adapter.target) for named in docker.named), docker.named
+
+
+def test_each_running_containers_use_is_read_from_docker_stats_in_its_own_fields(adapter: Kind) -> None:
+    rows = '{"Name":"clank-abc-paper","CPUPerc":"12.50%","MemUsage":"1.2GiB / 4GiB"}\nnot json\n'
+    docker = Docker({("stats", "--no-stream", "--format", "{{json .}}"): rows})
+    assert adapter(docker).stats() == [{"Name": "clank-abc-paper", "CPUPerc": "12.50%", "MemUsage": "1.2GiB / 4GiB"}]
+    assert docker.calls == [["stats", "--no-stream", "--format", "{{json .}}"]]
+    assert adapter(Docker({})).stats() == [], "Docker does not answer: no figures"

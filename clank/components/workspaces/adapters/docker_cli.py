@@ -51,6 +51,8 @@ TEMPLATE = (
 # Each container's labels as Docker's own map: `docker ps` joins them with commas, which a value may also hold.
 INSPECT = '{"id":{{json .Id}},"labels":{{json .Config.Labels}}}'
 LIMITS = "{{.NCPU}} {{.MemTotal}}"
+STATS = "{{json .}}"  # each running container's use, in Docker's own fields
+STATS_SECONDS = 20.0  # `docker stats --no-stream` samples twice: a second or two
 ONE = (
     '{"id":{{json .Id}},"name":{{json .Name}},"image":{{json .Config.Image}},"state":{{json .State.Status}},'
     '"labels":{{json .Config.Labels}},"networks":{{json .NetworkSettings.Networks}}}'
@@ -134,6 +136,19 @@ class DockerCli(ContainerPlatform):
         if len(found) != 2 or not all(part.isdigit() for part in found):
             return None
         return int(found[0]), int(found[1]) // (1024 * 1024)
+
+    def stats(self) -> list[dict[str, Any]]:
+        """`docker stats --no-stream`: each running container's use of the CPU and memory, in Docker's own fields."""
+        answer = self._answer("stats", "--no-stream", "--format", STATS, timeout=STATS_SECONDS)
+        rows: list[dict[str, Any]] = []
+        for line in answer.output.splitlines() if answer.ok else []:
+            try:
+                found = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(found, dict):
+                rows.append(found)
+        return rows
 
     def image_exists(self, tag: str) -> bool:
         """Whether `docker image inspect` finds it."""

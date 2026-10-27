@@ -29,8 +29,8 @@ GitHub Actions' `ubuntu-24.04` and `ubuntu-24.04-arm` runners.
 **Status:** lane L for Linux x64 being built at the owner's instruction (2026-10-27: Clank on a Linux computer of the
 owner's, with OpenRouter's models; design 0014's status says so), with the recommended choices: the recording made by
 the hand-run job (design 0014 §2), and decision 0071's (a). Done: L0 (Docker Engine 28.0.4 recorded by the job on
-2026-10-27), L1, L2 and L3. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for the owner. The
-places below were found at commit e90c51a; the code has moved since, and each task's commit names where it changed.
+2026-10-27), L1, L2, L3 and L4. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for the owner.
+The places below were found at commit e90c51a; the code has moved since, and each task's commit names where it changed.
 
 A path such as `workspaces/sandbox.py:38` means `clank/components/workspaces/sandbox.py`, line 38, at commit e90c51a;
 every other path starts at the repository's root.
@@ -284,7 +284,7 @@ condition holds. Now: L0's tool, L1, P3 and P6.
 B because, until it is built, the meters would start again an engine the owner stopped with `sudo systemctl stop
 docker` alone (its socket still listening), within 10 seconds.
 
-- [ ] **Tests first:**
+- [x] **Tests first:**
   - `tests/components/machine/test_checks.py` (design 0014 §2, §5):
     `test_docker_checks_report_what_the_container_platform_reports`. A platform that says *no access* gives "Docker
     running" a warning with the docker group, never "start it with `clank docker start`". *not installed* on Linux
@@ -293,17 +293,24 @@ docker` alone (its socket still listening), within 10 seconds.
   - `tests/components/machine/test_meters.py` (design 0014 §2): `test_the_meters_never_wake_a_stopped_engine`. While
     Docker's last reading is not running, no container figures are asked for; while it runs, they come through the
     workspaces component, and the rows are as before.
-- [ ] **Files:** `machine/checks.py:149-159` (the two checks read `Facts.docker`, the platform's status);
+  - As built, also `test_each_running_containers_use_is_read_from_docker_stats_in_its_own_fields` (both adapters)
+    and `test_the_running_engines_containers_use_is_read_as_recorded`; the doctor's tests read Docker through a
+    faked `read_platform`, so no test asks this machine's Docker.
+- [x] **Files:** `machine/checks.py:149-159` (the two checks read `Facts.docker`, the platform's status);
   `machine/detect.py:84-87` (the profile's `docker` from the platform); `machine/cli.py:23-28` and
   `machine/service.py:123-140` (both build the facts from the platform the settings choose, read without the service
   in the command); `machine/meters.py:160-220` (`Containers` takes the workspaces' function instead of running
   `docker`); `machine/service.py:67`; `machine/component.py` (`uses=("workspaces",)`); `workspaces/service.py` (public
   `read_platform(home)` for the doctor and `container_stats()` for the meters);
-  `workspaces/adapters/docker_cli.py` (`stats()`). `tests/components/machine/test_doctor.py`.
-- [ ] **Interfaces:** `Facts.docker: PlatformStatus | None`; `read_platform(home: Home) -> PlatformStatus`, from
+  `workspaces/adapters/docker_cli.py` (`stats()`). `tests/components/machine/test_doctor.py`. As built,
+  `machine/detect.py` keeps `docker --version` (design 0014 §2: it reaches no engine), and `Facts.run` goes, no
+  check running a command of its own any more.
+- [x] **Interfaces:** `Facts.docker: PlatformStatus | None`; `read_platform(home: Home) -> PlatformStatus`, from
   `config/docker.json` and `choose_platform`; `Workspaces.container_stats() -> list[dict[str, Any]]`, empty unless
-  Docker's last reading is running; `DockerCli.stats() -> str`.
-- [ ] **Done when:** `tests/test_architecture.py` passes, with the new use declared and no cycle.
+  Docker's last reading is running; `DockerCli.stats() -> str`. As built: `Facts.docker: DockerReading | None` and
+  `read_platform(home: Home) -> DockerReading` (the status, and whether Clank starts it, which the fix's words
+  need), and `ContainerPlatform.stats() -> list[dict[str, Any]]`, Docker's rows parsed in the adapter.
+- [x] **Done when:** `tests/test_architecture.py` passes, with the new use declared and no cycle.
 
 #### L5. The gateway's Linux listener (B)
 

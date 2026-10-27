@@ -4,7 +4,9 @@ processor), the memory and page file in use, the disks' and the network's rates 
 drive's space and each NVIDIA GPU's use, memory, temperature and power (none without NVIDIA's library); the last
 readings are kept, the oldest dropped past five minutes, and answered at `GET /machine/meters`; each new one is sent to
 the clients live. A GPU whose handle its driver dropped is read again from a fresh start of NVIDIA's library, or else
-left out of the readings, said once, while the rest of each reading goes on."""
+left out of the readings, said once, while the rest of each reading goes on. Design 0014 §2: the containers' figures
+come through the workspaces component's platform, asked only while Docker's last reading is running, so the meters
+never wake an engine the owner stopped."""
 
 import ctypes
 import logging
@@ -18,10 +20,12 @@ from fastapi.testclient import TestClient
 from clank import registry
 from clank.components.machine import meters, service
 from clank.components.machine.meters import KEPT, TOP, Containers, Meters, Nvml, Processes
+from clank.components.workspaces import service as workspaces_service
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
 from clank.kernel.core import Kernel, open_kernel
 from clank.kernel.home import Home
+from tests.fakes.platform import FakePlatform
 
 AUTH = {"Authorization": "Bearer t", "X-Clank-Client": "console"}
 GPU = {"name": "NVIDIA GeForce RTX 5080", "use": 12.0, "memory_used": 2 << 30, "memory_total": 16 << 30,
@@ -74,26 +78,50 @@ def test_a_reading_has_the_busiest_and_the_largest_processes_read_every_few_seco
     assert len(shown) == len(set(shown))
 
 
+STATS = [
+    {"Name": "clank-abc-paper", "CPUPerc": "1600.00%", "MemUsage": "3.5GiB / 12GiB"},
+    {"Name": "clank-abc-edge", "CPUPerc": "0.01%", "MemUsage": "9MiB / 128MiB"},
+    {"Name": "n8n", "CPUPerc": "2.00%", "MemUsage": "200MiB / 30GiB"},
+    {"Name": "clank-abc-notes", "CPUPerc": "0.50%", "MemUsage": "512KiB / 2GiB"},
+]  # `docker stats`' own fields, as the platform gives them
+
+
 def test_the_workspaces_containers_are_read_from_docker_stats_on_a_thread_of_their_own() -> None:
-    lines = "\n".join([
-        '{"Name":"clank-abc-paper","CPUPerc":"1600.00%","MemUsage":"3.5GiB / 12GiB"}',
-        '{"Name":"clank-abc-edge","CPUPerc":"0.01%","MemUsage":"9MiB / 128MiB"}',
-        '{"Name":"n8n","CPUPerc":"2.00%","MemUsage":"200MiB / 30GiB"}',
-        '{"Name":"clank-abc-notes","CPUPerc":"0.50%","MemUsage":"512KiB / 2GiB"}',
-    ])  # fmt: skip
-    asked: list[list[str]] = []
+    asked: list[str] = []
 
-    def docker(argv: list[str]) -> str | None:
-        asked.append(argv)
-        return lines
+    def stats() -> list[dict[str, Any]]:
+        asked.append("stats")
+        return [dict(row) for row in STATS]
 
-    containers = Containers("clank-abc-", run=docker, cpus=32, clock=lambda: 100.0)
+    containers = Containers("clank-abc-", stats=stats, cpus=32, clock=lambda: 100.0)
     assert containers.read_now() == [
         {"name": "paper", "cpu": 50.0, "memory_used": int(3.5 * (1 << 30)), "memory_total": 12 << 30},
         {"name": "notes", "cpu": 0.0, "memory_used": 512 << 10, "memory_total": 2 << 30},
     ]
-    assert asked[0][1:4] == ["stats", "--no-stream", "--format"]
-    assert Containers("clank-abc-", run=lambda argv: None, cpus=32).read_now() == [], "Docker not running: none"
+    assert asked == ["stats"]
+    assert Containers("clank-abc-", stats=list, cpus=32).read_now() == [], "Docker not running: none"
+
+
+def test_the_meters_never_wake_a_stopped_engine(home: Home, clock: FakeClock, monkeypatch: pytest.MonkeyPatch) -> None:
+    platform = FakePlatform(state="stopped")
+    platform.stats_rows = [{**STATS[0], "Name": f"clank-{home.id}-paper"}]
+    monkeypatch.setattr(workspaces_service, "make_platform", lambda name: platform)
+    kernel = open_kernel(home, clock, registry.components())
+    try:
+        machine: service.Machine = kernel.parts["machine"]
+        workspaces = kernel.parts["workspaces"]
+        assert machine.container_stats() == [], "Docker never read yet: nothing asked"
+        workspaces.docker(refresh=True)
+        assert machine.container_stats() == []
+        assert "stats" not in platform.calls, "while Docker's last reading is not running, its engine is asked nothing"
+        platform.state = "running"
+        workspaces.docker(refresh=True)
+        assert machine.container_stats() == platform.stats_rows, "through the workspaces component's platform"
+        assert platform.calls.count("stats") == 1
+        rows = Containers(f"clank-{home.id}-", stats=machine.container_stats, cpus=32).read_now()
+        assert rows == [{"name": "paper", "cpu": 50.0, "memory_used": int(3.5 * (1 << 30)), "memory_total": 12 << 30}]
+    finally:
+        kernel.close()
 
 
 def test_without_nvidias_library_there_are_no_gpus() -> None:

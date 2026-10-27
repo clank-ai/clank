@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from clank.components.workspaces.adapters.docker_cli import INSPECT, LIMITS, TEMPLATE
+from clank.components.workspaces.adapters.docker_cli import INSPECT, LIMITS, STATS, TEMPLATE
 from clank.components.workspaces.adapters.docker_engine import SOCKET, SYSTEMD, VERSION, DockerEngine
 from clank.components.workspaces.adapters.platform import PlatformError
 from clank.components.workspaces.sandbox import ContainerSpec
@@ -243,4 +243,10 @@ def test_the_capture_tool_asks_what_the_adapter_asks() -> None:
     assert capture_tool.SYSTEMD == SYSTEMD
     assert capture_tool.SOCKET == SOCKET
     assert (capture_tool.VERSION, capture_tool.TEMPLATE, capture_tool.INSPECT) == (VERSION, TEMPLATE, INSPECT)
-    assert capture_tool.LIMITS == LIMITS
+    assert (capture_tool.LIMITS, capture_tool.STATS) == (LIMITS, STATS)
+
+
+def test_the_running_engines_containers_use_is_read_as_recorded() -> None:
+    rows = engine(RecordedProgram.load(RECORDING, state="running")).stats()
+    assert [row["Name"] for row in rows] == ["web-dev", "toolbox-sandbox-017", "clank-0123456789ab-demo"]
+    assert all({"CPUPerc", "MemUsage"} <= set(row) for row in rows)

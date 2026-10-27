@@ -27,7 +27,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4.4 | Crashes and slowdowns while running | `tests/components/runtime/test_watcher.py` (7) |
 | 4.5 | Sessions and their cached context | none yet |
 | 4.6 | What Clank may stop | `tests/components/runtime/test_local_host.py` (10), `tests/components/runtime/test_watcher.py` (7) |
-| 4.7 | The rest of the computer | `tests/components/machine/test_checks.py` (7) |
+| 4.7 | The rest of the computer | `tests/components/machine/test_checks.py` (9) |
 | 4.8 | Every change is recorded | `tests/components/runtime/test_state.py` (4), `tests/console/test_pages.py` (10) |
 | 5 | The console | `tests/console/test_lists.py` (2) |
 | 5.1 | What it is | `tests/console/test_arrows.py` (8), `tests/console/test_data.py` (17), `tests/console/test_one_door.py` (6), `tests/console/test_shell.py` (19) |
@@ -49,7 +49,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7 | Setup and portability | see its subsections |
 | 7.1 | Where Clank runs | none yet |
 | 7.2 | The user's Clank folder | `tests/kernel/test_files.py` (8), `tests/kernel/test_home.py` (4) |
-| 7.3 | The first-run guide | `tests/components/machine/test_checks.py` (7), `tests/components/machine/test_detect.py` (5), `tests/components/machine/test_doctor.py` (4) |
+| 7.3 | The first-run guide | `tests/components/machine/test_checks.py` (9), `tests/components/machine/test_detect.py` (5), `tests/components/machine/test_doctor.py` (4) |
 | 7.4 | Recipes for serving setups | `tests/components/runtime/test_install.py` (5) |
 | 7.5 | Models | `tests/components/runtime/test_download.py` (8) |
 | 7.6 | Endpoints | none yet |
@@ -83,7 +83,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.6 | Policy | none yet |
 | 2.7 | Callers and access | `tests/components/gateway/test_callers.py` (6), `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (7), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (18), `vscode/test/live.test.ts` (1) |
 | 2.8 | Secrets | `tests/components/tools/test_servers.py` (7), `tests/kernel/test_secrets.py` (4) |
-| 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (14), `tests/components/workspaces/test_sandbox.py` (7), `tests/kernel/test_processes.py` (8) |
+| 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (15), `tests/components/workspaces/test_sandbox.py` (7), `tests/kernel/test_processes.py` (8) |
 | 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (8), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
 | 2.11 | The library: what the user installs | `tests/components/tools/test_servers.py` (7) |
 | 2.12 | Files for the user | none yet |
@@ -134,13 +134,13 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner does | `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (11), `tests/console/test_folder.py` (25), `tests/console/test_terminal.py` (5) |
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (11), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
-| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (14), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (11), `tests/console/test_folder.py` (25), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (8), `tests/docker/test_escape.py` (3) |
+| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (15), `tests/components/workspaces/test_edge.py` (3), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (11), `tests/console/test_folder.py` (25), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (8), `tests/docker/test_escape.py` (3) |
 | 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (11), `tests/console/test_folder.py` (25), `tests/contract/test_agent_program.py` (2) |
-| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_docker_containers.py` (14), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
+| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_docker_containers.py` (15), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
 | 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_workspace_operations.py` (11) |
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (3) |
-| 9 | The console: easy to use, dynamic, the machine on the right | `tests/components/machine/test_meters.py` (7), `tests/console/test_machine_column.py` (14) |
+| 9 | The console: easy to use, dynamic, the machine on the right | `tests/components/machine/test_meters.py` (8), `tests/console/test_machine_column.py` (14) |
 | 10 | A project's own software and MCP servers | `tests/components/agents/test_agent_servers.py` (9), `tests/components/tools/test_console_servers.py` (1), `tests/components/workspaces/test_sandbox.py` (7), `tests/components/workspaces/test_setup.py` (10), `tests/console/test_workspaces_page.py` (4) |
 
 ## Design 0005: the phone (the first slice of M9)
@@ -324,10 +324,10 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | none yet |
-| 2 | The container platform adapters | `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_choosing_a_platform.py` (11), `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (14), `tests/components/workspaces/test_docker_engine.py` (12), `tests/components/workspaces/test_docker_operations.py` (17), `tests/components/workspaces/test_workspace_operations.py` (11), `tests/console/test_folder.py` (25), `tests/contract/test_container_platform.py` (8), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
+| 2 | The container platform adapters | `tests/components/agents/test_work.py` (11), `tests/components/machine/test_checks.py` (9), `tests/components/machine/test_doctor.py` (4), `tests/components/machine/test_meters.py` (8), `tests/components/workspaces/test_choosing_a_platform.py` (11), `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (15), `tests/components/workspaces/test_docker_engine.py` (13), `tests/components/workspaces/test_docker_operations.py` (17), `tests/components/workspaces/test_workspace_operations.py` (11), `tests/console/test_folder.py` (25), `tests/contract/test_container_platform.py` (8), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (1) |
 | 3 | The edge's way to the gateway on Linux | none yet |
 | 4 | A workspace's container on Docker Engine | none yet |
-| 5 | The doctor and the machine profile on a Raspberry Pi 5 | none yet |
+| 5 | The doctor and the machine profile on a Raspberry Pi 5 | `tests/components/machine/test_checks.py` (9) |
 | 6 | OpenCode on arm64 | none yet |
 | 7 | CI on arm64 | `tests/tools/test_workflows.py` (1) |
 | 8 | A small machine: memory, VS Code and the owner's settings | none yet |
@@ -2575,7 +2575,7 @@ Design 0016 §9 (decision 0075's keys, built for the cloud): each workspace has 
 
 ### `tests/components/machine/test_checks.py`
 
-Design 0001 §4.7 and §7.3: `clank doctor`'s checks pass, warn or fail as the machine's facts say, each with what to do about it, and the checks that belong to one platform are skipped on the others.
+Design 0001 §4.7 and §7.3: `clank doctor`'s checks pass, warn or fail as the machine's facts say, each with what to do about it, and the checks that belong to one platform are skipped on the others. Design 0014 §2 and §5: Docker's checks report what the container platform reports, in its words, read through the workspaces component: no access names the docker group, never `clank docker start`; a Docker Engine that is not installed names its install; a stopped one names `sudo systemctl start docker`, since Clank never starts it; Docker from the snap and rootless Docker are unsupported, saying how to install Docker Engine.
 
 - a well set up machine passes every check
 - the database check closes the database it read
@@ -2584,6 +2584,8 @@ Design 0001 §4.7 and §7.3: `clank doctor`'s checks pass, warn or fail as the m
 - windows checks are skipped elsewhere
 - a clank home that cannot be written fails
 - little room for models is a warning and room that cannot be measured too
+- docker checks report what the container platform reports
+- the doctor names docker from the snap and rootless docker as unsupported
 
 ### `tests/components/machine/test_detect.py`
 
@@ -2597,7 +2599,7 @@ Design 0001 §2 and §7.3: Clank detects the machine it runs on (system, Python,
 
 ### `tests/components/machine/test_doctor.py`
 
-Design 0001 §7.3 and design 0002 §2.1 and §3.2 (M0.3): `clank doctor` prints each check and how many passed, as text or JSON, and works without the service; inside the service, the doctor is an operation that records the machine profile and the checks. A component's declaration may name doctor checks of its own (the phone's way in, design 0025 §2): they run after the machine's, and one that fails to run is said as a failed check.
+Design 0001 §7.3 and design 0002 §2.1 and §3.2 (M0.3): `clank doctor` prints each check and how many passed, as text or JSON, and works without the service; inside the service, the doctor is an operation that records the machine profile and the checks. A component's declaration may name doctor checks of its own (the phone's way in, design 0025 §2): they run after the machine's, and one that fails to run is said as a failed check. Design 0014 §2: both read Docker from the platform the settings choose (`read_platform`), never from a docker command of their own.
 
 - doctor prints each check and how many passed
 - doctor prints json for scripts and models
@@ -2606,11 +2608,12 @@ Design 0001 §7.3 and design 0002 §2.1 and §3.2 (M0.3): `clank doctor` prints 
 
 ### `tests/components/machine/test_meters.py`
 
-Design 0004 §9 (the owner's request, 2026-10-14: the console shows the machine's CPU, GPU, memory, disks and network all the time). The service reads them once a second: each reading has the CPU's use (as a whole and per logical processor), the memory and page file in use, the disks' and the network's rates since the reading before, each fixed drive's space and each NVIDIA GPU's use, memory, temperature and power (none without NVIDIA's library); the last readings are kept, the oldest dropped past five minutes, and answered at `GET /machine/meters`; each new one is sent to the clients live. A GPU whose handle its driver dropped is read again from a fresh start of NVIDIA's library, or else left out of the readings, said once, while the rest of each reading goes on.
+Design 0004 §9 (the owner's request, 2026-10-14: the console shows the machine's CPU, GPU, memory, disks and network all the time). The service reads them once a second: each reading has the CPU's use (as a whole and per logical processor), the memory and page file in use, the disks' and the network's rates since the reading before, each fixed drive's space and each NVIDIA GPU's use, memory, temperature and power (none without NVIDIA's library); the last readings are kept, the oldest dropped past five minutes, and answered at `GET /machine/meters`; each new one is sent to the clients live. A GPU whose handle its driver dropped is read again from a fresh start of NVIDIA's library, or else left out of the readings, said once, while the rest of each reading goes on. Design 0014 §2: the containers' figures come through the workspaces component's platform, asked only while Docker's last reading is running, so the meters never wake an engine the owner stopped.
 
 - a reading has the cpu the memory the disks the network and the gpus
 - a reading has the busiest and the largest processes read every few seconds
 - the workspaces containers are read from docker stats on a thread of their own
+- the meters never wake a stopped engine
 - without nvidias library there are no gpus
 - a gpu whose handle its driver dropped is read from a fresh start or else left out and said once
 - an nvidia gpu is read from its driver
@@ -3430,6 +3433,7 @@ Design 0004 §3 and design 0002 §2.9: every adapter's container commands, on a 
 - several files are written in a container in one command
 - a container without python gets its files one by one
 - every container command names the engine its adapter names
+- each running containers use is read from docker stats in its own fields
 
 ### `tests/components/workspaces/test_docker_desktop.py`
 
@@ -3461,6 +3465,7 @@ Design 0014 §2 (decision 0070): the Docker Engine adapter reads Docker Engine's
 - docker from the snap or rootless docker is unsupported saying how to install docker engine
 - where systemd knows dockers service its engine is used whatever the context
 - the capture tool asks what the adapter asks
+- the running engines containers use is read as recorded
 
 ### `tests/components/workspaces/test_docker_operations.py`
 

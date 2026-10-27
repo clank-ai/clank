@@ -26,7 +26,7 @@ These container commands are Docker's own CLI whatever program runs the engine: 
 import sys
 from abc import abstractmethod
 from collections.abc import Callable, Mapping, Sequence
-from typing import Protocol
+from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
@@ -145,6 +145,11 @@ class ContainerPlatform(Adapter):
     @abstractmethod
     def limits(self) -> tuple[int, int] | None:
         """The CPUs and the memory (MiB) the platform gives its containers, or None when it does not say."""
+
+    @abstractmethod
+    def stats(self) -> list[dict[str, Any]]:
+        """Each running container's use of the CPU and memory, in the platform's own fields (`docker stats`: Name,
+        CPUPerc, MemUsage); none when it does not say."""
 
     @abstractmethod
     def image_exists(self, tag: str) -> bool:

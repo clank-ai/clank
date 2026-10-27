@@ -27,6 +27,7 @@ import os
 import threading
 import time
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any, Literal
 
@@ -36,7 +37,8 @@ import anyio.to_thread
 from clank.components.workspaces import jobs as jobs  # the job runner, for the flows and the agents (design 0021 §6)
 from clank.components.workspaces.adapters import CONTAINER_PLATFORMS
 from clank.components.workspaces.adapters.choose import choose_platform
-from clank.components.workspaces.adapters.platform import Container, ContainerPlatform, PlatformError, PlatformStatus
+from clank.components.workspaces.adapters.platform import Container, ContainerPlatform, PlatformError
+from clank.components.workspaces.adapters.platform import PlatformStatus as PlatformStatus  # for the doctor
 from clank.components.workspaces.cloud import EVENT_TYPES as CLOUD_EVENT_TYPES
 from clank.components.workspaces.cloud import CloudBounds
 from clank.components.workspaces.edge import EVENT_TYPES as EDGE_EVENT_TYPES
@@ -54,9 +56,11 @@ from clank.components.workspaces.setup import proposed_setup
 from clank.kernel.clock import to_text
 from clank.kernel.core import Kernel
 from clank.kernel.events import Actor, EventType, Subject
+from clank.kernel.home import Home
 from clank.kernel.operations import Canceled, Operation, OperationContext, OperationType, Reconciliation, StepSpec
 from clank.kernel.processes import Answer, run_command
 from clank.kernel.questions import EXPIRY, Option, QuestionDraft
+from clank.kernel.settings import read_record
 
 log = logging.getLogger(__name__)
 Owner = Literal["clank", "other"]
@@ -120,6 +124,29 @@ def status_said(status: PlatformStatus) -> str:
     states = {"no access": "gives this account no access", "failed": "has failed"}
     said = f"{status.label} {states.get(status.state, f'is {status.state}')}"
     return f"{said}: {status.detail}" if status.detail else said
+
+
+@dataclass(frozen=True)
+class DockerReading:
+    """Docker as the doctor reads it, without the service (design 0014 §2, §5): the platform's status, and whether
+    Clank starts it."""
+
+    status: PlatformStatus
+    starts: bool
+
+
+def docker_settings(home: Home) -> DockerSettings:
+    """`config/docker.json` as the service would read it; its defaults when it is not there or does not read."""
+    path = home.config / "docker.json"
+    found = read_record(DockerSettings, path) if path.is_file() else []
+    return DockerSettings.model_validate(found[0].model_dump()) if isinstance(found, tuple) else DockerSettings()
+
+
+def read_platform(home: Home) -> DockerReading:
+    """Docker as the platform the settings choose reports it now, read without the service (`clank doctor`, and the
+    doctor's operation, which does not need this component's part)."""
+    platform = make_platform(docker_settings(home).adapter)
+    return DockerReading(status=platform.status(), starts=starts(platform))
 
 
 def owner(container: Container, home_id: str) -> Owner:
@@ -550,6 +577,16 @@ class Workspaces:
         found = platform.limits()
         self._limits = (adapter, now, found)
         return found
+
+    def container_stats(self) -> list[dict[str, Any]]:
+        """Each running container's use of the CPU and memory, as `docker stats` gives it (the machine's meters): none
+        unless Docker's last reading is running, so an engine the owner stopped is never woken (design 0014 §2)."""
+        if self._status is None or not self._status.running:
+            return []
+        try:
+            return self.platform.stats()
+        except PlatformError:
+            return []
 
     def gateway_port(self) -> int:
         """The port the gateway listens on, which the edge forwards."""

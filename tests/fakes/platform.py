@@ -8,6 +8,7 @@ only), and a network made again is another network, which a container that was o
 (`NetworkGone`), as Docker keeps a network's id, not its name."""
 
 from collections.abc import Callable, Mapping, Sequence
+from typing import Any
 
 from clank.components.workspaces.adapters.platform import (
     Container,
@@ -87,6 +88,7 @@ class FakePlatform(ContainerPlatform):
         self.on_check: Callable[[], None] | None = None
         self._checks = 0
         self.cpus_memory: tuple[int, int] | None = (16, 32768)
+        self.stats_rows: list[dict[str, Any]] = []  # its containers' use, as `docker stats` gives it
         self.images: set[str] = set()
         self.build_args: dict[str, dict[str, str]] = {}  # each image built: its build arguments
         self.build_folders: dict[str, str] = {}  # and the folder it was built from
@@ -158,6 +160,10 @@ class FakePlatform(ContainerPlatform):
 
     def limits(self) -> tuple[int, int] | None:
         return self.cpus_memory
+
+    def stats(self) -> list[dict[str, Any]]:
+        self.calls.append("stats")
+        return self.stats_rows
 
     def image_exists(self, tag: str) -> bool:
         return tag in self.images
