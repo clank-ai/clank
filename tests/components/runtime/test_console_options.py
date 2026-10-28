@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from textual.css.query import NoMatches
 from textual.widgets import Label, ListView
 
 from clank.client import Client
@@ -33,10 +34,13 @@ def served(rig: Rig) -> Iterator[Client]:
 
 
 def option(app: ClankConsole, name: str) -> str:
-    """The value shown beside an option's name."""
+    """The value shown beside an option's name ("" while its row is being drawn, its labels not in it yet)."""
     for row in app.query("#launch-options .row"):
-        if str(row.query_one(".name", Label).content) == name:
-            return str(row.query_one(".value", Label).content)
+        try:
+            if str(row.query_one(".name", Label).content) == name:
+                return str(row.query_one(".value", Label).content)
+        except NoMatches:
+            continue
     return ""
 
 
