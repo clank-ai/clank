@@ -199,8 +199,10 @@ class Review:
 
     def reply(self, workspace: str, port: int, request: str, reply: str, *, actor: Actor, message: str = "") -> None:
         """A reply to the agent's ask from a client (the phone): a change waiting for review is answered as its
-        question, so every client sees it settled; any other ask is replied to directly."""
-        change = self.store.get(request)
+        question, so every client sees it settled; any other ask is replied to directly. The change is read under the
+        lock its question is asked under, so a reply to an ask being asked about finds its question."""
+        with self._lock:
+            change = self.store.get(request)
         if change is not None and change["state"] == "waiting" and change.get("question"):
             option = "reject" if reply == "reject" else "accept"
             try:
@@ -212,7 +214,8 @@ class Review:
 
     def questioned(self, request: str) -> bool:
         """Whether an ask of the agent waits as Clank's question (so a client lists the question, not the ask)."""
-        change = self.store.get(request)
+        with self._lock:
+            change = self.store.get(request)
         return change is not None and change["state"] == "waiting" and bool(change.get("question"))
 
     def heard(self, workspace: str, line: dict[str, Any]) -> None:
@@ -257,6 +260,7 @@ class Review:
             if checking:
                 change["state"] = "checking"  # asked about or answered once checked (design 0020 §5)
             elif change["mode"] == "review":  # asked under the lock, so an answer from the terminal waits for it
+                self.store.save(change)  # stored first: whoever finds the question, at once, finds its change
                 change["question"] = self.kernel.questions.ask(self._question(change), asked_by=REVIEW).id
             self.store.save(change)
         self._record("agents.change_proposed", change, f"{workspace}'s agent asks to change {change['relative']}")
@@ -284,21 +288,22 @@ class Review:
             count = self._refused.get(key, 0) + 1 if verdict.refusals else 0
             self._refused[key] = count % REFUSALS_ASKED
             reject = bool(verdict.refusals) and count < REFUSALS_ASKED
+            self.kernel.events.record(  # before its question: whoever finds the question finds the checks said
+                "agents.change_checked",
+                summary=f"Clank checked {key[1]} in {key[0]}: " + ("refused" if verdict.refusals else "passed"),
+                actor=LATEX,
+                subject=Subject(kind="change", id=id),
+                data={"workspace": key[0], "change": id, "file": key[1], "passed": not verdict.refusals,
+                      "refusals": verdict.refusals, "unchecked": verdict.unchecked, "refused_in_a_row": count},
+            )  # fmt: skip
             if not reject:
                 if verdict.refusals or verdict.unchecked:
                     change["mode"] = "review"
                 change["state"] = "waiting"
                 if change["mode"] == "review":
+                    self.store.save(change)  # stored first, as `_asked` does
                     change["question"] = self.kernel.questions.ask(self._question(change), asked_by=REVIEW).id
             self.store.save(change)
-        self.kernel.events.record(
-            "agents.change_checked",
-            summary=f"Clank checked {key[1]} in {key[0]}: " + ("refused" if verdict.refusals else "passed"),
-            actor=LATEX,
-            subject=Subject(kind="change", id=id),
-            data={"workspace": key[0], "change": id, "file": key[1], "passed": not verdict.refusals,
-                  "refusals": verdict.refusals, "unchecked": verdict.unchecked, "refused_in_a_row": count},
-        )  # fmt: skip
         if reject:
             self._answer(change, "reject", LATEX, refusal_message(key[1], verdict.refusals))
         elif change["mode"] == "auto":
@@ -377,10 +382,12 @@ class Review:
         )  # fmt: skip
 
     def _resolved(self, question: Question) -> None:
-        """A question answered: when it is about a change still waiting, answer the agent with it."""
+        """A question answered: when it is about a change still waiting, answer the agent with it. The change is read
+        under the lock its question is asked under, so an answer given the moment it is asked is never lost."""
         if question.about is None or question.about.kind != "change" or question.answer is None:
             return
-        change = self.store.get(question.about.id)
+        with self._lock:
+            change = self.store.get(question.about.id)
         if change is None or change["state"] != "waiting":
             return
         self._answer(change, question.answer.option or "reject", question.answer.by, question.answer.text.strip())

@@ -9,7 +9,9 @@ can carry a note for the model.
 The service (`Review`, with its watchers running the bridge on this machine) turns each change into a question in review
 mode and answers OpenCode with the owner's answer (a reject with its note); in auto mode it answers at once. An answer
 given in the agent's terminal withdraws the question; a reply from the phone answers it; a server gone, or a change no
-server waits for any more, withdraws it. Each step is an event; the file as written is kept. A container whose bridge
+server waits for any more, withdraws it. A change is stored before its question is asked, and an answer read under
+the same lock, so an answer given the moment the question is asked still reaches the agent. Each step is an event;
+the file as written is kept. A container whose bridge
 cannot watch is said to need reopening, and is not tried again. The routes give a folder's mode, switch it, list the
 changes and give one with its files.
 """
@@ -353,6 +355,32 @@ def test_in_review_a_change_waits_for_your_answer_and_the_agent_hears_it(
     assert events[1].data["answer"] == "accepted"
     assert events[1].data["by"] == "you (vscode)"
     assert events[2].data["folder"] == str(tmp_path)
+
+
+def test_a_question_answered_the_moment_it_is_asked_still_reaches_the_agent(
+    kernel: Kernel, served: tuple[int, ThreadingHTTPServer], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A client that answers by program (a flow hearing the ask) can answer before the ask returns: the change is
+    # stored before its question is asked, and the answer read under the same lock, so the answer is never lost.
+    port, _ = served
+    (tmp_path / "a.py").write_bytes(b"x = 1\n")
+    review = watched(kernel, tmp_path, port, monkeypatch)
+    questions = kernel.questions
+    asking = questions.ask
+
+    def answered_at_once(draft: Any, **given: Any) -> Any:
+        question = asking(draft, **given)
+        answering = threading.Thread(
+            target=questions.answer, args=(question.id,), kwargs={"by": USER, "option": "accept"}, daemon=True
+        )
+        answering.start()
+        answering.join(1)
+        return question
+
+    monkeypatch.setattr(questions, "ask", answered_at_once)
+    feed("permission.asked", ASK)
+    until(lambda: sent({"reply": "once"}))
+    assert until(lambda: (review.store.get("per_1") or {}).get("state") == "accepted")
 
 
 def test_a_reject_tells_the_agent_why_an_answer_in_the_terminal_or_from_the_phone_settles_the_question(
