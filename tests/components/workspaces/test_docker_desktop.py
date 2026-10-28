@@ -157,7 +157,7 @@ def listed(id: str, name: str) -> dict[str, str]:
 
 def test_label_names_come_from_dockers_own_map_so_a_value_holding_a_comma_adds_none() -> None:
     answers = running([listed("a1", "notes")], {"a1": '{"id":"a1","labels":{"note":"a,toolbox.role=fake"}}\n'})
-    [found] = DockerDesktop(answers, "docker").status().containers
+    [found] = DockerDesktop(answers, "docker", platform="win32").status().containers
     assert found.label_keys == ["note"]
 
 
@@ -166,5 +166,6 @@ def test_a_container_gone_since_it_was_listed_has_no_labels_and_the_others_keep_
         [listed("a1", "kept"), listed("b2", "gone")],
         {"a1 b2": None, "a1": '{"id":"a1","labels":{"toolbox.sandbox":"1"}}\n', "b2": None},
     )
-    found = {container.name: container.label_keys for container in DockerDesktop(answers, "docker").status().containers}
+    desktop = DockerDesktop(answers, "docker", platform="win32")  # its commands as on Windows: no context named
+    found = {container.name: container.label_keys for container in desktop.status().containers}
     assert found == {"kept": ["toolbox.sandbox"], "gone": []}
