@@ -23,6 +23,7 @@ from clank.components.gateway.keys import Keys
 from clank.components.gateway.kinds import GatewaySettings
 from clank.components.gateway.routing import Routes
 from clank.components.gateway.server import create_gateway, follow
+from clank.components.gateway.sockets import remove_sockets
 from clank.components.runtime.adapters.openrouter import OpenRouter
 from clank.components.workspaces.service import Workspaces
 from clank.kernel.core import Kernel
@@ -49,76 +50,81 @@ def openrouter(monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeOpenRouter]:
         yield fake
 
 
-@contextlib.contextmanager
-def gateway(machine: Kernel, port: int, folder: Path) -> Iterator[Routes]:
-    """The gateway as its process makes it on Linux (`server.main`): its application over routes followed from the
-    service every second, the provider's key held for the main slot's launch as the service hands it over, served on
-    127.0.0.1 at the port and on its socket in the folder (`sockets.listeners`); its routes."""
-    if sys.platform == "win32":
-        raise AssertionError("the gateway's socket is Linux's")
-    from clank.components.gateway.sockets import listeners, remove_sockets
+if sys.platform != "win32":  # the gateway's socket: the type checker knows `listeners` only off Windows
+    from clank.components.gateway.sockets import listeners
 
-    routes = Routes()
-    stop = threading.Event()
-    routes.update(machine.parts["gateway"].routes())
-    threading.Thread(target=follow, args=(routes, machine.parts["gateway"].routes, stop), daemon=True).start()
-    routes.followed = True
-    keys = Keys()
-    keys.put("openrouter", KEY, int(machine.parts["gateway"].routes()["slots"]["main"]["launch"]), "")
-    app = create_gateway(routes, GatewaySettings(port=port), None, keys=keys, port=port)
-    listening = listeners(port, folder)
-    assert listening.gateway is not None, "the gateway listens on its socket"
-    server = uvicorn.Server(server_config(app, "127.0.0.1", port))
-    thread = threading.Thread(target=server.run, kwargs={"sockets": listening.served}, daemon=True)
-    thread.start()
-    deadline = time.monotonic() + 10
-    while not server.started:
-        assert time.monotonic() < deadline, "the gateway never started"
-        time.sleep(0.01)
-    try:
-        yield routes
-    finally:
-        stop.set()
-        server.should_exit = True
-        thread.join(15)
-        remove_sockets(listening.made)
+    @contextlib.contextmanager
+    def gateway(machine: Kernel, port: int, folder: Path) -> Iterator[Routes]:
+        """The gateway as its process makes it on Linux (`server.main`): its application over routes followed from the
+        service every second, the provider's key held for the main slot's launch as the service hands it over, served
+        on 127.0.0.1 at the port and on its socket in the folder (`sockets.listeners`); its routes."""
+        routes = Routes()
+        stop = threading.Event()
+        routes.update(machine.parts["gateway"].routes())
+        threading.Thread(target=follow, args=(routes, machine.parts["gateway"].routes, stop), daemon=True).start()
+        routes.followed = True
+        keys = Keys()
+        keys.put("openrouter", KEY, int(machine.parts["gateway"].routes()["slots"]["main"]["launch"]), "")
+        app = create_gateway(routes, GatewaySettings(port=port), None, keys=keys, port=port)
+        listening = listeners(port, folder)
+        assert listening.gateway is not None, "the gateway listens on its socket"
+        server = uvicorn.Server(server_config(app, "127.0.0.1", port))
+        thread = threading.Thread(target=server.run, kwargs={"sockets": listening.served}, daemon=True)
+        thread.start()
+        deadline = time.monotonic() + 10
+        while not server.started:
+            assert time.monotonic() < deadline, "the gateway never started"
+            time.sleep(0.01)
+        try:
+            yield routes
+        finally:
+            stop.set()
+            server.should_exit = True
+            thread.join(15)
+            remove_sockets(listening.made)
+
+    async def asked_through_the_gateway(
+        machine: Kernel, openrouter: FakeOpenRouter, tmp_path: Path
+    ) -> "subprocess.CompletedProcess[str]":
+        """A cloud model in the main slot, the gateway on its socket, a workspace allowed the cloud, and OpenCode in its
+        container asked once; what OpenCode said."""
+        bench = CloudBench(machine, openrouter)
+        bench.add()
+        bench.write_preset(CODER)
+        bench.run(PRESET)
+        sockets = Path(tempfile.mkdtemp(prefix="clank-gw-"))  # short: a socket's path has at most 107 bytes
+        port = free_port()
+        gateway_port(machine.home, port, socket_folder=str(sockets))
+        machine.settings.reload_changed()
+        folder = tmp_path / "cloudy"
+        folder.mkdir()
+        workspaces: Workspaces = machine.parts["workspaces"]
+        try:
+            with gateway(machine, port, sockets) as routes:
+                async with machine.operations.running():
+                    name = str((await opened(machine, folder))["workspace"])
+                workspaces.allow_cloud(name, True, actor=YOU)
+                env = machine.parts["agents"].configure(name)
+                routes.update(machine.parts["gateway"].routes())  # the workspace's key, as the next routes have it
+                argv = workspaces.exec_argv(name, ["opencode", "run", ASKED], env, terminal=False)
+                return subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                                      timeout=OPENCODE_SECONDS, check=False)  # fmt: skip
+        finally:
+            shutil.rmtree(sockets, ignore_errors=True)
 
 
 async def test_an_agent_in_its_container_gets_its_answer_from_a_cloud_model_through_the_edge_and_the_gateway(
     machine: Kernel, openrouter: FakeOpenRouter, tmp_path: Path
 ) -> None:
-    if sys.platform != "linux":
-        pytest.skip("Docker Engine runs on Linux")
-    if not on_docker_engine(machine):
-        pytest.skip("this machine's Docker is not Docker Engine: its edge reaches the host's loopback")
-    bench = CloudBench(machine, openrouter)
-    bench.add()
-    bench.write_preset(CODER)
-    bench.run(PRESET)
-    sockets = Path(tempfile.mkdtemp(prefix="clank-gw-"))  # short: a socket's path has at most 107 bytes
-    port = free_port()
-    gateway_port(machine.home, port, socket_folder=str(sockets))
-    machine.settings.reload_changed()
-    folder = tmp_path / "cloudy"
-    folder.mkdir()
-    workspaces: Workspaces = machine.parts["workspaces"]
-    try:
-        with gateway(machine, port, sockets) as routes:
-            async with machine.operations.running():
-                name = str((await opened(machine, folder))["workspace"])
-            workspaces.allow_cloud(name, True, actor=YOU)
-            env = machine.parts["agents"].configure(name)
-            routes.update(machine.parts["gateway"].routes())  # the workspace's key, as the next second's routes have it
-            argv = workspaces.exec_argv(name, ["opencode", "run", ASKED], env, terminal=False)
-            said = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True,
-                                  timeout=OPENCODE_SECONDS, check=False)  # fmt: skip
-    finally:
-        shutil.rmtree(sockets, ignore_errors=True)
-    chats = openrouter.chats()
-    assert chats, f"OpenRouter heard nothing; OpenCode said: {said.stdout}\n{said.stderr}"
-    asked = chats[0]
-    assert asked.headers.get("authorization") == f"Bearer {KEY}", "the owner's key, held by the gateway alone"
-    assert asked.body["model"] == CODER, "the listed model"
-    assert any(ASKED in str(message.get("content")) for message in asked.body["messages"]), "the agent's request"
-    assert said.returncode == 0, said.stderr
-    assert "OK" in said.stdout, f"OpenCode prints the answer: {said.stdout}\n{said.stderr}"
+    if sys.platform == "win32" or not on_docker_engine(machine):
+        pytest.skip("Docker Engine, on Linux: elsewhere the edge reaches the host's loopback")
+    else:  # an `else` on sys.platform: the type checker knows what it calls only off Windows
+        said = await asked_through_the_gateway(machine, openrouter, tmp_path)
+        chats = openrouter.chats()
+        assert chats, f"OpenRouter heard nothing; OpenCode said: {said.stdout}\n{said.stderr}"
+        asked = chats[0]
+        assert asked.headers.get("authorization") == f"Bearer {KEY}", "the owner's key, held by the gateway alone"
+        assert asked.body["model"] == CODER, "the listed model"
+        assert any(ASKED in str(message.get("content")) for message in asked.body["messages"]), "the agent's request"
+        assert said.returncode == 0, said.stderr
+        assert "OK" in said.stdout, f"OpenCode prints the answer: {said.stdout}\n{said.stderr}"
