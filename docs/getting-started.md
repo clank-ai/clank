@@ -459,8 +459,10 @@ Clank says why and what to do. The usual ones:
 | "Docker is stopped" | Start Docker: Docker Desktop on Windows and macOS (or `clank docker start`); on Linux, `sudo systemctl start docker` |
 | A workspace says its container uses an older sandbox image | Reopen it: F6, `x`, then `o` |
 | F10 opens your terminal's menu instead of the Monitor | `clank console --page monitor` |
-| The key is refused (401) | Make a new key at OpenRouter and add it again (`clank endpoint key openrouter`) |
+| The key is refused (401; OpenRouter says "Missing Authentication header" for a key it does not know) | Paste it again, whole (it is shown once, at openrouter.ai, Keys), or make a new key and add it (`clank endpoint key openrouter`) |
 | "No credits" (402) | Add credits at OpenRouter, or pick a free model |
+| "No provider of … serves it with data_collection deny" | Clank asks OpenRouter by default for providers that keep no data, and none of this model's do: pick another model, or allow any provider (Providers and models, `o`) |
+| "Rate limited" (429) on a free model | Free models take 20 requests a minute and 50 a day (1,000 a day once you bought 10 credits): wait a minute, or pick a paid model |
 
 <details>
 <summary><b>Windows</b></summary>
