@@ -67,9 +67,10 @@ Words with a special meaning in Clank's documents and code, defined once. Alphab
   runtime, gateway, workspaces, network, agents, tools, skills, remote.
 - **Console**: Clank's terminal application: it shows what runs and lets the user change it (decision
   [0003](decisions/0003-one-terminal-console.md)).
-- **Container platform**: where Clank's containers run: Docker Desktop first, Docker Engine on Linux later; the
-  workspaces component's kind of adapter. A container is Clank's only when it carries this CLANK_HOME's `clank.home`
-  label (design 0002 §2.9).
+- **Container platform**: where Clank's containers run: Docker Desktop, an application Clank starts and stops, and
+  Docker Engine on Linux, the system's service, whose state Clank reads and never changes (design 0014 §2, decision
+  0070); the workspaces component's kind of adapter, both on one base for the plain docker CLI. A container is
+  Clank's only when it carries this CLANK_HOME's `clank.home` label (design 0002 §2.9).
 - **Context facts**: what an engine's adapter declares of its context for a preset's options (`context_facts`): its
   window and longest answer, its thinking budget, the part it attends to exactly (KVMem's retrieval budget) or its whole
   window, where it runs, whether it counts tokens or keeps one conversation, where its answer reports each figure, and

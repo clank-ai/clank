@@ -3,8 +3,10 @@ machine's meters (`meters.py`), read every second while the service runs, the la
 the clients as the live event `machine.meters`.
 
 The doctor operation has two steps, both safe to run again: detect (the machine profile, written to
-`config/machine.json` through the settings files, so the change is recorded) and check (the checks of `clank doctor`).
-Its result is the checks; the last one is what clients show as "doctor: 9 of 10 passed".
+`config/machine.json` through the settings files, so the change is recorded) and check (the checks of `clank doctor`,
+Docker read through the platform the settings choose, design 0014 §2). Its result is the checks; the last one is what
+clients show as "doctor: 9 of 10 passed". The meters' containers come through the workspaces component too, which asks
+Docker only while its last reading runs.
 """
 
 import json
@@ -22,6 +24,7 @@ from clank.components.machine.checks import Facts, free_gb, hags_mode, run_check
 from clank.components.machine.detect import detect
 from clank.components.machine.kinds import MachineProfile
 from clank.components.machine.meters import KEPT, SECONDS, Containers, Meters
+from clank.components.workspaces.service import read_platform
 from clank.kernel.clock import to_text
 from clank.kernel.core import Kernel
 from clank.kernel.events import Actor, EventType
@@ -65,8 +68,17 @@ class Machine:
     def read_meters(self) -> dict[str, Any]:
         """The machine's meters now."""
         if self._meters is None:
-            self._meters = Meters(containers=Containers(f"clank-{self.kernel.home.id}-"))
+            self._meters = Meters(containers=Containers(f"clank-{self.kernel.home.id}-", stats=self.container_stats))
         return self._meters.read(to_text(self.kernel.clock.now()))
+
+    def container_stats(self) -> list[dict[str, Any]]:
+        """The containers' use of the CPU and memory, through the workspaces component: none while Docker's last reading
+        is not running (an engine the owner stopped is never woken, design 0014 §2), nor without that component."""
+        workspaces = self.kernel.parts.get("workspaces")
+        if workspaces is None:
+            return []
+        found: list[dict[str, Any]] = workspaces.container_stats()
+        return found
 
     def keep_reading(self) -> dict[str, Any]:
         """Read the meters and keep the reading with the last ones; the reading."""
@@ -128,10 +140,11 @@ class Machine:
             values = json.loads(profile.model_dump_json())
             self.kernel.settings.write("machine", "machine", values, base=current.revision, actor=DOCTOR)
         async with context.step("check"):
+            docker = await context.run_blocking(read_platform, self.kernel.home)
             facts = Facts(
                 home=self.kernel.home,
                 profile=profile,
-                run=run_command,
+                docker=docker,
                 port=service_port(self.kernel),
                 hags_mode=hags_mode(),
                 free_gb=free_gb(self.kernel.home),

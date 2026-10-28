@@ -1,7 +1,8 @@
 """The machine component's declaration (design 0002 §1, §2.1).
 
 It owns the machine profile (`config/machine.json`), the checks of `clank doctor` and the machine's meters (the CPU,
-the GPU, the memory, the disks and the network, read every second); it uses no other component.
+the GPU, the memory, the disks and the network, read every second); it uses the workspaces component, through which the
+doctor and the meters ask Docker (design 0014 §2: the platform's adapter is the one place that sends docker commands).
 """
 
 from typing import Any
@@ -31,6 +32,7 @@ COMPONENT = Component(
     kinds=(MachineProfile,),
     event_types=tuple(EVENT_TYPES),
     build=Machine,
+    uses=("workspaces",),
     commands=commands,
     console=pages,
 )

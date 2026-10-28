@@ -1,0 +1,132 @@
+{
+  "program": "Docker Engine",
+  "version": "28.0.4",
+  "recorded": "2026-10-27",
+  "how": "Recorded by tools/capture_docker_engine.py on GitHub's ubuntu-24.04 runner (the hand-run job record-docker-engine.yml, run 40578825917), from Docker Engine 28.0.4 as Docker's own packages install it. Running: with four example containers of busybox:1.37.0, made by the tool for the recording and removed after (one of Clank's, one of another tool's, one of another program's, and one that is not running). Stopped: after `sudo systemctl stop docker.socket docker.service`, so its commands woke nothing. No access: as a user outside the docker group. Each answer is its exit status, its output, its seconds and its errors. Replaced by made-up values of the same form: the containers' ids. The commands are those the tool lists, which are the adapter's; when they differ, the contract test fails, and the engine is recorded again.",
+  "platform": "linux",
+  "command": "/usr/bin/docker",
+  "initial": "running",
+  "states": {
+    "running": {
+      "systemctl show docker.service --property=LoadState --property=ActiveState": [
+        0,
+        "LoadState=loaded\nActiveState=active\n",
+        0.01,
+        ""
+      ],
+      "docker -H unix:///var/run/docker.sock version --format {{.Server.Version}}": [
+        0,
+        "28.0.4\n",
+        0.02,
+        ""
+      ],
+      "docker -H unix:///var/run/docker.sock ps --all --no-trunc --format {\"id\":{{json .ID}},\"name\":{{json .Names}},\"image\":{{json .Image}},\"state\":{{json .State}},\"status\":{{json .Status}},\"clank.home\":{{json (.Label \"clank.home\")}},\"clank.component\":{{json (.Label \"clank.component\")}},\"clank.record\":{{json (.Label \"clank.record\")}},\"clank.ports\":{{json (.Label \"clank.ports\")}},\"clank.proxy\":{{json (.Label \"clank.proxy\")}},\"networks\":{{json .Networks}}}": [
+        0,
+        "{\"id\":\"a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1\",\"name\":\"toolbox-docs-build\",\"image\":\"busybox:1.37.0\",\"state\":\"exited\",\"status\":\"Exited (0) Less than a second ago\",\"clank.home\":\"\",\"clank.component\":\"\",\"clank.record\":\"\",\"clank.ports\":\"\",\"clank.proxy\":\"\",\"networks\":\"bridge\"}\n{\"id\":\"b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2\",\"name\":\"web-dev\",\"image\":\"busybox:1.37.0\",\"state\":\"running\",\"status\":\"Up Less than a second\",\"clank.home\":\"\",\"clank.component\":\"\",\"clank.record\":\"\",\"clank.ports\":\"\",\"clank.proxy\":\"\",\"networks\":\"dev_default\"}\n{\"id\":\"c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3\",\"name\":\"toolbox-sandbox-017\",\"image\":\"busybox:1.37.0\",\"state\":\"running\",\"status\":\"Up Less than a second\",\"clank.home\":\"\",\"clank.component\":\"\",\"clank.record\":\"\",\"clank.ports\":\"\",\"clank.proxy\":\"\",\"networks\":\"toolbox-017-net,toolbox-outer\"}\n{\"id\":\"d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4\",\"name\":\"clank-0123456789ab-demo\",\"image\":\"busybox:1.37.0\",\"state\":\"running\",\"status\":\"Up Less than a second\",\"clank.home\":\"0123456789ab\",\"clank.component\":\"workspaces\",\"clank.record\":\"demo\",\"clank.ports\":\"\",\"clank.proxy\":\"\",\"networks\":\"clank-0123456789ab-demo-net\"}\n",
+        0.02,
+        ""
+      ],
+      "docker -H unix:///var/run/docker.sock container inspect --format {\"id\":{{json .Id}},\"labels\":{{json .Config.Labels}}} a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1 b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2 c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3 d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4": [
+        0,
+        "{\"id\":\"a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1\",\"labels\":{\"toolbox.project\":\"lean\",\"toolbox.role\":\"run\"}}\n{\"id\":\"b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2\",\"labels\":{\"com.docker.compose.project\":\"dev\",\"com.docker.compose.service\":\"web\"}}\n{\"id\":\"c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3\",\"labels\":{\"toolbox.mode\":\"auto\",\"toolbox.project\":\"017\",\"toolbox.sandbox\":\"1\"}}\n{\"id\":\"d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4\",\"labels\":{\"clank.component\":\"workspaces\",\"clank.home\":\"0123456789ab\",\"clank.record\":\"demo\"}}\n",
+        0.02,
+        ""
+      ],
+      "docker -H unix:///var/run/docker.sock info --format {{.NCPU}} {{.MemTotal}}": [
+        0,
+        "4 16760340480\n",
+        0.3,
+        ""
+      ],
+      "docker -H unix:///var/run/docker.sock info --format {\"limit\":{{json .MemoryLimit}},\"warnings\":{{json .Warnings}}}": [
+        0,
+        "{\"limit\":true,\"warnings\":null}\n",
+        0.06,
+        ""
+      ],
+      "docker -H unix:///var/run/docker.sock stats --no-stream --format {{json .}}": [
+        0,
+        "{\"BlockIO\":\"0B / 0B\",\"CPUPerc\":\"0.00%\",\"Container\":\"b2b2b2b2b2b2\",\"ID\":\"b2b2b2b2b2b2\",\"MemPerc\":\"0.00%\",\"MemUsage\":\"428KiB / 15.61GiB\",\"Name\":\"web-dev\",\"NetIO\":\"732B / 84B\",\"PIDs\":\"1\"}\n{\"BlockIO\":\"0B / 0B\",\"CPUPerc\":\"0.00%\",\"Container\":\"c3c3c3c3c3c3\",\"ID\":\"c3c3c3c3c3c3\",\"MemPerc\":\"0.00%\",\"MemUsage\":\"424KiB / 15.61GiB\",\"Name\":\"toolbox-sandbox-017\",\"NetIO\":\"1.86kB / 252B\",\"PIDs\":\"1\"}\n{\"BlockIO\":\"139kB / 0B\",\"CPUPerc\":\"0.00%\",\"Container\":\"d4d4d4d4d4d4\",\"ID\":\"d4d4d4d4d4d4\",\"MemPerc\":\"0.00%\",\"MemUsage\":\"556KiB / 15.61GiB\",\"Name\":\"clank-0123456789ab-demo\",\"NetIO\":\"732B / 126B\",\"PIDs\":\"1\"}\n",
+        2.54,
+        ""
+      ]
+    },
+    "stopped": {
+      "systemctl show docker.service --property=LoadState --property=ActiveState": [
+        0,
+        "LoadState=loaded\nActiveState=inactive\n",
+        0.01,
+        ""
+      ],
+      "docker -H unix:///var/run/docker.sock version --format {{.Server.Version}}": [
+        1,
+        "\n",
+        0.01,
+        "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?\n"
+      ],
+      "docker -H unix:///var/run/docker.sock ps --all --no-trunc --format {\"id\":{{json .ID}},\"name\":{{json .Names}},\"image\":{{json .Image}},\"state\":{{json .State}},\"status\":{{json .Status}},\"clank.home\":{{json (.Label \"clank.home\")}},\"clank.component\":{{json (.Label \"clank.component\")}},\"clank.record\":{{json (.Label \"clank.record\")}},\"clank.ports\":{{json (.Label \"clank.ports\")}},\"clank.proxy\":{{json (.Label \"clank.proxy\")}},\"networks\":{{json .Networks}}}": [
+        1,
+        "",
+        0.02,
+        "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?\n"
+      ],
+      "docker -H unix:///var/run/docker.sock info --format {{.NCPU}} {{.MemTotal}}": [
+        0,
+        "0 0\n",
+        0.05,
+        "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?\n"
+      ],
+      "docker -H unix:///var/run/docker.sock info --format {\"limit\":{{json .MemoryLimit}},\"warnings\":{{json .Warnings}}}": [
+        0,
+        "{\"limit\":false,\"warnings\":null}\n",
+        0.06,
+        "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?\n"
+      ],
+      "docker -H unix:///var/run/docker.sock stats --no-stream --format {{json .}}": [
+        1,
+        "",
+        0.02,
+        "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?\n"
+      ]
+    },
+    "no access": {
+      "systemctl show docker.service --property=LoadState --property=ActiveState": [
+        0,
+        "LoadState=loaded\nActiveState=active\n",
+        0.01,
+        ""
+      ],
+      "docker -H unix:///var/run/docker.sock version --format {{.Server.Version}}": [
+        1,
+        "\n",
+        0.01,
+        "permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get \"http://%2Fvar%2Frun%2Fdocker.sock/v1.48/version\": dial unix /var/run/docker.sock: connect: permission denied\n"
+      ],
+      "docker -H unix:///var/run/docker.sock ps --all --no-trunc --format {\"id\":{{json .ID}},\"name\":{{json .Names}},\"image\":{{json .Image}},\"state\":{{json .State}},\"status\":{{json .Status}},\"clank.home\":{{json (.Label \"clank.home\")}},\"clank.component\":{{json (.Label \"clank.component\")}},\"clank.record\":{{json (.Label \"clank.record\")}},\"clank.ports\":{{json (.Label \"clank.ports\")}},\"clank.proxy\":{{json (.Label \"clank.proxy\")}},\"networks\":{{json .Networks}}}": [
+        1,
+        "",
+        0.02,
+        "permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get \"http://%2Fvar%2Frun%2Fdocker.sock/v1.48/containers/json?all=1\": dial unix /var/run/docker.sock: connect: permission denied\n"
+      ],
+      "docker -H unix:///var/run/docker.sock info --format {{.NCPU}} {{.MemTotal}}": [
+        0,
+        "0 0\n",
+        0.05,
+        "permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get \"http://%2Fvar%2Frun%2Fdocker.sock/v1.48/info\": dial unix /var/run/docker.sock: connect: permission denied\n"
+      ],
+      "docker -H unix:///var/run/docker.sock info --format {\"limit\":{{json .MemoryLimit}},\"warnings\":{{json .Warnings}}}": [
+        0,
+        "{\"limit\":false,\"warnings\":null}\n",
+        0.04,
+        "permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get \"http://%2Fvar%2Frun%2Fdocker.sock/v1.48/info\": dial unix /var/run/docker.sock: connect: permission denied\n"
+      ],
+      "docker -H unix:///var/run/docker.sock stats --no-stream --format {{json .}}": [
+        1,
+        "",
+        0.01,
+        "permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get \"http://%2Fvar%2Frun%2Fdocker.sock/v1.48/containers/json\": dial unix /var/run/docker.sock: connect: permission denied\n"
+      ]
+    }
+  },
+  "transitions": {}
+}

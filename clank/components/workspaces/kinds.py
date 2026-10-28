@@ -23,12 +23,22 @@ class DockerSettings(Settings):
     SINGLE = True
 
     adapter: str = Field(
-        "docker-desktop",
+        "auto",
         title="Container platform",
-        description="The adapter Clank uses for containers: docker-desktop (the only one so far).",
+        description="The adapter Clank uses for containers: auto (Docker Desktop on Windows and macOS; on Linux, the "
+        "one of the engine the docker command would use, chosen without waking any: Docker's view says which and why), "
+        "docker-desktop, or docker-engine (Docker Engine on Linux, the system's service, which Clank never starts or "
+        "stops).",
     )
     poll_seconds: float = Field(
         5.0, ge=1, title="Checked every", description="How often, in seconds, Clank reads Docker's state."
+    )
+    allow_unlimited_memory: bool = Field(
+        False,
+        title="Allow unlimited memory",
+        description="Open workspaces even where Docker cannot limit a container's memory (a Raspberry Pi's default "
+        "kernel): an agent's runaway process could then take this computer's memory. Off: no workspace opens there, "
+        "saying how to turn the limits on.",
     )
     start_timeout_seconds: int = Field(
         300, ge=10, title="Time to start", description="How long a start may take before it is reported as failed."

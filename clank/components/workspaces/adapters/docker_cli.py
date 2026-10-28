@@ -1,0 +1,383 @@
+"""The plain docker CLI, which every container platform adapter shares (design 0014 §2, decision 0070).
+
+Every container command Clank sends is Docker's own CLI, the same whichever program runs the engine, so they live
+here once, in `DockerCli`, which each adapter extends with what is its program's own: Docker Desktop its `docker
+desktop` command and its program (`docker_desktop.py`), Docker Engine its systemd service (`docker_engine.py`). The
+commands (design 0004 §3): `docker info` for the CPUs and memory its engine has, `docker build`, `docker network`,
+`docker run` (then `docker network connect` for a container's other networks), `docker run --rm` followed line by line
+for a workspace's setup, `docker container inspect`, `start`, `stop`, `rm`, `volume rm`, and `docker exec` for a
+terminal. The containers are listed with `docker ps --all` and a template that gives Clank's labels exactly; the list
+of every label is read only for the labels' names, from Docker's own map of them (`docker container inspect`), because
+a value may hold the comma that separates them. The listing and the inspection both say the networks a container is on
+(`docker ps` joins their names with commas, which a network's name never holds), so the edge's place on each
+workspace's network is read with what is read anyway; a start Docker refuses because a network the container was on is
+gone ("network ... not found") is a `NetworkGone`. The files an agent's start writes go in one `docker exec` of a few
+lines of Python reading them from its input (`PUT_FILES`; each exec is a fifth of a second on Windows, and nine of them
+made most of the agent's wait in VS Code, 2026-10-26), one by one in a container without Python.
+
+Every command's arguments start in one place (`_argv`): the docker command, then the engine the adapter names
+(`_target`: none here, so the docker command's own choice), then the command's own; a command handed back for another
+to run (`exec_argv`) starts there too. There an adapter may refuse first, sending nothing (`_ready`: Docker Engine
+while systemd says its service is not active, so a stopped engine is never woken).
+"""
+
+import json
+import os
+import re
+import shutil
+import sys
+from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
+from typing import Any
+
+from clank.components.workspaces.adapters.platform import (
+    LABELS,
+    Container,
+    ContainerPlatform,
+    NetworkGone,
+    PlatformError,
+    PlatformStatus,
+)
+from clank.components.workspaces.sandbox import ContainerSpec, joined, run_arguments
+from clank.kernel.processes import TIMEOUT_SECONDS, Answer
+
+TEMPLATE = (
+    '{"id":{{json .ID}},"name":{{json .Names}},"image":{{json .Image}},"state":{{json .State}},'
+    '"status":{{json .Status}},"clank.home":{{json (.Label "clank.home")}},'
+    '"clank.component":{{json (.Label "clank.component")}},"clank.record":{{json (.Label "clank.record")}},'
+    '"clank.ports":{{json (.Label "clank.ports")}},"clank.proxy":{{json (.Label "clank.proxy")}},'
+    '"networks":{{json .Networks}}}'
+)
+# Each container's labels as Docker's own map: `docker ps` joins them with commas, which a value may also hold.
+INSPECT = '{"id":{{json .Id}},"labels":{{json .Config.Labels}}}'
+LIMITS = "{{.NCPU}} {{.MemTotal}}"
+STATS = "{{json .}}"  # each running container's use, in Docker's own fields
+MEMORY = '{"limit":{{json .MemoryLimit}},"warnings":{{json .Warnings}}}'  # of `docker info`, only what Clank reads
+# `docker info` answers 0 even when it reached no engine, its refusal on its errors (recorded on 2026-10-27)
+UNREACHED = re.compile(r"cannot connect to the docker daemon|permission denied|error during connect", re.IGNORECASE)
+STATS_SECONDS = 20.0  # `docker stats --no-stream` samples twice: a second or two
+ONE = (
+    '{"id":{{json .Id}},"name":{{json .Name}},"image":{{json .Config.Image}},"state":{{json .State.Status}},'
+    '"labels":{{json .Config.Labels}},"networks":{{json .NetworkSettings.Networks}}}'
+)
+RUN_SECONDS = 120.0
+# Several files written in one `docker exec` (`put_files`): each [path, text] of the JSON list on its input, its folder
+# made, its text as UTF-8 with its line ends as given.
+PUT_FILES = (
+    "import json, os, sys\n"
+    "for path, text in json.loads(sys.stdin.buffer.read().decode('utf-8')):\n"
+    "    os.makedirs(os.path.dirname(path) or '.', exist_ok=True)\n"
+    "    with open(path, 'w', encoding='utf-8', newline='') as file:\n"
+    "        file.write(text)\n"
+)
+NOT_FOUND = (126, 127)  # `docker exec`'s status when the container cannot run the program (python3 is not there)
+MISSING = re.compile(r"no such (container|volume|network)|not found|is not connected", re.IGNORECASE)
+JOINED = re.compile(r"already exists in network", re.IGNORECASE)
+GONE = re.compile(r"network \S+ not found", re.IGNORECASE)  # a start refused: a network it was on is gone
+
+
+def find_docker(
+    which: Callable[[str], str | None] = shutil.which,
+    environ: Mapping[str, str] = os.environ,
+    platform: str = sys.platform,
+) -> str | None:
+    """The docker command: on the PATH, else in Docker Desktop's own folder; None when neither has it."""
+    found = which("docker")
+    if found:
+        return found
+    for candidate in _desktop_commands(environ, platform):
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
+def _desktop_commands(environ: Mapping[str, str], platform: str) -> list[Path]:
+    if platform == "win32":
+        bases = [
+            (environ.get("LOCALAPPDATA"), ("Programs", "DockerDesktop")),
+            (environ.get("ProgramFiles"), ("Docker", "Docker")),
+        ]
+        return [Path(root, *parts, "resources", "bin", "docker.exe") for root, parts in bases if root]
+    if platform == "darwin":
+        return [Path("/Applications/Docker.app/Contents/Resources/bin/docker")]
+    return []
+
+
+class DockerCli(ContainerPlatform):
+    """The plain docker CLI under every container platform: the container commands, and the list of containers with
+    their labels; what the platform itself is (its status, starting and stopping it) is each adapter's own."""
+
+    def containers(self) -> list[Container]:
+        """Every container, running or not, with Clank's labels read exactly, every label's name, and its networks."""
+        listed = self._docker("ps", "--all", "--no-trunc", "--format", TEMPLATE) or ""
+        rows = [json.loads(line) for line in listed.splitlines() if line.strip()]
+        labels = self._label_names([row["id"] for row in rows])
+        return _containers(rows, labels)
+
+    def _label_names(self, ids: list[str]) -> dict[str, list[str]]:
+        """Each container's label names, from Docker's own map of them; a container gone since it was listed (which
+        fails the inspection of them all) has none, and the others are asked one at a time."""
+        if not ids:
+            return {}
+        together = self._docker("container", "inspect", "--format", INSPECT, *ids)
+        answers = (
+            [together]
+            if together is not None
+            else [self._docker("container", "inspect", "--format", INSPECT, id) for id in ids]
+        )
+        found: dict[str, list[str]] = {}
+        for answer in answers:
+            for line in (answer or "").splitlines():
+                if line.strip():
+                    raw = json.loads(line)
+                    found[raw["id"]] = sorted(raw.get("labels") or {})
+        return found
+
+    def limits(self) -> tuple[int, int] | None:
+        """The CPUs and memory Docker's engine has (on Docker Desktop, its virtual machine's); None when it does not
+        say, as when `docker info` reached no engine (it answers `0 0` then)."""
+        found = (self._docker("info", "--format", LIMITS) or "").split()
+        if len(found) != 2 or not all(part.isdigit() and int(part) > 0 for part in found):
+            return None
+        return int(found[0]), int(found[1]) // (1024 * 1024)
+
+    def memory_limits(self) -> tuple[bool | None, list[str]]:
+        """`docker info`'s `MemoryLimit` and its warnings about memory, never the whole of it, which holds the host's
+        name; nothing said when it reached no engine."""
+        answer = self._answer("info", "--format", MEMORY)
+        if not answer.ok or UNREACHED.search(answer.errors):
+            return None, []
+        try:
+            found = json.loads(answer.output)
+        except ValueError:
+            return None, []
+        if not isinstance(found, dict):
+            return None, []
+        limit = found.get("limit")
+        warnings = [str(each) for each in found.get("warnings") or [] if "memory" in str(each).lower()]
+        return (limit if isinstance(limit, bool) else None), warnings
+
+    def stats(self) -> list[dict[str, Any]]:
+        """`docker stats --no-stream`: each running container's use of the CPU and memory, in Docker's own fields."""
+        answer = self._answer("stats", "--no-stream", "--format", STATS, timeout=STATS_SECONDS)
+        rows: list[dict[str, Any]] = []
+        for line in answer.output.splitlines() if answer.ok else []:
+            try:
+                found = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(found, dict):
+                rows.append(found)
+        return rows
+
+    def image_exists(self, tag: str) -> bool:
+        """Whether `docker image inspect` finds it."""
+        return self._answer("image", "inspect", "--format", "{{.Id}}", tag).ok
+
+    def build_image(
+        self,
+        tag: str,
+        folder: str,
+        labels: Mapping[str, str],
+        line: Callable[[str], None],
+        canceled: Callable[[], bool],
+        args: Mapping[str, str] | None = None,
+    ) -> int | None:
+        """`docker build`, with its build arguments, its plain progress followed line by line."""
+        marks = [part for key, value in labels.items() for part in ("--label", f"{key}={value}")]
+        given = [part for key, value in (args or {}).items() for part in ("--build-arg", f"{key}={value}")]
+        argv = self._argv("build", "--progress", "plain", "--tag", tag, *marks, *given, folder)
+        return self.follow(argv, line, canceled)
+
+    def ensure_network(
+        self, name: str, *, internal: bool, labels: Mapping[str, str], options: Mapping[str, str] | None = None
+    ) -> None:
+        """`docker network create`, with its driver's options (`--opt`), unless `docker network inspect` finds it."""
+        if self._answer("network", "inspect", "--format", "{{.Name}}", name).ok:
+            return
+        marks = [part for key, value in labels.items() for part in ("--label", f"{key}={value}")]
+        given = [part for key, value in (options or {}).items() for part in ("--opt", f"{key}={value}")]
+        made = self._answer("network", "create", *(["--internal"] if internal else []), *marks, *given, name)
+        if not made.ok:
+            raise PlatformError(f"the network {name} could not be made: {words(made)}")
+
+    def network_options(self, name: str) -> dict[str, str] | None:
+        """`docker network inspect`'s options of the network; None when it is not there."""
+        found = self._answer("network", "inspect", "--format", "{{json .Options}}", name)
+        if not found.ok:
+            return None
+        try:
+            options = json.loads(found.output or "null")
+        except ValueError:
+            return {}
+        return {str(key): str(value) for key, value in options.items()} if isinstance(options, dict) else {}
+
+    def join_network(self, network: str, container: str, alias: str) -> bool:
+        """`docker network connect --alias`: True when it joined now, False when it was on the network already."""
+        joined_it = self._answer("network", "connect", "--alias", alias, network, container)
+        if joined_it.ok:
+            return True
+        if JOINED.search(joined_it.errors):
+            return False
+        raise PlatformError(f"{container} could not join {network}: {words(joined_it)}")
+
+    def leave_network(self, network: str, container: str) -> None:
+        """`docker network disconnect --force`."""
+        self._gone_or_done(self._answer("network", "disconnect", "--force", network, container), network)
+
+    def remove_network(self, name: str) -> None:
+        """`docker network rm`."""
+        self._gone_or_done(self._answer("network", "rm", name), name)
+
+    def container(self, name: str) -> Container | None:
+        """`docker container inspect`, or None when it is not there."""
+        found = self._answer("container", "inspect", "--format", ONE, name)
+        if not found.ok:
+            return None
+        raw = json.loads(found.output)
+        labels = raw.get("labels") or {}
+        return Container(
+            id=raw["id"],
+            name=str(raw["name"]).lstrip("/"),
+            image=raw["image"],
+            state=raw["state"],
+            clank={label: labels[label] for label in LABELS if labels.get(label)},
+            label_keys=sorted(labels),
+            networks=_networks(raw.get("networks")),
+        )
+
+    def run_container(self, spec: ContainerSpec) -> None:
+        """`docker run`, then `docker network connect` for each of its other networks."""
+        ran = self._answer(*run_arguments(spec), timeout=RUN_SECONDS)
+        if not ran.ok:
+            raise PlatformError(f"{spec.name} could not start: {words(ran)}")
+        for network, alias in joined(spec):
+            joined_it = self._answer("network", "connect", *(["--alias", alias] if alias else []), network, spec.name)
+            if not joined_it.ok:
+                raise PlatformError(f"{spec.name} could not join {network}: {words(joined_it)}")
+
+    def run_once(self, spec: ContainerSpec, line: Callable[[str], None], canceled: Callable[[], bool]) -> int | None:
+        """`docker run --rm` in the foreground, its output followed line by line; canceling it removes the container."""
+        status = self.follow(self._argv(*run_arguments(spec)), line, canceled)
+        if status is None:
+            self._answer("rm", "--force", spec.name)  # a canceled run's container goes too
+        return status
+
+    def start_container(self, name: str) -> None:
+        """`docker start`; `NetworkGone` when a network it was on is gone."""
+        started = self._answer("start", name, timeout=RUN_SECONDS)
+        if not started.ok:
+            gone = NetworkGone if GONE.search(started.errors) else PlatformError
+            raise gone(f"{name} could not start: {words(started)}")
+
+    def stop_container(self, name: str, seconds: int) -> None:
+        """`docker stop`."""
+        self._gone_or_done(self._answer("stop", "--time", str(seconds), name, timeout=seconds + RUN_SECONDS), name)
+
+    def remove_container(self, name: str) -> None:
+        """`docker rm --force`."""
+        self._gone_or_done(self._answer("rm", "--force", name), name)
+
+    def remove_volume(self, name: str) -> None:
+        """`docker volume rm`."""
+        self._gone_or_done(self._answer("volume", "rm", name), name)
+
+    def put_file(self, name: str, path: str, text: str) -> None:
+        """`docker exec --interactive` of a shell that writes what it reads, as the container's own user."""
+        script = 'mkdir -p "$(dirname "$1")" && cat > "$1"'
+        put = self._answer("exec", "--interactive", name, "sh", "-c", script, "sh", path, input=text.encode("utf-8"))
+        if not put.ok:
+            raise PlatformError(f"{path} could not be written in {name}: {words(put)}")
+
+    def put_files(self, name: str, files: Sequence[tuple[str, str]]) -> None:
+        """One `docker exec --interactive` of Python that writes the files it reads, as the container's own user; one
+        by one (`put_file`) in a container without Python."""
+        given = json.dumps([[path, text] for path, text in files]).encode("utf-8")
+        put = self._answer("exec", "--interactive", name, "python3", "-c", PUT_FILES, input=given)
+        if put.status in NOT_FOUND:
+            super().put_files(name, files)
+        elif not put.ok:
+            paths = ", ".join(path for path, _ in files)
+            raise PlatformError(f"{paths} could not be written in {name}: {words(put)}")
+
+    def run_in(
+        self, name: str, argv: Sequence[str], *, workdir: str, input: bytes | None = None, timeout: float = 30.0
+    ) -> Answer:
+        """`docker exec --interactive` (no terminal), its whole answer."""
+        return self._answer("exec", "--interactive", "--workdir", workdir, name, *argv, timeout=timeout, input=input)
+
+    def exec_argv(
+        self,
+        name: str,
+        argv: Sequence[str],
+        *,
+        workdir: str,
+        env: Mapping[str, str] | None = None,
+        terminal: bool = True,
+    ) -> list[str]:
+        """`docker exec`, with a terminal unless told not to, as the container's own user."""
+        given = [part for key, value in (env or {}).items() for part in ("--env", f"{key}={value}")]
+        tty = ["--tty"] if terminal else []
+        return self._argv("exec", "--interactive", *tty, *given, "--workdir", workdir, name, *argv)
+
+    def _target(self) -> list[str]:
+        """The engine every command names, right after the docker command: none here, so the docker command's own
+        choice (its `DOCKER_HOST`, else its current context)."""
+        return []
+
+    def _ready(self) -> None:
+        """Before any command is sent to the engine: `PlatformError` when none may be, saying why (none here; Docker
+        Engine sends none while systemd says its service is not active)."""
+
+    def _argv(self, *arguments: str) -> list[str]:
+        """A command's whole arguments, once the engine may be asked (`_ready`): the docker command, the engine the
+        adapter names, then its own."""
+        self._ready()
+        return [self.command or "docker", *self._target(), *arguments]
+
+    def _gone_or_done(self, answer: Answer, name: str) -> None:
+        if not answer.ok and not MISSING.search(answer.errors):
+            raise PlatformError(f"Docker refused for {name}: {words(answer)}")
+
+    def _answer(self, *arguments: str, timeout: float = TIMEOUT_SECONDS, input: bytes | None = None) -> Answer:
+        return self.answer(self._argv(*arguments), timeout=timeout, input=input)
+
+    def _docker(self, *arguments: str, timeout: float = TIMEOUT_SECONDS) -> str | None:
+        return self.run(self._argv(*arguments), timeout=timeout)
+
+    def _status(self, state: str, **values: object) -> PlatformStatus:
+        return PlatformStatus.model_validate({"adapter": self.NAME, "label": self.LABEL, "state": state, **values})
+
+
+def _containers(rows: list[dict[str, Any]], labels: dict[str, list[str]]) -> list[Container]:
+    containers = []
+    for raw in rows:
+        containers.append(
+            Container(
+                id=raw["id"],
+                name=raw["name"],
+                image=raw["image"],
+                state=raw["state"],
+                status=raw.get("status", ""),
+                clank={label: raw[label] for label in LABELS if raw.get(label)},
+                label_keys=labels.get(raw["id"], []),
+                networks=_networks(raw.get("networks")),
+            )
+        )
+    return containers
+
+
+def _networks(raw: object) -> list[str]:
+    """The networks a container is on, by name: `docker ps` joins them with commas, `docker container inspect` gives
+    Docker's map of them."""
+    if isinstance(raw, dict):
+        return sorted(raw)
+    if isinstance(raw, str):
+        return [name.strip() for name in raw.split(",") if name.strip()]
+    return []
+
+
+def words(answer: Answer) -> str:
+    """What Docker said of a refusal: its errors, else its output, on one line."""
+    said = (answer.errors or answer.output).strip() or f"exit {answer.status}"
+    return " ".join(said.split())

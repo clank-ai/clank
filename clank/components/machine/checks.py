@@ -1,10 +1,13 @@
 """The checks of `clank doctor`: what Clank needs from this computer, each with what to do about it (design 0001 §4.7,
 §7.3).
 
-Each check reads facts (`Facts`: CLANK_HOME, the machine profile, a way to run commands, the platform, the API's port,
-Windows' GPU scheduling setting, the free disk space) and answers passed, warning, failed or skipped, with a detail
-and, when it is not passed, what to do. A warning means Clank can run but something will be missing or slow; failed
-means Clank cannot work as it is. Checks never change anything (design 0001 §4.7: Clank explains and offers, the
+Each check reads facts (`Facts`: CLANK_HOME, the machine profile, Docker as its container platform reports it, the
+platform, the API's port, Windows' GPU scheduling setting, the free disk space) and answers passed, warning, failed or
+skipped, with a detail and, when it is not passed, what to do. Docker is read through the workspaces component's adapter
+(design 0014 §2), never by a docker command of the doctor's own, so a stopped Docker Engine is never woken, and its
+checks say what the platform says, in its words: a Docker Clank does not start names the command its owner runs, an
+account outside the docker group how to join it. A warning means Clank can run but something will be missing or slow;
+failed means Clank cannot work as it is. Checks never change anything (design 0001 §4.7: Clank explains and offers, the
 user decides). After the machine's own, the checks other components declare run (`more`, design 0002 §2.1: the phone's
 way in, design 0025 §2); one that fails to run is said as a failed check.
 """
@@ -19,8 +22,8 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from clank.components.machine.kinds import MachineProfile
+from clank.components.workspaces.service import MEMORY_FIX, DockerReading, memory_said
 from clank.kernel.home import Home
-from clank.kernel.processes import Run
 
 Status = Literal["passed", "warning", "failed", "skipped"]
 MARKS: dict[str, str] = {"passed": "ok  ", "warning": "warn", "failed": "FAIL", "skipped": "skip"}
@@ -44,7 +47,7 @@ class Facts:
 
     home: Home
     profile: MachineProfile
-    run: Run
+    docker: DockerReading | None = None  # Docker as its container platform reports it; None: not read
     platform: str = sys.platform
     port: int = 7720
     hags_mode: int | None = None
@@ -149,16 +152,43 @@ def _hags(facts: Facts) -> tuple[Status, str, str]:
 
 
 def _docker_installed(facts: Facts) -> tuple[Status, str, str]:
-    if facts.profile.docker and facts.profile.docker != "not installed":
-        return "passed", f"Docker {facts.profile.docker}", ""
-    return "warning", "not installed", "install Docker Desktop: agents work in its containers (from M4)"
+    if facts.docker is None:
+        return "skipped", "Docker was not read", ""
+    status = facts.docker.status
+    if status.state in ("not installed", "unsupported"):
+        return "warning", f"{status.label}: {status.state}", status.detail
+    client = facts.profile.docker if facts.profile.docker not in ("", "not installed") else ""
+    return "passed", status.label + (f", its docker command {client}" if client else ""), ""
 
 
 def _docker_running(facts: Facts) -> tuple[Status, str, str]:
-    answer = facts.run(["docker", "info", "--format", "{{.ServerVersion}}"])
-    if answer and answer.strip():
-        return "passed", f"its engine answers ({answer.strip()})", ""
-    return "warning", "not running", "start it with `clank docker start` (or open Docker Desktop)"
+    if facts.docker is None:
+        return "skipped", "Docker was not read", ""
+    status = facts.docker.status
+    if status.running:
+        engine = f", engine {status.engine}" if status.engine and status.engine != status.version else ""
+        return "passed", f"{status.label} {status.version} runs{engine}", ""
+    if facts.docker.starts and not status.detail:
+        return "warning", status.state, "start it with `clank docker start` (or open Docker Desktop)"
+    return "warning", status.state, status.detail
+
+
+def _docker_memory(facts: Facts) -> tuple[Status, str, str]:
+    if facts.docker is None or not facts.docker.status.running:
+        return "skipped", "read while Docker runs", ""
+    limited, words = facts.docker.memory
+    if limited is None:
+        return "skipped", "Docker does not say", ""
+    if limited:
+        return "passed", "it limits each container's memory", ""
+    said = memory_said(words)
+    if facts.docker.allow_unlimited_memory:
+        return "warning", f"{said}: workspaces open without it, as allow_unlimited_memory allows", MEMORY_FIX
+    return (
+        "failed",
+        f"{said}, so no workspace opens",
+        f"{MEMORY_FIX} (or set allow_unlimited_memory in config/docker.json)",
+    )
 
 
 def _port(facts: Facts) -> tuple[Status, str, str]:
@@ -180,6 +210,7 @@ CHECKS: list[tuple[str, str, Callable[[Facts], tuple[Status, str, str]]]] = [
     ("hags", "Hardware-accelerated GPU scheduling off", _hags),
     ("docker_installed", "Docker installed", _docker_installed),
     ("docker_running", "Docker running", _docker_running),
+    ("docker_memory", "Docker limits memory", _docker_memory),
     ("port", "The API's port", _port),
 ]
 

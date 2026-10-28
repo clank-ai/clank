@@ -15,15 +15,15 @@ service starts again, said once in the log, and the rest of each reading goes on
 every reading failed, each second for hours, its traceback logged each time). A reading costs about a millisecond.
 From 2026-10-15 (the owner: the panel did not say enough) a reading also has the busiest and the largest processes
 (`Processes`, read every few seconds) and the CPU and memory of Clank's containers (`Containers`, `docker stats` on a
-thread of its own every ten seconds, so a reading never waits for Docker).
+thread of its own every ten seconds, so a reading never waits for Docker). The figures come through the workspaces
+component's platform, which asks only while Docker's last reading runs (design 0014 §2): a docker command of the meters'
+own would wake an engine the owner stopped.
 """
 
 import contextlib
 import ctypes
-import json
 import logging
 import re
-import shutil
 import sys
 import threading
 import time
@@ -32,8 +32,6 @@ from typing import Any
 
 import psutil
 
-from clank.kernel.processes import run_answer
-
 log = logging.getLogger(__name__)
 SECONDS = 1.0
 KEPT = 300  # five minutes of readings
@@ -41,7 +39,6 @@ DRIVES_SECONDS = 60.0
 PROCESS_SECONDS = 3.0  # the processes are read every few seconds: going through them all costs some tens of ms
 TOP = 6  # the busiest and the largest processes, each
 CONTAINER_SECONDS = 10.0
-CONTAINER_TIMEOUT = 20.0
 NVML_NAMES = ("nvml.dll",) if sys.platform == "win32" else ("libnvidia-ml.so.1", "libnvidia-ml.so")
 
 
@@ -189,19 +186,19 @@ class Processes:
 
 
 class Containers:
-    """The CPU and memory of Clank's containers (`docker stats`, which takes a second or two), read on a thread of its
-    own every `CONTAINER_SECONDS`, so a reading never waits for Docker; none while Docker does not answer. A container's
-    CPU is its share of the machine; the edge, which only forwards, is left out."""
+    """The CPU and memory of Clank's containers (`docker stats`, which takes a second or two, as `stats` gives its
+    rows), read on a thread of its own every `CONTAINER_SECONDS`, so a reading never waits for Docker; none while Docker
+    does not answer. A container's CPU is its share of the machine; the edge, which only forwards, is left out."""
 
     def __init__(
         self,
         prefix: str,
-        run: Callable[[list[str]], str | None] | None = None,
+        stats: Callable[[], list[dict[str, Any]]] | None = None,
         cpus: int | None = None,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self._prefix = prefix
-        self._run = run or _docker
+        self._stats = stats or list
         self._cpus = cpus or psutil.cpu_count() or 1
         self._clock = clock
         self._rows: list[dict[str, Any]] = []
@@ -225,13 +222,8 @@ class Containers:
 
     def read_now(self) -> list[dict[str, Any]]:
         """`docker stats` now: each of Clank's containers but the edge, by its workspace's name."""
-        answer = self._run(["docker", "stats", "--no-stream", "--format", "{{json .}}"])
         rows = []
-        for line in (answer or "").splitlines():
-            try:
-                found = json.loads(line)
-            except ValueError:
-                continue
+        for found in self._stats():
             name = str(found.get("Name", ""))
             if not name.startswith(self._prefix) or name.endswith("-edge"):
                 continue
@@ -240,15 +232,6 @@ class Containers:
             rows.append({"name": name.removeprefix(self._prefix), "cpu": round(cpu, 1),
                          "memory_used": _bytes(used), "memory_total": _bytes(total)})  # fmt: skip
         return rows
-
-
-def _docker(argv: list[str]) -> str | None:
-    """A docker command's output; None when Docker is not there or does not answer (no window opens)."""
-    program = shutil.which(argv[0])
-    if program is None:
-        return None
-    answer = run_answer([program, *argv[1:]], timeout=CONTAINER_TIMEOUT)
-    return answer.output if answer.ok else None
 
 
 def _number(text: str) -> float:

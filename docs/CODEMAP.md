@@ -263,7 +263,10 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/tools/service.py` | The tools component's part (design 0002 §1; the M8.0 plan): the MCP servers Clank knows, and checking one. |
 | `clank/components/workspaces/__init__.py` | The workspaces component: where agents work. In M0 it holds Docker, the container platform, through its adapter; |
 | `clank/components/workspaces/adapters/__init__.py` | The workspaces component's kind of adapter, the container platform (design 0002 §2.9, §2.10): where Clank's |
+| `clank/components/workspaces/adapters/choose.py` | Which container platform adapter the setting `adapter` means on this computer (design 0014 §2, decision 0070). |
+| `clank/components/workspaces/adapters/docker_cli.py` | The plain docker CLI, which every container platform adapter shares (design 0014 §2, decision 0070). |
 | `clank/components/workspaces/adapters/docker_desktop.py` | The Docker Desktop adapter: Docker Desktop through its own commands (design 0002 §2.9, §2.10). |
+| `clank/components/workspaces/adapters/docker_engine.py` | The Docker Engine adapter, for Linux (design 0014 §2, decision 0070): Docker Engine, the system's service, whose |
 | `clank/components/workspaces/adapters/platform.py` | The container platform kind of adapter: the interface every container platform meets (design 0002 §2.9, §2.10). |
 | `clank/components/workspaces/api.py` | The workspaces component's routes: Docker's status, and starting and stopping it; the workspaces, and opening, |
 | `clank/components/workspaces/cli.py` | The workspaces component's commands: `clank docker status\|start\|stop`, and `clank workspace |
@@ -284,6 +287,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/workspaces/jobs.py` | Jobs in a workspace's container (design 0013 §17, decision 0132; design 0021 §6): a long computation run detached, |
 | `clank/components/workspaces/kinds.py` | The workspaces component's kinds of record: how Clank uses Docker (`config/docker.json`), and from M4 each workspace |
 | `clank/components/workspaces/layers/tex/latex_build.py` | Clank's LaTeX helper, in the TeX layer (design 0020 §8-§10, decision 0134): run in a workspace's container, it reads |
+| `clank/components/workspaces/memory.py` | Docker's memory limits, in words (design 0014 §4). |
 | `clank/components/workspaces/network.py` | A host the agent asks for (design 0024 §3, decision 0141): when a workspace's agent reaches a host that is not |
 | `clank/components/workspaces/sandbox.py` | A workspace's container and the edge, as Clank wants them (design 0004 §3 and §6, design 0002 §2.9). |
 | `clank/components/workspaces/service.py` | The workspaces component's part in the service. In M0 it holds Docker: the container platform's status, whose each |

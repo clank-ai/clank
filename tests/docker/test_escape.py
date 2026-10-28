@@ -29,7 +29,7 @@ from clank.components.workspaces.sandbox import names
 from clank.components.workspaces.service import Workspaces
 from clank.kernel.core import Kernel
 from clank.kernel.events import Actor
-from tests.docker.conftest import docker, gateway_port
+from tests.docker.conftest import docker, for_the_agent, gateway_port
 from tests.support.served import free_port
 
 pytestmark = [pytest.mark.docker, pytest.mark.anyio]
@@ -89,6 +89,7 @@ def gateway(machine: Kernel) -> Iterator[int]:
 
 
 async def opened(kernel: Kernel, folder: Path) -> dict[str, Any]:
+    for_the_agent(folder)
     started = await kernel.operations.start("workspaces.open", {"folder": str(folder), "yes": True}, actor=YOU)
     with anyio.fail_after(OPEN_SECONDS):
         done = await kernel.operations.wait(started.id)

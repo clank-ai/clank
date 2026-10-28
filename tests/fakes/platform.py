@@ -8,6 +8,7 @@ only), and a network made again is another network, which a container that was o
 (`NetworkGone`), as Docker keeps a network's id, not its name."""
 
 from collections.abc import Callable, Mapping, Sequence
+from typing import Any
 
 from clank.components.workspaces.adapters.platform import (
     Container,
@@ -19,6 +20,9 @@ from clank.components.workspaces.adapters.platform import (
 from clank.components.workspaces.sandbox import ContainerSpec
 from clank.kernel.adapters import Capability
 from clank.kernel.processes import Answer
+
+SYSTEM_START = "sudo systemctl start docker"  # a Docker the system runs: what its owner runs (design 0014 §2)
+SYSTEM_STOP = "sudo systemctl stop docker.socket docker.service"
 
 
 def container(
@@ -58,7 +62,8 @@ def with_edge(platform: "FakePlatform", home: str, workspace: str, ports: str = 
 
 class FakePlatform(ContainerPlatform):
     """A container platform that does as it is told: its state, its containers, and how many checks a start takes
-    (None: it never comes up)."""
+    (None: it never comes up); or, `starts` false, one the system runs (as Docker Engine is, design 0014 §2), whose
+    start and stop are refused with the owner's command, and whose state says what to do (`detail`)."""
 
     NAME = "fake"
     LABEL = "Fake Docker"
@@ -69,19 +74,33 @@ class FakePlatform(ContainerPlatform):
         state: str = "running",
         containers: Sequence[Container] = (),
         starts_after: int | None = 1,
+        *,
+        starts: bool = True,
+        detail: str = "",
     ) -> None:
         super().__init__(lambda arguments, timeout=0.0: None, None if state == "not installed" else "fake")
         self.state = state
         self.containers = list(containers)
         self.starts_after = starts_after
+        self.starts = starts
+        self.detail = detail
         self.calls: list[str] = []
         self.on_check: Callable[[], None] | None = None
         self._checks = 0
         self.cpus_memory: tuple[int, int] | None = (16, 32768)
+        self.stats_rows: list[dict[str, Any]] = []  # its containers' use, as `docker stats` gives it
+        self.memory: tuple[bool | None, list[str]] = (True, [])  # whether it limits memory, and its words
+        self.memory_asked = 0
+        self.access = ""  # why the agent could not use a folder as it mounts it (Docker Engine's rule, as told)
+        self.access_asked: list[str] = []
         self.images: set[str] = set()
         self.build_args: dict[str, dict[str, str]] = {}  # each image built: its build arguments
         self.build_folders: dict[str, str] = {}  # and the folder it was built from
         self.networks: dict[str, bool] = {}
+        self.options: dict[str, dict[str, str]] = {}  # each network's driver options, as it was made
+        self.inner_options: dict[
+            str, str
+        ] = {}  # what a workspace's own network is made with (Docker Engine's, as told)
         self.made: dict[str, int] = {}  # each network: how many times it was made, which stands for its id
         self.attached: dict[str, dict[str, int]] = {}  # each container: the networks it joined, as made then
         self.joined: set[tuple[str, str]] = set()
@@ -99,7 +118,14 @@ class FakePlatform(ContainerPlatform):
         return "fake"
 
     def capabilities(self) -> list[Capability]:
-        return [Capability(name, self.command is not None, "as told") for name in ("status", "start", "stop")]
+        installed = self.command is not None
+        if self.starts:
+            return [Capability(name, installed, "as told") for name in ("status", "start", "stop")]
+        return [
+            Capability("status", installed, "as told"),
+            Capability("start", False, f"`{SYSTEM_START}`: the system's"),
+            Capability("stop", False, f"`{SYSTEM_STOP}`: the system's"),
+        ]
 
     def status(self) -> PlatformStatus:
         if self.on_check is not None:
@@ -116,12 +142,14 @@ class FakePlatform(ContainerPlatform):
             version="4.85.0" if running else "",
             engine="29.6.2" if running else "",
             containers=self.containers if running else [],
-            detail="install it" if self.state == "not installed" else "",
+            detail=self.detail or ("install it" if self.state == "not installed" else ""),
         )
 
     def request_start(self) -> None:
         if self.command is None:
             raise PlatformError("Fake Docker is not installed")
+        if not self.starts:
+            raise PlatformError(f"Clank never starts Fake Docker: start it with `{SYSTEM_START}`")
         self.calls.append("start")
         self.state = "starting"
         self._checks = 0
@@ -129,6 +157,8 @@ class FakePlatform(ContainerPlatform):
     def request_stop(self) -> None:
         if self.command is None:
             raise PlatformError("Fake Docker is not installed")
+        if not self.starts:
+            raise PlatformError(f"Clank never stops Fake Docker: stop it with `{SYSTEM_STOP}`")
         self.calls.append("stop")
         self.state = "stopped"
 
@@ -136,8 +166,20 @@ class FakePlatform(ContainerPlatform):
         self.calls.append("after start")
         log("nothing to put back")
 
+    def agent_access(self, folder: str) -> str:
+        self.access_asked.append(folder)
+        return self.access
+
     def limits(self) -> tuple[int, int] | None:
         return self.cpus_memory
+
+    def stats(self) -> list[dict[str, Any]]:
+        self.calls.append("stats")
+        return self.stats_rows
+
+    def memory_limits(self) -> tuple[bool | None, list[str]]:
+        self.memory_asked += 1
+        return self.memory
 
     def image_exists(self, tag: str) -> bool:
         return tag in self.images
@@ -162,11 +204,20 @@ class FakePlatform(ContainerPlatform):
             self.images.add(tag)
         return self.build_status
 
-    def ensure_network(self, name: str, *, internal: bool, labels: Mapping[str, str]) -> None:
+    def ensure_network(
+        self, name: str, *, internal: bool, labels: Mapping[str, str], options: Mapping[str, str] | None = None
+    ) -> None:
         if name not in self.networks:
             self.calls.append(f"network {name}")
             self.networks[name] = internal
+            self.options[name] = dict(options or {})
             self.made[name] = self.made.get(name, 0) + 1
+
+    def network_options(self, name: str) -> dict[str, str] | None:
+        return dict(self.options.get(name, {})) if name in self.networks else None
+
+    def inner_network_options(self) -> dict[str, str]:
+        return dict(self.inner_options)
 
     def join_network(self, network: str, container: str, alias: str) -> bool:
         found = self._find(container)

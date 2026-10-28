@@ -22,7 +22,10 @@ set of hosts or a host by name, or takes one back.
 
 Design 0004 §3 (revised 2026-10-26): a workspace whose container runs cut off from the model (the edge not running on
 its network) says so in its step, in the service's words, marked as changing; the agent may still start (its start puts
-the edge right first), and `o` opens the workspace, which puts it right at once."""
+the edge right first), and `o` opens the workspace, which puts it right at once.
+
+Design 0014 §2: `s` starts Docker only when Clank starts it; a Docker the system runs (Docker Engine) is shown with the
+command to run, in the status's words, and nothing is started."""
 
 import contextlib
 from collections.abc import Callable, Sequence
@@ -448,6 +451,21 @@ async def test_a_folder_whose_container_would_see_more_than_it_is_refused_saying
         await pilot.press("o")
         await settle(pilot, lambda: "holds Clank's own folder" in message(app))
     assert [loaded.id for loaded in kernel.settings.records("workspace")] == []
+
+
+async def test_the_folder_page_shows_the_command_for_a_docker_clank_does_not_start(
+    kernel: Kernel, client: Client, platform: FakePlatform, gateway: None, project: Path
+) -> None:
+    said = "start it with `sudo systemctl start docker`; Clank never starts or stops Docker Engine"
+    platform.state, platform.starts, platform.detail = "stopped", False, said
+    app = console(client, kernel, project)
+    async with app.run_test(size=(220, 50)) as pilot:
+        await settle(pilot, lambda: "Docker" in text(app) and "stopped" in text(app))
+        await pilot.press("s")
+        await settle(pilot, lambda: "sudo systemctl start docker" in message(app))
+        assert message(app).endswith(f"! Fake Docker is stopped: {said}"), "said as a problem, in the status's words"
+    assert kernel.operations.find(None, 10) == [], "no start was asked"
+    assert "start" not in platform.calls
 
 
 def test_readiness_names_each_missing_item_with_its_key() -> None:

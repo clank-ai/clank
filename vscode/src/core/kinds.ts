@@ -174,10 +174,12 @@ export interface MachineProfile {
 export interface DockerSettings {
   /** The name clients show for this record; the file's own name when empty. */
   title: string;
-  /** The adapter Clank uses for containers: docker-desktop (the only one so far). */
+  /** The adapter Clank uses for containers: auto (Docker Desktop on Windows and macOS; on Linux, the one of the engine the docker command would use, chosen without waking any: Docker's view says which and why), docker-desktop, or docker-engine (Docker Engine on Linux, the system's service, which Clank never starts or stops). */
   adapter: string;
   /** How often, in seconds, Clank reads Docker's state. */
   poll_seconds: number;
+  /** Open workspaces even where Docker cannot limit a container's memory (a Raspberry Pi's default kernel): an agent's runaway process could then take this computer's memory. Off: no workspace opens there, saying how to turn the limits on. */
+  allow_unlimited_memory: boolean;
   /** How long a start may take before it is reported as failed. */
   start_timeout_seconds: number;
   /** How long a stop may take before it is reported as failed. */

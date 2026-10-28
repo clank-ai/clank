@@ -28,8 +28,12 @@ build steps L5 and L6 (§10) while the review goes on, with §3's recommended op
 testing the integration with the API keys from openrouter, so we need to make sure that this is completely set up and
 ready for testing." It is built with the recommended choices: Docker Engine's first recording is made by the hand-run
 job (§2), and decision 0071's (a). Decision 0070 is accepted. Built so far by plan s9: L0's capture tool, the errors in
-recordings and the hand-run job; its recording waits for the job's run. L5 and L6 (§3) are built beside lane L, on a
-branch of their own. The Pi's steps (P1-P6) wait.*
+recordings and the hand-run job, with Docker Engine 28.0.4's recording (run 40578825917); L1, one base for the plain
+docker CLI; L2, the docker-engine adapter; L3, the adapter chosen by platform and by what answers (`auto`), with no
+start where Clank cannot start; L4, the doctor and the meters asking Docker through it; L7, no workspace opening where
+Docker cannot limit memory, unless allowed and said; L8, a folder the agent's user (1000) may not write refused, saying
+how to let it; and, from L6, the workspaces' networks giving this computer no address on Docker Engine. L5 and L6 (§3)
+are built beside lane L, on a branch of their own. The Pi's steps (P1-P6) wait.*
 
 **The machine.** A Raspberry Pi 5: arm64, four Cortex-A76 cores, and 8 GB of memory, the size this design is checked
 against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engine from Docker's Debian packages
@@ -41,15 +45,15 @@ against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engi
 | § | Section | Status |
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | Proposed 2026-10-18 |
-| 2 | The container platform adapters | Proposed 2026-10-18; being built at the owner's instruction (2026-10-27, plan s9 lane L) |
+| 2 | The container platform adapters | Proposed 2026-10-18; built at the owner's instruction, 2026-10-27 (plan s9 L0-L4): the `docker-engine` adapter on Docker Engine 28.0.4's recording, `auto`, the doctor and the meters through the adapter |
 | 3 | The edge's way to the gateway on Linux | Proposed 2026-10-18; option (a) chosen 2026-10-27 (decision 0071); the gateway's socket (step L5) and the edge's way on Docker Engine (step L6) built 2026-10-27 |
-| 4 | A workspace's container on Docker Engine | Proposed 2026-10-18; being built at the owner's instruction (2026-10-27, plan s9 L7 and L8) |
-| 5 | The doctor and the machine profile on a Raspberry Pi 5 | Proposed 2026-10-18 |
+| 4 | A workspace's container on Docker Engine | Proposed 2026-10-18; its memory limits, the agent's user and the workspaces' networks without this computer's address built at the owner's instruction, 2026-10-27 (plan s9 L7, L8, and L6's networks); the escape test of the host's own address comes with §3 (L6) |
+| 5 | The doctor and the machine profile on a Raspberry Pi 5 | Proposed 2026-10-18; Docker's checks built with L4 and L7 (2026-10-27); the Pi's profile and checks (P3) wait |
 | 6 | OpenCode on arm64 | Proposed 2026-10-18 |
 | 7 | CI on arm64 | Proposed 2026-10-18 |
 | 8 | A small machine: memory, VS Code and the owner's settings | Proposed 2026-10-18 |
 | 9 | What this design does not cover | Proposed 2026-10-18 |
-| 10 | Build steps | Proposed 2026-10-18 |
+| 10 | Build steps | Proposed 2026-10-18; lane L for Linux x64 built but L5-L6 (2026-10-27); lane P waits |
 
 ## 1. What runs on Linux and arm64 today, and what this design refines
 

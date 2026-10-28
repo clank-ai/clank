@@ -23,6 +23,7 @@ from clank.components.machine.kinds import MachineProfile
 from clank.components.remote import probes, tailnet
 from clank.components.remote.probes import Public, Reached
 from clank.components.workspaces import service as workspaces_service
+from clank.components.workspaces.service import DockerReading, PlatformStatus
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
 from clank.kernel.core import Kernel, open_kernel
@@ -145,6 +146,8 @@ def test_the_doctor_adds_the_phones_checkup_while_remote_access_is_on_without_th
 ) -> None:
     monkeypatch.setattr(machine_cli, "detect", lambda *args, **kwargs: MachineProfile())
     monkeypatch.setattr(machine_cli, "run_command", lambda arguments: None)
+    stopped = PlatformStatus(adapter="fake", label="Fake Docker", state="stopped")
+    monkeypatch.setattr(machine_cli, "read_platform", lambda home: DockerReading(status=stopped, starts=True))
     settings = home.config / "remote.json"
     settings.write_text(json.dumps({"schema": "remote/1", "on": False}), encoding="utf-8")
     quiet = CliRunner().invoke(main, ["doctor"], env={"CLANK_HOME": str(home.root)})

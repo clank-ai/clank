@@ -10,7 +10,10 @@ reads Docker's limits once in a while, since a VS Code window waits for it befor
 Design 0018 §8.1: `clank code` over SSH gets the folder ready and opens nothing on the PC's screen, saying the command
 for the other computer; in a terminal of VS Code's Remote-SSH it opens the other computer's VS Code.
 
-Design 0016 §7: with no model running and none that worked yet, `clank work` loads the runtime's fallback preset."""
+Design 0016 §7: with no model running and none that worked yet, `clank work` loads the runtime's fallback preset.
+
+Design 0014 §2: `clank work` and `clank code` start Docker only when Clank starts it; a Docker the system runs (Docker
+Engine) is shown with what to do, in the status's words, and nothing is started."""
 
 import json
 from collections.abc import Iterator, Mapping, Sequence
@@ -175,6 +178,41 @@ def test_clank_work_starts_docker_opens_the_folder_and_runs_the_agent_here(
     [argv] = commands
     assert argv[-3:] == ["/workspace", names(kernel.home.id).container("paper"), "opencode"]
     assert (names(kernel.home.id).container("paper"), CONFIG) in platform.files
+
+
+SYSTEMS = "start it with `sudo systemctl start docker`; Clank never starts or stops Docker Engine"
+
+
+def test_work_never_asks_a_docker_the_system_runs_to_start(
+    kernel: Kernel, http: TestClient, platform: FakePlatform, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    platform.state, platform.starts, platform.detail = "stopped", False, SYSTEMS
+    folder = tmp_path / "paper"
+    folder.mkdir()
+    monkeypatch.chdir(folder)
+    kernel.parts["runtime"].state.set_slot("main", "ready", "a test", actor=YOU, preset="daily-262k")
+    monkeypatch.setattr(agents_cli, "terminal", lambda argv: pytest.fail("the agent ran without Docker"))
+    result = run("work")
+    assert result.exit_code == 1, result.output
+    assert f"Fake Docker is stopped: {SYSTEMS}" in result.output
+    assert "starting it" not in result.output
+    assert [each.type for each in kernel.operations.find()] == [], "no POST docker/start, nor anything after it"
+
+
+def test_code_never_asks_a_docker_the_system_runs_to_start(
+    kernel: Kernel, http: TestClient, platform: FakePlatform, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    platform.state, platform.starts, platform.detail = "stopped", False, SYSTEMS
+    folder = tmp_path / "paper"
+    folder.mkdir()
+    monkeypatch.chdir(folder)
+    kernel.parts["runtime"].state.set_slot("main", "ready", "a test", actor=YOU, preset="daily-262k")
+    state = fake_vscode(kernel, tmp_path, monkeypatch)
+    result = run("code")
+    assert result.exit_code == 1, result.output
+    assert f"Fake Docker is stopped: {SYSTEMS}" in result.output
+    assert [each.type for each in kernel.operations.find()] == []
+    assert asked(state, opened=0).get("opened", []) == [], "no window opened"
 
 
 def test_with_no_model_running_clank_loads_the_slots_last_good_one_and_says_why_it_cannot(

@@ -79,15 +79,16 @@ def test_without_the_docker_desktop_command_it_says_to_update_and_refuses_to_sta
         platform.request_stop()
 
 
-def desktop(status: str | None) -> Answers:
+def desktop(status: str | None, linux: bool = False) -> Answers:
     """Docker Desktop's command answering that it already runs, while its engine does not answer, and its own status
-    (None: no answer, as when it is stopped)."""
+    (None: no answer, as when it is stopped); on Linux each command names its own context (design 0014 §2)."""
+    named = "docker --context desktop-linux" if linux else "docker"
     return Answers(
         {
-            "docker desktop version --format json": '{"version":"v0.4.3"}\n',
-            "docker desktop start --detach": ALREADY,
-            f"docker version --format {VERSIONS}": None,
-            "docker desktop status --format json": status,
+            f"{named} desktop version --format json": '{"version":"v0.4.3"}\n',
+            f"{named} desktop start --detach": ALREADY,
+            f"{named} version --format {VERSIONS}": None,
+            f"{named} desktop status --format json": status,
         }
     )
 
@@ -108,7 +109,7 @@ def test_a_stopped_docker_desktop_whose_program_cannot_start_says_what_to_do() -
     platform = DockerDesktop(desktop(None), COMMAND, platform="win32", launch=Launches(starts=False))
     with pytest.raises(PlatformError, match="open Docker Desktop"):
         platform.request_start()
-    elsewhere = DockerDesktop(desktop(None), "/usr/bin/docker", platform="linux", launch=Launches())
+    elsewhere = DockerDesktop(desktop(None, linux=True), "/usr/bin/docker", platform="linux", launch=Launches())
     with pytest.raises(PlatformError, match="open Docker Desktop"):
         elsewhere.request_start()
 

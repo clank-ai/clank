@@ -33,10 +33,10 @@ GitHub Actions' `ubuntu-24.04` and `ubuntu-24.04-arm` runners.
 
 **Status:** lane L for Linux x64 being built at the owner's instruction (2026-10-27: Clank on a Linux computer of the
 owner's, with OpenRouter's models; design 0014's status says so), with the recommended choices: the recording made by
-the hand-run job (design 0014 §2), and decision 0071's (a). Done: L0's tool, the errors in recordings and the job; the
-recording waits for the job's run. L5 and L6 are built on a branch of their own. The Pi's steps (P1-P6) wait for the
-owner. The places below were found at commit e90c51a; the code has moved since, and each task's commit names where it
-changed.
+the hand-run job (design 0014 §2), and decision 0071's (a). Done: L0 (Docker Engine 28.0.4 recorded by the job on
+2026-10-27), L1, L2, L3, L4, L7 and L8: lane L but L5 and L6. L5 and L6 are built on a branch of their own. The Pi's
+steps (P1-P6) wait for the owner. The places below were found at commit e90c51a; the code has moved since, and each
+task's commit names where it changed.
 
 A path such as `workspaces/sandbox.py:38` means `clank/components/workspaces/sandbox.py`, line 38, at commit e90c51a;
 every other path starts at the repository's root.
@@ -163,7 +163,10 @@ condition holds. Now: L0's tool, L1, P3 and P6.
     group, from a folder that user can read. It merges them and prints `program.json` between two marker lines in its
     log, so no action is added to keep it. The log shows `docker version`, so what was recorded is on record.
 - [x] **Done when:** the tool, the fake's errors and the job are committed, and `tools.check` passes.
-- [ ] **Then the recording**, made as the owner chose (design 0014 §2):
+- [x] **Then the recording**, made as the owner chose (design 0014 §2): by the job, run 40578825917 on 2026-10-27
+  (Docker Engine 28.0.4), committed with L2 as `tests/fixtures/docker-engine/28.0.4/program.json`. It showed that
+  `docker info --format` exits 0 even when the engine was not reached (`0 0`, `{"limit":false,...}`, the refusal
+  on its errors), which L7 heeds. The two ways it could be made:
   - the job, once the owner approves its few x64 minutes: `gh workflow run record-docker-engine.yml`, then the
     recording taken from `gh run view --log`;
   - or the owner on the Pi, during the dry run: `no access` before joining the docker group, then the other two.
@@ -173,27 +176,29 @@ condition holds. Now: L0's tool, L1, P3 and P6.
 
 #### L1. One base class for the plain docker CLI (B)
 
-- [ ] **Test first** (`tests/components/workspaces/test_docker_cli.py`, design 0014 §2):
+- [x] **Test first** (`tests/components/workspaces/test_docker_cli.py`, design 0014 §2):
   `test_every_container_command_is_the_plain_docker_cli_both_adapters_share`. Each container method of the interface
   (`limits` to `exec_argv`, `workspaces/adapters/platform.py:128-215`) is `DockerCli`'s own, not overridden in
-  `DockerDesktop`. It fails today: there is no `DockerCli`.
-- [ ] **Files:** create `clank/components/workspaces/adapters/docker_cli.py`. Move into it the container commands
+  `DockerDesktop`. It fails today: there is no `DockerCli`. Built with
+  `test_every_command_starts_with_the_engine_its_adapter_names` (a command handed back, `exec_argv`, too).
+- [x] **Files:** create `clank/components/workspaces/adapters/docker_cli.py`. Move into it the container commands
   (`workspaces/adapters/docker_desktop.py:219-342`), the reading of containers and their labels' names
   (`workspaces/adapters/docker_desktop.py:145-167, 389-403`), `find_docker`
   (`workspaces/adapters/docker_desktop.py:71-95`) and the helpers (`_answer`, `_docker`, `_gone_or_done`, `_words`).
   `DockerDesktop` extends `DockerCli` and keeps `docker desktop` and its program
   (`workspaces/adapters/docker_desktop.py:123-143, 169-217, 351-365`). The docstrings of
   `workspaces/adapters/__init__.py` and `workspaces/adapters/platform.py` name the base.
-- [ ] **Interfaces:** `class DockerCli(ContainerPlatform)`, abstract in `find`, `status`, `request_start` and
+- [x] **Interfaces:** `class DockerCli(ContainerPlatform)`, abstract in `find`, `status`, `request_start` and
   `request_stop`; `DockerCli.containers() -> list[Container]` (the `docker ps` template and the labels' names), used
   by both adapters' `status`; one place where every command's arguments start (`_target()`, empty here), for L2's and
-  L3's pins. No public name changes.
-- [ ] **Done when:** the contract test, `tests/components/workspaces/test_docker_containers.py` and every workspace
+  L3's pins. No public name changes: `TEMPLATE`, `INSPECT`, `PUT_FILES` and `find_docker` stay importable from
+  `docker_desktop.py`; as built, Docker's words for a refusal are the base's public `words()`, which L2 reads too.
+- [x] **Done when:** the contract test, `tests/components/workspaces/test_docker_containers.py` and every workspace
   test pass unchanged.
 
 #### L2. A `docker-engine` adapter for Linux (B)
 
-- [ ] **Tests first**, on L0's recording, committed with this task:
+- [x] **Tests first**, on L0's recording, committed with this task:
   - The contract cases on the new recording (`tests/contract/test_container_platform.py`). They fail: there is no
     adapter. The contract gains `test_a_platform_clank_does_not_start_refuses_with_the_command_to_run`, for every
     adapter: where a start or a stop is not supported, its capability is false and names the command, and asking
@@ -212,57 +217,81 @@ condition holds. Now: L0's tool, L1, P3 and P6.
     - `test_every_command_goes_to_the_system_engines_socket` (`-H unix:///var/run/docker.sock`, whatever
       `DOCKER_HOST` and the current context say);
     - `test_a_failed_engine_says_where_to_read_why`; `test_without_systemd_the_engine_is_asked_directly`.
-  - `tests/components/workspaces/test_docker_containers.py` runs for both adapters.
-- [ ] **Files:** create `clank/components/workspaces/adapters/docker_engine.py`. List it in
+  - `tests/components/workspaces/test_docker_containers.py` runs for both adapters, with
+    `test_every_container_command_names_the_engine_its_adapter_names`.
+  - As built, also: `test_systemds_word_for_dockers_service_gives_its_state`,
+    `test_a_reading_of_systemd_from_the_last_second_is_reused`,
+    `test_docker_from_the_snap_or_rootless_docker_is_unsupported_saying_how_to_install_docker_engine` (the adapter's
+    own words; L3 chooses it), `test_where_systemd_knows_dockers_service_its_engine_is_used_whatever_the_context`
+    and `test_the_capture_tool_asks_what_the_adapter_asks`. The contract tells a platform Clank starts by its
+    recording's transitions: Docker Engine's has none.
+- [x] **Files:** create `clank/components/workspaces/adapters/docker_engine.py`. List it in
   `workspaces/adapters/__init__.py:10-15`, and say "Docker Engine on Linux" in the kind's description. Update
   `docs/GLOSSARY.md` (*Container platform*: Docker Engine on Linux now).
-- [ ] **Interfaces:** `class DockerEngine(DockerCli)`: `NAME = "docker-engine"`, `LABEL = "Docker Engine"`,
+- [x] **Interfaces:** `class DockerEngine(DockerCli)`: `NAME = "docker-engine"`, `LABEL = "Docker Engine"`,
   `PLATFORMS = ("linux",)`. `status()` gives running, starting, stopping, stopped, failed, no access, unsupported or
   not installed. `capabilities()`: status is supported; start and stop are not, each naming its command.
   `request_start()` and `request_stop()` raise `PlatformError` with the command. Every engine command passes one
-  guard, `_active()`, which reads systemd (a reading from the last second is reused).
+  guard, `_active()`, which reads systemd (a reading from the last second is reused). As built, the guard is the
+  base's `_ready()`, which `_argv` asks before every command, so no container method is overridden; systemd's view
+  is `docker_service(answer) -> Service | None` and the groups `docker_group() -> tuple[bool, bool]`, both module
+  functions L3 and L4 read too.
 
 #### L3. The adapter chosen by platform and by what answers (B)
 
-- [ ] **Tests first:**
+- [x] **Tests first:**
   - `tests/components/workspaces/test_choosing_a_platform.py` (design 0014 §2):
     - `test_docker_engine_is_used_where_docker_desktop_is_not` (Linux; the docker command's context is not
       `desktop-linux`, and systemd knows Docker's service: `docker-engine`, with its reason);
     - `test_docker_desktop_is_used_on_windows_and_macos_and_where_its_context_is_current_on_linux`;
     - `test_a_stopped_docker_desktop_is_still_chosen_where_no_docker_engine_is_installed`;
     - `test_a_docker_command_without_dockers_system_service_asks_the_engine_directly`;
-    - `test_docker_from_the_snap_or_rootless_docker_is_unsupported_saying_how_to_install_docker_engine`;
+    - `test_docker_from_the_snap_or_rootless_docker_is_unsupported_saying_how_to_install_docker_engine` (built as
+      `test_the_snap_and_rootless_docker_go_to_docker_engine_which_says_they_are_unsupported`, the adapter's own
+      words being L2's);
     - `test_an_adapter_named_in_the_settings_is_used_as_named`;
     - `test_choosing_an_adapter_asks_no_engine` (only `docker context show`, `systemctl show` and `docker desktop
       version` are run, so a stopped engine is not woken);
-    - `test_docker_desktop_on_linux_names_its_own_context_and_elsewhere_changes_nothing`.
+    - `test_docker_desktop_on_linux_names_its_own_context_and_elsewhere_changes_nothing`;
+    - as built, also `test_without_a_docker_command_docker_engine_says_how_to_install_it`,
+      `test_the_platform_made_from_the_settings_keeps_why_it_was_chosen` and
+      `test_dockers_view_says_which_adapter_was_chosen_why_and_whether_clank_starts_it` (with the adapter in use,
+      for L6).
   - `tests/components/workspaces/test_docker_operations.py`:
     - `test_starting_docker_engine_is_refused_at_once_with_the_command_to_run`;
     - `test_without_access_a_start_names_the_docker_group_not_systemctl`;
-    - `test_stopping_docker_engine_is_refused_before_any_question_about_other_containers`.
+    - `test_stopping_docker_engine_is_refused_before_any_question_about_other_containers`;
+    - as built, also `test_a_workspaces_container_on_a_stopped_docker_engine_is_unavailable_saying_how_to_start_it`
+      (L2's guard reaches an agent's clients as `WorkspaceUnavailable`, in its words).
   - `tests/components/workspaces/test_workspace_operations.py`:
     `test_opening_a_workspace_while_docker_engine_is_stopped_names_the_command_to_start_it`.
   - `tests/components/agents/test_work.py`: `test_work_never_asks_a_docker_the_system_runs_to_start`. Docker's view
     says stopped, and `starts` is false: no `POST docker/start` is sent, the status's detail is printed, and the exit
     status is 1. Also `test_code_never_asks_a_docker_the_system_runs_to_start`.
   - The folder page: `test_the_folder_page_shows_the_command_for_a_docker_clank_does_not_start`.
-- [ ] **Files:** `workspaces/kinds.py:25-28` (`adapter`: `auto` by default; its description lists `auto`,
+- [x] **Files:** `workspaces/kinds.py:25-28` (`adapter`: `auto` by default; its description lists `auto`,
   `docker-desktop` and `docker-engine`); `workspaces/service.py:69-72` (`choose_platform`), `119-125` (the platform
   property uses it), `322-368` (start and stop refused at once, in the status's words), `459-469` (the view gains
   `chosen` and `starts`) and `494-498` (`_require_usable` refuses *no access* too); `workspaces/folders.py:157-160`
   (the status's detail); `workspaces/adapters/docker_desktop.py` (`--context desktop-linux` on Linux);
   `agents/cli.py:67-77`; `agents/console/folder.py:729-732`. Regenerated: `clank/schemas/docker.schema.json`,
-  `vscode/src/core/kinds.ts`.
-- [ ] **Interfaces:** `choose_platform(setting: str, platform: str = sys.platform, answer: TimedAnswer = run_answer,
-  which: Callable[[str], str | None] = shutil.which, environ: Mapping[str, str] = os.environ) -> tuple[str, str]`:
-  the adapter's name, and why. `GET /docker` gains `chosen: str` and `starts: bool`.
+  `vscode/src/core/kinds.ts`. As built, the choice is a module of its own, `workspaces/adapters/choose.py`, which
+  `make_platform` asks, so tests that replace `make_platform` choose nothing; the platform made keeps why
+  (`ContainerPlatform.chosen`).
+- [x] **Interfaces:** `choose_platform(setting: str, platform: str = sys.platform, answer: TimedAnswer = run_answer,
+  which: Callable[[str], str | None] = shutil.which, environ: Mapping[str, str] = os.environ) -> tuple[str, str]`: the
+  adapter's name, and why. `GET /docker` gains `chosen: str` and `starts: bool`, and as built `said: str`, the state in
+  a sentence with what to do (the words `clank work`, `clank code` and the folder page show). For L6:
+  `Workspaces.platform_adapter() -> str`, the adapter in use by name (`docker-desktop`, `docker-engine`), and
+  `Workspaces.platform_starts() -> bool`, which asks nothing more of a platform not installed or unsupported (no start
+  mends those, and Docker Desktop's own command, unanswered, would be asked again at each reading).
 
 #### L4. The doctor and the meters ask the platform (B)
 
 B because, until it is built, the meters would start again an engine the owner stopped with `sudo systemctl stop
 docker` alone (its socket still listening), within 10 seconds.
 
-- [ ] **Tests first:**
+- [x] **Tests first:**
   - `tests/components/machine/test_checks.py` (design 0014 §2, §5):
     `test_docker_checks_report_what_the_container_platform_reports`. A platform that says *no access* gives "Docker
     running" a warning with the docker group, never "start it with `clank docker start`". *not installed* on Linux
@@ -271,17 +300,24 @@ docker` alone (its socket still listening), within 10 seconds.
   - `tests/components/machine/test_meters.py` (design 0014 §2): `test_the_meters_never_wake_a_stopped_engine`. While
     Docker's last reading is not running, no container figures are asked for; while it runs, they come through the
     workspaces component, and the rows are as before.
-- [ ] **Files:** `machine/checks.py:149-159` (the two checks read `Facts.docker`, the platform's status);
+  - As built, also `test_each_running_containers_use_is_read_from_docker_stats_in_its_own_fields` (both adapters)
+    and `test_the_running_engines_containers_use_is_read_as_recorded`; the doctor's tests read Docker through a
+    faked `read_platform`, so no test asks this machine's Docker.
+- [x] **Files:** `machine/checks.py:149-159` (the two checks read `Facts.docker`, the platform's status);
   `machine/detect.py:84-87` (the profile's `docker` from the platform); `machine/cli.py:23-28` and
   `machine/service.py:123-140` (both build the facts from the platform the settings choose, read without the service
   in the command); `machine/meters.py:160-220` (`Containers` takes the workspaces' function instead of running
   `docker`); `machine/service.py:67`; `machine/component.py` (`uses=("workspaces",)`); `workspaces/service.py` (public
   `read_platform(home)` for the doctor and `container_stats()` for the meters);
-  `workspaces/adapters/docker_cli.py` (`stats()`). `tests/components/machine/test_doctor.py`.
-- [ ] **Interfaces:** `Facts.docker: PlatformStatus | None`; `read_platform(home: Home) -> PlatformStatus`, from
+  `workspaces/adapters/docker_cli.py` (`stats()`). `tests/components/machine/test_doctor.py`. As built,
+  `machine/detect.py` keeps `docker --version` (design 0014 §2: it reaches no engine), and `Facts.run` goes, no
+  check running a command of its own any more.
+- [x] **Interfaces:** `Facts.docker: PlatformStatus | None`; `read_platform(home: Home) -> PlatformStatus`, from
   `config/docker.json` and `choose_platform`; `Workspaces.container_stats() -> list[dict[str, Any]]`, empty unless
-  Docker's last reading is running; `DockerCli.stats() -> str`.
-- [ ] **Done when:** `tests/test_architecture.py` passes, with the new use declared and no cycle.
+  Docker's last reading is running; `DockerCli.stats() -> str`. As built: `Facts.docker: DockerReading | None` and
+  `read_platform(home: Home) -> DockerReading` (the status, and whether Clank starts it, which the fix's words
+  need), and `ContainerPlatform.stats() -> list[dict[str, Any]]`, Docker's rows parsed in the adapter.
+- [x] **Done when:** `tests/test_architecture.py` passes, with the new use declared and no cycle.
 
 #### L5. The gateway's Linux listener (B)
 
@@ -381,11 +417,17 @@ which wait for the docker-marked test's answer on Linux (below).
   it forwards) and makes the edge again (`ready(..., again=why)`); the edge also mounts Clank's programs, as every
   container since decision 0142, so the socket folder is its only mount besides them; and `edge.py` no longer changes
   the sandbox image's tag (decision 0142: the programs are mounted, not copied), so no image is built again.
-- [ ] **If the host's own address answers:** the workspaces' networks are made with
+- [x] **If the host's own address answers:** the workspaces' networks are made with
   `com.docker.network.bridge.inhibit_ipv4`, and the docker-marked test proves the address no longer answers. The
-  outer network keeps its address: it is the edge's way out. *Waiting for the docker-marked test on Linux:* making
-  the networks so needs an option in `ensure_network`, the adapters' own, which L1 moves to the base class on another
-  branch; it is added once the test says the address answers.
+  outer network keeps its address: it is the edge's way out. It answers (found on L5 and L6's branch, 2026-10-27), so
+  this part was built on lane L's branch, which moves `ensure_network` into `DockerCli`: `ensure_network(...,
+  options)`, `ContainerPlatform.network_options(name)` and `inner_network_options()` (Docker Engine's
+  `inhibit_ipv4`; none on Docker Desktop), with
+  `test_a_workspaces_network_gives_this_computer_no_address_on_docker_engine_and_is_as_before_elsewhere` and the
+  workspace's own tests. A network made before is made again when its workspace next opens while its container does
+  not run (its container is then made again on it, its home kept, and the edge joins it again); while the container
+  runs, the opening says so, and it is made again once the workspace is stopped and opened again. The docker-marked
+  test is L6's.
 - [x] **Interfaces:** `edge_spec(home, image, *, gateway_port, socket_folder: str | None = None, user: str = USER)`;
   `ContainerPlatform.HOST_LOOPBACK: ClassVar[bool]`; `ensure_network(..., options: Mapping[str, str] | None = None)`;
   `checked_folder(given: str, clank_home: Path, socket_folder: Path | None = None) -> str`. *As built:* `edge_spec`
@@ -395,7 +437,7 @@ which wait for the docker-marked test's answer on Linux (below).
 
 #### L7. A workspace opens only with its memory limited (B)
 
-- [ ] **Tests first** (design 0014 §4, §5):
+- [x] **Tests first** (design 0014 §4, §5):
   - `tests/components/workspaces/test_workspace_operations.py`:
     `test_a_workspace_does_not_open_where_docker_cannot_limit_memory_saying_how_to_fix_it` (Docker's words, and
     `cgroup_enable=memory` in `/boot/firmware/cmdline.txt` on a Raspberry Pi);
@@ -403,25 +445,41 @@ which wait for the docker-marked test's answer on Linux (below).
     `test_dockers_memory_limits_are_read_when_a_workspace_opens_never_in_the_regular_check`.
   - `tests/components/machine/test_checks.py`:
     `test_the_doctor_fails_when_docker_cannot_limit_memory_and_warns_when_it_is_allowed`.
-- [ ] **Files:** `workspaces/adapters/docker_cli.py` (`memory_limits()` and `warnings()`, from `docker info
+  - As built, also `test_whether_docker_can_limit_memory_is_read_in_its_words` and
+    `test_a_docker_info_that_reached_no_engine_says_no_cpus_or_memory` (both adapters), and
+    `test_memory_limits_are_read_as_recorded_and_an_answer_that_reached_no_engine_says_nothing` on the recording:
+    `docker info --format` exits 0 even when it reached no engine, so an answer whose errors say so tells nothing,
+    and `limits()` no longer takes `0 0` for a computer's CPUs and memory. The doctor counts 11 checks; the
+    console's machine page shows the new one (its snapshot rewritten).
+- [x] **Files:** `workspaces/adapters/docker_cli.py` (`memory_limits()` and `warnings()`, from `docker info
   --format` with `MemoryLimit` and `Warnings` only); `workspaces/kinds.py` (`allow_unlimited_memory`, false by
   default); `workspaces/folders.py:150-183` (the refusal in the record step; the log line when allowed);
   `workspaces/service.py` (the summary says "memory not limited"); `machine/checks.py` (the check "Docker limits
-  memory"). Regenerated: `clank/schemas/docker.schema.json`, `vscode/src/core/kinds.ts`.
-- [ ] **Interfaces:** `ContainerPlatform.memory_limits() -> bool | None`; `ContainerPlatform.warnings() -> list[str]`;
+  memory"). Regenerated: `clank/schemas/docker.schema.json`, `vscode/src/core/kinds.ts`. As built, the words the
+  opening, Docker's view and the doctor share are `workspaces/memory.py`'s.
+- [x] **Interfaces:** `ContainerPlatform.memory_limits() -> bool | None`; `ContainerPlatform.warnings() -> list[str]`;
   `DockerSettings.allow_unlimited_memory: bool = False`; `GET /docker` gains `memory_limits: bool | None`, the last
-  reading.
+  reading. As built, one method gives both, from one `docker info`: `ContainerPlatform.memory_limits() -> tuple[bool
+  | None, list[str]]`, the warnings that speak of memory; `DockerReading` carries them and the allowance to the
+  doctor.
 
 #### L8. A folder the agent cannot write is refused, saying why (C)
 
-Only if `id -u` on the Pi, or on CI's runner (P2), is not 1000.
+Only if `id -u` on the Pi, or on CI's runner (P2), is not 1000. Built: GitHub's runners run as user 1001, and the
+owner's Linux computer may use another.
 
-- [ ] **Test first** (`tests/components/workspaces/test_workspace_operations.py`, design 0014 §4):
+- [x] **Test first** (`tests/components/workspaces/test_workspace_operations.py`, design 0014 §4):
   `test_on_linux_a_folder_the_agent_cannot_write_is_refused_saying_why`. On Docker Engine, a folder that uid 1000 may
   not write is refused. The words say that the agent works as user 1000 in its container, whose folder it is, and how
-  to let it write.
-- [ ] **Files:** `workspaces/folders.py:150-161` (the record step asks the platform's rule; Docker Desktop's file
+  to let it write. As built, the rule's own tests are `tests/components/workspaces/test_agent_access.py`'s: what user
+  1000 may do comes from the folder's owner, group and others' bits and its POSIX access control list, as Linux
+  decides it; the words name the fix (`setfacl -R -m u:1000:rwX,d:u:1000:rwX FOLDER`, or `chmod -R a+rwX FOLDER`);
+  Docker Desktop's file sharing says nothing; and, on Linux only, a real private folder of another user's is refused.
+- [x] **Files:** `workspaces/folders.py:150-161` (the record step asks the platform's rule; Docker Desktop's file
   sharing has none); the tests' folders in `tests/docker/` are opened to uid 1000 where the runner's user is not 1000.
+  As built: `ContainerPlatform.agent_access(folder) -> str` (empty: the agent may use it), Docker Engine's from
+  `docker_engine.folder_access`, its words from `refusal`; `tests/docker/conftest.py`'s `for_the_agent(folder)` opens a
+  test's folders before a container sees them, where this machine's user is not 1000.
 
 ### Lane P: the Pi's own checks, and CI on arm64
 

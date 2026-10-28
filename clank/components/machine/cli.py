@@ -1,7 +1,8 @@
 """The machine component's command: `clank doctor`, which checks this computer and changes nothing.
 
 It is one of the three commands that act without a running service (design 0002 §2.15): it detects the machine and
-runs the checks itself. It exits with 1 when a check failed (a warning is not a failure).
+runs the checks itself, reading Docker through the platform the settings choose (design 0014 §2). It exits with 1 when
+a check failed (a warning is not a failure).
 """
 
 import json
@@ -13,6 +14,7 @@ import click
 
 from clank.components.machine.checks import MARKS, Facts, free_gb, hags_mode, run_checks
 from clank.components.machine.detect import detect
+from clank.components.workspaces.service import read_platform
 from clank.kernel.home import Home
 from clank.kernel.processes import run_command
 
@@ -24,8 +26,8 @@ def doctor(as_json: bool) -> None:
     home = Home.resolve()
     profile = detect(run_command)
     facts = Facts(
-        home=home, profile=profile, run=run_command, port=_port(home), hags_mode=hags_mode(), free_gb=free_gb(home),
-        more=_declared(),
+        home=home, profile=profile, docker=read_platform(home), port=_port(home), hags_mode=hags_mode(),
+        free_gb=free_gb(home), more=_declared(),
     )  # fmt: skip
     results = run_checks(facts)
     if as_json:

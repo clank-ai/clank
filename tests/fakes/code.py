@@ -3,12 +3,15 @@ run as Clank runs the real one. Its first argument names a JSON file that keeps 
 the extensions installed (with their versions), the folders opened, and the extensions it refuses to install (a test
 writes those first). `--list-extensions --show-versions` prints the installed ones as `id@version`;
 `--install-extension` installs an id (at 1.0.0) or a `.vsix` (Clank's, at the version its name says) unless refused;
-anything else opens its last argument, a folder.
+anything else opens its last argument, a folder. It writes the JSON file whole, through a file beside it renamed over
+it, so a test reading it while it writes never reads half of it.
 """
 
 import json
+import os
 import re
 import sys
+import time
 from pathlib import Path
 
 
@@ -33,8 +36,22 @@ def main(argv: list[str]) -> int:
             print(f"Extension '{wanted}' was successfully installed.")
     else:
         state.setdefault("opened", []).append(arguments[-1])
-    state_file.write_text(json.dumps(state), encoding="utf-8")
+    write(state_file, json.dumps(state))
     return status
+
+
+def write(path: Path, text: str) -> None:
+    """`text` into `path` whole: written beside it, then renamed over it. On Windows a rename fails while a reader holds
+    the file open, for a moment: it is tried again then."""
+    beside = path.with_name(path.name + ".part")
+    beside.write_text(text, encoding="utf-8")
+    for _ in range(100):
+        try:
+            os.replace(beside, path)
+            return
+        except PermissionError:
+            time.sleep(0.02)
+    os.replace(beside, path)
 
 
 if __name__ == "__main__":

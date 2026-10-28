@@ -6,19 +6,23 @@ program's (design 0002 §2.9, §3.2). Starting and stopping are operations (desi
 a start asks the platform, waits until its engine answers (within `start_timeout_seconds`, and it can be canceled while
 it waits), then lets the adapter put right what the start disturbed; a stop asks the user first whenever a container
 that is not Clank's runs, naming each, because stopping Docker stops them all. Both are safe to run again, and after a
-restart an interrupted one is reconciled by reading Docker's state. A background check reads the status every
-`poll_seconds` and records `docker.changed` when what runs changes (not when only a container's uptime does), so clients
-follow Docker without asking it themselves; the first reading after the service starts is what clients load, not a
-change. The platform is made by `make_platform` from the adapter the settings name, again when that setting changes;
-tests replace `make_platform`. From M4 the workspaces themselves are its too: opening, stopping and removing one are
-operations of `folders.py`, and the edge they share forwards the gateway's port and the proxy's (from the gateway's
-service). The edge is kept on every workspace's network (`edge.py`, design 0004 §3 revised 2026-10-26): the background
-check joins it back to the network of a running workspace it is not on, starts it or makes it, from the reading it
-takes anyway (the first one when the service starts); `reach` puts it right before an agent starts in a workspace; and
-each view of a workspace says, as `edge` and `edge_said`, whether its container reaches the edge, and what Clank does
-when it does not. The platform adapter's name decides the edge's way to the gateway (design 0014 §3): `docker-engine`
-gets the gateway's socket (`edge_socket`, from the gateway's service), every other adapter the host's loopback; and on
-Linux no workspace's folder may hold the gateway's socket folder or be inside it (`socket_folder`).
+restart an interrupted one is reconciled by reading Docker's state. A platform Clank does not start (the system's Docker
+Engine, design 0014 §2) is refused both at once, in the status's words, a stop before any question; so is one this
+account has no access to (the docker group). A background check reads the status every `poll_seconds` and records
+`docker.changed` when what runs changes (not when only a container's uptime does), so clients follow Docker without
+asking it themselves; the first reading after the service starts is what clients load, not a change. The platform is
+made by `make_platform` from the setting `adapter` (`auto` by default: the adapter of this computer's Docker, chosen by
+`adapters/choose.py` without waking any engine), again when that setting changes, and keeps why it was chosen; Docker's
+view says which, why, and whether Clank starts it; tests replace `make_platform`. From M4 the workspaces themselves are
+its too: opening, stopping and removing one are operations of `folders.py`, and the edge they share forwards the
+gateway's port and the proxy's (from the gateway's service). The edge is kept on every workspace's network (`edge.py`,
+design 0004 §3 revised 2026-10-26): the background check joins it back to the network of a running workspace it is not
+on, starts it or makes it, from the reading it takes anyway (the first one when the service starts); `reach` puts it
+right before an agent starts in a workspace; and each view of a workspace says, as `edge` and `edge_said`, whether its
+container reaches the edge, and what Clank does when it does not. The platform adapter's name decides the edge's way to
+the gateway (design 0014 §3): `docker-engine` gets the gateway's socket (`edge_socket`, from the gateway's service),
+every other adapter the host's loopback; and on Linux no workspace's folder may hold the gateway's socket folder or be
+inside it (`socket_folder`).
 """
 
 import logging
@@ -26,6 +30,7 @@ import os
 import threading
 import time
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 from typing import Any, Literal
@@ -35,12 +40,16 @@ import anyio.to_thread
 
 from clank.components.workspaces import jobs as jobs  # the job runner, for the flows and the agents (design 0021 §6)
 from clank.components.workspaces.adapters import CONTAINER_PLATFORMS
-from clank.components.workspaces.adapters.platform import Container, ContainerPlatform, PlatformError, PlatformStatus
+from clank.components.workspaces.adapters.choose import choose_platform
+from clank.components.workspaces.adapters.platform import Container, ContainerPlatform, PlatformError
+from clank.components.workspaces.adapters.platform import PlatformStatus as PlatformStatus  # for the doctor
 from clank.components.workspaces.cloud import EVENT_TYPES as CLOUD_EVENT_TYPES
 from clank.components.workspaces.cloud import CloudBounds
 from clank.components.workspaces.edge import EVENT_TYPES as EDGE_EVENT_TYPES
 from clank.components.workspaces.edge import Edge
 from clank.components.workspaces.kinds import DockerSettings, Workspace
+from clank.components.workspaces.memory import MEMORY_FIX as MEMORY_FIX  # for the doctor (design 0014 §5)
+from clank.components.workspaces.memory import memory_said as memory_said
 from clank.components.workspaces.network import SETS_FILE, HostAsks, sets
 from clank.components.workspaces.sandbox import BRIDGE_PROGRAM as BRIDGE_PROGRAM  # for the agents (design 0005)
 from clank.components.workspaces.sandbox import CURRENT_INSTRUCTIONS as CURRENT_INSTRUCTIONS  # for the agents
@@ -53,9 +62,11 @@ from clank.components.workspaces.setup import proposed_setup
 from clank.kernel.clock import to_text
 from clank.kernel.core import Kernel
 from clank.kernel.events import Actor, EventType, Subject
+from clank.kernel.home import Home
 from clank.kernel.operations import Canceled, Operation, OperationContext, OperationType, Reconciliation, StepSpec
 from clank.kernel.processes import Answer, run_command
 from clank.kernel.questions import EXPIRY, Option, QuestionDraft
+from clank.kernel.settings import read_record
 
 log = logging.getLogger(__name__)
 Owner = Literal["clank", "other"]
@@ -99,9 +110,60 @@ class DockerError(Exception):
 
 
 def make_platform(name: str) -> ContainerPlatform:
-    """The container platform an adapter name gives, with its command found on this machine."""
-    adapter = CONTAINER_PLATFORMS.get(name)
-    return adapter(run_command, adapter.find())
+    """The container platform the setting names (`auto`: the one this computer's Docker is, `choose_platform`, design
+    0014 §2), with its command found on this machine; it keeps why it was chosen (`chosen`)."""
+    chosen, why = choose_platform(name)
+    adapter = CONTAINER_PLATFORMS.get(chosen)
+    platform = adapter(run_command, adapter.find())
+    platform.chosen = why
+    return platform
+
+
+def starts(platform: ContainerPlatform) -> bool:
+    """Whether Clank starts and stops this platform: an application its user runs does, the system's service does not
+    (design 0014 §2)."""
+    return any(capability.name == "start" and capability.supported for capability in platform.capabilities())
+
+
+def status_said(status: PlatformStatus) -> str:
+    """The platform's state in a sentence, with what to do when it says: "Docker Engine is stopped: start it with
+    `sudo systemctl start docker`; ..."."""
+    states = {"no access": "gives this account no access", "failed": "has failed"}
+    said = f"{status.label} {states.get(status.state, f'is {status.state}')}"
+    return f"{said}: {status.detail}" if status.detail else said
+
+
+@dataclass(frozen=True)
+class DockerReading:
+    """Docker as the doctor reads it, without the service (design 0014 §2, §4, §5): the platform's status, whether
+    Clank starts it, and while it runs, whether it can limit a container's memory, in its words; and whether the owner
+    allows a workspace without that (`allow_unlimited_memory`)."""
+
+    status: PlatformStatus
+    starts: bool
+    memory: tuple[bool | None, list[str]] = (None, [])
+    allow_unlimited_memory: bool = False
+
+
+def docker_settings(home: Home) -> DockerSettings:
+    """`config/docker.json` as the service would read it; its defaults when it is not there or does not read."""
+    path = home.config / "docker.json"
+    found = read_record(DockerSettings, path) if path.is_file() else []
+    return DockerSettings.model_validate(found[0].model_dump()) if isinstance(found, tuple) else DockerSettings()
+
+
+def read_platform(home: Home) -> DockerReading:
+    """Docker as the platform the settings choose reports it now, read without the service (`clank doctor`, and the
+    doctor's operation, which does not need this component's part)."""
+    settings = docker_settings(home)
+    platform = make_platform(settings.adapter)
+    status = platform.status()
+    return DockerReading(
+        status=status,
+        starts=starts(platform),
+        memory=platform.memory_limits() if status.running else (None, []),
+        allow_unlimited_memory=settings.allow_unlimited_memory,
+    )
 
 
 def owner(container: Container, home_id: str) -> Owner:
@@ -116,19 +178,24 @@ def image_name(name: str) -> str:
     return name[: len("sha256:") + 12] if name.startswith("sha256:") else name
 
 
-def summary(status: PlatformStatus, owners: list[Owner]) -> str:
-    """One line on the platform: "Docker Desktop · running · 3 containers running, none of them Clank's"."""
+def summary(status: PlatformStatus, owners: list[Owner], unlimited: bool = False) -> str:
+    """One line on the platform: "Docker Desktop · running · 3 containers running, none of them Clank's", and
+    " · memory not limited" while Docker's last reading says it cannot limit a container's memory (design 0014 §4)."""
     text = f"{status.label} · {status.state}"
     if not status.running:
         return text
+    return f"{text} · {_running(status, owners)}" + (" · memory not limited" if unlimited else "")
+
+
+def _running(status: PlatformStatus, owners: list[Owner]) -> str:
     running = [mine for container, mine in zip(status.containers, owners, strict=True) if container.state == "running"]
     if not running:
-        return f"{text} · no container running"
+        return "no container running"
     clanks = running.count("clank")
     if len(running) == 1:
-        return f"{text} · 1 container running, {'Clank' if clanks else 'not Clank'}'s"
+        return f"1 container running, {'Clank' if clanks else 'not Clank'}'s"
     whose = "none" if clanks == 0 else "all" if clanks == len(running) else str(clanks)
-    return f"{text} · {len(running)} containers running, {whose} of them Clank's"
+    return f"{len(running)} containers running, {whose} of them Clank's"
 
 
 class Workspaces:
@@ -136,13 +203,14 @@ class Workspaces:
 
     def __init__(self, kernel: Kernel) -> None:
         self.kernel = kernel
-        self._adapter = ""
+        self._adapter = ""  # the setting the platform was made from (auto, or an adapter's name)
         self._platform: ContainerPlatform | None = None
         self._last: dict[str, Any] | None = None
         self._status: PlatformStatus | None = None  # the last reading, as the platform gave it
         self._fingerprint: tuple[Any, ...] | None = None
         self._lock = threading.Lock()
         self._limits: tuple[str, float, tuple[int, int] | None] | None = None  # adapter, when read, what it said
+        self._memory: bool | None = None  # whether Docker limits a container's memory, as last read (an opening's)
         self.cloud = CloudBounds(kernel)  # where each workspace's requests may go (design 0016 §9)
         self.network = HostAsks(kernel, self.allow_host)  # the hosts its agent asks for (design 0024 §3)
         self.edge = Edge(self)  # the edge on every workspace's network (design 0004 §3)
@@ -153,11 +221,37 @@ class Workspaces:
 
     @property
     def platform(self) -> ContainerPlatform:
-        """The container platform the settings name."""
+        """The container platform the settings name, chosen when it is first asked for and again when the setting
+        changes (`auto`: this computer's, design 0014 §2)."""
         name = self.settings().adapter
         if self._platform is None or name != self._adapter:
             self._platform, self._adapter = make_platform(name), name
         return self._platform
+
+    def platform_adapter(self) -> str:
+        """The adapter in use, by name (docker-desktop, docker-engine): the edge's way to the gateway depends on it
+        (design 0014 §3)."""
+        return self.platform.NAME
+
+    def platform_starts(self, status: PlatformStatus | None = None) -> bool:
+        """Whether Clank starts and stops the platform in use, read from it each time (Docker Desktop's own command
+        may answer later than its first asking; Docker Desktop keeps its answer once it has one); never where its
+        `status` says it is not installed or unsupported, which no start mends, so nothing more is asked of it."""
+        if status is not None and status.state in ("not installed", "unsupported"):
+            return False
+        return starts(self.platform)
+
+    def note_memory(self, limited: bool | None) -> None:
+        """Keep the last reading of whether Docker can limit a container's memory (an opening reads it, design 0014
+        §4), which Docker's view says."""
+        self._memory = limited
+
+    def not_running(self, status: PlatformStatus) -> str:
+        """Why Docker cannot be used now and what to do, for one that does not run: the status's own words, or, for a
+        platform Clank starts that says nothing more, how to start it through Clank."""
+        if self.platform_starts(status) and not status.detail:
+            return f"Docker is {status.state}: start it with `clank docker start`, or from the console's Docker page"
+        return status_said(status)
 
     def docker(self, refresh: bool = False) -> dict[str, Any]:
         """Docker as last read, or read now (when asked, or never read yet): its state, versions, a one-line summary,
@@ -390,8 +484,12 @@ class Workspaces:
     def runs_current_image(self, workspace: str) -> bool | None:
         """Whether the workspace's container runs Clank's sandbox image as this Clank builds it: False for one made
         from an older image (its bridge and Clank's MCP server are baked into it), which moves to the new one when the
-        workspace is stopped and opened again; None when it has no container."""
-        found = self.platform.container(names(self.kernel.home.id).container(workspace))
+        workspace is stopped and opened again; None when it has no container, or Docker refuses to be asked (a stopped
+        Docker Engine, design 0014 §2)."""
+        try:
+            found = self.platform.container(names(self.kernel.home.id).container(workspace))
+        except PlatformError:
+            return None
         layers = Workspace.model_validate(self.kernel.settings.get("workspace", workspace).record.model_dump()).layers
         return found.image == layered_tag(layers) if found is not None else None
 
@@ -420,11 +518,15 @@ class Workspaces:
         return {"workspace": name, "layers": layers, "said": said}
 
     def container_of(self, workspace: str) -> str:
-        """The name of a workspace's container, once it runs; `WorkspaceUnavailable` saying why not."""
+        """The name of a workspace's container, once it runs; `WorkspaceUnavailable` saying why not (a refusal of
+        Docker's in its words: a stopped Docker Engine names the command that starts it, design 0014 §2)."""
         if workspace not in {loaded.id for loaded in self.kernel.settings.records("workspace")}:
             raise WorkspaceUnavailable(f"there is no workspace {workspace!r}: `clank workspace open` makes one")
         name = names(self.kernel.home.id).container(workspace)
-        found = self.platform.container(name)
+        try:
+            found = self.platform.container(name)
+        except PlatformError as error:
+            raise WorkspaceUnavailable(str(error)) from error
         if found is None or found.state != "running":
             raise WorkspaceUnavailable(f"{workspace}'s container does not run: `clank workspace open` starts it")
         return name
@@ -465,14 +567,20 @@ class Workspaces:
         """The command that runs `argv` in a workspace's container, in its folder, with `env`: in a terminal, else
         talked to over its input and output (an MCP server); `container`, when the caller has just found it running,
         is not asked of Docker again."""
-        return self.platform.exec_argv(
-            container or self.container_of(workspace), argv, workdir=WORKSPACE, env=env, terminal=terminal
-        )
+        found = container or self.container_of(workspace)
+        try:
+            return self.platform.exec_argv(found, argv, workdir=WORKSPACE, env=env, terminal=terminal)
+        except PlatformError as error:
+            raise WorkspaceUnavailable(str(error)) from error
 
     def run_in(self, workspace: str, argv: list[str], input: bytes | None = None, timeout: float = 30.0) -> Answer:
         """Run `argv` in a workspace's running container, in its folder, as its user; its whole answer (design 0005
-        §2: the session bridge). `WorkspaceUnavailable` when its container does not run."""
-        return self.platform.run_in(self.container_of(workspace), argv, workdir=WORKSPACE, input=input, timeout=timeout)
+        §2: the session bridge). `WorkspaceUnavailable` when its container does not run, or Docker refuses."""
+        found = self.container_of(workspace)
+        try:
+            return self.platform.run_in(found, argv, workdir=WORKSPACE, input=input, timeout=timeout)
+        except PlatformError as error:
+            raise WorkspaceUnavailable(str(error)) from error
 
     def folder_of(self, workspace: str) -> str:
         """A workspace's folder on this machine."""
@@ -500,6 +608,16 @@ class Workspaces:
         found = platform.limits()
         self._limits = (adapter, now, found)
         return found
+
+    def container_stats(self) -> list[dict[str, Any]]:
+        """Each running container's use of the CPU and memory, as `docker stats` gives it (the machine's meters): none
+        unless Docker's last reading is running, so an engine the owner stopped is never woken (design 0014 §2)."""
+        if self._status is None or not self._status.running:
+            return []
+        try:
+            return self.platform.stats()
+        except PlatformError:
+            return []
 
     def gateway_port(self) -> int:
         """The port the gateway listens on, which the edge forwards."""
@@ -614,6 +732,8 @@ class Workspaces:
                 context.log(f"{status.label} is already running")
                 return {"already": True, "docker": self._last}
             _require_usable(status)
+            if not self.platform_starts():
+                raise DockerError(status_said(status))  # the system's: what its owner runs, in the status's words
             await context.run_blocking(platform.request_start)
             context.log(f"asked {status.label} to start")
         async with context.step("wait"):
@@ -633,6 +753,9 @@ class Workspaces:
             if status.state == "stopped":
                 context.log(f"{status.label} is not running")
                 return {"already": True, "docker": self._last}
+            if not self.platform_starts():  # refused in the platform's words, before any question, having run nothing
+                await context.run_blocking(platform.request_stop)
+                raise DockerError(f"Clank does not stop {status.label}")
             home = self.kernel.home.id
             others = [c for c in status.containers if c.state == "running" and owner(c, home) != "clank"]
             if others:
@@ -739,11 +862,18 @@ class Workspaces:
         return view
 
     def _view(self, status: PlatformStatus) -> dict[str, Any]:
+        """Docker as clients show it: the platform's status, when it was read, a one-line summary, the state in a
+        sentence with what to do (`said`), why this adapter is the one in use (`chosen`), whether Clank starts it
+        (`starts`: the system's Docker Engine it never does, design 0014 §2), and each container with its owner."""
         owners = [owner(container, self.kernel.home.id) for container in status.containers]
         return {
             **status.model_dump(mode="json", exclude={"containers"}),
             "checked": to_text(self.kernel.clock.now()),
-            "summary": summary(status, owners),
+            "summary": summary(status, owners, unlimited=self._memory is False),
+            "said": status_said(status),
+            "memory_limits": self._memory,
+            "chosen": self.platform.chosen,
+            "starts": self.platform_starts(status),
             "containers": [
                 {**container.model_dump(mode="json", exclude={"label_keys"}), "owner": mine}
                 for container, mine in zip(status.containers, owners, strict=True)
@@ -774,7 +904,9 @@ def _docker_lock(params: Any) -> list[str]:
 
 
 def _require_usable(status: PlatformStatus) -> None:
+    """Refuse, in the status's words, a platform that is not installed, not supported, or not this account's to use
+    (the docker group, design 0014 §2)."""
     if status.state == "not installed":
         raise DockerError(f"{status.label} is not installed: {status.detail}")
-    if status.state == "unsupported":
+    if status.state in ("unsupported", "no access"):
         raise DockerError(status.detail)

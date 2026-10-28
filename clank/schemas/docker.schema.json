@@ -16,8 +16,8 @@
       "type": "string"
     },
     "adapter": {
-      "default": "docker-desktop",
-      "description": "The adapter Clank uses for containers: docker-desktop (the only one so far).",
+      "default": "auto",
+      "description": "The adapter Clank uses for containers: auto (Docker Desktop on Windows and macOS; on Linux, the one of the engine the docker command would use, chosen without waking any: Docker's view says which and why), docker-desktop, or docker-engine (Docker Engine on Linux, the system's service, which Clank never starts or stops).",
       "title": "Container platform",
       "type": "string"
     },
@@ -27,6 +27,12 @@
       "minimum": 1,
       "title": "Checked every",
       "type": "number"
+    },
+    "allow_unlimited_memory": {
+      "default": false,
+      "description": "Open workspaces even where Docker cannot limit a container's memory (a Raspberry Pi's default kernel): an agent's runaway process could then take this computer's memory. Off: no workspace opens there, saying how to turn the limits on.",
+      "title": "Allow unlimited memory",
+      "type": "boolean"
     },
     "start_timeout_seconds": {
       "default": 300,

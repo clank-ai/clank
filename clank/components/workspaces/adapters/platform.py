@@ -19,12 +19,14 @@ there is no error. Each container it lists or reads says the networks it is on (
 place on every workspace's network is checked from the reading the service takes anyway (design 0004 §3, revised
 2026-10-26); joining a network says whether it joined now or was on it already, and a container that cannot start
 because a network it was on is gone (removed, or made again since) is a `NetworkGone`, so Clank makes it again.
+These container commands are Docker's own CLI whatever program runs the engine: one base, `DockerCli`
+(`docker_cli.py`, design 0014 §2), holds them for every adapter.
 """
 
 import sys
 from abc import abstractmethod
 from collections.abc import Callable, Mapping, Sequence
-from typing import Protocol
+from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
@@ -121,6 +123,7 @@ class ContainerPlatform(Adapter):
         self.launch = launch
         self.answer = answer
         self.follow = follow
+        self.chosen = ""  # why this adapter is the one in use, said by whoever chose it (design 0014 §2)
 
     @classmethod
     @abstractmethod
@@ -144,6 +147,16 @@ class ContainerPlatform(Adapter):
         """The CPUs and the memory (MiB) the platform gives its containers, or None when it does not say."""
 
     @abstractmethod
+    def stats(self) -> list[dict[str, Any]]:
+        """Each running container's use of the CPU and memory, in the platform's own fields (`docker stats`: Name,
+        CPUPerc, MemUsage); none when it does not say."""
+
+    @abstractmethod
+    def memory_limits(self) -> tuple[bool | None, list[str]]:
+        """Whether the platform can limit a container's memory (None: it does not say), and its warnings about it, in
+        its words (design 0014 §4: a Raspberry Pi's default kernel cannot)."""
+
+    @abstractmethod
     def image_exists(self, tag: str) -> bool:
         """Whether an image of this tag is built."""
 
@@ -161,8 +174,14 @@ class ContainerPlatform(Adapter):
         status, or None when it could not start or was canceled."""
 
     @abstractmethod
-    def ensure_network(self, name: str, *, internal: bool, labels: Mapping[str, str]) -> None:
-        """Make a network unless it is there (internal: no route out)."""
+    def ensure_network(
+        self, name: str, *, internal: bool, labels: Mapping[str, str], options: Mapping[str, str] | None = None
+    ) -> None:
+        """Make a network unless it is there (internal: no route out), with its driver's `options`."""
+
+    @abstractmethod
+    def network_options(self, name: str) -> dict[str, str] | None:
+        """A network's driver options, as it was made; None when it is not there."""
 
     @abstractmethod
     def join_network(self, network: str, container: str, alias: str) -> bool:
@@ -237,3 +256,15 @@ class ContainerPlatform(Adapter):
 
     def after_start(self, log: Callable[[str], None]) -> None:
         """Put right what starting the platform disturbed on this machine, saying what it does; most need nothing."""
+
+    def inner_network_options(self) -> Mapping[str, str]:
+        """The driver options a workspace's own network is made with, so this computer has no address on it: none
+        where the platform's networks give it none anyway (Docker Desktop's, in its virtual machine); Docker Engine's
+        bridge would give it one, which a workspace's container could reach (design 0014 §4)."""
+        return {}
+
+    def agent_access(self, folder: str) -> str:
+        """Why the agent (user 1000 in its container) could not read and write this folder as the platform mounts it,
+        saying how to let it; empty when it can. Docker Desktop's file sharing maps the folder's owner, so it says
+        nothing; Docker Engine shows the host's own owners (design 0014 §4)."""
+        return ""
