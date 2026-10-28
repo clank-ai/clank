@@ -140,7 +140,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_workspace_operations.py` (17) |
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (5) |
-| 9 | The console: easy to use, dynamic, the machine on the right | `tests/components/machine/test_meters.py` (8), `tests/console/test_machine_column.py` (14) |
+| 9 | The console: easy to use, dynamic, the machine on the right | `tests/components/machine/test_meters.py` (9), `tests/console/test_machine_column.py` (14) |
 | 10 | A project's own software and MCP servers | `tests/components/agents/test_agent_servers.py` (9), `tests/components/tools/test_console_servers.py` (1), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_setup.py` (10), `tests/console/test_workspaces_page.py` (4) |
 
 ## Design 0005: the phone (the first slice of M9)
@@ -172,7 +172,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner gets | none yet |
 | 2 | How OpenCode asks, as measured | none yet |
-| 3 | Review and auto: Clank answers | `tests/components/agents/test_review.py` (11) |
+| 3 | Review and auto: Clank answers | `tests/components/agents/test_review.py` (12) |
 | 4 | The watcher | `tests/components/agents/test_watch_channel.py` (9) |
 | 5 | A change | `tests/components/agents/test_changes.py` (7) |
 | 6 | VS Code | `vscode/test/gates.test.ts` (16), `vscode/test/review.test.ts` (10) |
@@ -203,7 +203,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4.1 | Cost and data | none yet |
 | 4.2 | Plots | none yet |
 | 4.3 | Deliverables | none yet |
-| 5 | Implementing a plan | `tests/components/agents/test_review.py` (11) |
+| 5 | Implementing a plan | `tests/components/agents/test_review.py` (12) |
 | 5.1 | The implementer's instructions | `tests/components/agents/test_session_flow_branches.py` (8) |
 | 6 | Outside Clank | none yet |
 | 7 | Choosing the mode from Clank (phase 2) | `tests/components/agents/test_modes.py` (7), `vscode/test/plans.test.ts` (10) |
@@ -324,7 +324,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | none yet |
-| 2 | The container platform adapters | `tests/components/agents/test_work.py` (11), `tests/components/machine/test_checks.py` (10), `tests/components/machine/test_doctor.py` (4), `tests/components/machine/test_meters.py` (8), `tests/components/workspaces/test_choosing_a_platform.py` (12), `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_docker_engine.py` (14), `tests/components/workspaces/test_docker_operations.py` (17), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (25), `tests/contract/test_container_platform.py` (9), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (2) |
+| 2 | The container platform adapters | `tests/components/agents/test_work.py` (11), `tests/components/machine/test_checks.py` (10), `tests/components/machine/test_doctor.py` (4), `tests/components/machine/test_meters.py` (9), `tests/components/workspaces/test_choosing_a_platform.py` (12), `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_docker_engine.py` (14), `tests/components/workspaces/test_docker_operations.py` (17), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (25), `tests/contract/test_container_platform.py` (9), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (2) |
 | 3 | The edge's way to the gateway on Linux | `tests/components/gateway/test_listeners.py` (11), `tests/components/gateway/test_service.py` (15), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_socket.py` (5), `tests/components/workspaces/test_sandbox.py` (10), `tests/docker/test_cloud_live.py` (1), `tests/docker/test_escape.py` (5) |
 | 4 | A workspace's container on Docker Engine | `tests/components/machine/test_checks.py` (10), `tests/components/workspaces/test_agent_access.py` (4), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/docker/test_escape.py` (5) |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | `tests/components/machine/test_checks.py` (10) |
@@ -362,12 +362,12 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner gets, and what this design takes from design 0015 | none yet |
 | 2 | OpenRouter, the first cloud provider | none yet |
-| 3 | What OpenRouter offers, as its documentation says | `tests/components/runtime/test_openrouter.py` (14), `tests/real/test_openrouter.py` (5) |
+| 3 | What OpenRouter offers, as its documentation says | `tests/components/runtime/test_openrouter.py` (16), `tests/real/test_openrouter.py` (5) |
 | 4 | The provider's record, and its key | `tests/cli/test_endpoint_commands.py` (12), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/console/test_secret_field.py` (6) |
 | 5 | How the gateway gets the key | `tests/components/gateway/test_cloud_keys.py` (6) |
-| 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (14) |
+| 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (16) |
 | 7 | Cloud presets, and the main slot running one | `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17) |
-| 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_openrouter.py` (14), `tests/docker/test_cloud_live.py` (1) |
+| 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_openrouter.py` (16), `tests/docker/test_cloud_live.py` (1) |
 | 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
 | 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
 | 11 | Cost: each request, session and flow, and the limits | `tests/cli/test_cloud_commands.py` (7), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_cost_limits.py` (8), `tests/components/gateway/test_cost_views.py` (8), `tests/console/test_add_model.py` (25), `tests/console/test_cost_pause.py` (2), `tests/console/test_data.py` (18), `tests/console/test_home.py` (15), `tests/console/test_monitor_cloud.py` (3), `tests/console/test_requests_page.py` (11), `tests/console/test_text.py` (4), `tests/kernel/test_event_attention.py` (3) |
@@ -1391,6 +1391,7 @@ Design 0007 §3-§7 and design 0009 §5: reviewing the agent's changes, run on t
 - the watcher says a server that stopped is gone
 - a rejected change carries the note for the model
 - in review a change waits for your answer and the agent hears it
+- a question answered the moment it is asked still reaches the agent
 - a reject tells the agent why an answer in the terminal or from the phone settles the question
 - in auto mode clank answers at once
 - in review the implementers edits to a plan are accepted at once and any other change still waits
@@ -2697,7 +2698,7 @@ Design 0001 §7.3 and design 0002 §2.1 and §3.2 (M0.3): `clank doctor` prints 
 
 ### `tests/components/machine/test_meters.py`
 
-Design 0004 §9 (the owner's request, 2026-10-14: the console shows the machine's CPU, GPU, memory, disks and network all the time). The service reads them once a second: each reading has the CPU's use (as a whole and per logical processor), the memory and page file in use, the disks' and the network's rates since the reading before, each fixed drive's space and each NVIDIA GPU's use, memory, temperature and power (none without NVIDIA's library); the last readings are kept, the oldest dropped past five minutes, and answered at `GET /machine/meters`; each new one is sent to the clients live. A GPU whose handle its driver dropped is read again from a fresh start of NVIDIA's library, or else left out of the readings, said once, while the rest of each reading goes on. Design 0014 §2: the containers' figures come through the workspaces component's platform, asked only while Docker's last reading is running, so the meters never wake an engine the owner stopped.
+Design 0004 §9 (the owner's request, 2026-10-14: the console shows the machine's CPU, GPU, memory, disks and network all the time). The service reads them once a second: each reading has the CPU's use (as a whole and per logical processor), the memory and page file in use, the disks' and the network's rates since the reading before, each fixed drive's space and each NVIDIA GPU's use, memory, temperature and power (none without NVIDIA's library); the last readings are kept, the oldest dropped past five minutes, and answered at `GET /machine/meters`; each new one is sent to the clients live. A GPU whose handle its driver dropped is read again from a fresh start of NVIDIA's library, or else left out of the readings, said once, while the rest of each reading goes on. Design 0014 §2: the containers' figures come through the workspaces component's platform, asked only while Docker's last reading is running, so the meters never wake an engine the owner stopped. A process whose name the system does not give is named by its id.
 
 - a reading has the cpu the memory the disks the network and the gpus
 - a reading has the busiest and the largest processes read every few seconds
@@ -2707,6 +2708,7 @@ Design 0004 §9 (the owner's request, 2026-10-14: the console shows the machine'
 - a gpu whose handle its driver dropped is read from a fresh start or else left out and said once
 - an nvidia gpu is read from its driver
 - the last readings are kept and answered oldest first
+- a process whose name the system does not give is named by its id
 
 ### `tests/components/notion/test_applying.py`
 
@@ -3104,7 +3106,7 @@ Design 0016 §4, §6, §9, §10 and §14: adding a cloud provider needs the owne
 - changing the options or withdrawing the agreement is recorded
 - removing the provider removes its key with its record
 - removing the key alone leaves the record
-- the list asks for tool models programmings most used first
+- the list asks for tool models most used first
 - a search narrows the list by name or id and free shows the free ones
 - the list sorts by price window or newest and all shows models without tools
 - the list is kept an hour unless asked fresh
@@ -3290,7 +3292,7 @@ Design 0016 §3, §6 and §8: what the OpenRouter adapter reads of OpenRouter's 
 
 - the list keeps tool models unless asked with the smaller window and prices per million
 - a free model is marked with its limits and its retirement
-- the models are asked for with tools and programmings most used first
+- the models are asked for with tools most used first and never with a category beside them
 - the account reads the keys own facts and no limit as none
 - a request goes as the tool sent it with the listed id and the records policy
 - the presets effort and zdr are added only where the tool set none
@@ -3302,6 +3304,8 @@ Design 0016 §3, §6 and §8: what the OpenRouter adapter reads of OpenRouter's 
 - a requests cost is openrouters figure else an estimate that says so
 - a generations record gives its total cost
 - a presets options follow the model
+- a window of zero beside the providers real one says nothing
+- a router priced per request is left out since its cost cannot be said before
 
 ### `tests/components/runtime/test_options.py`
 
