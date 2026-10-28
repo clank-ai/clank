@@ -52,9 +52,9 @@ using an LLM", for local models, OpenRouter keys, or both.
   the fixes that need no administrator rights and lists the others; administrator commands in the terminal; after
   joining the docker group, log out and in; Docker Desktop through its own start; the service, Add a model in the
   terminal (cloud, local or both), this folder opened; the console's `s` and `t`.
-- [ ] 6. The sandbox image in the background (S4): the operation `workspaces.image` (`POST /workspaces/image`), the
+- [x] 6. The sandbox image in the background (S4): the operation `workspaces.image` (`POST /workspaces/image`), the
   setup starting it and waiting for it before opening the folder, the console's `b`.
-- [ ] 7. Docs: design 0028's statuses, getting started's §2 and §3, the console's page, the changelog, the roadmap, the
+- [x] 7. Docs: design 0028's statuses, getting started's §2 and §3, the console's page, the changelog, the roadmap, the
   indexes and the generated pages.
 
 ## Progress
@@ -62,4 +62,6 @@ using an LLM", for local models, OpenRouter keys, or both.
 Written 2026-10-27. S2 (tasks 1-4) built the same day: `clank setup --check`, `GET /setup` and the console's Setup page,
 the console opening on it while anything required is missing; the docs of task 7 so far. S3 (task 5) built the same
 day: `clank setup` offering each fix in order, administrator commands attached to the terminal, `--yes`, and the
-console's `s` and `t`.
+console's `s` and `t`. S4 (tasks 6 and 7) built the same day: the sandbox image built in the background during the
+setup, the console's `b`, and the docs. Left for later: Clank's VS Code window's extension installed by the setup
+itself (today it says `clank code` installs it the first time).

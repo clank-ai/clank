@@ -15,14 +15,17 @@ runs, rather than guessing. The folder it was started in is checked as a workspa
   password. A fix that leaves the person something to do after it (log out and in once after joining the docker group;
   open Docker Desktop once after installing it) says so, and the setup stops there. Docker Desktop is started through
   its own start: by the service's operation when the service runs, else here (`start_platform`). Clank's service is
-  started in the background as `clank serve --background` starts it; the model's step asks once whether models run in
+  started in the background as `clank serve --background` starts it; the sandbox image is built by the service in the
+  background (`workspaces.image`, design 0028 §4), and followed to its end before the folder opens on it, so the setup
+  goes on while it builds; the model's step asks once whether models run in
   the cloud through OpenRouter, on this computer's GPU, or both (the cloud first), and hands the terminal to Add a
   model's command for each (`clank model add --cloud`, `--local`), which keeps the key in Clank's secrets folder; the
   folder is opened as a workspace (`clank workspace open`'s operation). An item
   whose fix is the person's to do (the log out and in, the kernel's memory setting) is said, and the setup goes on.
   Without a terminal to answer in, every answer is no.
 - `--yes` does every fix that needs no administrator rights without asking (Docker Desktop's start, the service, the
-  folder) and lists the others with their commands; Add a model needs the person's answers, so it is listed too.
+  sandbox image, the folder) and lists the others with their commands; Add a model needs the person's answers, so it
+  is listed too.
 
 Each item is a line: its state (`done`, `to do`, `doing`, `waits` for an item before it, `unknown` until the service
 says, `optional`), its title and what it is now; under an item not done, what to do (`->`), wrapped to the terminal.
@@ -161,6 +164,7 @@ class Fixes:
         self.offered: set[str] = set()
         self.later: list[dict[str, Any]] = []  # fixes not done: declined, or needing what --yes does not give
         self.stopped = False
+        self.building = ""  # the operation building the sandbox image in the background, once this run started it
 
     def run(self, found: dict[str, Any]) -> dict[str, Any]:
         """Offer each item's fix in order until none is left to offer, or one leaves the person something to do; the
@@ -183,6 +187,8 @@ class Fixes:
         echo(f"{item['title']}: {item['said']}")
         if not fix["does"]:
             echo(f"{'Yours' if item['required'] else 'Optional, yours'} to do: {fix['said']}", "  ")
+            if item["required"]:
+                self.later.append(item)
             return
         if fix["admin"] and self.yes:
             echo(f"Not done with --yes, since it needs administrator rights: run `{fix['shown']}` yourself, or `clank "
@@ -200,6 +206,7 @@ class Fixes:
             "terminal": self._terminal,
             "docker": self._docker,
             "service": self._service,
+            "image": self._image,
             "folder": self._folder,
         }
         actions[fix["does"]](item)
@@ -271,12 +278,37 @@ class Fixes:
                 echo(f"Add a model ended without a {path} model; `clank model add` tries again.", "  ")
                 return
 
+    def _image(self, item: dict[str, Any]) -> None:
+        """The sandbox image, built by the service in the background while the setup goes on."""
+        client = self._client()
+        if client is None:
+            echo("Clank's service builds it: start it first (above).", "  ")
+            return
+        operation = common.call(lambda: client.post("workspaces/image", {"yes": True}))
+        self.building = str(operation["id"])
+        echo(f"Building it in the background ({self.building}); the setup goes on meanwhile, and `clank operations` "
+             "shows how far it is.", "  ")  # fmt: skip
+
+    def _wait_for_the_image(self, client: Client) -> None:
+        """The background build, followed to its end, before a folder opens on its image."""
+        if not self.building:
+            return
+        operation = common.call(lambda: client.get(f"records/operation/{self.building}"))["values"]
+        if operation["status"] in follow.FINISHED:
+            return
+        echo("First the sandbox image's build ends, in the background since above:", "  ")
+        done = follow.follow(client, operation)
+        if done["status"] != "done":
+            echo(f"{done['title']}: {done['error'] or done['status']}", "  ")
+
     def _folder(self, item: dict[str, Any]) -> None:
-        """The folder `clank setup` was started in, opened as a workspace by the service's operation."""
+        """The folder `clank setup` was started in, opened as a workspace by the service's operation, once the image's
+        build in the background ended."""
         client = self._client()
         if client is None:
             echo("Clank's service opens it: start it first (above).", "  ")
             return
+        self._wait_for_the_image(client)
         body = {"folder": self.folder, "yes": True}
         done = follow.follow(client, common.call(lambda: client.post("workspaces/open", body)))
         if done["status"] != "done":
@@ -298,6 +330,12 @@ class Fixes:
         echo(found["said"])
         for line in found.get("ready_said") or []:
             echo(f"- {line}", "  ", "    ")
+        client = self._client() if self.building else None
+        if client is not None:
+            operation = common.call(lambda: client.get(f"records/operation/{self.building}"))["values"]
+            if operation["status"] not in follow.FINISHED:
+                echo(f"The sandbox image is still being built in the background ({self.building}): `clank operations` "
+                     "shows how far it is.")  # fmt: skip
         if self.later:
             click.echo("Left to do:")
             for item in self.later:

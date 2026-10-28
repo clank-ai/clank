@@ -11,30 +11,30 @@ F4 This folder         ✗ 4   │ ┌─ Clank's setup ────────
 9 Presets                    │ │                                     runs it; it is built once, in a few minutes, and │
 0 Providers and models       │ │                                     downloads about a gigabyte (Ubuntu 24.04,        │
 F1 Help                      │ │                                     Node.js 22, OpenCode and the common build tools) │
-F2 Launch options            │ │                                     → opening a folder's workspace builds it, asking │
-F3 MCP servers               │ │                                     first (This folder's o) · press f                │
-F6 Workspaces                │ │  6  A model                         ✗ no model has answered a test request yet. This │
-F7 Requests                  │ │                                     computer has NVIDIA GeForce RTX 5080, 16 GB:     │
-F8 CPU models                │ │                                     local models can run on it                       │
-F9 Phone               ●     │ │                                     → Add a model: in the cloud through OpenRouter   │
-F10 Monitor                  │ │                                     (with your OpenRouter key), on this computer's   │
-F12 Add a model              │ │                                     GPU, or both (the cloud first, then local) ·     │
-Setup                        │ │                                     press m                                          │
-─────────────────────────────│ │  7  A folder                        ✗ no folder is a workspace yet. The agent works  │
-coming                       │ │                                     in a folder you choose, in a container that sees │
-Sampling              M3     │ │                                     only it                                          │
-Sessions              M3     │ │                                     → This folder opens the folder `clank` was       │
-Keys                  M3     │ │                                     started in as a workspace · press f              │
-Layout                M2     │ │  8  Clank's VS Code window          ○ optional: VS Code is not installed; the agent  │
-Tests and trials      M2     │ │                                     works in the terminal without it                 │
-Agents                M5     │ │                                     → install VS Code (code.visualstudio.com), then  │
-Modes                 M5     │ │                                     `clank code` in a folder                         │
-Changes               M6     │ │ Not ready yet: The sandbox image, A model, A folder.                                 │
-Network access        M7     │ │ Next:  f open This folder                                                            │
-Skills                M8     │ └──────────────────────────────────────────────────────────────────────────────────────┘
-Files                 M9     │
+F2 Launch options            │ │                                     → build it now, in the background: the setup     │
+F3 MCP servers               │ │                                     goes on meanwhile, and the first folder then     │
+F6 Workspaces                │ │                                     opens at once · press b                          │
+F7 Requests                  │ │  6  A model                         ✗ no model has answered a test request yet. This │
+F8 CPU models                │ │                                     computer has NVIDIA GeForce RTX 5080, 16 GB:     │
+F9 Phone               ●     │ │                                     local models can run on it                       │
+F10 Monitor                  │ │                                     → Add a model: in the cloud through OpenRouter   │
+F12 Add a model              │ │                                     (with your OpenRouter key), on this computer's   │
+Setup                        │ │                                     GPU, or both (the cloud first, then local) ·     │
+─────────────────────────────│ │                                     press m                                          │
+coming                       │ │  7  A folder                        ✗ no folder is a workspace yet. The agent works  │
+Sampling              M3     │ │                                     in a folder you choose, in a container that sees │
+Sessions              M3     │ │                                     only it                                          │
+Keys                  M3     │ │                                     → This folder opens the folder `clank` was       │
+Layout                M2     │ │                                     started in as a workspace · press f              │
+Tests and trials      M2     │ │  8  Clank's VS Code window          ○ optional: VS Code is not installed; the agent  │
+Agents                M5     │ │                                     works in the terminal without it                 │
+Modes                 M5     │ │                                     → install VS Code (code.visualstudio.com), then  │
+Changes               M6     │ │                                     `clank code` in a folder                         │
+Network access        M7     │ │ Not ready yet: The sandbox image, A model, A folder.                                 │
+Skills                M8     │ │ Next:  b build the sandbox image                                                     │
+Files                 M9     │ └──────────────────────────────────────────────────────────────────────────────────────┘
                              │
                              │
                              │
 
- s start Docker  t run it here  m add a model  f This folder  r read it again  ? explain  f1 help  esc menu
+ s start Docker  t run it here  b build the image  m add a model  f This folder  r read it again  ? explain  f1 help

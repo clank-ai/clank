@@ -1,8 +1,9 @@
 """Design 0028 §4 and §5: the Setup page does the next step on one key. `s` starts Docker Desktop through its own
 command, the service's start; `t` runs the command shown, one that needs administrator rights, in this terminal, asked
 first in a window that names it: the console steps aside for it (headless, it runs at once), sudo asks for the password
-itself, and the console says how it ended and what the person does next; Esc in the window runs nothing. A key that has
-nothing to do says why."""
+itself, and the console says how it ended and what the person does next; Esc in the window runs nothing. `b` builds
+the sandbox image in the background, asked first (S4). A key that has nothing to do says why: `s` with Docker Engine
+stopped, that Clank never starts it, and the command `t` runs."""
 
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -13,6 +14,7 @@ from textual.widgets import Label
 from clank.client import Client
 from clank.components.agents import checklist, vscode
 from clank.components.workspaces.adapters.platform import PlatformSetup
+from clank.components.workspaces.sandbox import image_tag
 from clank.console.app import ClankConsole
 from clank.console.confirm import ConfirmScreen
 from clank.console.snapshot import render_text
@@ -142,3 +144,35 @@ async def test_a_key_with_nothing_to_do_says_why(client: Client, home: Home) -> 
         await pilot.press("s")
         await settle(pilot, lambda: "Docker needs no start from here" in render_text(app))
         assert ran.ran == []
+
+
+async def test_s_with_docker_engine_stopped_says_clank_never_starts_it_and_names_ts_command(
+    client: Client, home: Home, platform: FakePlatform
+) -> None:
+    engine(platform, "stopped", PlatformSetup(at_boot=True, in_group=True, start=START, boot=ENABLE, join=JOIN))
+    ran = Terminal()
+    app = make(client, home, ran)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await frame_when(pilot, app, TITLE, "press t")
+        await pilot.press("s")
+        said = "Clank never starts Docker Engine: t runs `sudo systemctl start docker` in this terminal"
+        await settle(pilot, lambda: said in render_text(app))
+        assert (ran.ran, platform.calls) == ([], [])
+
+
+async def test_b_builds_the_sandbox_image_in_the_background_asked_first(
+    client: Client, home: Home, platform: FakePlatform
+) -> None:
+    ran = Terminal()
+    app = make(client, home, ran)
+    async with app.run_test(size=(120, 40)) as pilot:
+        frame = await frame_when(pilot, app, TITLE, "press b")
+        assert "Next:  b build the sandbox image" in frame
+        await pilot.press("b")
+        await settle(pilot, lambda: isinstance(app.screen, ConfirmScreen))
+        assert "about a gigabyte" in window_said(app)
+        assert platform.calls == [], "nothing before the yes"
+        await pilot.pause(0.1)
+        await pilot.press("enter")
+        await settle(pilot, lambda: f"build {image_tag()}" in platform.calls)
+        await settle(pilot, lambda: "built for this Clank" in render_text(app))

@@ -6,11 +6,13 @@ sudo asks for the password itself and nothing it says is captured; after joining
 and in once, and stops there. Docker Desktop is started through its own start, by the service when it runs, else here.
 Clank's service is started on a yes, the folder `clank setup` was started in is opened as a workspace on a yes, and the
 model's step asks once: in the cloud, on this computer's GPU, or both, the terminal handed to Add a model's command for
-each, the cloud first. `--yes` does every fix that needs no
+each, the cloud first. The sandbox image is built by the service in the background on a yes while the setup goes on, and
+the folder opens once the build ended (S4). `--yes` does every fix that needs no
 administrator rights without asking and lists the others with their commands."""
 
 import subprocess
 import sys
+import time
 from collections.abc import Iterator, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -176,6 +178,17 @@ def test_after_joining_the_docker_group_it_says_to_log_out_and_in_once_and_stops
     assert shown.exit_code == 1
 
 
+def test_what_is_the_persons_to_do_is_said_and_listed_again_at_the_end(
+    home: Home, project: Path, platform: FakePlatform, terminal: Terminal, started: list[Home]
+) -> None:
+    engine(platform, "no access", setup=PlatformSetup(at_boot=True, in_group=True, start=START, boot=ENABLE, join=JOIN))
+    shown = run(home, input="")
+    assert terminal.ran == [], "a log out and in is the person's: Clank runs nothing for it"
+    left = shown.output[shown.output.index("Left to do:") :]
+    assert "Docker usable by this account: log out and in again" in " ".join(left.split())
+    assert started == [], "the service waits until this account can use Docker"
+
+
 def test_a_command_that_fails_says_so_and_the_setup_goes_on(
     home: Home, project: Path, platform: FakePlatform, started: list[Home], monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -251,3 +264,30 @@ def test_yes_starts_docker_desktop_through_its_own_start(
     platform.state = "stopped"
     run(home, "--yes")
     assert platform.calls[:2] == ["start", "after start"]
+
+
+def test_the_sandbox_image_is_built_in_the_background_and_the_folder_waits_for_it(
+    home: Home, project: Path, platform: FakePlatform, kernel: Kernel, terminal: Terminal
+) -> None:
+    """Design 0028 §4 (S4): on a yes the image is built by the service in the background while the setup goes on (the
+    model is asked meanwhile), and the folder opens once the build ended, on the image it built."""
+    building = platform.build_image
+
+    def slow(*args: Any, **kwargs: Any) -> int | None:
+        time.sleep(1.0)  # long enough for the setup to reach the folder while it builds
+        return building(*args, **kwargs)
+
+    platform.build_image = slow  # type: ignore[method-assign]
+    shown = run(home, input="y\n\ny\n")  # the image, yes; the model, not now; the folder, yes
+    assert platform.calls.count(f"build {image_tag()}") == 1, "built once, by the setup's operation"
+    assert "Building it in the background (op-" in shown.output
+    waited = shown.output.index("First the sandbox image's build ends")
+    assert waited < shown.output.index("Open a workspace"), "the folder opens once the build ended"
+    assert kernel.settings.records("workspace"), "the folder opened"
+    assert any(each.type == "workspaces.image" for each in kernel.operations.find())
+
+
+def test_yes_builds_the_sandbox_image_too(home: Home, project: Path, platform: FakePlatform, kernel: Kernel,
+                                          terminal: Terminal) -> None:  # fmt: skip
+    run(home, "--yes")
+    assert f"build {image_tag()}" in platform.calls

@@ -14,8 +14,9 @@ asking it themselves; the first reading after the service starts is what clients
 made by `make_platform` from the setting `adapter` (`auto` by default: the adapter of this computer's Docker, chosen by
 `adapters/choose.py` without waking any engine), again when that setting changes, and keeps why it was chosen; Docker's
 view says which, why, and whether Clank starts it; tests replace `make_platform`. From M4 the workspaces themselves are
-its too: opening, stopping and removing one are operations of `folders.py`, and the edge they share forwards the
-gateway's port and the proxy's (from the gateway's service). The edge is kept on every workspace's network (`edge.py`,
+its too: opening, stopping and removing one are operations of `folders.py` (so is building the sandbox image alone,
+for the setup: design 0028 §4), and the edge they share forwards the gateway's port and the proxy's (from the gateway's
+service). The edge is kept on every workspace's network (`edge.py`,
 design 0004 §3 revised 2026-10-26): the background check joins it back to the network of a running workspace it is not
 on, starts it or makes it, from the reading it takes anyway (the first one when the service starts); `reach` puts it
 right before an agent starts in a workspace; and each view of a workspace says, as `edge` and `edge_said`, whether its

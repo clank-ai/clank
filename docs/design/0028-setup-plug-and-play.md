@@ -20,11 +20,11 @@ Linux ([design 0014](0014-linux-and-small-machines.md) §2-§4, built at the own
 | 1 | Who sets Clank up, and the one path each follows | Proposed 2026-10-27; being built at the owner's instruction |
 | 2 | Rules every step of the setup keeps | Proposed 2026-10-27; being built at the owner's instruction |
 | 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9) |
-| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; being built at the owner's instruction: the checklist (S2) and the fixes (S3) built 2026-10-27, `clank setup` and the console's Setup page ([plan s62](../plans/s62-clank-setup.md)) |
-| 5 | Docker, configured correctly on each system | Proposed 2026-10-27; being built at the owner's instruction: each state's words and fix (S2), and the fixes Clank does, in the terminal on a yes (S3), built 2026-10-27 |
+| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: the checklist (S2), the fixes (S3) and the sandbox image built in the background (S4), `clank setup` and the console's Setup page ([plan s62](../plans/s62-clank-setup.md)); Clank's VS Code window's install is said, not done by the setup |
+| 5 | Docker, configured correctly on each system | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: each state's words and fix (S2), and the fixes Clank does, in the terminal on a yes (S3) |
 | 6 | Clank's VS Code extension without building it | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction (S5) |
 | 7 | Local models: what is one step and what is not yet | Proposed 2026-10-27 |
-| 8 | Tests and build steps | Proposed 2026-10-27; the installers' tests built (the website's `installer` workflow); `clank setup`'s tests built (S2, S3) |
+| 8 | Tests and build steps | Proposed 2026-10-27; the installers' tests built (the website's `installer` workflow); `clank setup`'s tests built (S2-S4) |
 
 ## 1. Who sets Clank up, and the one path each follows
 
@@ -168,6 +168,14 @@ first in a window that names it (the console steps aside while it runs). Not ins
 Docker step: `winget install --id Docker.DockerDesktop -e` on Windows, `brew install --cask docker` on macOS with
 Homebrew, and on Linux Clank's installer itself (`curl -fsSL https://clank-ai.github.io/install.sh | sh`), which shows
 each command and asks first, and also installs Clank's latest release again.
+
+As built (S4, 2026-10-27): the sandbox image is built by an operation of its own, `workspaces.image` (`POST
+/workspaces/image`), when no image of this Clank's tag is there, asked first unless `yes`, each line of the build in
+its log; it holds the lock `workspaces.image`, which opening a workspace holds too, so an opening while it builds is
+refused, naming it, and two builds never run at once. `clank setup` starts it on a yes (with `--yes`, without asking)
+and goes on while it builds, the model asked meanwhile, then follows it to its end before it opens the folder; the
+image's item says it is being built, with its operation and its log's last line. On the console's Setup page `b`
+starts it, asked first.
 
 ## 5. Docker, configured correctly on each system
 

@@ -37,4 +37,4 @@ Files                 M9     │ │ model, A folder.                           
                              │ └──────────────────────────────────────────────────────────────────────────────────────┘
                              │
 
- s start Docker  t run it here  m add a model  f This folder  r read it again  ? explain  f1 help  esc menu
+ s start Docker  t run it here  b build the image  m add a model  f This folder  r read it again  ? explain  f1 help

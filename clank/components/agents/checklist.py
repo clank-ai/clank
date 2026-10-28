@@ -8,7 +8,8 @@ the model and the folder are not known (`unknown`), which the items say rather t
 
 The items, in order: Docker installed, Docker running, Docker starts with the computer (only where systemd says,
 Docker Engine), Docker usable by this account, Docker limits memory (only where it cannot), Clank's service, the
-sandbox image, a model, a folder, and Clank's VS Code window. The service comes before the image, which it builds; both
+sandbox image (built in the background by the service's `workspaces.image` while it is not built for this Clank), a
+model, a folder, and Clank's VS Code window. The service comes before the image, which it builds; both
 come after Docker, so a service the setup starts never starts before this account may use Docker (a process keeps the
 groups it started with). Starting with the computer and the VS Code window are offered, not required.
 
@@ -326,7 +327,10 @@ def _image(facts: Facts, usable: bool) -> Item:
         "not built yet. Every workspace's container runs it; it is built once, in a few minutes, and downloads about a "
         "gigabyte (Ubuntu 24.04, Node.js 22, OpenCode and the common build tools)"
     )
-    fix = Fix("opening a folder's workspace builds it, asking first (This folder's o)", "folder")
+    fix = Fix(
+        "build it now, in the background: the setup goes on meanwhile, and the first folder then opens at once",
+        "image",
+    )
     return Item("image", title, "to do", said, fix=fix)
 
 
@@ -348,6 +352,7 @@ def _model(facts: Facts) -> Item:
         "Add a model: in the cloud through OpenRouter (with your OpenRouter key), on this computer's GPU, or both "
         "(the cloud first, then local)",
         "model",
+        shown="clank model add",
     )
     return Item("model", title, "to do", said, fix=fix)
 

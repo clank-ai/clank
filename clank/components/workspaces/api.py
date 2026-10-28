@@ -1,6 +1,6 @@
 """The workspaces component's routes: Docker's status, and starting and stopping it; the workspaces, and opening,
 installing the software of (design 0004 §10), stopping and removing one (design 0004 §1); a workspace's image layers
-(design 0020 §3).
+(design 0020 §3); Clank's sandbox image built alone, for the setup (design 0028 §4).
 
 They are included under `/api/v1/` behind the local token like every route (design 0002 §2.7). Reading the platform
 runs its commands, so it happens off the service's event loop. Starting and stopping return the operation they start
@@ -26,6 +26,12 @@ class OpenRequest(BaseModel):
     folder: str
     yes: bool = False
     layers: list[str] = []
+
+
+class ImageRequest(BaseModel):
+    """`yes` builds the sandbox image without asking first."""
+
+    yes: bool = False
 
 
 class SetupRequest(BaseModel):
@@ -116,6 +122,13 @@ def router(workspaces: "Workspaces") -> APIRouter:
         """Open a folder as a workspace: an operation that makes what is missing (its record, the sandbox image, the
         networks, the edge, its container) and asks first before it builds the image."""
         return await _start(workspaces, "workspaces.open", request, wanted.model_dump())
+
+    @routes.post("/workspaces/image")
+    async def build_image(wanted: ImageRequest, request: Request) -> dict[str, Any]:
+        """Build Clank's sandbox image when it is not built for this Clank: an operation of its own, which `clank
+        setup` runs in the background (design 0028 §4); asked first unless `yes`; opening a workspace is refused while
+        it builds, naming it."""
+        return await _start(workspaces, "workspaces.image", request, wanted.model_dump())
 
     @routes.post("/workspaces/setup")
     async def setup_workspace(wanted: SetupRequest, request: Request) -> dict[str, Any]:

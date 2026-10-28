@@ -17,9 +17,10 @@ F6 Workspaces      │ │ ✗ not built yet. Every workspace's container runs  
 F7 Requests        │ │ it; it is built once, in a few minutes, and          │
 F8 CPU models      │ │ downloads about a gigabyte (Ubuntu 24.04, Node.js    │
 F9 Phone         ● │ │ 22, OpenCode and the common build tools)             │
-F10 Monitor        │ │ → opening a folder's workspace builds it, asking     │
-F12 Add a model    │ │ first (This folder's o) · press f                    │
-Setup              │ │  6  A model                                          │
+F10 Monitor        │ │ → build it now, in the background: the setup goes on │
+F12 Add a model    │ │ meanwhile, and the first folder then opens at once · │
+Setup              │ │ press b                                              │
+                   │ │  6  A model                                          │
                    │ │ ✗ no model has answered a test request yet. This     │
                    │ │ computer has NVIDIA GeForce RTX 5080, 16 GB: local   │
                    │ │ models can run on it                                 │
@@ -30,11 +31,10 @@ Setup              │ │  6  A model                                          
                    │ │ ✗ no folder is a workspace yet. The agent works in a │
                    │ │ folder you choose, in a container that sees only it  │
                    │ │ → This folder opens the folder `clank` was started   │
-                   │ │ in as a workspace · press f                          │
+                   │ │ in as a workspace · press f                          │▃▃
                    │ │  8  Clank's VS Code window                           │
-                   │ │ ○ optional: VS Code is not installed; the agent      │▄▄
+                   │ │ ○ optional: VS Code is not installed; the agent      │
                    │ │ works in the terminal without it                     │
                    │ │ → install VS Code (code.visualstudio.com), then      │
-                   │ │ `clank code` in a folder                             │
 
- s start Docker  t run it here  m add a model  f This folder  ? explain  f1 help
+ s start Docker  t run it here  b build the image  ? explain  f1 help

@@ -1,6 +1,6 @@
 """Workspaces: folders agents work in, each in a container of its own (design 0004 §1, §3 and §6; design 0002 §2.9).
 
-- `workspaces.open` {folder, yes, layers}, under the lock `workspaces`:
+- `workspaces.open` {folder, yes, layers}, under the locks `workspaces` and `workspaces.image`:
   - record: the folder must be one whose container would see nothing more than it (not a drive's root, not the user's
     home folder, not one that holds CLANK_HOME or is inside it, whose secrets a container must never see, and on Linux
     not one that holds the gateway's socket folder or is inside it, which only the edge sees, design 0014 §3); its
@@ -29,6 +29,10 @@
   cannot start because a network it was on is gone (made again since), and a running one is left as it is (the edge is
   made again when it forwards other ports). So opening again does only what is missing. A folder is never given the
   name `edge` (`RESERVED`): its container would be the edge's.
+- `workspaces.image` {yes}, under the lock `workspaces.image`, which an opening holds too (design 0028 §4): Clank's
+  sandbox image alone, built as an opening builds it when no image of its tag is there (asked first unless `yes`, each
+  line in its log, cancelable), so `clank setup` builds it in the background and the first folder opens at once; an
+  opening while it builds is refused, naming it. Docker must run, as for an opening.
 - `workspaces.setup` {folder, command, yes}, under its own lock (design 0004 §10): the folder's workspace must be open
   once (its record made, the image built). A command given is kept in its record; the command is the record's, else
   the one proposed from the folder's files (`setup.proposed_setup`), else there is nothing to install. Asked first
@@ -72,6 +76,7 @@ if TYPE_CHECKING:
 
 LOCK = "workspaces"
 SETUP_LOCK = "workspaces.setup"  # one setup at a time, without holding up opening or stopping a workspace
+IMAGE_LOCK = "workspaces.image"  # the sandbox image's build: held by an opening too, so two never build it at once
 QUESTION_MINUTES = 30
 STOP_SECONDS = 10
 NAME_LENGTH = 40
@@ -152,7 +157,15 @@ def operation_types(workspaces: "Workspaces") -> list[OperationType]:
             "Open a workspace",
             tuple(StepSpec(step) for step in steps),
             folders.open,
-            locks=_lock,
+            locks=lambda params: [LOCK, IMAGE_LOCK],
+            owner="workspaces",
+        ),
+        OperationType(
+            "workspaces.image",
+            "Build Clank's sandbox image",
+            (StepSpec("check"), StepSpec("build")),
+            folders.image,
+            locks=lambda params: [IMAGE_LOCK],
             owner="workspaces",
         ),
         OperationType(
@@ -236,6 +249,25 @@ class Folders:
             spec = workspace_spec(home, name, folder, image, cpus=cpus, memory_mib=memory_mib, proxy=proxy)
             await self._ensure(context, platform, spec)
         return {"workspace": name, "folder": folder, "container": spec.name, "image": image}
+
+    async def image(self, context: OperationContext) -> dict[str, Any]:
+        """Clank's sandbox image, built when no image of this Clank's tag is there, asked first unless `yes`: the
+        setup's build in the background (design 0028 §4), so the first folder opens at once."""
+        async with context.step("check"):
+            platform = self.workspaces.platform
+            status = await context.run_blocking(platform.status)
+            if not status.running:
+                raise WorkspaceError(self.workspaces.not_running(status))
+            tag = image_tag()
+            if await context.run_blocking(platform.image_exists, tag):
+                context.log(f"{tag} is built")
+                return {"tag": tag, "built": False}
+            if not context.params.get("yes"):
+                await self._ask_build(context, tag)
+        async with context.step("build"):
+            await self._build(context, platform, tag)
+            context.log(f"{tag} is built: every workspace's container runs it")
+        return {"tag": tag, "built": True}
 
     async def setup(self, context: OperationContext) -> dict[str, Any]:
         """Install the folder's software into its workspace's home, asked first, in a container that reaches the

@@ -580,8 +580,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | Who sets Clank up, and the one path each follows | none yet |
 | 2 | Rules every step of the setup keeps | none yet |
 | 3 | The installer on each system | none yet |
-| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (13), `tests/components/agents/test_setup_checklist.py` (25), `tests/console/test_data.py` (18), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (5), `tests/console/test_shell.py` (20) |
-| 5 | Docker, configured correctly on each system | `tests/cli/test_setup_fixes.py` (13), `tests/components/agents/test_setup_checklist.py` (25), `tests/components/workspaces/test_platform_setup.py` (5), `tests/console/test_setup_page_fixes.py` (5), `tests/contract/test_container_platform.py` (9) |
+| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (16), `tests/components/agents/test_setup_checklist.py` (25), `tests/components/workspaces/test_image_operation.py` (5), `tests/console/test_data.py` (18), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (7), `tests/console/test_shell.py` (20) |
+| 5 | Docker, configured correctly on each system | `tests/cli/test_setup_fixes.py` (16), `tests/components/agents/test_setup_checklist.py` (25), `tests/components/workspaces/test_platform_setup.py` (5), `tests/console/test_setup_page_fixes.py` (7), `tests/contract/test_container_platform.py` (9) |
 | 6 | Clank's VS Code extension without building it | `tests/components/agents/test_vscode_release.py` (6), `tests/tools/test_release.py` (6) |
 | 7 | Local models: what is one step and what is not yet | none yet |
 | 8 | Tests and build steps | none yet |
@@ -742,13 +742,14 @@ Design 0028 §4 and design 0002 §2.15: `clank setup --check` prints the checkli
 
 ### `tests/cli/test_setup_fixes.py`
 
-Design 0028 §4 and §5: `clank setup`, without `--check`, asks about each item that is not done, in order, showing its fix and its exact command first, and does it on a yes; nothing runs without its yes, and without a terminal to answer in the answer is no. A command that needs administrator rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo usermod -aG docker <account>`, the installer's Docker step) runs attached to the terminal, so sudo asks for the password itself and nothing it says is captured; after joining the docker group it says to log out and in once, and stops there. Docker Desktop is started through its own start, by the service when it runs, else here. Clank's service is started on a yes, the folder `clank setup` was started in is opened as a workspace on a yes, and the model's step asks once: in the cloud, on this computer's GPU, or both, the terminal handed to Add a model's command for each, the cloud first. `--yes` does every fix that needs no administrator rights without asking and lists the others with their commands.
+Design 0028 §4 and §5: `clank setup`, without `--check`, asks about each item that is not done, in order, showing its fix and its exact command first, and does it on a yes; nothing runs without its yes, and without a terminal to answer in the answer is no. A command that needs administrator rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo usermod -aG docker <account>`, the installer's Docker step) runs attached to the terminal, so sudo asks for the password itself and nothing it says is captured; after joining the docker group it says to log out and in once, and stops there. Docker Desktop is started through its own start, by the service when it runs, else here. Clank's service is started on a yes, the folder `clank setup` was started in is opened as a workspace on a yes, and the model's step asks once: in the cloud, on this computer's GPU, or both, the terminal handed to Add a model's command for each, the cloud first. The sandbox image is built by the service in the background on a yes while the setup goes on, and the folder opens once the build ended (S4). `--yes` does every fix that needs no administrator rights without asking and lists the others with their commands.
 
 - nothing runs without its yes
 - without a terminal to answer in the answer is no
 - an administrator command runs attached to the terminal on a yes
 - the terminal runner inherits the terminal so sudo asks itself and nothing is captured
 - after joining the docker group it says to log out and in once and stops there
+- what is the persons to do is said and listed again at the end
 - a command that fails says so and the setup goes on
 - docker desktop stopped is started through its own start without the service
 - with the service docker desktop is started by the services operation
@@ -757,6 +758,8 @@ Design 0028 §4 and §5: `clank setup`, without `--check`, asks about each item 
 - the models step asks once cloud local or both and hands the terminal to add a model
 - yes does every fix without administrator rights and lists the others
 - yes starts docker desktop through its own start
+- the sandbox image is built in the background and the folder waits for it
+- yes builds the sandbox image too
 
 ### `tests/cli/test_update.py`
 
@@ -3648,6 +3651,16 @@ Design 0020 §3: a workspace's record may name image layers (`tex` so far); its 
 - the layers build is asked first saying what it adds
 - a layer is added to a workspace and taken away through the api
 
+### `tests/components/workspaces/test_image_operation.py`
+
+Design 0028 §4 (S4): Clank's sandbox image is built during the setup, as an operation of its own that runs in the background (`workspaces.image`): it builds the image when no image of this Clank's tag is there, each line of the build in its log, and does nothing when it is built; it asks first unless `yes` (it downloads about a gigabyte), and nothing is built on a no; it is refused, in Docker's words, while Docker does not run. Opening a workspace holds the same lock, so an opening while the image is built is refused, naming the build (and a build while a workspace opens, likewise). The setup's checklist says the build while it runs, with its operation.
+
+- it builds the image of this clanks tag when it is not built each line in its log
+- it does nothing when the image is built
+- it asks first unless yes and a no builds nothing
+- it is refused while docker does not run
+- an opening while the image is built is refused naming the build
+
 ### `tests/components/workspaces/test_jobs_runner.py`
 
 Design 0021 §6: jobs run in a workspace's container for flows' boxes and for the agent the owner talks to alike, from one runner in the workspaces component, and every job runs at the lowest CPU priority (`nice -n 19`), so the model, on the same machine, keeps its speed while a job computes. The flows' job module gives the runner's names as before.
@@ -4470,13 +4483,15 @@ Design 0028 §4 and decision 0148: the console's Setup page shows `clank setup`'
 
 ### `tests/console/test_setup_page_fixes.py`
 
-Design 0028 §4 and §5: the Setup page does the next step on one key. `s` starts Docker Desktop through its own command, the service's start; `t` runs the command shown, one that needs administrator rights, in this terminal, asked first in a window that names it: the console steps aside for it (headless, it runs at once), sudo asks for the password itself, and the console says how it ended and what the person does next; Esc in the window runs nothing. A key that has nothing to do says why.
+Design 0028 §4 and §5: the Setup page does the next step on one key. `s` starts Docker Desktop through its own command, the service's start; `t` runs the command shown, one that needs administrator rights, in this terminal, asked first in a window that names it: the console steps aside for it (headless, it runs at once), sudo asks for the password itself, and the console says how it ended and what the person does next; Esc in the window runs nothing. `b` builds the sandbox image in the background, asked first (S4). A key that has nothing to do says why: `s` with Docker Engine stopped, that Clank never starts it, and the command `t` runs.
 
 - s starts docker desktop through its own start
 - t asks first naming the command then runs it in this terminal
 - esc in the window runs nothing
 - after joining the docker group the console says to log out and in once
 - a key with nothing to do says why
+- s with docker engine stopped says clank never starts it and names ts command
+- b builds the sandbox image in the background asked first
 
 ### `tests/console/test_shell.py`
 

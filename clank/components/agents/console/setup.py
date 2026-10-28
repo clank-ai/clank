@@ -8,11 +8,13 @@ through its own command (the service's `docker.start`); `t` runs the command sho
 rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo usermod -aG docker <account>`, the
 installer's Docker step), in this terminal, asked first: the console steps aside while it runs, sudo asks for the
 password itself, and nothing it says reaches Clank (`clank.console.terminal`); what the person does after it (log out
-and in) is said when it ends. `m` opens Add a model (in the cloud through OpenRouter, on this computer's GPU, or both),
-`f` opens This folder, where `o` opens the folder as a workspace. Under the rows, "Next:" and the key of the first
-required item a key can do, or what to do when none can (log out and in); once everything required is done, "Ready:",
-what was set up and what each thing is for, and `f`. `r` reads the checklist again now (the service is asked again
-whenever Docker, the slots or an operation change, and every few seconds while the page is on screen).
+and in) is said when it ends. `b` builds the sandbox image in the background (`POST /workspaces/image`, asked first),
+its progress said by the image's item while it runs, so a model is added meanwhile. `m` opens Add a model (in the cloud
+through OpenRouter, on this computer's GPU, or both), `f` opens This folder, where `o` opens the folder as a
+workspace. Under the rows, "Next:" and the key of the first required item a key can do, or what to do when none can
+(log out and in); once everything required is done, "Ready:", what was set up and what each thing is for, and `f`.
+`r` reads the checklist again now (the service is asked again whenever Docker, the slots or an operation change, and
+every few seconds while the page is on screen).
 
 The page has no key of its own in the menu: the one F-key left, F11, is the terminal's full screen on most terminals.
 It is the last page of the menu, Ctrl+P finds it, and the console opens on it while anything required is missing
@@ -26,7 +28,7 @@ from textual.content import Content
 from textual.widgets import Label
 
 from clank.client import ClientError, NotRunning
-from clank.console import terminal
+from clank.console import actions, terminal
 from clank.console.buttons import Buttons, from_keys
 from clank.console.confirm import ConfirmScreen
 from clank.console.data import ConsoleData
@@ -40,8 +42,16 @@ from clank.console.style import mark
 TITLES = 36  # an item's number and title, the column its words wrap beside
 READ_SECONDS = 5.0
 REFRESHED_BY = {"all", "setup"}
-KEY_OF = {"docker": "s", "terminal": "t", "model": "m", "folder": "f"}  # what a fix does, and the key here
-DOING = {"s": "start Docker", "t": "run it in this terminal", "m": "add a model", "f": "open This folder"}
+KEY_OF = {"docker": "s", "terminal": "t", "image": "b", "model": "m", "folder": "f"}  # a fix, and its key here
+DOING = {
+    "s": "start Docker", "t": "run it in this terminal", "b": "build the sandbox image", "m": "add a model",
+    "f": "open This folder",
+}  # fmt: skip
+BUILD = [
+    "It is built once, in a few minutes, in the background: add a model meanwhile (m).",
+    "It downloads about a gigabyte: Ubuntu 24.04, Node.js 22, OpenCode and the common build tools.",
+    "Every workspace's container and the edge run it.",
+]
 INTRO = (
     "What Clank needs on this computer, in order: each says what it is now and, while it is not done, what to do. "
     "`clank setup` in a terminal says the same."
@@ -129,6 +139,8 @@ class SetupPage(Page):
         PageKey("s", "docker", "start Docker", "start Docker Desktop through its own command, and wait for it"),
         PageKey("t", "terminal", "run it here", "run the command shown, which needs administrator rights, in this "
                 "terminal: the console steps aside, sudo asks for your password itself, and the console comes back"),
+        PageKey("b", "image", "build the image", "build Clank's sandbox image in the background (asked first), while "
+                "you add a model"),
         PageKey("m", "model", "add a model", "Add a model: in the cloud through OpenRouter, on this computer's GPU, "
                 "or both"),
         PageKey("f", "folder", "This folder", "This folder: the folder clank was started in, where o opens it as a "
@@ -169,12 +181,19 @@ class SetupPage(Page):
         group.display = bool(keys)
 
     def unable(self, key: str) -> str:
-        """Why `s` or `t` cannot act now: no item waits for it."""
+        """Why `s`, `t` or `b` cannot act now: no item waits for it; for `s` with a Docker Clank never starts (Docker
+        Engine), the command `t` runs instead."""
         found = self.console.data.setup
         if key == "s" and first_fix(found, "docker") is None:
+            running = next((each for each in (found or {}).get("items", []) if each["id"] == "docker_running"), None)
+            fix = (running or {}).get("fix") or {}
+            if running is not None and running["state"] != "done" and fix.get("does") == "terminal":
+                return f"Clank never starts Docker Engine: t runs `{fix['shown']}` in this terminal, asked first"
             return "Docker needs no start from here"
         if key == "t" and first_fix(found, "terminal") is None:
             return "no command waits to run in this terminal"
+        if key == "b" and first_fix(found, "image") is None:
+            return "the sandbox image needs no build from here"
         return ""
 
     def press(self, key: str) -> bool:
@@ -187,6 +206,9 @@ class SetupPage(Page):
             return True
         if key == "t":
             self._ask_terminal()
+            return True
+        if key == "b":
+            self._ask_build()
             return True
         if key == "m":
             self.console.show_page("addmodel")
@@ -216,6 +238,19 @@ class SetupPage(Page):
             "The console opens here while anything required is missing; once everything is done it says what was set "
             "up and what each thing is for, and f opens This folder. r reads it all again.",
         ]
+
+    def _ask_build(self) -> None:
+        """`b`: Clank's sandbox image, asked first, then built by the service in the background."""
+        if first_fix(self.console.data.setup, "image") is None:
+            return
+        client, console = self.console.client, self.console
+
+        def answered(yes: bool | None) -> None:
+            if yes:
+                actions.call(console, lambda: client.post("workspaces/image", {"yes": True}),
+                             done="the sandbox image is being built in the background")  # fmt: skip
+
+        console.push_screen(ConfirmScreen("Build Clank's sandbox image now?", BUILD), answered)
 
     def _ask_terminal(self) -> None:
         """`t`: the command shown, asked first in a window, then run in this terminal."""

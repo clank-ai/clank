@@ -21,7 +21,8 @@ The next release. Its version is set when it is tagged; until then, a clone has 
   usermod -aG docker $USER`, run in your terminal, where sudo asks for your password itself (Clank never sees it), then
   a log out and in after joining the group; Clank's service started; a model added (in the cloud, on this computer's
   GPU, or both); the folder opened as a workspace. `--yes` does every fix that needs no administrator rights and lists
-  the others. On the Setup page, `s` starts Docker Desktop and `t` runs the command shown in the terminal.
+  the others. The sandbox image is built in the background meanwhile, so the first folder opens at once. On the Setup
+  page, `s` starts Docker Desktop, `t` runs the command shown in the terminal and `b` builds the sandbox image.
 
 ## 0.3.0b3: Linux with Docker Engine, and the extension in every release (2026-10-27)
 

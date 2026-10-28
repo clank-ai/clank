@@ -117,6 +117,8 @@ def _building(kernel: "Kernel") -> Building | None:
                 continue
             if operation.type == "workspaces.open" and (not operation.steps or operation.steps[-1].name != "image"):
                 continue
+            if operation.status == "waiting":
+                return Building(operation.id, "it waits for your answer (Waiting for you, or `clank questions`)")
             lines = kernel.operations.log_lines(operation.id)
             return Building(operation.id, lines[-1].text if lines else "")
     return None

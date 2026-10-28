@@ -231,6 +231,8 @@ installs it by itself; to have it in your usual VS Code too: `code --install-ext
      it in your terminal on a yes, where `sudo` asks for your password itself; Clank never sees it. After joining the
      `docker` group, log out and in once, then run `clank setup` again.
    - **Clank's service**, started in the background (`clank stop` ends it).
+   - **The sandbox image** every workspace's container runs: built once, in the background (a few minutes; about a
+     gigabyte to download), while you add a model, so your first folder opens at once.
    - **A model**: it asks once whether models run in the cloud through OpenRouter, on this computer's GPU, or both
      (the cloud first), saying first the GPU it found, then walks the steps of 4a or 4b in the terminal.
    - **A folder**: the folder you typed `clank setup` in, opened as a workspace (step 5).
@@ -239,8 +241,8 @@ installs it by itself; to have it in your usual VS Code too: `code --install-ext
    `clank setup --check` only says it all and changes nothing (the installer ends with it); `clank setup --yes` does
    every fix that needs no administrator rights without asking, and lists the others with their commands. In the
    console the same checklist is the **Setup** page, where `clank` opens while anything is missing: `s` starts Docker
-   Desktop, `t` runs a command shown in the terminal (asked first), `m` opens Add a model, `f` This folder. Once
-   everything is done it says **Ready**, what was set up and what each thing is for.
+   Desktop, `t` runs a command shown in the terminal (asked first), `b` builds the sandbox image, `m` opens Add a
+   model, `f` This folder. Once everything is done it says **Ready**, what was set up and what each thing is for.
 4. **Check the computer**, if something seems wrong: `clank doctor`. It changes nothing. Each line is `ok`, `warn`,
    `fail` or `skip` (a check that does not apply here, such as WSL on Linux), with what to do under each that is not
    `ok`. On a computer without an NVIDIA GPU, "An NVIDIA GPU" warns, and that is fine for a cloud model.

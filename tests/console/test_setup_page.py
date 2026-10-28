@@ -74,7 +74,7 @@ async def test_each_item_shows_what_it_is_now_and_what_to_do_with_the_key_that_d
                       "press m", "press f", "This computer has NVIDIA GeForce RTX 5080, 16 GB: local models can run",
                       "optional: VS Code is not installed"):  # fmt: skip
             assert words in text, words
-        assert "Next:  f open This folder" in frame
+        assert "Next:  b build the sandbox image" in frame
         assert_frame(frame, "setup")
 
 
