@@ -164,7 +164,8 @@ async def test_the_machines_page_shows_the_profile_and_the_doctors_checks_once_d
         shown = page_text(app, "machine")
         assert "NVIDIA GeForce RTX 5080" in shown
         assert "start it with `clank docker start`" in shown
-        assert_frame(await frame_when(pilot, app, "The API's port"), "machine")
+        # The doctor's operation says done after its last check is drawn: wait for both, as the snapshot shows both.
+        assert_frame(await frame_when(pilot, app, "The API's port", "the doctor runs: done"), "machine")
 
 
 async def test_operations_show_their_steps_and_log_and_c_cancels_the_highlighted_one(
