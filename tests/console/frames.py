@@ -69,10 +69,17 @@ async def settle(pilot: Pilot[Any], until: Callable[[], bool], seconds: float = 
     drawn: a window pushed a moment ago is on screen before its first layout, and its frame is empty until then (a
     test that read it at once found nothing on a slow machine, Python 3.14 on GitHub's Windows runner)."""
     deadline = time.monotonic() + seconds
-    while not until() or not render_text(pilot.app).strip():
+    while not until() or not drawn(pilot.app):
         if time.monotonic() > deadline:
             raise AssertionError("the console never got there")
         await pilot.pause(0.05)
+
+
+def drawn(app: App[Any]) -> bool:
+    """Whether the screen on top is drawn: mounted, and showing something unless it holds nothing (a test app's blank
+    screen is drawn as it is)."""
+    screen = app.screen
+    return screen.is_mounted and (not screen.children or bool(render_text(app).strip()))
 
 
 async def steady_frame(pilot: Pilot[Any], app: App[Any], seconds: float = 10) -> str:
