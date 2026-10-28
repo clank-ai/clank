@@ -33,7 +33,10 @@ def asked(state: Path, opened: int = 1) -> dict[str, Any]:
     """What the fake was asked, once it has opened this many folders (the window is started, not waited for)."""
     deadline = time.monotonic() + 30
     while True:
-        found: dict[str, Any] = json.loads(state.read_text(encoding="utf-8")) if state.is_file() else {}
+        try:
+            found: dict[str, Any] = json.loads(state.read_text(encoding="utf-8")) if state.is_file() else {}
+        except (ValueError, OSError):  # the fake renames its file over the last one: read it again
+            found = {}
         if len(found.get("opened", [])) >= opened:
             return found
         assert time.monotonic() < deadline, "the folder was never opened"
