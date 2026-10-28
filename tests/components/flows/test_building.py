@@ -21,6 +21,7 @@ again there; one whose session is still starting refused, saying to wait, no oth
 refused saying how to open one."""
 
 import json
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -42,8 +43,10 @@ pytestmark = pytest.mark.anyio
 
 
 @pytest.fixture
-def rig(home: Home, clock: FakeClock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Rig:
-    return make_rig(home, clock, tmp_path, monkeypatch, None)
+def rig(home: Home, clock: FakeClock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Rig]:
+    made = make_rig(home, clock, tmp_path, monkeypatch, None)
+    yield made
+    made.kernel.close()
 
 
 def building(rig: Rig) -> Building:

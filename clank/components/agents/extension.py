@@ -142,6 +142,7 @@ def _assets(tag: str, fetch: Fetch) -> dict[str, str]:
     try:
         release = fetch(f"{updates.API}/releases/tags/{tag}")
     except urllib.error.HTTPError as error:
+        error.close()  # its answer's body, unread, is let go of here
         if error.code == 404:
             raise ReleaseError(f"GitHub has no release {tag} of Clank to take it from", NEWER) from error
         raise ReleaseError(
@@ -163,5 +164,7 @@ def _download(download: Download, url: str, tag: str) -> bytes:
     try:
         return download(url)
     except (OSError, http.client.HTTPException) as error:
+        if isinstance(error, urllib.error.HTTPError):
+            error.close()  # its answer's body, unread, is let go of here
         name = url.rsplit("/", 1)[-1]
         raise ReleaseError(f"GitHub did not send {name} of the release {tag} ({error})", AGAIN) from error

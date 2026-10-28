@@ -308,6 +308,7 @@ def _fetch(url: str) -> bytes:
             data: bytes = answer.read()
             return data
     except urllib.error.HTTPError as error:
+        error.close()  # its answer's body, unread, is let go of here
         if error.code == 404:
             raise LookupError(f"404 for {url}") from error
         raise OSError(f"{url} answered {error.code}") from error

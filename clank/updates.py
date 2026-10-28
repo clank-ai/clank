@@ -129,6 +129,7 @@ def _release(install: Install, fetch: Fetch) -> dict[str, Any]:
         try:
             latest = str(fetch(f"{API}/releases/latest")["tag_name"])
         except urllib.error.HTTPError as error:
+            error.close()  # its answer's body, unread, is let go of here
             if error.code != 404:
                 raise
             tags = fetch(f"{API}/tags")  # no release yet: its newest tag

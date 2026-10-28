@@ -10,6 +10,7 @@ import subprocess
 import sys
 import threading
 import time
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -18,7 +19,7 @@ from clank.components.flows import jobs
 from clank.kernel.clock import FakeClock
 from clank.kernel.home import Home
 from clank.kernel.processes import Answer
-from tests.components.flows.rig import WORKSPACE, make_rig
+from tests.components.flows.rig import WORKSPACE, Rig, make_rig
 
 
 def test_a_jobs_folder_is_named_by_its_flow_run_box_and_number() -> None:
@@ -70,10 +71,15 @@ def test_the_start_and_end_scripts_run_a_command_detached_and_end_it_with_its_gr
     assert "late" not in (folder / "log").read_text()
 
 
-def test_a_job_started_in_the_workspace_writes_its_files_and_is_ended_by_clank(
-    home: Home, clock: FakeClock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    rig = make_rig(home, clock, tmp_path, monkeypatch, None)
+@pytest.fixture
+def rig(home: Home, clock: FakeClock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Rig]:
+    """The flows' rig, its kernel closed after the test."""
+    made = make_rig(home, clock, tmp_path, monkeypatch, None)
+    yield made
+    made.kernel.close()
+
+
+def test_a_job_started_in_the_workspace_writes_its_files_and_is_ended_by_clank(rig: Rig) -> None:
     workspaces = rig.kernel.parts["workspaces"]
     done = jobs.folder_of(f"{WORKSPACE}/study", 1, "search", 1)
     rig.bridge.commands["python anneal.py"] = Answer(0, "best 0.25\n", "")
@@ -95,10 +101,7 @@ def test_a_job_started_in_the_workspace_writes_its_files_and_is_ended_by_clank(
     assert rig.bridge.jobs_ended == [held]
 
 
-def test_a_job_whose_workspace_does_not_run_does_not_start(
-    home: Home, clock: FakeClock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    rig = make_rig(home, clock, tmp_path, monkeypatch, None)
+def test_a_job_whose_workspace_does_not_run_does_not_start(rig: Rig) -> None:
     rig.platform.containers.clear()
     rig.kernel.parts["workspaces"].docker(refresh=True)
     with pytest.raises(jobs.JobError, match="could not start"):
