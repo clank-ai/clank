@@ -172,7 +172,8 @@ class Processes:
             try:
                 with known.oneshot():
                     share = known.cpu_percent(None) / self._cpus
-                    rows.append({"pid": known.pid, "name": known.name(), "cpu": round(min(share, 100.0), 1),
+                    name = known.name() or f"process {known.pid}"  # Windows gives some of its own none
+                    rows.append({"pid": known.pid, "name": name, "cpu": round(min(share, 100.0), 1),
                                  "memory": known.memory_info().rss})  # fmt: skip
             except (psutil.Error, OSError):
                 continue

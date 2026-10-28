@@ -6,7 +6,7 @@ readings are kept, the oldest dropped past five minutes, and answered at `GET /m
 the clients live. A GPU whose handle its driver dropped is read again from a fresh start of NVIDIA's library, or else
 left out of the readings, said once, while the rest of each reading goes on. Design 0014 §2: the containers' figures
 come through the workspaces component's platform, asked only while Docker's last reading is running, so the meters
-never wake an engine the owner stopped."""
+never wake an engine the owner stopped. A process whose name the system does not give is named by its id."""
 
 import ctypes
 import logging
@@ -14,6 +14,7 @@ import time
 from collections.abc import Iterator
 from typing import Any
 
+import psutil
 import pytest
 from fastapi.testclient import TestClient
 
@@ -221,3 +222,11 @@ def test_the_last_readings_are_kept_and_answered_oldest_first(kernel: Kernel, mo
     assert len(samples) == KEPT
     assert [sample["cpu"] for sample in samples[:2]] == [5.0, 6.0]
     assert samples[-1]["cpu"] == float(KEPT + 4)
+
+
+def test_a_process_whose_name_the_system_does_not_give_is_named_by_its_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Windows gives no name for some of its own processes (seen on GitHub's runner, 2026-10-28): no row is blank.
+    monkeypatch.setattr(psutil.Process, "name", lambda self: "")
+    rows = Processes(clock=lambda: 0.0).read()
+    assert rows
+    assert all(row["name"] == f"process {row['pid']}" for row in rows)
