@@ -87,12 +87,16 @@ def job(text: str, name: str) -> str:
 def test_the_docker_tests_run_in_ci_on_linux_x64() -> None:
     # Design 0014 §10's P2, for x64: on every push and pull request the isolation tests and the live agent test run on
     # GitHub's ubuntu-24.04 runner, whose Docker Engine is the system's service from Docker's own packages, so the
-    # docker-engine adapter, the edge's way to the gateway's socket and the workspaces' networks run on a real Linux.
+    # docker-engine adapter, the edge's way to the gateway's socket and the workspaces' networks run on a real Linux;
+    # so do an agent's request to a cloud model through them (the owner's first test, design 0028) and the setup's
+    # checklist.
     text = (WORKFLOWS / "checks.yml").read_text(encoding="utf-8")
     linux = job(text, "linux-docker")
     assert "runs-on: ubuntu-24.04" in linux
     assert "if:" not in linux.split("steps:", 1)[0], "on every push and pull request the checks run on"
     assert "pytest -m docker tests/docker/test_escape.py tests/docker/test_agent_files_live.py" in linux
+    assert "tests/docker/test_cloud_live.py" in linux, "an agent's request through the edge and gateway to the cloud"
+    assert "tests/docker/test_setup_live.py" in linux, "`clank setup --check` on a real Linux"
     assert "persist-credentials: false" in linux, "its checkout keeps no token"
     pins = set(re.findall(r"uses: (\S+@[0-9a-f]{40})", job(text, "oldest-python")))
     used = set(re.findall(r"uses: (\S+@\S+)", linux))

@@ -87,7 +87,7 @@ jobs:
       - run: uv sync --locked
       - name: Docker as Clank sees it
         run: uv run --locked clank doctor || true
-      - run: uv run --locked pytest -m docker tests/docker/test_escape.py tests/docker/test_agent_files_live.py -p no:cacheprovider -ra
+      - run: uv run --locked pytest -m docker tests/docker/test_escape.py tests/docker/test_agent_files_live.py tests/docker/test_cloud_live.py tests/docker/test_setup_live.py -p no:cacheprovider -ra
 
   # The GitHub release of a version tag, once every check passed on it (design 0028 §6): the VS Code extension compiled,
   # tested and packaged as on a working copy (tools.extension, tools.vsix), then attached with its SHA-256 by
