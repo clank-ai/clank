@@ -571,7 +571,7 @@ async def test_with_a_cloud_model_a_asks_the_workspace_first_and_y_starts_the_ag
         assert "not asked yet: paper is asked once before its agent uses the cloud model (u allows it)" in text(app)
         await pilot.press("a")
         await settle(pilot, lambda: isinstance(app.screen, AskScreen))
-        assert "Let paper's agent use the cloud model cloud: Example Coder?" in window(app)
+        await settle(pilot, lambda: "Let paper's agent use the cloud model cloud: Example Coder?" in window(app))
         assert "What never goes: Notion pages" in window(app)
         await pilot.press("y")
         await settle(pilot, lambda: "OpenCode ended" in message(app), seconds=20)
@@ -590,6 +590,7 @@ async def test_n_keeps_the_workspace_local_and_says_how_to_allow_it(
         await settle(pilot, lambda: "Ready:  a start OpenCode here" in text(app), seconds=20)
         await pilot.press("a")
         await settle(pilot, lambda: isinstance(app.screen, AskScreen))
+        await settle(pilot, lambda: "Let paper's agent use the cloud model" in window(app))
         await pilot.press("n")
         await settle(pilot, lambda: "u allows the cloud for it" in message(app))
         await settle(pilot, lambda: "kept on this machine: paper never uses the cloud model (u allows it)" in text(app))
@@ -628,10 +629,8 @@ async def test_a_workspace_that_existed_before_the_agreement_is_asked_in_stronge
         await settle(pilot, lambda: "Ready:  a start OpenCode here" in text(app), seconds=20)
         await pilot.press("a")
         await settle(pilot, lambda: isinstance(app.screen, AskScreen))
-        assert (
-            "existed before the cloud provider was agreed: its earlier sessions and its folder may hold research"
-            in (window(app))
-        )
+        stronger = "existed before the cloud provider was agreed: its earlier sessions and its folder may hold research"
+        await settle(pilot, lambda: stronger in window(app))  # the window drawn, not only on screen
 
 
 async def test_u_changes_the_bound_asked_first_and_the_held_back_servers_and_the_cost_show(

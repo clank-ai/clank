@@ -157,6 +157,7 @@ async def test_n_with_a_planning_open_asks_first_and_esc_leaves_it_open_untouche
         await settle(pilot, lambda: "building with the model" in heading_of(app))
         await pilot.press("n")
         await settle(pilot, lambda: isinstance(app.screen, ConfirmScreen))
+        await settle(pilot, lambda: "a planning is open" in render_text(app))  # the window drawn, not only on screen
         asked = render_text(app)
         await pilot.press("escape")
         await settle(pilot, lambda: not isinstance(app.screen, ConfirmScreen))

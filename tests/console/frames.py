@@ -65,9 +65,11 @@ def assert_frame(frame: str, name: str) -> None:
 
 
 async def settle(pilot: Pilot[Any], until: Callable[[], bool], seconds: float = 10) -> None:
-    """Let the console run until a condition holds (it loads and redraws in its own time)."""
+    """Let the console run until a condition holds (it loads and redraws in its own time) and the screen on top is
+    drawn: a window pushed a moment ago is on screen before its first layout, and its frame is empty until then (a
+    test that read it at once found nothing on a slow machine, Python 3.14 on GitHub's Windows runner)."""
     deadline = time.monotonic() + seconds
-    while not until():
+    while not until() or not render_text(pilot.app).strip():
         if time.monotonic() > deadline:
             raise AssertionError("the console never got there")
         await pilot.pause(0.05)
