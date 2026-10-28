@@ -5,6 +5,7 @@ which records who used it and why, without the value; setting and removing one a
 import json
 import os
 import sys
+from collections.abc import Iterator
 from datetime import UTC, datetime
 
 import pytest
@@ -21,12 +22,13 @@ VALUE = "sk-test-0123456789abcd"
 
 
 @pytest.fixture
-def secrets(home: Home) -> Secrets:
+def secrets(home: Home) -> Iterator[Secrets]:
     home.ensure()
     store = Store(home.database)
     store.migrate(kernel_migrations())
     clock = FakeClock(datetime(2026, 10, 13, 18, 0, tzinfo=UTC))
-    return Secrets(home, EventLog(store, clock, EventTypes(EVENT_TYPES)), clock)
+    yield Secrets(home, EventLog(store, clock, EventTypes(EVENT_TYPES)), clock)
+    store.close()  # closed, not left to the garbage collector (Python 3.14 warns of it)
 
 
 def written(home: Home) -> str:
