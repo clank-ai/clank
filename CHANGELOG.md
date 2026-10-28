@@ -5,9 +5,11 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
-## Unreleased: since 0.3.0b3
+## 0.3.0b4: `clank setup`, and OpenRouter's model list fixed (2026-10-28)
 
-The next release. Its version is set when it is tagged; until then, a clone has it (`git pull`, or `clank update`).
+Setting Clank up without help: `clank setup` says what this computer still needs and does each step, asking first,
+and the console opens on the same checklist. Picking a cloud model works again: OpenRouter had begun refusing the
+list Clank asked for. From 0.3.0b2 or 0.3.0b3, `clank update`; from 0.3.0b1, run the installer again.
 
 ### Added
 
