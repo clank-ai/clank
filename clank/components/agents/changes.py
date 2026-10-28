@@ -7,7 +7,9 @@ applies exactly (a write's content; an edit whose old text is found once, or eve
 the diff: its lines placed by their numbers, each kept line checked against the file, the removed indentation taken
 from the file's own lines; None when even that does not fit the file (it changed since). `unified` is the diff the
 clients show, made from the file before and after, with its counts. `ChangeStore` keeps each change as a JSON file in
-`state/changes/` (the newest `KEPT`), so a client reads it again after a restart and the owner can see every one.
+`state/changes/` (the newest `KEPT`), so a client reads it again after a restart and the owner can see every one; it
+writes and deletes them as the kernel's `files` does, so a client reading a change meanwhile never makes the write fail
+on Windows (a lost change would leave the agent waiting).
 """
 
 import difflib
@@ -16,6 +18,8 @@ import re
 import threading
 from pathlib import Path
 from typing import Any
+
+from clank.kernel import files
 
 KEPT = 200
 NAME = re.compile(r"^[A-Za-z0-9_-]{1,100}$")  # a change's id: OpenCode's permission id (per_...)
@@ -145,13 +149,10 @@ class ChangeStore:
     def save(self, change: dict[str, Any]) -> None:
         """Keep a change (replacing what was kept of it), then forget the oldest beyond `KEPT`."""
         with self._lock:
-            self.folder.mkdir(parents=True, exist_ok=True)
-            path = self._path(change["id"])
-            path.with_suffix(".part").write_text(json.dumps(change, ensure_ascii=False), encoding="utf-8")
-            path.with_suffix(".part").replace(path)
+            files.replace(self._path(change["id"]), json.dumps(change, ensure_ascii=False))
             kept = sorted(self.folder.glob("*.json"), key=lambda each: each.stat().st_mtime_ns)
             for old in kept[:-KEPT]:
-                old.unlink(missing_ok=True)
+                files.remove(old)
 
     def get(self, id: str) -> dict[str, Any] | None:
         """A change, or None when it is not kept (or the id is not a change's)."""
