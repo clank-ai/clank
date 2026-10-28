@@ -30,13 +30,13 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4.7 | The rest of the computer | `tests/components/machine/test_checks.py` (10) |
 | 4.8 | Every change is recorded | `tests/components/runtime/test_state.py` (4), `tests/console/test_pages.py` (10) |
 | 5 | The console | `tests/console/test_lists.py` (2) |
-| 5.1 | What it is | `tests/console/test_arrows.py` (8), `tests/console/test_data.py` (18), `tests/console/test_one_door.py` (6), `tests/console/test_shell.py` (20) |
+| 5.1 | What it is | `tests/console/test_arrows.py` (8), `tests/console/test_data.py` (18), `tests/console/test_one_door.py` (6), `tests/console/test_shell.py` (21) |
 | 5.2 | The main screen | none yet |
 | 5.3 | The control screens | none yet |
 | 5.4 | Explain anything | `tests/console/test_records.py` (4) |
-| 5.5 | Changing how it looks and what it shows | `tests/console/test_shell.py` (20) |
+| 5.5 | Changing how it looks and what it shows | `tests/console/test_shell.py` (21) |
 | 5.6 | Panels are modules | `tests/console/test_pages.py` (10) |
-| 5.7 | Redraws and load | `tests/console/test_data.py` (18), `tests/console/test_flow_panel.py` (8), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_panel.py` (12), `tests/console/test_shell.py` (20) |
+| 5.7 | Redraws and load | `tests/console/test_data.py` (18), `tests/console/test_flow_panel.py` (8), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_panel.py` (12), `tests/console/test_shell.py` (21) |
 | 5.8 | Without a screen | `tests/components/runtime/test_model_commands.py` (3), `tests/console/test_command.py` (4) |
 | 6 | The gateway | `tests/components/gateway/test_recent_requests.py` (6), `tests/console/test_requests_page.py` (11) |
 | 6.1 | The path of a request | `tests/components/gateway/test_server.py` (23) |
@@ -89,13 +89,13 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.12 | Files for the user | none yet |
 | 2.13 | Clank's own traffic | none yet |
 | 2.14 | The API | `tests/kernel/test_api.py` (17), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_apidoc.py` (1), `vscode/test/client.test.ts` (7) |
-| 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (7), `tests/cli/test_setup_command.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/console/test_command.py` (4), `tests/console/test_data.py` (18), `tests/console/test_shell.py` (20) |
+| 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (7), `tests/cli/test_setup_command.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/console/test_command.py` (4), `tests/console/test_data.py` (18), `tests/console/test_shell.py` (21) |
 | 2.16 | Where things are | `tests/kernel/test_files.py` (8), `tests/kernel/test_home.py` (4) |
 | 2.17 | The kernel against every feature asked for | none yet |
 | 2.18 | Choices this section makes | none yet |
 | 3 | The skeleton (M0) and the order of milestones | see its subsections |
 | 3.1 | How the rest is designed and built | none yet |
-| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (4), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (15), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (20), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (7), `tests/tools/test_codemap.py` (10), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (18) |
+| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (4), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (15), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (21), `tests/console/test_text.py` (4), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (7), `tests/tools/test_codemap.py` (10), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (18) |
 | 3.3 | The milestones after M0 | `tests/docker/test_escape.py` (5) |
 | 3.4 | Carried into the later milestones' designs | none yet |
 
@@ -236,7 +236,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | The panel | `tests/components/tools/test_console_servers.py` (1), `tests/console/test_frames.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_windows.py` (3), `tests/console/test_workspaces_page.py` (4) |
 | 5 | Text never spills out of a panel | `tests/console/test_frames.py` (1), `tests/console/test_windows.py` (3) |
 | 6 | No color written in a page | `tests/test_repository.py` (11), `tests/tools/test_check_colors.py` (8) |
-| 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (3), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (20), `tests/console/test_windows.py` (3) |
+| 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (3), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (21), `tests/console/test_windows.py` (3) |
 | 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (5), `tests/components/tools/test_console_servers.py` (1), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_workspaces_page.py` (4) |
 | 9 | Narrow windows | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_machine_column.py` (14), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5) |
 | 10 | What changes in the tests | none yet |
@@ -262,7 +262,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What the owner gets | none yet |
-| 2 | The page: its views, its panels and its keys | `tests/console/test_flow_panel.py` (8), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_flow_view.py` (12), `tests/console/test_monitor_guide.py` (7), `tests/console/test_monitor_live.py` (2), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_monitor_undo_and_drop.py` (5), `tests/console/test_monitor_watch_for.py` (2), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (20) |
+| 2 | The page: its views, its panels and its keys | `tests/console/test_flow_panel.py` (8), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_flow_view.py` (12), `tests/console/test_monitor_guide.py` (7), `tests/console/test_monitor_live.py` (2), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_monitor_undo_and_drop.py` (5), `tests/console/test_monitor_watch_for.py` (2), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (21) |
 | 3 | Which session the page follows, and which the Guide acts on | `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_monitor_watch.py` (12), `tests/components/agents/test_pausing.py` (8), `tests/components/agents/test_watch_for_marks.py` (14), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_watch_for.py` (2) |
 | 4 | The context window | `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_service.py` (15), `tests/components/runtime/test_cloud_facts.py` (5), `tests/components/runtime/test_context_facts.py` (10), `tests/components/runtime/test_count_tokens.py` (5) |
 | 4.1 | How full, and how much is left | `tests/components/agents/test_context_margin.py` (5), `tests/components/agents/test_monitor_context.py` (15), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_session_facts.py` (13), `tests/components/runtime/test_context_facts.py` (10), `tests/console/test_monitor_context.py` (15), `tests/console/test_requests_page.py` (11) |
@@ -325,14 +325,14 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What runs on Linux and arm64 today, and what this design refines | none yet |
 | 2 | The container platform adapters | `tests/components/agents/test_work.py` (11), `tests/components/machine/test_checks.py` (10), `tests/components/machine/test_doctor.py` (4), `tests/components/machine/test_meters.py` (8), `tests/components/workspaces/test_choosing_a_platform.py` (12), `tests/components/workspaces/test_docker_cli.py` (2), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_docker_engine.py` (14), `tests/components/workspaces/test_docker_operations.py` (17), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (25), `tests/contract/test_container_platform.py` (9), `tests/fakes/test_recorded.py` (7), `tests/tools/test_capture_docker_engine.py` (5), `tests/tools/test_workflows.py` (2) |
-| 3 | The edge's way to the gateway on Linux | `tests/components/gateway/test_listeners.py` (11), `tests/components/gateway/test_service.py` (15), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_socket.py` (5), `tests/components/workspaces/test_sandbox.py` (10), `tests/docker/test_escape.py` (5) |
+| 3 | The edge's way to the gateway on Linux | `tests/components/gateway/test_listeners.py` (11), `tests/components/gateway/test_service.py` (15), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_socket.py` (5), `tests/components/workspaces/test_sandbox.py` (10), `tests/docker/test_cloud_live.py` (1), `tests/docker/test_escape.py` (5) |
 | 4 | A workspace's container on Docker Engine | `tests/components/machine/test_checks.py` (10), `tests/components/workspaces/test_agent_access.py` (4), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/docker/test_escape.py` (5) |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | `tests/components/machine/test_checks.py` (10) |
 | 6 | OpenCode on arm64 | none yet |
 | 7 | CI on arm64 | `tests/tools/test_workflows.py` (2) |
 | 8 | A small machine: memory, VS Code and the owner's settings | none yet |
 | 9 | What this design does not cover | none yet |
-| 10 | Build steps | `tests/tools/test_workflows.py` (2) |
+| 10 | Build steps | `tests/docker/test_cloud_live.py` (1), `tests/tools/test_workflows.py` (2) |
 
 ## Design 0015: endpoints, models Clank did not start
 
@@ -367,13 +367,13 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 5 | How the gateway gets the key | `tests/components/gateway/test_cloud_keys.py` (6) |
 | 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (14) |
 | 7 | Cloud presets, and the main slot running one | `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17) |
-| 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_openrouter.py` (14) |
+| 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_openrouter.py` (14), `tests/docker/test_cloud_live.py` (1) |
 | 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
 | 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
 | 11 | Cost: each request, session and flow, and the limits | `tests/cli/test_cloud_commands.py` (7), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_cost_limits.py` (8), `tests/components/gateway/test_cost_views.py` (8), `tests/console/test_add_model.py` (25), `tests/console/test_cost_pause.py` (2), `tests/console/test_data.py` (18), `tests/console/test_home.py` (15), `tests/console/test_monitor_cloud.py` (3), `tests/console/test_requests_page.py` (11), `tests/console/test_text.py` (4), `tests/kernel/test_event_attention.py` (3) |
 | 12 | How cost is known and kept | `tests/components/gateway/test_cloud_cost.py` (5), `tests/components/gateway/test_cost_views.py` (8), `tests/components/gateway/test_state_files.py` (4) |
 | 13 | What the Monitor shows of a cloud model | `tests/components/runtime/test_cloud_facts.py` (5), `tests/console/test_monitor_cloud.py` (3) |
-| 14 | The first run: Add a model | `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (18), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (20) |
+| 14 | The first run: Add a model | `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (18), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (21) |
 | 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_folder.py` (25), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
 | 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3) |
 | 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (18) |
@@ -580,8 +580,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | Who sets Clank up, and the one path each follows | none yet |
 | 2 | Rules every step of the setup keeps | none yet |
 | 3 | The installer on each system | none yet |
-| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (16), `tests/components/agents/test_setup_checklist.py` (25), `tests/components/workspaces/test_image_operation.py` (5), `tests/console/test_data.py` (18), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (7), `tests/console/test_shell.py` (20) |
-| 5 | Docker, configured correctly on each system | `tests/cli/test_setup_fixes.py` (16), `tests/components/agents/test_setup_checklist.py` (25), `tests/components/workspaces/test_platform_setup.py` (5), `tests/console/test_setup_page_fixes.py` (7), `tests/contract/test_container_platform.py` (9) |
+| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (17), `tests/components/agents/test_setup_checklist.py` (28), `tests/components/workspaces/test_image_operation.py` (5), `tests/console/test_data.py` (18), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (8), `tests/console/test_shell.py` (21), `tests/docker/test_setup_live.py` (1) |
+| 5 | Docker, configured correctly on each system | `tests/cli/test_setup_fixes.py` (17), `tests/components/agents/test_setup_checklist.py` (28), `tests/components/workspaces/test_platform_setup.py` (6), `tests/console/test_setup_page_fixes.py` (8), `tests/contract/test_container_platform.py` (9), `tests/docker/test_setup_live.py` (1) |
 | 6 | Clank's VS Code extension without building it | `tests/components/agents/test_vscode_release.py` (6), `tests/tools/test_release.py` (6) |
 | 7 | Local models: what is one step and what is not yet | none yet |
 | 8 | Tests and build steps | none yet |
@@ -742,7 +742,7 @@ Design 0028 §4 and design 0002 §2.15: `clank setup --check` prints the checkli
 
 ### `tests/cli/test_setup_fixes.py`
 
-Design 0028 §4 and §5: `clank setup`, without `--check`, asks about each item that is not done, in order, showing its fix and its exact command first, and does it on a yes; nothing runs without its yes, and without a terminal to answer in the answer is no. A command that needs administrator rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo usermod -aG docker <account>`, the installer's Docker step) runs attached to the terminal, so sudo asks for the password itself and nothing it says is captured; after joining the docker group it says to log out and in once, and stops there. Docker Desktop is started through its own start, by the service when it runs, else here. Clank's service is started on a yes, the folder `clank setup` was started in is opened as a workspace on a yes, and the model's step asks once: in the cloud, on this computer's GPU, or both, the terminal handed to Add a model's command for each, the cloud first. The sandbox image is built by the service in the background on a yes while the setup goes on, and the folder opens once the build ended (S4). `--yes` does every fix that needs no administrator rights without asking and lists the others with their commands.
+Design 0028 §4 and §5: `clank setup`, without `--check`, asks about each item that is not done, in order, showing its fix and its exact command first, and does it on a yes; nothing runs without its yes, and without a terminal to answer in the answer is no. A command that needs administrator rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo usermod -aG docker <account>`, the installer's Docker step) runs attached to the terminal, so sudo asks for the password itself and nothing it says is captured; after joining the docker group it says to log out and in once, and stops there. Docker Desktop is started through its own start, by the service when it runs, else here. Clank's service is started on a yes, the folder `clank setup` was started in is opened as a workspace on a yes, and the model's step asks once: in the cloud, on this computer's GPU, or both, the terminal handed to Add a model's command for each, the cloud first. The sandbox image is built by the service in the background on a yes while the setup goes on, and the folder opens once the build ended (S4). `--yes` does every fix that needs no administrator rights without asking and lists the others with their commands. A command the checklist does not build is never run, whoever gave it: it is shown, for the person to run if they trust it.
 
 - nothing runs without its yes
 - without a terminal to answer in the answer is no
@@ -760,6 +760,7 @@ Design 0028 §4 and §5: `clank setup`, without `--check`, asks about each item 
 - yes starts docker desktop through its own start
 - the sandbox image is built in the background and the folder waits for it
 - yes builds the sandbox image too
+- a command the checklist does not build is never run and is shown for the person
 
 ### `tests/cli/test_update.py`
 
@@ -1509,7 +1510,7 @@ Design 0005 §2-§3: the session bridge and the agent's outbox, run on this mach
 
 ### `tests/components/agents/test_setup_checklist.py`
 
-Design 0028 §4 and §5: `clank setup`'s checklist. Each item says its state and, while it is not done, what to do: its fix, and whether Clank does it on a yes. Each Docker state of §5 has its words and its fix: not installed, the installer's Docker step in the terminal (winget on Windows, Homebrew on macOS, Clank's installer on Linux), or where to get Docker when no command can; the snap's or rootless Docker, not supported, the commands shown and never run; Docker Engine stopped, `sudo systemctl start docker` in the terminal; Docker Desktop stopped, started by Clank through its own command; not started with the computer, `sudo systemctl enable docker`, offered and not required; no access outside the docker group, `sudo usermod -aG docker <account>` in the terminal, then a log out and in; no access inside it, the log out and in alone, which Clank does not do; no memory limits, the kernel setting, which Clank never makes; a folder the agent cannot write, how to let it. An administrator command runs only in the terminal. Without the service, the model and the folder are not known, and the service is to start, unless this account may not use Docker yet: a service started then would keep the session's groups. An item waits while one it needs is not done. Ready says what was set up and what each thing is for.
+Design 0028 §4 and §5: `clank setup`'s checklist. Each item says its state and, while it is not done, what to do: its fix, and whether Clank does it on a yes. Each Docker state of §5 has its words and its fix: not installed, the installer's Docker step in the terminal (winget on Windows, Homebrew on macOS, Clank's installer on Linux), or where to get Docker when no command can; the snap's or rootless Docker, not supported, the commands shown and never run; Docker Engine stopped, `sudo systemctl start docker` in the terminal; Docker Desktop stopped, started by Clank through its own command; not started with the computer, `sudo systemctl enable docker`, offered and not required; no access outside the docker group, `sudo usermod -aG docker <account>` in the terminal, then a log out and in; no access inside it, the log out and in alone, which Clank does not do; no memory limits, the kernel setting, which Clank never makes; a folder the agent cannot write, how to let it. An administrator command runs only in the terminal. Without the service, the model and the folder are not known, and the service is to start, unless this account may not use Docker yet: a service started then would keep the session's groups. An item waits while one it needs is not done. Ready says what was set up and what each thing is for. A client runs only the commands the checklist builds, the docker group's for its own account alone (`runnable`), whoever gave it the checklist. The console opens on Setup only for what This folder does not put right on its way to the agent (`opens`, decision 0148): a Docker Desktop only stopped and a sandbox image not built for this Clank are This folder's to do.
 
 - with everything done it is ready and says what each thing is for
 - docker not installed on linux offers clanks installer in the terminal with administrator rights
@@ -1536,6 +1537,9 @@ Design 0028 §4 and §5: `clank setup`'s checklist. Each item says its state and
 - clanks vs code window is optional and says how to get it
 - only a fix that runs a command in the terminal needs administrator rights
 - the view gives each items fix with its command as a list
+- the console opens on setup only for what this folder does not put right on its way
+- a client runs only the commands the checklist builds the docker groups for its own account alone
+- every command the checklist builds is one a client runs
 
 ### `tests/components/agents/test_show_files_tool.py`
 
@@ -3687,13 +3691,14 @@ Design 0024 §5 and §6 (decision 0141): the named sets of hosts (Python package
 
 ### `tests/components/workspaces/test_platform_setup.py`
 
-Design 0028 §5: how the container platform is set up on this computer, as `clank setup` reads it from the platform's adapter. Docker Engine says whether systemd starts Docker's service with the computer (its unit file's state, which starts nothing), whether this account is in the docker group as the system lists it now, and the commands its owner runs with administrator rights: `sudo systemctl start docker`, `sudo systemctl enable docker` and `sudo usermod -aG docker` with this account's name. Without systemd it says nothing of the boot and names no systemctl command; not installed, it names none (the contract holds every recorded platform to the same: Docker Desktop, which Clank starts through its own command, names none).
+Design 0028 §5: how the container platform is set up on this computer, as `clank setup` reads it from the platform's adapter. Docker Engine says whether systemd starts Docker's service with the computer (its unit file's state, which starts nothing), whether this account is in the docker group as the system lists it now, and the commands its owner runs with administrator rights: `sudo systemctl start docker`, `sudo systemctl enable docker` and `sudo usermod -aG docker` with this account's name (none when the system gives no name). Without systemd it says nothing of the boot and names no systemctl command; not installed, it names none (the contract holds every recorded platform to the same: Docker Desktop, which Clank starts through its own command, names none).
 
 - whether systemd starts docker with the computer is its unit files state
 - the owners commands need administrator rights and the join names this account
 - whether this account is in the docker group is as the system lists it now
 - without systemd nothing is said of the boot and no systemctl command is named
 - docker engine not installed names no command
+- an account whose name the system does not give is offered no join command
 
 ### `tests/components/workspaces/test_sandbox.py`
 
@@ -4483,7 +4488,7 @@ Design 0028 §4 and decision 0148: the console's Setup page shows `clank setup`'
 
 ### `tests/console/test_setup_page_fixes.py`
 
-Design 0028 §4 and §5: the Setup page does the next step on one key. `s` starts Docker Desktop through its own command, the service's start; `t` runs the command shown, one that needs administrator rights, in this terminal, asked first in a window that names it: the console steps aside for it (headless, it runs at once), sudo asks for the password itself, and the console says how it ended and what the person does next; Esc in the window runs nothing. `b` builds the sandbox image in the background, asked first (S4). A key that has nothing to do says why: `s` with Docker Engine stopped, that Clank never starts it, and the command `t` runs.
+Design 0028 §4 and §5: the Setup page does the next step on one key. `s` starts Docker Desktop through its own command, the service's start; `t` runs the command shown, one that needs administrator rights, in this terminal, asked first in a window that names it: the console steps aside for it (headless, it runs at once), sudo asks for the password itself, and the console says how it ended and what the person does next; Esc in the window runs nothing. `b` builds the sandbox image in the background, asked first (S4). A key that has nothing to do says why: `s` with Docker Engine stopped, that Clank never starts it, and the command `t` runs. `t` runs only a command the checklist builds, whoever gave it: another is refused, its words naming it.
 
 - s starts docker desktop through its own start
 - t asks first naming the command then runs it in this terminal
@@ -4492,6 +4497,7 @@ Design 0028 §4 and §5: the Setup page does the next step on one key. `s` start
 - a key with nothing to do says why
 - s with docker engine stopped says clank never starts it and names ts command
 - b builds the sandbox image in the background asked first
+- t never runs a command the checklist does not build
 
 ### `tests/console/test_shell.py`
 
@@ -4517,6 +4523,7 @@ Design 0001 §5.1, §5.5, §5.7, design 0002 §2.15, §3.2 and design 0011 §7: 
 - with a model ready clank opens on this folder
 - a page named on the command line opens as asked the header saying no model
 - a bare clank and clank console open the guide and a page named does not
+- with docker desktop only stopped after a restart clank opens on this folder which starts it
 
 ### `tests/console/test_side_work_panel.py`
 
@@ -4622,6 +4629,12 @@ Design 0022 §6 and §7, run in the TeX layer's image on this machine's Docker (
 
 - a drawing is compiled and a frame exports as a vector pdf
 
+### `tests/docker/test_cloud_live.py`
+
+Design 0014 §3, §10 and design 0016 §8, on Docker Engine when asked (`-m docker`): the owner's first test on Linux, from the agent's side. OpenCode, as Clank configures it in a workspace's container, asks its model through the edge with its workspace's key; the edge forwards to the gateway's socket, in the folder it mounts read-only; the gateway, made and served as its process makes and serves it on Linux (its TCP socket and its Unix socket, the routes the service gives it followed as it follows them, the provider's key held for the launch), forwards the request to OpenRouter (the fake, playing its recording) with the owner's key and the listed model, and OpenCode prints the answer that came back. Nothing in it is a stand-in but OpenRouter: the image, the edge, the gateway's application and OpenCode are Clank's.
+
+- an agent in its container gets its answer from a cloud model through the edge and the gateway
+
 ### `tests/docker/test_escape.py`
 
 Design 0004 §3 and §8, design 0002 §3.3 (M4's escape tests), on this machine's Docker when asked (`-m docker`): a workspace's container sees its folder and nothing else of the machine (its mounts, a subprocess, a symlink that points out of the folder); from inside it nothing answers but the edge: not the internet (by address or by name, IPv4 or IPv6), not the machine, not another workspace; the edge answers, forwarding to the gateway's port; and the container runs as the image's user, with no capability, within its limits. Design 0014 §3 and §4, on Linux: the gateway's stand-in listens where the gateway does on each platform (on Docker Engine on a socket, in a short folder of its own that the test's `config/gateway.json` names; elsewhere on 127.0.0.1); on Docker Engine the edge reaches it through that socket, mounting nothing but its folder (read-only) and Clank's programs, as the owner; and the host's own address on a workspace's network answers nothing (the probe listens on that address only, never on every address).
@@ -4646,6 +4659,12 @@ Design 0020 §8-§10, run in the TeX layer's image on this machine's Docker (`-m
 Design 0020 §3, §5, §6, §7, §8, §9 and §10, end to end, on this machine's Docker when asked (`-m docker`): a workspace opened with the TeX layer (its image built when missing), then, through the service's own parts and the workspace's real container: the checks on real changes to a document (a clean change passes and its build is as clean as before; an invented citation, a value without a source, an undefined reference and a change that breaks the build are refused, each with its reason; a new bibliography entry is checked against Crossref's record, a wrong year refused), the change's PDF marked by latexdiff, the document's pages rendered with their words and a mark said with its source line, and LaTeX Workshop's build keeping the PDF beside the document.
 
 - the latex checks marked pdf pages and build run for real
+
+### `tests/docker/test_setup_live.py`
+
+Design 0028 §4 and §5, on this machine's Docker when asked (`-m docker`): `clank setup --check` reads this computer as it is, through the platform the settings choose and without the service, as on a new computer right after the installer: Docker installed, running and usable by this account are done, Clank's service is to start, the model and the folder are not known yet; on Docker Engine, whether systemd starts it with the computer is said, and every command it offers its owner is one a client runs. Reading it changes nothing: no container, network, volume or image is made or removed.
+
+- clank setup check reads this computers docker as it is and changes nothing
 
 ### `tests/fakes/test_recorded.py`
 

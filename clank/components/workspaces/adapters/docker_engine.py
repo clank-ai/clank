@@ -293,13 +293,13 @@ class DockerEngine(DockerCli):
         groups: Callable[[], tuple[bool, bool]] = docker_group,
         environ: Mapping[str, str] = os.environ,
         clock: Callable[[], float] = time.monotonic,
-        account: Callable[[], str] = account_name,
+        account: Callable[[], str] | None = None,
     ) -> None:
         super().__init__(run, command, platform=platform, launch=launch, answer=answer, follow=follow)
         self.groups = groups
         self.environ = environ
         self.clock = clock
-        self.account = account
+        self.account = account  # this account's name; None: as the system lists it when asked (`account_name`)
         self._read: tuple[float, Service | None, str] | None = None  # when, what systemd said, why unsupported
 
     @classmethod
@@ -375,7 +375,7 @@ class DockerEngine(DockerCli):
         listed, _ = self.groups()
         service, _ = self._reading()
         systemd = service is not None and service.known
-        account = self.account()
+        account = self.account() if self.account is not None else account_name()
         return PlatformSetup(
             at_boot=at_boot,
             in_group=listed,

@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from clank.components.workspaces.adapters import CONTAINER_PLATFORMS
+from clank.components.workspaces.adapters import CONTAINER_PLATFORMS, docker_engine
 from clank.components.workspaces.adapters.platform import ContainerPlatform, PlatformError, PlatformSetup
 from tests.fakes.recorded import RecordedProgram, recordings
 
@@ -150,8 +150,9 @@ def test_a_platform_clank_does_not_start_refuses_with_the_command_to_run(
 
 @pytest.mark.parametrize(("adapter", "folder"), CASES)
 def test_how_it_is_set_up_is_read_from_the_program_and_only_one_clank_does_not_start_names_its_owners_commands(
-    adapter: type[ContainerPlatform], folder: Path
+    adapter: type[ContainerPlatform], folder: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    monkeypatch.setattr(docker_engine, "account_name", lambda: "owner")  # this account, as the system lists it
     for state in json.loads((folder / "program.json").read_text(encoding="utf-8"))["states"]:
         program = RecordedProgram.load(folder, state=state)
         setup = build(adapter, program).setup_state()
@@ -162,3 +163,4 @@ def test_how_it_is_set_up_is_read_from_the_program_and_only_one_clank_does_not_s
         assert setup.at_boot is not None, f"{state}: as recorded"
         for command in (setup.start, setup.boot, setup.join):
             assert command[:1] == ("sudo",), f"{state}: {command} needs administrator rights, run by its owner"
+        assert setup.join[-1] == "owner", f"{state}: the docker group's command names this account"
