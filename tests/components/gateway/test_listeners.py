@@ -77,7 +77,7 @@ def test_the_socket_folder_is_never_the_home_folder_nor_inside_or_holding_clank_
     clank_home, runs_from = user / ".clank", short / "opt" / "clank"
     for folder in (clank_home, clank_home / "sockets", runs_from, runs_from / "sockets"):
         folder.mkdir(parents=True, exist_ok=True)
-    good = user / ".cache" / "clank" / "0123456789ab"
+    good = user / ".cache" / "cg"  # short: a socket's path holds 107 bytes, and Windows' temporary folder is long
     assert checked_socket_folder(good, clank_home, runs_from, user) == good.resolve(), "it need not be there yet"
     refused = {
         user: "is your home folder itself",
