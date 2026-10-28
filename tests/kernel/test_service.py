@@ -80,13 +80,17 @@ def test_a_stop_ends_the_event_stream_at_once_telling_its_followers_and_logs_no_
             asked = time.perf_counter()
             http.post("/api/v1/service/stop")
             text = following.read().decode("utf-8")
-            # The stream ends when the service says it closes, not at the graceful shutdown's limit; the process's own
-            # exit after it (the interpreter's teardown) takes longer on a busy machine, and is not what is measured.
             ended = time.perf_counter() - asked
             assert "event: closing" in text
-            assert ended < CLOSING_SECONDS
+            # The stream ends when the service says it closes, not at the graceful shutdown's limit: had the limit cut
+            # it, Uvicorn would say so (below). The time is a loose check only: on a busy machine a close the service
+            # made at once can end just past the limit (2.2 s was seen in a full run), and the process's own exit after
+            # it (the interpreter's teardown) is not what is measured.
+            assert ended < CLOSING_SECONDS + 3
             assert process.wait(15) == 0
-    assert "Exception in ASGI application" not in "".join(output)
+    log = "".join(output)
+    assert "timeout graceful shutdown exceeded" not in log, "the graceful shutdown's limit cut the stream"
+    assert "Exception in ASGI application" not in log
 
 
 def test_a_second_service_for_the_same_clank_home_is_refused(home: Home) -> None:
