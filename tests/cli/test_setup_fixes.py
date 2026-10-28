@@ -8,12 +8,14 @@ Clank's service is started on a yes, the folder `clank setup` was started in is 
 model's step asks once: in the cloud, on this computer's GPU, or both, the terminal handed to Add a model's command for
 each, the cloud first. The sandbox image is built by the service in the background on a yes while the setup goes on, and
 the folder opens once the build ended (S4). `--yes` does every fix that needs no
-administrator rights without asking and lists the others with their commands."""
+administrator rights without asking and lists the others with their commands. A command the checklist does not build
+is never run, whoever gave it: it is shown, for the person to run if they trust it."""
 
 import subprocess
 import sys
 import time
 from collections.abc import Iterator, Sequence
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -83,6 +85,7 @@ def this_computer(platform: FakePlatform, monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setattr(workspaces_service, "WAIT_SECONDS", 0.001)
     monkeypatch.setattr(vscode, "which", lambda name: None)
     monkeypatch.setattr(checklist, "found_tools", lambda: frozenset())
+    monkeypatch.setattr(checklist, "account_name", lambda: "ada")
     monkeypatch.setattr(follow, "POLL_SECONDS", 0.005)
 
 
@@ -291,3 +294,14 @@ def test_yes_builds_the_sandbox_image_too(home: Home, project: Path, platform: F
                                           terminal: Terminal) -> None:  # fmt: skip
     run(home, "--yes")
     assert f"build {image_tag()}" in platform.calls
+
+
+def test_a_command_the_checklist_does_not_build_is_never_run_and_is_shown_for_the_person(
+    home: Home, project: Path, platform: FakePlatform, terminal: Terminal, started: list[Home]
+) -> None:
+    engine(platform, "stopped", setup=replace(OWNER, start=("sudo", "systemctl", "start", "docker", "--now")))
+    shown = run(home, input="y\ny\n")
+    assert terminal.ran == [], "only the commands the checklist builds run"
+    assert "not one Clank's setup runs" in said(shown)
+    assert "`sudo systemctl start docker --now`" in said(shown)
+    assert shown.exit_code == 1

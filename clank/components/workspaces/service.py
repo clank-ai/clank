@@ -45,6 +45,8 @@ import anyio.to_thread
 from clank.components.workspaces import jobs as jobs  # the job runner, for the flows and the agents (design 0021 §6)
 from clank.components.workspaces.adapters import CONTAINER_PLATFORMS
 from clank.components.workspaces.adapters.choose import choose_platform
+from clank.components.workspaces.adapters.docker_engine import account_name as account_name  # for `clank setup`
+from clank.components.workspaces.adapters.docker_engine import owner_commands as owner_commands  # (design 0028 §5)
 from clank.components.workspaces.adapters.platform import Container, ContainerPlatform, PlatformError
 from clank.components.workspaces.adapters.platform import PlatformStatus as PlatformStatus  # for the doctor
 from clank.components.workspaces.cloud import EVENT_TYPES as CLOUD_EVENT_TYPES

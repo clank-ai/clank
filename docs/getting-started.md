@@ -240,7 +240,9 @@ installs it by itself; to have it in your usual VS Code too: `code --install-ext
 
    `clank setup --check` only says it all and changes nothing (the installer ends with it); `clank setup --yes` does
    every fix that needs no administrator rights without asking, and lists the others with their commands. In the
-   console the same checklist is the **Setup** page, where `clank` opens while anything is missing: `s` starts Docker
+   console the same checklist is the **Setup** page, where `clank` opens while something it needs is missing (a
+   Docker Desktop not started yet, or a sandbox image a Clank update made stale, This folder puts right itself, so
+   those open This folder): `s` starts Docker
    Desktop, `t` runs a command shown in the terminal (asked first), `b` builds the sandbox image, `m` opens Add a
    model, `f` This folder. Once everything is done it says **Ready**, what was set up and what each thing is for.
 4. **Check the computer**, if something seems wrong: `clank doctor`. It changes nothing. Each line is `ok`, `warn`,

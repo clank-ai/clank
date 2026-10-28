@@ -9,13 +9,16 @@ out and in alone, which Clank does not do; no memory limits, the kernel setting,
 agent cannot write, how to let it. An administrator command runs only in the terminal. Without the service, the model
 and the folder are not known, and the service is to start, unless this account may not use Docker yet: a service
 started then would keep the session's groups. An item waits while one it needs is not done. Ready says what was set up
-and what each thing is for."""
+and what each thing is for. A client runs only the commands the checklist builds, the docker group's for its own
+account alone (`runnable`), whoever gave it the checklist. The console opens on Setup only for what This folder does
+not put right on its way to the agent (`opens`, decision 0148): a Docker Desktop only stopped and a sandbox image not
+built for this Clank are This folder's to do."""
 
 from dataclasses import replace
 
 import pytest
 
-from clank.components.agents.checklist import Building, Facts, Item, Model, VsCode, items, ready, view
+from clank.components.agents.checklist import Building, Facts, Item, Model, VsCode, items, ready, runnable, view
 from clank.components.workspaces.adapters.platform import PlatformSetup, PlatformStatus
 from clank.components.workspaces.service import SetupReading
 
@@ -350,3 +353,46 @@ def test_the_view_gives_each_items_fix_with_its_command_as_a_list() -> None:
     assert running["fix"]["shown"] == "sudo systemctl start docker"
     assert shown["ready"] is False
     assert shown["ready_said"] == []
+
+
+def test_the_console_opens_on_setup_only_for_what_this_folder_does_not_put_right_on_its_way() -> None:
+    assert view(facts())["opens"] is False
+    assert view(facts(model=None))["opens"] is True, "a first start: no model has answered yet"
+    assert view(facts(workspaces=()))["opens"] is True, "a first start: no folder is a workspace yet"
+    assert view(facts(docker=reading(stopped(ENGINE))))["opens"] is True, "Clank never starts Docker Engine"
+    no_access = stopped(ENGINE, "no access", "this account may not use Docker: join the docker group")
+    assert view(facts(docker=reading(no_access, setup=replace(OWNER, in_group=False))))["opens"] is True
+    assert view(facts(docker=reading(memory=(False, ["no memory limit support"]))))["opens"] is True
+    restarted = view(facts("win32", reading(stopped(DESKTOP))))
+    assert (restarted["ready"], restarted["opens"]) == (False, False), "This folder starts Docker Desktop itself"
+    updated = view(facts(docker=reading(image_built=False)))
+    assert (updated["ready"], updated["opens"]) == (False, False), "This folder builds the image, asked first"
+    assert view(facts(docker=reading(setup=replace(OWNER, at_boot=False))))["opens"] is False, "offered, not required"
+
+
+def test_a_client_runs_only_the_commands_the_checklist_builds_the_docker_groups_for_its_own_account_alone() -> None:
+    known = [START, ENABLE, JOIN, ("winget", "install", "--id", "Docker.DockerDesktop", "-e"),
+             ("brew", "install", "--cask", "docker"), ("sh", "-c", INSTALLER)]  # fmt: skip
+    for command in known:
+        assert runnable(command, account="ada"), command
+        assert runnable(list(command), account="ada"), "as the API gives it, a list"
+    others = [("sudo", "usermod", "-aG", "docker", "eve"), ("sudo", "systemctl", "start", "docker", "--now"),
+              ("sudo", "sh", "-c", INSTALLER), ("sh", "-c", INSTALLER + "; true"), ()]  # fmt: skip
+    for command in others:
+        assert not runnable(command, account="ada"), command
+    assert not runnable(("sudo", "usermod", "-aG", "docker", ""), account=""), "no account's name, no join"
+
+
+def test_every_command_the_checklist_builds_is_one_a_client_runs() -> None:
+    cases = [
+        facts(docker=reading(stopped(ENGINE))),
+        facts(docker=reading(setup=replace(OWNER, at_boot=False))),
+        facts(docker=reading(stopped(ENGINE, "no access"), setup=replace(OWNER, in_group=False))),
+        facts(docker=reading(stopped(ENGINE, "not installed"))),
+        facts("win32", reading(stopped(DESKTOP, "not installed")), tools=frozenset({"winget"})),
+        facts("darwin", reading(stopped(DESKTOP, "not installed")), tools=frozenset({"brew"})),
+    ]
+    built = [each.fix.command for found in cases for each in items(found) if each.fix is not None and each.fix.command]
+    assert len(built) == len(cases), "each case builds one command"
+    for command in built:
+        assert runnable(command, account="ada"), command

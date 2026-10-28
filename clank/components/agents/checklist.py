@@ -23,8 +23,16 @@ limits, the kernel setting, which Clank never makes. A command that needs admini
 attached to the person's terminal, where sudo or Windows asks for the password itself; Clank never reads, asks for or
 keeps a password. An item waits while one it needs is not done (the image while Docker cannot be used).
 
+A client runs a fix's command only when it is one of these (`runnable`): the installers' Docker steps, and the
+commands Docker Engine's owner runs, the docker group's for the client's own account alone. The checklist reaches a
+client from the service, over the local API; the check keeps a client from running anything else as root, whatever
+it was given (a service of another version, a bug).
+
 `view` is the checklist as the API gives it and every client shows it: the items, whether everything required is done
-(`ready`), one line on it, and, once ready, what was set up and what each thing is for.
+(`ready`), one line on it, and, once ready, what was set up and what each thing is for; and whether the console opens
+on Setup at its start (`opens`, decision 0148): something required is missing that This folder does not put right on
+its way to the agent. This folder starts a Docker Desktop that is only stopped and builds a sandbox image not built
+for this Clank (asked first), so an owner who set Clank up meets Setup after neither a restart nor an update.
 """
 
 import shlex
@@ -33,11 +41,15 @@ from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
-from clank.components.workspaces.service import MEMORY_FIX, SetupReading, memory_said
+from clank.components.workspaces.service import MEMORY_FIX, SetupReading, account_name, memory_said, owner_commands
 
 State = Literal["done", "to do", "doing", "waits", "unknown"]
 Does = Literal["", "terminal", "docker", "service", "image", "model", "folder"]
 INSTALLER = "curl -fsSL https://clank-ai.github.io/install.sh | sh"
+WINGET = ("winget", "install", "--id", "Docker.DockerDesktop", "-e")  # Docker Desktop, by Windows' package manager
+BREW = ("brew", "install", "--cask", "docker")  # by Homebrew, on macOS
+LINUX = ("sh", "-c", INSTALLER)  # Docker Engine, by Clank's installer
+ON_THE_WAY = ("image",)  # what This folder does on its way to the agent, asked first; and a Docker it starts
 DOCKER_PAGE = "docker.com/products/docker-desktop"
 ENGINE_PAGES = "docs.docker.com/engine/install"
 GROUP_NOTE = "docs.docker.com/engine/install/linux-postinstall"
@@ -120,6 +132,13 @@ def found_tools(which: Callable[[str], str | None] = shutil.which) -> frozenset[
     return frozenset(tool for tool in TOOLS if which(tool))
 
 
+def runnable(command: Sequence[str], account: str | None = None) -> bool:
+    """Whether a client runs this command: one of the installers' Docker steps, or of the commands Docker Engine's
+    owner runs, the docker group's for `account` (this one's, unless named) alone."""
+    name = account_name() if account is None else account
+    return tuple(command) in (WINGET, BREW, LINUX, *owner_commands(name))
+
+
 def shown(command: Sequence[str]) -> str:
     """A command as the person would type it."""
     return shlex.join(command)
@@ -159,16 +178,15 @@ def _install(facts: Facts) -> Fix:
                 f"install Docker Desktop ({DOCKER_PAGE}), open it once and accept its terms, then run `clank setup` "
                 "again"
             )
-        command: tuple[str, ...] = ("winget", "install", "--id", "Docker.DockerDesktop", "-e")
         return Fix(
-            f"install Docker Desktop with Windows' own package manager: `{shown(command)}`. Windows asks for "
+            f"install Docker Desktop with Windows' own package manager: `{shown(WINGET)}`. Windows asks for "
             "administrator rights itself, and Docker Desktop's installer may turn WSL 2 on and ask to restart",
             "terminal",
-            command,
+            WINGET,
             admin=True,
             after="restart if Docker Desktop's installer asks, open Docker Desktop once and accept its terms, then run "
             "`clank setup` again",
-            shown=shown(command),
+            shown=shown(WINGET),
         )
     if facts.system == "darwin":
         if "brew" not in facts.tools:
@@ -176,14 +194,13 @@ def _install(facts: Facts) -> Fix:
                 f"install Docker Desktop ({DOCKER_PAGE}), open it once and accept its terms, then run `clank setup` "
                 "again"
             )
-        command = ("brew", "install", "--cask", "docker")
         return Fix(
-            f"install Docker Desktop with Homebrew: `{shown(command)}` (it may ask for your password itself)",
+            f"install Docker Desktop with Homebrew: `{shown(BREW)}` (it may ask for your password itself)",
             "terminal",
-            command,
+            BREW,
             admin=True,
             after="open Docker Desktop once (in Applications) and accept its terms, then run `clank setup` again",
-            shown=shown(command),
+            shown=shown(BREW),
         )
     if "curl" not in facts.tools:
         return Fix(
@@ -195,7 +212,7 @@ def _install(facts: Facts) -> Fix:
         "each command and asks before it runs them with sudo, which asks for your password itself; it also installs "
         "Clank's latest release again",
         "terminal",
-        ("sh", "-c", INSTALLER),
+        LINUX,
         admin=True,
         after="log out and in once if it added you to the docker group, then run `clank setup` again",
         shown=INSTALLER,
@@ -407,6 +424,14 @@ def ready(found: Sequence[Item]) -> bool:
     return all(item.state == "done" for item in found if item.required)
 
 
+def opens(found: Sequence[Item], facts: Facts) -> bool:
+    """Whether the console opens on Setup at its start (decision 0148): a required item is to do, or not known, that
+    This folder does not put right on its way to the agent (a Docker it starts, the sandbox image); an item that waits
+    is decided by the one it waits for."""
+    on_the_way = (*ON_THE_WAY, "docker_running") if facts.docker.starts else ON_THE_WAY
+    return any(item.required and item.state in ("to do", "unknown") and item.id not in on_the_way for item in found)
+
+
 def ready_said(facts: Facts) -> list[str]:
     """Once ready: what was set up, and what each thing is for."""
     label = facts.docker.status.label
@@ -433,13 +458,14 @@ def ready_said(facts: Facts) -> list[str]:
 
 def view(facts: Facts) -> dict[str, Any]:
     """The checklist as the API gives it: every item (its fix with its command as shown), whether everything required
-    is done, one line on it, and once ready what was set up."""
+    is done, one line on it, once ready what was set up, and whether the console opens on Setup."""
     found = items(facts)
     done = ready(found)
     left = [item.title for item in found if item.required and item.state != "done"]
     said = "Ready: everything Clank needs is set up." if done else f"Not ready yet: {', '.join(left)}."
     return {
         "ready": done,
+        "opens": opens(found, facts),
         "said": said,
         "items": [_item_view(item) for item in found],
         "ready_said": ready_said(facts) if done else [],

@@ -41,8 +41,9 @@ state Clank reads and never changes.
   the computer (its unit file's state, `systemctl show docker.service --property=UnitFileState`, which starts nothing),
   whether this account is in the docker group as the system lists it now, and the commands its owner runs with
   administrator rights: `sudo systemctl start docker` and `sudo systemctl enable docker` where systemd knows Docker's
-  service, and `sudo usermod -aG docker` with this account's name. Clank shows them, and runs them only in the owner's
-  terminal, where sudo asks for the password itself.
+  service, and `sudo usermod -aG docker` with this account's name (none when the system gives no name). Clank shows
+  them, and runs them only in the owner's terminal, where sudo asks for the password itself; a client runs no other
+  (`owner_commands`, which `clank setup` checks a command against before it runs it).
 """
 
 import os
@@ -185,6 +186,12 @@ def account_name() -> str:
         return pwd.getpwuid(os.getuid()).pw_name
     except KeyError:
         return os.environ.get("USER", "")
+
+
+def owner_commands(account: str) -> tuple[tuple[str, ...], ...]:
+    """Every command Docker Engine's owner may be offered to run with administrator rights (design 0028 §5): its start,
+    its start with the computer, and the docker group's for `account` alone (none without a name)."""
+    return (START_COMMAND, BOOT_COMMAND, *(((*JOIN_COMMAND, account),) if account else ()))
 
 
 AGENT_UID, AGENT_GID = (int(part) for part in USER.split(":"))  # the agent's user and group in its container
@@ -357,8 +364,8 @@ class DockerEngine(DockerCli):
     def setup_state(self) -> PlatformSetup:
         """Whether systemd starts Docker's service with the computer, whether this account is in the docker group as
         the system lists it now, and the commands its owner runs to start it, to start it with the computer and to
-        join the group (design 0028 §5); none when it is not installed, and no systemctl command where systemd knows no
-        Docker service of the system's."""
+        join the group (design 0028 §5); none when it is not installed, no systemctl command where systemd knows no
+        Docker service of the system's, and no join where the system gives no name for this account."""
         if self.command is None:
             return PlatformSetup()
         found = self.answer(list(BOOT), timeout=SYSTEMD_SECONDS)
@@ -368,12 +375,13 @@ class DockerEngine(DockerCli):
         listed, _ = self.groups()
         service, _ = self._reading()
         systemd = service is not None and service.known
+        account = self.account()
         return PlatformSetup(
             at_boot=at_boot,
             in_group=listed,
             start=START_COMMAND if systemd else (),
             boot=BOOT_COMMAND if systemd else (),
-            join=(*JOIN_COMMAND, self.account()),
+            join=(*JOIN_COMMAND, account) if account else (),
         )
 
     def inner_network_options(self) -> dict[str, str]:

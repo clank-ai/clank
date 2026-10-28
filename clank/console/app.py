@@ -37,8 +37,9 @@ and the console draws in a style as soon as the service reports a change of its 
 (`restyle`, which draws every widget again); Textual's own theme command is left out of the palette. With `snapshot`,
 the console renders one frame once everything is loaded and returns it as text (§5.8). Opened with no page named
 (`guide`, a bare `clank` or `clank console`), it opens Setup in place of This folder or Home once it has read that
-anything the setup needs is missing (design 0028 §4, decision 0148), else Add a model when no model is usable (design
-0016 §14, decision 0105). A page without a key of its own (Setup) is reached from the menu and Ctrl+P.
+anything the setup needs is missing that This folder does not put right on its way to the agent (the checklist's
+`opens`: design 0028 §4, decision 0148), else Add a model when no model is usable (design 0016 §14, decision 0105). A
+page without a key of its own (Setup) is reached from the menu and Ctrl+P.
 """
 
 import os
@@ -756,13 +757,13 @@ class ClankConsole(App[str]):
             self.call_after_refresh(lambda: self.exit(render_text(self)))
 
     def _open_guide(self) -> None:
-        """Once, at the start, in place of This folder or Home: Setup while anything it needs is missing (decision
-        0148); else Add a model when no model is usable (decision 0105)."""
+        """Once, at the start, in place of This folder or Home: Setup while anything it needs is missing that This
+        folder does not put right itself (decision 0148); else Add a model when no model is usable (decision 0105)."""
         self._guide = False
         if self._page not in ("folder", "home"):
             return
         setup = self.data.setup
-        if setup is not None and not setup.get("ready", True) and self.query("#page-setup"):
+        if setup is not None and setup.get("opens", not setup.get("ready", True)) and self.query("#page-setup"):
             self.show_page("setup")
             return
         usable = (self.data.usable or {}).get("usable", True)

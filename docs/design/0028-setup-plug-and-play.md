@@ -148,7 +148,14 @@ item's state (`done`, `to do`, `doing`, `waits` for an item before it, `unknown`
 what it is now and what to do, changes nothing, and exits 0 when everything required is done, else 1; `--json` prints
 it as the API gives it. The console's Setup page draws the service's checklist, `m` opening Add a model and `f` This
 folder; it has no key of its own (F11, the one left, is the terminal's full screen on most terminals), it is the last
-page of the menu, and the console opens on it while anything required is missing (decision 0148).
+page of the menu, and the console opens on it while anything required is missing that This folder does not put
+right on its way to the agent (decision 0148, the checklist's `opens`): a Docker Desktop only stopped, which This
+folder starts, and a sandbox image not built for this Clank, which it builds (asked first), do not count, so once
+set up, Setup is in the menu ("afterwards it is in the menu", above) and a restart or an update opens This folder.
+
+A client runs a fix's command only when it is one the checklist builds (`checklist.runnable`: the installers' Docker
+steps, and Docker Engine's start, start with the computer and the docker group's for the client's own account),
+whoever gave it the checklist; any other is shown, for the person to run if they trust it.
 
 As built (S3, 2026-10-27): `clank setup` prints the checklist, then asks about each item not done, in order, showing
 what its fix does and its exact command, and does it on a yes, reading the checklist again after each; without a

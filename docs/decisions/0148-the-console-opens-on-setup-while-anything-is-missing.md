@@ -17,9 +17,12 @@ anything is missing, the console opens on **Setup**".
 ## Decision
 
 - With no page named (a bare `clank`, `clank console`), the console opens on **Setup** in place of This folder or Home
-  while any required item of `clank setup`'s checklist is not done (design 0028 §4: Docker installed, running and
-  usable by this account, its memory limits where it cannot set them, Clank's service, the sandbox image, a model, a
-  folder). Offered items (Docker starting with the computer, Clank's VS Code window) do not count.
+  while a required item of `clank setup`'s checklist is not done that This folder does not put right on its way to
+  the agent (design 0028 §4: Docker installed, running and usable by this account, its memory limits where it cannot
+  set them, Clank's service, a model, a folder; the checklist's `opens`). Two items do not count, since This folder
+  does them before it starts the agent, as it did before Setup: a Docker Desktop that is only stopped (This folder
+  starts it) and a sandbox image not built for this Clank (This folder builds it, asked first). Offered items (Docker
+  starting with the computer, Clank's VS Code window) do not count either.
 - Setup's model item opens Add a model (`m`), and its folder item This folder (`f`); Ready opens This folder (`f`).
 - With the setup done and no model usable now (a preset answered once, but none can load), the console opens on Add a
   model, as decision 0105 says.
@@ -31,13 +34,19 @@ anything is missing, the console opens on **Setup**".
 
 - **Keep Add a model first, Setup in the menu.** A new user on Linux would add a model, then meet Docker's refusal on
   This folder, with the fix in another place.
-- **Setup only on the first start.** Docker stopped after a restart, or a newer sandbox image after an update, would go
-  unsaid until This folder's step; Setup says it, with the key that does it, on the way to This folder.
+- **Setup only on the first start.** Docker Engine stopped after a restart would go unsaid until This folder's step,
+  which can only name the command: Setup runs it in the terminal on one key.
+- **Setup whenever any required item is not done** (as first built, 2026-10-27). An owner who set Clank up would meet
+  Setup after every restart of Windows (Docker Desktop not started yet) and after every update that changes the
+  sandbox image, one more page before This folder, whose `a` starts Docker Desktop and builds the image itself and
+  says each step as it does it. Narrowed before release (2026-10-28) to what This folder cannot do.
 - **F11 for the page.** Windows Terminal, GNOME Terminal and macOS keep it, so the key would do nothing there.
 
 ## Consequences
 
 - The console reads the checklist with everything else at its start (`GET /setup`, the console's `setup` topic) and
   again when Docker, a slot, an operation's end or a workspace's record changes.
-- A user whose Docker is stopped meets Setup first, where one key starts Docker Desktop (or the command to run in the
-  terminal is shown for Docker Engine), then This folder.
+- A user whose Docker Engine is stopped meets Setup first, where `t` runs the command shown in the terminal, asked
+  first; a Docker Desktop only stopped is started by This folder, as before.
+- `clank setup --check` still says every item not done, and exits 1 until all are: the checklist is unchanged; only
+  where the console opens is.

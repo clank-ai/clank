@@ -3,7 +3,8 @@ command, the service's start; `t` runs the command shown, one that needs adminis
 first in a window that names it: the console steps aside for it (headless, it runs at once), sudo asks for the password
 itself, and the console says how it ended and what the person does next; Esc in the window runs nothing. `b` builds
 the sandbox image in the background, asked first (S4). A key that has nothing to do says why: `s` with Docker Engine
-stopped, that Clank never starts it, and the command `t` runs."""
+stopped, that Clank never starts it, and the command `t` runs. `t` runs only a command the checklist builds, whoever
+gave it: another is refused, its words naming it."""
 
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -46,6 +47,7 @@ def this_computer(monkeypatch: pytest.MonkeyPatch) -> None:
     """No VS Code and no installer's tool found, whatever this machine has."""
     monkeypatch.setattr(vscode, "which", lambda name: None)
     monkeypatch.setattr(checklist, "found_tools", lambda: frozenset())
+    monkeypatch.setattr(checklist, "account_name", lambda: "ada")
 
 
 def make(client: Client, home: Home, ran: Terminal) -> ClankConsole:
@@ -176,3 +178,18 @@ async def test_b_builds_the_sandbox_image_in_the_background_asked_first(
         await pilot.press("enter")
         await settle(pilot, lambda: f"build {image_tag()}" in platform.calls)
         await settle(pilot, lambda: "built for this Clank" in render_text(app))
+
+
+async def test_t_never_runs_a_command_the_checklist_does_not_build(
+    client: Client, home: Home, platform: FakePlatform
+) -> None:
+    other = ("sudo", "systemctl", "start", "docker", "--now")
+    engine(platform, "stopped", PlatformSetup(at_boot=True, in_group=True, start=other, boot=ENABLE, join=JOIN))
+    ran = Terminal()
+    app = make(client, home, ran)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await frame_when(pilot, app, TITLE, "press t")
+        await pilot.press("t")
+        await settle(pilot, lambda: "not one Clank's setup runs" in render_text(app))
+        assert ran.ran == []
+        assert not isinstance(app.screen, ConfirmScreen), "nothing to say yes to"

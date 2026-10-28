@@ -12,16 +12,17 @@ runs, rather than guessing. The folder it was started in is checked as a workspa
   one. A command that needs administrator rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo
   usermod -aG docker <account>`, the installer's Docker step) runs attached to this terminal (`attached`), so sudo, or
   Windows, asks for the password itself and nothing it says is captured: Clank never reads, asks for or keeps a
-  password. A fix that leaves the person something to do after it (log out and in once after joining the docker group;
-  open Docker Desktop once after installing it) says so, and the setup stops there. Docker Desktop is started through
-  its own start: by the service's operation when the service runs, else here (`start_platform`). Clank's service is
-  started in the background as `clank serve --background` starts it; the sandbox image is built by the service in the
-  background (`workspaces.image`, design 0028 §4), and followed to its end before the folder opens on it, so the setup
-  goes on while it builds; the model's step asks once whether models run in
+  password; and it runs only a command the checklist builds (`checklist.runnable`), whoever gave it the checklist,
+  showing any other for the person to run if they trust it. A fix that leaves the person something to do after it (log
+  out and in once after joining the docker group; open Docker Desktop once after installing it) says so, and the setup
+  stops there. Docker Desktop is started through its own start: by the service's operation when the service runs, else
+  here (`start_platform`). Clank's service is started in the background as `clank serve --background` starts it; the
+  sandbox image is built by the service in the background (`workspaces.image`, design 0028 §4), and followed to its end
+  before the folder opens on it, so the setup goes on while it builds; the model's step asks once whether models run in
   the cloud through OpenRouter, on this computer's GPU, or both (the cloud first), and hands the terminal to Add a
   model's command for each (`clank model add --cloud`, `--local`), which keeps the key in Clank's secrets folder; the
-  folder is opened as a workspace (`clank workspace open`'s operation). An item
-  whose fix is the person's to do (the log out and in, the kernel's memory setting) is said, and the setup goes on.
+  folder is opened as a workspace (`clank workspace open`'s operation). An item whose fix is the person's to do (the log
+  out and in, the kernel's memory setting) is said, and the setup goes on.
   Without a terminal to answer in, every answer is no.
 - `--yes` does every fix that needs no administrator rights without asking (Docker Desktop's start, the service, the
   sandbox image, the folder) and lists the others with their commands; Add a model needs the person's answers, so it
@@ -214,6 +215,11 @@ class Fixes:
     def _terminal(self, item: dict[str, Any]) -> None:
         """The command, attached to this terminal; what the person does after it, said, and the setup stops there."""
         fix = item["fix"]
+        if not checklist.runnable(fix["command"]):
+            shown = fix["shown"] or checklist.shown(fix["command"])
+            echo(f"`{shown}` is not one Clank's setup runs, so it did not run: run it yourself if you trust it.", "  ")
+            self.later.append(item)
+            return
         click.echo(f"  > {fix['shown'] or ' '.join(fix['command'])}")
         outcome = attached(fix["command"])
         if outcome != 0:

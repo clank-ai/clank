@@ -392,3 +392,22 @@ def test_a_bare_clank_and_clank_console_open_the_guide_and_a_page_named_does_not
     for arguments in ([], ["console"], ["console", "--page", "models"]):
         assert CliRunner().invoke(main, arguments).exit_code == 0
     assert [(each["page"], each["guide"]) for each in opened] == [("folder", True), ("home", True), ("models", False)]
+
+
+async def test_with_docker_desktop_only_stopped_after_a_restart_clank_opens_on_this_folder_which_starts_it(
+    client: Client, home: Home, kernel: Kernel, platform: FakePlatform, cloud_api: CloudBench
+) -> None:
+    cloud_api.add()
+    cloud_api.write_preset()
+    cloud_api.run("cloud-example-coder")
+    set_up(kernel, platform, "cloud-example-coder")
+    platform.state = "stopped"
+    app = ClankConsole(client, now=lambda: NOW, zone=UTC, home=home, page="folder", guide=True)
+    app.folder = FOLDER
+    async with app.run_test(size=(120, 40)) as pilot:
+        await settle(pilot, lambda: "cloud: Example Coder" in render_text(app).splitlines()[0])
+        await settle(pilot, lambda: app.data.setup is not None)
+        await pilot.pause(0.3)
+        assert app.data.setup is not None
+        assert app.data.setup["ready"] is False
+        assert current_page(app) == "page-folder"

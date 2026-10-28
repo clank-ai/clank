@@ -8,17 +8,17 @@ through its own command (the service's `docker.start`); `t` runs the command sho
 rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo usermod -aG docker <account>`, the
 installer's Docker step), in this terminal, asked first: the console steps aside while it runs, sudo asks for the
 password itself, and nothing it says reaches Clank (`clank.console.terminal`); what the person does after it (log out
-and in) is said when it ends. `b` builds the sandbox image in the background (`POST /workspaces/image`, asked first),
-its progress said by the image's item while it runs, so a model is added meanwhile. `m` opens Add a model (in the cloud
-through OpenRouter, on this computer's GPU, or both), `f` opens This folder, where `o` opens the folder as a
-workspace. Under the rows, "Next:" and the key of the first required item a key can do, or what to do when none can
-(log out and in); once everything required is done, "Ready:", what was set up and what each thing is for, and `f`.
-`r` reads the checklist again now (the service is asked again whenever Docker, the slots or an operation change, and
-every few seconds while the page is on screen).
+and in) is said when it ends. `t` runs only a command the checklist builds (`checklist.runnable`), whoever gave it. `b`
+builds the sandbox image in the background (`POST /workspaces/image`, asked first), its progress said by the image's
+item while it runs, so a model is added meanwhile. `m` opens Add a model (in the cloud through OpenRouter, on this
+computer's GPU, or both), `f` opens This folder, where `o` opens the folder as a workspace. Under the rows, "Next:" and
+the key of the first required item a key can do, or what to do when none can (log out and in); once everything required
+is done, "Ready:", what was set up and what each thing is for, and `f`. `r` reads the checklist again now (the service
+is asked again whenever Docker, the slots or an operation change, and every few seconds while the page is on screen).
 
 The page has no key of its own in the menu: the one F-key left, F11, is the terminal's full screen on most terminals.
-It is the last page of the menu, Ctrl+P finds it, and the console opens on it while anything required is missing
-(decision 0148).
+It is the last page of the menu, Ctrl+P finds it, and the console opens on it while anything required is missing that
+This folder does not put right on its way to the agent (decision 0148).
 """
 
 from typing import Any
@@ -28,6 +28,7 @@ from textual.content import Content
 from textual.widgets import Label
 
 from clank.client import ClientError, NotRunning
+from clank.components.agents import checklist
 from clank.console import actions, terminal
 from clank.console.buttons import Buttons, from_keys
 from clank.console.confirm import ConfirmScreen
@@ -258,6 +259,9 @@ class SetupPage(Page):
         if item is None:
             return
         fix = item["fix"]
+        if not checklist.runnable(fix["command"]):
+            self.console.say(f"`{fix['shown']}` is not one Clank's setup runs, so it does not run from here", True)
+            return
         lines = [f"{item['title']}: {item['said']}.", f"{fix['said'][0].upper()}{fix['said'][1:]}.", STEPS_ASIDE]
         if fix["after"]:
             lines.append(f"Then: {fix['after']}.")

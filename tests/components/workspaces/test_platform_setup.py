@@ -1,10 +1,10 @@
 """Design 0028 §5: how the container platform is set up on this computer, as `clank setup` reads it from the platform's
 adapter. Docker Engine says whether systemd starts Docker's service with the computer (its unit file's state, which
-starts nothing), whether this account is in the docker group as the system lists it now, and the commands its owner
-runs with administrator rights: `sudo systemctl start docker`, `sudo systemctl enable docker` and `sudo usermod -aG
-docker` with this account's name. Without systemd it says nothing of the boot and names no systemctl command; not
-installed, it names none (the contract holds every recorded platform to the same: Docker Desktop, which Clank starts
-through its own command, names none)."""
+starts nothing), whether this account is in the docker group as the system lists it now, and the commands its owner runs
+with administrator rights: `sudo systemctl start docker`, `sudo systemctl enable docker` and `sudo usermod -aG docker`
+with this account's name (none when the system gives no name). Without systemd it says nothing of the boot and names no
+systemctl command; not installed, it names none (the contract holds every recorded platform to the same: Docker Desktop,
+which Clank starts through its own command, names none)."""
 
 import pytest
 
@@ -38,10 +38,14 @@ def test_whether_this_account_is_in_the_docker_group_is_as_the_system_lists_it_n
 
 
 def test_without_systemd_nothing_is_said_of_the_boot_and_no_systemctl_command_is_named() -> None:
-    setup = engine(Machine(None)).setup_state()
+    setup = engine(Machine(None), account=lambda: "ada").setup_state()
     assert (setup.at_boot, setup.start, setup.boot) == (None, (), ())
     assert setup.join[:4] == ("sudo", "usermod", "-aG", "docker")
 
 
 def test_docker_engine_not_installed_names_no_command() -> None:
     assert engine(Machine("active"), command=None).setup_state() == PlatformSetup()
+
+
+def test_an_account_whose_name_the_system_does_not_give_is_offered_no_join_command() -> None:
+    assert engine(Machine("active"), account=lambda: "").setup_state().join == ()
