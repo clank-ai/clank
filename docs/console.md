@@ -9,10 +9,14 @@ The console (`clank`, `clank console`) is a Textual app that is a client of the 
 While anything Clank needs is missing, `clank` opens the console on **Setup** (the menu's last page; Ctrl+P finds it):
 Docker installed, running and usable by your account, Clank's service, the sandbox image, a model that answered a test
 request, a folder that is a workspace, and Clank's VS Code window, which is offered. Each item says what it is now
-and, while it is not done, what to do with the key that does it here: `m` opens **Add a model** (in the cloud through
-OpenRouter, on this computer's GPU, or both), `f` opens **This folder**; `r` reads it all again. Once everything is
+and, while it is not done, what to do with the key that does it here: `s` starts Docker Desktop, `t` runs a command
+that needs administrator rights (on Linux, `sudo systemctl start docker`, or joining the `docker` group) in this
+terminal, asked first (the console steps aside, sudo asks for your password itself, and the console comes back), `m`
+opens **Add a model** (in the cloud through OpenRouter, on this computer's GPU, or both), `f` opens **This folder**;
+`r` reads it all again. Once everything is
 done it says what was set up and what each thing is for, and `f` opens This folder. `clank setup --check` prints the
-same checklist in a terminal, without the service if need be (design 0028 §4).
+same checklist in a terminal, without the service if need be, and `clank setup` offers each fix there, one by one
+(design 0028 §4).
 
 ## Working in a folder, quickly
 

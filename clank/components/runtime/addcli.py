@@ -4,6 +4,8 @@ order and words (its guide, `GET /runtime/guide`): cloud or local; for the cloud
 fills them (refused in its words, asked again), and the test, a load into an empty main slot or a short request beside
 the local model that runs and then "load it now?"; for a local model, the main slot's presets and what each needs here,
 each step asked first and followed. The command works out nothing of its own: what it prints and asks is the service's.
+`--cloud` and `--local` skip the choice, for `clank setup`'s model step, which asks it once (design 0028 §4: the cloud,
+this computer's GPU, or both, the cloud first) and hands the terminal to this command for each.
 """
 
 from functools import partial
@@ -36,16 +38,20 @@ def say(step: dict[str, Any]) -> None:
 
 @click.command("add")
 @click.option("--stdin", "from_stdin", is_flag=True, help="Read the key from one line of standard input (scripts).")
-def add_model(from_stdin: bool) -> None:
+@click.option("--cloud", "path", flag_value="cloud", help="Skip the choice: the cloud's steps (OpenRouter, your key).")
+@click.option("--local", "path", flag_value="local", help="Skip the choice: a model on this computer's GPU.")
+def add_model(from_stdin: bool, path: str | None) -> None:
     """Add a model, step by step, as the console's Add a model does: cloud (OpenRouter, with your key) or local."""
     client = common.call(common.connect)
     guide = steps(client)
-    choice = guide["choice"]
-    say(choice)
-    for option in choice["options"]:
-        click.echo(f"  {option['key']}  {option['said']}")
-    picked = click.prompt("Cloud or local", type=click.Choice([option["key"] for option in choice["options"]]))
-    if picked == "l":
+    if path is None:
+        choice = guide["choice"]
+        say(choice)
+        for option in choice["options"]:
+            click.echo(f"  {option['key']}  {option['said']}")
+        picked = click.prompt("Cloud or local", type=click.Choice([option["key"] for option in choice["options"]]))
+        path = "local" if picked == "l" else "cloud"
+    if path == "local":
         local(client, guide)
         return
     start = guide[""]["cloud_from"]

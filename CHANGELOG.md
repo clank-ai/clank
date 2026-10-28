@@ -16,7 +16,12 @@ The next release. Its version is set when it is tagged; until then, a clone has 
   Clank's service, the sandbox image, a model that answered a test request, a folder that is a workspace, and Clank's
   VS Code window. `clank setup --check` changes nothing and works without the service; the installers end with it. While
   anything is missing, `clank` opens the console on its **Setup** page (decision 0148), whose model item opens Add a
-  model and folder item This folder.
+  model and folder item This folder. `clank setup` then offers each fix in order, showing its exact command and asking
+  first: Docker Desktop started; on Linux `sudo systemctl start docker`, `sudo systemctl enable docker` and `sudo
+  usermod -aG docker $USER`, run in your terminal, where sudo asks for your password itself (Clank never sees it), then
+  a log out and in after joining the group; Clank's service started; a model added (in the cloud, on this computer's
+  GPU, or both); the folder opened as a workspace. `--yes` does every fix that needs no administrator rights and lists
+  the others. On the Setup page, `s` starts Docker Desktop and `t` runs the command shown in the terminal.
 
 ## 0.3.0b3: Linux with Docker Engine, and the extension in every release (2026-10-27)
 

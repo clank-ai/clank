@@ -20,11 +20,11 @@ Linux ([design 0014](0014-linux-and-small-machines.md) §2-§4, built at the own
 | 1 | Who sets Clank up, and the one path each follows | Proposed 2026-10-27; being built at the owner's instruction |
 | 2 | Rules every step of the setup keeps | Proposed 2026-10-27; being built at the owner's instruction |
 | 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9) |
-| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; being built at the owner's instruction: the checklist (S2) built 2026-10-27, `clank setup --check` and the console's Setup page ([plan s62](../plans/s62-clank-setup.md)) |
-| 5 | Docker, configured correctly on each system | Proposed 2026-10-27; being built at the owner's instruction: each state's words and fix in the checklist built 2026-10-27 (S2) |
+| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; being built at the owner's instruction: the checklist (S2) and the fixes (S3) built 2026-10-27, `clank setup` and the console's Setup page ([plan s62](../plans/s62-clank-setup.md)) |
+| 5 | Docker, configured correctly on each system | Proposed 2026-10-27; being built at the owner's instruction: each state's words and fix (S2), and the fixes Clank does, in the terminal on a yes (S3), built 2026-10-27 |
 | 6 | Clank's VS Code extension without building it | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction (S5) |
 | 7 | Local models: what is one step and what is not yet | Proposed 2026-10-27 |
-| 8 | Tests and build steps | Proposed 2026-10-27; the installers' tests built (the website's `installer` workflow); `clank setup`'s checklist tests built (S2) |
+| 8 | Tests and build steps | Proposed 2026-10-27; the installers' tests built (the website's `installer` workflow); `clank setup`'s tests built (S2, S3) |
 
 ## 1. Who sets Clank up, and the one path each follows
 
@@ -149,6 +149,25 @@ what it is now and what to do, changes nothing, and exits 0 when everything requ
 it as the API gives it. The console's Setup page draws the service's checklist, `m` opening Add a model and `f` This
 folder; it has no key of its own (F11, the one left, is the terminal's full screen on most terminals), it is the last
 page of the menu, and the console opens on it while anything required is missing (decision 0148).
+
+As built (S3, 2026-10-27): `clank setup` prints the checklist, then asks about each item not done, in order, showing
+what its fix does and its exact command, and does it on a yes, reading the checklist again after each; without a
+terminal to answer in, every answer is no. A command that needs administrator rights runs attached to the person's
+terminal (the command's own input and output), so sudo, or Windows, asks for the password itself and nothing it says
+reaches Clank; Clank never reads, asks for or keeps a password. A fix that leaves the person something to do after it
+(log out and in once after joining the docker group; open Docker Desktop once after installing it) says so, and the
+setup stops there. Docker Desktop is started through its own start, by the service's `docker.start` when the service
+runs, else by `clank setup` itself. The service waits while this account may not use Docker, since a service started
+then would keep that session's groups. The model's step asks once ("Run models in the cloud through OpenRouter (c), on
+this computer's GPU (l), or both (b)?"), the GPU found said first in the item, then hands the terminal to Add a
+model's command for each (`clank model add --cloud`, then `--local`), which keeps the key in Clank's secrets folder; the
+folder is the one `clank setup` was started in, opened as `clank workspace open` opens it. `--yes` does every fix
+that needs no administrator rights and lists the others with their commands (Add a model, which needs answers, too).
+On the console's Setup page, `s` starts Docker Desktop and `t` runs the command shown in the console's terminal, asked
+first in a window that names it (the console steps aside while it runs). Not installed, Docker's fix is the installer's
+Docker step: `winget install --id Docker.DockerDesktop -e` on Windows, `brew install --cask docker` on macOS with
+Homebrew, and on Linux Clank's installer itself (`curl -fsSL https://clank-ai.github.io/install.sh | sh`), which shows
+each command and asks first, and also installs Clank's latest release again.
 
 ## 5. Docker, configured correctly on each system
 

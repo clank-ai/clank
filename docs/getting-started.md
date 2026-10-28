@@ -211,14 +211,39 @@ installs it by itself; to have it in your usual VS Code too: `code --install-ext
 ## 3. After installing
 
 1. **Open a new terminal**, so it finds `clank` (`uv tool update-shell` put it on the path of new ones).
-2. **Docker**:
-   - *Windows and macOS*: Docker Desktop runs (its whale is in the taskbar or the menu bar). After a restart it starts
-     when you sign in, if you let it in its settings.
-   - *Linux*: if the installer just added you to the `docker` group, **log out and in once** (or restart), so every
-     program you start can use Docker. Until then Clank says "this account may not use Docker yet" and what to do.
-3. **Check the computer**: `clank doctor`. It changes nothing. Each line is `ok`, `warn`, `fail` or `skip` (a check
-   that does not apply here, such as WSL on Linux), with what to do under each that is not `ok`. On a computer without
-   an NVIDIA GPU, "An NVIDIA GPU" warns, and that is fine for a cloud model.
+2. **On Linux, if the installer just added you to the `docker` group, log out and in once** (or restart), so every
+   program you start can use Docker. Until then `clank setup` says the group is not active in this session yet.
+3. **Set Clank up**: in a terminal, in the folder of a project you want the agent to work in, type
+
+   ```
+   clank setup
+   ```
+
+   It lists what Clank needs on this computer, in order, each item `done`, `to do`, `waits` (for an item before it) or
+   `unknown` (until Clank's service runs), with what to do under each one that is not done. Then it offers each fix in
+   order, showing what it does and its exact command, and asks before each one; answer `y` to do it, anything else to
+   leave it:
+   - **Docker installed, running and usable by your account** (on Linux also whether it starts with the computer).
+     Not installed, it offers the installer's Docker step: `winget` on Windows, Homebrew on macOS, Clank's installer
+     on Linux. Clank starts Docker Desktop itself (after a restart Docker Desktop starts when you sign in, if you let it
+     in its settings). Clank never starts Docker Engine on Linux, nor runs anything as root on its own: it shows the
+     command (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo usermod -aG docker $USER`) and runs
+     it in your terminal on a yes, where `sudo` asks for your password itself; Clank never sees it. After joining the
+     `docker` group, log out and in once, then run `clank setup` again.
+   - **Clank's service**, started in the background (`clank stop` ends it).
+   - **A model**: it asks once whether models run in the cloud through OpenRouter, on this computer's GPU, or both
+     (the cloud first), saying first the GPU it found, then walks the steps of 4a or 4b in the terminal.
+   - **A folder**: the folder you typed `clank setup` in, opened as a workspace (step 5).
+   - **Clank's VS Code window** is offered, not required (2b).
+
+   `clank setup --check` only says it all and changes nothing (the installer ends with it); `clank setup --yes` does
+   every fix that needs no administrator rights without asking, and lists the others with their commands. In the
+   console the same checklist is the **Setup** page, where `clank` opens while anything is missing: `s` starts Docker
+   Desktop, `t` runs a command shown in the terminal (asked first), `m` opens Add a model, `f` This folder. Once
+   everything is done it says **Ready**, what was set up and what each thing is for.
+4. **Check the computer**, if something seems wrong: `clank doctor`. It changes nothing. Each line is `ok`, `warn`,
+   `fail` or `skip` (a check that does not apply here, such as WSL on Linux), with what to do under each that is not
+   `ok`. On a computer without an NVIDIA GPU, "An NVIDIA GPU" warns, and that is fine for a cloud model.
 
 ## 4a. A cloud model, through OpenRouter
 
@@ -229,8 +254,9 @@ after you agree once, and only for the workspaces you allow.
    [Keys](https://openrouter.ai/keys), press **Create Key**, name it (Clank), and copy it: OpenRouter shows it once.
    For paid models, add credits under **Credits**; free models (their names end in `:free`) need none, with lower
    limits.
-2. **Type `clank`.** With no model set up, the console opens on **Add a model** (later: F12, or `a` on **Providers and
-   models**).
+2. **Type `clank`.** While anything is missing, the console opens on **Setup**: press `m` for **Add a model** (later:
+   F12, or `a` on **Providers and models**). In a terminal, `clank setup` (step 3) or `clank model add` walk the same
+   steps.
 3. Press `c` for **Cloud**, then Enter on **OpenRouter**.
 4. Read the **agreement**: what goes to OpenRouter (the prompts and the files the agent reads in a workspace you allow),
    what never goes (Notion, and MCP servers marked local: Space marks or unmarks one), and OpenRouter's data policy
@@ -279,7 +305,8 @@ Not possible: Clank's engines need an NVIDIA GPU. Use a cloud model (4a).
 
 ## 5. Work in a folder
 
-1. Open a terminal in the folder you want to work in and type `clank`. The console opens on **This folder** (F4).
+1. Open a terminal in the folder you want to work in and type `clank`. The console opens on **This folder** (F4),
+   or on **Setup** while anything is missing (`f` there opens This folder).
 2. It lists what working here needs: Docker, the folder's workspace, its software, a model, the gateway. `g` does
    every step that is not done. The first workspace builds Clank's sandbox image, which takes a few minutes.
 3. With a cloud model, Clank asks once whether this folder's work may go to OpenRouter. Answer `y`, or keep the folder
@@ -419,7 +446,8 @@ a workspace's container uses an older sandbox image, reopen that workspace: **Wo
 
 ## 7. Troubleshooting
 
-`clank doctor` checks the computer, and every refusal in Clank says why and what to do. The usual ones:
+`clank setup` says what is missing and offers each fix; `clank doctor` checks the computer; and every refusal in
+Clank says why and what to do. The usual ones:
 
 | What you see | What to do |
 | --- | --- |

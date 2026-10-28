@@ -37,4 +37,4 @@ Files                 M9     │
                              │
                              │
 
- m add a model  f This folder  r read it again  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu
+ s start Docker  t run it here  m add a model  f This folder  r read it again  ? explain  f1 help  esc menu

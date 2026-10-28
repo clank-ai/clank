@@ -24,7 +24,8 @@ the gateway (design 0014 §3): `docker-engine` gets the gateway's socket (`edge_
 every other adapter the host's loopback; and on Linux no workspace's folder may hold the gateway's socket folder or be
 inside it (`socket_folder`). For `clank setup` (design 0028 §4, §5) Docker is read in one go (`readiness.py`): in the
 service from the last reading (`setup_reading`, its memory limits kept a few minutes), without it from the platform the
-settings choose (`read_setup`).
+settings choose (`read_setup`); without the service, `clank setup` starts Docker Desktop through the platform's own
+start and waits for its engine as the operation does (`start_platform`).
 """
 
 import logging
@@ -183,6 +184,40 @@ def read_setup(home: Home, folder: str = "") -> SetupReading:
         clank_home=home.root,
         folder=folder,
     )
+
+
+def start_platform(home: Home, say: Callable[[str], None]) -> PlatformStatus:
+    """Start Docker without the service (`clank setup`, design 0028 §5), through the platform's own start (Docker
+    Desktop's command), and wait until its engine answers, within the settings' `start_timeout_seconds`, saying so;
+    then put right what the start disturbed, as the service's start does. `DockerError`, in the platform's words, for
+    one that is not installed, not this account's, or one Clank does not start (Docker Engine), or that did not start
+    in time."""
+    settings = docker_settings(home)
+    platform = make_platform(settings.adapter)
+    status = platform.status()
+    if status.running:
+        return status
+    _require_usable(status)
+    if not starts(platform):
+        raise DockerError(status_said(status))
+    try:
+        platform.request_start()
+    except PlatformError as error:
+        raise DockerError(str(error)) from error
+    minutes = max(1, settings.start_timeout_seconds // 60)
+    say(f"asked {status.label} to start; waiting for it, up to {minutes} minutes (the first time, accept its terms in "
+        "its window)")  # fmt: skip
+    deadline = time.monotonic() + settings.start_timeout_seconds
+    while not status.running:
+        if time.monotonic() >= deadline:
+            raise DockerError(
+                f"{status.label} did not start within {settings.start_timeout_seconds} seconds (it is {status.state}): "
+                f"open {status.label} to see why"
+            )
+        time.sleep(WAIT_SECONDS)
+        status = platform.status()
+    platform.after_start(say)
+    return status
 
 
 def owner(container: Container, home_id: str) -> Owner:

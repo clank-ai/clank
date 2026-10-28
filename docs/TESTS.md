@@ -373,9 +373,9 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 11 | Cost: each request, session and flow, and the limits | `tests/cli/test_cloud_commands.py` (7), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_cost_limits.py` (8), `tests/components/gateway/test_cost_views.py` (8), `tests/console/test_add_model.py` (25), `tests/console/test_cost_pause.py` (2), `tests/console/test_data.py` (18), `tests/console/test_home.py` (15), `tests/console/test_monitor_cloud.py` (3), `tests/console/test_requests_page.py` (11), `tests/console/test_text.py` (4), `tests/kernel/test_event_attention.py` (3) |
 | 12 | How cost is known and kept | `tests/components/gateway/test_cloud_cost.py` (5), `tests/components/gateway/test_cost_views.py` (8), `tests/components/gateway/test_state_files.py` (4) |
 | 13 | What the Monitor shows of a cloud model | `tests/components/runtime/test_cloud_facts.py` (5), `tests/console/test_monitor_cloud.py` (3) |
-| 14 | The first run: Add a model | `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (18), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (20) |
+| 14 | The first run: Add a model | `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (18), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (20) |
 | 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_folder.py` (25), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
-| 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (6), `tests/cli/test_work_cloud.py` (3) |
+| 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3) |
 | 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (18) |
 | 18 | Tests, the fake OpenRouter, and the checks owed with a real key | `tests/contract/test_endpoint.py` (5), `tests/real/test_openrouter.py` (5), `tests/test_architecture.py` (7), `tests/tools/test_capture_endpoint.py` (2) |
 | 19 | Build steps | none yet |
@@ -580,8 +580,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | Who sets Clank up, and the one path each follows | none yet |
 | 2 | Rules every step of the setup keeps | none yet |
 | 3 | The installer on each system | none yet |
-| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_setup_command.py` (7), `tests/components/agents/test_setup_checklist.py` (25), `tests/console/test_data.py` (18), `tests/console/test_setup_page.py` (7), `tests/console/test_shell.py` (20) |
-| 5 | Docker, configured correctly on each system | `tests/components/agents/test_setup_checklist.py` (25), `tests/components/workspaces/test_platform_setup.py` (5), `tests/contract/test_container_platform.py` (9) |
+| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (13), `tests/components/agents/test_setup_checklist.py` (25), `tests/console/test_data.py` (18), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (5), `tests/console/test_shell.py` (20) |
+| 5 | Docker, configured correctly on each system | `tests/cli/test_setup_fixes.py` (13), `tests/components/agents/test_setup_checklist.py` (25), `tests/components/workspaces/test_platform_setup.py` (5), `tests/console/test_setup_page_fixes.py` (5), `tests/contract/test_container_platform.py` (9) |
 | 6 | Clank's VS Code extension without building it | `tests/components/agents/test_vscode_release.py` (6), `tests/tools/test_release.py` (6) |
 | 7 | Local models: what is one step and what is not yet | none yet |
 | 8 | Tests and build steps | none yet |
@@ -700,9 +700,10 @@ Design 0002 §2.15 and the M8.0 plan, task 2: `clank mcp` adds MCP servers the w
 
 ### `tests/cli/test_model_add.py`
 
-Design 0016 §14 and §16: `clank model add` is the console's Add a model in the terminal, in its order and the service's words: the whole pass with its answers on standard input writes the provider's record once agreed, keeps the key (read without echo, never printed), writes the preset from the model picked with the settings as the service fills them, and loads it into the empty main slot, saying its answer and cost; a refused key is said and asked again, and so is a mistyped limit, the preset already written then taken as it is, as a second pass takes it; Local lists the main slot's presets and says what to do when a step cannot be done from here.
+Design 0016 §14 and §16: `clank model add` is the console's Add a model in the terminal, in its order and the service's words: the whole pass with its answers on standard input writes the provider's record once agreed, keeps the key (read without echo, never printed), writes the preset from the model picked with the settings as the service fills them, and loads it into the empty main slot, saying its answer and cost; a refused key is said and asked again, and so is a mistyped limit, the preset already written then taken as it is, as a second pass takes it; Local lists the main slot's presets and says what to do when a step cannot be done from here. Design 0028 §4: `--cloud` and `--local` skip the choice, for `clank setup`'s model step, which asks it once.
 
 - the whole pass on standard input agrees keeps the key writes the preset and loads it
+- cloud and local skip the choice
 - a refused key is said and asked again
 - with a local model running it tests then asks and no keeps it
 - local lists the presets and says what to do when a step cannot be done
@@ -738,6 +739,24 @@ Design 0028 §4 and design 0002 §2.15: `clank setup --check` prints the checkli
 - json prints the checklist as the api gives it
 - the folder it was started in is checked as a workspaces would be
 - at eighty columns what an item is now goes under its title and every line fits
+
+### `tests/cli/test_setup_fixes.py`
+
+Design 0028 §4 and §5: `clank setup`, without `--check`, asks about each item that is not done, in order, showing its fix and its exact command first, and does it on a yes; nothing runs without its yes, and without a terminal to answer in the answer is no. A command that needs administrator rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo usermod -aG docker <account>`, the installer's Docker step) runs attached to the terminal, so sudo asks for the password itself and nothing it says is captured; after joining the docker group it says to log out and in once, and stops there. Docker Desktop is started through its own start, by the service when it runs, else here. Clank's service is started on a yes, the folder `clank setup` was started in is opened as a workspace on a yes, and the model's step asks once: in the cloud, on this computer's GPU, or both, the terminal handed to Add a model's command for each, the cloud first. `--yes` does every fix that needs no administrator rights without asking and lists the others with their commands.
+
+- nothing runs without its yes
+- without a terminal to answer in the answer is no
+- an administrator command runs attached to the terminal on a yes
+- the terminal runner inherits the terminal so sudo asks itself and nothing is captured
+- after joining the docker group it says to log out and in once and stops there
+- a command that fails says so and the setup goes on
+- docker desktop stopped is started through its own start without the service
+- with the service docker desktop is started by the services operation
+- clanks service is started on a yes
+- the folder it was started in is opened as a workspace on a yes
+- the models step asks once cloud local or both and hands the terminal to add a model
+- yes does every fix without administrator rights and lists the others
+- yes starts docker desktop through its own start
 
 ### `tests/cli/test_update.py`
 
@@ -4448,6 +4467,16 @@ Design 0028 §4 and decision 0148: the console's Setup page shows `clank setup`'
 - m opens add a model and f opens this folder
 - r reads the checklist again
 - the page has no key of its own and is the menus last page
+
+### `tests/console/test_setup_page_fixes.py`
+
+Design 0028 §4 and §5: the Setup page does the next step on one key. `s` starts Docker Desktop through its own command, the service's start; `t` runs the command shown, one that needs administrator rights, in this terminal, asked first in a window that names it: the console steps aside for it (headless, it runs at once), sudo asks for the password itself, and the console says how it ended and what the person does next; Esc in the window runs nothing. A key that has nothing to do says why.
+
+- s starts docker desktop through its own start
+- t asks first naming the command then runs it in this terminal
+- esc in the window runs nothing
+- after joining the docker group the console says to log out and in once
+- a key with nothing to do says why
 
 ### `tests/console/test_shell.py`
 

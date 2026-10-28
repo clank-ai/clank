@@ -3,7 +3,8 @@ service's words: the whole pass with its answers on standard input writes the pr
 key (read without echo, never printed), writes the preset from the model picked with the settings as the service fills
 them, and loads it into the empty main slot, saying its answer and cost; a refused key is said and asked again, and so
 is a mistyped limit, the preset already written then taken as it is, as a second pass takes it; Local lists the main
-slot's presets and says what to do when a step cannot be done from here."""
+slot's presets and says what to do when a step cannot be done from here. Design 0028 §4: `--cloud` and `--local` skip
+the choice, for `clank setup`'s model step, which asks it once."""
 
 from click.testing import CliRunner, Result
 
@@ -33,6 +34,17 @@ def test_the_whole_pass_on_standard_input_agrees_keeps_the_key_writes_the_preset
     assert "cloud: Example Coder runs in the main slot. Its test: it answered a tiny request: OK in " in done.output
     main = cloud_api.kernel.parts["runtime"].state.slot("main")
     assert (main.status, main.preset) == ("ready", "cloud-example-coder")
+
+
+def test_cloud_and_local_skip_the_choice(cloud_api: CloudBench) -> None:
+    cloud_api.add()
+    done = run("1\n" + KEEP_SETTINGS, "--cloud")
+    assert done.exit_code == 0, done.output
+    assert "How should Clank run its model?" not in done.output, "the choice is skipped"
+    assert "cloud: Example Coder runs in the main slot." in done.output
+    local = run("1\n", "--local")
+    assert "How should Clank run its model?" not in local.output
+    assert "daily 262K" in local.output
 
 
 def test_a_refused_key_is_said_and_asked_again(cloud_api: CloudBench) -> None:

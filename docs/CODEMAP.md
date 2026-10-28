@@ -61,7 +61,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/console/monitor.py` | The Monitor (design 0012 §2, decision 0047): the page of the console's menu on F10 where the owner watches, and will |
 | `clank/components/agents/console/nowpanel.py` | The Monitor's Now panel (design 0012 §2, §5; §11 step 7): what the followed session does this second, as the service |
 | `clank/components/agents/console/parts.py` | The context's parts as the Monitor draws them (design 0012 §4.2, §4.7; §11 step 12): each part's color (the style's |
-| `clank/components/agents/console/setup.py` | The console's Setup page (design 0028 §4): `clank setup`'s checklist, as the service gives it (`GET /setup`, the |
+| `clank/components/agents/console/setup.py` | The console's Setup page (design 0028 §4, §5): `clank setup`'s checklist, as the service gives it (`GET /setup`, the |
 | `clank/components/agents/console/watchfor.py` | The Monitor's Watch for panel (design 0012 §2, §8): the newest marks the Watch for rules left, one line each: a mark |
 | `clank/components/agents/context.py` | A session's context totals (design 0012 §4.1 and §4.4, decision 0067): how much of the window the session uses, how |
 | `clank/components/agents/estimate.py` | The context's parts, estimated (design 0012 §4.2, §4.3, §4.6; decisions 0051, 0052 and 0067): what fills a |
@@ -98,7 +98,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/sessionflow/text.py` | How a session's flow keeps text (design 0012 §6.3: nothing spills out of a node): on one line, cut with "…"; the |
 | `clank/components/agents/sessionflow/todos.py` | The todo list's items across its revisions (design 0012 §6.2, decision 0050), the branches of a session that carries |
 | `clank/components/agents/sessions.py` | The session bridge (design 0005 §2): the service's way to the OpenCode servers running in a workspace's container. |
-| `clank/components/agents/setupcli.py` | `clank setup` (design 0028 §4): what Clank needs on this computer, in order, and what to do about each item that is |
+| `clank/components/agents/setupcli.py` | `clank setup` (design 0028 §4, §5): what Clank needs on this computer, in order, and the fixes, each asked first. |
 | `clank/components/agents/setupfacts.py` | What the setup's checklist reads (`checklist.Facts`, design 0028 §4), gathered in the service or without it. |
 | `clank/components/agents/showing.py` | Showing files to the owner (design 0018 §7.1): the agent names files of a workspace's folder, and Clank's VS Code |
 | `clank/components/agents/streaming.py` | The conversation stream (design 0023 §3): what happens in a conversation, pushed to a client as it happens, over |

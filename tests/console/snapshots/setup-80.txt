@@ -37,4 +37,4 @@ Setup              │ │  6  A model                                          
                    │ │ → install VS Code (code.visualstudio.com), then      │
                    │ │ `clank code` in a folder                             │
 
- m add a model  f This folder  r read it again  ? explain  f1 help  esc menu
+ s start Docker  t run it here  m add a model  f This folder  ? explain  f1 help

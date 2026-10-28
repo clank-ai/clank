@@ -48,7 +48,7 @@ using an LLM", for local models, OpenRouter keys, or both.
   and exits 0 when everything required is done, else 1.
 - [x] 4. The console's Setup page (its rows, `m` Add a model, `f` This folder, `r` read again), the menu without the
   planned "Setup guide", and the console opening on it while anything required is missing (decision 0148); frames.
-- [ ] 5. The fixes (S3): `clank setup` asks about each item not done, in order, showing the exact command; `--yes` does
+- [x] 5. The fixes (S3): `clank setup` asks about each item not done, in order, showing the exact command; `--yes` does
   the fixes that need no administrator rights and lists the others; administrator commands in the terminal; after
   joining the docker group, log out and in; Docker Desktop through its own start; the service, Add a model in the
   terminal (cloud, local or both), this folder opened; the console's `s` and `t`.
@@ -60,4 +60,6 @@ using an LLM", for local models, OpenRouter keys, or both.
 ## Progress
 
 Written 2026-10-27. S2 (tasks 1-4) built the same day: `clank setup --check`, `GET /setup` and the console's Setup page,
-the console opening on it while anything required is missing; the docs of task 7 so far.
+the console opening on it while anything required is missing; the docs of task 7 so far. S3 (task 5) built the same
+day: `clank setup` offering each fix in order, administrator commands attached to the terminal, `--yes`, and the
+console's `s` and `t`.

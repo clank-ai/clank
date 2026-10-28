@@ -1,0 +1,40 @@
+ ◆ CLANK  paper   ● service up 15d21h  ● docker stopped  ● no model: Add a model  ● gateway stopped               09:00
+F4 This folder         ✗ 5   │ ┌─ Clank's setup ──────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ What Clank needs on this computer, in order: each says what it is now and, while it  │
+2 Questions                  │ │ is not done, what to do. `clank setup` in a terminal says the same.                  │
+3 History                    │ │  1  Docker installed                ✓ Fake Docker is installed                       │
+4 Docker               ●     │ │  2  Docker running                  ✗ Fake Docker is stopped                         │
+5 Machine                    │ │                                     → start Fake Docker: `sudo systemctl start       │
+6 Operations                 │ │                                     docker`, with administrator rights, so it runs   │
+7 Records                    │ │                                     in your terminal, where sudo asks for your       │
+8 Models               ●     │ │                                     password itself (Clank never sees it) · press t  │
+9 Presets                    │ │                                     to run it in this terminal                       │
+0 Providers and models       │ │  3  Docker starts with the computer ✓ systemd starts Docker's service when the       │
+F1 Help                      │ │                                     computer starts                                  │
+F2 Launch options            │ │  4  Docker usable by this account   ○ waits for Docker to run                        │
+F3 MCP servers               │ │  5  Clank's service                 ✓ it runs in the background: the gateway, the    │
+F6 Workspaces                │ │                                     workspaces and the agents                        │
+F7 Requests                  │ │  6  The sandbox image               ○ waits until this account can use Docker        │
+F8 CPU models                │ │  7  A model                         ✗ no model has answered a test request yet. This │
+F9 Phone               ●     │ │                                     computer has NVIDIA GeForce RTX 5080, 16 GB:     │
+F10 Monitor                  │ │                                     local models can run on it                       │
+F12 Add a model              │ │                                     → Add a model: in the cloud through OpenRouter   │
+Setup                        │ │                                     (with your OpenRouter key), on this computer's   │
+─────────────────────────────│ │                                     GPU, or both (the cloud first, then local) ·     │
+coming                       │ │                                     press m                                          │
+Sampling              M3     │ │  8  A folder                        ✗ no folder is a workspace yet. The agent works  │
+Sessions              M3     │ │                                     in a folder you choose, in a container that sees │
+Keys                  M3     │ │                                     only it                                          │
+Layout                M2     │ │                                     → This folder opens the folder `clank` was       │
+Tests and trials      M2     │ │                                     started in as a workspace · press f              │
+Agents                M5     │ │  9  Clank's VS Code window          ○ optional: VS Code is not installed; the agent  │
+Modes                 M5     │ │                                     works in the terminal without it                 │
+Changes               M6     │ │                                     → install VS Code (code.visualstudio.com), then  │
+Network access        M7     │ │                                     `clank code` in a folder                         │
+Skills                M8     │ │ Not ready yet: Docker running, Docker usable by this account, The sandbox image, A   │
+Files                 M9     │ │ model, A folder.                                                                     │
+                             │ │ Next:  t run `sudo systemctl start docker` in this terminal                          │
+                             │ └──────────────────────────────────────────────────────────────────────────────────────┘
+                             │
+
+ s start Docker  t run it here  m add a model  f This folder  r read it again  ? explain  f1 help  esc menu
