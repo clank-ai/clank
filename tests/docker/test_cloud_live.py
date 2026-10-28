@@ -81,6 +81,8 @@ if sys.platform != "win32":  # the gateway's socket: the type checker knows `lis
             stop.set()
             server.should_exit = True
             thread.join(15)
+            if listening.proxy is not None:  # the proxy's socket, made with the others, which no proxy serves here
+                listening.proxy.close()
             remove_sockets(listening.made)
 
     async def asked_through_the_gateway(
@@ -92,6 +94,7 @@ if sys.platform != "win32":  # the gateway's socket: the type checker knows `lis
         bench.add()
         bench.write_preset(CODER)
         bench.run(PRESET)
+        machine.parts["agents"].give_local_only()  # as the service does at its start: until then nothing goes out
         sockets = Path(tempfile.mkdtemp(prefix="clank-gw-"))  # short: a socket's path has at most 107 bytes
         port = free_port()
         gateway_port(machine.home, port, socket_folder=str(sockets))
