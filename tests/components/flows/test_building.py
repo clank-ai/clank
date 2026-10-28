@@ -21,6 +21,7 @@ again there; one whose session is still starting refused, saying to wait, no oth
 refused saying how to open one."""
 
 import json
+import threading
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -44,8 +45,13 @@ pytestmark = pytest.mark.anyio
 
 @pytest.fixture
 def rig(home: Home, clock: FakeClock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Rig]:
+    # A planning's session gives up on its window soon in a test (a test's own setting comes after this one).
+    monkeypatch.setattr(building_module, "WINDOW_SECONDS", 5.0)
     made = make_rig(home, clock, tmp_path, monkeypatch, None)
     yield made
+    for thread in threading.enumerate():  # a planning's session, on a thread of its own, ends before the kernel closes
+        if thread.name.startswith("flows: planning"):
+            thread.join(building_module.WINDOW_SECONDS + 5)
     made.kernel.close()
 
 
