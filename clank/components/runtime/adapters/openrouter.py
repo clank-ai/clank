@@ -86,18 +86,21 @@ class OpenRouter(EndpointAdapter):
         ]
 
     def models_query(self, sort: str, *, everything: bool = False) -> dict[str, str]:
-        """Tool models (`supported_parameters=tools`) unless `everything`; most used first within programming
-        (`category=programming&sort=most-popular`, the order to be checked with a real key); other sorts are
-        Clank's own, over the whole list."""
+        """Tool models (`supported_parameters=tools`) unless `everything`; most used first (`sort=most-popular`, over
+        every model: OpenRouter refuses `category` beside `supported_parameters`, and `category=programming` alone
+        gives its first twenty, as its public list answered on 2026-10-28); other sorts are Clank's own, over the whole
+        list."""
         query = {} if everything else {"supported_parameters": "tools"}
         if sort == "most-popular":
-            query.update(category="programming", sort="most-popular")
+            query["sort"] = "most-popular"
         return query
 
     def models(self, answer: Mapping[str, Any], *, everything: bool = False) -> list[ModelLine]:
-        """`GET /models`' `data`, read into Clank's lines."""
+        """`GET /models`' `data`, read into Clank's lines; a router priced per request (OpenRouter writes -1) is left
+        out, since what one of its requests costs cannot be said before it is sent (design 0016 §11)."""
         lines = [_line(model) for model in answer.get("data") or [] if isinstance(model, dict) and model.get("id")]
-        return [line for line in lines if line.tools or everything]
+        priced = [line for line in lines if line.price_in >= 0 and line.price_out >= 0]
+        return [line for line in priced if line.tools or everything]
 
     def account(self, answer: Mapping[str, Any]) -> Account:
         """`GET /key`'s `data`."""
@@ -280,10 +283,12 @@ class OpenRouter(EndpointAdapter):
 
 
 def _line(model: Mapping[str, Any]) -> ModelLine:
-    """One model of the list, as Clank's line."""
+    """One model of the list, as Clank's line: its window the smaller of the two it gives, a zero saying nothing (a few
+    models give 0 beside their provider's real window)."""
     top = model.get("top_provider") if isinstance(model.get("top_provider"), dict) else {}
     assert isinstance(top, dict)
-    windows = [value for value in (model.get("context_length"), top.get("context_length")) if isinstance(value, int)]
+    given = (model.get("context_length"), top.get("context_length"))
+    windows = [value for value in given if isinstance(value, int) and not isinstance(value, bool) and value > 0]
     pricing = model.get("pricing") if isinstance(model.get("pricing"), dict) else {}
     assert isinstance(pricing, dict)
     parameters = [str(name) for name in model.get("supported_parameters") or []]

@@ -43,9 +43,8 @@ def events(text: str) -> list[dict[str, Any]]:
 
 
 def test_check_1_the_models_list_with_and_without_the_key(client: httpx2.Client) -> None:
-    keyed = client.get("/models", params={"supported_parameters": "tools", "category": "programming",
-                                          "sort": "most-popular"})  # fmt: skip
-    assert keyed.status_code == 200
+    keyed = client.get("/models", params=OpenRouter().models_query("most-popular"))
+    assert keyed.status_code == 200, keyed.text
     assert OpenRouter().models(keyed.json()), "the adapter reads the list"
     bare = httpx2.get(f"{URL}/models", timeout=60)
     print(f"check 1: without the key the list answers {bare.status_code}")

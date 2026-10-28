@@ -3,7 +3,8 @@ OpenRouter's API (`tests/fixtures/openrouter/<date>/http.json`; the documented s
 the runtime's and the gateway's tests reach no network and no one's account.
 
 It answers OpenRouter's routes under `/api/v1`: `GET /key` (the key's facts), `GET /models` (the recorded models; only
-those that take tool calls when asked `supported_parameters=tools`), `POST /chat/completions` (a whole answer, or a
+those that take tool calls when asked `supported_parameters=tools`; refused, as OpenRouter refuses it, when asked
+`category` beside it), `POST /chat/completions` (a whole answer, or a
 stream of the recorded lines, comment lines among them) and `GET /generation` (a request's record afterward, once
 `generations_ready`). Every route takes only its key, `made-up-openrouter-key` (never one that starts with `sk-`, so
 the repository's secrets check passes): any other is refused as the recording's `key refused` says. What a chat request
@@ -123,6 +124,8 @@ class FakeOpenRouter:
             if refused is not None:
                 return refused
             listed = self.models()
+            if request.query_params.get("category") and request.query_params.get("supported_parameters"):
+                return self._answer("both filters")
             if "tools" in request.query_params.get("supported_parameters", ""):
                 listed = [model for model in listed if "tools" in (model.get("supported_parameters") or [])]
             return JSONResponse({"data": listed, "total_count": len(listed), "links": {"next": None}})

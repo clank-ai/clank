@@ -225,13 +225,10 @@ def listed(http: TestClient, query: str = "") -> Any:
     return answer.json()
 
 
-def test_the_list_asks_for_tool_models_programmings_most_used_first(
-    rig: Rig, http: TestClient, openrouter: FakeOpenRouter
-) -> None:
+def test_the_list_asks_for_tool_models_most_used_first(rig: Rig, http: TestClient, openrouter: FakeOpenRouter) -> None:
     add_openrouter(rig)
     found = listed(http)
-    assert openrouter.sent[-1].query == {"supported_parameters": "tools", "category": "programming",
-                                         "sort": "most-popular"}  # fmt: skip
+    assert openrouter.sent[-1].query == {"supported_parameters": "tools", "sort": "most-popular"}
     assert openrouter.sent[-1].headers["authorization"] == f"Bearer {KEY}"
     assert [model["id"] for model in found["models"]] == ["example-vendor/example-coder",
                                                           "example-vendor/example-small:free"]  # fmt: skip

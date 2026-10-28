@@ -1,7 +1,11 @@
 """Design 0016 §3, §6 and §8: what the OpenRouter adapter reads of OpenRouter's answers and writes into its requests.
 
-Its model line keeps only models that take tool calls unless asked, takes the smaller of a model's two windows, turns
-OpenRouter's string prices per token into numbers per million, and marks free models with their limits; the account
+Its model line keeps only models that take tool calls unless asked, takes the smaller of a model's two windows (a zero,
+which OpenRouter gives a few models beside their provider's real one, says nothing), turns OpenRouter's string prices
+per token into numbers per million, leaves out a router priced per request (-1: what a request costs cannot be said
+before it is sent), and marks free models with their limits; the list is asked for most used first with
+`sort=most-popular`, never with `category` beside `supported_parameters`, which OpenRouter refuses (its public list,
+2026-10-28); the account
 reads `GET /key` (no limit read as none); a request goes as the tool sent it with the listed id as its model, the
 preset's thinking effort added only where the tool set none, and the record's data policy always (merged into a
 provider object the tool sent, the stricter word kept), nothing else changed; the
@@ -86,14 +90,16 @@ def test_a_free_model_is_marked_with_its_limits_and_its_retirement(openrouter: O
     assert free["price"]["cached_in"] is None
 
 
-def test_the_models_are_asked_for_with_tools_and_programmings_most_used_first(openrouter: OpenRouter) -> None:
-    assert openrouter.models_query("most-popular") == {
-        "supported_parameters": "tools", "category": "programming", "sort": "most-popular"
-    }  # fmt: skip
+def test_the_models_are_asked_for_with_tools_most_used_first_and_never_with_a_category_beside_them(
+    openrouter: OpenRouter,
+) -> None:
+    assert openrouter.models_query("most-popular") == {"supported_parameters": "tools", "sort": "most-popular"}
     assert openrouter.models_query("price") == {"supported_parameters": "tools"}
-    assert openrouter.models_query("most-popular", everything=True) == {
-        "category": "programming", "sort": "most-popular"
-    }  # fmt: skip
+    assert openrouter.models_query("most-popular", everything=True) == {"sort": "most-popular"}
+    for sort in ("most-popular", "price", "context", "newest"):
+        for everything in (False, True):
+            asked = openrouter.models_query(sort, everything=everything)
+            assert not ("category" in asked and "supported_parameters" in asked), "OpenRouter refuses both (400)"
 
 
 def test_the_account_reads_the_keys_own_facts_and_no_limit_as_none(openrouter: OpenRouter) -> None:
@@ -275,3 +281,28 @@ def test_a_presets_options_follow_the_model(openrouter: OpenRouter) -> None:
         "reasoning is one of default, max, xhigh, high, medium, low, minimal, none, not 'loud'",
         "openrouter has no preset option speed",
     ]
+
+
+# Two lines of OpenRouter's public list (2026-10-28), cut to what the line reads.
+ZERO_WINDOW: dict[str, Any] = {
+    "id": "openai/gpt-oss-safeguard-20b", "name": "OpenAI: gpt-oss-safeguard-20b", "context_length": 0,
+    "top_provider": {"context_length": 131072, "max_completion_tokens": 65536, "is_moderated": False},
+    "pricing": {"prompt": "0.000000075", "completion": "0.0000003", "input_cache_read": "0.0000000375"},
+    "supported_parameters": ["tools", "tool_choice", "reasoning"],
+}  # fmt: skip
+ROUTER: dict[str, Any] = {
+    "id": "openrouter/auto", "name": "Auto Router", "context_length": 2000000,
+    "top_provider": {"context_length": None, "max_completion_tokens": None, "is_moderated": False},
+    "pricing": {"prompt": "-1", "completion": "-1"}, "supported_parameters": ["tools", "tool_choice"],
+}  # fmt: skip
+
+
+def test_a_window_of_zero_beside_the_providers_real_one_says_nothing(openrouter: OpenRouter) -> None:
+    line = openrouter.models({"data": [ZERO_WINDOW]})[0]
+    assert line.window == 131072
+    assert openrouter.option_problems(openrouter.preset_options(line, {})) == [], "its preset can be written"
+
+
+def test_a_router_priced_per_request_is_left_out_since_its_cost_cannot_be_said_before(openrouter: OpenRouter) -> None:
+    assert openrouter.models({"data": [ROUTER, CODER]}) == openrouter.models({"data": [CODER]})
+    assert [line.id for line in openrouter.models({"data": [ROUTER]}, everything=True)] == []

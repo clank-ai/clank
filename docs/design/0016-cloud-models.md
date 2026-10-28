@@ -603,8 +603,8 @@ Enter, Enter.
    asks OpenRouter (`GET /key`); accepted, the line says its label, its own limit and what is left, and the key is
    kept; refused, OpenRouter's words and what to do, and the field is cleared. A key with no limit of its own gets
    OpenRouter's advice to set one.
-5. **The model.** OpenRouter's live list of models that take tool calls, read with the key: by default its programming
-   models, most used first (`category=programming`, `sort=most-popular`; *to be checked with a real key*, §18); `/`
+5. **The model.** OpenRouter's live list of models that take tool calls, read with the key: by default most used
+   first (`sort=most-popular`; OpenRouter refuses `category=programming` beside `supported_parameters`, §18); `/`
    searches by name or id; `s` sorts (most used, price, window, newest); `f` shows the free ones (their limits said).
    Each line: name, window, price in and out per million tokens, thinking, images; under the list, the highlighted
    model's description's first sentence, its most output, and its retirement date if it has one. Enter picks.
@@ -746,7 +746,12 @@ cloud is in the service's API and events, which every client reads alike, and no
 
 **Checks owed with a real key** (the owner, 2026-10-21; each a line of the capture or a real test):
 
-1. Whether `GET /models` needs the key; the order of `category=programming&sort=most-popular`.
+1. Whether `GET /models` needs the key; the order of `category=programming&sort=most-popular`. *Answered from its
+   public list, 2026-10-28:* it needs no key; it refuses `category` beside `supported_parameters` (400, "Cannot provide
+   both category and supported_parameters"), so the list Clank asked for by default was refused; `category=programming`
+   alone gives the first twenty; `sort=most-popular` orders every model by use. Clank asks `supported_parameters=tools`
+   with `sort=most-popular`. The list also showed two lines Clank now reads: a `context_length` of 0 beside the
+   provider's real window (read as none), and a router priced per request, `-1` (left out).
 2. That a stream's chunk `id` is the `gen-…` id `GET /generation` takes, and how soon it answers.
 3. A prompt over a model's window: its status and words (`says_full`), and whether OpenCode compacts on them as they
    are.
@@ -835,3 +840,6 @@ a fake of it until s34's routes land. Each task is one commit that starts with a
 - **2026-10-21, §8 revised after approval:** the review of plan s34 found OpenCode retrying OpenRouter's 503 under
   `data_collection: deny` without end; such a refusal is answered 403 (decision 0115). And a `provider` object the tool
   sent dropped the record's `deny`: the record's data policy is now merged into it, the stricter word kept (§6, §8).
+- **2026-10-28, §14 and §18 revised after approval:** OpenRouter's public list refused the default models query
+  (`category` beside `supported_parameters`): the most used now come from `sort=most-popular` over the tool models;
+  §18's first check is answered, and the fake refuses that query as OpenRouter does.

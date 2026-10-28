@@ -1,6 +1,6 @@
 {
   "adapter": "openrouter",
-  "source": "OpenRouter's documented shapes, read 2026-10-20 on the pages design 0016 §3 cites (API reference, Authentication, List models, Get current API key, Usage accounting, Streaming, Errors and debugging, Get a generation); written by hand, never recorded from OpenRouter. Every id, label, word and number is made up; the refusals' words are not OpenRouter's (its words are to be checked with a real key, design 0016 §18). The owner's recording replaces it as the contract's first.",
+  "source": "OpenRouter's documented shapes, read 2026-10-20 on the pages design 0016 §3 cites (API reference, Authentication, List models, Get current API key, Usage accounting, Streaming, Errors and debugging, Get a generation); written by hand, never recorded from OpenRouter. Every id, label, word and number is made up; the refusals' words are not OpenRouter's (its words are to be checked with a real key, design 0016 §18). The owner's recording replaces it as the contract's first. The exchange `both filters` is OpenRouter's own answer, words and all, read 2026-10-28 from its public list, which needs no key.",
   "recorded": "2026-10-20",
   "how": "By hand, from the documentation: each exchange is one of Clank's fixed made-up requests and the answer the documentation describes; tests/fakes/openrouter.py plays it.",
   "key": "made-up-openrouter-key",
@@ -66,7 +66,6 @@
         "path": "/models",
         "query": {
           "supported_parameters": "tools",
-          "category": "programming",
           "sort": "most-popular"
         },
         "body": null
@@ -363,6 +362,30 @@
           "total_count": 3,
           "links": {
             "next": null
+          }
+        }
+      }
+    },
+    {
+      "name": "both filters",
+      "request": {
+        "method": "GET",
+        "path": "/models",
+        "query": {
+          "supported_parameters": "tools",
+          "category": "programming"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": {
+            "message": "Cannot provide both category and supported_parameters",
+            "code": 400
           }
         }
       }
