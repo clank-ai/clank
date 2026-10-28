@@ -5,8 +5,9 @@ first, as `clank serve --background` does, and says so; with `--no-start` it say
 `--snapshot` prints one frame as text and exits (design 0001 §5.8), for scripts, bug reports and a model that cannot
 see a screen. `--view` opens a page with views on one of them: `--page monitor --view flow` is the Monitor's Flow view
 (design 0013 §15), for a terminal that keeps F10 for itself, such as one reached over SSH; a view it does not have is
-refused, never opened as another. With no page named, the console opens on Add a model while no model is usable (design
-0016 §14). `--record FOLDER` keeps what the console draws, as the terminal gets it, for a player (decision 0126).
+refused, never opened as another. With no page named, the console opens on Setup while anything the setup needs is
+missing (design 0028 §4, decision 0148), else on Add a model while no model is usable (design 0016 §14). `--record
+FOLDER` keeps what the console draws, as the terminal gets it, for a player (decision 0126).
 
 Textual's own log file (`TEXTUAL_LOG`) and its devtools are turned off for the console: they would record each key
 pressed and each paste, and the console is where a cloud provider's key is typed (design 0016 §4).
@@ -27,8 +28,8 @@ from clank.kernel.service import ServiceError, start_detached
 @click.option(
     "--page",
     default=None,
-    help="The page to open: home (the default), folder, help, or any page's id. Unnamed, the console opens on Add a "
-    "model while no model is usable.",
+    help="The page to open: home (the default), folder, setup, help, or any page's id. Unnamed, the console opens on "
+    "Setup while anything the setup needs is missing.",
 )
 @click.option(
     "--view",

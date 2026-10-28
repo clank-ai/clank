@@ -19,7 +19,7 @@ F8 CPU models      │ └──────────────────
 F9 Phone         ● │
 F10 Monitor        │ ┌─ Then work ────────────────────────────────────────────────────┐
 F12 Add a model    │ │  a OpenCode in this terminal; the menu comes back when you     │
-                   │ │    leave it                                                    │
+Setup              │ │    leave it                                                    │
                    │ │  c VS Code on this folder, OpenCode beside your files (it      │
                    │ │    gets every step above done first)                           │
                    │ │  f a flow built with the model, OpenCode beside this console:  │

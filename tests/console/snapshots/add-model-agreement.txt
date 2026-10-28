@@ -19,7 +19,7 @@ F8 CPU models      │ │ credits. Clank shows what each request, session and f
 F9 Phone         ● │ │ and you may set a daily and a monthly limit.                   │
 F10 Monitor        │ │                                                                │
 F12 Add a model    │ │ Clank asks only for providers that do not keep your data       │
-                   │ │ (data_collection deny). o allows any provider.                 │
+Setup              │ │ (data_collection deny). o allows any provider.                 │
                    │ │                                                                │
                    │ │ MCP servers (each one you have is marked local only; unmark    │
                    │ │ one to offer it):                                              │

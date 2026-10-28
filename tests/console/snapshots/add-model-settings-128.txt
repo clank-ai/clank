@@ -19,20 +19,20 @@ F8 CPU models                │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔�
 F9 Phone               ●     │ │ ▊  default                                                                                 ▎ │
 F10 Monitor                  │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
 F12 Add a model              │ │ A day's cost limit, US dollars (empty: none)                                                 │
-─────────────────────────────│ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
-coming                       │ │ ▊                                                                                          ▎ │
-Sampling              M3     │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
-Sessions              M3     │ │ A month's cost limit, US dollars (empty: none)                                               │
-Keys                  M3     │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
-Layout                M2     │ │ ▊                                                                                          ▎ │
-Tests and trials      M2     │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
-Agents                M5     │ │                                                                                              │
-Modes                 M5     │ │ OpenRouter can limit the key too (openrouter.ai, Keys). Taking these writes the preset, then │
-Changes               M6     │ │ tests it with one short request. One short request: about $0.000031 at its prices. Enter     │
-Network access        M7     │ │ takes these.                                                                                 │
-Skills                M8     │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+Setup                        │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+─────────────────────────────│ │ ▊                                                                                          ▎ │
+coming                       │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+Sampling              M3     │ │ A month's cost limit, US dollars (empty: none)                                               │
+Sessions              M3     │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+Keys                  M3     │ │ ▊                                                                                          ▎ │
+Layout                M2     │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+Tests and trials      M2     │ │                                                                                              │
+Agents                M5     │ │ OpenRouter can limit the key too (openrouter.ai, Keys). Taking these writes the preset, then │
+Modes                 M5     │ │ tests it with one short request. One short request: about $0.000031 at its prices. Enter     │
+Changes               M6     │ │ takes these.                                                                                 │
+Network access        M7     │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+Skills                M8     │
 Files                 M9     │
-Setup guide           M10    │
                              │
                              │
                              │

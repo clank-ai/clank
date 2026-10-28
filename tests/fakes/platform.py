@@ -15,6 +15,7 @@ from clank.components.workspaces.adapters.platform import (
     ContainerPlatform,
     NetworkGone,
     PlatformError,
+    PlatformSetup,
     PlatformStatus,
 )
 from clank.components.workspaces.sandbox import ContainerSpec
@@ -93,6 +94,7 @@ class FakePlatform(ContainerPlatform):
         self.memory_asked = 0
         self.access = ""  # why the agent could not use a folder as it mounts it (Docker Engine's rule, as told)
         self.access_asked: list[str] = []
+        self.setup = PlatformSetup()  # how it is set up on this computer, and its owner's commands (design 0028 §5)
         self.images: set[str] = set()
         self.build_args: dict[str, dict[str, str]] = {}  # each image built: its build arguments
         self.build_folders: dict[str, str] = {}  # and the folder it was built from
@@ -169,6 +171,9 @@ class FakePlatform(ContainerPlatform):
     def agent_access(self, folder: str) -> str:
         self.access_asked.append(folder)
         return self.access
+
+    def setup_state(self) -> PlatformSetup:
+        return self.setup
 
     def limits(self) -> tuple[int, int] | None:
         return self.cpus_memory

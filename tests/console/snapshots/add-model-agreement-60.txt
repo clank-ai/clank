@@ -19,7 +19,7 @@ F8 CPU models      │ │ Each workspace asks once, the      │
 F9 Phone         ● │ │ first time its agent would use the │
 F10 Monitor        │ │ cloud model; those you have now    │
 F12 Add a model    │ │ stay local until you say.          │
-                   │ │                                    │
+Setup              │ │                                    │
                    │ │ What it costs: each request is     │
                    │ │ paid from your OpenRouter credits. │
                    │ │ Clank shows what each request,     │

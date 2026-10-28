@@ -52,6 +52,7 @@ uv sync                                # set up the working copy: Python 3.12 an
                                        # (the VS Code extension also needs Node 22 or newer; tools.check installs its tools)
 uv run clank --version                 # the clank command, from the working copy
 uv run clank doctor                    # check this computer (works without the service; changes nothing)
+uv run clank setup --check             # what Clank needs, item by item, and what to do (changes nothing)
 uv run clank serve                     # run the Clank service here (--background to detach); clank stop ends it
 uv run clank status                    # whether it runs, and what waits for you
 uv run clank events --follow           # what happens, as it happens; also: clank questions, operations, records

@@ -1,7 +1,7 @@
 """Test support: the console's frames compared with the snapshots checked in under `tests/console/snapshots/`
 (decision 0027). What changes from run to run (the service's port, the ids of questions and operations, Clank's
-version) is replaced by a fixed stand-in of the same width first; `CLANK_UPDATE_SNAPSHOTS=1` rewrites the snapshots
-instead of comparing.
+version, the sandbox image's tag) is replaced by a fixed stand-in of the same width first; `CLANK_UPDATE_SNAPSHOTS=1`
+rewrites the snapshots instead of comparing.
 """
 
 import difflib
@@ -24,6 +24,8 @@ STAND_INS: list[tuple[re.Pattern[str], str | Callable[[re.Match[str]], str]]] = 
     (re.compile(r"127\.0\.0\.1:\d{5}\b"), "127.0.0.1:47720"),
     (re.compile(r"\bq-[0-9a-f]{6}\b"), "q-000000"),
     (re.compile(r"\bop-[0-9a-f]{8}\b"), "op-00000000"),
+    # The sandbox image's tag is the checksum of its Dockerfile (design 0004 §3): the same width whatever it holds.
+    (re.compile(r"\bclank-sandbox:[0-9a-f]{12}\b"), "clank-sandbox:000000000000"),
     (re.compile(r"\bv\d+\.\d+\.\d+[\w.]*"), lambda found: re.sub(r"\d", "0", found.group(0))),
     # The header names the folder the console started in: when that is this checkout, whatever its letters' case (the
     # repository is checked out as "clank" on continuous integration), it reads "Clank", of the same width.

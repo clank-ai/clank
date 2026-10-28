@@ -19,7 +19,7 @@ F8 CPU models      │ │ credits were bought) · reads       │
 F9 Phone         ● │ │ images                             │
 F10 Monitor        │ │                                    │
 F12 Add a model    │ │ example-vendor/example-coder: A    │
-                   │ │ made-up model for coding. Window   │
+Setup              │ │ made-up model for coding. Window   │
                    │ │ 262,144 tokens, most output        │
                    │ │ 32,768.                            │
                    │ └────────────────────────────────────┘

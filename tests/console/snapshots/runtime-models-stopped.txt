@@ -19,6 +19,7 @@ F8 CPU models                │
 F9 Phone               ●     │
 F10 Monitor                  │
 F12 Add a model              │
+Setup                        │
 ─────────────────────────────│
 coming                       │
 Sampling              M3     │
@@ -32,7 +33,6 @@ Changes               M6     │
 Network access        M7     │
 Skills                M8     │
 Files                 M9     │
-Setup guide           M10    │
                              │
                              │
                              │

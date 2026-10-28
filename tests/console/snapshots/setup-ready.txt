@@ -1,0 +1,40 @@
+ ◆ CLANK  paper   ● service up 15d21h  ● docker running  ● daily 262K  ● gateway stopped                          09:00
+F4 This folder         ✗ 3   │ ┌─ Clank's setup ──────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ What Clank needs on this computer, in order: each says what it is now and, while it  │
+2 Questions                  │ │ is not done, what to do. `clank setup` in a terminal says the same.                  │
+3 History                    │ │  1  Docker installed                ✓ Fake Docker 4.85.0                             │
+4 Docker               ●     │ │  2  Docker running                  ✓ it runs, engine 29.6.2                         │
+5 Machine                    │ │  3  Docker usable by this account   ✓ this account may use Docker                    │
+6 Operations                 │ │  4  Clank's service                 ✓ it runs in the background: the gateway, the    │
+7 Records                    │ │                                     workspaces and the agents                        │
+8 Models               ●     │ │  5  The sandbox image               ✓ built for this Clank                           │
+9 Presets                    │ │                                     (clank-sandbox:000000000000)                     │
+0 Providers and models       │ │  6  A model                         ✓ daily 262K answered a test request (on this    │
+F1 Help                      │ │                                     computer)                                        │
+F2 Launch options            │ │  7  A folder                        ✓ 1 workspace: paper (/work/paper)               │
+F3 MCP servers               │ │  8  Clank's VS Code window          ○ optional: VS Code is not installed; the agent  │
+F6 Workspaces                │ │                                     works in the terminal without it                 │
+F7 Requests                  │ │                                     → install VS Code (code.visualstudio.com), then  │
+F8 CPU models                │ │                                     `clank code` in a folder                         │
+F9 Phone               ●     │ │ Ready: everything Clank needs is set up.                                             │
+F10 Monitor                  │ │ · Fake Docker runs the agent in a container of its own for each folder, so the agent │
+F12 Add a model              │ │ sees only that folder.                                                               │
+Setup                        │ │ · The sandbox image (clank-sandbox:000000000000) is what each of those containers    │
+─────────────────────────────│ │ runs.                                                                                │
+coming                       │ │ · Clank's service runs in the background: the gateway every model request goes       │
+Sampling              M3     │ │ through, the workspaces and the agents.                                              │
+Sessions              M3     │ │ · daily 262K answers the agent, on this computer.                                    │
+Keys                  M3     │ │ · Your workspaces: paper.                                                            │
+Layout                M2     │ │ · Next: open a terminal in a project's folder and type `clank`; This folder starts   │
+Tests and trials      M2     │ │ the agent there (a), or in VS Code (c).                                              │
+Agents                M5     │ │ · To undo any of it, getting started's Uninstalling section                          │
+Modes                 M5     │ │ (clank-ai.github.io/get-started) says how to remove each.                            │
+Changes               M6     │ │ Ready:  f open This folder                                                           │
+Network access        M7     │ └──────────────────────────────────────────────────────────────────────────────────────┘
+Skills                M8     │
+Files                 M9     │
+                             │
+                             │
+                             │
+
+ m add a model  f This folder  r read it again  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu

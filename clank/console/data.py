@@ -4,16 +4,17 @@ right after it), and a `Follower`, in a thread of its own, follows the one event
 `event` update, and the topics it touches (`questions`, `operations`, `docker`, `machine`, `service`, the runtime's
 `slots`, `presets`, `engines`, `launches` and `hosts`, the MCP servers, `mcp`, those of the folder the console was
 started in included, the Monitor's Watch for `marks`, and the cloud's: whether a model is `usable`, the providers,
-`endpoints`, and the `cost`, design 0016 §11 and §14) are read again from the API by a second thread, each once
-however many events touched it meanwhile, so a burst of events costs a few reads and the screen's thread never calls the
-API. A live log line becomes `log`, who is connected `clients`, and each reading of the machine's meters
-(`machine.meters`, once a second) `meter`, kept with the last `METERS` (`meters`, read whole at load). The gateway's
-activity (`activity`) is loaded with the rest; the shell reads it again every few seconds. The stream's first word
-(`connected`) becomes `connection` True; a lost connection, or a stream ended by the service stopping (`closing`),
-becomes `connection` False, and the service is tried again every `RETRY_SECONDS`; when it answers again, or when the
-stream says the console fell behind (`reset`), everything is read again (`all`). The app takes the updates off the queue
-at most four times a second and `apply`s them, which caps its redraws. A service without the cloud's routes (one older
-than the console) leaves those three unknown (None) rather than failing the load.
+`endpoints`, and the `cost`, design 0016 §11 and §14; `clank setup`'s checklist, `setup`, design 0028 §4) are read
+again from the API by a second thread, each once however many events touched it meanwhile, so a burst of events costs a
+few reads and the screen's thread never calls the API. A live log line becomes `log`, who is connected `clients`, and
+each reading of the machine's meters (`machine.meters`, once a second) `meter`, kept with the last `METERS` (`meters`,
+read whole at load). The gateway's activity (`activity`) is loaded with the rest; the shell reads it again every few
+seconds. The stream's first word (`connected`) becomes `connection` True; a lost connection, or a stream ended by the
+service stopping (`closing`), becomes `connection` False, and the service is tried again every `RETRY_SECONDS`; when it
+answers again, or when the stream says the console fell behind (`reset`), everything is read again (`all`). The app
+takes the updates off the queue at most four times a second and `apply`s them, which caps its redraws. A service
+without the cloud's routes (one older than the console) leaves those three unknown (None) rather than failing the load,
+and one without the setup's route its checklist.
 """
 
 import contextlib
@@ -37,9 +38,9 @@ LAUNCHES = 20
 METERS = 300  # the readings kept: five minutes, as the service keeps them
 TOPICS = (
     "service", "docker", "machine", "questions", "operations", "slots", "presets", "engines", "launches", "hosts",
-    "mcp", "meters", "activity", "marks", "usable", "endpoints", "cost",
+    "mcp", "meters", "activity", "marks", "usable", "endpoints", "cost", "setup",
 )  # fmt: skip
-OPTIONAL = {"usable", "endpoints", "cost"}  # unknown (None) from a service without their routes
+OPTIONAL = {"usable", "endpoints", "cost", "setup"}  # unknown (None) from a service without their routes
 PATHS = {
     "activity": "gateway/activity",
     "slots": "runtime/slots",
@@ -50,6 +51,7 @@ PATHS = {
     "usable": "runtime/usable",
     "endpoints": "runtime/endpoints",
     "cost": "gateway/cost",
+    "setup": "setup",
 }
 GATEWAY_COST = ("gateway.cost", "gateway.limit_warned", "gateway.limit_reached", "gateway.limit_raised")
 # What ends with an engine or a model file put on a host, or taken off: the engines' installs change.
@@ -85,6 +87,7 @@ class ConsoleData:
     usable: dict[str, Any] | None = None  # whether a model is usable, and why (design 0016 §14); None: not known
     endpoints: list[dict[str, Any]] | None = None  # the cloud providers (design 0016 §4); None: not known
     cost: dict[str, Any] | None = None  # the cloud's spending today and this month, the limits, a pause (§11)
+    setup: dict[str, Any] | None = None  # `clank setup`'s checklist (design 0028 §4); None: not known
     kinds: list[dict[str, Any]] = field(default_factory=list)
     connected: bool = False
     last_event: int = 0
@@ -146,10 +149,12 @@ def touched(event: dict[str, Any]) -> list[str]:
     if kind.startswith("operation."):
         ended = kind == "operation.finished"
         if ended and event["actor"]["via"] == "machine.doctor":
-            return ["operations", "machine"]
-        return ["operations", "engines"] if ended and event["actor"]["via"] in INSTALLS else ["operations"]
+            return ["operations", "machine", "setup"]
+        if ended:
+            return ["operations", "engines", "setup"] if event["actor"]["via"] in INSTALLS else ["operations", "setup"]
+        return ["operations"]
     if kind == "docker.changed":
-        return ["docker"]
+        return ["docker", "setup"]
     if kind in ("agents.marked", "agents.marks_seen"):
         return ["marks"]
     if kind == "agents.model_changed":  # a window told its model changed (design 0013 §7): the slots' pages read again
@@ -157,7 +162,7 @@ def touched(event: dict[str, Any]) -> list[str]:
     if kind.startswith("service."):
         return ["service"]
     if kind == "runtime.slot":
-        return ["slots", "launches", "usable"]
+        return ["slots", "launches", "usable", "setup"]
     if kind == "runtime.endpoint_checked":
         return ["endpoints"]
     if kind.startswith("runtime.endpoint_"):
@@ -182,6 +187,8 @@ def touched(event: dict[str, Any]) -> list[str]:
             return ["engines"]
         if subject == "mcp-server":
             return ["mcp"]
+        if subject == "workspace":
+            return ["setup"]
     return []
 
 

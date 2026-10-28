@@ -36,8 +36,9 @@ Clank's own is used and the message line says why. Ctrl+P's "Change style" write
 and the console draws in a style as soon as the service reports a change of its settings or of a style's file
 (`restyle`, which draws every widget again); Textual's own theme command is left out of the palette. With `snapshot`,
 the console renders one frame once everything is loaded and returns it as text (§5.8). Opened with no page named
-(`guide`, a bare `clank` or `clank console`), it opens Add a model in place of This folder or Home once it has read
-that no model is usable (design 0016 §14, decision 0105).
+(`guide`, a bare `clank` or `clank console`), it opens Setup in place of This folder or Home once it has read that
+anything the setup needs is missing (design 0028 §4, decision 0148), else Add a model when no model is usable (design
+0016 §14, decision 0105). A page without a key of its own (Setup) is reached from the menu and Ctrl+P.
 """
 
 import os
@@ -121,6 +122,8 @@ def _bindings() -> list[BindingType]:
     keys: list[Binding] = []
     for page in PAGES:
         entry = page.ENTRY
+        if not entry.key:
+            continue  # a page reached from the menu and Ctrl+P alone (Setup: F11 is the terminal's full screen)
         action = f"key('{entry.key}')" if entry.key in DIGITS else f"page('{entry.id}')"
         keys.append(Binding(entry.key.lower(), action, entry.label.lower(), show=False))
     bound = {binding.key for binding in keys} | {"escape"}  # Esc is `on_key`'s, after a page's field took its own
@@ -753,14 +756,25 @@ class ClankConsole(App[str]):
             self.call_after_refresh(lambda: self.exit(render_text(self)))
 
     def _open_guide(self) -> None:
-        """Once, at the start: Add a model in place of This folder or Home when no model is usable (decision 0105)."""
+        """Once, at the start, in place of This folder or Home: Setup while anything it needs is missing (decision
+        0148); else Add a model when no model is usable (decision 0105)."""
         self._guide = False
+        if self._page not in ("folder", "home"):
+            return
+        setup = self.data.setup
+        if setup is not None and not setup.get("ready", True) and self.query("#page-setup"):
+            self.show_page("setup")
+            return
         usable = (self.data.usable or {}).get("usable", True)
-        if usable or self._page not in ("folder", "home") or not self.query("#page-addmodel"):
+        if usable or not self.query("#page-addmodel"):
             return
         self.show_page("addmodel")
         page: Any = self.query_one("#page-addmodel")
         page.start()
+
+    def refreshed(self, topic: str, value: Any) -> None:
+        """A topic a page read again itself (Setup's `r`), applied as the follower's readings are, at the next tick."""
+        self._updates.put(Update(topic, value))
 
     def _draw_header(self) -> None:
         frame = self.frame if self._heard and self.busy() else None
@@ -840,7 +854,10 @@ def explain_button(pressed: Button, reason: str) -> tuple[str, list[str]]:
 
 
 def menu_name(entry: MenuEntry, room: int) -> Content:
-    """A page's menu entry, its key in `key` and its name, cut to `room` columns."""
+    """A page's menu entry, its key in `key` and its name, cut to `room` columns (its name alone for a page without a
+    key of its own)."""
+    if not entry.key:
+        return Content(fit(entry.label, room))
     name = fit(f"{entry.key} {entry.label}", room)
     return Content.assemble((name[: len(entry.key)], "$clank-key"), name[len(entry.key) :])
 

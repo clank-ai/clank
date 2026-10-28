@@ -75,7 +75,7 @@ to go on; anything else skips that step and says how to do it later.
    Restart, and run the installer again: it goes on where it stopped. Then it offers to start Docker Desktop and
    waits for it (up to five minutes): the first time, Docker Desktop shows its terms in its own window; accept them.
 4. **Clank**: its latest release, with `uv tool install`, then `uv tool update-shell` so `clank` is on your path.
-5. **The check**: `clank doctor` says what is ready and what is not, each with what to do (step 3).
+5. **The check**: `clank setup --check` says what is set up and what is not, each with what to do (step 3).
 
 </details>
 
@@ -88,7 +88,7 @@ to go on; anything else skips that step and says how to do it later.
    `brew install --cask docker`; without Homebrew, it gives Docker's download page. Then it offers to open Docker
    Desktop and waits for it (up to five minutes): the first time, accept its terms in its window.
 4. **Clank**: its latest release, with `uv tool install`, then `uv tool update-shell`.
-5. **The check**: `clank doctor` (step 3).
+5. **The check**: `clank setup --check` (step 3).
 
 </details>
 
@@ -110,7 +110,7 @@ to go on; anything else skips that step and says how to do it later.
    - Docker from the snap, or rootless Docker, is not supported (they cannot reach the folders Clank needs, or they
      map the agent's user to another one); the installer says so, and can install Docker Engine beside it.
 4. **Clank**: its latest release, with `uv tool install`, then `uv tool update-shell`.
-5. **The check**: `clank doctor` (step 3).
+5. **The check**: `clank setup --check` (step 3).
 
 </details>
 

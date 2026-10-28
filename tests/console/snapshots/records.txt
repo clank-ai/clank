@@ -19,9 +19,10 @@ F8 CPU models                │ │ service service · built-in · no file yet;
 F9 Phone               ●     │ │ CLANK_HOME/config/service.json                                                       │
 F10 Monitor                  │ │ title              ""                                                 Title          │
 F12 Add a model              │ │ host               "127.0.0.1"                                        Address        │
-─────────────────────────────│ │ port               7720                                               Port           │
-coming                       │ │ events_kept_days   30                                                 History kept   │
-Sampling              M3     │ └──────────────────────────────────────────────────────────────────────────────────────┘
+Setup                        │ │ port               7720                                               Port           │
+─────────────────────────────│ │ events_kept_days   30                                                 History kept   │
+coming                       │ └──────────────────────────────────────────────────────────────────────────────────────┘
+Sampling              M3     │
 Sessions              M3     │
 Keys                  M3     │
 Layout                M2     │
@@ -32,7 +33,6 @@ Changes               M6     │
 Network access        M7     │
 Skills                M8     │
 Files                 M9     │
-Setup guide           M10    │
                              │
                              │
                              │

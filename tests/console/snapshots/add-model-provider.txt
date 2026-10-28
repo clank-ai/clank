@@ -19,7 +19,7 @@ F8 CPU models      │
 F9 Phone         ● │
 F10 Monitor        │
 F12 Add a model    │
-                   │
+Setup              │
                    │
                    │
                    │

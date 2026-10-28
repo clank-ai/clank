@@ -19,16 +19,16 @@ F8 CPU models                │ │ models     ○ main: not loaded (never star
 F9 Phone               ●     │ │ gpu        RTX 5080 · 3% busy · 2.0 GB of 15.9 GB in use · 34°C                      │
 F10 Monitor                  │ │ gateway    ○ stopped   F4, then g, starts it                                         │
 F12 Add a model              │ │ machine    not detected yet   d runs the doctor, which detects it                    │
-───────────────────────────  │ │ folder     /work/paper   F4: get ready and work here                                 │
-coming                       │ └──────────────────────────────────────────────────────────────────────────────────────┘
-Sampling              M3     │
-Sessions              M3     │ ┌─ History ────────────────────────────────────────────────────────────────────────────┐
-Keys                  M3     │ │ 11:40:00  Clank asks: Stop Docker Desktop?                                           │
-Layout                M2     │ └──────────────────────────────────────────────────────────────────────────────────────┘
+Setup                        │ │ folder     /work/paper   F4: get ready and work here                                 │
+───────────────────────────  │ └──────────────────────────────────────────────────────────────────────────────────────┘
+coming                       │
+Sampling              M3     │ ┌─ History ────────────────────────────────────────────────────────────────────────────┐
+Sessions              M3     │ │ 11:40:00  Clank asks: Stop Docker Desktop?                                           │
+Keys                  M3     │ └──────────────────────────────────────────────────────────────────────────────────────┘
+Layout                M2     │
 Tests and trials      M2     │
-Agents                M5     │
-Modes                 M5   ▅▅│
+Agents                M5   ▅▅│
+Modes                 M5     │
 Changes               M6     │
-Network access        M7     │
 
  s start or stop Docker  d run the doctor  v the question whole  ? explain  f1 help

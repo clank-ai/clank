@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from clank.components.workspaces.adapters.docker_cli import INSPECT, LIMITS, MEMORY, STATS, TEMPLATE
-from clank.components.workspaces.adapters.docker_engine import SOCKET, SYSTEMD, VERSION, DockerEngine
+from clank.components.workspaces.adapters.docker_engine import BOOT, SOCKET, SYSTEMD, VERSION, DockerEngine
 from clank.components.workspaces.adapters.platform import PlatformError
 from clank.components.workspaces.sandbox import ContainerSpec
 from clank.kernel.processes import TIMEOUT_SECONDS, Answer
@@ -35,15 +35,24 @@ class Machine:
     from systemd's."""
 
     def __init__(
-        self, active: str | None = "active", load: str = "loaded", answers: Mapping[str, Answer] | None = None
+        self,
+        active: str | None = "active",
+        load: str = "loaded",
+        answers: Mapping[str, Answer] | None = None,
+        unit_file: str = "enabled",
     ) -> None:
         self.active = active
         self.load = load
         self.answers = dict(answers or {})
+        self.unit_file = unit_file  # systemd's word for whether Docker's service starts with the computer
         self.asked: list[list[str]] = []
         self.systemd = 0
 
     def answer(self, arguments: Sequence[str], timeout: float = TIMEOUT_SECONDS, input: bytes | None = None) -> Answer:
+        if Path(arguments[0]).name == "systemctl" and " ".join(arguments) == " ".join(BOOT):
+            if self.active is None:
+                return Answer(1, "", "System has not been booted with systemd as init system (PID 1). Can't operate.\n")
+            return Answer(0, f"UnitFileState={self.unit_file}\n", "")
         if Path(arguments[0]).name == "systemctl":
             assert " ".join(arguments) == SYSTEMD_ASKED
             self.systemd += 1
@@ -76,10 +85,11 @@ class Clock:
 def engine(
     program: Machine | RecordedProgram,
     *,
-    command: str = "/usr/bin/docker",
+    command: str | None = "/usr/bin/docker",
     groups: Callable[[], tuple[bool, bool]] = lambda: (False, False),
     environ: Mapping[str, str] | None = None,
     clock: Callable[[], float] | None = None,
+    account: Callable[[], str] = lambda: "ada",
 ) -> DockerEngine:
     follow = program.follow if isinstance(program, Machine) else (lambda *args, **kwargs: 0)
     return DockerEngine(
@@ -91,6 +101,7 @@ def engine(
         groups=groups,
         environ=environ or {},
         clock=clock or Clock(),
+        account=account,
     )
 
 
@@ -241,6 +252,7 @@ def test_where_systemd_knows_dockers_service_its_engine_is_used_whatever_the_con
 
 def test_the_capture_tool_asks_what_the_adapter_asks() -> None:
     assert capture_tool.SYSTEMD == SYSTEMD
+    assert capture_tool.BOOT == BOOT
     assert capture_tool.SOCKET == SOCKET
     assert (capture_tool.VERSION, capture_tool.TEMPLATE, capture_tool.INSPECT) == (VERSION, TEMPLATE, INSPECT)
     assert (capture_tool.LIMITS, capture_tool.STATS, capture_tool.MEMORY) == (LIMITS, STATS, MEMORY)

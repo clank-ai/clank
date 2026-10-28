@@ -19,7 +19,8 @@ F8 CPU models                │ │ any provider.                              
 F9 Phone               ●     │ │                                                                                              │
 F10 Monitor                  │ │ MCP servers (each one you have is marked local only; unmark one to offer it):                │
 F12 Add a model              │ │ lit  local only: never offered to the cloud model                                            │
-─────────────────────────────│ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+Setup                        │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+─────────────────────────────│
 coming                       │
 Sampling              M3     │
 Sessions              M3     │
@@ -32,7 +33,6 @@ Changes               M6     │
 Network access        M7     │
 Skills                M8     │
 Files                 M9     │
-Setup guide           M10    │
                              │
                              │
                              │

@@ -1,0 +1,40 @@
+ ◆ CLANK  paper   ● service  ● docker  ● no model  ● gateway              09:00
+F4 This folder   ✗ │ ┌─ Clank's setup ──────────────────────────────────────┐
+1 Home             │ │ What Clank needs on this computer, in order: each    │
+2 Questions        │ │ says what it is now and, while it is not done, what  │
+3 History          │ │ to do. `clank setup` in a terminal says the same.    │
+4 Docker         ● │ │  1  Docker installed                                 │
+5 Machine          │ │ ✓ Fake Docker 4.85.0                                 │
+6 Operations       │ │  2  Docker running                                   │
+7 Records          │ │ ✓ it runs, engine 29.6.2                             │
+8 Models         ● │ │  3  Docker usable by this account                    │
+9 Presets          │ │ ✓ this account may use Docker                        │
+0 Providers and…   │ │  4  Clank's service                                  │
+F1 Help            │ │ ✓ it runs in the background: the gateway, the        │
+F2 Launch optio…   │ │ workspaces and the agents                            │
+F3 MCP servers     │ │  5  The sandbox image                                │
+F6 Workspaces      │ │ ✗ not built yet. Every workspace's container runs    │
+F7 Requests        │ │ it; it is built once, in a few minutes, and          │
+F8 CPU models      │ │ downloads about a gigabyte (Ubuntu 24.04, Node.js    │
+F9 Phone         ● │ │ 22, OpenCode and the common build tools)             │
+F10 Monitor        │ │ → opening a folder's workspace builds it, asking     │
+F12 Add a model    │ │ first (This folder's o) · press f                    │
+Setup              │ │  6  A model                                          │
+                   │ │ ✗ no model has answered a test request yet. This     │
+                   │ │ computer has NVIDIA GeForce RTX 5080, 16 GB: local   │
+                   │ │ models can run on it                                 │
+                   │ │ → Add a model: in the cloud through OpenRouter (with │
+                   │ │ your OpenRouter key), on this computer's GPU, or     │
+                   │ │ both (the cloud first, then local) · press m         │
+                   │ │  7  A folder                                         │
+                   │ │ ✗ no folder is a workspace yet. The agent works in a │
+                   │ │ folder you choose, in a container that sees only it  │
+                   │ │ → This folder opens the folder `clank` was started   │
+                   │ │ in as a workspace · press f                          │
+                   │ │  8  Clank's VS Code window                           │
+                   │ │ ○ optional: VS Code is not installed; the agent      │▄▄
+                   │ │ works in the terminal without it                     │
+                   │ │ → install VS Code (code.visualstudio.com), then      │
+                   │ │ `clank code` in a folder                             │
+
+ m add a model  f This folder  r read it again  ? explain  f1 help  esc menu

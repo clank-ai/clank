@@ -34,9 +34,10 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/boardplace.py` | Where a new item goes on a board (design 0022 §4): the agent says where ("below fig-2", "in the frame Figure 3", "in |
 | `clank/components/agents/boards.py` | Boards (design 0022): a canvas the owner and the agent share, a `.board` file of the folder (JSON: its title, its |
 | `clank/components/agents/changes.py` | A change the agent asks to make to a file (design 0007 §5): the file as it would be after it, its diff, and where |
+| `clank/components/agents/checklist.py` | `clank setup`'s checklist (design 0028 §4, §5): what Clank needs on this computer, in order, each item with its |
 | `clank/components/agents/cli.py` | `clank work [FOLDER]` (design 0004 §1): the agent, in a folder's container, in this terminal, at once; `clank code |
 | `clank/components/agents/component.py` | The agents component's declaration (design 0002 §1, design 0004 §4). |
-| `clank/components/agents/console/__init__.py` | The agents component's console page: the folder clank was started in (design 0004 §1). |
+| `clank/components/agents/console/__init__.py` | The agents component's console pages: the folder clank was started in (design 0004 §1), the Monitor (design 0012), |
 | `clank/components/agents/console/biggestpanel.py` | The Monitor's Biggest in the context panel (design 0012 §2, §4.6; §11 step 12): the largest items in the followed |
 | `clank/components/agents/console/boxchart.py` | A flow laid out for the Monitor's Flow view (design 0013 §12, board D1; decision 0057's shape): `render(view, width, |
 | `clank/components/agents/console/boxpanel.py` | The Flow view's drawings of boxes (design 0013 §12): `BoxChart`, board D1's Flow panel, which shows a flow as |
@@ -60,6 +61,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/console/monitor.py` | The Monitor (design 0012 §2, decision 0047): the page of the console's menu on F10 where the owner watches, and will |
 | `clank/components/agents/console/nowpanel.py` | The Monitor's Now panel (design 0012 §2, §5; §11 step 7): what the followed session does this second, as the service |
 | `clank/components/agents/console/parts.py` | The context's parts as the Monitor draws them (design 0012 §4.2, §4.7; §11 step 12): each part's color (the style's |
+| `clank/components/agents/console/setup.py` | The console's Setup page (design 0028 §4): `clank setup`'s checklist, as the service gives it (`GET /setup`, the |
 | `clank/components/agents/console/watchfor.py` | The Monitor's Watch for panel (design 0012 §2, §8): the newest marks the Watch for rules left, one line each: a mark |
 | `clank/components/agents/context.py` | A session's context totals (design 0012 §4.1 and §4.4, decision 0067): how much of the window the session uses, how |
 | `clank/components/agents/estimate.py` | The context's parts, estimated (design 0012 §4.2, §4.3, §4.6; decisions 0051, 0052 and 0067): what fills a |
@@ -96,6 +98,8 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/agents/sessionflow/text.py` | How a session's flow keeps text (design 0012 §6.3: nothing spills out of a node): on one line, cut with "…"; the |
 | `clank/components/agents/sessionflow/todos.py` | The todo list's items across its revisions (design 0012 §6.2, decision 0050), the branches of a session that carries |
 | `clank/components/agents/sessions.py` | The session bridge (design 0005 §2): the service's way to the OpenCode servers running in a workspace's container. |
+| `clank/components/agents/setupcli.py` | `clank setup` (design 0028 §4): what Clank needs on this computer, in order, and what to do about each item that is |
+| `clank/components/agents/setupfacts.py` | What the setup's checklist reads (`checklist.Facts`, design 0028 §4), gathered in the service or without it. |
 | `clank/components/agents/showing.py` | Showing files to the owner (design 0018 §7.1): the agent names files of a workspace's folder, and Clank's VS Code |
 | `clank/components/agents/streaming.py` | The conversation stream (design 0023 §3): what happens in a conversation, pushed to a client as it happens, over |
 | `clank/components/agents/vscode.py` | Clank's VS Code window (design 0004 §5): a separate instance of the VS Code program on this machine, its settings and |
@@ -289,6 +293,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/workspaces/layers/tex/latex_build.py` | Clank's LaTeX helper, in the TeX layer (design 0020 §8-§10, decision 0134): run in a workspace's container, it reads |
 | `clank/components/workspaces/memory.py` | Docker's memory limits, in words (design 0014 §4). |
 | `clank/components/workspaces/network.py` | A host the agent asks for (design 0024 §3, decision 0141): when a workspace's agent reaches a host that is not |
+| `clank/components/workspaces/readiness.py` | Docker as `clank setup` reads it (design 0028 §4, §5): what the setup's checklist needs of the workspaces, read in |
 | `clank/components/workspaces/sandbox.py` | A workspace's container and the edge, as Clank wants them (design 0004 §3 and §6, design 0002 §2.9). |
 | `clank/components/workspaces/service.py` | The workspaces component's part in the service. In M0 it holds Docker: the container platform's status, whose each |
 | `clank/components/workspaces/setup.py` | A workspace's software (design 0004 §10): what installs the folder's own programs where its agent finds them. |

@@ -19,7 +19,7 @@ F8 CPU models      │ │ frontier 262K                      │
 F9 Phone         ● │ │   kvmem-llamacpp v0.00.0-rc1 ·     │
 F10 Monitor        │ │ swift-1.5-qwen3.8-27b · fit: known │
 F12 Add a model    │ │ once its engine is installed       │
-                   │ │   KVMem/llama.cpp v0.00.0-rc1 is   │
+Setup              │ │   KVMem/llama.cpp v0.00.0-rc1 is   │
                    │ │ not installed here, and Clank has  │
                    │ │ no recipe for it                   │
                    │ │ frontier 262K lean                 │

@@ -21,11 +21,17 @@ place on every workspace's network is checked from the reading the service takes
 because a network it was on is gone (removed, or made again since) is a `NetworkGone`, so Clank makes it again.
 These container commands are Docker's own CLI whatever program runs the engine: one base, `DockerCli`
 (`docker_cli.py`, design 0014 §2), holds them for every adapter.
+
+For `clank setup` (design 0028 §5) a platform also says how it is set up on this computer (`setup_state`, a
+`PlatformSetup`): whether it starts with the computer, whether this account is in its group, and the commands its owner
+runs with administrator rights to put it right, which Clank shows and runs only in the owner's terminal; a platform
+Clank starts itself names none.
 """
 
 import sys
 from abc import abstractmethod
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
@@ -102,6 +108,20 @@ class PlatformStatus(BaseModel):
     def running(self) -> bool:
         """Whether its engine runs and answers."""
         return self.state == "running"
+
+
+@dataclass(frozen=True)
+class PlatformSetup:
+    """How a platform is set up on this computer, for `clank setup` (design 0028 §5): whether it starts with the
+    computer and whether this account is in its group as the system lists it now (None: the platform does not say),
+    and the commands its owner runs, with administrator rights, to start it now, to start it with the computer and to
+    let this account use it (none for a platform Clank starts itself)."""
+
+    at_boot: bool | None = None
+    in_group: bool | None = None
+    start: tuple[str, ...] = ()
+    boot: tuple[str, ...] = ()
+    join: tuple[str, ...] = ()
 
 
 class ContainerPlatform(Adapter):
@@ -268,3 +288,8 @@ class ContainerPlatform(Adapter):
         saying how to let it; empty when it can. Docker Desktop's file sharing maps the folder's owner, so it says
         nothing; Docker Engine shows the host's own owners (design 0014 §4)."""
         return ""
+
+    def setup_state(self) -> PlatformSetup:
+        """How the platform is set up on this computer, and the commands its owner runs to put it right (design 0028
+        §5); nothing for a platform Clank starts itself, which asks nothing."""
+        return PlatformSetup()

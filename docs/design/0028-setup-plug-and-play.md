@@ -20,11 +20,11 @@ Linux ([design 0014](0014-linux-and-small-machines.md) §2-§4, built at the own
 | 1 | Who sets Clank up, and the one path each follows | Proposed 2026-10-27; being built at the owner's instruction |
 | 2 | Rules every step of the setup keeps | Proposed 2026-10-27; being built at the owner's instruction |
 | 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9) |
-| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; being built at the owner's instruction |
-| 5 | Docker, configured correctly on each system | Proposed 2026-10-27; being built at the owner's instruction |
+| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; being built at the owner's instruction: the checklist (S2) built 2026-10-27, `clank setup --check` and the console's Setup page ([plan s62](../plans/s62-clank-setup.md)) |
+| 5 | Docker, configured correctly on each system | Proposed 2026-10-27; being built at the owner's instruction: each state's words and fix in the checklist built 2026-10-27 (S2) |
 | 6 | Clank's VS Code extension without building it | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction (S5) |
 | 7 | Local models: what is one step and what is not yet | Proposed 2026-10-27 |
-| 8 | Tests and build steps | Proposed 2026-10-27; the installers' tests built (the website's `installer` workflow) |
+| 8 | Tests and build steps | Proposed 2026-10-27; the installers' tests built (the website's `installer` workflow); `clank setup`'s checklist tests built (S2) |
 
 ## 1. Who sets Clank up, and the one path each follows
 
@@ -135,6 +135,20 @@ is not done; afterwards it is in the menu.
   can use: the cloud is the way"). Cloud is Add a model's cloud path as it is; local is its local path; both is cloud
   first, then local.
 - **Ready** says what was set up and what each thing is for, then opens This folder.
+
+As built (S2, 2026-10-27, [plan s62](../plans/s62-clank-setup.md)): the checklist is one pure function of what is read
+(`agents/checklist.py`), which the service serves (`GET /setup`, the agents' part, which reads Docker, the main slot,
+the machine, the workspaces and Clank's VS Code window) and `clank setup` reads itself when the service does not run,
+Docker as the doctor reads it, saying that the model and the folder are told once the service runs. Its items are the
+table's, in its order but for one swap: Clank's service comes before the sandbox image, which the service builds, and
+both after Docker, so a service the setup starts never starts before this account may use Docker. Two of §5's states
+are items of their own, each shown only where it applies: Docker starts with the computer (Docker Engine, through
+systemd; offered, not required) and Docker limits memory (only where it cannot). `clank setup --check` prints each
+item's state (`done`, `to do`, `doing`, `waits` for an item before it, `unknown` until the service says, `optional`),
+what it is now and what to do, changes nothing, and exits 0 when everything required is done, else 1; `--json` prints
+it as the API gives it. The console's Setup page draws the service's checklist, `m` opening Add a model and `f` This
+folder; it has no key of its own (F11, the one left, is the terminal's full screen on most terminals), it is the last
+page of the menu, and the console opens on it while anything required is missing (decision 0148).
 
 ## 5. Docker, configured correctly on each system
 

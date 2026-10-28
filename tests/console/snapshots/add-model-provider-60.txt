@@ -19,7 +19,7 @@ F8 CPU models      │ │ then your key.                     │
 F9 Phone         ● │ └────────────────────────────────────┘
 F10 Monitor        │
 F12 Add a model    │
-                   │
+Setup              │
                    │
                    │
                    │

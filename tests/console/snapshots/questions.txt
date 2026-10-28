@@ -19,6 +19,7 @@ F8 CPU models                │
 F9 Phone               ●     │
 F10 Monitor                  │
 F12 Add a model              │
+Setup                        │
 ───────────────────────────  │
 coming                       │
 Sampling              M3     │
@@ -26,9 +27,8 @@ Sessions              M3     │
 Keys                  M3     │
 Layout                M2     │
 Tests and trials      M2     │
-Agents                M5     │
-Modes                 M5   ▅▅│
+Agents                M5   ▅▅│
+Modes                 M5     │
 Changes               M6     │
-Network access        M7     │
 
  y n … answer it with an option's key  v the question whole  ? explain  f1 help  esc menu  f5 machine column  q quit

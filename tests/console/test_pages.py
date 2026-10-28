@@ -95,7 +95,8 @@ async def test_components_pages_join_the_menu_with_their_keys(
         "F9 Phone",
         "F10 Monitor",
         "F12 Add a model",
-    ]
+        "Setup",
+    ], "the pages with a key of their own, then Setup, which has none (decision 0148)"
 
 
 async def test_history_shows_every_event_newest_last_and_filters_by_what_is_typed(

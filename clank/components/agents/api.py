@@ -21,6 +21,7 @@ agents are watched, how many changes wait, and what its window was told of its m
 owner marked up (design 0008), or a page of a PDF; `POST /agents/latex/pages` renders a PDF of a folder as page images
 to mark up (design 0020 §10), `POST /agents/latex/comments` sends the owner's comments on lines of LaTeX files to the
 agent (§11), and `POST /agents/latex/build` builds a document in its workspace's container for LaTeX Workshop (§3).
+`GET /setup` is `clank setup`'s checklist (design 0028 §4, §5): what Clank needs on this computer, item by item.
 `POST /agents/show` opens files of a workspace's folder in the owner's VS Code window (design 0018 §7): the agent's,
 through the gateway, refused (409) while no VS Code window follows the service. The Monitor's flows (design 0012 §6.1):
 `GET /agents/flow/{workspace}` (the flows kept, briefly) and `GET /agents/flow/{workspace}/{session}` (one, whole, or
@@ -893,6 +894,16 @@ def router(agents: "Agents") -> APIRouter:
         beside the local model that runs) and Ready. Served by the agents' part, which reads all of them; the runtime
         writes the words (`GET /runtime/guide/local`, the Local step, is the runtime's)."""
         found: dict[str, Any] = await anyio.to_thread.run_sync(lambda: agents.add_model_guide(preset, folder))
+        return found
+
+    @routes.get("/setup")
+    async def setup(folder: str = "", refresh: bool = False) -> dict[str, Any]:
+        """What Clank needs on this computer, item by item, in order (design 0028 §4, §5): each item's state, what it
+        is now, and its fix (what to do, the exact command, whether it needs administrator rights, whether Clank does
+        it on a yes); whether everything required is done, and once it is, what was set up. `folder`, when named, is
+        checked as a workspace's would be; `refresh` reads Docker now instead of giving its last reading. Served by
+        the agents' part, which reads Docker, the runtime, the machine, the workspaces and Clank's VS Code window."""
+        found: dict[str, Any] = await anyio.to_thread.run_sync(lambda: agents.setup(folder, refresh))
         return found
 
     @routes.get("/agents/servers")

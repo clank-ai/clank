@@ -9,10 +9,11 @@ most four a second, and nothing is lost. In the style's look (design 0011 §7): 
 folder's name in `name` at normal weight on every page ("◆ CLANK" alone bold), each pill whole in its state's color and
 the clock in `quiet`; the menu's keys are in `key`, its highlighted entry on `selection` in `selected-text`, bold,
 whether the menu has the focus or not, and "coming" in `quiet`; the message line stands above the keys bar, in `quiet`,
-an error in `attention`, bold. Design 0016 §14 and decision 0105: with no model usable, a bare `clank` and `clank
-console` open on Add a model in place of This folder or Home, the header saying "no model: Add a model"; a page named
-on the command line opens as asked, the header still saying so; with a model ready, the console opens as it always
-did."""
+an error in `attention`, bold. Design 0028 §4 and decision 0148: while anything the setup needs is missing, a bare
+`clank` and `clank console` open on Setup in place of This folder or Home, the header saying "no model: Add a model"
+when no model is usable; design 0016 §14 and decision 0105: with the setup done and no model usable, they open on Add a
+model; a page named on the command line opens as asked, the header still saying so; with a model ready and the setup
+done, the console opens as it always did. A page without a key of its own (Setup) is listed after those with one."""
 
 import time
 from datetime import UTC, datetime
@@ -26,16 +27,20 @@ from textual.widgets import ContentSwitcher, Label, ListItem, ListView
 from clank.cli import console as console_command
 from clank.cli.main import main
 from clank.client import Client
+from clank.components.runtime.state import LastGood
+from clank.components.workspaces.sandbox import image_tag
 from clank.console import app as console_app
 from clank.console.app import ClankConsole
 from clank.console.menu import PLANNED, MenuEntry, place
 from clank.console.snapshot import render_text
+from clank.kernel.access import client_actor
 from clank.kernel.console_kinds import StyleSettings
 from clank.kernel.core import Kernel
 from clank.kernel.events import CLANK
 from clank.kernel.home import Home
 from clank.kernel.questions import Option, QuestionDraft
 from tests.console.frames import FOLDER, assert_frame, frame_when, settle
+from tests.fakes.platform import FakePlatform
 from tests.support.cloud import CloudBench
 from tests.support.served import free_port
 
@@ -97,7 +102,8 @@ async def test_the_menu_lists_every_page_with_its_key_then_every_planned_page_in
             "F9",
             "F10",
             "F12",
-        ], "the first page, the digits (0 last), then F keys"
+            "Setup",
+        ], "the first page, the digits (0 last), then F keys, then a page without a key of its own"
         planned = {item.id: item for item in app.query("#menu .planned")}
         assert set(planned) == {f"menu-{entry.id}" for entry in PLANNED}
         for entry in PLANNED:
@@ -310,21 +316,42 @@ def current_page(app: ClankConsole) -> str:
     return str(app.query_one("#pages", ContentSwitcher).current)
 
 
-async def test_with_no_model_usable_clank_opens_on_add_a_model_the_header_saying_so(
+async def test_with_something_the_setup_needs_missing_clank_opens_on_setup_the_header_saying_no_model(
     client: Client, home: Home, cloud_api: CloudBench
 ) -> None:
     app = ClankConsole(client, now=lambda: NOW, zone=UTC, home=home, page="folder", guide=True)
     app.folder = FOLDER
     async with app.run_test(size=(120, 40)) as pilot:
-        await settle(pilot, lambda: current_page(app) == "page-addmodel")
-        await settle(pilot, lambda: "How should Clank run its model?" in render_text(app))
+        await settle(pilot, lambda: current_page(app) == "page-setup")
+        await settle(pilot, lambda: "What Clank needs on this computer" in render_text(app))
         assert "no model: Add a model" in render_text(app).splitlines()[0]
 
 
-async def test_with_a_model_ready_clank_opens_on_this_folder(client: Client, home: Home, cloud_api: CloudBench) -> None:
+def set_up(kernel: Kernel, platform: FakePlatform, preset: str) -> None:
+    """What the setup needs, done: the sandbox image built, a preset that answered a test request, a workspace."""
+    platform.images.add(image_tag())
+    kernel.parts["runtime"].state.remember_good("main", LastGood(preset=preset, time=NOW))
+    kernel.settings.write("workspace", "paper", {"path": FOLDER}, base=None, actor=client_actor("console"))
+
+
+async def test_with_the_setup_done_and_no_model_usable_clank_opens_on_add_a_model(
+    client: Client, home: Home, kernel: Kernel, platform: FakePlatform, cloud_api: CloudBench
+) -> None:
+    set_up(kernel, platform, "daily-262k")
+    app = ClankConsole(client, now=lambda: NOW, zone=UTC, home=home, page="folder", guide=True)
+    app.folder = FOLDER
+    async with app.run_test(size=(120, 40)) as pilot:
+        await settle(pilot, lambda: current_page(app) == "page-addmodel")
+        await settle(pilot, lambda: "How should Clank run its model?" in render_text(app))
+
+
+async def test_with_a_model_ready_clank_opens_on_this_folder(
+    client: Client, home: Home, kernel: Kernel, platform: FakePlatform, cloud_api: CloudBench
+) -> None:
     cloud_api.add()
     cloud_api.write_preset()
     cloud_api.run("cloud-example-coder")
+    set_up(kernel, platform, "cloud-example-coder")
     app = ClankConsole(client, now=lambda: NOW, zone=UTC, home=home, page="folder", guide=True)
     app.folder = FOLDER
     async with app.run_test(size=(120, 40)) as pilot:

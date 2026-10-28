@@ -5,6 +5,19 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
+## Unreleased: since 0.3.0b3
+
+The next release. Its version is set when it is tagged; until then, a clone has it (`git pull`, or `clank update`).
+
+### Added
+
+- **`clank setup`**: what Clank needs on this computer, item by item, and what to do about each one that is not done
+  (design 0028): Docker installed, running and usable by your account (on Linux, whether it starts with the computer),
+  Clank's service, the sandbox image, a model that answered a test request, a folder that is a workspace, and Clank's
+  VS Code window. `clank setup --check` changes nothing and works without the service; the installers end with it. While
+  anything is missing, `clank` opens the console on its **Setup** page (decision 0148), whose model item opens Add a
+  model and folder item This folder.
+
 ## 0.3.0b3: Linux with Docker Engine, and the extension in every release (2026-10-27)
 
 Clank on a Linux computer without Docker Desktop: the one-line installer sets Docker Engine up from Docker's own

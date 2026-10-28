@@ -2,7 +2,7 @@
   "program": "Docker Engine",
   "version": "28.0.4",
   "recorded": "2026-10-27",
-  "how": "Recorded by tools/capture_docker_engine.py on GitHub's ubuntu-24.04 runner (the hand-run job record-docker-engine.yml, run 40578825917), from Docker Engine 28.0.4 as Docker's own packages install it. Running: with four example containers of busybox:1.37.0, made by the tool for the recording and removed after (one of Clank's, one of another tool's, one of another program's, and one that is not running). Stopped: after `sudo systemctl stop docker.socket docker.service`, so its commands woke nothing. No access: as a user outside the docker group. Each answer is its exit status, its output, its seconds and its errors. Replaced by made-up values of the same form: the containers' ids. The commands are those the tool lists, which are the adapter's; when they differ, the contract test fails, and the engine is recorded again.",
+  "how": "Recorded by tools/capture_docker_engine.py on GitHub's ubuntu-24.04 runner (the hand-run job record-docker-engine.yml, run 40578825917), from Docker Engine 28.0.4 as Docker's own packages install it. Running: with four example containers of busybox:1.37.0, made by the tool for the recording and removed after (one of Clank's, one of another tool's, one of another program's, and one that is not running). Stopped: after `sudo systemctl stop docker.socket docker.service`, so its commands woke nothing. No access: as a user outside the docker group. Each answer is its exit status, its output, its seconds and its errors. Replaced by made-up values of the same form: the containers' ids. The commands are those the tool lists, which are the adapter's; when they differ, the contract test fails, and the engine is recorded again. The answer to `systemctl show docker.service --property=UnitFileState` (whether systemd starts Docker's service with the computer, design 0028 §5) was written by hand on 2026-10-27 in each state, as Docker's own packages leave the service (enabled), until the job records the engine again.",
   "platform": "linux",
   "command": "/usr/bin/docker",
   "initial": "running",
@@ -49,6 +49,12 @@
         "{\"BlockIO\":\"0B / 0B\",\"CPUPerc\":\"0.00%\",\"Container\":\"b2b2b2b2b2b2\",\"ID\":\"b2b2b2b2b2b2\",\"MemPerc\":\"0.00%\",\"MemUsage\":\"428KiB / 15.61GiB\",\"Name\":\"web-dev\",\"NetIO\":\"732B / 84B\",\"PIDs\":\"1\"}\n{\"BlockIO\":\"0B / 0B\",\"CPUPerc\":\"0.00%\",\"Container\":\"c3c3c3c3c3c3\",\"ID\":\"c3c3c3c3c3c3\",\"MemPerc\":\"0.00%\",\"MemUsage\":\"424KiB / 15.61GiB\",\"Name\":\"toolbox-sandbox-017\",\"NetIO\":\"1.86kB / 252B\",\"PIDs\":\"1\"}\n{\"BlockIO\":\"139kB / 0B\",\"CPUPerc\":\"0.00%\",\"Container\":\"d4d4d4d4d4d4\",\"ID\":\"d4d4d4d4d4d4\",\"MemPerc\":\"0.00%\",\"MemUsage\":\"556KiB / 15.61GiB\",\"Name\":\"clank-0123456789ab-demo\",\"NetIO\":\"732B / 126B\",\"PIDs\":\"1\"}\n",
         2.54,
         ""
+      ],
+      "systemctl show docker.service --property=UnitFileState": [
+        0,
+        "UnitFileState=enabled\n",
+        0.01,
+        ""
       ]
     },
     "stopped": {
@@ -87,6 +93,12 @@
         "",
         0.02,
         "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?\n"
+      ],
+      "systemctl show docker.service --property=UnitFileState": [
+        0,
+        "UnitFileState=enabled\n",
+        0.01,
+        ""
       ]
     },
     "no access": {
@@ -125,6 +137,12 @@
         "",
         0.01,
         "permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get \"http://%2Fvar%2Frun%2Fdocker.sock/v1.48/containers/json\": dial unix /var/run/docker.sock: connect: permission denied\n"
+      ],
+      "systemctl show docker.service --property=UnitFileState": [
+        0,
+        "UnitFileState=enabled\n",
+        0.01,
+        ""
       ]
     }
   },

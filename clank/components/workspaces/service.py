@@ -22,7 +22,9 @@ right before an agent starts in a workspace; and each view of a workspace says, 
 container reaches the edge, and what Clank does when it does not. The platform adapter's name decides the edge's way to
 the gateway (design 0014 §3): `docker-engine` gets the gateway's socket (`edge_socket`, from the gateway's service),
 every other adapter the host's loopback; and on Linux no workspace's folder may hold the gateway's socket folder or be
-inside it (`socket_folder`).
+inside it (`socket_folder`). For `clank setup` (design 0028 §4, §5) Docker is read in one go (`readiness.py`): in the
+service from the last reading (`setup_reading`, its memory limits kept a few minutes), without it from the platform the
+settings choose (`read_setup`).
 """
 
 import logging
@@ -51,6 +53,8 @@ from clank.components.workspaces.kinds import DockerSettings, Workspace
 from clank.components.workspaces.memory import MEMORY_FIX as MEMORY_FIX  # for the doctor (design 0014 §5)
 from clank.components.workspaces.memory import memory_said as memory_said
 from clank.components.workspaces.network import SETS_FILE, HostAsks, sets
+from clank.components.workspaces.readiness import SetupReading as SetupReading  # for `clank setup` (design 0028 §4)
+from clank.components.workspaces.readiness import setup_reading
 from clank.components.workspaces.sandbox import BRIDGE_PROGRAM as BRIDGE_PROGRAM  # for the agents (design 0005)
 from clank.components.workspaces.sandbox import CURRENT_INSTRUCTIONS as CURRENT_INSTRUCTIONS  # for the agents
 from clank.components.workspaces.sandbox import CURRENT_PHONE as CURRENT_PHONE  # (design 0018 §7.5)
@@ -166,6 +170,21 @@ def read_platform(home: Home) -> DockerReading:
     )
 
 
+def read_setup(home: Home, folder: str = "") -> SetupReading:
+    """Docker as `clank setup` reads it without the service (design 0028 §4, §5), through the platform the settings
+    choose, as the doctor reads it; `folder`, when named, is checked as a workspace's would be (the gateway's socket
+    folder is the service's to know)."""
+    settings = docker_settings(home)
+    platform = make_platform(settings.adapter)
+    return setup_reading(
+        platform,
+        starts=lambda: starts(platform),
+        allow_unlimited_memory=settings.allow_unlimited_memory,
+        clank_home=home.root,
+        folder=folder,
+    )
+
+
 def owner(container: Container, home_id: str) -> Owner:
     """Whose a container is: Clank's (this CLANK_HOME's), or another program's."""
     if container.clank.get("clank.home") == home_id:
@@ -211,6 +230,7 @@ class Workspaces:
         self._lock = threading.Lock()
         self._limits: tuple[str, float, tuple[int, int] | None] | None = None  # adapter, when read, what it said
         self._memory: bool | None = None  # whether Docker limits a container's memory, as last read (an opening's)
+        self._memory_words: tuple[str, float, tuple[bool | None, list[str]]] | None = None  # the setup's reading
         self.cloud = CloudBounds(kernel)  # where each workspace's requests may go (design 0016 §9)
         self.network = HostAsks(kernel, self.allow_host)  # the hosts its agent asks for (design 0024 §3)
         self.edge = Edge(self)  # the edge on every workspace's network (design 0004 §3)
@@ -240,6 +260,37 @@ class Workspaces:
         if status is not None and status.state in ("not installed", "unsupported"):
             return False
         return starts(self.platform)
+
+    def setup_reading(self, folder: str = "", refresh: bool = False) -> SetupReading:
+        """Docker as the setup's checklist reads it (design 0028 §4, §5), through the platform in use: its status as
+        last read (the background check keeps it current), or read now when asked (`refresh`, as a client does after a
+        fix) or never read yet; its memory limits read at most once in `LIMITS_SECONDS` (`docker info` took 0.7 s on
+        Docker Desktop, and they change only when Docker restarts with other settings); `folder`, when named, checked
+        as a workspace's would be."""
+        platform = self.platform
+        settings = self.settings()
+        status = self._status if self._status is not None and not refresh else platform.status()
+
+        def memory() -> tuple[bool | None, list[str]]:
+            adapter, now, kept = self._adapter, time.monotonic(), self._memory_words
+            if kept is not None and kept[0] == adapter and now - kept[1] < LIMITS_SECONDS:
+                return kept[2]
+            found = platform.memory_limits()
+            self._memory_words = (adapter, now, found)
+            return found
+
+        reading = setup_reading(
+            platform,
+            starts=lambda: starts(platform),
+            allow_unlimited_memory=settings.allow_unlimited_memory,
+            clank_home=self.kernel.home.root,
+            folder=folder,
+            socket_folder=self.socket_folder() if folder else None,
+            memory=memory,
+            status=status,
+        )
+        self._observe(reading.status)
+        return reading
 
     def note_memory(self, limited: bool | None) -> None:
         """Keep the last reading of whether Docker can limit a container's memory (an opening reads it, design 0014

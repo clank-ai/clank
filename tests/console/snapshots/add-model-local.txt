@@ -19,7 +19,7 @@ F8 CPU models      │ │ frontier 262K lean                                   
 F9 Phone         ● │ │   kvmem-llamacpp v0.00.0-rc1 · swift-1.5-qwen3.8-27b-iq3xxs ·  │
 F10 Monitor        │ │ fit: known once its engine is installed                        │
 F12 Add a model    │ │   install KVMem/llama.cpp v0.00.0-rc1; download Swift 1.5      │
-                   │ │ Qwen3.8-27B IQ3_XXS's weights (9.7 GB)                         │
+Setup              │ │ Qwen3.8-27B IQ3_XXS's weights (9.7 GB)                         │
                    │ │ frontier 96K                                                   │
                    │ │   kvmem-llamacpp v0.00.0-rc1 · swift-1.5-qwen3.8-27b · fit:    │
                    │ │ known once its engine is installed                             │

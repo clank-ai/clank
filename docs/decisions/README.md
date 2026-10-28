@@ -112,7 +112,7 @@ and use the template below.
 | [0102](0102-the-first-cloud-provider-is-openrouter.md) | The first cloud provider is OpenRouter, alone for now | Accepted (the owner's decision) | 2026-10-20 |
 | [0103](0103-the-cloud-is-agreed-once-and-asked-once-per-workspace.md) | The cloud is agreed to once per provider and asked once per workspace; existing workspaces stay local; Notion and MCP servers marked local never go (answers 0075 for the cloud) | Accepted (the owner's decision) | 2026-10-20 |
 | [0104](0104-cloud-cost-is-shown-with-an-optional-limit.md) | Each cloud request, session and flow shows what it cost; an optional daily or monthly limit pauses cloud requests until the owner raises it | Accepted (the owner's decision) | 2026-10-20 |
-| [0105](0105-with-no-usable-model-the-console-opens-on-add-a-model.md) | With no usable model, the console opens on Add a model: cloud or local, in one pass | Accepted (the owner's decision) | 2026-10-20 |
+| [0105](0105-with-no-usable-model-the-console-opens-on-add-a-model.md) | With no usable model, the console opens on Add a model: cloud or local, in one pass | Accepted (the owner's decision); its opening superseded by 0148 | 2026-10-20 |
 | [0106](0106-the-service-hands-the-cloud-key-to-the-gateway.md) | The service hands a cloud provider's key to the gateway, behind its local token, while a cloud model is loaded (a third way beside 0073's) | Proposed (Claude's call) | 2026-10-20 |
 | [0107](0107-a-cloud-model-serves-the-main-slot.md) | A cloud model serves the main slot in an engine's place, one provider at a time (0077's (a), for cloud models) | Proposed (Claude's call) | 2026-10-20 |
 | [0108](0108-cloud-cost-is-openrouters-own-figure-kept-by-the-service.md) | Cloud cost is OpenRouter's own figure, kept by the service from the gateway's spool, in this computer's days and months | Proposed (Claude's call) | 2026-10-20 |
@@ -155,6 +155,7 @@ and use the template below.
 | [0145](0145-clank-update-finishes-in-a-helper.md) | `clank update` finishes in a helper process when the tool must be installed again: Windows keeps a running program's files, and the service, the gateway and the command run from the tool's | Accepted (Claude, with plan s61, 2026-10-26) |
 | [0146](0146-kvmem-keeps-a-snapshot-at-the-end-of-the-system-prompt.md) | KVMem keeps a snapshot of the model's state at the end of the system prompt, so a new session resumes there instead of reading OpenCode's prompt and tools again (12.2 s to 1.0 s measured) | Accepted for frontier 262K's build; revised by its tests |
 | [0147](0147-the-gateway-answers-clanks-programs-and-each-agent-for-its-own-workspace.md) | The gateway answers only Clank's own programs, and an agent's calls through it act for its own workspace, by a key every workspace has | Accepted; refines 0075 | 2026-10-27 |
+| [0148](0148-the-console-opens-on-setup-while-anything-is-missing.md) | While anything the setup needs is missing, the console opens on Setup, whose model item opens Add a model | Accepted (the owner's instruction, design 0028); supersedes 0105's opening | 2026-10-27 |
 
 ## Template
 

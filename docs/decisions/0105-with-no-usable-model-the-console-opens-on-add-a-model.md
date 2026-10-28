@@ -1,6 +1,8 @@
 # 0105. With no usable model, the console opens on Add a model: cloud or local, in one pass
 
-- Status: Accepted (the owner's decision)
+- Status: Accepted (the owner's decision); its opening superseded by
+  [0148](0148-the-console-opens-on-setup-while-anything-is-missing.md): while anything the setup needs is missing,
+  the console opens on Setup, whose model item opens Add a model
 - Date: 2026-10-20
 - Decided by: the owner's fourth answer of 2026-10-20 ("First run: a guided first step. With no usable model, the
   console opens on "Add a model": Cloud (pick OpenRouter, paste the key hidden, pick a model from its live list, Clank

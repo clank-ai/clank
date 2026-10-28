@@ -90,6 +90,7 @@ console and one set of commands:
 
 | Step | With Clank |
 | --- | --- |
+| Set it up | `clank setup` (and the console's Setup page) says what Clank needs, item by item, and what to do |
 | Check the machine | `clank doctor` says what is ready and what is missing |
 | Docker and workspaces | a container for each folder, made and started for you |
 | Engines | llama.cpp or KVMem, installed or adopted from where they are |
@@ -133,10 +134,10 @@ curl -fsSL https://clank-ai.github.io/install.sh | sh
 ```
 
 The installer installs [uv](https://docs.astral.sh/uv/) if it is missing, checks Git and Docker (on Windows it offers
-to install each with winget, asking first), installs Clank's latest release and runs `clank doctor`. Run it again to
-update. Then open a new terminal and type `clank`: with no model set up, it opens on **Add a model**, where you choose a
-cloud model with an OpenRouter key or a model on your own GPU. Then open a terminal in any project folder and type
-`clank`.
+to install each with winget, asking first), installs Clank's latest release and runs `clank setup --check`, which says
+what is set up and what is next. Run it again to update. Then open a new terminal and type `clank`: while anything is
+missing it opens on **Setup**, whose model item opens **Add a model**, where you choose a cloud model with an OpenRouter
+key or a model on your own GPU. Then open a terminal in any project folder and type `clank`.
 
 Or by hand, from a clone (Windows, in PowerShell):
 

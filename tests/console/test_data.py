@@ -3,7 +3,9 @@ stream: each event brings the fresh data of the topics it touches, read from the
 log line arrives as it is written; a lost service is said, tried again, and reloaded whole when it is back; stopping
 the follower ends it at once. Design 0013 §7: a window told its model changed brings the slots again, so This folder
 says it at once. Design 0016 §11 and §14: whether a model is usable, the cloud providers and the cloud's cost are read
-at the start (unknown from a service without their routes), and again on the events that change each, and only those."""
+at the start (unknown from a service without their routes), and again on the events that change each, and only those.
+Design 0028 §4: so is `clank setup`'s checklist, again whenever Docker, a slot, an operation's end or a workspace's
+record changes."""
 
 import queue
 import threading
@@ -202,10 +204,23 @@ def test_what_ends_an_install_a_download_or_a_removal_touches_the_engines() -> N
 
     for via in ("runtime.install", "runtime.adopt", "runtime.uninstall", "runtime.download", "runtime.verify",
                 "runtime.remove"):  # fmt: skip
-        assert console_data.touched(ended(via)) == ["operations", "engines"], via
-    assert console_data.touched(ended("runtime.load")) == ["operations"]
+        assert console_data.touched(ended(via)) == ["operations", "engines", "setup"], via
+    assert console_data.touched(ended("runtime.load")) == ["operations", "setup"]
     host = {"type": "settings.changed", "actor": {"kind": "user", "via": "cli"}, "subject": {"kind": "host", "id": "x"}}
     assert console_data.touched(host) == ["engines", "hosts"]
+
+
+def test_the_setup_checklist_is_read_at_the_start_and_again_on_what_changes_it(client: Client) -> None:
+    data = load(client)
+    assert data.setup is not None
+    assert [item["id"] for item in data.setup["items"]][:2] == ["docker_installed", "docker_running"]
+
+    def event(type: str, subject: dict[str, str] | None = None) -> dict[str, object]:
+        return {"type": type, "actor": {"kind": "clank", "via": "workspaces"}, "subject": subject}
+
+    assert console_data.touched(event("docker.changed")) == ["docker", "setup"]
+    assert console_data.touched(event("settings.changed", {"kind": "workspace", "id": "paper"})) == ["setup"]
+    assert "setup" not in console_data.touched(event("operation.step")), "an operation's end, not each of its steps"
 
 
 def test_a_window_told_its_model_changed_touches_the_slots() -> None:
@@ -240,7 +255,7 @@ def test_each_cloud_event_touches_its_part_and_only_its_part() -> None:
     for type in ("gateway.cost", "gateway.limit_warned", "gateway.limit_reached", "gateway.limit_raised"):
         assert console_data.touched(event(type)) == ["cost"], type
     assert console_data.touched(event("runtime.slot", {"kind": "slot", "id": "main"})) == [
-        "slots", "launches", "usable",
+        "slots", "launches", "usable", "setup",
     ]  # fmt: skip
     assert console_data.touched(event("settings.changed", {"kind": "preset", "id": "x"})) == ["presets", "usable"]
     assert console_data.touched(event("workspaces.cloud_answered", {"kind": "workspace", "id": "paper"})) == [], (

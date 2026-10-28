@@ -8,7 +8,8 @@
 
 It runs the commands the adapter sends, as `commands` lists them: systemd's view of Docker's service, then the system
 engine, named by its socket: its version, its containers and the names of their labels, its CPUs and memory, whether it
-can limit a container's memory (with its warnings), and its containers' use. It keeps each one's exit status, output,
+can limit a container's memory (with its warnings), and its containers' use; last, whether systemd starts Docker's
+service with the computer (design 0028 §5). It keeps each one's exit status, output,
 seconds and errors. If the adapter ever asks something else, the contract test fails, since a recording answers only
 what was recorded, and the engine is recorded again.
 
@@ -44,6 +45,7 @@ from typing import Any
 SOCKET = "unix:///var/run/docker.sock"
 TARGET = ("-H", SOCKET)
 SYSTEMD = ("systemctl", "show", "docker.service", "--property=LoadState", "--property=ActiveState")
+BOOT = ("systemctl", "show", "docker.service", "--property=UnitFileState")
 VERSION = "{{.Server.Version}}"
 TEMPLATE = (
     '{"id":{{json .ID}},"name":{{json .Names}},"image":{{json .Image}},"state":{{json .State}},'
@@ -139,7 +141,8 @@ def engine(docker: str, *arguments: str) -> list[str]:
 def commands(ids: Sequence[str], docker: str = "docker") -> list[list[str]]:
     """The commands the adapter sends, in its order: systemd's view of Docker's service; the engine's version; its
     containers, and the names of their labels when there are any (`ids`, as `docker ps` listed them); its CPUs and
-    memory; whether it can limit a container's memory, with its warnings; its containers' use."""
+    memory; whether it can limit a container's memory, with its warnings; its containers' use; and, for `clank setup`,
+    whether systemd starts Docker's service with the computer (design 0028 §5)."""
     asked = [
         list(SYSTEMD),
         engine(docker, "version", "--format", VERSION),
@@ -152,6 +155,7 @@ def commands(ids: Sequence[str], docker: str = "docker") -> list[list[str]]:
         engine(docker, "info", "--format", LIMITS),
         engine(docker, "info", "--format", MEMORY),
         engine(docker, "stats", "--no-stream", "--format", STATS),
+        list(BOOT),
     ]
 
 

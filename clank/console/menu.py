@@ -126,11 +126,4 @@ PLANNED = [
         "design 0002 §2.12",
         milestone="M9",
     ),
-    MenuEntry(
-        "setup",
-        "Setup guide",
-        "The first run: detect the machine, then a local model, an API key or a remote model, step by step.",
-        "design 0001 §7.3",
-        milestone="M10",
-    ),
 ]

@@ -801,6 +801,14 @@ class Agents:
         return runtime.guide(servers=servers, machine=said, docker=str(workspaces.docker()["state"]), limits=limits,
                              preset=preset)  # fmt: skip
 
+    def setup(self, folder: str = "", refresh: bool = False) -> dict[str, Any]:
+        """`clank setup`'s checklist (design 0028 §4, §5, `GET /setup`): served here, where Docker, the main slot, this
+        computer, the workspaces and Clank's VS Code window can all be read; `folder`, when named, is checked as a
+        workspace's would be; Docker is read now with `refresh`, else as last read."""
+        from clank.components.agents import checklist, setupfacts
+
+        return checklist.view(setupfacts.from_service(self.kernel, folder, refresh))
+
     def give_local_only(self) -> list[str]:
         """Give the gateway the names of the tools that never go to a cloud model (design 0016 §10, decision 0111):
         Clank's Notion tools, and each tool of a server marked local only, as OpenCode names them (`<server>_<tool>`,

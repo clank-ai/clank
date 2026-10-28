@@ -8,8 +8,11 @@ program. Design 0004 §3 (revised 2026-10-26): each container's networks are rea
 stopped one's too, so the edge's place on every workspace's network costs no other question. Design 0014 §2: an
 adapter that asks for a command's whole answer gets it as recorded, with its errors; and a platform Clank does not
 start (a system service, whose recording has no transitions: Docker Engine) refuses a start and a stop with the
-command its owner runs, having run nothing, and its capabilities say so."""
+command its owner runs, having run nothing, and its capabilities say so. Design 0028 §5: how it is set up is read from
+the program, and only a platform Clank does not start names the commands its owner runs, each with administrator
+rights; one Clank starts asks nothing for it."""
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -17,7 +20,7 @@ from pathlib import Path
 import pytest
 
 from clank.components.workspaces.adapters import CONTAINER_PLATFORMS
-from clank.components.workspaces.adapters.platform import ContainerPlatform, PlatformError
+from clank.components.workspaces.adapters.platform import ContainerPlatform, PlatformError, PlatformSetup
 from tests.fakes.recorded import RecordedProgram, recordings
 
 
@@ -143,3 +146,19 @@ def test_a_platform_clank_does_not_start_refuses_with_the_command_to_run(
         with pytest.raises(PlatformError, match=re.escape(command.group(1))):
             asks[capability.name]()
     assert program.calls[asked:] == [], "asked anyway, it runs nothing"
+
+
+@pytest.mark.parametrize(("adapter", "folder"), CASES)
+def test_how_it_is_set_up_is_read_from_the_program_and_only_one_clank_does_not_start_names_its_owners_commands(
+    adapter: type[ContainerPlatform], folder: Path
+) -> None:
+    for state in json.loads((folder / "program.json").read_text(encoding="utf-8"))["states"]:
+        program = RecordedProgram.load(folder, state=state)
+        setup = build(adapter, program).setup_state()
+        if starts(folder):
+            assert setup == PlatformSetup(), state
+            assert program.calls == [], f"{state}: nothing is asked of a platform Clank starts itself"
+            continue
+        assert setup.at_boot is not None, f"{state}: as recorded"
+        for command in (setup.start, setup.boot, setup.join):
+            assert command[:1] == ("sudo",), f"{state}: {command} needs administrator rights, run by its owner"

@@ -19,7 +19,7 @@ F8 CPU models      │ │  6  A model                      │
 F9 Phone         ● │ │ ✗ none is loaded (never started) │
 F10 Monitor        │ │ press l to load a model          │
 F12 Add a model    │ │  7  The gateway                  │
-                   │ │ ✗ stopped   press g to start the │
+Setup              │ │ ✗ stopped   press g to start the │
                    │ │ gateway                          │
                    │ │ Next:  l load a model            │
                    │ │        g get everything ready    │

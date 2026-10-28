@@ -19,7 +19,7 @@ F8 CPU models      │ │ models     ○ main: not loaded (never started)      
 F9 Phone         ● │ │              8 opens Models                          │
 F10 Monitor        │ │ gpu        RTX 5080 · 3% busy · 2.0 GB of 15.9 GB in │
 F12 Add a model    │ │            use · 34°C                                │
-                   │ │ gateway    ○ stopped   F4, then g, starts it         │
+Setup              │ │ gateway    ○ stopped   F4, then g, starts it         │
                    │ │ machine    not detected yet                          │
                    │ │            d runs the doctor, which detects it       │
                    │ │ folder     /work/paper   F4: get ready and work here │

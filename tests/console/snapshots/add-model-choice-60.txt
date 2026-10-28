@@ -19,7 +19,7 @@ F8 CPU models      │ │ request; it needs an engine and    │
 F9 Phone         ● │ │ the model's files (many GB) here.  │
 F10 Monitor        │ │ This computer: NVIDIA GeForce RTX  │
 F12 Add a model    │ │ 5080, 15.9 GB; 64.0 GB of memory.  │
-                   │ └────────────────────────────────────┘
+Setup              │ └────────────────────────────────────┘
                    │
                    │
                    │

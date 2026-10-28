@@ -1,0 +1,40 @@
+ ◆ CLANK  paper   ● service up 15d21h  ● docker running  ● no model: Add a model  ● gateway stopped               09:00
+F4 This folder         ✗ 4   │ ┌─ Clank's setup ──────────────────────────────────────────────────────────────────────┐
+1 Home                       │ │ What Clank needs on this computer, in order: each says what it is now and, while it  │
+2 Questions                  │ │ is not done, what to do. `clank setup` in a terminal says the same.                  │
+3 History                    │ │  1  Docker installed                ✓ Fake Docker 4.85.0                             │
+4 Docker               ●     │ │  2  Docker running                  ✓ it runs, engine 29.6.2                         │
+5 Machine                    │ │  3  Docker usable by this account   ✓ this account may use Docker                    │
+6 Operations                 │ │  4  Clank's service                 ✓ it runs in the background: the gateway, the    │
+7 Records                    │ │                                     workspaces and the agents                        │
+8 Models               ●     │ │  5  The sandbox image               ✗ not built yet. Every workspace's container     │
+9 Presets                    │ │                                     runs it; it is built once, in a few minutes, and │
+0 Providers and models       │ │                                     downloads about a gigabyte (Ubuntu 24.04,        │
+F1 Help                      │ │                                     Node.js 22, OpenCode and the common build tools) │
+F2 Launch options            │ │                                     → opening a folder's workspace builds it, asking │
+F3 MCP servers               │ │                                     first (This folder's o) · press f                │
+F6 Workspaces                │ │  6  A model                         ✗ no model has answered a test request yet. This │
+F7 Requests                  │ │                                     computer has NVIDIA GeForce RTX 5080, 16 GB:     │
+F8 CPU models                │ │                                     local models can run on it                       │
+F9 Phone               ●     │ │                                     → Add a model: in the cloud through OpenRouter   │
+F10 Monitor                  │ │                                     (with your OpenRouter key), on this computer's   │
+F12 Add a model              │ │                                     GPU, or both (the cloud first, then local) ·     │
+Setup                        │ │                                     press m                                          │
+─────────────────────────────│ │  7  A folder                        ✗ no folder is a workspace yet. The agent works  │
+coming                       │ │                                     in a folder you choose, in a container that sees │
+Sampling              M3     │ │                                     only it                                          │
+Sessions              M3     │ │                                     → This folder opens the folder `clank` was       │
+Keys                  M3     │ │                                     started in as a workspace · press f              │
+Layout                M2     │ │  8  Clank's VS Code window          ○ optional: VS Code is not installed; the agent  │
+Tests and trials      M2     │ │                                     works in the terminal without it                 │
+Agents                M5     │ │                                     → install VS Code (code.visualstudio.com), then  │
+Modes                 M5     │ │                                     `clank code` in a folder                         │
+Changes               M6     │ │ Not ready yet: The sandbox image, A model, A folder.                                 │
+Network access        M7     │ │ Next:  f open This folder                                                            │
+Skills                M8     │ └──────────────────────────────────────────────────────────────────────────────────────┘
+Files                 M9     │
+                             │
+                             │
+                             │
+
+ m add a model  f This folder  r read it again  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu

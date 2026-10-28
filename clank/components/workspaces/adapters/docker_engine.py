@@ -37,6 +37,12 @@ state Clank reads and never changes.
   its container, so a folder user 1000 may not read, write and enter (by its mode's owner, group and others' bits, or
   its POSIX access control list, as Linux decides) is refused, saying whose it is and how to let user 1000 write it
   (`agent_access`, design 0014 §4).
+- *How it is set up, for `clank setup`* (`setup_state`, design 0028 §5): whether systemd starts Docker's service with
+  the computer (its unit file's state, `systemctl show docker.service --property=UnitFileState`, which starts nothing),
+  whether this account is in the docker group as the system lists it now, and the commands its owner runs with
+  administrator rights: `sudo systemctl start docker` and `sudo systemctl enable docker` where systemd knows Docker's
+  service, and `sudo usermod -aG docker` with this account's name. Clank shows them, and runs them only in the owner's
+  terminal, where sudo asks for the password itself.
 """
 
 import os
@@ -49,13 +55,25 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
 from clank.components.workspaces.adapters.docker_cli import DockerCli, find_docker, words
-from clank.components.workspaces.adapters.platform import Follow, PlatformError, PlatformStatus, follow_command
+from clank.components.workspaces.adapters.platform import (
+    Follow,
+    PlatformError,
+    PlatformSetup,
+    PlatformStatus,
+    follow_command,
+)
 from clank.components.workspaces.sandbox import USER
 from clank.kernel.adapters import Capability
 from clank.kernel.processes import Launch, TimedAnswer, TimedRun, launch_program, run_answer
 
 SOCKET = "unix:///var/run/docker.sock"  # the system engine's, which every command names
 SYSTEMD = ("systemctl", "show", "docker.service", "--property=LoadState", "--property=ActiveState")
+BOOT = ("systemctl", "show", "docker.service", "--property=UnitFileState")  # whether it starts with the computer
+AT_BOOT = ("enabled", "enabled-runtime", "static", "generated", "alias")  # systemd's words: it starts with the computer
+NOT_AT_BOOT = ("disabled", "masked", "masked-runtime", "indirect", "linked", "linked-runtime")
+START_COMMAND = ("sudo", "systemctl", "start", "docker")  # what its owner runs (design 0028 §5)
+BOOT_COMMAND = ("sudo", "systemctl", "enable", "docker")
+JOIN_COMMAND = ("sudo", "usermod", "-aG", "docker")  # and this account's name
 VERSION = "{{.Server.Version}}"
 SYSTEMD_SECONDS = 5.0
 FRESH_SECONDS = 1.0  # a reading of systemd this recent is reused before a command
@@ -157,6 +175,18 @@ def docker_group() -> tuple[bool, bool]:
     return listed, group == os.getegid() or group in os.getgroups()
 
 
+def account_name() -> str:
+    """This account's name, as the system lists it (`id -un`); empty off Linux and macOS."""
+    if sys.platform == "win32":
+        return ""
+    import pwd
+
+    try:
+        return pwd.getpwuid(os.getuid()).pw_name
+    except KeyError:
+        return os.environ.get("USER", "")
+
+
 AGENT_UID, AGENT_GID = (int(part) for part in USER.split(":"))  # the agent's user and group in its container
 ACL = "system.posix_acl_access"  # where Linux keeps a file's POSIX access control list
 READ, WRITE, ENTER = 4, 2, 1
@@ -256,11 +286,13 @@ class DockerEngine(DockerCli):
         groups: Callable[[], tuple[bool, bool]] = docker_group,
         environ: Mapping[str, str] = os.environ,
         clock: Callable[[], float] = time.monotonic,
+        account: Callable[[], str] = account_name,
     ) -> None:
         super().__init__(run, command, platform=platform, launch=launch, answer=answer, follow=follow)
         self.groups = groups
         self.environ = environ
         self.clock = clock
+        self.account = account
         self._read: tuple[float, Service | None, str] | None = None  # when, what systemd said, why unsupported
 
     @classmethod
@@ -321,6 +353,28 @@ class DockerEngine(DockerCli):
         """Why the agent could not use this folder as Docker Engine mounts it, with the host's own owners (design 0014
         §4); empty when it can."""
         return folder_access(folder)
+
+    def setup_state(self) -> PlatformSetup:
+        """Whether systemd starts Docker's service with the computer, whether this account is in the docker group as
+        the system lists it now, and the commands its owner runs to start it, to start it with the computer and to
+        join the group (design 0028 §5); none when it is not installed, and no systemctl command where systemd knows no
+        Docker service of the system's."""
+        if self.command is None:
+            return PlatformSetup()
+        found = self.answer(list(BOOT), timeout=SYSTEMD_SECONDS)
+        values = dict(line.split("=", 1) for line in found.output.splitlines() if "=" in line) if found.ok else {}
+        word = values.get("UnitFileState", "").strip()
+        at_boot = True if word in AT_BOOT else False if word in NOT_AT_BOOT else None
+        listed, _ = self.groups()
+        service, _ = self._reading()
+        systemd = service is not None and service.known
+        return PlatformSetup(
+            at_boot=at_boot,
+            in_group=listed,
+            start=START_COMMAND if systemd else (),
+            boot=BOOT_COMMAND if systemd else (),
+            join=(*JOIN_COMMAND, self.account()),
+        )
 
     def inner_network_options(self) -> dict[str, str]:
         """A workspace's own network gives this computer no address on it (the bridge's `inhibit_ipv4`), so nothing

@@ -19,7 +19,7 @@ F8 CPU models      │ │ each cost; the Providers and       │
 F9 Phone         ● │ │ models page sets the limits.       │
 F10 Monitor        │ └────────────────────────────────────┘
 F12 Add a model    │
-                   │
+Setup              │
                    │
                    │
                    │

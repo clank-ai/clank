@@ -19,7 +19,7 @@ F8 CPU models      │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔�
 F9 Phone         ● │ │ ▊  16384                         ▎ │
 F10 Monitor        │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
 F12 Add a model    │ │ Its thinking effort (one of        │
-                   │ │ default, low, medium, high)        │
+Setup              │ │ default, low, medium, high)        │
                    │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
                    │ │ ▊  default                       ▎ │
                    │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
