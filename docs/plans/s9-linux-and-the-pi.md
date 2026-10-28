@@ -501,6 +501,11 @@ After P1's OK and L6 (and L8 where the runner's user is not 1000).
 - [ ] **Test first** (`tests/tools/test_workflows.py`): `test_the_docker_tests_run_in_ci_on_linux_x64_and_arm64`. A
   job runs `uv run pytest -m docker tests/docker` on both runners, on version tags and by hand. Then the docker tests
   themselves, which are skipped today (`tests/docker/conftest.py:19-26`).
+  *As built for x64 (2026-10-27, at the owner's instruction to have Clank ready on a Linux computer):*
+  `test_the_docker_tests_run_in_ci_on_linux_x64`; the job `linux-docker` runs the escape tests and the live agent
+  test (`tests/docker/test_escape.py`, `test_agent_files_live.py`; the LaTeX and board layers, not Linux's, stay
+  by hand) on every push and pull request, beside the checks, so a change that breaks Linux is seen at once;
+  arm64 waits for P1's OK.
 - [ ] **Files:** `.github/workflows/checks.yml` (the job `docker`). The job's log shows `id -u`, `getconf PAGESIZE`
   and `docker version`, so what each runner proves is on record.
 

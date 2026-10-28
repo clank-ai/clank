@@ -1,8 +1,9 @@
 # The repository's checks: formatting, lint, types, the VS Code extension, and the tests, which include the
 # documentation, secrets and spelling checks. They run by the same command as on a working copy, `uv run python -m tools.check` (design 0001
 # §8.4). Python 3.12, the oldest Clank supports, runs on every push; Python 3.14 on Linux and Windows runs for pull
-# requests, version tags and on demand (decision 0022). A version tag whose checks all pass then gets its GitHub
-# release, carrying the VS Code extension (design 0028 §6). Each action is pinned to the commit of a release at least
+# requests, version tags and on demand (decision 0022). The Docker tests run on Linux with Docker Engine on every push
+# (design 0014 §10). A version tag whose checks all pass then gets its GitHub release, carrying the VS Code extension
+# (design 0028 §6). Each action is pinned to the commit of a release at least
 # two weeks old.
 name: checks
 
@@ -64,6 +65,29 @@ jobs:
       # The extension's suite inside a real VS Code (decision 0029), on Linux under a virtual display.
       - if: runner.os == 'Linux'
         run: uv run --locked python -m tools.extension --host
+
+  # The Docker tests on a real Linux (design 0014 §10, P2 for x64): GitHub's ubuntu-24.04 runner has Docker Engine, the
+  # system's service from Docker's own packages, so the docker-engine adapter, the edge's way to the gateway's socket and
+  # the workspaces' networks without this computer's address run as on a Linux computer. The runner's user is not the
+  # agent's (1000), so the tests open their folders to it (tests/docker/conftest.py, for_the_agent). The sandbox image is
+  # built once in the job. Its checkout keeps no token.
+  linux-docker:
+    name: Linux, Docker Engine
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.3"
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Docker as Clank sees it
+        run: uv run --locked clank doctor || true
+      - run: uv run --locked pytest -m docker tests/docker/test_escape.py tests/docker/test_agent_files_live.py -p no:cacheprovider -ra
 
   # The GitHub release of a version tag, once every check passed on it (design 0028 §6): the VS Code extension compiled,
   # tested and packaged as on a working copy (tools.extension, tools.vsix), then attached with its SHA-256 by

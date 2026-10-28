@@ -1,9 +1,10 @@
-"""Design 0014 §2: Docker Engine's first recording is made by a job of the repository's CI that runs only by hand, on
-GitHub's ubuntu-24.04 runner. It records the engine running (with the tool's example containers), stopped (both of
-Docker's units stopped first, so the tool's commands wake nothing, and started again after, whatever happened) and as
+"""Design 0014 §2 and §10: Docker Engine's first recording is made by a job of the repository's CI that runs only by
+hand, on GitHub's ubuntu-24.04 runner. It records the engine running (with the tool's example containers), stopped (both
+of Docker's units stopped first, so the tool's commands wake nothing, and started again after, whatever happened) and as
 a user the job makes outside the docker group, then merges the three and prints the recording in its log between two
-marker lines, with `docker version` on record. It adds no action: only the checkout the checks already use. The
-workflow is read as text, since Clank has no YAML library (design 0014 §7)."""
+marker lines, with `docker version` on record. It adds no action: only the checkout the checks already use. The workflow
+is read as text, since Clank has no YAML library (design 0014 §7). The Docker tests run on GitHub's Linux runner, on
+Docker Engine, on every push (§10's P2, for x64)."""
 
 import json
 import re
@@ -74,3 +75,26 @@ def sample(state: str) -> dict[str, object]:
     }
     found = "28.0.4" if state == "running" else ""
     return {"state": state, "version": found, "command": "/usr/bin/docker", "answers": answers[state], "replaced": []}
+
+
+def job(text: str, name: str) -> str:
+    """One job of a workflow with several, as its text: from its key to the next job's."""
+    found = re.search(rf"\n  {re.escape(name)}:\n(.*?)(?=\n  [a-z][a-z0-9-]*:\n|\Z)", text, re.S)
+    assert found, f"no job {name}"
+    return found.group(1)
+
+
+def test_the_docker_tests_run_in_ci_on_linux_x64() -> None:
+    # Design 0014 §10's P2, for x64: on every push and pull request the isolation tests and the live agent test run on
+    # GitHub's ubuntu-24.04 runner, whose Docker Engine is the system's service from Docker's own packages, so the
+    # docker-engine adapter, the edge's way to the gateway's socket and the workspaces' networks run on a real Linux.
+    text = (WORKFLOWS / "checks.yml").read_text(encoding="utf-8")
+    linux = job(text, "linux-docker")
+    assert "runs-on: ubuntu-24.04" in linux
+    assert "if:" not in linux.split("steps:", 1)[0], "on every push and pull request the checks run on"
+    assert "pytest -m docker tests/docker/test_escape.py tests/docker/test_agent_files_live.py" in linux
+    assert "persist-credentials: false" in linux, "its checkout keeps no token"
+    pins = set(re.findall(r"uses: (\S+@[0-9a-f]{40})", job(text, "oldest-python")))
+    used = set(re.findall(r"uses: (\S+@\S+)", linux))
+    assert used, "it uses actions"
+    assert used <= pins, "its actions are the ones the checks already pin, at the same commits"
