@@ -5,9 +5,12 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
-## Unreleased: since 0.3.0b2
+## 0.3.0b3: Linux with Docker Engine, and the extension in every release (2026-10-27)
 
-The next release. Its version is set when it is tagged; until then, a clone has it (`git pull`, or `clank update`).
+Clank on a Linux computer without Docker Desktop: the one-line installer sets Docker Engine up from Docker's own
+packages (asking first), and the agent's container reaches its model through a socket only it mounts. Tested on every
+push on GitHub's Ubuntu runner with Docker Engine. And no build for Clank's VS Code window: each release carries its
+extension. From 0.3.0b2, `clank update`; from 0.3.0b1, run the installer again.
 
 ### Added
 
