@@ -8,28 +8,32 @@ runs, rather than guessing. The folder it was started in is checked as a workspa
 - `--check` prints the checklist and changes nothing; it exits 0 when everything required is done, else 1 (the
   installers end with it, design 0028 §3). `--json` prints the checklist as the API gives it, for scripts and models.
 - Without `--check`, after the checklist it asks about each item that is not done, in order, and does it on a yes,
-  reading the checklist again after each: the item and its fix are shown first, with the exact command when it runs
-  one. A command that needs administrator rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo
+  reading the checklist again after each: the item and its fix are shown first, with the exact command when it runs one.
+  A command that needs administrator rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo
   usermod -aG docker <account>`, the installer's Docker step) runs attached to this terminal (`attached`), so sudo, or
   Windows, asks for the password itself and nothing it says is captured: Clank never reads, asks for or keeps a
   password; and it runs only a command the checklist builds (`checklist.runnable`), whoever gave it the checklist,
-  showing any other for the person to run if they trust it. A fix that leaves the person something to do after it (log
-  out and in once after joining the docker group; open Docker Desktop once after installing it) says so, and the setup
-  stops there. Docker Desktop is started through its own start: by the service's operation when the service runs, else
-  here (`start_platform`). Clank's service is started in the background as `clank serve --background` starts it; the
-  sandbox image is built by the service in the background (`workspaces.image`, design 0028 §4), and followed to its end
-  before the folder opens on it, so the setup goes on while it builds; the model's step asks once whether models run in
-  the cloud through OpenRouter, on this computer's GPU, or both (the cloud first), and hands the terminal to Add a
-  model's command for each (`clank model add --cloud`, `--local`), which keeps the key in Clank's secrets folder; the
-  folder is opened as a workspace (`clank workspace open`'s operation). An item whose fix is the person's to do (the log
-  out and in, the kernel's memory setting) is said, and the setup goes on.
-  Without a terminal to answer in, every answer is no.
+  showing any other for the person to run if they trust it. Once this account joined the docker group, the setup runs
+  itself again with the group (`dockergroup.take`, decision 0150) and goes on, with no log out and in; a service that
+  started before the account joined is stopped and started again, with the group. A fix that leaves the person something
+  to do after it (log out and in once, where `sg` is not installed; open Docker Desktop once after installing it) says
+  so, and the setup stops there. Docker Desktop is started through its own start: by the service's operation when the
+  service runs, else here (`start_platform`). Clank's service is started in the background as `clank serve --background`
+  starts it; the sandbox image is built by the service in the background (`workspaces.image`, design 0028 §4), and
+  followed to its end before the folder opens on it, so the setup goes on while it builds; the model's step asks once
+  whether models run in the cloud through OpenRouter, on this computer's GPU, or both (the cloud first), and hands the
+  terminal to Add a model's command for each (`clank model add --cloud`, `--local`), which keeps the key in Clank's
+  secrets folder; the folder is opened as a workspace (`clank workspace open`'s operation). An item whose fix is the
+  person's to do (the log out and in, the kernel's memory setting) is said, and the setup goes on. Without a terminal to
+  answer in, every answer is no.
 - `--yes` does every fix that needs no administrator rights without asking (Docker Desktop's start, the service, the
   sandbox image, the folder) and lists the others with their commands; Add a model needs the person's answers, so it
   is listed too.
 
-Each item is a line: its state (`done`, `to do`, `doing`, `waits` for an item before it, `unknown` until the service
-says, `optional`), its title and what it is now; under an item not done, what to do (`->`), wrapped to the terminal.
+Each item is a line: its state, marked and colored (`✓ done` in green, `• to do` in yellow, `… doing` in cyan, `· waits`
+for an item before it and `? unknown` until the service says, both quiet, `○ optional` in blue), its title in bold and
+what it is now; under an item not done, what to do (`→`, in cyan, its commands in bold), wrapped to the terminal. The
+colors are `clank.cli.paint`'s: none where the output is not a terminal, or with `NO_COLOR` set.
 """
 
 import json
@@ -39,23 +43,31 @@ import signal
 import subprocess
 import sys
 import textwrap
+import time
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
 import click
 
-from clank.cli import common, follow
+from clank.cli import common, dockergroup, follow
+from clank.cli.paint import commands, paint
 from clank.client import Client, ClientError, NotRunning
 from clank.components.agents import checklist, setupfacts
 from clank.components.workspaces.service import DockerError, start_platform
+from clank.kernel.access import read_connection
 from clank.kernel.home import Home
 from clank.kernel.service import AlreadyRunning, ServiceError, start_detached
 
-MARK = 9  # the state's column
+MARK = 12  # the state's column: its mark and its word
+MARKS = {"done": "✓", "to do": "•", "doing": "…", "waits": "·", "unknown": "?", "optional": "○"}
+KINDS = {  # the color of each state (`clank.cli.paint`)
+    "done": "good", "to do": "todo", "doing": "doing", "waits": "quiet", "unknown": "quiet", "optional": "optional"
+}  # fmt: skip
 SAID_AT_LEAST = 40  # columns beside an item's title for what it is now; fewer, and it goes under the title
 HEAD = "Clank's setup: what Clank needs on this computer, in order."
 UNCHANGED = "Nothing was changed."
+STOP_SECONDS = 15.0  # how long a service being restarted may take to stop, as `clank stop` waits
 OFFERED = (
     "`clank setup` offers each fix in order and asks before each one; a command that needs administrator rights runs "
     "in this terminal, where sudo asks for your password itself."
@@ -88,28 +100,38 @@ def state_of(item: dict[str, Any]) -> str:
     return "optional" if item["state"] == "to do" and not item["required"] else str(item["state"])
 
 
-def render(found: dict[str, Any], width: int) -> list[str]:
+def render(found: dict[str, Any], width: int, colored: bool = False) -> list[str]:
     """The checklist's lines: each item, what to do under one not done, then one line on the whole. What an item is
-    now stands beside its title, or under it where the terminal leaves less than `SAID_AT_LEAST` columns beside it."""
+    now stands beside its title, or under it where the terminal leaves less than `SAID_AT_LEAST` columns beside it.
+    `colored`: each state, title, command and the outcome in its color (`clank.cli.paint`)."""
+
+    def painted(text: str, kind: str) -> str:
+        return paint(text, kind) if colored else text
+
+    def ticked(lines: list[str], kind: str = "") -> list[str]:
+        return commands(lines, kind) if colored else lines
+
     titles = max(len(item["title"]) for item in found["items"])
     column = 2 + MARK + titles + 2
     beside = width - column >= SAID_AT_LEAST
     under = " " * (2 + MARK)
-    lines = [HEAD, ""]
+    lines = [painted("◆ ", "brand") + painted(HEAD, "title"), ""]
     for item in found["items"]:
-        head = f"  {state_of(item):<{MARK}}{item['title']:<{titles}}"
+        state = state_of(item)
+        mark = painted(f"{MARKS.get(state, ' ')} {state:<{MARK - 2}}", KINDS.get(state, "quiet"))
         if beside:
             said = wrap(item["said"], width - column) or [""]
-            lines.append(f"{head}  {said[0]}")
+            title = painted(item["title"].ljust(titles), "title")
+            lines.append(f"  {mark}{title}  {said[0]}")
             lines += [" " * column + more for more in said[1:]]
         else:
-            lines.append(head.rstrip())
+            lines.append(f"  {mark}{painted(item['title'], 'title')}")
             lines += [under + "  " + more for more in wrap(item["said"], width - len(under) - 2)]
         fix = item.get("fix")
         if fix and item["state"] != "done":
-            lines += [under + line for line in wrap(f"-> {fix['said']}", width - len(under), "   ")]
-    lines += ["", *wrap(found["said"], width)]
-    lines += [line for each in found.get("ready_said") or [] for line in wrap(f"- {each}", width, "  ")]
+            lines += [under + line for line in ticked(wrap(f"→ {fix['said']}", width - len(under), "  "), "fix")]
+    lines += ["", *[painted(line, "good" if found["ready"] else "todo") for line in wrap(found["said"], width)]]
+    lines += [line for each in found.get("ready_said") or [] for line in ticked(wrap(f"• {each}", width, "  "))]
     return lines
 
 
@@ -124,13 +146,21 @@ def width() -> int:
     return shutil.get_terminal_size((80, 24)).columns
 
 
-def echo(text: str, indent: str = "", more: str = "") -> None:
+def echo(text: str, indent: str = "", more: str = "", kind: str = "") -> None:
     """A paragraph, wrapped to the terminal: its first line indented by `indent`, the others by `more` (`indent`'s
-    too unless given)."""
+    too unless given); its commands bold, the rest in `kind`'s color when given."""
     more = more or indent
-    lines = wrap(text, width() - len(more))
-    for number, line in enumerate(lines or [""]):
+    lines = commands(wrap(text, width() - len(more)) or [""], kind)
+    for number, line in enumerate(lines):
         click.echo((indent if number == 0 else more) + line)
+
+
+def heading(title: str, said: str) -> None:
+    """An item as the setup comes to it: its title in bold, then what it is now."""
+    lines = wrap(f"{title}: {said}", width())
+    lines[0] = paint(title, "title") + lines[0][len(title) :] if lines[0].startswith(title) else lines[0]
+    for line in lines:
+        click.echo(line)
 
 
 def attached(argv: Sequence[str]) -> int | str:
@@ -185,9 +215,9 @@ class Fixes:
     def _offer(self, item: dict[str, Any]) -> None:
         fix = item["fix"]
         click.echo()
-        echo(f"{item['title']}: {item['said']}")
+        heading(item["title"], item["said"])
         if not fix["does"]:
-            echo(f"{'Yours' if item['required'] else 'Optional, yours'} to do: {fix['said']}", "  ")
+            echo(f"{'Yours' if item['required'] else 'Optional, yours'} to do: {fix['said']}", "  ", kind="todo")
             if item["required"]:
                 self.later.append(item)
             return
@@ -199,7 +229,7 @@ class Fixes:
         if fix["does"] == "model":
             self._model(item)
             return
-        echo(fix["said"], "  ")
+        echo(fix["said"], "  ", kind="fix")
         if not self.yes and not ask("  Do it now?"):
             self.later.append(item)
             return
@@ -220,13 +250,17 @@ class Fixes:
             echo(f"`{shown}` is not one Clank's setup runs, so it did not run: run it yourself if you trust it.", "  ")
             self.later.append(item)
             return
-        click.echo(f"  > {fix['shown'] or ' '.join(fix['command'])}")
+        click.echo(f"  {paint('>', 'quiet')} {paint(fix['shown'] or ' '.join(fix['command']), 'command')}")
         outcome = attached(fix["command"])
         if outcome != 0:
             ended = outcome if isinstance(outcome, str) else f"exit {outcome}"
-            echo(f"That did not work ({ended}): its words are above.", "  ")
+            echo(f"That did not work ({ended}): its words are above.", "  ", kind="bad")
             return
-        click.echo("  Done.")
+        click.echo(f"  {paint('Done.', 'good')}")
+        if item["id"] == "docker_access" and dockergroup.pending():
+            echo("Clank takes the docker group now, so you need not log out and in: this setup starts again with it. "
+                 "Programs you start yourself get it at your next login.", "  ")  # fmt: skip
+            dockergroup.take(["setup", *(["--yes"] if self.yes else [])])
         if fix["after"]:
             echo(f"Next: {fix['after']}.", "  ")
             self.stopped = True
@@ -247,7 +281,14 @@ class Fixes:
         echo(f"{status.label} runs.", "  ")
 
     def _service(self, item: dict[str, Any]) -> None:
-        """Clank's service, started in the background as `clank serve --background` starts it."""
+        """Clank's service, started in the background as `clank serve --background` starts it; one that started before
+        this account joined the docker group, stopped first, so it starts again with the group (decision 0150)."""
+        client = self._client() if item["id"] == "docker_access" else None
+        if client is not None:
+            common.call(lambda: client.post("service/stop"))
+            deadline = time.monotonic() + STOP_SECONDS
+            while read_connection(self.home) is not None and time.monotonic() < deadline:
+                time.sleep(0.1)
         try:
             start_detached(self.home)
         except AlreadyRunning:
@@ -333,9 +374,9 @@ class Fixes:
         """How the setup ends: the checklist's line, what was set up once ready, and the fixes left with their
         commands."""
         click.echo()
-        echo(found["said"])
+        echo(found["said"], kind="good" if found["ready"] else "todo")
         for line in found.get("ready_said") or []:
-            echo(f"- {line}", "  ", "    ")
+            echo(f"• {line}", "  ", "    ")
         client = self._client() if self.building else None
         if client is not None:
             operation = common.call(lambda: client.get(f"records/operation/{self.building}"))["values"]
@@ -343,11 +384,11 @@ class Fixes:
                 echo(f"The sandbox image is still being built in the background ({self.building}): `clank operations` "
                      "shows how far it is.")  # fmt: skip
         if self.later:
-            click.echo("Left to do:")
+            click.echo(paint("Left to do:", "todo"))
             for item in self.later:
                 fix = item["fix"]
                 said = f"`{fix['shown']}`" if fix.get("shown") else fix["said"]
-                echo(f"- {item['title']}: {said}", "  ", "    ")
+                echo(f"• {item['title']}: {said}", "  ", "    ")
 
 
 @click.command()
@@ -364,14 +405,14 @@ def setup(check: bool, yes: bool, as_json: bool) -> None:
     if as_json:
         click.echo(json.dumps(found, indent=2))
         raise SystemExit(0 if found["ready"] else 1)
-    for line in render(found, width()):
+    for line in render(found, width(), colored=True):
         click.echo(line)
     if note:
-        echo(note)
+        echo(note, kind="todo")
     if check:
         if not found["ready"]:
-            echo(OFFERED)
-        click.echo(UNCHANGED)
+            echo(OFFERED, kind="quiet")
+        click.echo(paint(UNCHANGED, "quiet"))
         raise SystemExit(0 if found["ready"] else 1)
     if found["ready"]:
         return

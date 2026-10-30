@@ -19,9 +19,9 @@ Linux ([design 0014](0014-linux-and-small-machines.md) §2-§4, built at the own
 | --- | --- | --- |
 | 1 | Who sets Clank up, and the one path each follows | Proposed 2026-10-27; being built at the owner's instruction |
 | 2 | Rules every step of the setup keeps | Proposed 2026-10-27; being built at the owner's instruction |
-| 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9) |
-| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: the checklist (S2), the fixes (S3) and the sandbox image built in the background (S4), `clank setup` and the console's Setup page ([plan s62](../plans/s62-clank-setup.md)); Clank's VS Code window's install is said, not done by the setup |
-| 5 | Docker, configured correctly on each system | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: each state's words and fix (S2), and the fixes Clank does, in the terminal on a yes (S3) |
+| 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9); revised 2026-10-29 at the owner's instruction (`install.sh` in color, `clank setup` offered at its end, no log out and in: decision 0150) |
+| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: the checklist (S2), the fixes (S3) and the sandbox image built in the background (S4), `clank setup` and the console's Setup page ([plan s62](../plans/s62-clank-setup.md)); Clank's VS Code window's install is said, not done by the setup; revised 2026-10-29 at the owner's instruction (in color; the docker group taken at once, decision 0150) |
+| 5 | Docker, configured correctly on each system | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: each state's words and fix (S2), and the fixes Clank does, in the terminal on a yes (S3); revised 2026-10-29 at the owner's instruction (no log out and in: decision 0150) |
 | 6 | Clank's VS Code extension without building it | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction (S5) |
 | 7 | Local models: what is one step and what is not yet | Proposed 2026-10-27 |
 | 8 | Tests and build steps | Proposed 2026-10-27; the installers' tests built (the website's `installer` workflow); `clank setup`'s tests built (S2-S4) |
@@ -95,11 +95,21 @@ to `clank setup`.
   - Configured: `sudo systemctl enable --now docker` (started now, and at each boot), and the account added to the
     `docker` group with `sudo usermod -aG docker $USER`. Before the second, it says what Docker itself says: the group
     gives root's rights on that computer (https://docs.docker.com/engine/install/linux-postinstall/). The group takes
-    effect at the next login: the installer runs its own last checks through `sg docker`, and says to log out and in
-    once before `clank`. `clank setup` notices when that is not done yet (§5).
+    effect at the next login, but Clank takes it at once (revised 2026-10-29, decision 0150): the installer runs its
+    own last checks through `sg docker`, and says that Clank uses the group now and that the person's own `docker`
+    commands get it at their next login.
   - Checked: `docker version` answers for the account, through the group.
 - **The last step** runs `clank setup --check` (§4) where it ran `clank doctor`: the checklist, with what to do next.
-  A Clank without `clank setup` (0.3.0b2 and older) gets `clank doctor`, as before.
+  A Clank without `clank setup` (0.3.0b2 and older) gets `clank doctor`, as before. Revised 2026-10-29 at the owner's
+  instruction ("get everything as close to running after the install as possible"): `install.sh` first offers
+  `clank setup` itself ("Set Clank up now? It asks before each step.", yes unless the person types n), run in the
+  terminal; `--check` is run when the person says no, and for a script (`CLANK_YES=1`). Its next steps then say
+  only what is left: a new terminal when `clank` is not on this one's path yet (or the `export` for this one), and
+  `clank` in a project's folder.
+- **Its words in color** (revised 2026-10-29, the owner's instruction): `install.sh`'s steps numbered in cyan, what
+  is done in green (✓), what is to know or to do in yellow (!), what failed in red (✗), each command dimmed as it
+  runs; plain, with ASCII marks, where the output is not a terminal, the locale is not UTF-8, or `NO_COLOR` is set.
+  `install.ps1` keeps its plain words for now.
 - **What building it found** (2026-10-27): Docker's packages start the service and enable it at boot by themselves on
   Ubuntu, so that question is asked only where they do not; Fedora 41's dnf5 adds a repository with `addrepo
   --from-repofile=`, older dnf with `--add-repo`; a fresh Arch has no package database until `pacman -Sy`, and Arch
@@ -118,7 +128,7 @@ is not done; afterwards it is in the menu.
 | --- | --- | --- |
 | Docker installed | the platform's adapter finds it | the installer's Docker step, run in the terminal |
 | Docker running | the adapter says running | start it (Docker Desktop), or `sudo systemctl start docker` in the terminal (Linux) |
-| Docker usable by this account | not *no access* | the docker group, then log out and in (Linux; §5) |
+| Docker usable by this account | not *no access* | the docker group, which Clank takes at once (Linux; §5, decision 0150) |
 | The sandbox image | built for this Clank | build it now, in the background (a few minutes, once) |
 | Clank's service | it answers | start it |
 | A model | a preset answered a test request | Add a model: cloud, local or both (§1) |
@@ -161,9 +171,13 @@ As built (S3, 2026-10-27): `clank setup` prints the checklist, then asks about e
 what its fix does and its exact command, and does it on a yes, reading the checklist again after each; without a
 terminal to answer in, every answer is no. A command that needs administrator rights runs attached to the person's
 terminal (the command's own input and output), so sudo, or Windows, asks for the password itself and nothing it says
-reaches Clank; Clank never reads, asks for or keeps a password. A fix that leaves the person something to do after it
-(log out and in once after joining the docker group; open Docker Desktop once after installing it) says so, and the
-setup stops there. Docker Desktop is started through its own start, by the service's `docker.start` when the service
+reaches Clank; Clank never reads, asks for or keeps a password. Once the account joined the docker group, the setup
+runs itself again through `sg docker` and goes on (revised 2026-10-29, decision 0150). A fix that leaves the person
+something to do after it (log out and in once, only where `sg` is missing; open Docker Desktop once after installing
+it) says so, and the setup stops there. In color (revised 2026-10-29, the owner's instruction): each state's mark
+and word, ✓ done in green, • to do in yellow, … doing in cyan, · waits and ? unknown quiet, ○ optional in blue; each
+title bold, what to do under it in cyan with its commands bold, and the outcome in green or yellow (`clank.cli.paint`;
+none in a pipe or with `NO_COLOR`). Docker Desktop is started through its own start, by the service's `docker.start` when the service
 runs, else by `clank setup` itself. The service waits while this account may not use Docker, since a service started
 then would keep that session's groups. The model's step asks once ("Run models in the cloud through OpenRouter (c), on
 this computer's GPU (l), or both (b)?"), the GPU found said first in the item, then hands the terminal to Add a
@@ -195,8 +209,8 @@ Each state the platform reads (design 0014 §2) has its words, its fix, and whet
 | Stopped (Linux) | Docker Engine is stopped | `sudo systemctl start docker` | in the terminal, on a yes |
 | Stopped (Windows, macOS) | Docker Desktop is not running | start it | yes |
 | Not started at boot (Linux) | it will be stopped after a restart | `sudo systemctl enable docker` | in the terminal, on a yes |
-| No access, not in the group | this account may not use Docker | `sudo usermod -aG docker $USER`, then log out and in | in the terminal, on a yes; the login is the person's |
-| No access, in the group | the group is not active in this session yet | log out and in, then `clank stop` and `clank` | no |
+| No access, not in the group | this account may not use Docker | `sudo usermod -aG docker $USER`; then Clank takes the group at once through `sg docker` (revised 2026-10-29, decision 0150), or, where `sg` is missing, log out and in | in the terminal, on a yes; then nothing more |
+| No access, in the group | Clank's service started before the account joined (decision 0150); or, where `sg` is missing, the group is not active in this session yet | the service stopped and started again, with the group; or log out and in, then `clank stop` and `clank` | the restart, on a yes; the login is the person's |
 | No memory limits | Docker cannot limit a container's memory | the kernel setting (design 0014 §4) | no |
 | A folder the agent cannot write | the agent's account cannot write it | the folder's permissions, or another folder (design 0014 §4) | no |
 

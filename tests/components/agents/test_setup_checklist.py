@@ -4,8 +4,10 @@ installer's Docker step in the terminal (winget on Windows, Homebrew on macOS, C
 get Docker when no command can; the snap's or rootless Docker, not supported, the commands shown and never run; Docker
 Engine stopped, `sudo systemctl start docker` in the terminal; Docker Desktop stopped, started by Clank through its own
 command; not started with the computer, `sudo systemctl enable docker`, offered and not required; no access outside the
-docker group, `sudo usermod -aG docker <account>` in the terminal, then a log out and in; no access inside it, the log
-out and in alone, which Clank does not do; no memory limits, the kernel setting, which Clank never makes; a folder the
+docker group, `sudo usermod -aG docker <account>` in the terminal, then nothing more where `sg` is installed (Clank
+takes the group at once, decision 0150), else a log out and in; no access inside it, Clank's service restarted where
+it started before the account joined and `sg` is installed, else the log out and in alone, which Clank does not do;
+no memory limits, the kernel setting, which Clank never makes; a folder the
 agent cannot write, how to let it. An administrator command runs only in the terminal. Without the service, the model
 and the folder are not known, and the service is to start, unless this account may not use Docker yet: a service
 started then would keep the session's groups. An item waits while one it needs is not done. Ready says what was set up
@@ -196,6 +198,27 @@ def test_an_account_outside_the_docker_group_joins_it_in_the_terminal_then_logs_
     assert (found.fix.does, found.fix.command, found.fix.admin) == ("terminal", JOIN, True)
     assert found.fix.after.startswith("log out and in once")
     assert "`clank setup` again" in found.fix.after
+
+
+def test_with_sg_an_account_that_joins_the_docker_group_has_nothing_more_to_do() -> None:
+    no_access = stopped(ENGINE, "no access", "this account may not use Docker: join the docker group")
+    outside = reading(no_access, setup=replace(OWNER, in_group=False))
+    found = item(facts(docker=outside, service=False, tools=frozenset({"curl", "sg"})), "docker_access")
+    assert found.fix is not None
+    assert (found.fix.does, found.fix.command, found.fix.admin) == ("terminal", JOIN, True)
+    assert found.fix.after == "", "Clank takes the group at once: no log out and in"
+
+
+def test_with_sg_a_service_that_started_before_the_account_joined_is_restarted_by_the_setup() -> None:
+    no_access = stopped(ENGINE, "no access", "this account is in the docker group, but ...")
+    found = item(facts(docker=reading(no_access), tools=frozenset({"curl", "sg"})), "docker_access")
+    assert "Clank's service started before it joined" in found.said
+    assert found.fix is not None
+    assert (found.fix.does, found.fix.command, found.fix.admin) == ("service", (), False)
+    assert "`clank setup` stops it and starts it again, with the group" in found.fix.said
+    alone = item(facts(docker=reading(no_access), service=False, tools=frozenset({"curl", "sg"})), "docker_access")
+    assert alone.fix is not None
+    assert "log out and in again" in alone.fix.said, "this process itself lacks the group: sg did not give it"
 
 
 @pytest.mark.parametrize(("service", "again"), [(True, "`clank stop`, then `clank`"), (False, "`clank setup` again")])

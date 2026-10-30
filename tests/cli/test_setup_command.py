@@ -97,13 +97,13 @@ def test_without_the_service_it_reads_docker_itself_and_says_what_only_the_servi
     shown = run(home, "--check")
     assert shown.exit_code == 1, shown.output
     lines = lines_of(shown)
-    assert lines["Docker installed"].split()[0] == "done"
+    assert lines["Docker installed"].split()[:2] == ["✓", "done"]
     assert "Fake Docker 4.85.0" in lines["Docker installed"]
-    assert lines["Clank's service"].split()[:2] == ["to", "do"]
+    assert lines["Clank's service"].split()[:3] == ["•", "to", "do"]
     for title in ("A model", "A folder"):
-        assert lines[title].split()[0] == "unknown"
+        assert lines[title].split()[:2] == ["?", "unknown"]
         assert "Clank's service tells this once it runs" in lines[title]
-    assert "-> start it: `clank serve --background`" in shown.output
+    assert "→ start it: `clank serve --background`" in shown.output
     assert "Nothing was changed." in shown.output
 
 
@@ -123,12 +123,12 @@ def test_with_the_service_the_checklist_is_the_services(
     shown = run(home, "--check")
     assert shown.exit_code == 1, shown.output
     lines = lines_of(shown)
-    assert lines["Clank's service"].split()[0] == "done"
-    assert lines["The sandbox image"].split()[:2] == ["to", "do"]
+    assert lines["Clank's service"].split()[:2] == ["✓", "done"]
+    assert lines["The sandbox image"].split()[:3] == ["•", "to", "do"]
     assert "no model has answered a test request yet" in lines["A model"]
     assert "no folder is a workspace yet" in lines["A folder"]
     assert f"open {project} as a workspace" in shown.output
-    assert lines["Clank's VS Code window"].split()[0] == "optional"
+    assert lines["Clank's VS Code window"].split()[:2] == ["○", "optional"]
 
 
 def test_it_exits_0_when_everything_required_is_done(
@@ -166,5 +166,5 @@ def test_at_eighty_columns_what_an_item_is_now_goes_under_its_title_and_every_li
     shown = run(home, "--check", columns=80)
     lines = shown.output.splitlines()
     assert all(len(line) <= 80 for line in lines), [line for line in lines if len(line) > 80]
-    title = lines.index("  to do    Clank's service")
-    assert lines[title + 1].startswith("             not running.")
+    title = lines.index("  • to do     Clank's service")
+    assert lines[title + 1].startswith("                not running.")

@@ -17,11 +17,13 @@ Each Docker state of §5 has its words, its fix and whether Clank does it (`Fix.
 Docker step in the terminal (`winget` on Windows, Homebrew on macOS, Clank's installer on Linux), on a yes; the snap's
 or rootless Docker, not supported, the commands shown and never run; Docker Engine stopped, `sudo systemctl start
 docker` in the terminal; Docker Desktop stopped, started through its own command by Clank; not started at boot, `sudo
-systemctl enable docker` in the terminal; no access outside the docker group, `sudo usermod -aG docker <account>` in
-the terminal, then a log out and in, which is the person's; no access inside it, the log out and in alone; no memory
-limits, the kernel setting, which Clank never makes. A command that needs administrator rights (`Fix.admin`) runs only
-attached to the person's terminal, where sudo or Windows asks for the password itself; Clank never reads, asks for or
-keeps a password. An item waits while one it needs is not done (the image while Docker cannot be used).
+systemctl enable docker` in the terminal; no access outside the docker group, `sudo usermod -aG docker <account>` in the
+terminal, after which Clank takes the group at once where `sg` is installed (decision 0150) and the person logs out and
+in where it is not; no access inside it, Clank's service restarted (it started before the account joined), or the log
+out and in without `sg`; no memory limits, the kernel setting, which Clank never makes. A command that needs
+administrator rights (`Fix.admin`) runs only attached to the person's terminal, where sudo or Windows asks for the
+password itself; Clank never reads, asks for or keeps a password. An item waits while one it needs is not done (the
+image while Docker cannot be used).
 
 A client runs a fix's command only when it is one of these (`runnable`): the installers' Docker steps, and the
 commands Docker Engine's owner runs, the docker group's for the client's own account alone. The checklist reaches a
@@ -54,7 +56,7 @@ DOCKER_PAGE = "docker.com/products/docker-desktop"
 ENGINE_PAGES = "docs.docker.com/engine/install"
 GROUP_NOTE = "docs.docker.com/engine/install/linux-postinstall"
 UNDO = "getting started's Uninstalling section (clank-ai.github.io/get-started) says how to remove each"
-TOOLS = ("winget", "brew", "curl")  # what a fix of Docker runs, found on the PATH
+TOOLS = ("winget", "brew", "curl", "sg")  # what a fix of Docker runs, found on the PATH (sg: decision 0150)
 LISTED = 3  # the workspaces the folder's item names
 
 
@@ -214,7 +216,9 @@ def _install(facts: Facts) -> Fix:
         "terminal",
         LINUX,
         admin=True,
-        after="log out and in once if it added you to the docker group, then run `clank setup` again",
+        after="run `clank setup` again"
+        if "sg" in facts.tools
+        else "log out and in once if it added you to the docker group, then run `clank setup` again",
         shown=INSTALLER,
     )
 
@@ -283,6 +287,13 @@ def _access(facts: Facts, running: Item) -> Item:
     if status.state != "no access":
         return Item("docker_access", title, "done", "this account may use Docker")
     again = "`clank stop`, then `clank`" if facts.service else "run `clank setup` again"
+    takes = "sg" in facts.tools  # Clank takes a group its account is in at once (decision 0150)
+    if facts.docker.setup.in_group and facts.service and takes:
+        said = "this account is in the docker group, but Clank's service started before it joined and keeps the groups "
+        "it started with"
+        fix = Fix("restart Clank's service: `clank setup` stops it and starts it again, with the group (or `clank "
+                  "stop`, then `clank`)", "service")  # fmt: skip
+        return Item("docker_access", title, "to do", said, fix=fix)
     if facts.docker.setup.in_group:
         said = "this account is in the docker group, but the group is not active in this session yet"
         fix = Fix(f"log out and in again (or restart the computer), then {again}")
@@ -294,7 +305,11 @@ def _access(facts: Facts, running: Item) -> Item:
         "this account may not use Docker: it is not in the docker group. Docker says the group gives root's rights on "
         f"this computer ({GROUP_NOTE})"
     )
-    after = f"log out and in once (or restart the computer), so every program you start can use Docker; then {again}"
+    after = (
+        ""
+        if takes
+        else (f"log out and in once (or restart the computer), so every program you start can use Docker; then {again}")
+    )
     return Item("docker_access", title, "to do", said, fix=_admin(join, "join the docker group", after))
 
 

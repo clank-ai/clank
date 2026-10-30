@@ -2,8 +2,10 @@
 its fix and its exact command first, and does it on a yes; nothing runs without its yes, and without a terminal to
 answer in the answer is no. A command that needs administrator rights (`sudo systemctl start docker`, `sudo systemctl
 enable docker`, `sudo usermod -aG docker <account>`, the installer's Docker step) runs attached to the terminal, so
-sudo asks for the password itself and nothing it says is captured; after joining the docker group it says to log out
-and in once, and stops there. Docker Desktop is started through its own start, by the service when it runs, else here.
+sudo asks for the password itself and nothing it says is captured; after joining the docker group it runs itself again
+with the group where `sg` is installed (decision 0150), else says to log out and in once and stops there; a service
+that started before the account joined is stopped and started again, with the group. Docker Desktop is started
+through its own start, by the service when it runs, else here.
 Clank's service is started on a yes, the folder `clank setup` was started in is opened as a workspace on a yes, and the
 model's step asks once: in the cloud, on this computer's GPU, or both, the terminal handed to Add a model's command for
 each, the cloud first. The sandbox image is built by the service in the background on a yes while the setup goes on, and
@@ -25,7 +27,7 @@ from click.testing import CliRunner, Result
 from fastapi.testclient import TestClient
 
 from clank import registry
-from clank.cli import common, follow
+from clank.cli import common, dockergroup, follow
 from clank.cli.main import main
 from clank.client import Client
 from clank.components.agents import checklist, setupcli, vscode
@@ -179,6 +181,50 @@ def test_after_joining_the_docker_group_it_says_to_log_out_and_in_once_and_stops
     assert "log out and in once" in said(shown)
     assert started == [], "nothing more: the group takes effect at the next login"
     assert shown.exit_code == 1
+
+
+class TookTheGroup(Exception):
+    """The setup, run again with the docker group (`dockergroup.take`)."""
+
+
+def test_with_sg_after_joining_the_docker_group_the_setup_runs_again_with_it(
+    home: Home, project: Path, platform: FakePlatform, terminal: Terminal, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    engine(platform, "no access")
+    monkeypatch.setattr(checklist, "found_tools", lambda: frozenset({"sg"}))
+    monkeypatch.setattr(dockergroup, "pending", lambda: True)
+    again: list[list[str]] = []
+
+    def take(argv: Sequence[str]) -> None:
+        again.append(list(argv))
+        raise TookTheGroup
+
+    monkeypatch.setattr(dockergroup, "take", take)
+    shown = run(home, input="y\n")
+    assert terminal.ran == [list(JOIN)]
+    assert again == [["setup"]], "the same setup, run again with the group"
+    assert isinstance(shown.exception, TookTheGroup)
+    assert "you need not log out and in" in said(shown)
+    assert "log out and in once" not in said(shown)
+
+
+def test_with_sg_a_service_started_before_the_account_joined_is_stopped_and_started_again(
+    home: Home, project: Path, platform: FakePlatform, terminal: Terminal, started: list[Home],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:  # fmt: skip
+    engine(platform, "no access", replace(OWNER, in_group=True))
+    monkeypatch.setattr(checklist, "found_tools", lambda: frozenset({"sg"}))
+    stops: list[str] = []
+    kernel = open_kernel(home, FakeClock(NOW), registry.components())
+    app = create_app(kernel, token="t", port=7720, stop=lambda: stops.append("stop"))
+    with TestClient(app, base_url="http://127.0.0.1:7720") as http:
+        monkeypatch.setattr(common, "connect", lambda: Client("http://127.0.0.1:7720", "t", name="cli", http=http))
+        shown = run(home, input="y\n")
+    kernel.close()
+    assert "Clank's service started before it joined" in said(shown)
+    assert stops == ["stop"], "the service that keeps its old groups is stopped"
+    assert started == [home], "and started again by this setup, which has the group"
+    assert terminal.ran == [], "no administrator command"
 
 
 def test_what_is_the_persons_to_do_is_said_and_listed_again_at_the_end(

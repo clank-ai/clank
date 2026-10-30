@@ -13,10 +13,10 @@ state Clank reads and never changes.
 - *Then the engine.* An active engine is asked `docker version`, its whole answer kept. Running gives its version and
   its containers, through the base. "permission denied" on Docker's socket gives the state *no access*, whose detail
   says what to do (`docker_group` tells the two cases apart): join the docker group, which is equivalent to root on
-  that computer, log out and in again, and restart Clank's service; or, when the account is in the group but this
-  process is not (a process keeps the groups it started with, and `clank work` reuses the service), restart the service
-  once logged in again. Any other refusal gives *stopped*, in Docker's words. Without systemd, the engine is asked
-  directly.
+  that computer, after which Clank takes the group at once (`clank.cli.dockergroup`, decision 0150); or, when the
+  account is in the group but this process is not (a process keeps the groups it started with, and `clank work` reuses
+  the service), restart the service, which then starts with the group. Any other refusal gives *stopped*, in Docker's
+  words. Without systemd, the engine is asked directly.
 - *One engine, named.* Every command names the system engine's socket (`-H unix:///var/run/docker.sock`), which wins
   over `DOCKER_HOST` and the current context: Docker Desktop started later, a remote context or a `DOCKER_HOST` never
   gets Clank's commands.
@@ -97,14 +97,13 @@ ROOTLESS = (
     "packages (docs.docker.com/engine/install), the system's service"
 )
 JOIN = (
-    "this account may not use Docker: join the docker group (`sudo usermod -aG docker $USER`), log out and in again, "
-    "then restart Clank's service (`clank stop`, then `clank work`). Anyone in the docker group can act as root on "
-    "this computer (docs.docker.com/engine/install/linux-postinstall)"
+    "this account may not use Docker: join the docker group (`clank setup` does it, asking first: `sudo usermod -aG "
+    "docker $USER`), and Clank uses it at once. Anyone in the docker group can act as root on this computer "
+    "(docs.docker.com/engine/install/linux-postinstall)"
 )
 RESTART = (
     "this account is in the docker group, but Clank's service started before it joined and keeps the groups it "
-    "started with: log out and in again if you have not yet, then restart Clank's service (`clank stop`, then "
-    "`clank work`)"
+    "started with: restart it (`clank setup` does, or `clank stop`, then `clank`)"
 )
 
 

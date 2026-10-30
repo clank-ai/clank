@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-clank = "clank.cli.main:main"
+clank = "clank.cli.main:run"
 
 [dependency-groups]
 dev = [

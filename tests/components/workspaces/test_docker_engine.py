@@ -109,8 +109,9 @@ def test_a_user_outside_the_docker_group_is_told_how_to_join_it() -> None:
     program = RecordedProgram.load(RECORDING, state="no access")
     status = engine(program, groups=lambda: (False, False)).status()
     assert (status.state, status.running, status.containers) == ("no access", False, [])
-    for said in ("`sudo usermod -aG docker $USER`", "log out and in again", "`clank stop`", "`clank work`", "root"):
+    for said in ("`sudo usermod -aG docker $USER`", "`clank setup` does it", "Clank uses it at once", "root"):
         assert said in status.detail, said
+    assert "log out" not in status.detail, "Clank takes the group at once (decision 0150)"
 
 
 def test_a_service_started_before_the_user_joined_the_docker_group_says_to_restart_it() -> None:
@@ -119,8 +120,9 @@ def test_a_service_started_before_the_user_joined_the_docker_group_says_to_resta
     assert status.state == "no access"
     assert "usermod" not in status.detail, "the account is in the group already"
     assert "started before" in status.detail
-    assert "`clank stop`" in status.detail
-    assert "`clank work`" in status.detail
+    assert "`clank setup` does" in status.detail
+    assert "`clank stop`, then `clank`" in status.detail
+    assert "log out" not in status.detail, "the service starts again with the group (decision 0150)"
 
 
 def test_a_stopped_engine_is_read_from_systemd_and_never_woken() -> None:

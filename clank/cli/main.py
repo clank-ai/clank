@@ -15,7 +15,7 @@ from typing import Any
 import click
 
 from clank import __version__, registry
-from clank.cli import records
+from clank.cli import dockergroup, records
 from clank.cli.autostart import autostart
 from clank.cli.console import console
 from clank.cli.service import serve, status, stop
@@ -42,6 +42,13 @@ def main(context: click.Context) -> None:
             stream.reconfigure(encoding="utf-8")
     if context.invoked_subcommand is None:
         context.invoke(console, opening="folder")
+
+
+def run() -> None:
+    """The `clank` command's entry, its script's: the docker group taken first where the account joined it since its
+    last login (decision 0150), then the command."""
+    dockergroup.take(sys.argv[1:])
+    main()
 
 
 for command in (serve, stop, status, console, autostart, update, *records.COMMANDS):
