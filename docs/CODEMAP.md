@@ -241,7 +241,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/components/runtime/console/options.py` | The Launch options page (design 0003 §8.2, design 0001 §3.5): a preset's options and what each one becomes. |
 | `clank/components/runtime/console/presets.py` | The Presets page (design 0003 §8.2): each preset with its serving setup and model, its fit in the GPU's memory now or |
 | `clank/components/runtime/console/providers.py` | The Providers and models page (design 0003 §8.2): the serving setups, and the models' files. |
-| `clank/components/runtime/devcli.py` | `clank dev` (decision 0149): dev mode, for testing, said, or turned on or off. |
+| `clank/components/runtime/devcli.py` | `clank dev` (decisions 0149 and 0152): dev mode, for testing, said, or turned on or off. |
 | `clank/components/runtime/endpoint_routes.py` | The runtime's routes for the providers someone else runs (design 0016 §4-§7, plan s34's interface): their records, |
 | `clank/components/runtime/endpoints.py` | The providers someone else runs, reached at their URL with the owner's key (design 0016 §4-§6): OpenRouter first. |
 | `clank/components/runtime/gpu.py` | The GPU's memory, and whether a plan fits in it (design 0001 §3.6, design 0003 §6.5). |

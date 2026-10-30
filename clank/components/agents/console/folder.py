@@ -91,7 +91,7 @@ DOING = {
     "g": "start the gateway",
 }  # fmt: skip
 OPTIONAL = {"its software"}  # a step the agent can start without (it is offered, not required)
-REFRESHED_BY = {"all", "docker", "slots", "presets", "operations", "mcp", "connection", "endpoints"}
+REFRESHED_BY = {"all", "docker", "slots", "presets", "operations", "mcp", "connection", "endpoints", "dev"}
 ANSWERED = "workspaces.cloud_answered"  # a workspace's bound changed, from any client: read again
 NAME = 18
 REASON = 60  # a stopped slot's reason, cut: the Models page shows it whole
@@ -202,12 +202,18 @@ def server_lines(servers: list[dict[str, Any]] | None, checked: dict[str, str], 
     return lines
 
 
-def host_line(view: dict[str, Any] | None) -> Content | None:
-    """The hosts the workspace's agent may reach through Clank's proxy (design 0024 §1, §4), and `h`; none without a
+def host_line(view: dict[str, Any] | None, dev: bool = False) -> Content | None:
+    """The hosts the workspace's agent may reach through Clank's proxy (design 0024 §1, §4), and `h`: every public
+    host while dev mode is on (`dev`, decision 0152), its allowances kept for when it is off; none without a
     workspace."""
     if view is None or not view.get("workspace"):
         return None
     hosts = sorted(view.get("hosts") or {})
+    if dev:
+        kept = ", ".join(hosts) if hosts else "none"
+        return Content(
+            f"Hosts its agent reaches: every public host, in dev mode (allowed when it is off: {kept}; h changes them)"
+        )
     if not hosts:
         return Content("Hosts its agent reaches: none (h allows a set or a host; one it needs, it may ask you for)")
     return Content(f"Hosts its agent reaches: {', '.join(hosts)} (h allows a set or a host, or takes one back)")
@@ -514,7 +520,7 @@ class FolderPage(Page):
         lines += self._cloud_lines(data)
         for line in server_lines(self.servers, self.checked, (self.view or {}).get("workspace")):
             lines.append(line[SERVER_INDENT:] if line.plain.startswith(" " * SERVER_INDENT) else line)
-        hosts = host_line(self.view)
+        hosts = host_line(self.view, bool((data.dev or {}).get("on")))
         if hosts is not None:
             lines.append(hosts)
         return Content("\n").join(lines)

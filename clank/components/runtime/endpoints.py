@@ -136,7 +136,8 @@ class Endpoints:
         }  # fmt: skip
 
     def dev_mode(self) -> bool:
-        """Whether dev mode is on (decision 0149): every cloud provider asked for any of a model's providers."""
+        """Whether dev mode is on (decisions 0149 and 0152): every cloud provider asked for any of a model's providers,
+        and every public host open to the agent."""
         return self.runtime.settings().dev_mode
 
     def dev_view(self) -> dict[str, Any]:
@@ -145,7 +146,8 @@ class Endpoints:
         return {"on": on, "said": guide.DEV_SAID[on]}
 
     def set_dev(self, on: bool, *, actor: Actor) -> dict[str, Any]:
-        """Turn dev mode on or off in the runtime's settings, recorded with who did it; the next request goes so."""
+        """Turn dev mode on or off in the runtime's settings, recorded with who did it; the next request and the
+        agent's next connection go so (the gateway reads it with its routes, decision 0152)."""
         loaded = self.kernel.settings.get("runtime", "runtime")
         values = loaded.record.model_dump(mode="json")
         if values.get("dev_mode") is not on:

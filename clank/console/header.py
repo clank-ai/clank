@@ -1,11 +1,11 @@
 """The console's header (design 0001 §5, design 0004 §9, design 0011 §7): one row on `bars`, the same on every page:
 "◆ CLANK" bold in `brand`, the name of the folder the console was started in, in `name`, then a pill for each part that
 runs, its dot and its few words whole in its state's color (the service and how long it has been up, Docker, the model
-in the main slot, dev mode while it is on (decision 0149, in `attention`), the gateway, the cloud's spending once a
-provider is added (in the service's words, design 0016 §11, a pause in `failed`), the questions waiting), then a
-spinner in `now` while something runs. The clock is on
-the right, a label of its own, in `quiet` (`clank.tcss`). When the header is too narrow for every pill's words, the
-cloud's pill says its short words first, then every pill does.
+in the main slot, dev mode while it is on (decisions 0149 and 0152, in `attention`: "dev mode: any provider, any host",
+whatever providers there are), the gateway, the cloud's spending once a provider is added (in the service's words,
+design 0016 §11, a pause in `failed`), the questions waiting), then a spinner in `now` while something runs. The clock
+is on the right, a label of its own, in `quiet` (`clank.tcss`). When the header is too narrow for every pill's words,
+the model's advice says its short words first, then the cloud's pill, then dev mode's, then every pill does.
 
 Each pill is a function in `PILLS`: it takes the console's data, the gateway's activity and the time now, and gives a
 `Said`: its words, its short words, and the state the pill is colored by (`text.tone`); or nothing when it has nothing
@@ -69,10 +69,16 @@ def model(data: ConsoleData, activity: dict[str, Any] | None, now: datetime) -> 
 
 
 def dev(data: ConsoleData, activity: dict[str, Any] | None, now: datetime) -> Said | None:
-    """Dev mode, while it is on (decision 0149): every cloud provider asked for any of a model's providers."""
-    if not data.connected or not any(each.get("dev_mode") for each in data.endpoints or []):
+    """Dev mode, while it is on (decisions 0149 and 0152): every cloud provider asked for any of a model's providers,
+    and every public host open to the agent. As the console reads it (`data.dev`), whatever providers there are; as
+    each provider's view says, from a service that does not say it alone."""
+    if data.dev is not None:
+        on = bool(data.dev.get("on"))
+    else:
+        on = any(each.get("dev_mode") for each in data.endpoints or [])
+    if not data.connected or not on:
         return None
-    return Said("dev mode: any provider", "dev mode", "waiting")
+    return Said("dev mode: any provider, any host", "dev mode", "waiting")
 
 
 def gateway(data: ConsoleData, activity: dict[str, Any] | None, now: datetime) -> Said | None:
@@ -136,7 +142,8 @@ def header(
     advice = {index for index, (pill, told) in enumerate(found) if pill is model and told.words != told.short
               and told.state == "stopped"}  # "no model: Add a model" goes short first  # fmt: skip
     longest = {index for index, (pill, _) in enumerate(found) if pill is cloud}  # then the cloud's words
-    for shortened in (set(), advice, advice | longest, set(range(len(said)))):
+    devs = {index for index, (pill, _) in enumerate(found) if pill is dev}  # then dev mode's
+    for shortened in (set(), advice, advice | longest, advice | longest | devs, set(range(len(said)))):
         parts = list(head)
         for index, pill in enumerate(said):
             words = pill.short if index in shortened else pill.words

@@ -4,7 +4,8 @@ cloud provider is asked for any of a model's providers (`data_collection allow`)
 record says: the route the gateway follows, a load's tiny request and the provider's check, each request's notes
 naming dev mode. The record keeps its own policy, which applies again from the next request once dev mode is off; a
 record that already allows any provider, and its `zdr`, are left as they are. Each provider says dev mode beside its
-own policy, as `GET` and `PUT /runtime/dev` say what dev mode does."""
+own policy, as `GET` and `PUT /runtime/dev` say what dev mode does: since decision 0152, both halves of it, any cloud
+provider and every public host for the agent (private addresses still never), and when each applies."""
 
 from collections.abc import Iterator
 from typing import Any
@@ -14,6 +15,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from clank.components.runtime import cloud as cloud_slot
+from clank.components.runtime import guide
 from clank.components.runtime.adapters.openrouter import OpenRouter
 from clank.kernel.api import create_app
 from clank.kernel.events import Actor
@@ -148,3 +150,12 @@ def test_dev_mode_relaxes_only_the_data_policy_and_a_request_says_where_it_came_
     assert sent["provider"] == {"data_collection": "allow"}
     assert "provider_from" not in sent, "what the gateway adds goes to OpenRouter; where it came from does not"
     assert notes == ["provider.data_collection allow added (dev mode)"]
+
+
+def test_dev_modes_words_say_both_its_halves_and_when_each_applies() -> None:
+    on, off = guide.DEV_SAID[True], guide.DEV_SAID[False]
+    for needed in ("data_collection allow", "every public host at once", "without a question", "private addresses",
+                   "still never", "OpenCode", "next start"):  # fmt: skip
+        assert needed in on, needed
+    for needed in ("as its record says", "only the hosts allowed for it", "clank dev on"):
+        assert needed in off, needed

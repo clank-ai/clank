@@ -292,7 +292,7 @@ export interface RuntimeSettings {
   cloud_health_seconds: number;
   /** What clank work, clank code and This folder load when the main slot runs nothing and no configuration has worked yet (design 0015 §13). */
   fallback_preset: string;
-  /** For testing (decision 0149): while on, every cloud provider is asked for any of a model's providers (data_collection allow), those that may keep or train on what they are sent too, whatever its own record says, from the next request; the console's header says so. clank dev on, clank dev off. */
+  /** For testing (decisions 0149 and 0152): while on, every cloud provider is asked for any of a model's providers (data_collection allow), those that may keep or train on what they are sent too, whatever its own record says, from the next request; and every workspace's agent reaches every public host at once, without a question (private addresses still never), OpenCode fetching and searching the web from its next start. The console's header says so. clank dev on, clank dev off. */
   dev_mode: boolean;
 }
 

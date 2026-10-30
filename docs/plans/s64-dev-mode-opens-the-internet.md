@@ -2,8 +2,8 @@
 
 Decision 0152, the owner's request of 2026-10-29: "the model is having trouble doing the benchmark that I have assigned
 it because it has no ability to git clone and the network is blocked. In dev mode, these types of restrictions should
-be completely lifted." Design 0024 §1, §3, §6 and §7 and design 0016 §4, §15 and §16 are revised after approval with
-it. Dev mode (decision 0149) asked every cloud provider for any of a model's providers; it now also lets every
+be completely lifted." Design 0024 §1, §3, §4, §6 and §7 and design 0016 §4, §15 and §16 are revised after approval
+with it. Dev mode (decision 0149) asked every cloud provider for any of a model's providers; it now also lets every
 workspace's agent reach every public host at once, without a question, and lets OpenCode fetch and search the web.
 Private addresses stay refused.
 
@@ -63,13 +63,15 @@ clone failed with 403.
   `network_file`; `prepare` and `configure` write them as dev mode says, under the lock; a change of dev mode writes
   them again in every running container (`Agents.tell_network`, heard from `settings.changed`, off the thread that
   changed it). Tests in `test_dev_mode_agent.py`, with the fake platform's files.
-- [ ] 4. **Every description of dev mode** (`runtime/guide.py`'s `DEV_SAID`, `devcli.py`, `endpoint_routes.py`,
-  `kinds.py`, `console/header.py`, `console/data.py`, `runtime/console/providers.py`): the pill "dev mode: any
-  provider, any host" ("dev mode" when narrow, before the other pills go short), shown whatever providers exist; `D`
-  asked first in words that say both halves and when each applies, without a provider too; `clank dev` in the
-  service's words. Tests: `test_dev_mode_console.py`, `test_data.py`, `test_dev_command.py`, `test_dev_mode.py`.
+- [x] 4. **Every description of dev mode** (`runtime/guide.py`'s `DEV_SAID`, `devcli.py`, `endpoint_routes.py`,
+  `kinds.py`, `console/header.py`, `console/data.py`, `runtime/console/providers.py`, `agents/console/folder.py`): the
+  pill "dev mode: any provider, any host" ("dev mode" when narrow, before the other pills go short), shown whatever
+  providers exist; `D` asked first in words that say both halves and when each applies, without a provider too;
+  `clank dev` in the service's words; This folder's hosts line says every public host while dev mode is on (design
+  0024 §4, revised with it). Tests: `test_dev_mode_console.py`, `test_data.py`, `test_dev_command.py`,
+  `test_dev_mode.py`.
 - [ ] 5. **Records and docs**: decision 0152 and the index (0141's and 0149's lines), 0149's status; design 0024 §1,
-  §3, §6, §7 and design 0016 §4, §15, §16 revised, with their revision logs and the designs' index; getting started,
+  §3, §4, §6, §7 and design 0016 §4, §15, §16 revised, with their revision logs and the designs' index; getting started,
   `docs/console.md`, the glossary and `SECURITY.md`; the generated pages (the API page, the settings schema, the
   extension's types, the code map, the tests page).
 

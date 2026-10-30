@@ -1,12 +1,12 @@
-# 0152. Dev mode opens the agent's internet: every public host at once, without a question; private addresses still never
+# 0152. Dev mode opens the agent's internet: every public host at once, no question; private addresses still never
 
 - Status: Accepted (the owner's request of 2026-10-29: "In dev mode, these types of restrictions should be completely
   lifted"); extends [0149](0149-dev-mode-asks-any-provider-for-testing.md); lifts
   [0141](0141-the-internet-through-clanks-proxy-by-allowance.md)'s allowances while dev mode is on, its refusal of
   private addresses kept
 - Date: 2026-10-29
-- Decided by: the owner (the request quoted below); how it is built, Claude (design 0024 §1, §3, §6 and §7 and design
-  0016 §4, §15 and §16, revised after approval; [plan s64](../plans/s64-dev-mode-opens-the-internet.md))
+- Decided by: the owner (the request quoted below); how it is built, Claude (design 0024 §1, §3, §4, §6 and §7 and
+  design 0016 §4, §15 and §16, revised after approval; [plan s64](../plans/s64-dev-mode-opens-the-internet.md))
 
 ## Context
 
@@ -42,7 +42,7 @@
   dev mode.
 - **Said wherever dev mode is**: the header's pill reads "dev mode: any provider, any host", whatever providers there
   are; `D` on Providers and models asks first in words that say both halves and when each applies, and works without a
-  provider; `clank dev` says both.
+  provider; `clank dev` says both; This folder says the agent reaches every public host.
 - Still one setting, `runtime.json`'s `dev_mode`, off by default, turned on or off as decision 0149 says.
 
 ## Alternatives considered

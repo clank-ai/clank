@@ -51,11 +51,14 @@ POLICY = {
     "deny": "Clank asks only for providers that do not keep your data (data_collection deny).",
     "allow": "Clank asks for any provider, those that may keep your data too (data_collection allow).",
 }
-DEV_SAID = {  # dev mode, on and off (decision 0149)
+DEV_SAID = {  # dev mode, on and off (decisions 0149 and 0152)
     True: "Dev mode is on: Clank asks every cloud provider for any of a model's providers, those that may keep or "
-    "train on what they are sent too (data_collection allow), whatever its own record says. clank dev off ends it.",
+    "train on what they are sent too (data_collection allow), whatever its own record says; and every workspace's "
+    "agent reaches every public host at once, without a question (private addresses, this machine and your network, "
+    "still never), OpenCode fetching and searching the web from its next start in a folder. clank dev off ends it.",
     False: "Dev mode is off: each cloud provider is asked as its record says (data_collection deny unless you changed "
-    "it). clank dev on asks for any provider, for testing.",
+    "it), and each workspace's agent reaches only the hosts allowed for it, a host not allowed asked for. clank dev on "
+    "asks for any provider and opens every public host to the agent, for testing.",
 }
 
 
