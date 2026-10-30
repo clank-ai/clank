@@ -9,8 +9,10 @@ provider's short test beside a local model, then "load it now?"), `ready` (what 
 (Clank's presets for the main slot and what each needs here). `guide` gives each step's title and words from the state
 the service holds; `cloud_from` says where Cloud starts (the provider, its key, or the model once the key is set).
 `model_said` and `model_settings` are a model line's words and its settings' fields (`limit_fields` the limits');
-`account_said` is the key's account in a line; `local_steps` is what a local preset still needs, in
-order, each with the call that does it; `endpoint_said` is the Providers page's lines for a provider.
+`preset_settings` are a cloud preset's settings as a form changes them, and `preset_changed_said` what a change did
+(design 0016 §7, revised after approval 2026-10-29); `account_said` is the key's account in a line; `local_steps` is
+what a local preset still needs, in order, each with the call that does it; `endpoint_said` is the Providers page's
+lines for a provider.
 
 It is the service's: it reads no client's state and draws nothing. The service's routes put its words in their
 answers (plan s34's interface; plan s35 lists what it asks for).
@@ -41,6 +43,25 @@ SORTED = {
 }
 EFFORTS = ("max", "xhigh", "high", "medium", "low", "minimal", "none")  # OpenRouter's, when a model lists none
 OUTPUT = 16384  # the output a preset takes by default, or the model's most when smaller
+CAPPED = 32000  # OpenCode's own cap on an answer, which Clank lifts to the most output above it (decision 0153)
+NAMES = {"context": "context", "max_output": "most output", "reasoning": "thinking effort", "images": "images"}
+IN_TOKENS = ("context", "max_output")  # a cloud preset's settings counted in tokens: OpenCode's limits
+WINDOWS = (
+    "OpenCode windows open now keep the limits they started with until they start again; the next one started gets "
+    "these."
+)
+SHARED = (
+    "Its thinking and its answer share the most output, and OpenCode keeps that much room free in each request: a "
+    "larger one makes it compact sooner."
+)
+LIFTED = (
+    "OpenCode's own cap is 32,000 tokens an answer: Clank lifts it to the most output when OpenCode starts "
+    "(OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX, decision 0153)."
+)
+EFFORT_NOW = (
+    "The thinking effort reaches OpenCode windows open now too, from their next request: the gateway adds it to each "
+    "request that names none of its own."
+)
 TEST_IN, TEST_OUT = 40, 16  # one short request's tokens, about: "Reply with OK.", 16 out at most
 DOCKER_GET = (
     "Docker is not installed: get Docker Desktop (Windows, macOS: docs.docker.com/desktop) or Docker Engine (Linux: "
@@ -270,7 +291,7 @@ def efforts(model: dict[str, Any]) -> tuple[str, ...]:
 def model_settings(model: dict[str, Any]) -> list[dict[str, str]]:
     """A cloud preset's settings for a model, each field's words and its value as filled."""
     thinks = f"one of {', '.join(efforts(model))}" if model["thinking"] else "default: it does not think"
-    output = model["output"] or OUTPUT
+    output = min(model["output"] or OUTPUT, model["window"] // 2 or OUTPUT)  # and at most half the context (§7)
     return [
         {"id": "title", "said": "Its title, as the pickers show it", "value": f"cloud: {model['name']}"},
         {"id": "context", "said": f"Its context, in tokens (the model's window, {model['window']:,}; a smaller one "
@@ -278,6 +299,79 @@ def model_settings(model: dict[str, Any]) -> list[dict[str, str]]:
         {"id": "max_output", "said": f"Its most output, in tokens (at most {output:,})",
          "value": str(min(OUTPUT, output))},
         {"id": "reasoning", "said": f"Its thinking effort ({thinks})", "value": "default"},
+    ]  # fmt: skip
+
+
+def listed(items: list[str]) -> str:
+    """Words joined as people list them: a; a and b; a, b and c."""
+    return items[0] if len(items) == 1 else f"{', '.join(items[:-1])} and {items[-1]}"
+
+
+def setting_said(key: str, value: Any, unit: bool = True) -> str:
+    """A cloud preset's setting as people read it: 32,768 tokens, high."""
+    if key in IN_TOKENS and isinstance(value, int) and not isinstance(value, bool):
+        return f"{value:,} tokens" if unit else f"{value:,}"
+    if value is None:
+        return "not set"
+    return str(value).lower() if isinstance(value, bool) else str(value)
+
+
+def preset_changed_said(
+    title: str, was: dict[str, Any], now: dict[str, Any], slot: str | None, kept: str = ""
+) -> list[str]:
+    """What a change of a cloud preset's settings did, in words (design 0016 §7): each setting changed and what it was
+    (`now` in the settings' order); where the change applies: the slot that runs it, from the next request (unless it
+    kept its earlier settings, and `kept` says why), else the preset's next load; while a slot follows it, that
+    OpenCode windows open now keep the limits they started with, and that a thinking effort reaches them at once; what
+    the most output holds, and that Clank lifts OpenCode's own cap above 32,000."""
+    if not now:
+        return [f"Nothing changed: {title} has these settings already."]
+    changes = [f"{NAMES.get(key, key)} {setting_said(key, value)} (was {setting_said(key, was.get(key), unit=False)})"
+               for key, value in now.items()]  # fmt: skip
+    lines = [f"{title}: {'; '.join(changes)}."]
+    follows = bool(slot) and not kept
+    if follows:
+        lines.append(f"The {slot} slot runs it and follows the change from the next request.")
+    elif slot:
+        lines.append(f"The {slot} slot runs it with its earlier settings until it loads it again: {kept}.")
+    else:
+        lines.append("It applies when the preset is next loaded.")
+    if follows and set(now) & set(IN_TOKENS):
+        lines.append(WINDOWS)
+    if follows and "reasoning" in now:
+        lines.append(EFFORT_NOW)
+    if "max_output" in now:
+        lines.append(SHARED)
+        if isinstance(now["max_output"], int) and now["max_output"] > CAPPED:
+            lines.append(LIFTED)
+    return lines
+
+
+def preset_settings(options: dict[str, Any], model: dict[str, Any] | None) -> list[dict[str, str]]:
+    """A cloud preset's settings as a form changes them (design 0016 §7): each field's words, with the model's limits
+    when its line is known (`model`, as its provider last listed it; its most output at most half the context), and its
+    value now."""
+    window = int(model["window"]) if model else 0
+    context = int(options.get("context") or window)
+    if model:
+        most = int(model["output"] or OUTPUT)
+        bound = min(most, context // 2 or most)
+        whose = "the model's most" if model["output"] else "Clank's most for a model that says none"
+        limit = "half the context" if bound < most else whose
+        sized = (f"at most {window:,}, the model's window; ", f" (at most {bound:,}, {limit})")
+        thinks = f"one of {', '.join(efforts(model))}" if model["thinking"] else "default: it does not think"
+    else:
+        sized = ("", " (at most half the context)")
+        thinks = f"one of {', '.join(('default', *EFFORTS))}"
+    output = options.get("max_output")
+    return [
+        {"id": "context", "value": str(context or ""),
+         "said": f"Context, in tokens ({sized[0]}a smaller one makes OpenCode compact sooner and each request cost "
+                 "less)"},
+        {"id": "max_output", "value": str(output or ""),
+         "said": f"Most output, in tokens: its thinking and its answer together{sized[1]}"},
+        {"id": "reasoning", "value": str(options.get("reasoning") or "default"),
+         "said": f"Thinking effort, {thinks} (less thinking leaves more of the most output for the answer)"},
     ]  # fmt: skip
 
 

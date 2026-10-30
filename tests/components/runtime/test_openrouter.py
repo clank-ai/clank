@@ -1,4 +1,5 @@
-"""Design 0016 §3, §6 and §8: what the OpenRouter adapter reads of OpenRouter's answers and writes into its requests.
+"""Design 0016 §3, §6, §7 and §8: what the OpenRouter adapter reads of OpenRouter's answers and writes into its
+requests.
 
 Its model line keeps only models that take tool calls unless asked, takes the smaller of a model's two windows (a zero,
 which OpenRouter gives a few models beside their provider's real one, says nothing), turns OpenRouter's string prices
@@ -10,7 +11,9 @@ reads `GET /key` (no limit read as none); a request goes as the tool sent it wit
 preset's thinking effort added only where the tool set none, and the record's data policy always (merged into a
 provider object the tool sent, the stricter word kept), nothing else changed; the
 headers carry the bearer key and the session for OpenRouter's cache; each refusal gets words that say what to do and
-whether OpenCode may retry it; and a request's cost is OpenRouter's own figure, else an estimate that says so."""
+whether OpenCode may retry it; and a request's cost is OpenRouter's own figure, else an estimate that says so. A cloud
+preset's most output is at most the model's and at most half its context (§7, revised after approval 2026-10-29: the
+agent keeps room for a whole answer in every request)."""
 
 import json
 from typing import Any
@@ -296,8 +299,11 @@ def test_a_presets_options_follow_the_model(openrouter: OpenRouter) -> None:
         "context": 200000, "max_output": 16384, "reasoning": "default", "images": False
     }  # fmt: skip
     assert openrouter.preset_options(free, {"context": 16384}) == {
-        "context": 16384, "max_output": 16384, "reasoning": "default", "images": True
-    }  # fmt: skip
+        "context": 16384, "max_output": 8192, "reasoning": "default", "images": True
+    }, "at most half the context"  # fmt: skip
+    with pytest.raises(ValueError, match=r"max_output is at most half the context \(10,000 of 20,000\), not 16,384"):
+        openrouter.preset_options(coder, {"context": 20000, "max_output": 16384})
+    assert openrouter.preset_options(coder, {"context": 32768, "max_output": 16384})["max_output"] == 16384, "half"
     small = openrouter.models({"data": [{**CODER, "top_provider": {"max_completion_tokens": 8192}}]})[0]
     assert openrouter.preset_options(small, {})["max_output"] == 8192
     assert openrouter.preset_options(coder, {"reasoning": "high"})["reasoning"] == "high"

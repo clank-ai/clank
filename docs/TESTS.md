@@ -366,7 +366,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | The provider's record, and its key | `tests/cli/test_endpoint_commands.py` (12), `tests/components/runtime/test_dev_mode.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/console/test_secret_field.py` (6) |
 | 5 | How the gateway gets the key | `tests/components/gateway/test_cloud_keys.py` (6) |
 | 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (18) |
-| 7 | Cloud presets, and the main slot running one | `tests/components/agents/test_opencode_output.py` (5), `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17) |
+| 7 | Cloud presets, and the main slot running one | `tests/components/agents/test_opencode_output.py` (5), `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_preset_change.py` (7), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_openrouter.py` (18) |
 | 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_dev_mode.py` (6), `tests/components/runtime/test_openrouter.py` (18), `tests/docker/test_cloud_live.py` (1) |
 | 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
 | 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
@@ -3010,6 +3010,18 @@ Design 0016 §13 (design 0012 §4, decision 0067): the Monitor reads a cloud mod
 - the estimate shares the census out to openrouters prompt tokens at the plain default
 - with records off the census of a cloud request keeps no text
 
+### `tests/components/runtime/test_cloud_preset_change.py`
+
+Design 0016 §7 (revised after approval 2026-10-29, the owner's request): a cloud preset's settings change after it is written, through `PATCH /api/v1/runtime/presets/{name}`: any of its context, its most output (`max_output`) and its thinking effort (`reasoning`), merged into its options and checked against its model's limits as the provider lists them, then written over the record at its revision with who changed it. A value beyond the model is refused in the adapter's words, and so is a most output above half the context (the agent keeps room for a whole answer in every request); a preset that does not exist is 404, and a local one is refused, saying where its options change. The slot that runs it follows at once (its kept route planned again, nothing sent), and keeps it as the last configuration that worked; the change is an event naming the preset, its settings and that slot. The answer says, in the service's words, what changed, where it applies, and, while a slot runs it, that OpenCode windows open now keep the limits they started with until they start again. A cloud preset's view gives its settings for a form, the model's limits in their words.
+
+- its most output is raised within the models limit and written with who changed it
+- a value beyond the model is refused in the adapters words and nothing is written
+- the most output is at most half the context
+- an unknown preset is 404 and a local one says where its options change
+- nothing to change is refused and the same values change nothing
+- the slot that runs it follows from the next request and keeps it as the last that worked
+- a cloud presets view gives its settings with the models limits in their words
+
 ### `tests/components/runtime/test_cloud_presets.py`
 
 Design 0016 §7: a preset names an engine or a provider (`endpoint`), never both and never neither; a cloud preset is for the main slot only; every preset Clank ships reads as before; a cloud preset's problems name a provider not added, not agreed, or without a key; one is written from a model of the provider's list (never a model without tool calls), its options from the model; each preset as clients see it says its provider and, for a cloud one, its prices; a cloud preset needs nothing installed or downloaded; and a provider a preset names cannot be removed.
@@ -3334,7 +3346,7 @@ Design 0003 §6.1 and §8.4, design 0001 §3.6 and §5.8: the next estimate for 
 
 ### `tests/components/runtime/test_openrouter.py`
 
-Design 0016 §3, §6 and §8: what the OpenRouter adapter reads of OpenRouter's answers and writes into its requests.
+Design 0016 §3, §6, §7 and §8: what the OpenRouter adapter reads of OpenRouter's answers and writes into its requests.
 
 - the list keeps tool models unless asked with the smaller window and prices per million
 - a free model is marked with its limits and its retirement

@@ -569,15 +569,16 @@ def preset_facts(id: str, preset: Preset, model: ModelEntry) -> dict[str, Any]:
 
 def _preset_view(runtime: Runtime, loaded: Loaded, known: Mapping[str, ModelEntry]) -> dict[str, Any]:
     """A preset as clients show it: its values, where it comes from, its provider (its engine and version, or `cloud`
-    and its provider), a cloud preset's prices, its problems, and the sampling it gives its engine (design 0003 §4.1;
-    none for a cloud preset, which starts no engine)."""
+    and its provider), a cloud preset's prices and its settings as a form changes them (design 0016 §7), its problems,
+    and the sampling it gives its engine (design 0003 §4.1; none for a cloud preset, which starts no engine)."""
     values = loaded.record.model_dump(mode="json")
     record = Preset.model_validate(loaded.record.model_dump())
     title = values.pop("title", "") or loaded.id
     view = {"id": loaded.id, "title": title, **values, "source": loaded.source, "file": str(loaded.path)}
     if record.cloud:
-        price = runtime.endpoints.preset_price(record)
-        view.update(provider=f"cloud {record.endpoint}", price=price)
+        extras = runtime.endpoints.preset_extras(record)
+        price = extras["price"]
+        view.update(provider=f"cloud {record.endpoint}", price=price, settings=extras["settings"])
         if price is not None:
             view["price_said"] = f"{guide.per_million(price)} per million tokens"
         return {**view, "problems": runtime.endpoints.preset_problems(record), "sampling": []}
