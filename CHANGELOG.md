@@ -5,6 +5,47 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
+## 0.3.0b5: dev mode, no log out on Linux, and the setup in color (2026-10-29)
+
+From the owner's first install on Linux. For testing with OpenRouter's free models, most of which are served by
+providers that may keep or train on prompts: dev mode asks for any provider until you turn it off, and the header
+says so. Nobody logs out and in after joining the docker group any more: Clank takes the group at once. The
+installer and `clank setup` are in color, and the installer offers the setup at once. From 0.3.0b2 or later, `clank
+update`; from 0.3.0b1, run the installer again.
+
+### Added
+
+- **`clank setup` in color**: each item's state marked and colored (✓ done in green, • to do in yellow, ○ optional
+  in blue), its title bold, what to do in cyan with its commands bold, and the outcome in green or yellow. None in a
+  pipe, a file, or with `NO_COLOR` set.
+- **Dev mode** (decision 0149), for testing: `clank dev on` (or `D` on Providers and models, asked first) sends every
+  cloud request to any of the model's providers (`data_collection allow`), those that may keep or train on what they
+  are sent too, whatever the provider's record says, from the next request. The header says `dev mode: any provider`
+  while it is on, each provider's policy line and each request's notes say so, and `clank dev off` returns to the
+  record's own policy (Clank's default asks only for providers that keep no data). Nothing else changes: the
+  agreement, a workspace's bound, the MCP servers marked local only and the cost limits stay as they are.
+
+### Changed
+
+- **No log out and in after joining the docker group** (Linux, decision 0150): every `clank` command takes the
+  group itself through the system's `sg docker` until your next login, so `clank setup` goes on right after joining
+  it, and a Clank service that started before is started again with it (asked first). The `docker` commands you type
+  yourself get the group at your next login, as before. Where the system has no `sg`, the setup still says to log
+  out and in.
+- **The installer, in color, offers the setup at once** (macOS and Linux, on the website): its steps numbered, what
+  is done in green, what to know or do in yellow, what failed in red, each command dimmed; at its end it asks "Set
+  Clank up now?" and runs `clank setup`, which asks before each step. Its next steps say only what is left.
+
+### Fixed
+
+- **A model refused under a data policy could be said to be retired**: OpenRouter's refusal for a model none of whose
+  providers meets a data policy is now known by its words, whatever its status, and says what to do: pick another
+  model, allow any provider, or try dev mode; and, when your OpenRouter account's privacy settings are the reason,
+  where to change them (openrouter.ai/settings/privacy).
+- **A free model's limit for the day was retried without end**: once OpenRouter says the free models' daily limit is
+  reached (50 requests a day until 10 credits were bought, then 1,000), the agent stops and says so, instead of
+  asking again until the next UTC day.
+
 ## 0.3.0b4: `clank setup`, and OpenRouter's model list fixed (2026-10-28)
 
 Setting Clank up without help: `clank setup` says what this computer still needs and does each step, asking first,
