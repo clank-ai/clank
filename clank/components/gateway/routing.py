@@ -15,6 +15,10 @@ does not move it.
 A slot a cloud model serves (design 0016 §7-§8) is served once the gateway holds its provider's key for its launch
 (`keyed`, decision 0106): until then a request waits as for a starting slot.
 
+The routes also carry what the agent's proxy follows (design 0024 §1): each workspace's hosts allowed (`hosts_of`),
+and whether dev mode is on (`dev_mode`, decision 0152: every public host goes out), so a change of either reaches a
+running workspace within a second, with nothing restarted.
+
 A request waits (`ready`) while its slot is starting, stopping or being changed by an operation (a switch passes
 through all three), up to the hold; a slot that is stopped or failed, with nothing changing it, refuses at once. A role
 loaded on demand (`demand`, design 0008 §7: the vision model) is asked of the service first, which loads it, so its
@@ -119,6 +123,12 @@ class Routes:
             return None
         return [str(each) for each in found.get("hosts") or []]
 
+    def dev_mode(self) -> bool:
+        """Whether dev mode is on, as the routes carry the runtime's setting (decision 0152): the proxy then lets every
+        public host out; off for routes that do not say (a service from before it)."""
+        with self._lock:
+            return bool(self._raw.get("dev_mode"))
+
     def local_only(self) -> list[str]:
         """The names (prefixes) of the tools that never go to a cloud model (design 0016 §10): Clank's Notion tools
         always, whatever the routes name, and those the routes name."""
@@ -165,6 +175,7 @@ class Routes:
                 "local_only_given": bool(raw.get("local_only_given", True)),
                 "cost": dict(raw.get("cost") or {}),
                 "network": dict(raw.get("network") or {}),
+                "dev_mode": bool(raw.get("dev_mode")),
             }
             slots: dict[str, Any] = self._raw["slots"]
             for name in {*slots, *self._engines}:

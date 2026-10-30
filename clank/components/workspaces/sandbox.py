@@ -31,6 +31,12 @@ container runs the version the service runs. A workspace whose record names imag
 an image built on it, a layer at a time in their order, each from its folder under `layers` with the image below as
 the build argument `BASE` (`layer_chain`); its tag names the layers and is the checksum of the base's tag and the
 layers' files (`layered_tag`).
+
+Clank's files for the agent (`agent_files`), written into its home at each start of the agent (design 0018 §7.5),
+hold its instructions as they are, but the network's (`network_instructions`, design 0024 §3): in dev mode (decision
+0152) their first part, the rules, is `instructions/dev/network.md`'s (every public host at once, with no question and
+no wait; private addresses still never), the literature's calls kept. It is one file either way (`network_file`), so
+writing it again as dev mode says leaves none of dev mode's words once it is off.
 """
 
 import csv
@@ -60,6 +66,8 @@ PHONE_PROGRAM = f"{PROGRAMS}/phone_mcp.py"  # Clank's own MCP server for the age
 AGENT_CLANK = f"{AGENT_HOME}/.clank"  # Clank's files for the agent, written at each start (design 0018 §7.5)
 CURRENT_PHONE = f"{AGENT_CLANK}/mcp/phone_mcp.py"  # Clank's MCP server as this Clank has it
 CURRENT_INSTRUCTIONS = f"{AGENT_CLANK}/instructions/*.md"  # Clank's instructions to every agent (design 0020 §13)
+NETWORK_INSTRUCTIONS = f"{AGENT_CLANK}/instructions/network.md"  # the agent's internet, as dev mode says (0152)
+LITERATURE = "## The literature"  # where the network instructions' rules end and the literature's calls begin
 IMAGE = "clank-sandbox"
 DEFAULT_NETWORK = "bridge"  # Docker's own, which reaches the internet: a workspace's setup only
 LAYERS = ("tex",)  # the image layers Clank knows (design 0020 §3), in the order they are built
@@ -295,15 +303,35 @@ def image_folder() -> Path:
     return Path(str(resources.files("clank.components.workspaces").joinpath("image")))
 
 
-def agent_files() -> list[tuple[str, str]]:
+def agent_files(dev_mode: bool = False) -> list[tuple[str, str]]:
     """Clank's files for the agent, as this Clank has them, each with its path in the container (design 0018 §7.5):
-    its MCP server and the module it imports, and its instructions."""
+    its MCP server and the module it imports, and its instructions, the network's as dev mode says (decision 0152)."""
     folder = image_folder()
     found = [(f"{AGENT_CLANK}/mcp/{name}", (folder / name).read_text(encoding="utf-8"))
              for name in ("phone_mcp.py", "find_figures.py")]  # fmt: skip
-    found += [(f"{AGENT_CLANK}/instructions/{rules.name}", rules.read_text(encoding="utf-8"))
+    found += [network_file(dev_mode) if rules.name == "network.md"
+              else (f"{AGENT_CLANK}/instructions/{rules.name}", rules.read_text(encoding="utf-8"))
               for rules in sorted((folder / "instructions").glob("*.md"))]  # fmt: skip
     return found
+
+
+def network_instructions(dev_mode: bool = False) -> str:
+    """The agent's network instructions (design 0024 §3 and §6): `instructions/network.md` as it is; in dev mode
+    (decision 0152) with the rules of `instructions/dev/network.md` in place of its first part (every public host at
+    once, with no question and no wait; private addresses still never), its literature's calls kept."""
+    folder = image_folder() / "instructions"
+    text = (folder / "network.md").read_text(encoding="utf-8")
+    if not dev_mode:
+        return text
+    rules = (folder / "dev" / "network.md").read_text(encoding="utf-8")
+    _, heading, literature = text.partition(LITERATURE)
+    return f"{rules.rstrip()}\n\n{heading}{literature}" if heading else rules
+
+
+def network_file(dev_mode: bool = False) -> tuple[str, str]:
+    """The agent's network instructions as dev mode says, with their path in the container: one file either way, so
+    writing it again leaves none of dev mode's words once it is off (decision 0152)."""
+    return NETWORK_INSTRUCTIONS, network_instructions(dev_mode)
 
 
 def image_tag() -> str:

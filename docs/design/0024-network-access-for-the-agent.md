@@ -12,13 +12,13 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 
 | § | Section | Status |
 | --- | --- | --- |
-| 1 | The rule: through Clank, by allowance | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)): the allowances, `clank workspace allow --host`; the console's and VS Code's keys with §4 |
+| 1 | The rule: through Clank, by allowance | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)): the allowances, `clank workspace allow --host`; the console's and VS Code's keys with §4; revised after approval 2026-10-29 (the owner's request: dev mode lifts the allowances, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
 | 2 | The way out: a forward proxy at the gateway | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)); revised after approval 2026-10-26 (the edge made again joins every workspace's network back) |
-| 3 | A host the agent asks for | Approved 2026-10-26; built 2026-10-26 ([plan s54](../plans/s54-the-ask.md)) |
-| 4 | What the owner sees | Approved 2026-10-26; built 2026-10-26 ([plan s56](../plans/s56-the-network-views.md)) but the Monitor's fetching line, which comes with the Monitor's move to the stream (design 0023 step 4) |
+| 3 | A host the agent asks for | Approved 2026-10-26; built 2026-10-26 ([plan s54](../plans/s54-the-ask.md)); revised after approval 2026-10-29 (the owner's request: nothing held or asked in dev mode, and the instructions say so, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
+| 4 | What the owner sees | Approved 2026-10-26; built 2026-10-26 ([plan s56](../plans/s56-the-network-views.md)) but the Monitor's fetching line, which comes with the Monitor's move to the stream (design 0023 step 4); revised after approval 2026-10-29 (the owner's request: This folder and the log say dev mode, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
 | 5 | Packages, papers, data: the named sets | Approved 2026-10-26; built 2026-10-26 ([plan s55](../plans/s55-the-named-sets.md)): the file, `clank workspace allow --set`; the console's key with the views |
-| 6 | Search | Approved 2026-10-26; the literature calls built 2026-10-26 in the agent's instructions ([plan s55](../plans/s55-the-named-sets.md)); a web search provider is the owner's choice, when the need shows |
-| 7 | What is never reached | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)) |
+| 6 | Search | Approved 2026-10-26; the literature calls built 2026-10-26 in the agent's instructions ([plan s55](../plans/s55-the-named-sets.md)); a web search provider is the owner's choice, when the need shows; revised after approval 2026-10-29 (the owner's request: OpenCode's own web tools in dev mode, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
+| 7 | What is never reached | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)); revised after approval 2026-10-29 (the owner's request: private addresses refused in dev mode too, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
 | 8 | Order of work | Approved 2026-10-26 |
 
 ## 1. The rule: through Clank, by allowance
@@ -31,7 +31,13 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 - **The owner allows** from the console's This folder page, `clank workspace allow --host NAME`, VS Code, and the
   phone later; takes an allowance back the same way; and sees every allowance in the workspace's record.
 - **Deny wins** (decision 0018): a host both allowed and denied is denied; a host in §7 is denied whatever the record
-  says.
+  or dev mode says.
+- **Dev mode lifts the allowances** (revised after approval 2026-10-29, the owner's request; decision 0152). While the
+  runtime's `dev_mode` is on (design 0016 §4), the proxy lets every public host out at once, for every workspace,
+  whatever its record says, without the ask of §3. The record is never rewritten: its allowances apply again from the
+  next connection once dev mode is off. The gateway reads dev mode with its routes, every second, beside the
+  allowances, so a running workspace follows it with no container restarted; a connection already open when it is
+  turned off finishes. An exchange dev mode let out is logged with why `dev mode` (§4). §7 applies as always.
 
 ## 2. The way out: a forward proxy at the gateway
 
@@ -76,6 +82,13 @@ This design opens the network the way Clank opens everything: visibly, by the ow
   without it.
 - The hold costs the agent a wait, not a failure: a `pip install` or a `curl` that the owner allows within the minute
   simply succeeds.
+- **Not in dev mode** (revised after approval 2026-10-29, the owner's request; decision 0152): the owner was in
+  OpenCode's window, never saw the question, and the agent's `git clone` failed. While dev mode is on nothing is held
+  or asked (§1); a connection held when dev mode is turned on goes out at once, its question left to expire. The
+  instructions (`network.md`) are written as dev mode says: with it, that every public host answers at once, with no
+  question and no wait, and that private addresses still never do (their first part from `instructions/dev/network.md`
+  in place of the normal one). They are written at each start of the agent, as dev mode says then, and again in every
+  running workspace's container whenever dev mode changes, so no dev mode instruction is left once it is off.
 
 ## 4. What the owner sees
 
@@ -84,7 +97,10 @@ This design opens the network the way Clank opens everything: visibly, by the ow
   log` and `clank network hosts`.
 - **The Monitor's Now panel** says when the session's agent is fetching ("fetching `export.arxiv.org` · 1.2 MB · 3 s"),
   from the proxy's exchanges in flight, joined to the session as its model requests are (design 0012 §3).
-- **This folder** lists the workspace's allowed hosts under its software, with `h` to allow or take one back.
+- **This folder** lists the workspace's allowed hosts under its software, with `h` to allow or take one back; while
+  dev mode is on, that its agent reaches every public host, the allowances kept for when it is off (revised after
+  approval 2026-10-29, decision 0152). An exchange dev mode let out says so in the Network view and `clank network
+  log` (its why, `dev mode`), as an asked one says how it was answered.
 - The log is a file a day under `logs/network/`, kept `KEEP_DAYS` (30) as the gateway's records are; the phone's log
   shows it later.
 
@@ -116,12 +132,18 @@ Search is not a host but a provider, and a choice of the owner's:
   another), an MCP tool `search_web` served by the gateway, each query recorded with its cost; the owner adds it if the
   literature APIs are not enough. A self-hosted search engine in a container is the other way, heavier and keyless;
   **Choice**: the owner decides which, when the need shows.
+- **OpenCode's own web tools in dev mode** (revised after approval 2026-10-29, the owner's request; decision 0152):
+  its configuration denies `webfetch` and `websearch` but in dev mode, where it allows both, from OpenCode's next start
+  in a folder (a window already open keeps what it started with). `webfetch` goes through the proxy as any request
+  does; `websearch` is OpenCode's own, with its own search provider (whether OpenCode 1.19.4 offers it with Clank's
+  provider is to be checked with the image's OpenCode).
 
 ## 7. What is never reached
 
 - **Private addresses**: the machine (`host.docker.internal`, the host's own addresses), the local networks (the RFC
   1918 ranges, link-local, the tailnet's range), other containers; the proxy refuses them before resolving and after
-  (a public name that resolves to a private address is refused too).
+  (a public name that resolves to a private address is refused too), dev mode or not (revised after approval
+  2026-10-29, decision 0152: dev mode opens the internet, never Clank's own service or the owner's network).
 - **The gateway and the service**: reached only on the edge's gateway port as today, never through the proxy.
 - **Plain HTTP to a host allowed for HTTPS** is allowed (the allowance is the host's), but recorded with its path.
 - The proxy never opens a tunnel's bytes, keeps no body, and holds no credential of the owner's: a site that needs a
@@ -156,3 +178,10 @@ by the owner's allowances per workspace and host; private addresses are refused 
   edge is now kept on every workspace's network whatever makes it again, the service's check of Docker puts it back
   when it is not there, starting an agent puts it right first, and the views say a workspace cut off from the model
   (design 0004 §3, revised the same day).
+- **2026-10-29, §1, §3, §4, §6 and §7 revised after approval:** at the owner's request ("the model is having trouble
+  doing the benchmark that I have assigned it because it has no ability to git clone and the network is blocked. In
+  dev mode, these types of restrictions should be completely lifted"), decision 0152: in dev mode (design 0016 §4) the
+  proxy lets every public host out at once, without the ask, each exchange logged with why `dev mode`; OpenCode may
+  use `webfetch` and `websearch` from its next start; the instructions say so and are written again whenever dev mode
+  changes; This folder says the agent reaches every public host; private addresses stay refused
+  ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)).

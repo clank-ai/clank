@@ -2,7 +2,8 @@
 
 - Status: Accepted (the owner's instruction of 2026-10-29: "We should have a 'dev mode' that allows us to override the
   privacy default"); refines [0109](0109-what-clank-sends-openrouter.md), whose policy (no data-keeping providers)
-  stays the default
+  stays the default; extended by [0152](0152-dev-mode-opens-the-agents-internet.md) (dev mode also opens the agent's
+  internet)
 - Date: 2026-10-29
 
 ## Context

@@ -4,7 +4,8 @@ right after it), and a `Follower`, in a thread of its own, follows the one event
 `event` update, and the topics it touches (`questions`, `operations`, `docker`, `machine`, `service`, the runtime's
 `slots`, `presets`, `engines`, `launches` and `hosts`, the MCP servers, `mcp`, those of the folder the console was
 started in included, the Monitor's Watch for `marks`, and the cloud's: whether a model is `usable`, the providers,
-`endpoints`, and the `cost`, design 0016 §11 and §14; `clank setup`'s checklist, `setup`, design 0028 §4) are read
+`endpoints`, and the `cost`, design 0016 §11 and §14; dev mode, `dev`, decisions 0149 and 0152, which opens the agent's
+internet whatever providers there are; `clank setup`'s checklist, `setup`, design 0028 §4) are read
 again from the API by a second thread, each once however many events touched it meanwhile, so a burst of events costs a
 few reads and the screen's thread never calls the API. A live log line becomes `log`, who is connected `clients`, and
 each reading of the machine's meters (`machine.meters`, once a second) `meter`, kept with the last `METERS` (`meters`,
@@ -14,7 +15,7 @@ service stopping (`closing`), becomes `connection` False, and the service is tri
 answers again, or when the stream says the console fell behind (`reset`), everything is read again (`all`). The app
 takes the updates off the queue at most four times a second and `apply`s them, which caps its redraws. A service
 without the cloud's routes (one older than the console) leaves those three unknown (None) rather than failing the load,
-and one without the setup's route its checklist.
+one without the setup's route its checklist, and one without dev mode's its `dev`.
 """
 
 import contextlib
@@ -38,9 +39,9 @@ LAUNCHES = 20
 METERS = 300  # the readings kept: five minutes, as the service keeps them
 TOPICS = (
     "service", "docker", "machine", "questions", "operations", "slots", "presets", "engines", "launches", "hosts",
-    "mcp", "meters", "activity", "marks", "usable", "endpoints", "cost", "setup",
+    "mcp", "meters", "activity", "marks", "usable", "endpoints", "cost", "setup", "dev",
 )  # fmt: skip
-OPTIONAL = {"usable", "endpoints", "cost", "setup"}  # unknown (None) from a service without their routes
+OPTIONAL = {"usable", "endpoints", "cost", "setup", "dev"}  # unknown (None) from a service without their routes
 PATHS = {
     "activity": "gateway/activity",
     "slots": "runtime/slots",
@@ -52,6 +53,7 @@ PATHS = {
     "endpoints": "runtime/endpoints",
     "cost": "gateway/cost",
     "setup": "setup",
+    "dev": "runtime/dev",
 }
 GATEWAY_COST = ("gateway.cost", "gateway.limit_warned", "gateway.limit_reached", "gateway.limit_raised")
 # What ends with an engine or a model file put on a host, or taken off: the engines' installs change.
@@ -88,6 +90,7 @@ class ConsoleData:
     endpoints: list[dict[str, Any]] | None = None  # the cloud providers (design 0016 §4); None: not known
     cost: dict[str, Any] | None = None  # the cloud's spending today and this month, the limits, a pause (§11)
     setup: dict[str, Any] | None = None  # `clank setup`'s checklist (design 0028 §4); None: not known
+    dev: dict[str, Any] | None = None  # dev mode: on or off, and its words (decisions 0149, 0152); None: not known
     kinds: list[dict[str, Any]] = field(default_factory=list)
     connected: bool = False
     last_event: int = 0
@@ -189,8 +192,8 @@ def touched(event: dict[str, Any]) -> list[str]:
             return ["mcp"]
         if subject == "workspace":
             return ["setup"]
-        if subject == "runtime":  # dev mode, which each provider's view says (decision 0149)
-            return ["endpoints"]
+        if subject == "runtime":  # dev mode, which each provider's view says, and the header (decision 0152)
+            return ["endpoints", "dev"]
     return []
 
 

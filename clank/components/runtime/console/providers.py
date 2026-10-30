@@ -16,8 +16,10 @@ most once a minute by the service), Clank's spending today and this month agains
 presets; or, without one, how to add one. `a` opens Add a model at Cloud; `k` sets the key again in a hidden field (`PUT
 /runtime/endpoints/openrouter/key`); `c` checks the provider (an operation; its items in a window); `o` changes the data
 policy, asked first (`PATCH`); `L` sets the cost limits in a form (`PUT /gateway/cost/limits`); `D` turns dev mode on or
-off, asked first (`PUT /runtime/dev`, decision 0149); `r` removes the provider with its key, asked first, and says why
-not while a preset or the main slot uses it.
+off, asked first in words that say both its halves and when each applies (`PUT /runtime/dev`, decisions 0149 and 0152:
+any provider, and every public host for the agent), with or without a provider, since dev mode opens the agent's
+internet with a local model too; `r` removes the provider with its key, asked first, and says why not while a preset or
+the main slot uses it.
 """
 
 import json
@@ -150,7 +152,7 @@ class ProvidersPage(Page):
             "c", "check", "check it", "check the cloud provider: its key, its account, a short request, a tool call"
         ),
         PageKey("o", "policy", "data policy", "only providers that keep no data, or any"),
-        PageKey("D", "dev", "dev mode", "for testing: any provider for every request, whatever the record says"),
+        PageKey("D", "dev", "dev mode", "for testing: any provider for every request, every public host for the agent"),
         PageKey("L", "limits", "cost limits", "the cloud's daily and monthly cost limits"),
         PageKey("r", "remove", "remove it", "remove the cloud provider, with its key"),
         PageKey("i", "install", "install an engine"),
@@ -199,7 +201,7 @@ class ProvidersPage(Page):
             "r": self._remove_provider,
         }
         if key in cloud:
-            if key != "a" and not self._provider():
+            if key not in ("a", "D") and not self._provider():  # dev mode opens the agent's internet too (0152)
                 self.console.say("there is no cloud provider: a adds one", True)
             else:
                 cloud[key]()
@@ -415,16 +417,30 @@ class ProvidersPage(Page):
         self.console.push_screen(ConfirmScreen(f"Ask OpenRouter for data_collection {policy}?", lines), answered)
 
     def _dev(self) -> None:
-        on = not (self._provider() or {}).get("dev_mode")
+        known = self.console.data.dev
+        on = not (known.get("on") if known is not None else (self._provider() or {}).get("dev_mode"))
         body = {"on": on}
-        said = (
-            "For testing: every request then goes to any of the model's providers, those that may keep or train on "
-            "what they are sent too (data_collection allow), whatever the provider's record says; the header says dev "
-            "mode."
-            if on
-            else "Every request then goes as the provider's record says (its policy, above)."
-        )
-        lines = [said, "It applies from the next request.", f"The call: PUT /api/v1/runtime/dev {json.dumps(body)}"]
+        if on:
+            said = (
+                "For testing: every cloud request then goes to any of the model's providers, those that may keep or "
+                "train on what they are sent too (data_collection allow), whatever the provider's record says; and "
+                "every workspace's agent reaches every public host at once, without a question (private addresses, "
+                "this machine and your network, still never). The header says dev mode."
+            )
+            when = (
+                "From the next cloud request and the agent's next connection; OpenCode fetches and searches the web "
+                "from its next start in a folder (a window already open, once it starts again)."
+            )
+        else:
+            said = (
+                "Every cloud request then goes as its provider's record says, and each workspace's agent reaches only "
+                "the hosts allowed for it, a host not allowed asked for."
+            )
+            when = (
+                "From the next cloud request and the agent's next connection; OpenCode's web tools are refused from "
+                "its next start in a folder."
+            )
+        lines = [said, when, f"The call: PUT /api/v1/runtime/dev {json.dumps(body)}"]
         turned = "on" if on else "off"
 
         def answered(yes: bool | None) -> None:

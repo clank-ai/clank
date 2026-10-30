@@ -60,9 +60,10 @@ class Shout(socketserver.BaseRequestHandler):
 
 
 class Served:
-    """The proxy and its upstreams on this machine, with a resolver that maps the test's names to them."""
+    """The proxy and its upstreams on this machine, with a resolver that maps the test's names to them; dev mode as
+    `dev_mode` says, when given (decision 0152)."""
 
-    def __init__(self, folder: Path, ask: Ask | None = None) -> None:
+    def __init__(self, folder: Path, ask: Ask | None = None, dev_mode: Callable[[], bool] | None = None) -> None:
         self.pages = ThreadingHTTPServer(("127.0.0.1", 0), Page)
         self.shouts = socketserver.ThreadingTCPServer(("127.0.0.1", 0), Shout)
         self.shouts.daemon_threads = True
@@ -73,6 +74,7 @@ class Served:
         self.proxy = Proxy(
             hosts=HOSTS.get, token_of=lambda workspace: TOKENS.get(workspace, ""), log=self.log,
             resolve=self.resolve, private=lambda ip: ip != "127.0.0.1" and private_address(ip), ask=ask,
+            dev_mode=dev_mode,
         )  # fmt: skip
         self.loop = asyncio.new_event_loop()
         self.ready = threading.Event()

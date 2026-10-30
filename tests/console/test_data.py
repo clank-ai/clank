@@ -5,7 +5,8 @@ the follower ends it at once. Design 0013 §7: a window told its model changed b
 says it at once. Design 0016 §11 and §14: whether a model is usable, the cloud providers and the cloud's cost are read
 at the start (unknown from a service without their routes), and again on the events that change each, and only those.
 Design 0028 §4: so is `clank setup`'s checklist, again whenever Docker, a slot, an operation's end or a workspace's
-record changes."""
+record changes. Design 0016 §15 (decision 0152): and dev mode, which the header shows whatever providers there are,
+read again with the providers whenever the runtime's settings change."""
 
 import queue
 import threading
@@ -258,9 +259,26 @@ def test_each_cloud_event_touches_its_part_and_only_its_part() -> None:
         "slots", "launches", "usable", "setup",
     ]  # fmt: skip
     assert console_data.touched(event("settings.changed", {"kind": "preset", "id": "x"})) == ["presets", "usable"]
+    assert console_data.touched(event("settings.changed", {"kind": "runtime", "id": "runtime"})) == [
+        "endpoints", "dev",
+    ], "dev mode, which each provider's view says, and the console reads itself"  # fmt: skip
     assert console_data.touched(event("workspaces.cloud_answered", {"kind": "workspace", "id": "paper"})) == [], (
         "a workspace's answer is the folder page's to read"
     )
+
+
+def test_dev_mode_is_read_at_the_start_and_again_when_it_is_turned_on(
+    client: Client, kernel: Kernel, cloud_api: CloudBench
+) -> None:
+    data = load(client)
+    assert data.dev is not None
+    assert data.dev["on"] is False
+    assert data.dev["said"].startswith("Dev mode is off")
+    with following(client, kernel.events.last_id()) as updates:
+        take(updates, lambda update: update.topic == "connection")
+        client.put("runtime/dev", {"on": True})
+        taken = take(updates, lambda update: update.topic == "dev" and update.data["on"])
+    assert taken[-1].data["said"].startswith("Dev mode is on")
 
 
 def test_a_key_set_brings_the_fresh_providers_and_whether_a_model_is_usable(

@@ -69,7 +69,7 @@ class GivenKey(BaseModel):
 
 
 class DevMode(BaseModel):
-    """Dev mode on or off (decision 0149)."""
+    """Dev mode on or off (decisions 0149 and 0152)."""
 
     on: bool
 
@@ -81,13 +81,15 @@ def router(runtime: "Runtime") -> APIRouter:
 
     @routes.get("/runtime/dev")
     def dev_mode() -> dict[str, Any]:
-        """Dev mode (decision 0149): whether every cloud provider is asked for any of a model's providers, and what
-        that means, in words."""
+        """Dev mode (decisions 0149 and 0152): whether it is on, and what that means, in words.
+
+        While it is on, every cloud provider is asked for any of a model's providers, and the agent reaches every public
+        host."""
         return endpoints.dev_view()
 
     @routes.put("/runtime/dev")
     def set_dev_mode(asked: DevMode, request: Request) -> dict[str, Any]:
-        """Turn dev mode on or off, recorded with who did it; the next request goes so."""
+        """Turn dev mode on or off, recorded with who did it; the next request and connection go so."""
         return endpoints.set_dev(asked.on, actor=client_actor(request.headers.get(CLIENT_HEADER)))
 
     @routes.get("/runtime/endpoints")

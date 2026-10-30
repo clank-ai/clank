@@ -66,6 +66,7 @@ from clank.components.workspaces.sandbox import EDGE_ALIAS, LAYERS, image_tag, l
 from clank.components.workspaces.sandbox import PHONE_PROGRAM as PHONE_PROGRAM
 from clank.components.workspaces.sandbox import WORKSPACE as WORKSPACE  # for the agents (design 0007)
 from clank.components.workspaces.sandbox import agent_files as agent_files
+from clank.components.workspaces.sandbox import network_file as network_file  # for the agents (decision 0152)
 from clank.components.workspaces.setup import proposed_setup
 from clank.kernel.clock import to_text
 from clank.kernel.core import Kernel

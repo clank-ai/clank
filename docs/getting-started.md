@@ -294,6 +294,15 @@ too ([openrouter.ai/settings/privacy](https://openrouter.ai/settings/privacy)). 
 until you buy 10 credits once (then 1,000 a day, and the credits stay for paid models); an agent's task can take
 dozens of requests.
 
+Dev mode also opens the agent's internet, for testing with any model, local or cloud: every workspace's agent
+reaches every public host at once, with no question and no wait (a benchmark's `git clone`, a `pip install`), and
+OpenCode may use its own web tools (`webfetch`, `websearch`). Private addresses (your machine, your network, your
+tailnet) are still never reached, and every exchange is still logged (`clank network log`). The agent's connections
+follow dev mode from the next one, with nothing restarted, and its instructions in each running workspace are
+written again at once; OpenCode's web tools come with its next start in a folder, so a window already open gets
+them when it starts again. The header's pill says `dev mode: any provider, any host` (`dev mode` when the terminal
+is narrow).
+
 ## 4b. A model on your own GPU
 
 Clank runs local models with llama.cpp or KVMem (an engine that keeps a long context partly in system memory). This
@@ -358,6 +367,10 @@ question shows under **Waiting for you** (`y` allows it always for the workspace
 not asked again for ten minutes); refused, the agent reads why in plain words. Private addresses (your machine, your
 network) are never reached. Every exchange is logged in `logs/network/` by host, status, bytes and time, never by
 content. A workspace made before this gets the proxy when it is next stopped and opened.
+
+For testing, **dev mode** (`clank dev on`, above) lifts the allowances and the question: every public host goes out
+at once for every workspace, each exchange logged with why `dev mode`; private addresses stay refused. `clank dev
+off` brings the allowances back from the agent's next connection.
 
 ### Boards: lay out figures with the agent
 
@@ -476,6 +489,7 @@ Clank says why and what to do. The usual ones:
 | `clank` is not found | Open a new terminal after the installer (`uv tool update-shell` put it on the path of new ones) |
 | "Docker is stopped" | Start Docker: Docker Desktop on Windows and macOS (or `clank docker start`); on Linux, `sudo systemctl start docker` |
 | A workspace says its container uses an older sandbox image | Reopen it: F6, `x`, then `o` |
+| The agent's `git clone`, `pip install` or `curl` fails with 403, "… is not allowed for the workspace" | The host is not allowed for that workspace, and its question (under **Waiting for you** in the console, not in OpenCode's window) was not answered within the minute: allow the host (`clank workspace allow FOLDER --host NAME`, or `--set code` for GitHub), or, for testing, turn dev mode on (`clank dev on`): every public host then goes out at once |
 | F10 opens your terminal's menu instead of the Monitor | `clank console --page monitor` |
 | The key is refused (401; OpenRouter says "Missing Authentication header" for a key it does not know) | Paste it again, whole (it is shown once, at openrouter.ai, Keys), or make a new key and add it (`clank endpoint key openrouter`) |
 | "No credits" (402) | Add credits at OpenRouter, or pick a free model |

@@ -46,7 +46,7 @@ OpenRouter.
 | 1 | What the owner gets, and what this design takes from design 0015 | Approved 2026-10-20 for building, the owner's go-ahead |
 | 2 | OpenRouter, the first cloud provider | Approved 2026-10-20 (the owner's answers: 1; decision 0102) |
 | 3 | What OpenRouter offers, as its documentation says | Approved 2026-10-20 for building, the owner's go-ahead (each fact cited; what is unsaid is marked) |
-| 4 | The provider's record, and its key | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (the owner's instruction: dev mode, decision 0149) |
+| 4 | The provider's record, and its key | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (the owner's instruction: dev mode, decision 0149; the owner's request the same day: dev mode opens the agent's internet too, decision 0152, built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md))) |
 | 5 | How the gateway gets the key | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0106) |
 | 6 | The OpenRouter adapter | Approved 2026-10-20 for building, the owner's go-ahead |
 | 7 | Cloud presets, and the main slot running one | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0107) |
@@ -57,8 +57,8 @@ OpenRouter.
 | 12 | How cost is known and kept | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0108) |
 | 13 | What the Monitor shows of a cloud model | Approved 2026-10-20 for building, the owner's go-ahead |
 | 14 | The first run: Add a model | Approved 2026-10-20 (the owner's answers: 4; decision 0105) |
-| 15 | The Providers and models page, and the other pages | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (dev mode's key and pill, decision 0149) |
-| 16 | The commands | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (`clank dev`, decision 0149) |
+| 15 | The Providers and models page, and the other pages | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (dev mode's key and pill, decision 0149; the pill's words, shown whatever providers there are, and `D` without a provider, decision 0152, built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md))) |
+| 16 | The commands | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (`clank dev`, decision 0149; what it says, decision 0152, built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md))) |
 | 17 | The phone and VS Code | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-21 (the owner's instruction: a subsection For the phone app) |
 | 18 | Tests, the fake OpenRouter, and the checks owed with a real key | Approved 2026-10-20 for building, the owner's go-ahead |
 | 19 | Build steps | Approved 2026-10-20 for building, the owner's go-ahead |
@@ -202,7 +202,10 @@ Add a model (§14) and `clank endpoint add openrouter` (§16) write it from the 
   `dev_mode`, off by default, turned on or off by `clank dev on|off`, the Providers page's `D` or
   `PUT /api/v1/runtime/dev`: while it is on, every request goes with `data_collection allow`, whatever `options`
   says, from the next request (the gateway reads it with each route, as it reads `agreed`). The record is never
-  rewritten, and its own policy applies again once dev mode is off; `zdr` stays as the record says.
+  rewritten, and its own policy applies again once dev mode is off; `zdr` stays as the record says. And (revised after
+  approval 2026-10-29, the owner's request; decision 0152) every workspace's agent reaches every public host at once,
+  without a question, from the next connection (design 0024 §1 and §3; private addresses still never, §7), and
+  OpenCode may fetch and search the web from its next start in a folder (design 0024 §6).
 
 ## 5. How the gateway gets the key
 
@@ -648,7 +651,10 @@ from there. Nothing in Add a model needs Docker.
   2, or 5 when the provider is there), `k` set the key again (the hidden field), `c` check (§6), `o` its options, `L`
   the cost limits, `r` remove the provider (asked first; refused while used); and `D` dev mode, on or off, asked
   first with the call it makes (revised after approval 2026-10-29, decision 0149), the policy line then saying dev
-  mode beside the record's own.
+  mode beside the record's own. Its window says both halves (any provider; every public host for the agent, private
+  addresses still never) and when each applies (the next request and connection; OpenCode's web tools at its next
+  start in a folder); since dev mode opens the agent's internet, `D` works without a provider too (revised after
+  approval 2026-10-29, decision 0152).
 - **Presets (9) and the picker** show a cloud preset's provider as `cloud openrouter` and its prices; a switch to it is
   a switch like any (§7).
 - **Models (8)** shows the main slot's cloud model: its provider, its window, its last health, "not reached since …".
@@ -657,7 +663,9 @@ from there. Nothing in Add a model needs Docker.
   only, and the cost of its sessions today.
 - **Requests (F7)** shows each request's cost, provider and model, and a refusal's words.
 - **Home (1)** and the header show cloud spending today and this month, a pause, and its key; the header has a pill,
-  "dev mode: any provider", while dev mode is on (decision 0149).
+  "dev mode: any provider, any host" ("dev mode" when narrow), while dev mode is on (decision 0149; its words, and
+  shown whatever providers there are: the console reads `GET /runtime/dev` itself, revised after approval 2026-10-29,
+  decision 0152).
 - **The Monitor (F10)**: §11 and §13. **The Flow view**: each box's cost, the flow's total, and a box waiting for the
   workspace's answer.
 - **MCP servers (F3)** shows each server's mark (local only, or may go to the cloud), with a key to change it.
@@ -680,7 +688,7 @@ clank workspace allow FOLDER --cloud | --local [--yes]       a workspace's bound
 clank mcp local NAME [--off]                       mark an MCP server local only, or not (§10)
 clank cost [--today | --month | --sessions | --flows] [--json]
 clank cost limit [--day USD|none] [--month USD|none]
-clank dev [on | off] [--json]                       dev mode, for testing (decision 0149): any provider, whatever the record says
+clank dev [on | off] [--json]                       dev mode, for testing: any provider, any host (decisions 0149, 0152)
 ```
 
 - Each is a client of the API (design 0002 §2.15), with `--json`. A key is never an argument (§4).
@@ -859,3 +867,9 @@ a fake of it until s34's routes land. Each task is one commit that starts with a
   whatever its status (404 or 503), pointing to OpenRouter's account settings when the request allowed any provider
   or OpenRouter names them; and a free model's daily limit is not retried, since retrying cannot help until the
   next UTC day. Both read OpenRouter's words as of 2025, *to be checked with a real key* (§18).
+- **2026-10-29, §4, §15 and §16 revised after approval:** at the owner's request ("In dev mode, these types of
+  restrictions should be completely lifted"), decision 0152: dev mode also opens the agent's internet (design 0024 §1,
+  §3, §6 and §7, revised the same day): every public host at once, without a question, private addresses still never;
+  OpenCode may fetch and search. The header's pill says "dev mode: any provider, any host", whatever providers there
+  are; `D` asks first in words that say both halves, without a provider too; `clank dev` says both
+  ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)).

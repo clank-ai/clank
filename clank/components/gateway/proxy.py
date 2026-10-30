@@ -1,5 +1,5 @@
 """The forward proxy at the gateway (design 0024 §1, §2 and §7, decision 0141): the agent's only way to the internet,
-open only to the hosts the owner allowed for its workspace.
+open only to the hosts the owner allowed for its workspace, and to every public host while dev mode is on.
 
 A workspace's container is told `HTTP_PROXY=http://<workspace>:<token>@edge:<port>` (and the same for HTTPS and ALL);
 the edge forwards the port here. The token is `network_token`: the SHA-256 HMAC of the service's local token over the
@@ -15,9 +15,14 @@ is forwarded to its host with the proxy's own headers dropped and `Connection: c
 path recorded. A host not allowed is asked for when the proxy has an `ask` (design 0024 §3: the connection held up to
 `HOLD_SECONDS` while the service asks the owner; `always` or `once` let the request out, logged as asked), else, or
 when the owner did not allow it, refused 403 with the words that say the host, the workspace and how it is
-allowed (`clank workspace allow FOLDER --host NAME`); a name that cannot be resolved 502. Every exchange is one line of
-`NetworkLog` (`logs/network/<day>.jsonl`: time, workspace, host, port, method, the path of a plain request, status,
-bytes sent and received, seconds, why refused), never a body, never a tunnel's bytes; the days older than kept are
+allowed (`clank workspace allow FOLDER --host NAME`); a name that cannot be resolved 502. While `dev_mode` says on
+(decision 0152, as the routes carry the runtime's setting), a public host not allowed goes out at once, never asked
+for, logged why `dev mode`; a connection held while the owner is asked goes out as soon as dev mode is turned on, the
+question left to expire. A private address is refused whatever the allowances or dev mode say: dev mode opens the
+internet, never this machine or the owner's network. Every exchange is one line of `NetworkLog`
+(`logs/network/<day>.jsonl`: time, workspace, host, port, method, the path of a plain request, status, bytes sent and
+received, seconds, why let out when not allowed, or why refused), never a body, never a tunnel's bytes; the days older
+than kept are
 removed when a day's first line is written; `recent` and `by_host` read it back for the owner (design 0024 §4). The
 resolver and the private check can be given (the tests reach upstreams on this machine). On Linux it is served on its
 socket too (`serve_on`, design 0014 §3), the edge's way to it on Docker Engine.
@@ -44,6 +49,8 @@ CHUNK = 65536
 HEAD_MOST = 64 * 1024  # bytes of a request's head read before it is refused as too long
 KEEP_DAYS = 30
 HOLD_SECONDS = 60  # how long a connection is held while the owner is asked about its host (design 0024 §3)
+DEV = "dev mode"  # why an exchange went out to a host not allowed: dev mode was on (decision 0152)
+DEV_LOOK_SECONDS = 0.5  # how often a connection held for the owner's answer looks whether dev mode was turned on
 PRIVATE_NAMES = ("localhost", "edge", "host.docker.internal", "gateway.docker.internal")
 PRIVATE_SUFFIXES = (".localhost", ".local", ".internal", ".home.arpa")
 # The private ranges (RFC 1918, the loopback, link-local, the carrier range 100.64/10 the tailnet uses, this host,
@@ -187,8 +194,8 @@ class Refused(Exception):
 class Proxy:
     """The forward proxy: `hosts(workspace)` is the workspace's allowances (None for an unknown workspace),
     `token_of(workspace)` its token; `ask(workspace, host)`, when given, is awaited for a host not allowed while the
-    connection is held (design 0024 §3: `always`, `once` or `no`); `resolve` and `private` as the module's unless
-    given."""
+    connection is held (design 0024 §3: `always`, `once` or `no`); `dev_mode()`, when given, says whether dev mode is
+    on now (decision 0152: every public host goes out); `resolve` and `private` as the module's unless given."""
 
     def __init__(
         self,
@@ -198,6 +205,7 @@ class Proxy:
         resolve: Resolve | None = None,
         private: Callable[[str], bool] | None = None,
         ask: Ask | None = None,
+        dev_mode: Callable[[], bool] | None = None,
     ) -> None:
         self.hosts = hosts
         self.token_of = token_of
@@ -205,6 +213,7 @@ class Proxy:
         self.resolve = resolve or resolve_name
         self.private = private or private_address
         self.ask = ask
+        self.dev_mode = dev_mode
 
     async def serve(self, host: str, port: int) -> asyncio.AbstractServer:
         """Listen on `host:port`; the server returned is the caller's to run and to close."""
@@ -278,8 +287,9 @@ class Proxy:
         return workspace
 
     async def _admitted(self, workspace: str, host: str, port: int) -> tuple[tuple[str, int], str]:
-        """The address to connect to for an allowed, public host, and why it was let out when it was asked for
-        (`asked: once`, `asked: always`; "" for a host allowed); `Refused` otherwise."""
+        """The address to connect to for a public host allowed or let out, and why it was let out when it was not
+        allowed (`asked: once`, `asked: always`, `dev mode`; "" for a host allowed); `Refused` otherwise. A private
+        address is refused first and last, whatever the allowances or dev mode say."""
         patterns = self.hosts(workspace)
         literal: str | None = None
         with contextlib.suppress(ValueError):  # a name, not an address
@@ -288,12 +298,15 @@ class Proxy:
             raise Refused(403, "private", _private(host))
         why = ""
         if not allowed_host(host, patterns or []):
-            if self.ask is None:
+            if self._dev():
+                why = DEV  # every public host, at once and never asked for (decision 0152)
+            elif self.ask is None:
                 raise Refused(403, "not allowed", _not_allowed(host, workspace))
-            decision = await self.ask(workspace, host)  # the connection held meanwhile (design 0024 §3)
-            if decision not in ("always", "once"):
-                raise Refused(403, "asked: no", _not_allowed(host, workspace, asked=True))
-            why = f"asked: {decision}"
+            else:
+                decision = await self._asked(workspace, host)  # the connection held meanwhile (design 0024 §3)
+                if decision not in ("always", "once", DEV):
+                    raise Refused(403, "asked: no", _not_allowed(host, workspace, asked=True))
+                why = DEV if decision == DEV else f"asked: {decision}"
         if literal is not None:
             return (literal, port), why
         try:
@@ -305,6 +318,27 @@ class Proxy:
         if any(self.private(address) for address, _ in found):
             raise Refused(403, "private", _private(host))
         return found[0], why
+
+    def _dev(self) -> bool:
+        """Whether dev mode is on now, as the routes say (decision 0152)."""
+        return self.dev_mode is not None and bool(self.dev_mode())
+
+    async def _asked(self, workspace: str, host: str) -> str:
+        """The owner's answer about a host not allowed (`always`, `once` or `no`), the connection held meanwhile
+        (design 0024 §3); `dev mode` as soon as dev mode is turned on while it waits (decision 0152), the question left
+        to expire. A connection whose handler is canceled (its client gone) cancels its ask."""
+        assert self.ask is not None
+        asking = asyncio.ensure_future(self.ask(workspace, host))
+        try:
+            while not asking.done():
+                if self._dev():
+                    asking.cancel()
+                    return DEV
+                await asyncio.wait({asking}, timeout=DEV_LOOK_SECONDS)
+        except BaseException:
+            asking.cancel()
+            raise
+        return asking.result()
 
     async def _tunnel(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, address: tuple[str, int]

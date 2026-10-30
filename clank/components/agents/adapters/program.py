@@ -84,10 +84,12 @@ class AgentProgram(Adapter):
         model: AgentModel,
         servers: Mapping[str, Server] | None = None,
         read_only: Mapping[str, Sequence[str]] | None = None,
+        web: bool = False,
     ) -> tuple[str, str]:
         """Its configuration for a model and the MCP servers it gets (each started by a command in the container), with
-        the tools of each server its last check marks read-only (all a planner may use, design 0009 §3): the file's
-        path in the container (under `HOME`) and its text."""
+        the tools of each server its last check marks read-only (all a planner may use, design 0009 §3), and its own
+        web tools allowed when `web` says so (dev mode, decision 0152): the file's path in the container (under
+        `HOME`) and its text."""
 
     def compaction(self, window: int, output: int, margin: int = 0) -> Compaction | None:
         """When it compacts a conversation for a model's window and output limit, told the window less `margin`, and

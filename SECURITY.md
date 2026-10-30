@@ -27,8 +27,10 @@ Clank is in beta: fixes go into the newest version only.
   as an ordinary user with no added capabilities and limits on CPU, memory and processes, and is on an internal
   network of its own: it reaches the model through Clank's gateway, and the internet only through Clank's proxy, to
   the hosts you allowed for that workspace (`clank network`; a host it asks for waits for your answer, and every
-  exchange is in `clank network log`). Installing a folder's software runs in a separate container Clank starts,
-  asking first.
+  exchange is in `clank network log`). Dev mode, which you turn on for testing (`clank dev on`, shown in the
+  console's header), lets every public host out at once instead; a private address (your computer, your network,
+  your tailnet) is refused in dev mode too. Installing a folder's software runs in a separate container Clank
+  starts, asking first.
 - **The gateway** records every request, and sends a workspace's work to a cloud provider only after you agreed to
   that provider once and allowed that workspace; content marked local (Notion, and the MCP servers you mark) is kept
   from the cloud.

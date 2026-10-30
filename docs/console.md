@@ -38,8 +38,10 @@ same checklist in a terminal, without the service if need be, and `clank setup` 
 5. **Hosts** (`h`): the internet hosts the workspace's agent may reach through Clank's proxy, listed under "Then
    work" (design 0024). `h` allows a named set (papers, python, code, data, docs: each says what it opens) or a
    host by name, or takes one back; a host the agent reaches without an allowance holds its request while a
-   question waits for you (`y` always, `o` once, `n` no). **Requests** (F7) shows every exchange with `n`, and
-   `clank network log` and `clank network hosts` the same from the command line.
+   question waits for you (`y` always, `o` once, `n` no), except in dev mode (`D` on Providers and models), where
+   every public host goes out at once and private addresses still never (decision 0152). **Requests** (F7) shows
+   every exchange with `n` (why each went out or was refused, `dev mode` among them), and `clank network log` and
+   `clank network hosts` the same from the command line.
 6. Then `a` starts OpenCode in this terminal (leave it with `/exit`: the console comes back), or `c`
    opens the folder in Clank's VS Code window: your files on the left, OpenCode in a terminal at the right edge (kept
    there: a window that had it elsewhere moves it back, and a reloaded window never starts a second one).
@@ -125,7 +127,7 @@ clank flow run <name>                                 # or run it from the comma
 
 | Part | Where | What it shows |
 | --- | --- | --- |
-| Header | `clank/console/header.py` | Clank's name, the folder's name, a pill per part that runs (`PILLS`), each in its state's color (and dev mode's while it is on, decision 0149), a spinner while something runs. |
+| Header | `clank/console/header.py` | Clank's name, the folder's name, a pill per part that runs (`PILLS`), each in its state's color, and dev mode's while it is on, whatever providers there are: "dev mode: any provider, any host" ("dev mode" when narrow; decisions 0149 and 0152: any cloud provider, and every public host for the agent, private addresses still never); a spinner while something runs. |
 | Menu | `clank/console/app.py` (`_menu`), `clank/console/menu.py` (`PLANNED`) | Every page with its key, then the pages later milestones bring, in red. |
 | Keys bar | `clank/console/keysbar.py` (`KeysBar`), `clank/console/keys.py` (`ANYWHERE`, `fit_keys`), each page's `KEYS` | The keys of the page on screen, then the keys that act anywhere, each a button; when narrow, `f5`, `q` and the palette go first, then the page's keys from the right, and `?` and `f1` always stay. Help (F1) and `?` read the same declarations. |
 | Buttons | `clank/console/buttons.py` (`Buttons`, `button`, `lay_out`, `from_keys`) | Every key the console shows is a button (design 0011 §12): a group is one widget that takes the focus, a row or a column with its own cursor; a button pressed goes through the console's one door (`ClankConsole.press_button`), as its key typed does. |
