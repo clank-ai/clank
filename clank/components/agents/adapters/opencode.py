@@ -30,13 +30,18 @@ with the instructions of `prompts/implement.md` (§5). Every agent also reads Cl
 (`/home/agent/.clank/instructions/`, written at each start: design 0018 §7.5): how a file is opened for the owner, and
 the LaTeX rules (design 0020 §13).
 
-It compacts a session once a step's total (its prompt and its answer) reaches the window it is told less the output
-limit, counted up to 32,000 (its `session/overflow.ts`), and a compaction keeps a summary and the newest turns up to
-min(15,000, max(2,000, a quarter of that)) (its `session/compaction.ts`), as read in OpenCode 1.19.0 (design 0012
-§4.1); Clank turns neither `compaction.auto` off nor `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX` on, which would change
-the rule. It cuts each tool's output at 2,000 lines or 51,200 bytes, the rest saved to a file (its `Truncate`), which
-the margin's default is chosen by (decision 0089). Told the engine's window itself, a step that ended just under the
-line had its results push the next request and its answer's room past the window, and KVMem refused it.
+It caps each answer at 32,000 tokens (its `OUTPUT_TOKEN_MAX`) unless `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX` says
+more: each request's `max_tokens` is the smaller of the model's output limit and that cap (its `provider/transform.ts`,
+`session/llm/request.ts`). So for a model whose output limit is above 32,000, Clank sets the variable to that limit
+when OpenCode starts (`env`, `OUTPUT_VARIABLE`), and says so (`env_said`; decision 0153, design 0016 §7). It compacts a
+session once a step's total (its prompt and its answer) reaches the window it is told less that same output limit (its
+`session/overflow.ts`, checked before each step), all of it once Clank lifted the cap; and a compaction keeps a summary
+and the newest turns up to min(15,000, max(2,000, a quarter of the window less the output limit counted up to 32,000,
+whatever the variable)) (its `session/compaction.ts`), as read in OpenCode 1.19.4's source, the image's version (design
+0012 §4.1). Clank never turns `compaction.auto` off, which would change the rule. It cuts each tool's output at 2,000
+lines or 51,200 bytes, the rest saved to a file (its `Truncate`), which the margin's default is chosen by (decision
+0089). Told the engine's window itself, a step that ended just under the line had its results push the next request
+and its answer's room past the window, and KVMem refused it.
 """
 
 import json
@@ -70,9 +75,16 @@ READING = (
 # A reading command redirected, substituted or told to write a file is refused. OpenCode checks each part of a chained
 # or piped command on its own (measured, 1.19.0): reading commands piped together run, and any other part is refused.
 GUARDS = ("*>*", "*$(*", "*`*", "*--output*")
-OUTPUT_COUNTED = 32_000  # the output limit OpenCode keeps room for, at most (its OUTPUT_TOKEN_MAX)
+OUTPUT_COUNTED = 32_000  # OpenCode's own cap on an answer (its OUTPUT_TOKEN_MAX), unless OUTPUT_VARIABLE says more
+OUTPUT_VARIABLE = "OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX"  # set to an output limit above that cap (decision 0153)
 KEPT_MOST, KEPT_LEAST = 15_000, 2_000  # what a compaction keeps of the newest turns, at most and at least
 UNSAFE = re.compile(r"[^a-zA-Z0-9_-]")  # what OpenCode replaces in an MCP tool's name
+
+
+def counted_output(output: int) -> int:
+    """The output limit OpenCode keeps room for in its compaction line and sends as an answer's most: all of it, since
+    Clank lifts OpenCode's own cap of 32,000 above it (decision 0153); 32,000 when none is told."""
+    return output or OUTPUT_COUNTED
 
 
 CLANK_INSTRUCTIONS = CURRENT_INSTRUCTIONS  # Clank's to every agent, in the container (design 0018 §7.5)
@@ -135,28 +147,48 @@ class OpenCode(AgentProgram):
         """Its terminal interface; with `port`, its API served there on the container's loopback."""
         return ["opencode", *(["--port", str(port), "--hostname", "127.0.0.1"] if port else [])]
 
-    def env(self) -> dict[str, str]:
-        """Offline: nothing fetched, nothing shared, nothing watched."""
-        return dict(ENVIRONMENT)
+    def env(self, model: AgentModel | None = None) -> dict[str, str]:
+        """Offline: nothing fetched, nothing shared, nothing watched; and, for a model whose output limit is above
+        OpenCode's own cap of 32,000, that limit as its cap (`OUTPUT_VARIABLE`, decision 0153)."""
+        found = dict(ENVIRONMENT)
+        if model is not None and model.output > OUTPUT_COUNTED:
+            found[OUTPUT_VARIABLE] = str(model.output)
+        return found
+
+    def env_said(self, model: AgentModel) -> list[str]:
+        """Its cap lifted to the model's output limit, in words, when `env` lifts it."""
+        if model.output <= OUTPUT_COUNTED:
+            return []
+        return [
+            f"OpenCode may send up to {model.output:,} tokens an answer: Clank sets {OUTPUT_VARIABLE} to the most "
+            f"output, OpenCode's own cap being {OUTPUT_COUNTED:,}"
+        ]
 
     def files(self) -> list[tuple[str, str]]:
         """Its configuration folder's `.npmrc` (`NPMRC`): its own background installs offline, failing at once."""
         return [(f"{self.HOME}/.config/opencode/.npmrc", NPMRC)]
 
     def compaction(self, window: int, output: int, margin: int = 0) -> Compaction:
-        """Once a step's total reaches the window it is told (the window less `margin`) less the output limit
-        (counted up to 32,000); a summary and the newest turns kept, up to a quarter of that, between 2,000 and 15,000
-        tokens (module docstring)."""
-        line = window - margin - min(output or OUTPUT_COUNTED, OUTPUT_COUNTED)
-        keeps = min(KEPT_MOST, max(KEPT_LEAST, line // 4))
+        """Once a step's total reaches the window it is told (the window less `margin`) less the output limit, all of
+        it (`counted_output`: Clank lifts OpenCode's own cap above 32,000); a summary and the newest turns kept, up to
+        a quarter of the window told less the output limit counted up to 32,000 (OpenCode counts its cap there,
+        whatever the variable), between 2,000 and 15,000 tokens (module docstring)."""
+        counted = counted_output(output)
+        line = window - margin - counted
+        keeps = min(KEPT_MOST, max(KEPT_LEAST, (window - margin - min(counted, OUTPUT_COUNTED)) // 4))
         told = (
             f"the window it is told (the engine's less {margin:,} kept for one step's tool results)"
             if margin
             else "the window"
         )
+        lifted = (
+            f" (all of it: Clank sets {OUTPUT_VARIABLE} above OpenCode's own cap of {OUTPUT_COUNTED:,})"
+            if counted > OUTPUT_COUNTED
+            else ""
+        )
         rule = (
-            f"OpenCode compacts once a step's total reaches {told} less the output limit (counted up to "
-            f"{OUTPUT_COUNTED:,}), and keeps a summary and the newest turns up to {keeps:,} tokens"
+            f"OpenCode compacts once a step's total reaches {told} less the output limit, {counted:,}{lifted}, and "
+            f"keeps a summary and the newest turns up to {keeps:,} tokens"
         )
         return Compaction(line, keeps, rule)
 

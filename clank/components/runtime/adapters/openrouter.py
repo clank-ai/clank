@@ -11,6 +11,8 @@ decision 0109) and `zdr` (only zero-data-retention providers, off by default).
   thinks (`reasoning` among its parameters), reads images, takes tool calls; free models (`:free`) with their limits.
 - **The account** (`GET /key`): the key's label, limit and what is left (`null`: none), its use (UTC days), the budget
   that refuses first.
+- **A cloud preset's options** (design 0016 §7): its context at most the model's window, its most output at most the
+  model's and at most half the context, its thinking effort one the model lists; written, or changed later, so.
 - **A request** (decision 0109): as the tool sent it, its `model` the listed id; `provider` (the record's data policy)
   and `reasoning` (the preset's effort) added only where the tool set none; the key as a bearer token, and the
   session's id as `x-session-id` for OpenRouter's prompt cache; no attribution header, no `usage` field.
@@ -135,9 +137,10 @@ class OpenRouter(EndpointAdapter):
         )
 
     def preset_options(self, model: ModelLine, wanted: Mapping[str, Any]) -> dict[str, Any]:
-        """Its context (at most the model's window), its output (16,384 or the model's most when smaller), its
-        thinking effort (`default`, or one the model lists, else one of OpenRouter's seven) and whether it reads
-        images (the model's)."""
+        """Its context (at most the model's window), its output (16,384 or the model's most when smaller, and at most
+        half the context: the agent keeps room for a whole answer in every request, design 0016 §7), its thinking
+        effort (`default`, or one the model lists, else one of OpenRouter's seven) and whether it reads images (the
+        model's)."""
         problems = self.option_problems(wanted)
         if problems:
             raise ValueError("; ".join(problems))
@@ -145,9 +148,15 @@ class OpenRouter(EndpointAdapter):
         context = int(wanted.get("context") or model.window)
         if context > model.window:
             raise ValueError(f"context is at most {model.window:,} for {model.id}, not {context:,}")
-        output = int(wanted.get("max_output") or min(MAX_OUTPUT, most))
+        half = context // 2 or most
+        output = int(wanted.get("max_output") or max(1, min(MAX_OUTPUT, most, half)))
         if output > most:
             raise ValueError(f"max_output is at most {most:,} for {model.id}, not {output:,}")
+        if output > half:
+            raise ValueError(
+                f"max_output is at most half the context ({half:,} of {context:,}), not {output:,}: the agent keeps "
+                "room for a whole answer in every request, and the conversation needs the rest"
+            )
         reasoning = str(wanted.get("reasoning") or "default")
         if reasoning != "default" and model.efforts and reasoning not in model.efforts:
             raise ValueError(f"reasoning is default or one of {', '.join(model.efforts)} for {model.id}")

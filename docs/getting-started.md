@@ -286,6 +286,14 @@ after you agree once, and only for the workspaces you allow.
 What it costs shows on the header, Home, Requests (F7), the Monitor and `clank cost`. Set a daily or monthly limit
 (`L` anywhere, or `clank cost limit`); when it is reached, cloud requests pause until you raise it.
 
+**Its settings later.** A model's thinking and its answer share its preset's most output (16,384 tokens unless the
+model's own is smaller), so a reasoning model that thinks at length can stop in the middle of its thinking. To give
+it more, or to change its context or its thinking effort, press `e` on **Presets** (9), or type
+`clank preset change "cloud: <its name>" --output 65536`: up to the model's own most, and at most half the context
+(OpenCode keeps that much room free in every request, so it compacts sooner). A lower effort (`--reasoning low`)
+leaves more of the most output for the answer. The main slot uses the new settings from the next request; an
+OpenCode window already open keeps its limits until you start it again.
+
 **Free models.** Most free models are served by providers that may keep or train on what they are sent, and Clank
 asks OpenRouter only for providers that keep no data, so those models are refused. To test with them, turn on
 **dev mode**: `clank dev on` (or `D` on Providers and models). Every request may then go to any of the model's

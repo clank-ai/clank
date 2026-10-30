@@ -30,13 +30,13 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4.7 | The rest of the computer | `tests/components/machine/test_checks.py` (10) |
 | 4.8 | Every change is recorded | `tests/components/runtime/test_state.py` (4), `tests/console/test_pages.py` (10) |
 | 5 | The console | `tests/console/test_lists.py` (2) |
-| 5.1 | What it is | `tests/console/test_arrows.py` (8), `tests/console/test_data.py` (19), `tests/console/test_one_door.py` (6), `tests/console/test_shell.py` (21) |
+| 5.1 | What it is | `tests/console/test_arrows.py` (8), `tests/console/test_data.py` (20), `tests/console/test_one_door.py` (6), `tests/console/test_shell.py` (21) |
 | 5.2 | The main screen | none yet |
 | 5.3 | The control screens | none yet |
 | 5.4 | Explain anything | `tests/console/test_records.py` (4) |
 | 5.5 | Changing how it looks and what it shows | `tests/console/test_shell.py` (21) |
 | 5.6 | Panels are modules | `tests/console/test_pages.py` (10) |
-| 5.7 | Redraws and load | `tests/console/test_data.py` (19), `tests/console/test_flow_panel.py` (8), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_panel.py` (12), `tests/console/test_shell.py` (21) |
+| 5.7 | Redraws and load | `tests/console/test_data.py` (20), `tests/console/test_flow_panel.py` (8), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_panel.py` (12), `tests/console/test_shell.py` (21) |
 | 5.8 | Without a screen | `tests/components/runtime/test_model_commands.py` (3), `tests/console/test_command.py` (4) |
 | 6 | The gateway | `tests/components/gateway/test_recent_requests.py` (6), `tests/console/test_requests_page.py` (11) |
 | 6.1 | The path of a request | `tests/components/gateway/test_server.py` (23) |
@@ -89,7 +89,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.12 | Files for the user | none yet |
 | 2.13 | Clank's own traffic | none yet |
 | 2.14 | The API | `tests/kernel/test_api.py` (17), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_apidoc.py` (1), `vscode/test/client.test.ts` (7) |
-| 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (7), `tests/cli/test_setup_command.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/console/test_command.py` (4), `tests/console/test_data.py` (19), `tests/console/test_shell.py` (21) |
+| 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (7), `tests/cli/test_setup_command.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/console/test_command.py` (4), `tests/console/test_data.py` (20), `tests/console/test_shell.py` (21) |
 | 2.16 | Where things are | `tests/kernel/test_files.py` (8), `tests/kernel/test_home.py` (4) |
 | 2.17 | The kernel against every feature asked for | none yet |
 | 2.18 | Choices this section makes | none yet |
@@ -123,7 +123,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7.5 | Taking a model or an engine off a host | none yet |
 | 8 | The console, VS Code and the commands | `tests/components/runtime/test_runtime_api.py` (6) |
 | 8.1 | The models page (the menu's Models entry, now built) | `tests/components/runtime/test_console_models.py` (2) |
-| 8.2 | Presets, providers and models, launch options | `tests/components/runtime/test_console_options.py` (5), `tests/components/runtime/test_console_presets.py` (2), `tests/components/runtime/test_console_providers.py` (2) |
+| 8.2 | Presets, providers and models, launch options | `tests/components/runtime/test_console_options.py` (5), `tests/components/runtime/test_console_presets.py` (2), `tests/components/runtime/test_console_providers.py` (2), `tests/console/test_preset_change.py` (5) |
 | 8.3 | VS Code | `vscode/test/controller.test.ts` (18) |
 | 8.4 | Commands | `tests/components/runtime/test_engine_commands.py` (3), `tests/components/runtime/test_model_commands.py` (3) |
 | 9 | Testing, and the order of work | `tests/components/runtime/test_fake_engine.py` (3), `tests/real/test_engines.py` (1) |
@@ -265,7 +265,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | The page: its views, its panels and its keys | `tests/console/test_flow_panel.py` (8), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_flow_view.py` (12), `tests/console/test_monitor_guide.py` (7), `tests/console/test_monitor_live.py` (2), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_monitor_undo_and_drop.py` (5), `tests/console/test_monitor_watch_for.py` (2), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (21) |
 | 3 | Which session the page follows, and which the Guide acts on | `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_monitor_watch.py` (12), `tests/components/agents/test_pausing.py` (8), `tests/components/agents/test_watch_for_marks.py` (14), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_watch_for.py` (2) |
 | 4 | The context window | `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_service.py` (15), `tests/components/runtime/test_cloud_facts.py` (5), `tests/components/runtime/test_context_facts.py` (10), `tests/components/runtime/test_count_tokens.py` (5) |
-| 4.1 | How full, and how much is left | `tests/components/agents/test_context_margin.py` (5), `tests/components/agents/test_monitor_context.py` (15), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_session_facts.py` (13), `tests/components/runtime/test_context_facts.py` (10), `tests/console/test_monitor_context.py` (15), `tests/console/test_requests_page.py` (11) |
+| 4.1 | How full, and how much is left | `tests/components/agents/test_context_margin.py` (5), `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_opencode_output.py` (5), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_session_facts.py` (13), `tests/components/runtime/test_context_facts.py` (10), `tests/console/test_monitor_context.py` (15), `tests/console/test_requests_page.py` (11) |
 | 4.2 | The parts, estimated | `tests/components/agents/test_monitor_estimate.py` (11), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_census.py` (12), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14), `vscode/test/readout.test.ts` (12) |
 | 4.3 | Loop text | `tests/components/agents/test_monitor_estimate.py` (11), `tests/components/gateway/test_census.py` (12) |
 | 4.4 | On the GPU exactly | `tests/components/agents/test_monitor_context.py` (15), `tests/components/runtime/test_context_facts.py` (10), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_view.py` (14) |
@@ -307,7 +307,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | A box's settings | `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_session_modes.py` (7), `tests/components/flows/test_accept_command.py` (10), `tests/components/flows/test_box_server.py` (7), `tests/components/flows/test_flow_file.py` (18), `tests/components/flows/test_runner_controls.py` (10) |
 | 5 | Running a box: a fresh session | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_monitor_watch.py` (12), `tests/components/agents/test_session_modes.py` (7), `tests/components/flows/test_accept_command.py` (10), `tests/components/flows/test_box_server.py` (7), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_first_prepared.py` (17), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_prepare.py` (8), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_controls.py` (10), `tests/components/flows/test_verify_loop.py` (6), `tests/components/runtime/test_count_tokens.py` (5) |
 | 6 | The runner, an operation of the service | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_prepare.py` (8), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_restart.py` (6), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_controls.py` (10), `tests/components/flows/test_runner_routes.py` (2), `tests/components/flows/test_runs.py` (7) |
-| 7 | A model per box, and what a switch costs | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_model_changed.py` (4), `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_watch.py` (12), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_model_per_box.py` (13), `tests/components/flows/test_models.py` (4), `tests/components/flows/test_prepare.py` (8), `tests/console/test_data.py` (19), `vscode/test/controller.test.ts` (18) |
+| 7 | A model per box, and what a switch costs | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_servers.py` (6), `tests/components/agents/test_model_changed.py` (6), `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_watch.py` (12), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_model_per_box.py` (13), `tests/components/flows/test_models.py` (4), `tests/components/flows/test_prepare.py` (8), `tests/console/test_data.py` (20), `vscode/test/controller.test.ts` (18) |
 | 8 | Deliverables, tries and stale boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/flows/test_deliverables.py` (3), `tests/components/flows/test_diffs.py` (5), `tests/components/flows/test_handoff.py` (5), `tests/components/flows/test_runs.py` (7), `tests/components/flows/test_stale.py` (9), `tests/components/flows/test_verify.py` (8), `tests/components/flows/test_waiting.py` (9) |
 | 9 | The model proposes boxes | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_flow_tools.py` (9), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_proposals.py` (8), `tests/components/flows/test_proposals_again.py` (6), `tests/components/flows/test_proposals_auto.py` (3), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_proposals_followed.py` (2), `tests/components/flows/test_proposals_join.py` (12), `tests/components/flows/test_proposals_routes.py` (2), `tests/components/flows/test_verify.py` (8), `tests/components/flows/test_waiting.py` (9), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12) |
 | 10 | Gates | `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_diffs.py` (5), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_next_flow.py` (11), `tests/components/flows/test_proposals_decided.py` (11), `tests/components/flows/test_runner.py` (11), `tests/components/flows/test_runner_routes.py` (2), `tests/components/flows/test_runs.py` (7), `tests/components/flows/test_verify_loop.py` (6), `tests/components/flows/test_waiting.py` (9), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_monitor_flow_boards.py` (12), `vscode/test/gates.test.ts` (16) |
@@ -366,16 +366,16 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | The provider's record, and its key | `tests/cli/test_endpoint_commands.py` (12), `tests/components/runtime/test_dev_mode.py` (7), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/console/test_secret_field.py` (6) |
 | 5 | How the gateway gets the key | `tests/components/gateway/test_cloud_keys.py` (6) |
 | 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (18) |
-| 7 | Cloud presets, and the main slot running one | `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17) |
+| 7 | Cloud presets, and the main slot running one | `tests/cli/test_preset_change_command.py` (4), `tests/components/agents/test_model_changed.py` (6), `tests/components/agents/test_opencode_output.py` (5), `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_preset_change.py` (7), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_openrouter.py` (18), `tests/console/test_data.py` (20), `tests/console/test_preset_change.py` (5) |
 | 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_dev_mode.py` (7), `tests/components/runtime/test_openrouter.py` (18), `tests/docker/test_cloud_live.py` (1) |
 | 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
 | 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
-| 11 | Cost: each request, session and flow, and the limits | `tests/cli/test_cloud_commands.py` (7), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_cost_limits.py` (8), `tests/components/gateway/test_cost_views.py` (8), `tests/console/test_add_model.py` (25), `tests/console/test_cost_pause.py` (2), `tests/console/test_data.py` (19), `tests/console/test_home.py` (15), `tests/console/test_monitor_cloud.py` (3), `tests/console/test_requests_page.py` (11), `tests/console/test_text.py` (4), `tests/kernel/test_event_attention.py` (3) |
+| 11 | Cost: each request, session and flow, and the limits | `tests/cli/test_cloud_commands.py` (7), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_cost_limits.py` (8), `tests/components/gateway/test_cost_views.py` (8), `tests/console/test_add_model.py` (25), `tests/console/test_cost_pause.py` (2), `tests/console/test_data.py` (20), `tests/console/test_home.py` (15), `tests/console/test_monitor_cloud.py` (3), `tests/console/test_requests_page.py` (11), `tests/console/test_text.py` (4), `tests/kernel/test_event_attention.py` (3) |
 | 12 | How cost is known and kept | `tests/components/gateway/test_cloud_cost.py` (5), `tests/components/gateway/test_cost_views.py` (8), `tests/components/gateway/test_state_files.py` (4) |
 | 13 | What the Monitor shows of a cloud model | `tests/components/runtime/test_cloud_facts.py` (5), `tests/console/test_monitor_cloud.py` (3) |
-| 14 | The first run: Add a model | `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (19), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (21) |
-| 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_data.py` (19), `tests/console/test_dev_mode_console.py` (5), `tests/console/test_folder.py` (25), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
-| 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_dev_command.py` (1), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_dev_mode.py` (7) |
+| 14 | The first run: Add a model | `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (20), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (21) |
+| 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_data.py` (20), `tests/console/test_dev_mode_console.py` (5), `tests/console/test_folder.py` (25), `tests/console/test_pages.py` (10), `tests/console/test_preset_change.py` (5), `tests/console/test_providers_cloud.py` (7) |
+| 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_dev_command.py` (1), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (7), `tests/cli/test_preset_change_command.py` (4), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_dev_mode.py` (7) |
 | 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (18) |
 | 18 | Tests, the fake OpenRouter, and the checks owed with a real key | `tests/contract/test_endpoint.py` (5), `tests/real/test_openrouter.py` (5), `tests/test_architecture.py` (7), `tests/tools/test_capture_endpoint.py` (2) |
 | 19 | Build steps | none yet |
@@ -580,7 +580,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | Who sets Clank up, and the one path each follows | none yet |
 | 2 | Rules every step of the setup keeps | none yet |
 | 3 | The installer on each system | none yet |
-| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_paint.py` (2), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (19), `tests/components/agents/test_setup_checklist.py` (30), `tests/components/workspaces/test_image_operation.py` (5), `tests/console/test_data.py` (19), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (8), `tests/console/test_shell.py` (21), `tests/docker/test_setup_live.py` (1) |
+| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_paint.py` (2), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (19), `tests/components/agents/test_setup_checklist.py` (30), `tests/components/workspaces/test_image_operation.py` (5), `tests/console/test_data.py` (20), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (8), `tests/console/test_shell.py` (21), `tests/docker/test_setup_live.py` (1) |
 | 5 | Docker, configured correctly on each system | `tests/cli/test_docker_group.py` (3), `tests/cli/test_setup_fixes.py` (19), `tests/components/agents/test_setup_checklist.py` (30), `tests/components/workspaces/test_platform_setup.py` (6), `tests/console/test_setup_page_fixes.py` (8), `tests/contract/test_container_platform.py` (9), `tests/docker/test_setup_live.py` (1) |
 | 6 | Clank's VS Code extension without building it | `tests/components/agents/test_vscode_release.py` (6), `tests/tools/test_release.py` (6) |
 | 7 | Local models: what is one step and what is not yet | none yet |
@@ -736,6 +736,15 @@ Design 0028 §4: color in the terminal, for the commands that print for people. 
 
 - a checklist in color is the checklist without its color taken away
 - commands are bold even across a lines end and no color drops every color
+
+### `tests/cli/test_preset_change_command.py`
+
+Design 0016 §16 and §7 (revised after approval 2026-10-29, the owner's request): `clank preset change PRESET [--output N] [--context N] [--reasoning R] [--json]` changes a cloud preset's settings through the service, by its id or its title, and prints the service's words: what changed, where it applies, and, while the main slot runs it, that OpenCode windows open now keep the limits they started with until they start again; `--json` prints the service's answer. A refusal is the service's own words and exits 1, a local preset's saying where its options change; with no setting to change, it says what to give.
+
+- change raises the most output and prints the services words
+- change with json prints the services answer
+- a refusal is the services words and exits 1
+- with nothing to change it says what to give
 
 ### `tests/cli/test_service_commands.py`
 
@@ -1214,12 +1223,14 @@ Design 0023 §2 (decision 0139): the mirror the service keeps of the sessions cl
 
 ### `tests/components/agents/test_model_changed.py`
 
-Design 0013 §7 (decision 0062): after a flow's box switched the main slot, the owner's window in the workspace is told its model changed: in the event `agents.model_changed` (which VS Code shows), and in a notice the review's view carries for This folder, until OpenCode is next started there. A preset whose context is smaller than what one of the owner's own sessions holds is named as too small for it; a box's session is not the owner's. The window itself is left as it is: its configuration changes only when it next starts. Run against the fake bridge, with no container and no OpenCode.
+Design 0013 §7 (decision 0062): after a flow's box switched the main slot, the owner's window in the workspace is told its model changed: in the event `agents.model_changed` (which VS Code shows), and in a notice the review's view carries for This folder, until OpenCode is next started there. A preset whose context is smaller than what one of the owner's own sessions holds is named as too small for it; a box's session is not the owner's. The window itself is left as it is: its configuration changes only when it next starts. And design 0016 §7 (revised after approval 2026-10-29): when the settings of the preset the main slot runs change its limits (its context or most output), each OpenCode window open in a running workspace is told the same way, in words that say it keeps the limits it started with until it next starts; a thinking effort alone tells no one (the gateway adds it to the next request), nor does a workspace with no window open. Run against the fake bridge, with no container and no OpenCode.
 
 - the owners window is told in an event and on the reviews view
 - with no window open the next opencode started is said to get it
 - a preset with a smaller context than the owners session holds is named
 - the windows configuration changes only when it next starts which ends the notice
+- a change of the main slots presets limits tells each open window until opencode starts again
+- a thinking effort alone or a workspace with no window tells no one
 
 ### `tests/components/agents/test_modes.py`
 
@@ -1359,6 +1370,16 @@ Design 0004 §4 and design 0009 §3-§5: OpenCode's configuration has one provid
 - the instructions say how to plan measure and carry out a plan
 - every agent reads clanks instructions in the container the latex rules among them
 - it runs its terminal interface offline
+
+### `tests/components/agents/test_opencode_output.py`
+
+Design 0016 §7 and design 0012 §4.1 (revised after approval 2026-10-29, decision 0153): OpenCode caps each answer at 32,000 tokens unless `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX` says more (read in OpenCode 1.19.4's source, the image's version), so for a model whose most output is above 32,000, Clank sets the variable to that most output when OpenCode starts, from a terminal or without one, and its notes say so; at 32,000 or under it sets nothing. OpenCode then counts the whole most output in its compaction line, and so do the Monitor's rule and Watch for's line, while what a compaction keeps is still counted with 32,000, as OpenCode counts it. Run against the fake bridge, with no container and no OpenCode.
+
+- the variable is the most output above 32000 and unset at or under it
+- the compaction line counts the whole most output and what it keeps counts 32000
+- watch for counts the whole most output above 32000
+- opencode started from a terminal gets the variable and its note says so
+- opencode started without a terminal gets the variable too
 
 ### `tests/components/agents/test_pausing.py`
 
@@ -3023,6 +3044,18 @@ Design 0016 §13 (design 0012 §4, decision 0067): the Monitor reads a cloud mod
 - the estimate shares the census out to openrouters prompt tokens at the plain default
 - with records off the census of a cloud request keeps no text
 
+### `tests/components/runtime/test_cloud_preset_change.py`
+
+Design 0016 §7 (revised after approval 2026-10-29, the owner's request): a cloud preset's settings change after it is written, through `PATCH /api/v1/runtime/presets/{name}`: any of its context, its most output (`max_output`) and its thinking effort (`reasoning`), merged into its options and checked against its model's limits as the provider lists them, then written over the record at its revision with who changed it. A value beyond the model is refused in the adapter's words, and so is a most output above half the context (the agent keeps room for a whole answer in every request); a preset that does not exist is 404, and a local one is refused, saying where its options change. The slot that runs it follows at once (its kept route planned again, nothing sent), and keeps it as the last configuration that worked; the change is an event naming the preset, its settings and that slot. The answer says, in the service's words, what changed, where it applies, and, while a slot runs it, that OpenCode windows open now keep the limits they started with until they start again. A cloud preset's view gives its settings for a form, the model's limits in their words.
+
+- its most output is raised within the models limit and written with who changed it
+- a value beyond the model is refused in the adapters words and nothing is written
+- the most output is at most half the context
+- an unknown preset is 404 and a local one says where its options change
+- nothing to change is refused and the same values change nothing
+- the slot that runs it follows from the next request and keeps it as the last that worked
+- a cloud presets view gives its settings with the models limits in their words
+
 ### `tests/components/runtime/test_cloud_presets.py`
 
 Design 0016 §7: a preset names an engine or a provider (`endpoint`), never both and never neither; a cloud preset is for the main slot only; every preset Clank ships reads as before; a cloud preset's problems name a provider not added, not agreed, or without a key; one is written from a model of the provider's list (never a model without tool calls), its options from the model; each preset as clients see it says its provider and, for a cloud one, its prices; a cloud preset needs nothing installed or downloaded; and a provider a preset names cannot be removed.
@@ -3348,7 +3381,7 @@ Design 0003 §6.1 and §8.4, design 0001 §3.6 and §5.8: the next estimate for 
 
 ### `tests/components/runtime/test_openrouter.py`
 
-Design 0016 §3, §6 and §8: what the OpenRouter adapter reads of OpenRouter's answers and writes into its requests.
+Design 0016 §3, §6, §7 and §8: what the OpenRouter adapter reads of OpenRouter's answers and writes into its requests.
 
 - the list keeps tool models unless asked with the smaller window and prices per million
 - a free model is marked with its limits and its retirement
@@ -3993,7 +4026,7 @@ Design 0016 §11 and decision 0104: when a cloud spending limit is reached, the 
 
 ### `tests/console/test_data.py`
 
-Design 0001 §5.1 and §5.7, design 0002 §2.15: the console loads what it shows once, then follows the one event stream: each event brings the fresh data of the topics it touches, read from the API off the screen's thread; a live log line arrives as it is written; a lost service is said, tried again, and reloaded whole when it is back; stopping the follower ends it at once. Design 0013 §7: a window told its model changed brings the slots again, so This folder says it at once. Design 0016 §11 and §14: whether a model is usable, the cloud providers and the cloud's cost are read at the start (unknown from a service without their routes), and again on the events that change each, and only those. Design 0028 §4: so is `clank setup`'s checklist, again whenever Docker, a slot, an operation's end or a workspace's record changes. Design 0016 §15 (decision 0152): and dev mode, which the header shows whatever providers there are, read again with the providers whenever the runtime's settings change.
+Design 0001 §5.1 and §5.7, design 0002 §2.15: the console loads what it shows once, then follows the one event stream: each event brings the fresh data of the topics it touches, read from the API off the screen's thread; a live log line arrives as it is written; a lost service is said, tried again, and reloaded whole when it is back; stopping the follower ends it at once. Design 0013 §7: a window told its model changed brings the slots again, so This folder says it at once. Design 0016 §11 and §14: whether a model is usable, the cloud providers and the cloud's cost are read at the start (unknown from a service without their routes), and again on the events that change each, and only those; design 0016 §7: a cloud preset's settings changed bring the presets and the slots again (This folder's limits). Design 0028 §4: so is `clank setup`'s checklist, again whenever Docker, a slot, an operation's end or a workspace's record changes. Design 0016 §15 (decision 0152): and dev mode, which the header shows whatever providers there are, read again with the providers whenever the runtime's settings change.
 
 - loading reads every topic
 - a question asked reaches the console as an event then as the fresh questions
@@ -4009,6 +4042,7 @@ Design 0001 §5.1 and §5.7, design 0002 §2.15: the console loads what it shows
 - what ends an install a download or a removal touches the engines
 - the setup checklist is read at the start and again on what changes it
 - a window told its model changed touches the slots
+- a cloud presets settings changed touch the presets and the slots
 - loading reads whether a model is usable the providers and the cost
 - each cloud event touches its part and only its part
 - dev mode is read at the start and again when it is turned on
@@ -4505,6 +4539,16 @@ Design 0011 §2, §4, §7, §8, §9 and §11 (R2): every section of every page i
 - a panel wider than its page by no more than the vertical scroll bar is reached sideways too
 - a list in a panel is drawn on the panels background whether it has the focus or not
 - the phrases the tests look for are found at 80 columns
+
+### `tests/console/test_preset_change.py`
+
+Design 0016 §7 and §15, and design 0003 §8.2 (revised 2026-10-29, the owner's request): `e` on the Presets page changes the highlighted cloud preset's settings in a form filled with them, the model's limits in its labels as the service words them; only what was changed is sent, and the service's answer (what changed, where it applies, and, while the main slot runs it, that OpenCode windows open now keep the limits they started with) shows in a window, a refusal on the message line in the service's words, a number that is not one in the console's. On a local preset, `e` says where its options change instead. The form leaves Esc and Backspace to the window: Esc leaves it, sending nothing, and Backspace erases in its fields. The keys bar and the page's explanation list the key.
+
+- e opens a form of its settings with the models limits and sends only what changed
+- a refusal is said in the services words and a number that is not one in the consoles
+- esc leaves the form sending nothing and backspace erases in its fields
+- on a local preset e says where its options change
+- the keys bar and the pages explanation list e
 
 ### `tests/console/test_providers_cloud.py`
 

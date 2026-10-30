@@ -166,6 +166,8 @@ def touched(event: dict[str, Any]) -> list[str]:
         return ["service"]
     if kind == "runtime.slot":
         return ["slots", "launches", "usable", "setup"]
+    if kind == "runtime.preset_changed":  # a cloud preset's settings (design 0016 §7): its page, This folder's limits
+        return ["presets", "slots"]
     if kind == "runtime.endpoint_checked":
         return ["endpoints"]
     if kind.startswith("runtime.endpoint_"):

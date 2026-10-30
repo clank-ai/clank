@@ -2,8 +2,11 @@
 told its model changed: in the event `agents.model_changed` (which VS Code shows), and in a notice the review's view
 carries for This folder, until OpenCode is next started there. A preset whose context is smaller than what one of the
 owner's own sessions holds is named as too small for it; a box's session is not the owner's. The window itself is left
-as it is: its configuration changes only when it next starts. Run against the fake bridge, with no container and no
-OpenCode."""
+as it is: its configuration changes only when it next starts. And design 0016 §7 (revised after approval 2026-10-29):
+when the settings of the preset the main slot runs change its limits (its context or most output), each OpenCode
+window open in a running workspace is told the same way, in words that say it keeps the limits it started with until it
+next starts; a thinking effort alone tells no one (the gateway adds it to the next request), nor does a workspace with
+no window open. Run against the fake bridge, with no container and no OpenCode."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -21,7 +24,7 @@ from clank.components.workspaces.sandbox import names
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
 from clank.kernel.core import Kernel, open_kernel
-from clank.kernel.events import Actor
+from clank.kernel.events import Actor, Subject
 from clank.kernel.home import Home
 from tests.fakes.bridge import FakeBridge
 from tests.fakes.platform import FakePlatform, container
@@ -133,3 +136,46 @@ def test_the_windows_configuration_changes_only_when_it_next_starts_which_ends_t
     config = platform.files[(names(kernel.home.id).container("paper"), CONFIG)]
     assert '"context": 3072' in config, "the new model's window, 4,096, less its margin (decision 0089)"
     assert agents(kernel).model_notice("paper") is None, "the window has the new model's limits now"
+
+
+SETTINGS_SAID = (
+    "You (console) changed the settings of fast 4K, which the main slot runs (4,096 tokens of context, 1,024 out): "
+    "your OpenCode window in paper keeps the limits it started with until it next starts"
+)
+
+
+def preset_changed(kernel: Kernel, fields: list[str], slot: str | None = "main") -> None:
+    """A cloud preset's settings changed, as the runtime records it (design 0016 §7)."""
+    kernel.events.record(
+        "runtime.preset_changed",
+        summary=f"you (console) changed the {fields[0]} of fast 4K",
+        actor=OWNER,
+        subject=Subject(kind="preset", id="fast-4k"),
+        data={"preset": "fast-4k", "title": "fast 4K", "fields": fields, "options": {}, "slot": slot},
+    )
+
+
+def test_a_change_of_the_main_slots_presets_limits_tells_each_open_window_until_opencode_starts_again(
+    kernel: Kernel, bridge: FakeBridge
+) -> None:
+    bridge.window()
+    preset_changed(kernel, ["max_output"])
+    telling = agents(kernel).telling
+    assert telling is not None, "told off the thread that changed the preset"
+    telling.join(10)
+    notice = agents(kernel).model_notice("paper")
+    assert notice is not None
+    assert notice["said"] == SETTINGS_SAID
+    [event] = kernel.events.after(0, types=["agents.model_changed"])
+    assert (event.summary, event.actor, event.data["by"]) == (SETTINGS_SAID, OWNER, "You (console)")
+    agents(kernel).prepare("paper")
+    assert agents(kernel).model_notice("paper") is None, "OpenCode started again there: it has the new limits"
+
+
+def test_a_thinking_effort_alone_or_a_workspace_with_no_window_tells_no_one(kernel: Kernel, bridge: FakeBridge) -> None:
+    preset_changed(kernel, ["reasoning"])
+    preset_changed(kernel, ["max_output"], slot=None)
+    assert agents(kernel).telling is None, "the gateway adds an effort to the next request; no slot runs the other"
+    assert agents(kernel).tell_windows(OWNER) == [], "no OpenCode window is open in paper"
+    assert agents(kernel).model_notice("paper") is None
+    assert kernel.events.after(0, types=["agents.model_changed"]) == []

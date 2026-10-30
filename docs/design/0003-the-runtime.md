@@ -41,7 +41,7 @@ stays as the record of what was built and why, each such part marked.*
 | 5 | NInfer on this machine | Retired 2026-10-13 (decision 0034); built 2026-10-12 (decision 0031) |
 | 6 | A slot, and switching it | Proposed 2026-10-12; built at the owner's instruction |
 | 7 | Installs and models | Proposed 2026-10-12; built at the owner's instruction |
-| 8 | The console, VS Code and the commands | Proposed 2026-10-12; built at the owner's instruction |
+| 8 | The console, VS Code and the commands | Proposed 2026-10-12; built at the owner's instruction; §8.2 revised 2026-10-29 at the owner's request (`e` on Presets changes a cloud preset's settings, design 0016 §7) |
 | 9 | Testing, and the order of work | Proposed 2026-10-12; built at the owner's instruction |
 
 ## 1. What M1 delivers, and what moved
@@ -378,7 +378,11 @@ What it could look like with KVMem running:
 ### 8.2 Presets, providers and models, launch options
 
 - **Presets**: each preset with its engine, model, fit now, and its last start (time, how long, memory); Enter
-  switches to it, `c` checks it, `v` shows its file.
+  switches to it, `c` checks it, `v` shows its file. *Revised 2026-10-29 at the owner's request ("after the model is
+  set up, I would like to be able to increase the number of output tokens"):* `o` opens its launch options, and `e`
+  changes a cloud preset's context, most output and thinking effort in a form filled with them, its model's limits
+  in the labels, the service's answer in a window (design 0016 §7, §15). On a local preset `e` cannot act, and says
+  where its options change: its file, which `e` on Launch options opens.
 - **Providers and models**: each engine with its versions installed, where, and how it was installed; each model
   with its files on each host, sizes, and whether the checksum was verified; `i` installs an engine by its recipe,
   `d` downloads a model, `x` removes a model's files from a host and `u` removes an engine (§7.5).

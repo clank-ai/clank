@@ -35,6 +35,10 @@ its model changed (`model_changed`): the event `agents.model_changed`, which VS 
 view carries for This folder (`model_notice`) until OpenCode is next started there (`prepare`, which writes its
 configuration with the new model's limits). It names each of the owner's own sessions there (root sessions that are no
 box's) whose context holds more than the new model's context as too small for it. The window itself is left as it is.
+When the settings of the preset the main slot runs change its limits (design 0016 §7: `runtime.preset_changed`, its
+context or most output), each OpenCode window open in a running workspace is told the same way (`tell_windows`, off the
+thread that changed it), in words that say it keeps the limits it started with; a thinking effort reaches open windows
+from their next request, the gateway adding it, so it tells no one.
 
 A flow built with the model (design 0013 §15) starts its planning session on the workspace's OpenCode window once it
 answers: `prepare` tells whoever asked (`on_prepared`) the workspace and port of each window it gives a command for.
@@ -139,15 +143,15 @@ MODEL_EVENTS = [
     EventType(
         "agents.model_changed",
         "The model your OpenCode window in a workspace talks to changed: a flow's box switched the main slot (design "
-        "0013 §7, decision 0062). The window's configuration, with the model's limits, is refreshed when it next "
-        "starts.",
+        "0013 §7, decision 0062), or the settings of the preset it runs changed its limits (design 0016 §7). The "
+        "window's configuration, with the model's limits, is refreshed when it next starts.",
         {
             "workspace": "The workspace.",
             "title": "The model the main slot runs now: its preset's title.",
             "context": "Its context, in tokens.",
             "output": "Its output limit, in tokens.",
             "window": "Whether an OpenCode window runs in the workspace.",
-            "by": "What switched it: the flow and its box.",
+            "by": "What changed it: the flow and its box, or who changed the preset's settings.",
             "too_small": "Each of your sessions there whose context holds more than the new model's, with how much.",
         },
     )
@@ -233,8 +237,10 @@ class Agents:
         self._notices_lock = threading.Lock()
         self._prepared: list[Callable[[str, int], None]] = []  # told each window prepared (design 0013 §15)
         self._network_lock = threading.Lock()  # dev mode read and the network instructions written, together (0152)
+        self.telling: threading.Thread | None = None  # the open windows told of a preset's change (design 0016 §7)
         kernel.events.subscribe(self._heard_tools)  # the tools that never go to the cloud, given to the gateway
         kernel.events.subscribe(self._heard_dev_mode)  # the network instructions written again (decision 0152)
+        kernel.events.subscribe(self._heard_preset)  # the main slot's preset changed its limits: open windows told
 
     def on_prepared(self, told: Callable[[str, int], None]) -> None:
         """Be told each OpenCode window `prepare` gives a command for: its workspace and its port (a flow's planning
@@ -440,17 +446,19 @@ class Agents:
         """What OpenCode is told of its model, as `config/opencode.json` says now (decision 0089)."""
         return OpenCodeSettings.model_validate(self.kernel.settings.get("opencode", "opencode").record.model_dump())
 
-    def model_changed(self, workspace: str, *, by: str, besides: Collection[str] = (), actor: Actor) -> dict[str, Any]:
+    def model_changed(
+        self, workspace: str, *, by: str, besides: Collection[str] = (), actor: Actor, settings: bool = False,
+        window: bool | None = None,
+    ) -> dict[str, Any]:  # fmt: skip
         """Tell the owner's window in the workspace that the model it talks to changed (design 0013 §7, decision
-        0062): `by` (a flow's box, in words) switched the main slot. The model now and its limits, whether a window
-        runs there, and each root session of the workspace's servers that is not one of `besides` (the flows' boxes')
-        whose context holds more tokens than the model's context, as too small for it: said in the event
+        0062): `by` (a flow's box, in words) switched the main slot, or (`settings`, design 0016 §7) changed the
+        settings of the preset it runs. The model now and its limits, whether a window runs there (asked of the
+        container unless given), and each root session of the workspace's servers that is not one of `besides` (the
+        flows' boxes') whose context holds more tokens than the model's context, as too small for it: said in the event
         `agents.model_changed` and kept as the workspace's notice until OpenCode is next started there."""
         model, _ = self._model()
-        try:
-            window = any(server.get("terminal") for server in self.sessions.servers(workspace))
-        except SessionError:
-            window = False
+        if window is None:
+            window = self._window(workspace)
         too_small = []
         for seen in self.sessions.seen(workspace):
             if seen["parent"] or seen["port"] is None or seen["session"] in besides:
@@ -460,12 +468,19 @@ class Agents:
                 title = seen["title"] or seen["session"]
                 too_small.append({"session": seen["session"], "title": title, "holds": holds})
         sizes = f"{model.context:,} tokens of context, {model.output:,} out"
-        said = f"{by} switched the main slot to {model.title} ({sizes}): " + (
-            f"your OpenCode window in {workspace} talks to it from its next step, with the limits it started with "
-            "until it next starts"
-            if window
-            else f"the next OpenCode started in {workspace} gets it"
-        )
+        if settings:
+            said = f"{by} changed the settings of {model.title}, which the main slot runs ({sizes}): " + (
+                f"your OpenCode window in {workspace} keeps the limits it started with until it next starts"
+                if window
+                else f"the next OpenCode started in {workspace} gets them"
+            )
+        else:
+            said = f"{by} switched the main slot to {model.title} ({sizes}): " + (
+                f"your OpenCode window in {workspace} talks to it from its next step, with the limits it started with "
+                "until it next starts"
+                if window
+                else f"the next OpenCode started in {workspace} gets it"
+            )
         for each in too_small:
             said += f"; {model.title} is too small for your session {each['title']}, which holds "
             said += f"{each['holds']:,} tokens"
@@ -490,10 +505,47 @@ class Agents:
             found = self._notices.get(workspace)
             return dict(found) if found is not None else None
 
+    def tell_windows(self, actor: Actor) -> list[dict[str, Any]]:
+        """Tell each OpenCode window open in a running workspace that the settings of the preset the main slot runs
+        changed its limits (design 0016 §7), as `model_changed` tells it, until OpenCode starts again there; the
+        notices given. A workspace with no window open is not told: the next OpenCode started there gets the limits."""
+        workspaces: Workspaces = self.kernel.parts["workspaces"]
+        said = actor.describe()
+        by = said[:1].upper() + said[1:]
+        told = []
+        for workspace in sorted(workspaces.running()):
+            try:
+                if self._window(workspace):
+                    told.append(self.model_changed(workspace, by=by, actor=actor, settings=True, window=True))
+            except Exception:
+                log.exception("telling %s's window that its preset changed failed", workspace)
+        return told
+
+    def _heard_preset(self, event: Any) -> None:
+        """The settings of a preset a slot runs changed its context or most output (`runtime.preset_changed`): each
+        OpenCode window open is told, off the thread that changed it (asking each container takes a moment). A thinking
+        effort alone tells no one: the gateway adds it to the next request."""
+        if event.type != "runtime.preset_changed" or not event.data.get("slot"):
+            return
+        if not {"context", "max_output"} & set(event.data.get("fields") or ()):
+            return
+        self.telling = threading.Thread(
+            target=self.tell_windows, args=(event.actor,), name="agents: a preset's limits changed", daemon=True
+        )
+        self.telling.start()
+
+    def _window(self, workspace: str) -> bool:
+        """Whether an OpenCode window, in a terminal, runs in the workspace's container; False when it cannot say."""
+        try:
+            return any(server.get("terminal") for server in self.sessions.servers(workspace))
+        except SessionError:
+            return False
+
     def plan(self, program: str = "opencode") -> dict[str, Any]:
         """What the program would be given, writing nothing: its model, that model's limits, and notes."""
         adapter = self._adapter(program)
         model, notes = self._model()
+        notes += adapter.env_said(model)
         return {"program": adapter.LABEL, "model": model.title, "limits": limits(model), "notes": notes}
 
     def prepare(self, workspace: str, program: str = "opencode") -> dict[str, Any]:
@@ -508,6 +560,7 @@ class Agents:
         container = workspaces.container_of(workspace)
         model, notes = self._model(workspace)
         notes += workspaces.reach(workspace)
+        notes += adapter.env_said(model)
         servers = self._given(workspace, model.key)
         self._write_agent(workspace, adapter, model, servers, container)
         with self._notices_lock:  # its configuration has the model's limits now: nothing more to tell its window
@@ -518,7 +571,7 @@ class Agents:
             windows = "the OpenCode window" if closed == 1 else f"the {closed} OpenCode windows"
             notes.append(f"closed {windows} open in {workspace} first: one at a time (w on This folder changes that)")
         port = self._port(workspace, notes)
-        env = {**adapter.env(), **workspaces.agent_env(workspace)}
+        env = {**adapter.env(model), **workspaces.agent_env(workspace)}
         argv = workspaces.exec_argv(workspace, adapter.argv(port), env, container=container)
         if port is not None:
             for told in list(self._prepared):
@@ -537,10 +590,13 @@ class Agents:
             "notes": notes,
         }
 
-    def agent_env(self, workspace: str, program: str = "opencode") -> dict[str, str]:
-        """The environment an agent program runs with in the workspace (one started without a terminal too)."""
+    def agent_env(self, workspace: str, program: str = "opencode", model: AgentModel | None = None) -> dict[str, str]:
+        """The environment an agent program runs with in the workspace (one started without a terminal too), for its
+        model (the role's slot's, unless given): OpenCode's cap on an answer is the model's output limit above 32,000
+        (decision 0153)."""
         workspaces: Workspaces = self.kernel.parts["workspaces"]
-        return {**self._adapter(program).env(), **workspaces.agent_env(workspace)}
+        model = model or self._model()[0]
+        return {**self._adapter(program).env(model), **workspaces.agent_env(workspace)}
 
     def configure(self, workspace: str, program: str = "opencode") -> dict[str, str]:
         """Write the program's configuration (the model, the MCP servers it gets) as `prepare` does, for one started
@@ -551,7 +607,7 @@ class Agents:
         container = workspaces.container_of(workspace)  # refused first when its container does not run
         workspaces.reach(workspace)
         self._write_agent(workspace, adapter, model, self._given(workspace, model.key), container)
-        return self.agent_env(workspace, program)
+        return self.agent_env(workspace, program, model)
 
     def dev_mode(self) -> bool:
         """Whether dev mode is on, as the runtime's settings say now (decisions 0149 and 0152): OpenCode may then fetch

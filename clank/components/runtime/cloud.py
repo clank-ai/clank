@@ -16,6 +16,9 @@ restart and the watch mean when a provider someone else runs serves the slot in 
   once; a provider that does not answer leaves it ready, marked "not reached since"; an engine's crash rule never
   applies.
 
+- **its preset changed** (revised after approval 2026-10-29): the slot follows its new settings at once (`follow`):
+  the kept route planned again as a load plans it, with nothing sent, and the last configuration that worked kept so.
+
 `route` is what the gateway follows (plan s34's interface): the launch's kept route with its reach and agreement read
 from the record each time, so withdrawing the agreement applies to the next request; and, while dev mode is on
 (decision 0149), its data policy relaxed (`dev_adds`), so turning dev mode on or off applies to the next request too.
@@ -113,6 +116,29 @@ def prepare(runtime: "Runtime", preset_id: str, preset: Preset) -> CloudPrepared
         "images": images,
     }  # fmt: skip
     return CloudPrepared(preset_id, preset, record, adapter, model, route)
+
+
+def follow(runtime: "Runtime", name: str) -> str:
+    """A slot that runs a cloud preset takes the preset's settings as they are now (design 0016 §7, revised after
+    approval 2026-10-29): its launch's kept route planned again as a load plans it, nothing sent (no tiny request), so
+    the gateway follows them from the next request and the next agent started is told them; the last configuration that
+    worked, when it is that preset, keeps them too. "" once it follows them, else why not, in words (its route kept as
+    it was)."""
+    from clank.components.runtime.launching import preset_of
+
+    slot = runtime.state.slot(name)
+    if slot.launch_id is None or slot.preset is None:
+        return f"the {name} slot runs nothing"
+    preset_id, preset = preset_of(runtime, slot.preset)
+    try:
+        prepared = prepare(runtime, preset_id, preset)
+    except CloudError as error:
+        return str(error)
+    runtime.state.set_route(slot.launch_id, {**prepared.route, "launch": slot.launch_id})
+    good = slot.last_good
+    if good is not None and good.preset == preset_id:
+        runtime.state.remember_good(name, good.model_copy(update={"options": dict(preset.options)}))
+    return ""
 
 
 def dev_adds(adds: Mapping[str, Any]) -> dict[str, Any]:

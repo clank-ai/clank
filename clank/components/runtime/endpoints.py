@@ -68,7 +68,23 @@ EVENT_TYPES = [
         {"id": "The provider's record."},
         owner="runtime",
     ),
+    EventType(
+        "runtime.preset_changed",
+        "A cloud preset's settings changed (design 0016 §7): its context, most output or thinking effort. The slot "
+        "that runs it follows them from the next request; an OpenCode window open keeps the limits it started with "
+        "until it starts again.",
+        {
+            "preset": "The preset's id.",
+            "title": "Its title.",
+            "fields": "The settings that changed.",
+            "options": "Its options now.",
+            "slot": "The slot that runs it and follows the change; null when none does.",
+        },
+        owner="runtime",
+    ),
 ]
+CHANGED = ("context", "max_output", "reasoning")  # what a change of a cloud preset may set (design 0016 §7)
+SAID_ORDER = (*CHANGED, "images")  # the order a change's words name its settings in
 
 
 def record_problems(id: str, record: Settings) -> list[tuple[Place, str]]:
@@ -428,12 +444,78 @@ class Endpoints:
             problems.append(str(error))
         return problems
 
-    def preset_price(self, preset: Preset) -> dict[str, float | None] | None:
-        """A cloud preset's model's prices per million tokens, as its provider last listed them; None when not known."""
+    def preset_extras(self, preset: Preset) -> dict[str, Any]:
+        """What a cloud preset's view adds, from its model's line as its provider last listed it: the model's prices
+        per million tokens (None when not known), and the preset's settings as a form changes them, the model's limits
+        in their words (design 0016 §7)."""
         line = self.known(preset.endpoint, preset.model)
-        if line is None:
-            return None
-        return {"in": line.price_in, "out": line.price_out, "cached_in": line.price_cached_in}
+        price = (
+            None if line is None else {"in": line.price_in, "out": line.price_out, "cached_in": line.price_cached_in}
+        )
+        return {"price": price, "settings": guide.preset_settings(dict(preset.options), line.view() if line else None)}
+
+    def change_preset(self, name: str, wanted: Mapping[str, Any], *, actor: Actor) -> dict[str, Any]:
+        """Change a cloud preset's context, most output or thinking effort (design 0016 §7, revised after approval
+        2026-10-29): merged into its options, checked by its adapter against its model's limits as the provider lists
+        them now, and written over the record at its revision with who changed it. The slot that runs it follows at
+        once (`cloud.follow`), and the change is an event (`runtime.preset_changed`). 404 for no such preset; 400 for a
+        local one (its options are its engine's, in its file), for nothing to change, or for a value its model does not
+        take, in the adapter's words. The preset as clients see it after, what changed and what it was, the slot that
+        follows it, and what it did in words."""
+        from clank.components.runtime import cloud
+        from clank.components.runtime.service import PresetNotFound
+
+        try:
+            view = self.runtime.preset(name)
+        except PresetNotFound as error:
+            raise ApiError(404, "not_found", str(error)) from error
+        id, title = str(view["id"]), str(view["title"])
+        if not view.get("endpoint"):
+            raise ApiError(
+                400,
+                "local_preset",
+                f"{title} is a local preset: its options are in its file ({view['file']}); in the console, o on "
+                "Presets, then e on Launch options opens it",
+            )
+        given = {key: wanted[key] for key in CHANGED if wanted.get(key) is not None}
+        if not given:
+            raise ApiError(400, "invalid", "nothing to change: give context, max_output or reasoning")
+        loaded = self.kernel.settings.get("preset", id)
+        record = Preset.model_validate(loaded.record.model_dump())
+        line = self.model(record.endpoint, record.model)
+        try:
+            options = self.adapter(record.endpoint).preset_options(line, {**record.options, **given})
+        except ValueError as error:
+            raise ApiError(400, "invalid", str(error)) from error
+        changed = [key for key in SAID_ORDER if options.get(key) != record.options.get(key)]
+        changed += [key for key in options if key not in SAID_ORDER and options[key] != record.options.get(key)]
+        was = {key: record.options.get(key) for key in changed}
+        if not changed:
+            said = guide.preset_changed_said(title, was, {}, None)
+            return {"preset": view, "changed": [], "was": {}, "slot": None, "said": said}
+        values = {**loaded.record.model_dump(mode="json"), "options": options}
+        self.kernel.settings.write("preset", id, values, base=loaded.revision, actor=actor)
+        slot, kept = None, ""
+        for each in self.runtime.state.slots(self.runtime.settings().slots):
+            if each.status in ("starting", "ready") and each.preset == id:
+                slot, kept = each.name, cloud.follow(self.runtime, each.name)
+        now = {key: options.get(key) for key in changed}
+        named = guide.listed([f"the {guide.NAMES.get(key, key)}" for key in changed])
+        self.kernel.events.record(
+            "runtime.preset_changed",
+            summary=f"{actor.describe()} changed {named} of {title}",
+            actor=actor,
+            subject=Subject(kind="preset", id=id),
+            data={
+                "preset": id,
+                "title": title,
+                "fields": changed,
+                "options": options,
+                "slot": slot if not kept else None,
+            },
+        )
+        said = guide.preset_changed_said(title, was, now, slot, kept)
+        return {"preset": self.runtime.preset(id), "changed": changed, "was": was, "slot": slot, "said": said}
 
     def write_preset(
         self, id: str, model: str, *, title: str = "", wanted: Mapping[str, Any], actor: Actor

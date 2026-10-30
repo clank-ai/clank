@@ -1,6 +1,7 @@
 """The runtime's routes for the providers someone else runs (design 0016 §4-§7, plan s34's interface): their records,
-their keys, what their providers say (the account, the models), the cloud presets written from a model, the check
-and the test; and whether any model is usable (`GET /runtime/usable`).
+their keys, what their providers say (the account, the models), the cloud presets written from a model and changed
+later (`PATCH /runtime/presets/{name}`), the check and the test; and whether any model is usable
+(`GET /runtime/usable`).
 
 They are included with the runtime's routes, under `/api/v1/` behind the local token. A key is taken only in a
 request's body, over the loopback, and no route ever answers with it. What asks a provider runs off the service's
@@ -45,6 +46,15 @@ class NewCloudPreset(BaseModel):
 
     model: str
     title: str = ""
+    context: int | None = Field(None, ge=1)
+    max_output: int | None = Field(None, ge=1)
+    reasoning: str | None = None
+
+
+class PresetChange(BaseModel):
+    """What to change of a cloud preset (design 0016 §7): any of its context, its most output and its thinking effort;
+    what is left out stays as it is."""
+
     context: int | None = Field(None, ge=1)
     max_output: int | None = Field(None, ge=1)
     reasoning: str | None = None
@@ -161,6 +171,21 @@ def router(runtime: "Runtime") -> APIRouter:
         options = wanted.model_dump(exclude_none=True, exclude={"model", "title"})
         found: dict[str, Any] = await anyio.to_thread.run_sync(
             lambda: endpoints.write_preset(id, wanted.model, title=wanted.title, wanted=options, actor=actor)
+        )
+        return found
+
+    @routes.patch("/runtime/presets/{name}")
+    async def change_preset(name: str, change: PresetChange, request: Request) -> dict[str, Any]:
+        """Change a cloud preset's context, most output or thinking effort, within its model's limits.
+
+        The preset is named by its id or its title; the change is written with who made it, and the slot that runs the
+        preset follows it at once. The answer: the preset after, what changed and what it was, that slot, and what the
+        change did in words (OpenCode windows open now keep the limits they started with until they start again). A
+        local preset is refused, saying where its options change."""
+        actor = client_actor(request.headers.get(CLIENT_HEADER))
+        wanted = change.model_dump(exclude_none=True)
+        found: dict[str, Any] = await anyio.to_thread.run_sync(
+            lambda: endpoints.change_preset(name, wanted, actor=actor)
         )
         return found
 
