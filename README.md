@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-7aa2f7?style=flat-square"></a>
-  <a href="CHANGELOG.md"><img alt="Version 0.3.0b5, public beta" src="https://img.shields.io/badge/version-0.3.0b5%20beta-ff9e64?style=flat-square"></a>
+  <a href="CHANGELOG.md"><img alt="Version 0.3.0b6, public beta" src="https://img.shields.io/badge/version-0.3.0b6%20beta-ff9e64?style=flat-square"></a>
   <img alt="Python 3.12 or newer" src="https://img.shields.io/badge/python-3.12%2B-9ece6a?style=flat-square">
   <img alt="Windows; macOS and Linux untested" src="https://img.shields.io/badge/runs%20on-Windows-bb9af7?style=flat-square">
 </p>
@@ -158,7 +158,7 @@ The full guide, with every step, updating, uninstalling and troubleshooting:
 
 ## Status: public beta
 
-Clank 0.3.0b5 is in daily use on Windows, runs on Linux with Docker Engine (tested on every change), sets itself up
+Clank 0.3.0b6 is in daily use on Windows, runs on Linux with Docker Engine (tested on every change), sets itself up
 with `clank setup`, and `clank update` updates it. Not there yet: testing macOS beyond its installer, and the phone's chat. Local models need their
 engine built by hand for now. What each release brings:
 [CHANGELOG.md](CHANGELOG.md); where every part stands: [docs/ROADMAP.md](docs/ROADMAP.md).

@@ -6,7 +6,7 @@ with a short design of its part (a document in [design/](design/README.md), revi
 of small steps, each starting with a failing test, and ends with something the owner can run and a version tag. The
 status column is updated in the same commit as the work.
 
-**Where Clank stands (2026-10-29):** the fifth public beta, version 0.3.0b5 ([CHANGELOG.md](../CHANGELOG.md)), with
+**Where Clank stands (2026-10-30):** the sixth public beta, version 0.3.0b6 ([CHANGELOG.md](../CHANGELOG.md)), with
 Linux on Docker Engine (design 0014's lane L), `clank setup` (design 0028) and dev mode for testing free cloud models
 (decision 0149). On
 Windows, the first slices of M3, M4, M5 and M10 are built and in use: the console, the gateway, workspaces in Docker,

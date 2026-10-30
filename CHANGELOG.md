@@ -5,6 +5,59 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
+## 0.3.0b6: Backspace erases, a model's output limit you can change, and dev mode opens the internet (2026-10-30)
+
+From the owner's first days testing on Linux with a free cloud model. Typing in the console no longer jumps back a step
+when you press Backspace: Esc goes back. A cloud model's most output and thinking effort can be changed after it is set
+up (its thinking had been using up its output limit, and the run stopped with nothing saying why); Clank now says when
+an answer was cut off and tells the model to go on, and OpenCode uses an output limit above 32,000. In dev mode the
+agent reaches every public host at once, so `git clone` and package installs work. Every window opens centered. From
+0.3.0b2 or later, `clank update`; from 0.3.0b1, run the installer again.
+
+### Added
+
+- **Change a cloud model's settings after setup** (decision 0153): `e` on the Presets page, or `clank preset change
+  "cloud: <name>" --output 65536` (also `--context` and `--reasoning`). Its context, its most output (its thinking and
+  its answer together) and its thinking effort are checked against the model's own limits. The slot that runs it
+  follows at once; an OpenCode window already open is told that it keeps its limits until it starts again. A most
+  output is at most half the context, so OpenCode does not compact after every step. Through the API: `PATCH
+  /api/v1/runtime/presets/{name}`.
+- **OpenCode uses an output limit above 32,000** (decision 0153): when a model's most output is larger, Clank sets
+  OpenCode's `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX` to it as OpenCode starts, so a reasoning model can think longer
+  before it answers.
+- **An answer cut off at the output limit is said, and the model goes on** (decision 0154): a Watch for rule marks each
+  step OpenCode ended at the output limit, with the limit and how much of it was thinking, and tells the model to go
+  on, think more briefly and work in smaller steps; twice in a row at most, after which the session pauses and your
+  phone is told. Like every rule, yours to change in `config/monitor.json`.
+- **Dev mode opens the agent's internet** (decision 0152): while it is on, every workspace's agent reaches every
+  public host at once, without a question, each exchange still logged by host, size and time; OpenCode may use its own
+  web tools from its next start in a folder, and the agent's instructions say what it may reach. Private addresses
+  (this computer, your network, the tailnet) are never reached. The header says `dev mode: any provider, any host`,
+  with or without a cloud provider.
+
+### Changed
+
+- **Esc goes back; Backspace only erases** (decision 0151): Esc takes a step back inside a page (Add a model's step
+  before, the Monitor's Context view to the Session view, a box's session back to the box, the Flow view's boards back
+  to the flow), and goes to the menu from a page with none; the keys bar says `esc back` where it steps back.
+
+### Fixed
+
+- **Backspace went back a step while you typed**: in Add a model's model search, its settings, or the key's field, it
+  left the step mid-word. A text field's own keys (Backspace, Delete, the arrows, Home, End) now stay in the field, on
+  a page and in a window, and the page under it never hears them.
+- **The cloud question opened in the console's top left corner**: every window opens centered.
+- **`git clone` failed in dev mode**: the network question waited in the console while you were in OpenCode's window,
+  and expired (dev mode above).
+- **Add a model could show a sentence with the model's name missing** ("keep … running, and  waits on the Presets
+  page"): a guide read before the preset was written overwrote the newer one.
+
+### Tested
+
+- Every kind of window opens centered and whole at three sizes; every page keeps its panels on the screen and apart
+  at three sizes; typing then Backspace erases in every kind of field and never moves the page
+  (`tests/console/test_windows_placed.py`, `test_pages_fit.py` and `test_backspace_erases.py`).
+
 ## 0.3.0b5: dev mode, no log out on Linux, and the setup in color (2026-10-29)
 
 From the owner's first install on Linux. For testing with OpenRouter's free models, most of which are served by

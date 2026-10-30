@@ -5,4 +5,4 @@ part added in the milestone that builds it. `__version__` is the one place the v
 metadata reads it when the package is built (`[tool.hatch.version]` in pyproject.toml).
 """
 
-__version__ = "0.3.0b5"
+__version__ = "0.3.0b6"

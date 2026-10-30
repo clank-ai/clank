@@ -21,6 +21,15 @@ Update this page in the same commit as the fix.
 | No scriptable way to give the agent a task | `opencode run` rejects every edit under review mode, and Clank does not see its session | `clank work` | `clank work --message`, on the start route Clank already has |
 | The phone's chat (design 0025 §12) | Not built yet: a normal chat, the workspaces with the saved ones first, any session picked up, figures and the agent's questions in place | `remote/page/` | Plan s60 (branch `feature/phone-chat`, begun) |
 
+## Fixed on 2026-10-29 and 10-30
+
+| Issue | Cause | Commit |
+| --- | --- | --- |
+| Backspace went back a step while the owner typed in Add a model | The console gave the page every key a field did not handle itself, and a field takes Backspace through its binding, which Textual checks after the handlers | 3c4dbeb (decision 0151) |
+| A cloud model's run stopped with nothing saying why | Its thinking used up the output limit (16,384), the answer was cut, and OpenCode ended the run; nothing changed a preset afterwards, and OpenCode capped an answer at 32,000 | 3c4dbeb (decision 0154), 7cfc7a3 (decision 0153) |
+| `git clone` failed in dev mode | Dev mode opened the cloud's providers only; the agent's proxy asked the owner about each host in the console, unseen from OpenCode's window | ded0452 (decision 0152) |
+| The workspace's cloud question opened in the console's top left corner | The windows were centered by a list of their kinds that missed the question's | 9f91a72 |
+
 ## Fixed on 2026-10-26 and 10-27
 
 | Issue | Cause | Commit |
