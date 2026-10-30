@@ -83,11 +83,11 @@ Written 2026-10-30, from the owner's request of 2026-10-29.
   folder's line seen to fail first). The race the lock guards was checked the other way too: with `tell_network`
   writing without the lock, the test that turns dev mode off in the middle of an agent's start found dev mode's words
   left in the container.
-- Two more places said what dev mode no longer is, and say it now: This folder's hosts line said "none" while every
-  public host answered (design 0024 §4 revised with it), and the header's pill showed only once a cloud provider was
-  added, though dev mode now matters with a local model too (the console reads `GET /runtime/dev` itself). At 120
-  columns with every part running, the header has no room for the pill's whole words, as it had none for the old
-  ones: dev mode's go short ("dev mode") before the other pills'.
+- Two more places would have misled the owner in dev mode, and were changed with it: This folder's hosts line said
+  "none" while every public host answered (design 0024 §4 revised with it), and the header's pill showed only once a
+  cloud provider was added, though dev mode now matters with a local model too (the console reads `GET /runtime/dev`
+  itself). At 120 columns with every part running, the header has no room for the pill's whole words, as it had none
+  for the old ones: dev mode's go short ("dev mode") before the other pills'.
 - Not tried live: this was built in a worktree, away from the owner's service, home and containers. To check on the
   owner's machine, with the gateway restarted so the new proxy runs (the service adopts a running gateway, and one
   started before this keeps the old proxy): `clank dev on`; from a running workspace's container, `git clone` of a
