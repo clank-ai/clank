@@ -3,7 +3,8 @@ stream: each event brings the fresh data of the topics it touches, read from the
 log line arrives as it is written; a lost service is said, tried again, and reloaded whole when it is back; stopping
 the follower ends it at once. Design 0013 §7: a window told its model changed brings the slots again, so This folder
 says it at once. Design 0016 §11 and §14: whether a model is usable, the cloud providers and the cloud's cost are read
-at the start (unknown from a service without their routes), and again on the events that change each, and only those.
+at the start (unknown from a service without their routes), and again on the events that change each, and only those;
+design 0016 §7: a cloud preset's settings changed bring the presets and the slots again (This folder's limits).
 Design 0028 §4: so is `clank setup`'s checklist, again whenever Docker, a slot, an operation's end or a workspace's
 record changes."""
 
@@ -227,6 +228,12 @@ def test_a_window_told_its_model_changed_touches_the_slots() -> None:
     told = {"type": "agents.model_changed", "actor": {"kind": "clank", "via": "flow runner"},
             "subject": {"kind": "workspace", "id": "paper"}}  # fmt: skip
     assert console_data.touched(told) == ["slots"]
+
+
+def test_a_cloud_presets_settings_changed_touch_the_presets_and_the_slots() -> None:
+    changed = {"type": "runtime.preset_changed", "actor": {"kind": "user", "via": "console"},
+               "subject": {"kind": "preset", "id": "cloud-example-coder"}}  # fmt: skip
+    assert console_data.touched(changed) == ["presets", "slots"]
 
 
 def test_loading_reads_whether_a_model_is_usable_the_providers_and_the_cost(
