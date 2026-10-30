@@ -45,6 +45,16 @@ STAND_INS: list[tuple[re.Pattern[str], str | Callable[[re.Match[str]], str]]] = 
 ]  # each keeps its line's width (a version's digits each a 0), so a panel's right border stands where it is drawn
 
 
+SCROLL_GLYPHS = str.maketrans(dict.fromkeys("▁▂▃▄▅▆▇", "█"))
+
+
+def scrollbar_masked(frame: str) -> str:
+    """A frame as compared: the block glyphs in each line's last two columns (a scrollbar's thumb, whose edge is a
+    fraction of a row that depends on when the content finished loading) read as whole blocks, so two frames compare
+    by what they show, not by that fraction (monitor-flow-watch-60 differed so on CI, 2026-10-29)."""
+    return "\n".join(line[:-2] + line[-2:].translate(SCROLL_GLYPHS) for line in frame.split("\n"))
+
+
 def normalized(frame: str) -> str:
     """A frame with its changing parts replaced and its lines' trailing spaces removed."""
     for pattern, stand_in in STAND_INS:
@@ -67,7 +77,7 @@ def assert_frame(frame: str, name: str) -> None:
     assert path.exists(), f"no snapshot {path.name}: run with CLANK_UPDATE_SNAPSHOTS=1 and read what it wrote"
     expected = path.read_text(encoding="utf-8")
     difference = "".join(difflib.unified_diff(expected.splitlines(True), shown.splitlines(True), path.name, "frame"))
-    assert shown == expected, f"the frame differs from {path.name}:\n{difference}"
+    assert scrollbar_masked(shown) == scrollbar_masked(expected), f"the frame differs from {path.name}:\n{difference}"
 
 
 async def settle(pilot: Pilot[Any], until: Callable[[], bool], seconds: float = 10) -> None:

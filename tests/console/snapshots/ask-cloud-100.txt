@@ -1,0 +1,34 @@
+ ◆ CLANK  paper   ● service up 2h14m  ● docker running  ● no model  ● gateway stopped         13:54
+F4 This folder         ✗ 4   │ ┌─ Happening now ──────────────────────────────────────────────────┐
+1 Home                       │ │ Nothing runs right now.                                          │
+2 Questions                  │ └──────────────────────────────────────────────────────────────────┘
+3 History                    │
+4 Docker               ●     │ ┌─ Waiting for you ────────────────────────────────────────────────┐
+5 Machine                    │ │ ✓ Nothing waits for you.                                         │
+6 Operations                 │ │ questions from the agent and from Clank land here                │
+7 Records                    │ └──────────────────────────────────────────────────────────────────┘
+8 Models               ●     │
+9 Presets                    │ ┌─ What runs ──────────────────────────────────────────────────────┐
+0 Pro┌─ Let paper's agent use the cloud model cloud: Example Coder? ──────────────────────────┐   │
+F1 He│ What goes: every request of its agent's sessions, to the cloud provider and then the   │   │
+F2 La│ model's provider: your messages, what the agent reads of the folder, command output,   │e  │
+F3 MC│ and its instructions. What never goes: Notion pages, and the MCP servers marked local  │   │
+F6 Wo│ only (a session that used one stays on this machine). What the agent wrote into the    │   │
+F7 Re│ folder's files from them goes with the folder.                                         │   │
+F8 CP│ y  Allow: its requests go to the cloud provider from now on                            │C  │
+F9 Ph│ n  Keep local: it stays on this machine; not asked again                               │   │
+F10 M│                                                                                        │   │
+F12 A│ y or n answers; Esc leaves it waiting.                                                 │   │
+Setup└────────────────────────────────────────────────────────────────────────────────────────┘   │
+───────────────────────────  │ └──────────────────────────────────────────────────────────────────┘
+coming                       │
+Sampling              M3     │ ┌─ History ────────────────────────────────────────────────────────┐
+Sessions              M3     │ │ Nothing recorded yet.                                            │
+Keys                  M3     │ └──────────────────────────────────────────────────────────────────┘
+Layout                M2     │
+Tests and trials      M2     │
+Agents                M5   ▅▅│
+Modes                 M5     │
+Changes               M6     │
+
+ s start or stop Docker  d run the doctor  v the question whole  ? explain  f1 help

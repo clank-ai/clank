@@ -190,8 +190,8 @@ def guide(
                 else f"Loading {title or 'the preset'} into the main slot; its health is one short request"
             ],
             "mode": "ask" if runs_local else "load",
-            "ask": f"Load it now? This stops {local} in the main slot; or keep {local} running, and {title} waits on "
-            "the Presets page.",
+            "ask": f"Load it now? This stops {local} in the main slot; or keep {local} running, and "
+            f"{title or 'the new preset'} waits on the Presets page.",
             "failed": "Go back to the model (another, or other settings), or to the key (a new one).",
         },
         {

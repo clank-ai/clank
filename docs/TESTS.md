@@ -233,14 +233,14 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | What the owner gets | none yet |
 | 2 | The style: a file of named elements | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/kernel/test_console_kinds.py` (6) |
 | 3 | The style in the console | `tests/console/test_console_style.py` (14) |
-| 4 | The panel | `tests/components/tools/test_console_servers.py` (1), `tests/console/test_frames.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_windows.py` (3), `tests/console/test_workspaces_page.py` (4) |
+| 4 | The panel | `tests/components/tools/test_console_servers.py` (1), `tests/console/test_frames.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_pages_fit.py` (1), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_windows.py` (3), `tests/console/test_workspaces_page.py` (4) |
 | 5 | Text never spills out of a panel | `tests/console/test_frames.py` (1), `tests/console/test_windows.py` (3) |
 | 6 | No color written in a page | `tests/test_repository.py` (11), `tests/tools/test_check_colors.py` (8) |
-| 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (3), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (21), `tests/console/test_windows.py` (3) |
+| 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (3), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_pages_fit.py` (1), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (21), `tests/console/test_windows.py` (3), `tests/console/test_windows_placed.py` (3) |
 | 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (5), `tests/components/tools/test_console_servers.py` (1), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_workspaces_page.py` (4) |
 | 9 | Narrow windows | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_machine_column.py` (14), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5) |
 | 10 | What changes in the tests | none yet |
-| 11 | Build steps | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_keys_bar.py` (10), `tests/console/test_machine_column.py` (14), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_windows.py` (3) |
+| 11 | Build steps | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_keys_bar.py` (10), `tests/console/test_machine_column.py` (14), `tests/console/test_pages_fit.py` (1), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_windows.py` (3) |
 | 12 | Every key a button | see its subsections |
 | 12.1 | What becomes a button | `tests/console/test_confirm.py` (6), `tests/console/test_folder.py` (25), `tests/console/test_folder_buttons.py` (5), `tests/console/test_home.py` (15), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_questions.py` (2), `tests/console/test_windows.py` (3) |
 | 12.2 | One group, one cursor | `tests/console/test_button_groups.py` (9), `tests/console/test_buttons.py` (9) |
@@ -4433,6 +4433,12 @@ Design 0001 §4.8, §5.6, design 0002 §2.1, §2.4 and §3.2: the console's page
 - a switch to a cloud preset from the picker is the switch route
 - a cloud presets explanation says its provider
 
+### `tests/console/test_pages_fit.py`
+
+Design 0011 §4, §7 and §11 (the owner's request of 2026-10-29: visual tests that catch what a person sees as wrong, after a window opened in the console's top left corner): every page of the console, opened at 80, 120 and 170 columns, fits the screen across: each of its panels starts at or after the screen's left edge and ends at or before its right edge, and no two of its panels cover each other (one inside the other is a panel in a panel, and allowed). A page that scrolls may run below the screen; across, nothing may.
+
+- every page fits the screen across and its panels never cover each other
+
 ### `tests/console/test_panel.py`
 
 Design 0011 §4 (the panel): every section is a panel, a box with its title set in its top border at the left, bold, and its note at the right of that border, drawn again when a page changes it, and dropped whole, never cut, before the title goes when the panel is narrow; a panel is never narrower than its title; the panel that holds the focus, and only it, draws its border in `border-focused`, and Tab goes from panel to panel in reading order; panels in a row share the row's height and stack when the row is narrow, or at once when what they hold asks for more room than the row has (design 0011 §9), standing side by side again when it asks for less; panels in a grid stand in columns of set widths, one beside the several it spans (design 0012 §2: the Monitor's Flow beside Now, Watch for and the Guide), their borders lined up with the row below, and stack in the order given when the grid is narrow; a style's `round` border draws round corners; moving the focus costs the console no redraw of its own (design 0001 §5.7).
@@ -4608,6 +4614,14 @@ Design 0011 §4, §7, §11 and §12.1 (R2; every key a button): the windows over
 - a window is one panel its title in its border its border focused its keys its last line
 - the traffic window is two panels its list and the highlighted exchange
 - a window title too long for the screen is cut in its border and shown whole inside
+
+### `tests/console/test_windows_placed.py`
+
+Design 0011 §7 (the owner's report of 2026-10-29: the workspace's cloud question opened in the console's top left corner, not over its middle): every window over the console opens centered and whole on the screen. Every kind of window Clank has is found by walking its modules for ModalScreen's subclasses, so a new kind cannot be left out of this test: each is opened over the console at 60, 100 and 160 columns, and its box (the panels it shows) must lie inside the screen, with as much room on its left as on its right and above as below, within a cell. The workspace's cloud question, as This folder asks it before the agent starts, is a frame too.
+
+- every kind of window clank has is opened here
+- a window opens centered and whole on the screen
+- the workspaces cloud question opens over the middle of the console
 
 ### `tests/console/test_workspaces_page.py`
 

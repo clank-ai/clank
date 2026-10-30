@@ -195,10 +195,12 @@ Screen.-machine-off #machine {
 }
 
 /* A window over the console (design 0011 §7): a question shown whole (v), what has the focus explained (?), a choice
-   to pick, a form, an action to confirm, an MCP server's tools, a device's traffic. Each is one panel (`WindowPanel`,
-   its own rules beside it in panel.py: 90 columns, its border in border-focused), centered; the traffic window is
-   two. */
-DetailsScreen, PickScreen, FormScreen, ConfirmScreen, ToolsScreen, TrafficScreen {
+   to pick, a form, an action to confirm, a question the service asks (the workspace's cloud question among them), a
+   text to edit, an MCP server's tools, a device's traffic. Each is one panel (`WindowPanel`, its own rules beside it in
+   panel.py: 90 columns, its border in border-focused), centered; the traffic window is two. Every kind of window is
+   centered by this one rule, ModalScreen's, which its subclasses take (the cloud question once opened in the top left
+   corner: tests/console/test_windows_placed.py opens every kind). */
+ModalScreen {
     align: center middle;
 }
 

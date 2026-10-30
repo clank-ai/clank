@@ -455,7 +455,7 @@ async def test_the_test_ready_and_local_fit_at_60_columns(client: Client, home: 
     app = make(client, home)
     async with app.run_test(size=(60, 50)) as pilot:
         await to_test(pilot, app)
-        assert_frame(await on_screen(pilot, app, "n keep it"), "add-model-test-asking-60")
+        assert_frame(await on_screen(pilot, app, "n keep it", "Coder waits on"), "add-model-test-asking-60")
         await pilot.press("n")
         assert_frame(await on_screen(pilot, app, "Ready", "enter this folder"), "add-model-ready-60")
         page_of(app).start()

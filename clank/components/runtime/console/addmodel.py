@@ -399,15 +399,19 @@ class AddModelPage(Page):
             try:
                 found = client.get("runtime/guide", preset=preset, folder=folder)
             except Exception as error:
-                self.console.call_from_thread(self._guide_read, None, f"Add a model's steps could not be read: {error}")
+                self.console.call_from_thread(
+                    self._guide_read, None, f"Add a model's steps could not be read: {error}", preset
+                )
                 return
-            self.console.call_from_thread(self._guide_read, found, "")
+            self.console.call_from_thread(self._guide_read, found, "", preset)
             if then is not None:
                 self.console.call_from_thread(then)
 
         self.run_worker(read, thread=True, group="add-guide", exclusive=then is None, exit_on_error=False)
 
-    def _guide_read(self, found: dict[str, Any] | None, said: str) -> None:
+    def _guide_read(self, found: dict[str, Any] | None, said: str, preset: str = "") -> None:
+        if preset != self._preset_id():  # read for another preset (none yet, before this one was written): stale
+            return
         if found is not None:
             self.guide = found
         self.guide_said = said
