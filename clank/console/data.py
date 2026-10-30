@@ -189,6 +189,8 @@ def touched(event: dict[str, Any]) -> list[str]:
             return ["mcp"]
         if subject == "workspace":
             return ["setup"]
+        if subject == "runtime":  # dev mode, which each provider's view says (decision 0149)
+            return ["endpoints"]
     return []
 
 

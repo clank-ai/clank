@@ -186,7 +186,7 @@ class RuntimeSettings(Settings):
 
     KIND = "runtime"
     LABEL = "Runtime"
-    HELP = "The slots, the port engines listen on, and how long starts and health checks may take."
+    HELP = "The slots, the port engines listen on, how long starts and health checks may take, and dev mode."
     SINGLE = True
 
     slots: list[str] = Field(
@@ -233,6 +233,13 @@ class RuntimeSettings(Settings):
         title="Fallback preset",
         description="What clank work, clank code and This folder load when the main slot runs nothing and no "
         "configuration has worked yet (design 0015 §13).",
+    )
+    dev_mode: bool = Field(
+        False,
+        title="Dev mode",
+        description="For testing (decision 0149): while on, every cloud provider is asked for any of a model's "
+        "providers (data_collection allow), those that may keep or train on what they are sent too, whatever its own "
+        "record says, from the next request; the console's header says so. clank dev on, clank dev off.",
     )
 
     def port_of(self, slot: str) -> int:

@@ -51,6 +51,22 @@ POLICY = {
     "deny": "Clank asks only for providers that do not keep your data (data_collection deny).",
     "allow": "Clank asks for any provider, those that may keep your data too (data_collection allow).",
 }
+DEV_SAID = {  # dev mode, on and off (decision 0149)
+    True: "Dev mode is on: Clank asks every cloud provider for any of a model's providers, those that may keep or "
+    "train on what they are sent too (data_collection allow), whatever its own record says. clank dev off ends it.",
+    False: "Dev mode is off: each cloud provider is asked as its record says (data_collection deny unless you changed "
+    "it). clank dev on asks for any provider, for testing.",
+}
+
+
+def policy_said(own: str, dev: bool) -> str:
+    """A provider's data policy in words: its record's, or dev mode's while it is on and relaxes it (decision 0149)."""
+    if dev and own != "allow":
+        return (
+            "Dev mode: Clank asks for any provider, those that may keep your data too (data_collection allow); this "
+            f"record's own is {own}."
+        )
+    return POLICY.get(own, "")
 
 
 def cloud_from(endpoint: dict[str, Any] | None) -> str:

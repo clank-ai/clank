@@ -18,11 +18,12 @@ from clank.kernel.components import Component
 
 
 def commands() -> list[Any]:
-    """`clank model`, `clank preset`, `clank host`, `clank engine`, `clank endpoint`."""
+    """`clank model`, `clank preset`, `clank host`, `clank engine`, `clank endpoint`, `clank dev`."""
     from clank.components.runtime.cli import COMMANDS
     from clank.components.runtime.cloudcli import endpoint
+    from clank.components.runtime.devcli import dev
 
-    return [*COMMANDS, endpoint]
+    return [*COMMANDS, endpoint, dev]
 
 
 def pages() -> list[Any]:

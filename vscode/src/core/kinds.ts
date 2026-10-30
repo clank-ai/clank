@@ -292,6 +292,8 @@ export interface RuntimeSettings {
   cloud_health_seconds: number;
   /** What clank work, clank code and This folder load when the main slot runs nothing and no configuration has worked yet (design 0015 §13). */
   fallback_preset: string;
+  /** For testing (decision 0149): while on, every cloud provider is asked for any of a model's providers (data_collection allow), those that may keep or train on what they are sent too, whatever its own record says, from the next request; the console's header says so. clank dev on, clank dev off. */
+  dev_mode: boolean;
 }
 
 /** A provider someone else runs, reached at its URL with the owner's key (design 0016 §4). */

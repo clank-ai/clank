@@ -68,10 +68,27 @@ class GivenKey(BaseModel):
     key: str = Field(repr=False)
 
 
+class DevMode(BaseModel):
+    """Dev mode on or off (decision 0149)."""
+
+    on: bool
+
+
 def router(runtime: "Runtime") -> APIRouter:
     """The providers' routes, over the runtime's part."""
     routes = APIRouter()
     endpoints = runtime.endpoints
+
+    @routes.get("/runtime/dev")
+    def dev_mode() -> dict[str, Any]:
+        """Dev mode (decision 0149): whether every cloud provider is asked for any of a model's providers, and what
+        that means, in words."""
+        return endpoints.dev_view()
+
+    @routes.put("/runtime/dev")
+    def set_dev_mode(asked: DevMode, request: Request) -> dict[str, Any]:
+        """Turn dev mode on or off, recorded with who did it; the next request goes so."""
+        return endpoints.set_dev(asked.on, actor=client_actor(request.headers.get(CLIENT_HEADER)))
 
     @routes.get("/runtime/endpoints")
     def endpoint_list() -> list[dict[str, Any]]:

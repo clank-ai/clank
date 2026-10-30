@@ -10,13 +10,14 @@ files from a host (the catalog keeps it, and every preset stays) and `u` removes
 one adopted only forgotten). Each asks first when it fetches or deletes, as the operations always do, and the
 operations page follows them. Its panels, "Serving setups" and "Models", are board E11's (design 0011 §8).
 
-Its first panel, **Cloud** (design 0016 §15), shows each cloud provider: its agreement, its key (set, its last four
-and its label; never the rest), its data policy, OpenRouter's own count for the key (its limit and what is left, read
-at most once a minute by the service), Clank's spending today and this month against the limits, its last check, and
-its presets; or, without one, how to add one. `a` opens Add a model at Cloud; `k` sets the key again in a hidden field
-(`PUT /runtime/endpoints/openrouter/key`); `c` checks the provider (an operation; its items in a window); `o` changes
-the data policy, asked first (`PATCH`); `L` sets the cost limits in a form (`PUT /gateway/cost/limits`); `r` removes
-the provider with its key, asked first, and says why not while a preset or the main slot uses it.
+Its first panel, **Cloud** (design 0016 §15), shows each cloud provider: its agreement, its key (set, its last four and
+its label; never the rest), its data policy, OpenRouter's own count for the key (its limit and what is left, read at
+most once a minute by the service), Clank's spending today and this month against the limits, its last check, and its
+presets; or, without one, how to add one. `a` opens Add a model at Cloud; `k` sets the key again in a hidden field (`PUT
+/runtime/endpoints/openrouter/key`); `c` checks the provider (an operation; its items in a window); `o` changes the data
+policy, asked first (`PATCH`); `L` sets the cost limits in a form (`PUT /gateway/cost/limits`); `D` turns dev mode on or
+off, asked first (`PUT /runtime/dev`, decision 0149); `r` removes the provider with its key, asked first, and says why
+not while a preset or the main slot uses it.
 """
 
 import json
@@ -149,6 +150,7 @@ class ProvidersPage(Page):
             "c", "check", "check it", "check the cloud provider: its key, its account, a short request, a tool call"
         ),
         PageKey("o", "policy", "data policy", "only providers that keep no data, or any"),
+        PageKey("D", "dev", "dev mode", "for testing: any provider for every request, whatever the record says"),
         PageKey("L", "limits", "cost limits", "the cloud's daily and monthly cost limits"),
         PageKey("r", "remove", "remove it", "remove the cloud provider, with its key"),
         PageKey("i", "install", "install an engine"),
@@ -192,6 +194,7 @@ class ProvidersPage(Page):
             "k": self._key,
             "c": self._check,
             "o": self._policy,
+            "D": self._dev,
             "L": self._limits,
             "r": self._remove_provider,
         }
@@ -410,6 +413,26 @@ class ProvidersPage(Page):
                 actions.call(self.console, lambda: client.patch(OPENROUTER, body), done=f"data_collection {policy}")
 
         self.console.push_screen(ConfirmScreen(f"Ask OpenRouter for data_collection {policy}?", lines), answered)
+
+    def _dev(self) -> None:
+        on = not (self._provider() or {}).get("dev_mode")
+        body = {"on": on}
+        said = (
+            "For testing: every request then goes to any of the model's providers, those that may keep or train on "
+            "what they are sent too (data_collection allow), whatever the provider's record says; the header says dev "
+            "mode."
+            if on
+            else "Every request then goes as the provider's record says (its policy, above)."
+        )
+        lines = [said, "It applies from the next request.", f"The call: PUT /api/v1/runtime/dev {json.dumps(body)}"]
+        turned = "on" if on else "off"
+
+        def answered(yes: bool | None) -> None:
+            if yes:
+                client = self.console.client
+                actions.call(self.console, lambda: client.put("runtime/dev", body), done=f"dev mode {turned}")
+
+        self.console.push_screen(ConfirmScreen(f"Turn dev mode {turned}?", lines), answered)
 
     def _limits(self) -> None:
         limits = (self.console.data.cost or {}).get("limits") or {}

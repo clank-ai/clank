@@ -101,6 +101,9 @@ Words with a special meaning in Clank's documents and code, defined once. Alphab
   always named by its number ("decision 0014"). Not to be confused with a *policy decision*.
 - **Deliverable**: the files a box of a flow must write in the workspace's folder, and what they hold; it counts only
   when written during the box's try, and each try's copy is kept with its fingerprint (design 0013 §4, §8).
+- **Dev mode**: for testing, the runtime's setting under which every cloud provider is asked for any of a model's
+  providers (`data_collection allow`), whatever its record says; `clank dev on` or `off`, and the header says so
+  (decision [0149](decisions/0149-dev-mode-asks-any-provider-for-testing.md)).
 - **Device**: a phone or a computer paired to reach Clank over the user's tailnet while remote access is on (decision
   [0012](decisions/0012-the-phone-page-and-push.md)).
 - **Edge**: a sandbox's only door: to the gateway, the tool hub and the Clank service, and to git or the web only by

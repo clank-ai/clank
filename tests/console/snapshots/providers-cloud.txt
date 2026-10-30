@@ -47,4 +47,4 @@ Files                 M9     │ │ ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF@d56280
                              │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
                              │
 
- a add a cloud model  k set the key  c check it  o data policy  L cost limits  r remove it  ? explain  f1 help
+ a add a cloud model  k set the key  c check it  o data policy  D dev mode  L cost limits  r remove it  ? explain  f1 help

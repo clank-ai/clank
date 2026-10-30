@@ -39,7 +39,8 @@ REFUSED_WORDS = {
     "refused": "the provider refused it",
     "no_model": "the provider lists no such model",
     "rate_limited": "a limit of requests",
-    "data_policy": "no provider serves it with data_collection deny",
+    "free_limit": "the free models' limit for the day",
+    "data_policy": "no provider serves it under the data policy",
 }
 
 

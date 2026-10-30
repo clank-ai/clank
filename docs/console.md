@@ -125,7 +125,7 @@ clank flow run <name>                                 # or run it from the comma
 
 | Part | Where | What it shows |
 | --- | --- | --- |
-| Header | `clank/console/header.py` | Clank's name, the folder's name, a pill per part that runs (`PILLS`), each in its state's color, a spinner while something runs. |
+| Header | `clank/console/header.py` | Clank's name, the folder's name, a pill per part that runs (`PILLS`), each in its state's color (and dev mode's while it is on, decision 0149), a spinner while something runs. |
 | Menu | `clank/console/app.py` (`_menu`), `clank/console/menu.py` (`PLANNED`) | Every page with its key, then the pages later milestones bring, in red. |
 | Keys bar | `clank/console/keysbar.py` (`KeysBar`), `clank/console/keys.py` (`ANYWHERE`, `fit_keys`), each page's `KEYS` | The keys of the page on screen, then the keys that act anywhere, each a button; when narrow, `f5`, `q` and the palette go first, then the page's keys from the right, and `?` and `f1` always stay. Help (F1) and `?` read the same declarations. |
 | Buttons | `clank/console/buttons.py` (`Buttons`, `button`, `lay_out`, `from_keys`) | Every key the console shows is a button (design 0011 §12): a group is one widget that takes the focus, a row or a column with its own cursor; a button pressed goes through the console's one door (`ClankConsole.press_button`), as its key typed does. |

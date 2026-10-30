@@ -229,13 +229,42 @@ def test_each_refusal_says_what_to_do_and_whether_opencode_may_retry_it(
 
 
 def test_no_provider_under_deny_says_how_to_allow_it_and_is_not_retried(openrouter: OpenRouter) -> None:
-    body = said(503, "No endpoints found matching your data policy")
-    denied = openrouter.refusal(503, body, model="example-vendor/example-coder", denied=True)
-    assert (denied.code, denied.retried) == ("data_policy", False)
-    assert "No provider of example-vendor/example-coder serves it with data_collection deny" in denied.message
-    assert "Providers page (o)" in denied.message
-    allowed = openrouter.refusal(503, body, model="example-vendor/example-coder", denied=False)
+    for status in (503, 404):
+        body = said(status, "No endpoints found matching your data policy")
+        denied = openrouter.refusal(status, body, model="example-vendor/example-coder", denied=True)
+        assert (denied.code, denied.retried) == ("data_policy", False), status
+        assert "No provider of example-vendor/example-coder serves it with data_collection deny" in denied.message
+        assert "Providers page (o)" in denied.message
+        assert "dev mode (clank dev on)" in denied.message
+    unsaid = openrouter.refusal(
+        503, said(503, "No provider available"), model="example-vendor/example-coder", denied=True
+    )
+    assert (unsaid.code, unsaid.retried) == ("data_policy", False), "a 503 under deny, whatever its words"
+    allowed = openrouter.refusal(503, said(503, "No provider available"), model="example-vendor/example-coder")
     assert (allowed.code, allowed.retried) == ("no_provider", True)
+
+
+def test_a_data_policy_refusal_under_allow_points_to_the_accounts_privacy_settings(openrouter: OpenRouter) -> None:
+    words = "No endpoints found matching your data policy (Free model training). Configure: https://openrouter.ai/settings/privacy"
+    for status in (404, 503):
+        refusal = openrouter.refusal(status, said(status, words), model="example-vendor/example-small:free")
+        assert (refusal.code, refusal.retried) == ("data_policy", False), status
+        assert refusal.message.startswith(words), "OpenRouter's own words first"
+        assert "your OpenRouter account's privacy settings (openrouter.ai/settings/privacy)" in refusal.message
+    denied = openrouter.refusal(404, said(404, words), model="example-vendor/example-small:free", denied=True)
+    assert "openrouter.ai/settings/privacy" in denied.message, "named by OpenRouter: Clank's own policy is not all"
+    assert "dev mode (clank dev on)" in denied.message
+
+
+def test_a_free_models_daily_limit_is_not_retried_and_says_when_it_starts_again(openrouter: OpenRouter) -> None:
+    words = "Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day"
+    daily = openrouter.refusal(429, said(429, words), model="example-vendor/example-small:free")
+    assert (daily.code, daily.retried) == ("free_limit", False)
+    assert daily.message.startswith(words)
+    assert "50 requests a day until 10 credits were bought, then 1,000" in daily.message
+    assert "midnight UTC" in daily.message
+    minute = openrouter.refusal(429, said(429, "Rate limit exceeded: free-models-per-min."), model="x:free")
+    assert (minute.code, minute.retried) == ("rate_limited", True), "a minute's limit passes: OpenCode waits"
 
 
 def test_no_full_context_words_are_declared_until_a_real_key_shows_them(openrouter: OpenRouter) -> None:

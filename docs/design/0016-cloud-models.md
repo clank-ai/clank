@@ -46,19 +46,19 @@ OpenRouter.
 | 1 | What the owner gets, and what this design takes from design 0015 | Approved 2026-10-20 for building, the owner's go-ahead |
 | 2 | OpenRouter, the first cloud provider | Approved 2026-10-20 (the owner's answers: 1; decision 0102) |
 | 3 | What OpenRouter offers, as its documentation says | Approved 2026-10-20 for building, the owner's go-ahead (each fact cited; what is unsaid is marked) |
-| 4 | The provider's record, and its key | Approved 2026-10-20 for building, the owner's go-ahead |
+| 4 | The provider's record, and its key | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (the owner's instruction: dev mode, decision 0149) |
 | 5 | How the gateway gets the key | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0106) |
 | 6 | The OpenRouter adapter | Approved 2026-10-20 for building, the owner's go-ahead |
 | 7 | Cloud presets, and the main slot running one | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0107) |
-| 8 | The gateway forwards to OpenRouter | Approved 2026-10-20 for building, the owner's go-ahead (Claude's calls, decisions 0109 and 0110; decision 0074 built); revised after approval 2026-10-21 (decision 0115: a refusal not to be retried is never answered 503) |
+| 8 | The gateway forwards to OpenRouter | Approved 2026-10-20 for building, the owner's go-ahead (Claude's calls, decisions 0109 and 0110; decision 0074 built); revised after approval 2026-10-21 (decision 0115: a refusal not to be retried is never answered 503) and 2026-10-29 (dev mode, decision 0149; a data policy's refusal known by its words, the account's privacy settings named; a free model's daily limit not retried) |
 | 9 | Where a workspace's requests may go | Approved 2026-10-20 (the owner's answers: 2; decision 0103); how it asks is Claude's call (decision 0112) |
 | 10 | Local-only content never reaches the cloud: how it is enforced | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0111) |
 | 11 | Cost: each request, session and flow, and the limits | Approved 2026-10-20 (the owner's answers: 3; decision 0104) |
 | 12 | How cost is known and kept | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0108) |
 | 13 | What the Monitor shows of a cloud model | Approved 2026-10-20 for building, the owner's go-ahead |
 | 14 | The first run: Add a model | Approved 2026-10-20 (the owner's answers: 4; decision 0105) |
-| 15 | The Providers and models page, and the other pages | Approved 2026-10-20 for building, the owner's go-ahead |
-| 16 | The commands | Approved 2026-10-20 for building, the owner's go-ahead |
+| 15 | The Providers and models page, and the other pages | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (dev mode's key and pill, decision 0149) |
+| 16 | The commands | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (`clank dev`, decision 0149) |
 | 17 | The phone and VS Code | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-21 (the owner's instruction: a subsection For the phone app) |
 | 18 | Tests, the fake OpenRouter, and the checks owed with a real key | Approved 2026-10-20 for building, the owner's go-ahead |
 | 19 | Build steps | Approved 2026-10-20 for building, the owner's go-ahead |
@@ -198,6 +198,11 @@ Add a model (§14) and `clank endpoint add openrouter` (§16) write it from the 
   its key, refused while the main slot runs one of its presets or a preset names it (the refusal names them).
 - **When a change applies.** `options` and `timeout_seconds` apply at the next load; `agreed` cleared stops the next
   load and, at the gateway, the next request (§9); the key at once (§5).
+- **Dev mode** (revised after approval 2026-10-29, the owner's instruction; decision 0149). The runtime's settings'
+  `dev_mode`, off by default, turned on or off by `clank dev on|off`, the Providers page's `D` or
+  `PUT /api/v1/runtime/dev`: while it is on, every request goes with `data_collection allow`, whatever `options`
+  says, from the next request (the gateway reads it with each route, as it reads `agreed`). The record is never
+  rewritten, and its own policy applies again once dev mode is off; `zdr` stays as the record says.
 
 ## 5. How the gateway gets the key
 
@@ -356,7 +361,8 @@ Today the gateway forwards only to an engine on this machine (`gateway/server.py
   its own for the cloud (certificates verified, as httpx2 does by default; a connect timeout of 10 s; the endpoint's read
   timeout between pieces, below). The engines' client keeps no read timeout (`gateway/server.py:159`).
 - **What** (decision 0109). The request as OpenCode sent it, but: `model` is the listed id; `provider` gets
-  `data_collection` (and `zdr` when set) from the record's options, merged into a `provider` the tool sent of its own
+  `data_collection` (and `zdr` when set) from the record's options (`allow` while dev mode is on, decision 0149: the
+  notes then say `(dev mode)`, revised after approval 2026-10-29), merged into a `provider` the tool sent of its own
   with the stricter word kept (`deny` over `allow`, `zdr` on over off: revised after approval 2026-10-21, since a tool's
   own `provider` dropped the record's `deny`);
   `reasoning` gets the preset's effort when it is not `default` and the tool sent none. Nothing else is added or
@@ -399,12 +405,12 @@ Today the gateway forwards only to an engine on this machine (`gateway/server.py
 | 401 | The key was refused | "OpenRouter refused the key: it may have been deleted or disabled. Set a new one: Providers and models, k; or clank endpoint key openrouter" | No |
 | 402 | Credits used up, or the key's own limit reached | "Your OpenRouter credits are used up, or this key's own limit is reached: add credits or raise the key's limit at openrouter.ai, then ask again" | No |
 | 403 | A budget, a guardrail or moderation refused | "OpenRouter refused this request: <its words>"; a budget names when it resets (§6's `account`); moderation's flagged text is kept in the record only when records are on (decision 0096) | No |
-| 404 | No such model | "OpenRouter lists no model <id>; it may have been retired (its expiration_date). Pick another: Add a model, or clank endpoint models openrouter" | No |
+| 404 | No such model; or no provider under a data policy (revised after approval 2026-10-29: its words say "data policy" or "privacy") | "OpenRouter lists no model <id>; it may have been retired (its expiration_date). Pick another: Add a model, or clank endpoint models openrouter"; for a data policy, as the 503 below, its code `data_policy` | No |
 | 408, 524 | Timed out | As OpenRouter said | Yes |
 | 413 | Too large to send | "The request is larger than OpenRouter takes" | No |
-| 429 | A limit of requests, OpenRouter's or the provider's; `Retry-After` when given | Passed on with `Retry-After` | Yes |
+| 429 | A limit of requests, OpenRouter's or the provider's; `Retry-After` when given | Passed on with `Retry-After`; a free model's daily limit (its words say "per-day": revised after approval 2026-10-29) says "OpenRouter's free models take 50 requests a day until 10 credits were bought, then 1,000; the count starts again at midnight UTC: wait, add credits at openrouter.ai, or pick a paid model", code `free_limit`, answered 403 (decision 0115) | Yes; a daily limit no |
 | 502, 529 | The model is down or overloaded | As OpenRouter said | Yes |
-| 503 | No provider meets the request's routing | "No provider of <model> serves it with data_collection deny: pick another model, or allow it on the Providers page (o)" when the record denies, answered 403 (decision 0115: OpenCode retries any 503); else as OpenRouter said | No, with `deny`; else yes |
+| 503 | No provider meets the request's routing | "No provider of <model> serves it with data_collection deny: pick another model, or allow it on the Providers page (o), or test with any provider in dev mode (clank dev on)" when the request denies, answered 403 (decision 0115: OpenCode retries any 503); when its words say "data policy" or "privacy" and the request allowed any provider, or OpenRouter names its privacy settings, "OpenRouter refuses <model> under your OpenRouter account's privacy settings (openrouter.ai/settings/privacy): allow its providers there, or pick another model" (revised after approval 2026-10-29); else as OpenRouter said | No, under a data policy; else yes |
 
 - **Records.** A request's record names the provider (`cloud openrouter`), the model id sent, its workspace (§9), the
   reach, its usage, its `cost` (with how it was known), its `generation`, and any refusal in OpenRouter's words. The
@@ -640,7 +646,9 @@ from there. Nothing in Add a model needs Docker.
   line (§6: the key's limit and what is left, OpenRouter's count today and this month), Clank's spending today and
   this month against the limits, its last check, and its presets. Keys: `a` add a cloud model (Add a model, from screen
   2, or 5 when the provider is there), `k` set the key again (the hidden field), `c` check (§6), `o` its options, `L`
-  the cost limits, `r` remove the provider (asked first; refused while used).
+  the cost limits, `r` remove the provider (asked first; refused while used); and `D` dev mode, on or off, asked
+  first with the call it makes (revised after approval 2026-10-29, decision 0149), the policy line then saying dev
+  mode beside the record's own.
 - **Presets (9) and the picker** show a cloud preset's provider as `cloud openrouter` and its prices; a switch to it is
   a switch like any (§7).
 - **Models (8)** shows the main slot's cloud model: its provider, its window, its last health, "not reached since …".
@@ -648,7 +656,8 @@ from there. Nothing in Add a model needs Docker.
   or "kept on this machine"), `u` to change it (asked first; `c` stays VS Code's), the MCP servers held back as local
   only, and the cost of its sessions today.
 - **Requests (F7)** shows each request's cost, provider and model, and a refusal's words.
-- **Home (1)** and the header show cloud spending today and this month, a pause, and its key.
+- **Home (1)** and the header show cloud spending today and this month, a pause, and its key; the header has a pill,
+  "dev mode: any provider", while dev mode is on (decision 0149).
 - **The Monitor (F10)**: §11 and §13. **The Flow view**: each box's cost, the flow's total, and a box waiting for the
   workspace's answer.
 - **MCP servers (F3)** shows each server's mark (local only, or may go to the cloud), with a key to change it.
@@ -671,6 +680,7 @@ clank workspace allow FOLDER --cloud | --local [--yes]       a workspace's bound
 clank mcp local NAME [--off]                       mark an MCP server local only, or not (§10)
 clank cost [--today | --month | --sessions | --flows] [--json]
 clank cost limit [--day USD|none] [--month USD|none]
+clank dev [on | off] [--json]                       dev mode, for testing (decision 0149): any provider, whatever the record says
 ```
 
 - Each is a client of the API (design 0002 §2.15), with `--json`. A key is never an argument (§4).
@@ -843,3 +853,9 @@ a fake of it until s34's routes land. Each task is one commit that starts with a
 - **2026-10-28, §14 and §18 revised after approval:** OpenRouter's public list refused the default models query
   (`category` beside `supported_parameters`): the most used now come from `sort=most-popular` over the tool models;
   §18's first check is answered, and the fake refuses that query as OpenRouter does.
+- **2026-10-29, §4, §8, §15 and §16 revised after approval:** at the owner's instruction, dev mode (decision 0149):
+  for testing, every request asks for any provider, whatever the record says, shown in the header, on the Providers
+  page (`D`) and by `clank dev`. With it, §8's table: a refusal whose words name a data policy is `data_policy`
+  whatever its status (404 or 503), pointing to OpenRouter's account settings when the request allowed any provider
+  or OpenRouter names them; and a free model's daily limit is not retried, since retrying cannot help until the
+  next UTC day. Both read OpenRouter's words as of 2025, *to be checked with a real key* (§18).

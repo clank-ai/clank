@@ -17,10 +17,13 @@ restart and the watch mean when a provider someone else runs serves the slot in 
   applies.
 
 `route` is what the gateway follows (plan s34's interface): the launch's kept route with its reach and agreement read
-from the record each time, so withdrawing the agreement applies to the next request.
+from the record each time, so withdrawing the agreement applies to the next request; and, while dev mode is on
+(decision 0149), its data policy relaxed (`dev_adds`), so turning dev mode on or off applies to the next request too.
+The launch keeps the record's own policy.
 """
 
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -41,6 +44,7 @@ TINY_TOKENS = 16
 TINY_SECONDS = 120.0
 CHAT = "/chat/completions"
 KEY = "/key"
+DEV = "dev mode"  # where a request's data policy came from while dev mode is on (decision 0149)
 
 
 class CloudError(Exception):
@@ -111,14 +115,37 @@ def prepare(runtime: "Runtime", preset_id: str, preset: Preset) -> CloudPrepared
     return CloudPrepared(preset_id, preset, record, adapter, model, route)
 
 
+def dev_adds(adds: Mapping[str, Any]) -> dict[str, Any]:
+    """What the gateway adds to a request while dev mode is on (decision 0149): the provider asked for any of the
+    model's providers (`data_collection allow`), the request's notes saying it came from dev mode (`provider_from`,
+    never sent); the rest as it was. A policy that allows any provider already, or none, is left as it is."""
+    provider = adds.get("provider")
+    if not isinstance(provider, Mapping) or provider.get("data_collection", "allow") == "allow":
+        return dict(adds)
+    return {**adds, "provider": {**provider, "data_collection": "allow"}, "provider_from": DEV}
+
+
+def adds_now(runtime: "Runtime", adds: Mapping[str, Any]) -> dict[str, Any]:
+    """What the gateway adds to a request now: the record's, relaxed while dev mode is on."""
+    return dev_adds(adds) if runtime.settings().dev_mode else dict(adds)
+
+
+def denies(adds: Mapping[str, Any]) -> bool:
+    """Whether a request goes asking only for providers that keep no data (`data_collection deny`)."""
+    provider = adds.get("provider")
+    return isinstance(provider, Mapping) and provider.get("data_collection") == "deny"
+
+
 def route(runtime: "Runtime", slot: SlotRecord) -> dict[str, Any] | None:
-    """A cloud slot's route as the gateway follows it, its reach and agreement read now; None for an engine's slot."""
+    """A cloud slot's route as the gateway follows it, its reach, agreement and dev mode read now; None for an engine's
+    slot."""
     if slot.launch_id is None:
         return None
     launch = runtime.state.launch(slot.launch_id)
     if not launch.endpoint or launch.route is None:
         return None
     found = dict(launch.route)
+    found["adds"] = adds_now(runtime, found.get("adds") or {})
     try:
         record = runtime.endpoints.record(launch.endpoint)
         found.update(reach=record.reach, agreed=record.is_agreed)
@@ -185,15 +212,16 @@ def _healthy(runtime: "Runtime", prepared: CloudPrepared, launch: int) -> tuple[
         if account.status_code != 200:
             raise CloudError(adapter.refusal(account.status_code, account.content, model=model).message)
         tiny = {"messages": [{"role": "user", "content": TINY_WORDS}], "max_tokens": TINY_TOKENS, "stream": False}
-        sent, _ = adapter.translate(tiny, model, prepared.route["adds"])
+        adds = adds_now(runtime, prepared.route["adds"])
+        sent, _ = adapter.translate(tiny, model, adds)
         began = time.monotonic()
         answer = endpoints.ask(id, key, "POST", CHAT, body=sent, seconds=TINY_SECONDS)
     except ApiError as error:
         raise CloudError(str(error)) from error
     seconds = time.monotonic() - began
-    denied = prepared.record.options.get("data_collection", "deny") == "deny"
     if answer.status_code != 200:
-        raise CloudError(adapter.refusal(answer.status_code, answer.content, model=model, denied=denied).message)
+        refusal = adapter.refusal(answer.status_code, answer.content, model=model, denied=denies(adds))
+        raise CloudError(refusal.message)
     try:
         found = answer.json()
         text = str(found["choices"][0]["message"].get("content") or "").strip()

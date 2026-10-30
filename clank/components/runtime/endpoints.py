@@ -122,6 +122,7 @@ class Endpoints:
         record = self.record(id)
         loaded = self.kernel.settings.get(KIND, id)
         presets = self.presets(id)
+        dev = self.dev_mode()
         running = None
         for slot in self.runtime.state.slots(self.runtime.settings().slots):
             if slot.status in RUNS and slot.preset in presets:
@@ -130,9 +131,27 @@ class Endpoints:
             "id": id, "title": record.title or id, "adapter": record.adapter, "url": record.url,
             "reach": record.reach, "options": dict(record.options), "agreed": record.agreed,
             "key": self.key_view(id), "presets": presets, "running": running, "check": self.last_check(id),
-            "source": loaded.source, "file": str(loaded.path or loaded.user_file),
-            "said": {"policy": guide.POLICY.get(str(record.options.get("data_collection", "deny")), "")},
+            "source": loaded.source, "file": str(loaded.path or loaded.user_file), "dev_mode": dev,
+            "said": {"policy": guide.policy_said(str(record.options.get("data_collection", "deny")), dev)},
         }  # fmt: skip
+
+    def dev_mode(self) -> bool:
+        """Whether dev mode is on (decision 0149): every cloud provider asked for any of a model's providers."""
+        return self.runtime.settings().dev_mode
+
+    def dev_view(self) -> dict[str, Any]:
+        """Dev mode as clients show it: on or off, and what that means."""
+        on = self.dev_mode()
+        return {"on": on, "said": guide.DEV_SAID[on]}
+
+    def set_dev(self, on: bool, *, actor: Actor) -> dict[str, Any]:
+        """Turn dev mode on or off in the runtime's settings, recorded with who did it; the next request goes so."""
+        loaded = self.kernel.settings.get("runtime", "runtime")
+        values = loaded.record.model_dump(mode="json")
+        if values.get("dev_mode") is not on:
+            values["dev_mode"] = on
+            self.kernel.settings.write("runtime", "runtime", values, base=loaded.revision, actor=actor)
+        return self.dev_view()
 
     def presets(self, id: str) -> list[str]:
         """The presets that name a provider."""

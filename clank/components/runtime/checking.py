@@ -115,10 +115,11 @@ class Checks:
         except ApiError as error:
             return {"ok": False, "said": str(error), "code": _code(error.code)}, 0.0
         endpoints, adapter, model = self.runtime.endpoints, prepared.adapter, prepared.model.id
-        denied = prepared.record.options.get("data_collection", "deny") == "deny"
+        adds = cloud.adds_now(self.runtime, prepared.route["adds"])
+        denied = cloud.denies(adds)
         try:
             key = endpoints.key(preset.endpoint, user="runtime", why=f"the test of {preset.title or preset_id}")
-            sent, _ = adapter.translate(_tiny(), model, prepared.route["adds"])
+            sent, _ = adapter.translate(_tiny(), model, adds)
             began = time.monotonic()
             answer = endpoints.ask(preset.endpoint, key, "POST", CHAT, body=sent, seconds=TINY_SECONDS)
         except ApiError as error:
@@ -207,8 +208,8 @@ class Checks:
     ) -> tuple[Items, float]:
         """The answer, tools, thinking, policy and limits items."""
         adapter = ENDPOINTS.get(record.adapter)()
-        denied = record.options.get("data_collection", "deny") == "deny"
-        adds = adapter.adds(record.options, "default")
+        adds = cloud.adds_now(self.runtime, adapter.adds(record.options, "default"))
+        denied = cloud.denies(adds)
 
         def add(name: str, status: str, said: str) -> None:
             items.append({"name": name, "status": status, "said": said})
@@ -254,7 +255,10 @@ class Checks:
                     else:
                         add("thinking", "warn", "no thinking came back as reasoning")
         policy = str(record.options.get("data_collection", "deny"))
-        if policy != "deny":
+        if self.runtime.settings().dev_mode and policy != "allow":
+            add("policy", "warn", f"dev mode: data_collection allow, whatever this record says (its own: {policy}): "
+                                  "any of the model's providers may keep what it is sent (clank dev off)")  # fmt: skip
+        elif policy != "deny":
             add("policy", "warn", f"data_collection {policy}: any of the model's providers may keep what it is sent "
                                   "(o on the Providers page)")  # fmt: skip
         elif answered:
@@ -363,5 +367,5 @@ def _delta(event: Mapping[str, Any]) -> dict[str, Any]:
 
 def _code(code: str) -> str:
     """A refusal's code as the test's result names it."""
-    known = ("key_refused", "no_credits", "no_model", "data_policy", "cloud_unreachable")
+    known = ("key_refused", "no_credits", "no_model", "data_policy", "free_limit", "cloud_unreachable")
     return code if code in known else "refused"

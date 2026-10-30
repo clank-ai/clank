@@ -28,7 +28,9 @@ from tests.fakes.openrouter import KEY, FakeOpenRouter
 YOU = client_actor("console")
 RUNTIME = Actor(kind="clank", via="runtime")
 CODER = "example-vendor/example-coder"
-NOTED = re.compile(r"/runtime/endpoints.*|/workspaces/[^/]+/cloud(/ask)?|/gateway/cost/limits|/mcp/servers/[^/]+/local")
+NOTED = re.compile(
+    r"/runtime/endpoints.*|/runtime/dev|/workspaces/[^/]+/cloud(/ask)?|/gateway/cost/limits|/mcp/servers/[^/]+/local"
+)
 
 
 @dataclass

@@ -49,6 +49,21 @@ CREDITS_ADVICE = (
     "Your OpenRouter credits are used up, or this key's own limit is reached: add credits or raise the key's limit at "
     "openrouter.ai, then ask again"
 )
+POLICY_WORDS = ("data policy", "privacy")  # OpenRouter's words when no provider of a model meets a data policy
+PRIVACY = "openrouter.ai/settings/privacy"  # the account's own data policy, which Clank cannot change
+DENY_ADVICE = (
+    "No provider of {named} serves it with data_collection deny: pick another model, or allow it on the Providers page "
+    "(o), or test with any provider in dev mode (clank dev on)"
+)
+ACCOUNT_ADVICE = (
+    f"OpenRouter refuses {{named}} under your OpenRouter account's privacy settings ({PRIVACY}): allow its providers "
+    "there, or pick another model"
+)
+DAILY_WORDS = ("per-day", "per day")  # its words for a free model's daily limit (free-models-per-day)
+DAILY_ADVICE = (
+    "OpenRouter's free models take 50 requests a day until 10 credits were bought, then 1,000; the count starts again "
+    "at midnight UTC: wait, add credits at openrouter.ai, or pick a paid model"
+)
 
 
 class OpenRouter(EndpointAdapter):
@@ -174,6 +189,7 @@ class OpenRouter(EndpointAdapter):
         sent = copy.deepcopy(dict(body))
         sent["model"] = model
         notes = []
+        source = str(adds.get("provider_from") or "the provider's record")  # dev mode's, while it is on (decision 0149)
         provider = adds.get("provider")
         own = body.get("provider")
         if isinstance(provider, Mapping) and isinstance(own, Mapping):
@@ -182,11 +198,11 @@ class OpenRouter(EndpointAdapter):
             changed = {key: value for key, value in merged.items() if own.get(key, _ABSENT) != value}
             if changed:
                 said = ", ".join(f"provider.{key} {_word(value)}" for key, value in changed.items())
-                notes.append(f"{said} merged (the provider's record)")
+                notes.append(f"{said} merged ({source})")
         elif isinstance(provider, Mapping):
             sent["provider"] = dict(provider)
             said = ", ".join(f"provider.{key} {_word(value)}" for key, value in provider.items())
-            notes.append(f"{said} added (the provider's record)")
+            notes.append(f"{said} added ({source})")
         reasoning = adds.get("reasoning")
         if isinstance(reasoning, Mapping) and "reasoning" not in body:
             sent["reasoning"] = dict(reasoning)
@@ -203,9 +219,18 @@ class OpenRouter(EndpointAdapter):
 
     def refusal(self, status: int, body: bytes, *, model: str = "", denied: bool = False) -> Refusal:
         """Design 0016 §8's table: OpenRouter's words, then what to do; OpenCode retries only a timeout, a limit of
-        requests, a model down, and no provider when the record allows any."""
+        requests but a free model's daily one, a model down, and no provider when the record allows any. No provider
+        under a data policy, by its words or a 503 under `deny`, is the record's to change (`denied`) or the account's
+        (OpenRouter names its privacy settings, or the request allowed any provider)."""
         said = _said(body)
         named = model or "the model"
+        lowered = said.lower()
+        if status in (404, 503) and (any(words in lowered for words in POLICY_WORDS) or (status == 503 and denied)):
+            account = ACCOUNT_ADVICE.format(named=named)
+            advice = DENY_ADVICE.format(named=named) if denied else account
+            if denied and "privacy" in lowered:
+                advice = f"{advice}; and allow its providers in your OpenRouter account's privacy settings ({PRIVACY})"
+            return Refusal(status, "data_policy", said, advice, False)
         if status == 401:
             return Refusal(status, "key_refused", said, KEY_ADVICE, False)
         if status == 402:
@@ -222,16 +247,12 @@ class OpenRouter(EndpointAdapter):
             return Refusal(status, "too_large", said, "The request is larger than OpenRouter takes", False)
         if status in (408, 524):
             return Refusal(status, "timed_out", said, "", True)
+        if status == 429 and any(words in lowered for words in DAILY_WORDS):
+            return Refusal(status, "free_limit", said, DAILY_ADVICE, False)
         if status == 429:
             return Refusal(status, "rate_limited", said, "", True)
         if status in (502, 529):
             return Refusal(status, "model_down", said, "", True)
-        if status == 503 and denied:
-            advice = (
-                f"No provider of {named} serves it with data_collection deny: pick another model, or allow it on the "
-                "Providers page (o)"
-            )
-            return Refusal(status, "data_policy", said, advice, False)
         if status == 503:
             return Refusal(status, "no_provider", said, "", True)
         if status >= 500:

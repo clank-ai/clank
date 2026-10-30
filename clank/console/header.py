@@ -1,8 +1,9 @@
 """The console's header (design 0001 §5, design 0004 §9, design 0011 §7): one row on `bars`, the same on every page:
 "◆ CLANK" bold in `brand`, the name of the folder the console was started in, in `name`, then a pill for each part that
 runs, its dot and its few words whole in its state's color (the service and how long it has been up, Docker, the model
-in the main slot, the gateway, the cloud's spending once a provider is added (in the service's words, design 0016
-§11, a pause in `failed`), the questions waiting), then a spinner in `now` while something runs. The clock is on
+in the main slot, dev mode while it is on (decision 0149, in `attention`), the gateway, the cloud's spending once a
+provider is added (in the service's words, design 0016 §11, a pause in `failed`), the questions waiting), then a
+spinner in `now` while something runs. The clock is on
 the right, a label of its own, in `quiet` (`clank.tcss`). When the header is too narrow for every pill's words, the
 cloud's pill says its short words first, then every pill does.
 
@@ -67,6 +68,13 @@ def model(data: ConsoleData, activity: dict[str, Any] | None, now: datetime) -> 
     return Said("no model", "no model", "stopped")
 
 
+def dev(data: ConsoleData, activity: dict[str, Any] | None, now: datetime) -> Said | None:
+    """Dev mode, while it is on (decision 0149): every cloud provider asked for any of a model's providers."""
+    if not data.connected or not any(each.get("dev_mode") for each in data.endpoints or []):
+        return None
+    return Said("dev mode: any provider", "dev mode", "waiting")
+
+
 def gateway(data: ConsoleData, activity: dict[str, Any] | None, now: datetime) -> Said | None:
     """The gateway: running (and its requests in flight), or not."""
     if not data.connected or activity is None:
@@ -100,7 +108,7 @@ def cloud(data: ConsoleData, activity: dict[str, Any] | None, now: datetime) -> 
     return Said(str(said), "cloud", "waiting" if warned else "")
 
 
-PILLS: list[Pill] = [service, docker, model, gateway, cloud, questions]
+PILLS: list[Pill] = [service, docker, model, dev, gateway, cloud, questions]
 
 
 def header(
