@@ -88,7 +88,8 @@ to go on; anything else skips that step and says how to do it later.
    `brew install --cask docker`; without Homebrew, it gives Docker's download page. Then it offers to open Docker
    Desktop and waits for it (up to five minutes): the first time, accept its terms in its window.
 4. **Clank**: its latest release, with `uv tool install`, then `uv tool update-shell`.
-5. **The check**: `clank setup --check` (step 3).
+5. **Clank's setup**: it offers to run `clank setup` at once, which asks before each step (step 3); if you say
+   no, `clank setup --check` says what is left.
 
 </details>
 
@@ -106,11 +107,16 @@ to go on; anything else skips that step and says how to do it later.
    - Then it offers to add your account to the `docker` group (`sudo usermod -aG docker $USER`), so you can use
      Docker without `sudo`. Docker says plainly what that means: the group gives root's rights on that computer
      ([Docker's note](https://docs.docker.com/engine/install/linux-postinstall/)). Clank needs it to run the agent's
-     containers as you.
+     containers as you, and uses it at once: there is no need to log out and in. The `docker` commands you type
+     yourself get the group at your next login.
    - Docker from the snap, or rootless Docker, is not supported (they cannot reach the folders Clank needs, or they
      map the agent's user to another one); the installer says so, and can install Docker Engine beside it.
 4. **Clank**: its latest release, with `uv tool install`, then `uv tool update-shell`.
-5. **The check**: `clank setup --check` (step 3).
+5. **Clank's setup**: it offers to run `clank setup` at once, which asks before each step (step 3); if you say
+   no, `clank setup --check` says what is left.
+
+Its words are in color in a terminal: each step numbered, what is done in green, what to know or do in yellow, what
+failed in red, each command dimmed as it runs (`NO_COLOR=1` turns color off).
 
 </details>
 
@@ -210,17 +216,20 @@ installs it by itself; to have it in your usual VS Code too: `code --install-ext
 
 ## 3. After installing
 
-1. **Open a new terminal**, so it finds `clank` (`uv tool update-shell` put it on the path of new ones).
-2. **On Linux, if the installer just added you to the `docker` group, log out and in once** (or restart), so every
-   program you start can use Docker. Until then `clank setup` says the group is not active in this session yet.
+1. **Open a new terminal**, so it finds `clank` (`uv tool update-shell` put it on the path of new ones); the
+   installer says so only when `clank` is not on this terminal's path yet.
+2. **On macOS and Linux the installer offers this step at once**: if you said yes, what is left is the folder (in a
+   project's folder, type `clank`). On Linux, Clank uses the `docker` group at once if the installer just added you
+   to it: nobody logs out and in for Clank.
 3. **Set Clank up**: in a terminal, in the folder of a project you want the agent to work in, type
 
    ```
    clank setup
    ```
 
-   It lists what Clank needs on this computer, in order, each item `done`, `to do`, `waits` (for an item before it) or
-   `unknown` (until Clank's service runs), with what to do under each one that is not done. Then it offers each fix in
+   It lists what Clank needs on this computer, in order, each item `✓ done` (green), `• to do` (yellow), `· waits` (for
+   an item before it), `? unknown` (until Clank's service runs) or `○ optional`, with what to do under each one that
+   is not done. Then it offers each fix in
    order, showing what it does and its exact command, and asks before each one; answer `y` to do it, anything else to
    leave it:
    - **Docker installed, running and usable by your account** (on Linux also whether it starts with the computer).
@@ -229,7 +238,8 @@ installs it by itself; to have it in your usual VS Code too: `code --install-ext
      in its settings). Clank never starts Docker Engine on Linux, nor runs anything as root on its own: it shows the
      command (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo usermod -aG docker $USER`) and runs
      it in your terminal on a yes, where `sudo` asks for your password itself; Clank never sees it. After joining the
-     `docker` group, log out and in once, then run `clank setup` again.
+     `docker` group, Clank takes the group at once and goes on (a Clank service that started before is started
+     again, asked first). Only where the system lacks `sg`: log out and in once, then run `clank setup` again.
    - **Clank's service**, started in the background (`clank stop` ends it).
    - **The sandbox image** every workspace's container runs: built once, in the background (a few minutes; about a
      gigabyte to download), while you add a model, so your first folder opens at once.
@@ -275,6 +285,14 @@ after you agree once, and only for the workspaces you allow.
 
 What it costs shows on the header, Home, Requests (F7), the Monitor and `clank cost`. Set a daily or monthly limit
 (`L` anywhere, or `clank cost limit`); when it is reached, cloud requests pause until you raise it.
+
+**Free models.** Most free models are served by providers that may keep or train on what they are sent, and Clank
+asks OpenRouter only for providers that keep no data, so those models are refused. To test with them, turn on
+**dev mode**: `clank dev on` (or `D` on Providers and models). Every request may then go to any of the model's
+providers, and the header says `dev mode` until `clank dev off`. Your OpenRouter account must allow such providers
+too ([openrouter.ai/settings/privacy](https://openrouter.ai/settings/privacy)). Free models take 50 requests a day
+until you buy 10 credits once (then 1,000 a day, and the credits stay for paid models); an agent's task can take
+dozens of requests.
 
 ## 4b. A model on your own GPU
 
@@ -461,8 +479,10 @@ Clank says why and what to do. The usual ones:
 | F10 opens your terminal's menu instead of the Monitor | `clank console --page monitor` |
 | The key is refused (401; OpenRouter says "Missing Authentication header" for a key it does not know) | Paste it again, whole (it is shown once, at openrouter.ai, Keys), or make a new key and add it (`clank endpoint key openrouter`) |
 | "No credits" (402) | Add credits at OpenRouter, or pick a free model |
-| "No provider of … serves it with data_collection deny" | Clank asks OpenRouter by default for providers that keep no data, and none of this model's do: pick another model, or allow any provider (Providers and models, `o`) |
-| "Rate limited" (429) on a free model | Free models take 20 requests a minute and 50 a day (1,000 a day once you bought 10 credits): wait a minute, or pick a paid model |
+| "No provider of … serves it with data_collection deny" | Clank asks OpenRouter by default for providers that keep no data, and none of this model's do: pick another model, allow any provider (Providers and models, `o`), or, for testing, turn dev mode on (`clank dev on`) |
+| "OpenRouter refuses … under your OpenRouter account's privacy settings" | Your account at OpenRouter refuses providers that may train on prompts, as many free models' do: allow them at [openrouter.ai/settings/privacy](https://openrouter.ai/settings/privacy), or pick another model |
+| "Rate limited" (429) on a free model | Free models take 20 requests a minute: OpenCode waits and asks again |
+| "The free models' limit for the day" | Free models take 50 requests a day until you bought 10 credits once, then 1,000; the count starts again at midnight UTC. An agent's task can take dozens of requests: wait, buy credits, or pick a paid model |
 
 <details>
 <summary><b>Windows</b></summary>
@@ -490,7 +510,7 @@ Clank says why and what to do. The usual ones:
 
 | What you see | What to do |
 | --- | --- |
-| "permission denied" on `/var/run/docker.sock`, or Clank says this account may not use Docker | Join the group (`sudo usermod -aG docker $USER`) if you have not, then log out and in once, then `clank stop` and `clank` |
+| "permission denied" on `/var/run/docker.sock`, or Clank says this account may not use Docker | `clank setup`: it offers to join the group, takes it at once, and starts Clank's service again with it. Your own `docker` commands get the group at your next login |
 | Docker is installed from the snap | Clank does not support it: install Docker Engine from Docker's packages (step 2), which Clank then uses |
 | Docker stops after a restart | `sudo systemctl enable docker` |
 | The installer does not know your distribution | Install Docker Engine as [Docker's pages](https://docs.docker.com/engine/install/) say for it, then run the installer again |

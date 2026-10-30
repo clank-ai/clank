@@ -362,20 +362,20 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner gets, and what this design takes from design 0015 | none yet |
 | 2 | OpenRouter, the first cloud provider | none yet |
-| 3 | What OpenRouter offers, as its documentation says | `tests/components/runtime/test_openrouter.py` (16), `tests/real/test_openrouter.py` (5) |
-| 4 | The provider's record, and its key | `tests/cli/test_endpoint_commands.py` (12), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/console/test_secret_field.py` (6) |
+| 3 | What OpenRouter offers, as its documentation says | `tests/components/runtime/test_openrouter.py` (18), `tests/real/test_openrouter.py` (5) |
+| 4 | The provider's record, and its key | `tests/cli/test_endpoint_commands.py` (12), `tests/components/runtime/test_dev_mode.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/console/test_secret_field.py` (6) |
 | 5 | How the gateway gets the key | `tests/components/gateway/test_cloud_keys.py` (6) |
-| 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (16) |
+| 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (18) |
 | 7 | Cloud presets, and the main slot running one | `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17) |
-| 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_openrouter.py` (16), `tests/docker/test_cloud_live.py` (1) |
+| 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_dev_mode.py` (6), `tests/components/runtime/test_openrouter.py` (18), `tests/docker/test_cloud_live.py` (1) |
 | 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
 | 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
 | 11 | Cost: each request, session and flow, and the limits | `tests/cli/test_cloud_commands.py` (7), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_cost_limits.py` (8), `tests/components/gateway/test_cost_views.py` (8), `tests/console/test_add_model.py` (25), `tests/console/test_cost_pause.py` (2), `tests/console/test_data.py` (18), `tests/console/test_home.py` (15), `tests/console/test_monitor_cloud.py` (3), `tests/console/test_requests_page.py` (11), `tests/console/test_text.py` (4), `tests/kernel/test_event_attention.py` (3) |
 | 12 | How cost is known and kept | `tests/components/gateway/test_cloud_cost.py` (5), `tests/components/gateway/test_cost_views.py` (8), `tests/components/gateway/test_state_files.py` (4) |
 | 13 | What the Monitor shows of a cloud model | `tests/components/runtime/test_cloud_facts.py` (5), `tests/console/test_monitor_cloud.py` (3) |
 | 14 | The first run: Add a model | `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (18), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (21) |
-| 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_folder.py` (25), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
-| 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3) |
+| 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_dev_mode_console.py` (2), `tests/console/test_folder.py` (25), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
+| 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_dev_command.py` (1), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_dev_mode.py` (6) |
 | 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (18) |
 | 18 | Tests, the fake OpenRouter, and the checks owed with a real key | `tests/contract/test_endpoint.py` (5), `tests/real/test_openrouter.py` (5), `tests/test_architecture.py` (7), `tests/tools/test_capture_endpoint.py` (2) |
 | 19 | Build steps | none yet |
@@ -580,8 +580,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | Who sets Clank up, and the one path each follows | none yet |
 | 2 | Rules every step of the setup keeps | none yet |
 | 3 | The installer on each system | none yet |
-| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (17), `tests/components/agents/test_setup_checklist.py` (28), `tests/components/workspaces/test_image_operation.py` (5), `tests/console/test_data.py` (18), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (8), `tests/console/test_shell.py` (21), `tests/docker/test_setup_live.py` (1) |
-| 5 | Docker, configured correctly on each system | `tests/cli/test_setup_fixes.py` (17), `tests/components/agents/test_setup_checklist.py` (28), `tests/components/workspaces/test_platform_setup.py` (6), `tests/console/test_setup_page_fixes.py` (8), `tests/contract/test_container_platform.py` (9), `tests/docker/test_setup_live.py` (1) |
+| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_paint.py` (2), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (19), `tests/components/agents/test_setup_checklist.py` (30), `tests/components/workspaces/test_image_operation.py` (5), `tests/console/test_data.py` (18), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (8), `tests/console/test_shell.py` (21), `tests/docker/test_setup_live.py` (1) |
+| 5 | Docker, configured correctly on each system | `tests/cli/test_docker_group.py` (3), `tests/cli/test_setup_fixes.py` (19), `tests/components/agents/test_setup_checklist.py` (30), `tests/components/workspaces/test_platform_setup.py` (6), `tests/console/test_setup_page_fixes.py` (8), `tests/contract/test_container_platform.py` (9), `tests/docker/test_setup_live.py` (1) |
 | 6 | Clank's VS Code extension without building it | `tests/components/agents/test_vscode_release.py` (6), `tests/tools/test_release.py` (6) |
 | 7 | Local models: what is one step and what is not yet | none yet |
 | 8 | Tests and build steps | none yet |
@@ -620,6 +620,12 @@ Design 0002 §2.15: every action is also a command, a client of the API: `clank 
 - a command without the service says how to start it
 - arguments reach the service as typed with no home folder or wildcard expanded
 
+### `tests/cli/test_dev_command.py`
+
+Design 0016 §16 (decision 0149): `clank dev` says whether dev mode is on in the service's words, and `clank dev on` or `off` turns it so, recorded as the command's; `--json` prints the service's answer.
+
+- dev says whether it is on and on or off turns it so
+
 ### `tests/cli/test_docker_commands.py`
 
 Design 0002 §2.15 and §3.2: `clank docker status` prints Docker's state, its versions and each running container with its owner, as readable text and, with --json, as JSON; `clank docker start` and `clank docker stop` follow their operation step by step; a stop that needs an answer asks at the terminal (no leaves Docker running), `--yes` answers it as you (cli), and an answer given elsewhere while the prompt waits is reported with who gave it.
@@ -630,6 +636,14 @@ Design 0002 §2.15 and §3.2: `clank docker status` prints Docker's state, its v
 - docker stop asks at the terminal and no leaves docker running
 - docker stop yes answers the question as you through the cli
 - an answer given elsewhere while the prompt waits is reported with who gave it
+
+### `tests/cli/test_docker_group.py`
+
+Design 0028 §5 (decision 0150): on Linux, a `clank` command whose account the system lists in the docker group, but whose process lacks it (joined since the last login), runs itself again through `sg docker` with the same arguments, once (`CLANK_DOCKER_GROUP`), so it and the service it starts may use Docker at once; with the group already, without `sg`, or on Windows, it runs as it is. The command's own entry takes the group first; a test's call of the command never does.
+
+- a command joined since the last login runs again through sg with its arguments
+- otherwise it runs as it is
+- the commands entry takes the group before the command
 
 ### `tests/cli/test_endpoint_commands.py`
 
@@ -716,6 +730,13 @@ Design 0002 §2.15: the `clank` command writes UTF-8 on every platform, so what 
 
 - the command writes utf8 to a pipe
 
+### `tests/cli/test_paint.py`
+
+Design 0028 §4: color in the terminal, for the commands that print for people. Each kind of word has its color and the words never depend on it: a checklist in color is, its color taken away, the checklist without; commands are bold, even across a line's end; `NO_COLOR` drops every color.
+
+- a checklist in color is the checklist without its color taken away
+- commands are bold even across a lines end and no color drops every color
+
 ### `tests/cli/test_service_commands.py`
 
 Design 0002 §2.15: `clank status` says whether the service runs and what waits for the user, and how to start it when it does not; `clank stop` stops it; `clank serve --background` says when a service already runs and starts none, and a start in the background that fails says only what its own service said (the owner's report, 2026-10-18: the error quoted another service's log lines), and it runs from Clank's home, never the current folder.
@@ -742,13 +763,15 @@ Design 0028 §4 and design 0002 §2.15: `clank setup --check` prints the checkli
 
 ### `tests/cli/test_setup_fixes.py`
 
-Design 0028 §4 and §5: `clank setup`, without `--check`, asks about each item that is not done, in order, showing its fix and its exact command first, and does it on a yes; nothing runs without its yes, and without a terminal to answer in the answer is no. A command that needs administrator rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo usermod -aG docker <account>`, the installer's Docker step) runs attached to the terminal, so sudo asks for the password itself and nothing it says is captured; after joining the docker group it says to log out and in once, and stops there. Docker Desktop is started through its own start, by the service when it runs, else here. Clank's service is started on a yes, the folder `clank setup` was started in is opened as a workspace on a yes, and the model's step asks once: in the cloud, on this computer's GPU, or both, the terminal handed to Add a model's command for each, the cloud first. The sandbox image is built by the service in the background on a yes while the setup goes on, and the folder opens once the build ended (S4). `--yes` does every fix that needs no administrator rights without asking and lists the others with their commands. A command the checklist does not build is never run, whoever gave it: it is shown, for the person to run if they trust it.
+Design 0028 §4 and §5: `clank setup`, without `--check`, asks about each item that is not done, in order, showing its fix and its exact command first, and does it on a yes; nothing runs without its yes, and without a terminal to answer in the answer is no. A command that needs administrator rights (`sudo systemctl start docker`, `sudo systemctl enable docker`, `sudo usermod -aG docker <account>`, the installer's Docker step) runs attached to the terminal, so sudo asks for the password itself and nothing it says is captured; after joining the docker group it runs itself again with the group where `sg` is installed (decision 0150), else says to log out and in once and stops there; a service that started before the account joined is stopped and started again, with the group. Docker Desktop is started through its own start, by the service when it runs, else here. Clank's service is started on a yes, the folder `clank setup` was started in is opened as a workspace on a yes, and the model's step asks once: in the cloud, on this computer's GPU, or both, the terminal handed to Add a model's command for each, the cloud first. The sandbox image is built by the service in the background on a yes while the setup goes on, and the folder opens once the build ended (S4). `--yes` does every fix that needs no administrator rights without asking and lists the others with their commands. A command the checklist does not build is never run, whoever gave it: it is shown, for the person to run if they trust it.
 
 - nothing runs without its yes
 - without a terminal to answer in the answer is no
 - an administrator command runs attached to the terminal on a yes
 - the terminal runner inherits the terminal so sudo asks itself and nothing is captured
 - after joining the docker group it says to log out and in once and stops there
+- with sg after joining the docker group the setup runs again with it
+- with sg a service started before the account joined is stopped and started again
 - what is the persons to do is said and listed again at the end
 - a command that fails says so and the setup goes on
 - docker desktop stopped is started through its own start without the service
@@ -1511,7 +1534,7 @@ Design 0005 §2-§3: the session bridge and the agent's outbox, run on this mach
 
 ### `tests/components/agents/test_setup_checklist.py`
 
-Design 0028 §4 and §5: `clank setup`'s checklist. Each item says its state and, while it is not done, what to do: its fix, and whether Clank does it on a yes. Each Docker state of §5 has its words and its fix: not installed, the installer's Docker step in the terminal (winget on Windows, Homebrew on macOS, Clank's installer on Linux), or where to get Docker when no command can; the snap's or rootless Docker, not supported, the commands shown and never run; Docker Engine stopped, `sudo systemctl start docker` in the terminal; Docker Desktop stopped, started by Clank through its own command; not started with the computer, `sudo systemctl enable docker`, offered and not required; no access outside the docker group, `sudo usermod -aG docker <account>` in the terminal, then a log out and in; no access inside it, the log out and in alone, which Clank does not do; no memory limits, the kernel setting, which Clank never makes; a folder the agent cannot write, how to let it. An administrator command runs only in the terminal. Without the service, the model and the folder are not known, and the service is to start, unless this account may not use Docker yet: a service started then would keep the session's groups. An item waits while one it needs is not done. Ready says what was set up and what each thing is for. A client runs only the commands the checklist builds, the docker group's for its own account alone (`runnable`), whoever gave it the checklist. The console opens on Setup only for what This folder does not put right on its way to the agent (`opens`, decision 0148): a Docker Desktop only stopped and a sandbox image not built for this Clank are This folder's to do.
+Design 0028 §4 and §5: `clank setup`'s checklist. Each item says its state and, while it is not done, what to do: its fix, and whether Clank does it on a yes. Each Docker state of §5 has its words and its fix: not installed, the installer's Docker step in the terminal (winget on Windows, Homebrew on macOS, Clank's installer on Linux), or where to get Docker when no command can; the snap's or rootless Docker, not supported, the commands shown and never run; Docker Engine stopped, `sudo systemctl start docker` in the terminal; Docker Desktop stopped, started by Clank through its own command; not started with the computer, `sudo systemctl enable docker`, offered and not required; no access outside the docker group, `sudo usermod -aG docker <account>` in the terminal, then nothing more where `sg` is installed (Clank takes the group at once, decision 0150), else a log out and in; no access inside it, Clank's service restarted where it started before the account joined and `sg` is installed, else the log out and in alone, which Clank does not do; no memory limits, the kernel setting, which Clank never makes; a folder the agent cannot write, how to let it. An administrator command runs only in the terminal. Without the service, the model and the folder are not known, and the service is to start, unless this account may not use Docker yet: a service started then would keep the session's groups. An item waits while one it needs is not done. Ready says what was set up and what each thing is for. A client runs only the commands the checklist builds, the docker group's for its own account alone (`runnable`), whoever gave it the checklist. The console opens on Setup only for what This folder does not put right on its way to the agent (`opens`, decision 0148): a Docker Desktop only stopped and a sandbox image not built for this Clank are This folder's to do.
 
 - with everything done it is ready and says what each thing is for
 - docker not installed on linux offers clanks installer in the terminal with administrator rights
@@ -1525,6 +1548,8 @@ Design 0028 §4 and §5: `clank setup`'s checklist. Each item says its state and
 - docker engine not started with the computer offers systemctl enable and is not required
 - where the platform says nothing of the boot there is no such item
 - an account outside the docker group joins it in the terminal then logs out and in
+- with sg an account that joins the docker group has nothing more to do
+- with sg a service that started before the account joined is restarted by the setup
 - an account in the group whose session predates it logs out and in and clank runs nothing
 - docker without memory limits names the kernel setting which clank never makes
 - a folder the agent cannot write says how to let it and clank does not change it
@@ -3066,6 +3091,17 @@ Design 0013 §5 and design 0012 §4 (decision 0087): a text is counted for a pre
 - an engine that does not answer leaves the estimate saying why
 - an engine names a route to count exactly when its context facts say it counts
 
+### `tests/components/runtime/test_dev_mode.py`
+
+Design 0016 §4, §8 and §16 (decision 0149): dev mode, for testing. It is off until the owner turns it on, and kept in the runtime's settings (`config/runtime.json`'s `dev_mode`) with who turned it on or off. While it is on, every cloud provider is asked for any of a model's providers (`data_collection allow`) from the next request, whatever its record says: the route the gateway follows, a load's tiny request and the provider's check, each request's notes naming dev mode. The record keeps its own policy, which applies again from the next request once dev mode is off; a record that already allows any provider, and its `zdr`, are left as they are. Each provider says dev mode beside its own policy, as `GET` and `PUT /runtime/dev` say what dev mode does.
+
+- dev mode is off until turned on and kept with who turned it on
+- while it is on the next request asks any provider and off again the records policy
+- a load while it is on sends its tiny request to any provider
+- the providers check asks as dev mode says and its policy item says so
+- each provider says dev mode beside its own policy
+- dev mode relaxes only the data policy and a request says where it came from
+
 ### `tests/components/runtime/test_download.py`
 
 Design 0003 §7.2, design 0001 §7.5 and the M1.4 plan's review focus 1-2: a download says the file's size and the host's free disk and asks first; it is fetched by the host into `<file>.part` in the host's models folder, resumes from what the `.part` has after an interruption, and becomes the file only once its SHA-256 is the catalog's; a file whose checksum differs is kept aside as `<file>.bad` and refused. A file the user already has is adopted where it is once its size and SHA-256 are the catalog's (a `model-file` record), and refused when either differs.
@@ -3300,6 +3336,8 @@ Design 0016 §3, §6 and §8: what the OpenRouter adapter reads of OpenRouter's 
 - the headers carry the bearer key and the session for openrouters cache
 - each refusal says what to do and whether opencode may retry it
 - no provider under deny says how to allow it and is not retried
+- a data policy refusal under allow points to the accounts privacy settings
+- a free models daily limit is not retried and says when it starts again
 - no full context words are declared until a real key shows them
 - a requests cost is openrouters figure else an estimate that says so
 - a generations record gives its total cost
@@ -3939,6 +3977,13 @@ Design 0001 §5.1 and §5.7, design 0002 §2.15: the console loads what it shows
 - each cloud event touches its part and only its part
 - a key set brings the fresh providers and whether a model is usable
 - a limit reached brings the fresh cost
+
+### `tests/console/test_dev_mode_console.py`
+
+Design 0016 §15 (decision 0149): dev mode in the console. While it is on, the header has a pill, "dev mode: any provider" ("dev mode" when narrow) in `attention` (as a state waiting for the owner), beside the model it changes; off, none. On the Providers and models page, `D` turns it on or off, asked first with the call it makes (`PUT /runtime/dev`), and the provider's policy line says dev mode beside the record's own; the change reaches every page from the service's event.
+
+- the header says dev mode beside the model while it is on
+- capital d turns dev mode on asked first and the header and policy say so
 
 ### `tests/console/test_esc_to_menu.py`
 
