@@ -1,10 +1,11 @@
 """The runtime component's commands (design 0003 §8.4): `clank model status|load|unload|switch|download|adopt|remove`
-(and `add`, design 0016 §16, in `addcli.py`), `clank preset list|show|check`, `clank host list|add`, `clank engine
-list|install|adopt|uninstall`.
+(and `add`, design 0016 §16, in `addcli.py`), `clank preset list|show|check|change`, `clank host list|add`, `clank
+engine list|install|adopt|uninstall`.
 
 Each is a client of the API (design 0002 §2.15): readable text by default, JSON with `--json`. A preset is named by its
 id or its title; `clank preset show` prints its settings and the sampling it gives its engine, each value it sets or
-else the engine's own default in words (design 0003 §4.1).
+else the engine's own default in words (design 0003 §4.1); `clank preset change` changes a cloud preset's most output,
+context or thinking effort and prints what the service says it did (design 0016 §7, §16).
 """
 
 import json
@@ -212,6 +213,29 @@ def show(name: str, as_json: bool) -> None:
         click.echo("  sampling (a request's own values win over these):")
         for each in found["sampling"]:
             click.echo(f"    {each['key'].removeprefix('sampling.'):<18} {sampling_text(each)}")
+
+
+@preset.command("change")
+@click.argument("name")
+@click.option("--output", "max_output", type=click.IntRange(min=1), help="Its most output, in tokens: its thinking "
+              "and its answer together.")  # fmt: skip
+@click.option("--context", type=click.IntRange(min=1), help="Its context, in tokens.")
+@click.option("--reasoning", help="Its thinking effort: default, or one its model takes.")
+@click.option("--json", "as_json", is_flag=True, help="Print JSON, for scripts and models.")
+def change_preset(name: str, max_output: int | None, context: int | None, reasoning: str | None, as_json: bool) -> None:
+    """Change a cloud preset's most output, context or thinking effort, within its model's limits; the main slot
+    follows at once when it runs it, and OpenCode windows open now keep their limits until they start again."""
+    body = {"max_output": max_output, "context": context, "reasoning": reasoning}
+    wanted = {key: value for key, value in body.items() if value is not None}
+    if not wanted:
+        raise click.UsageError("give --output, --context or --reasoning: what to change")
+    client = common.call(common.connect)
+    found = common.call(lambda: client.patch(f"runtime/presets/{quote(name, safe='')}", wanted))
+    if as_json:
+        click.echo(json.dumps(found, indent=2))
+        return
+    for line in found["said"]:
+        click.echo(line)
 
 
 def sampling_text(option: dict[str, Any]) -> str:

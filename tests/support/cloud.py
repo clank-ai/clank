@@ -29,7 +29,8 @@ YOU = client_actor("console")
 RUNTIME = Actor(kind="clank", via="runtime")
 CODER = "example-vendor/example-coder"
 NOTED = re.compile(
-    r"/runtime/endpoints.*|/runtime/dev|/workspaces/[^/]+/cloud(/ask)?|/gateway/cost/limits|/mcp/servers/[^/]+/local"
+    r"/runtime/endpoints.*|/runtime/dev|/runtime/presets/[^/]+|/workspaces/[^/]+/cloud(/ask)?|/gateway/cost/limits"
+    r"|/mcp/servers/[^/]+/local"
 )
 
 

@@ -366,7 +366,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | The provider's record, and its key | `tests/cli/test_endpoint_commands.py` (12), `tests/components/runtime/test_dev_mode.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/console/test_secret_field.py` (6) |
 | 5 | How the gateway gets the key | `tests/components/gateway/test_cloud_keys.py` (6) |
 | 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (18) |
-| 7 | Cloud presets, and the main slot running one | `tests/components/agents/test_opencode_output.py` (5), `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_preset_change.py` (7), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_openrouter.py` (18) |
+| 7 | Cloud presets, and the main slot running one | `tests/cli/test_preset_change_command.py` (4), `tests/components/agents/test_opencode_output.py` (5), `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_preset_change.py` (7), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_openrouter.py` (18) |
 | 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_dev_mode.py` (6), `tests/components/runtime/test_openrouter.py` (18), `tests/docker/test_cloud_live.py` (1) |
 | 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
 | 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
@@ -375,7 +375,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 13 | What the Monitor shows of a cloud model | `tests/components/runtime/test_cloud_facts.py` (5), `tests/console/test_monitor_cloud.py` (3) |
 | 14 | The first run: Add a model | `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (18), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (21) |
 | 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_dev_mode_console.py` (2), `tests/console/test_folder.py` (25), `tests/console/test_pages.py` (10), `tests/console/test_providers_cloud.py` (7) |
-| 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_dev_command.py` (1), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_dev_mode.py` (6) |
+| 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_dev_command.py` (1), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (7), `tests/cli/test_preset_change_command.py` (4), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_dev_mode.py` (6) |
 | 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (18) |
 | 18 | Tests, the fake OpenRouter, and the checks owed with a real key | `tests/contract/test_endpoint.py` (5), `tests/real/test_openrouter.py` (5), `tests/test_architecture.py` (7), `tests/tools/test_capture_endpoint.py` (2) |
 | 19 | Build steps | none yet |
@@ -736,6 +736,15 @@ Design 0028 §4: color in the terminal, for the commands that print for people. 
 
 - a checklist in color is the checklist without its color taken away
 - commands are bold even across a lines end and no color drops every color
+
+### `tests/cli/test_preset_change_command.py`
+
+Design 0016 §16 and §7 (revised after approval 2026-10-29, the owner's request): `clank preset change PRESET [--output N] [--context N] [--reasoning R] [--json]` changes a cloud preset's settings through the service, by its id or its title, and prints the service's words: what changed, where it applies, and, while the main slot runs it, that OpenCode windows open now keep the limits they started with until they start again; `--json` prints the service's answer. A refusal is the service's own words and exits 1, a local preset's saying where its options change; with no setting to change, it says what to give.
+
+- change raises the most output and prints the services words
+- change with json prints the services answer
+- a refusal is the services words and exits 1
+- with nothing to change it says what to give
 
 ### `tests/cli/test_service_commands.py`
 
