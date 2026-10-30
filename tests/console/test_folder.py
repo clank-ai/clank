@@ -164,7 +164,8 @@ async def test_r_switches_the_agents_changes_between_review_and_auto(
         await settle(pilot, lambda: "review: the agent asks before it changes a file" in text(app))
         await pilot.press("r")
         await settle(pilot, lambda: "auto: the agent changes files without asking" in text(app))
-        assert "paper's agent now builds, changing files without asking (the bridge" in message(app)
+        said = "paper's agent now builds, changing files without asking (the bridge"
+        await settle(pilot, lambda: said in message(app))  # the message line can come a moment after the mode's words
     assert kernel.settings.get("workspace", "paper").record.model_dump()["changes"] == "auto"
     [switched] = kernel.events.after(0, types=["agents.review_switched"])
     assert switched.actor == YOU
