@@ -47,4 +47,4 @@
 
 
  12:21  ! Stop now cannot run now: no OpenCode server is known to run this session: its watcher has not seen it run since the service started
- f10 next view  enter open  bksp back  . stop  m note  k compact  p pause  u undo  x drop  l live text  ? explain  f1 help  esc menu  f5 machine column  q quit
+ f10 next view  enter open  . stop  m note  k compact  p pause  u undo  x drop  l live text  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu

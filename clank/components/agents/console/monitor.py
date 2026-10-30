@@ -4,11 +4,11 @@ guide, everything the local model does in a session.
 It has three views, in a row of tabs at its top: **Flow** (a flow, the work as a program of boxes: design 0013 §12),
 **Session** (one OpenCode session as it works: board A, with board D's Watch for and Guide) and **Context** (the context
 window whole: board C, design 0012 §4.7). F10 again, on the Monitor, moves to the next view, and a click on a tab shows
-its view; Enter on the Session view's Context window panel opens the Context view, and Backspace goes back to it (Esc on
-a window over the page only closes the window). The page opens on the view last shown, Session the first time. Under the
-tabs, one heading line names the session (or the flow) the view follows. The views' panels stand in the page itself,
-each marked with its view's class (`view-session`), and the page's class (`-view-session`) shows one view's: so the page
-scrolls sideways to a panel wider than it, as every page does.
+its view; Enter on the Session view's Context window panel opens the Context view, and Esc goes back from it (Esc on a
+window over the page only closes the window; decision 0151). The page opens on the view last shown, Session the first
+time. Under the tabs, one heading line names the session (or the flow) the view follows. The views' panels stand in the
+page itself, each marked with its view's class (`view-session`), and the page's class (`-view-session`) shows one
+view's: so the page scrolls sideways to a panel wider than it, as every page does.
 
 Each section is a panel (design 0011 §4). The Session view: the Context window across the page; Now, Watch for and the
 Guide beside the Flow; Tool calls beside Biggest in the context, in the same columns, so the borders line up
@@ -251,7 +251,7 @@ def heading(view: str, seen: Seen | None = None, zone: tzinfo | None = None) -> 
         when = datetime.fromtimestamp(since / 1000, UTC).astimezone(zone).strftime("%H:%M") if since else ""
         status = str(head.get("status") or "")
         pinned = seen.box if seen.box.startswith("the ") else f"the flow's box {seen.box}"
-        newest = f"{pinned} (Backspace goes back to it)" if seen.box else "the newest of this folder"
+        newest = f"{pinned} (Esc goes back to it)" if seen.box else "the newest of this folder"
         cost = (head.get("cost") or {}).get("said")  # a cloud model's, in the service's words (design 0016 §11)
         facts = [str(head.get("agent") or ""), STATES.get(status, status),
                  f"{head.get('steps') or 0} steps, {head.get('calls') or 0} calls",
@@ -327,8 +327,8 @@ class MonitorPage(Page):
             "on the Context view's What is in it: the part's items; on the Flow view: what the box chosen holds (a "
             "running box's session, in the Session view; a finished box's deliverable)",
         ),
-        PageKey("backspace", "back", "back", "from the Context view back to the Session view; from a session opened on "
-                "a flow's box, back to the box"),
+        PageKey("escape", "back", "back", "from the Context view back to the Session view; from a session opened on "
+                "a flow's box, back to the box; elsewhere Esc goes to the menu"),
         PageKey("full_stop", "stop", "stop", "on the Session view: stop the session the page follows, now (the Guide, "
                 "design 0012 §9.2)"),
         PageKey("m", "note", "note", "on the Session view: a note to the model, about the node under the flow's "
@@ -373,9 +373,9 @@ class MonitorPage(Page):
     VIEWS = VIEWS
     BOARDS = ("d2", "d3", "d4")  # the Flow view's boards beside D1 (design 0013 §12)
     VIEW_KEYS: ClassVar[dict[str, tuple[str, ...]]] = {
-        "session": ("f10", "enter", "backspace", "full_stop", "m", "k", "p", "u", "x", "l"),
+        "session": ("f10", "enter", "escape", "full_stop", "m", "k", "p", "u", "x", "l"),
         "flow": ("f10", "enter", "O", "L", "e", "o", "p", "r", "h", "n", "N", "plus", "minus"),
-        "context": ("f10", "enter", "backspace", "k", "x"),
+        "context": ("f10", "enter", "escape", "k", "x"),
     }  # the keys each view's keys bar shows, from `KEYS`
     BUILDING_KEYS = ("f10", "enter", "O", "n", "N")  # the Flow view's, while a flow is built with the model
     MACHINE_COLUMN = False  # its panels take the column's room (design 0012 §2); F5 shows it
@@ -727,6 +727,8 @@ class MonitorPage(Page):
         wanted = self.VIEW_KEYS.get(self.view, ())
         if self.view == "flow" and (self.flows.view or {}).get("planning"):
             wanted = self.BUILDING_KEYS
+        if self.view == "session" and not self.flows.opened_from:
+            wanted = tuple(key for key in wanted if key != "escape")  # no box to go back to: Esc is the menu's
         return tuple(key for key in self.KEYS if key.key in wanted)
 
     def draw_keys(self) -> None:
@@ -739,17 +741,17 @@ class MonitorPage(Page):
         return list(self.query(f"Panel.view-{view}").results(Panel))
 
     def press(self, key: str) -> bool:
-        """F10, the next view; Enter on the Context window panel, the Context view; Backspace there, back; in the
-        Session view, a panel's letter, that panel."""
+        """F10, the next view; Enter on the Context window panel, the Context view; Esc there, back; in the Session
+        view, a panel's letter, that panel."""
         if key == "f10":
             self.show_view(VIEWS[(VIEWS.index(self.view) + 1) % len(VIEWS)])
             return True
         if self.view == "flow" and self.flows.press(key):
             return True
-        if key == "backspace" and self.view == "session" and self.flows.opened_from and self.app.screen is self.screen:
+        if key == "escape" and self.view == "session" and self.flows.opened_from and self.app.screen is self.screen:
             self.back_to_box()
             return True
-        if key == "backspace" and self.view == "context" and self.app.screen is self.screen:  # no window over it
+        if key == "escape" and self.view == "context" and self.app.screen is self.screen:  # no window over it
             self.show_view("session", into="monitor-session-context")
             return True
         if key == "enter" and self.view == "session" and self._focused_panel() == "monitor-session-context":
@@ -1018,7 +1020,7 @@ class MonitorPage(Page):
             "dashed while it waits or is proposed); the box chosen in Selected, with a Live box while it runs; the "
             "models it uses; what waits for you; its brief, checked; its deliverables; and the boxes ahead with what "
             "each costs. The arrows move from box to box, End back to the box at work; Enter opens what the box holds "
-            "(a running box's session in the Session view, Backspace coming back to the box; a finished box's "
+            "(a running box's session in the Session view, Esc coming back to the box; a finished box's "
             "deliverable; on Deliverables, the file highlighted); o opens a deliverable in Clank's VS Code window; e "
             "edits the box chosen; p pauses the flow or resumes it; r runs it again from the box chosen (a flow not "
             "run yet, from its start); h shows the run's log. n starts a planning beside the console, a flow built "
@@ -1041,7 +1043,7 @@ class MonitorPage(Page):
             "session grew, each step split by part, and where the room went; what could be freed (Enter on Compact "
             "now, or k, asks first); and where these figures come from. Enter or x on a part, or Enter on a row of "
             "what could be freed, opens the window of its items, where x drops the result highlighted through the "
-            "Guide's Drop, which asks first. Backspace goes back to the Session view.",
+            "Guide's Drop, which asks first. Esc goes back to the Session view.",
         }
         marks = (
             whole(self._marks) if self.view == "session" and self._focused_panel() == "monitor-session-watch" else []
@@ -1234,8 +1236,8 @@ class MonitorPage(Page):
         self._read()
 
     def back_to_box(self) -> None:
-        """Backspace on a session opened from a flow's box: the page follows the folder's newest session again, and the
-        Flow view shows the box."""
+        """Esc on a session opened from a flow's box: the page follows the folder's newest session again, and the Flow
+        view shows the box."""
         if self._following is not None:
             self._following.unpin()
         self.flows.back()

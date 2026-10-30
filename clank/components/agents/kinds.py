@@ -183,6 +183,11 @@ class MonitorSettings(Settings):
         "Clank's loop guard stopped your last answer because it repeated itself, and that answer is not in your "
         "context. Go on from where you were, without writing it the same way again.",
     )  # fmt: skip
+    answer_cut: RuleSettings = _rule(
+        "answer_cut", ["mark", "tell the model"],
+        f"{MARKED} Go on from where you were: think more briefly, and take the work in smaller steps (a long file in "
+        "parts).",
+    )  # fmt: skip
     asks_about_a_repeat: RuleSettings = _rule(
         "asks_about_a_repeat", ["mark", "tell the phone"],
         f"{MARKED} Try another way instead of making the same call again.",

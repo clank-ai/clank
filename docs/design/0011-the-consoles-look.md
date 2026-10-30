@@ -601,10 +601,13 @@ line says which keys it stands for.
 - **Lists keep their own arrows**: the menu, a page's lists, the Flow view's boxes and a form's fields take their keys
   first, as today; the arrows move between buttons only while a group has the focus. No binding of the groups is a
   priority binding.
-- **Esc**, anywhere in a page (a group, a list, the page itself): back to the menu, the page staying as it was
-  (revised 2026-10-22, decision 0129). In a window, Esc stays the window's: it leaves it; in a field being typed in, it
-  leaves the field first. A step back inside a page (the Monitor's view before, the Flow view's board D1, Add a model's
-  step before) is **Backspace**.
+- **Esc**, anywhere in a page (a group, a list, the page itself): back. A step back inside the page when it has one
+  (the Monitor's view before, the Flow view's board D1, Add a model's step before), its keys bar saying `esc back`;
+  else to the menu, the page staying as it was (revised 2026-10-22, decision 0129; revised 2026-10-29, decision 0151).
+  In a window, Esc stays the window's: it leaves it; in a field being typed in, it leaves the field first.
+- **Backspace** erases in a field you type in and never moves you: no page has it as a key. A field's own keys
+  (Backspace, Delete, the arrows, Home, End) never reach the page, on a page or in a window (revised 2026-10-29,
+  decision 0151).
 - **`?`** with a button focused: the details window says what it does, the keys that press it, or why it cannot act
   now. On the keys bar's own `?`, it explains what had the focus before the keys bar.
 
@@ -741,3 +744,8 @@ lines and the arrows' order reworked).
   to the menu from anywhere in a page, the page staying as it was, and shows the menu beside the Monitor while it has
   the focus; it is on every keys bar, beside `?` and `f1`. A window keeps its Esc; a field being typed in is left
   first. The steps back that Esc took inside a page are Backspace's.
+- **2026-10-29, §12.4 revised after approval, at the owner's request** (decision 0151): "backspace causing me to go
+  back and now being used for me deleting things I am typing is a very, very big issue … Going back in the clanker menu
+  should be esc while backspace is reserved for actually erasing things." Esc takes the steps back inside a page that
+  Backspace took, and goes to the menu from a page with none; Backspace only erases, and a field's own keys never reach
+  the page under it (the page had heard Backspace before the field: on Add a model it went back a step mid-word).

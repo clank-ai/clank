@@ -245,7 +245,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 12.1 | What becomes a button | `tests/console/test_confirm.py` (6), `tests/console/test_folder.py` (25), `tests/console/test_folder_buttons.py` (5), `tests/console/test_home.py` (15), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_questions.py` (2), `tests/console/test_windows.py` (3) |
 | 12.2 | One group, one cursor | `tests/console/test_button_groups.py` (9), `tests/console/test_buttons.py` (9) |
 | 12.3 | Pressing a button | `tests/console/test_button_groups.py` (9), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_one_door.py` (6) |
-| 12.4 | How the focus moves | `tests/console/test_button_groups.py` (9), `tests/console/test_button_hints.py` (5), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_monitor_flow_buttons.py` (4) |
+| 12.4 | How the focus moves | `tests/console/test_backspace_erases.py` (7), `tests/console/test_button_groups.py` (9), `tests/console/test_button_hints.py` (5), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_monitor_flow_buttons.py` (4) |
 | 12.5 | Where the focus starts | `tests/console/test_arrows.py` (8), `tests/console/test_confirm.py` (6), `tests/console/test_esc_to_menu.py` (6) |
 | 12.6 | The message line says what the focused button does | `tests/console/test_button_hints.py` (5) |
 | 12.7 | A button that cannot act now | `tests/console/test_folder_buttons.py` (5), `tests/console/test_one_door.py` (6) |
@@ -284,7 +284,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 6.4 | Folds and dead ends | none yet |
 | 6.5 | Moving in it, and a step's details | `tests/console/test_flow_panel.py` (8) |
 | 7 | Tool calls and the live text | `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_service.py` (15), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_live.py` (2) |
-| 8 | Watch for: rules the owner sets | `tests/components/agents/test_session_flow_pairing.py` (8), `tests/components/agents/test_watch_for_marks.py` (14), `tests/components/agents/test_watch_for_rules.py` (8), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/agents/test_watch_for_settings.py` (4), `tests/components/gateway/test_activity.py` (22), `tests/components/remote/test_phone_marks.py` (4), `tests/console/test_monitor_watch_for.py` (2) |
+| 8 | Watch for: rules the owner sets | `tests/components/agents/test_session_flow_pairing.py` (8), `tests/components/agents/test_watch_for_marks.py` (14), `tests/components/agents/test_watch_for_rules.py` (9), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/agents/test_watch_for_settings.py` (4), `tests/components/gateway/test_activity.py` (22), `tests/components/remote/test_phone_marks.py` (4), `tests/console/test_monitor_watch_for.py` (2) |
 | 9 | The Guide | `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/remote/test_phone_session.py` (3) |
 | 9.1 | What every action shows | `tests/components/agents/test_guide.py` (5), `tests/components/agents/test_guide_actions.py` (8), `tests/components/agents/test_guide_undo_actions.py` (12), `tests/components/agents/test_guide_undo_and_drop.py` (6), `tests/components/agents/test_pausing.py` (8), `tests/components/gateway/test_activity.py` (22), `tests/console/test_confirm.py` (6), `tests/console/test_monitor_guide.py` (7), `tests/console/test_monitor_undo_and_drop.py` (5) |
 | 9.2 | Stop now | `tests/components/agents/test_guide.py` (5), `tests/components/agents/test_guide_actions.py` (8), `tests/console/test_monitor_guide.py` (7) |
@@ -294,7 +294,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 9.6 | Compact now | `tests/components/agents/test_guide.py` (5), `tests/components/agents/test_guide_actions.py` (8), `tests/components/agents/test_session_flow.py` (17), `tests/console/test_monitor_guide.py` (7) |
 | 9.7 | Drop an item | `tests/components/agents/test_flow_tree.py` (19), `tests/components/agents/test_guide_undo_actions.py` (12), `tests/components/agents/test_guide_undo_and_drop.py` (6), `tests/components/agents/test_session_flow_undo_and_drop.py` (3), `tests/console/test_monitor_context_drop.py` (6), `tests/console/test_monitor_undo_and_drop.py` (5) |
 | 10 | What must be measured before it is relied on | none yet |
-| 11 | Build steps | `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_monitor_estimate.py` (11), `tests/components/agents/test_monitor_now.py` (9), `tests/components/agents/test_pausing.py` (8), `tests/components/agents/test_session_flow_branches.py` (8), `tests/components/agents/test_session_flow_pairing.py` (8), `tests/components/agents/test_session_flows_kept.py` (16), `tests/components/agents/test_watch_for_marks.py` (14), `tests/components/agents/test_watch_for_rules.py` (8), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/agents/test_watch_for_settings.py` (4), `tests/components/gateway/test_census.py` (12), `tests/components/gateway/test_hold_gateway.py` (14), `tests/components/gateway/test_holds.py` (7), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_flow_chart.py` (6), `tests/console/test_flow_chart_edges.py` (3), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_drop.py` (6), `tests/console/test_monitor_context_view.py` (14), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16) |
+| 11 | Build steps | `tests/components/agents/test_monitor_context.py` (15), `tests/components/agents/test_monitor_estimate.py` (11), `tests/components/agents/test_monitor_now.py` (9), `tests/components/agents/test_pausing.py` (8), `tests/components/agents/test_session_flow_branches.py` (8), `tests/components/agents/test_session_flow_pairing.py` (8), `tests/components/agents/test_session_flows_kept.py` (16), `tests/components/agents/test_watch_for_marks.py` (14), `tests/components/agents/test_watch_for_rules.py` (9), `tests/components/agents/test_watch_for_service.py` (3), `tests/components/agents/test_watch_for_settings.py` (4), `tests/components/gateway/test_census.py` (12), `tests/components/gateway/test_hold_gateway.py` (14), `tests/components/gateway/test_holds.py` (7), `tests/components/gateway/test_session_facts.py` (13), `tests/console/test_flow_chart.py` (6), `tests/console/test_flow_chart_edges.py` (3), `tests/console/test_monitor_biggest.py` (6), `tests/console/test_monitor_calls.py` (5), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_context_drop.py` (6), `tests/console/test_monitor_context_view.py` (14), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16) |
 | 12 | Decisions to record | none yet |
 
 ## Design 0013: flows, the work as a program of boxes
@@ -1644,7 +1644,7 @@ Design 0012 §8 and §11 step 8 (decision 0053): the marks the Watch for rules l
 
 ### `tests/components/agents/test_watch_for_rules.py`
 
-Design 0012 §8 and §11 step 8 (decision 0053): each Watch for rule is a pure function over a session's flow, and of the facts of the slot its requests reach; it fires on a synthetic flow made for it and stays quiet on a clean one, and each mark it leaves says why, naming what it rests on. A rule over a stretch of calls marks the call where a streak reached its count, and again only after the streak ended; a rule whose fact is not known stays quiet. The flows are made from OpenCode's shapes by the bridge's own functions (plan s15's `tests/support/flowlines.py`).
+Design 0012 §8 and §11 step 8 (decision 0053): each Watch for rule is a pure function over a session's flow, and of the facts of the slot its requests reach; it fires on a synthetic flow made for it and stays quiet on a clean one, and each mark it leaves says why, naming what it rests on. A rule over a stretch of calls marks the call where a streak reached its count, and again only after the streak ended; a rule whose fact is not known stays quiet. An answer OpenCode ended at the output limit (its finish `length`) is marked, naming the limit and how much of it was thinking (revised 2026-10-29: the owner's cloud model stopped twice with nothing saying why). The flows are made from OpenCode's shapes by the bridge's own functions (plan s15's `tests/support/flowlines.py`).
 
 - the cases cover every rule and the loop guards words are the gateways
 - each rule fires on its synthetic flow and says why
@@ -1652,6 +1652,7 @@ Design 0012 §8 and §11 step 8 (decision 0053): each Watch for rule is a pure f
 - every rule stays quiet on a clean flow
 - a streak is marked where it reached its count and again only after it ended
 - a rule whose fact is not known stays quiet
+- an answer cut off is marked once whatever is known of the limit and a finished one never
 - an answer within a tenth of the output limit is marked naming the limit
 - a call waiting for you is said by what it touches never by its raw input
 
@@ -1665,7 +1666,7 @@ Design 0012 §8 and §11 step 8 (decision 0053): the Watch for rules run in the 
 
 ### `tests/components/agents/test_watch_for_settings.py`
 
-Design 0012 §8 and §11 step 8 (decision 0053): what each Watch for rule does is the owner's to set, in a readable settings file, `config/monitor.json`, a settings kind with its schema: mark it, pause the session, tell the phone, or tell the model and go on, telling the model at most twice in a row. Its defaults are §8's table.
+Design 0012 §8 and §11 step 8 (decision 0053): what each Watch for rule does is the owner's to set, in a readable settings file, `config/monitor.json`, a settings kind with its schema: mark it, pause the session, tell the phone, or tell the model and go on, telling the model at most twice in a row. Its defaults are §8's table: an answer cut off at the output limit is marked and the model told to go on (revised 2026-10-29, decision 0154).
 
 - the rules defaults are the designs table
 - a rule changed in its file is read and an unknown action is refused
@@ -3806,12 +3807,12 @@ Design 0004 §1, §3 and §6: opening a folder makes it a workspace (a record na
 
 ### `tests/console/test_add_model.py`
 
-Design 0016 §14 and decision 0105: Add a model, the console's guided first step, one panel at a time, Backspace back one screen and Esc to the menu (decision 0129). Its first screen asks how Clank should run its model: Cloud (`c`), or Local (`l`) with this machine's GPU and memory. Cloud names OpenRouter and where to get a key; the agreement says what goes to OpenRouter, where, what never goes (the MCP servers marked local, each already added marked, Space unmarking one), that each workspace asks once, and that each request costs money; `o` changes the data policy, `n` and Backspace go back writing nothing, and `y` writes the record with the servers marked as shown (none named when none is listed), and Backspace from the key then skips the agreement done; an agreement whose words were not read cannot be agreed to. A provider already added starts at its key, or at the model once its key is set. Every screen fits at 128, 88 and 60 columns, its keys bar at 60 keeping the keys the step needs. Design 0016 §11 and §14, screens 4 to 6: the key typed into the hidden field is sent once; accepted, the next screen says its account (its label, its own limit and what is left); refused, the service's words, the field cleared; no frame holds the key either way. The model list is OpenRouter's (a model without tool calls is never offered): `/` searches, `s` sorts, `f` shows the free ones with their limits; Enter on a model fills its settings, and Enter there writes the preset and a limit changed; a setting out of range is said, and nothing is written. Design 0016 §14, screens 7 and 8, and Local: from an empty main slot the preset is loaded, and Ready shows its answer, time and cost; with a local model running, the provider's short test comes first, then "load it now?", `n` keeping the local model and `y` switching; each failure says what to do, `b` back to the model and `k` back to the key. Local lists Clank's presets for the main slot with what each needs here, and Enter asks before its first step. Every word the steps say is the service's (its guide, its models' and its account's words): the page works out none of them.
+Design 0016 §14 and decision 0105: Add a model, the console's guided first step, one panel at a time, Esc back one screen, and from the first to the menu (decision 0151). Its first screen asks how Clank should run its model: Cloud (`c`), or Local (`l`) with this machine's GPU and memory. Cloud names OpenRouter and where to get a key; the agreement says what goes to OpenRouter, where, what never goes (the MCP servers marked local, each already added marked, Space unmarking one), that each workspace asks once, and that each request costs money; `o` changes the data policy, `n` and Esc go back writing nothing, and `y` writes the record with the servers marked as shown (none named when none is listed), and Esc from the key then skips the agreement done; an agreement whose words were not read cannot be agreed to. A provider already added starts at its key, or at the model once its key is set. Every screen fits at 128, 88 and 60 columns, its keys bar at 60 keeping the keys the step needs. Design 0016 §11 and §14, screens 4 to 6: the key typed into the hidden field is sent once; accepted, the next screen says its account (its label, its own limit and what is left); refused, the service's words, the field cleared; no frame holds the key either way. The model list is OpenRouter's (a model without tool calls is never offered): `/` searches, `s` sorts, `f` shows the free ones with their limits; Enter on a model fills its settings, and Enter there writes the preset and a limit changed; a setting out of range is said, and nothing is written. Design 0016 §14, screens 7 and 8, and Local: from an empty main slot the preset is loaded, and Ready shows its answer, time and cost; with a local model running, the provider's short test comes first, then "load it now?", `n` keeping the local model and `y` switching; each failure says what to do, `b` back to the model and `k` back to the key. Local lists Clank's presets for the main slot with what each needs here, and Enter asks before its first step. Every word the steps say is the service's (its guide, its models' and its account's words): the page works out none of them.
 
 - the first screen asks cloud or local with this machines gpu and memory
 - cloud names openrouter and where to get a key
 - the agreement says what goes where and what never goes each server marked local
-- n and backspace go back esc goes to the menu and nothing is written
+- n and esc go back and from the first step esc goes to the menu writing nothing
 - y writes the record with the servers marked as shown and the policy chosen
 - an added provider starts at its key
 - the first three screens fit at 128 and 60 columns
@@ -3831,7 +3832,7 @@ Design 0016 §14 and decision 0105: Add a model, the console's guided first step
 - the test ready and local fit at 60 columns
 - an agreement not read cannot be agreed to
 - with no server listed the agreement leaves the servers to the service
-- once agreed backspace from the key skips the agreement done
+- once agreed esc from the key skips the agreement done
 - at 60 columns the keys bar keeps the keys each step needs
 
 ### `tests/console/test_arrows.py`
@@ -3846,6 +3847,18 @@ Design 0001 §5.1 and design 0011 §12.5: the console is keyboard-first, so the 
 - the console starts on the menu whose arrows still open the pages
 - the arrows in a window leave the focus behind it alone
 - while no page is on screen the focus moving remembers nothing and raises nothing
+
+### `tests/console/test_backspace_erases.py`
+
+Design 0011 §12.4 (revised 2026-10-29, decision 0151: the owner's report that Backspace went back a step while they typed in Add a model): Backspace erases in a field you type in and never moves you; Esc goes back. A field's own keys (Backspace, Delete, the arrows, Home, End) stay the field's, on a page and in a window, and the page under it never hears them. No page declares Backspace as a key of its own. On Add a model, Backspace in the models' search, in the key's hidden field and in a setting erases there, the step staying; Backspace outside a field does nothing; Esc leaves the search first, then goes back one step, and from the first step to the menu, the page staying as it was. Where Esc steps back, the keys bar says `esc back`; it never writes `bksp`.
+
+- no page declares backspace as a key of its own
+- a fields own keys stay the fields and the page never hears them
+- in a window backspace erases its field and the page under it never hears it
+- backspace in the models search erases there and esc leaves the search then goes back
+- backspace in the keys hidden field erases and never leaves the step
+- backspace in a setting erases there and outside a field does nothing
+- on the first steps esc goes back and the keys bar says so
 
 ### `tests/console/test_box_chart.py`
 
@@ -3987,7 +4000,7 @@ Design 0016 §15 (decision 0149): dev mode in the console. While it is on, the h
 
 ### `tests/console/test_esc_to_menu.py`
 
-Design 0011 §12.5 (revised 2026-10-22, decision 0129): Esc goes back to the menu, from anywhere in a page (the owner: "Unless otherwise stated (like when I am confirming something), the esc key should always bring me back to the Clank menu"). A window open closes first, as Esc always did; a row of buttons, a page's list or the page itself all go back to the menu, the page staying as it was. Beside a page that hides the menu (the Monitor), Esc shows it while it has the focus, the arrows pass the Monitor without hiding it, and going back into the page hides it again. A step back inside a page (the Monitor's view before, the Flow view's board D1, Add a model's step before) is Backspace.
+Design 0011 §12.5 (revised 2026-10-22, decision 0129): Esc goes back to the menu, from anywhere in a page (the owner: "Unless otherwise stated (like when I am confirming something), the esc key should always bring me back to the Clank menu"). A window open closes first, as Esc always did; a row of buttons, a page's list or the page itself all go back to the menu, the page staying as it was. Beside a page that hides the menu (the Monitor), Esc shows it while it has the focus, the arrows pass the Monitor without hiding it, and going back into the page hides it again. Where a page has a step back inside it (the Monitor's view before, the Flow view's board D1, Add a model's step before), Esc takes that step first (revised 2026-10-29, decision 0151; tests/console/test_backspace_erases.py), and Backspace only erases.
 
 - esc is a key that acts anywhere and says menu
 - esc from a pages list goes back to the menu the page staying
@@ -4112,7 +4125,7 @@ Design 0011 §2, §8, §9 and §11 (R3): Home and This folder as boards E1 and E
 
 ### `tests/console/test_keys_bar.py`
 
-Design 0011 §4, §7 and §11 (R2): each page declares its keys once, as named actions with their words (`Page.KEYS`), and the keys bar, Help and `?` read that one declaration. The keys bar, one row on `bars`, shows the page's own keys first, then `? explain` and `f1 help`, then the other keys that act anywhere (`f5 machine column`, `q quit`) and `^p palette` at the right, each key in `key` and its words in `quiet`; when it is too narrow, the other keys that act anywhere go first, then the page's own from the right, and `?` and `f1` always stay. It shows the keys of the page on screen wherever the focus is. Help lists every key the pages declare, in board E13's four panels, and holds no table of keys of its own; no panel's key letter is one of its page's keys (on a page with views, of the keys of the view the panel is in: the Monitor's Session view's `n` is its Now panel's, its Flow view's builds a new flow, design 0013 §15). No page's key acts anywhere, but a page's own menu key, pressed again while the page is on screen (the Monitor's F10, its next view: design 0012 §2).
+Design 0011 §4, §7 and §11 (R2): each page declares its keys once, as named actions with their words (`Page.KEYS`), and the keys bar, Help and `?` read that one declaration. The keys bar, one row on `bars`, shows the page's own keys first, then `? explain` and `f1 help`, then the other keys that act anywhere (`f5 machine column`, `q quit`) and `^p palette` at the right, each key in `key` and its words in `quiet`; when it is too narrow, the other keys that act anywhere go first, then the page's own from the right, and `?` and `f1` always stay. It shows the keys of the page on screen wherever the focus is. Help lists every key the pages declare, in board E13's four panels, and holds no table of keys of its own; no panel's key letter is one of its page's keys (on a page with views, of the keys of the view the panel is in: the Monitor's Session view's `n` is its Now panel's, its Flow view's builds a new flow, design 0013 §15). No page's key acts anywhere, but a page's own menu key, pressed again while the page is on screen (the Monitor's F10, its next view: design 0012 §2), and Esc, which a page with a step back inside it declares as its own, `esc back` (revised 2026-10-29, decision 0151).
 
 - the keys bar shows this folders keys first then explain and help
 - the keys bar is one row on bars each key in key and its words in quiet
@@ -4300,7 +4313,7 @@ Design 0013 §12 and §14 step 6 (board D1), with design 0012 §2 (the page, its
 - without a flow the view says why
 - nothing redraws while nothing changes
 - a running box redraws at most four times a second and only its rows
-- enter on a running box opens the session view on its session and backspace comes back to the box
+- enter on a running box opens the session view on its session and esc comes back to the box
 - enter on a finished box shows its deliverable and h the run log
 - p pauses the flow and r runs it again from the box once confirmed
 - enter on a deliverable shows it and o opens it in clanks vs code window
@@ -4322,7 +4335,7 @@ Design 0013 §12 and §15 (decisions 0100 and 0101): building a flow with the mo
 - waiting for you says to wait while the planning session starts on its window
 - waiting for you says a vs code planning talks in clanks vs code window
 - building it says how to try a planning that failed again where a stacked page shows it
-- enter opens the session view on the planning session and backspace comes back
+- enter opens the session view on the planning session and esc comes back
 - help says n starts the planning beside the console
 
 ### `tests/console/test_monitor_guide.py`
@@ -4367,7 +4380,7 @@ Design 0012 §2 and §11 step 1, decision 0047: the Monitor, a page of the conso
 - each view draws its panels titled and empty saying no session yet or no flow yet
 - the monitor opens on the flow view the first time
 - the monitor opens on the view last shown
-- enter on the context window panel opens the context view and backspace goes back to it
+- enter on the context window panel opens the context view and esc goes back to it
 - in the session view a panels letter and tab move the focus from panel to panel
 - question mark says what the monitor shows and what is built so far
 - question mark says the heading line whole where the page cuts it

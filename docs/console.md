@@ -161,7 +161,8 @@ work and settings, a question's options, a window's keys. Each is pressed three 
 | ↑ ↓ | In a column of buttons, the next one; from a row, the group above or below (from the keys bar, back into the page) |
 | Home, End | A row's first or last button |
 | Enter, Space | Press the focused button; Enter on the menu goes into the page |
-| Esc | From a group, back to the page's main list; in a window, leave it |
+| Esc | Back: a step back inside a page when it has one (its keys bar says `esc back`), else to the menu; from a group, back to the page's main list; in a window, leave it; in a field, leave it first (decision 0151) |
+| Backspace | Erases in a field you type in; never moves you, and no page has it as a key. A field's own keys (Backspace, Delete, the arrows, Home, End) never reach the page (`field_keys`, decision 0151) |
 | ? | With a button focused, what it does and the keys that press it, or why it cannot act now |
 
 While a group has the focus, the message line says what its focused button does. A dimmed button cannot act now

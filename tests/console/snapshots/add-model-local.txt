@@ -41,4 +41,4 @@ Setup              │ │ Qwen3.8-27B IQ3_XXS's weights (9.7 GB)               
                    │
                    │
 
- enter set it up  bksp back  ? explain  f1 help  esc menu  f5 machine column  q quit
+ enter set it up  esc back  ? explain  f1 help  f5 machine column  q quit  ^b menu

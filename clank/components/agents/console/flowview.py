@@ -71,7 +71,7 @@ BOARD_KEYS = {
         *(PageKey(key, f"set_{field}", label.lower()) for key, field, label in flowboards.FIELDS),
         PageKey("v", "first_message", "first message", "the box's whole first message, as it would be sent now"),
         PageKey("s", "save", "save", "save the changes into the flow's file"),
-        PageKey("backspace", "back", "back to the flow", "board D1, asked first when a change is not saved"),
+        PageKey("escape", "back", "back to the flow", "board D1, asked first when a change is not saved"),
     ),
     "d3": (
         PageKey("a", "approve", "approve or go on", "approve the gate, or go on: the flow goes on"),
@@ -81,14 +81,14 @@ BOARD_KEYS = {
         PageKey("s", "send_back", "send back", "send the box back with a note: its next try gets it"),
         PageKey("d", "diff", "diff", "the file's last two tries, compared"),
         PageKey("x", "stop", "stop the flow", "the run ends here, asked first"),
-        PageKey("backspace", "back", "back to the flow", "board D1"),
+        PageKey("escape", "back", "back to the flow", "board D1"),
     ),
     "d4": (
         PageKey("a", "accept", "accept", "the card highlighted joins the flow"),
         PageKey("e", "edit", "edit", "the card highlighted's prompt, in a window; it stays waiting"),
         PageKey("r", "reject", "reject", "the card highlighted never runs"),
         PageKey("A", "accept_all", "accept all", "every card still waiting joins the flow, in its order"),
-        PageKey("backspace", "back", "back to the flow", "board D1"),
+        PageKey("escape", "back", "back to the flow", "board D1"),
     ),
 }  # the keys each board's keys bar shows
 
@@ -332,7 +332,7 @@ class FlowViewer:
         self._now_came: tuple[str, dict[str, Any]] | None = None
         self._context_came: tuple[str, dict[str, Any]] | None = None
         self._read_at = self._now_at = -READ_SECONDS
-        self.opened_from = ""  # the box whose session the Session view was opened on (Backspace comes back to it)
+        self.opened_from = ""  # the box whose session the Session view was opened on (Esc comes back to it)
         self.board = "d1"  # the board shown: D1, or a board of what a box holds
         self.gate = ""  # the gate board D3 shows
         self.edited = ""  # the box board D2 shows
@@ -488,11 +488,11 @@ class FlowViewer:
 
     def board_keys(self) -> tuple[PageKey, ...]:
         """The keys of the board shown; D1's are the page's own (`MonitorPage.VIEW_KEYS`); D3's those of the answers its
-        question offers, with `d` and Backspace."""
+        question offers, with `d` and Esc."""
         keys = BOARD_KEYS.get(self.board, ())
         if self.board == "d3":
             offered = flowboards.answers(self.view, self.gate)
-            keys = tuple(key for key in keys if key.key in offered or key.key in ("d", "backspace"))
+            keys = tuple(key for key in keys if key.key in offered or key.key in ("d", "escape"))
         return keys
 
     def _draw_board(self) -> None:
@@ -534,11 +534,11 @@ class FlowViewer:
         self._draw_prompt()
 
     def _board_press(self, key: str) -> bool:
-        """A board's keys; Backspace goes back to board D1 (from D2, asked first when a change is not saved)."""
-        if key == "backspace" and self.board == "d2" and any(self.changed.values()):
+        """A board's keys; Esc goes back to board D1 (from D2, asked first when a change is not saved)."""
+        if key == "escape" and self.board == "d2" and any(self.changed.values()):
             self._leave_d2()
             return True
-        if key == "backspace":
+        if key == "escape":
             self.show_board("d1")
             return True
         if self.board == "d2":
@@ -1333,9 +1333,9 @@ class FlowViewer:
         self._vscode(str(view.get("folder") or ""), path, f"{path} opens in {window_name()}")
 
     def open(self) -> None:
-        """Enter: what the box chosen holds. A running box's session in the Session view, pinned to it (Backspace comes
-        back to the box); a finished box's deliverable, as its try kept it; else the box whole. On Deliverables, the
-        file highlighted."""
+        """Enter: what the box chosen holds. A running box's session in the Session view, pinned to it (Esc comes back
+        to the box); a finished box's deliverable, as its try kept it; else the box whole. On Deliverables, the file
+        highlighted."""
         if self._in_deliverables():
             found = self.page.query_one("#monitor-flow-deliverables-list", flowpanels.DeliverablesList).highlighted()
             if found is not None and found.get("try"):

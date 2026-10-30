@@ -47,4 +47,4 @@ Setup              │
                    │
                    │
 
- enter go on  bksp back  ? explain  f1 help  esc menu
+ enter go on  esc back  ? explain  f1 help

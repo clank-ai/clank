@@ -197,7 +197,7 @@ async def test_the_monitor_opens_on_the_view_last_shown(client: Client, home: Ho
         assert page.view == "context", "coming back opens the view last shown, not the next"
 
 
-async def test_enter_on_the_context_window_panel_opens_the_context_view_and_backspace_goes_back_to_it(
+async def test_enter_on_the_context_window_panel_opens_the_context_view_and_esc_goes_back_to_it(
     client: Client, home: Home
 ) -> None:
     app = make(client, home)
@@ -208,7 +208,7 @@ async def test_enter_on_the_context_window_panel_opens_the_context_view_and_back
         await pilot.press("enter")
         await settle(pilot, lambda: page.view == "context")
         await settle(pilot, lambda: focused_panel(app) == "monitor-context-totals")
-        await pilot.press("backspace")
+        await pilot.press("escape")
         await settle(pilot, lambda: page.view == "session")
         await settle(pilot, lambda: focused_panel(app) == "monitor-session-context")
         await pilot.press("n", "enter")

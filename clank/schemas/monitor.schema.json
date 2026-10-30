@@ -50,6 +50,18 @@
       "description": "When: a request ended model_looped. By default: mark, tell the model; a key left out keeps its default.",
       "title": "The loop guard stopped an answer"
     },
+    "answer_cut": {
+      "$ref": "#/$defs/RuleSettings",
+      "default": {
+        "do": [
+          "mark",
+          "tell the model"
+        ],
+        "note": "Clank's Monitor marked this in your session: {why}. Go on from where you were: think more briefly, and take the work in smaller steps (a long file in parts)."
+      },
+      "description": "When: a step's answer reached the output limit before it ended (OpenCode's finish, length): a model's thinking counts against the limit, and OpenCode ends the run there (e on the Presets page raises a cloud model's). By default: mark, tell the model; a key left out keeps its default.",
+      "title": "An answer cut off at the output limit"
+    },
     "asks_about_a_repeat": {
       "$ref": "#/$defs/RuleSettings",
       "default": {

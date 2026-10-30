@@ -42,6 +42,7 @@ anything the setup needs is missing that This folder does not put right on its w
 page without a key of its own (Setup) is reached from the menu and Ctrl+P.
 """
 
+import functools
 import os
 import queue
 import threading
@@ -58,7 +59,7 @@ from textual.containers import Horizontal
 from textual.content import Content
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import ContentSwitcher, Label, ListItem, ListView
+from textual.widgets import ContentSwitcher, Input, Label, ListItem, ListView, TextArea
 
 from clank import registry
 from clank.client import Client, ClientError, NotRunning
@@ -115,6 +116,25 @@ def _pages_in_order() -> list[type[Page]]:
 PAGES = _pages_in_order()
 DIGITS = {page.ENTRY.key: page.ENTRY.id for page in PAGES if page.ENTRY.key.isdigit()}
 ACT_ANYWHERE = {key.key for key in (*ANYWHERE, PALETTE)}  # pressed by a button, they run their binding's action
+
+
+@functools.cache
+def _bound(kind: type[Widget]) -> frozenset[str]:
+    """Every key a kind of widget binds, from its bindings and its bases'."""
+    found: set[str] = set()
+    for each in kind.__mro__:
+        for binding in vars(each).get("BINDINGS", ()):
+            key = binding.key if isinstance(binding, Binding) else binding[0]
+            found.update(part.strip() for part in key.split(","))
+    return frozenset(found)
+
+
+def field_keys(widget: Widget | None) -> frozenset[str]:
+    """The keys a field you type in takes as its own (Backspace, Delete, the arrows, Home, End, its Ctrl keys), from its
+    bindings; none for anything else. Enter, Tab and Esc stay the console's and the page's (decision 0151)."""
+    if not isinstance(widget, Input | TextArea):
+        return frozenset()
+    return _bound(type(widget)) - {"enter", "tab", "shift+tab", "escape"}
 
 
 def _bindings() -> list[BindingType]:
@@ -623,9 +643,12 @@ class ClankConsole(App[str]):
 
     def on_key(self, event: events.Key) -> None:
         """A key the focused widget did not take goes to the page on screen, through its door (`press_page_key`); a
-        digit is left to its binding (`action_key`), which gives it to the page only while the focus is in it; while the
-        cloud is paused at its spending limit, `L` anywhere opens the limits (design 0016 §11)."""
+        field's own keys never do (Backspace erases there, and never moves you: decision 0151), on a page or in a
+        window; a digit is left to its binding (`action_key`), which gives it to the page only while the focus is in
+        it; while the cloud is paused at its spending limit, `L` anywhere opens the limits (design 0016 §11)."""
         self._present()
+        if event.key in field_keys(self.focused):
+            return  # the field's binding takes it (Textual checks bindings after this handler)
         if event.key == "L" and (self.data.cost or {}).get("paused"):
             event.stop()
             self.raise_limits()
@@ -633,7 +656,7 @@ class ClankConsole(App[str]):
         if event.key in DIGITS:
             return
         if event.key == "escape" and not self.screen.is_modal:
-            event.stop()  # a page's field takes it first (History's filter, Add a model's search); else the menu
+            event.stop()  # a page's field, then its step back, take it first; else the menu (decision 0151)
             if not self.press_page_key("escape"):
                 self.action_to_menu()
             return

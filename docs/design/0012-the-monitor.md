@@ -82,8 +82,9 @@ draw it, and the count of marks not yet seen (§8). The header gets a pill for t
 
 **Three views**, named in a row of tabs at the page's top (board D1): **Flow**, **Session**, **Context**. The page
 opens on the view last shown, the Flow view the first time (revised 2026-10-22, decision 0130). Esc closes a window;
-Backspace goes back from the Context view to the Session view, and from a session opened from the Flow view to its box
-([design 0013](0013-flows.md) §12; revised 2026-10-22, decision 0129: Esc goes to the menu).
+on the page, Esc goes back from the Context view to the Session view, and from a session opened from the Flow view to
+its box, and elsewhere to the menu ([design 0013](0013-flows.md) §12; revised 2026-10-22, decision 0129; revised
+2026-10-29, decision 0151: Backspace only erases).
 
 **Choice** (how the views are reached): (a) F10 again, on the Monitor, moves to the next view; Enter on the Context
 window panel opens the Context view; Enter on a box of the Flow view opens its session (board D1); (b) the capitals
@@ -563,6 +564,7 @@ the Monitor's to decide (a rule the owner sets), not the guard's."
 | Waiting for you | an approval or a question waits | OpenCode, today | mark, tell the phone |
 | The engine broke off | the last request ended in the engine's error | the gateway, today | mark |
 | The loop guard stopped an answer | a request ended `model_looped` | the gateway, step 2 | **Choice**, below |
+| An answer cut off at the output limit | a step's answer reached the output limit before it ended (OpenCode's finish, `length`): a model's thinking counts against the limit, and OpenCode ends the run there | OpenCode (revised 2026-10-29, decision 0154) | mark, tell the model |
 | OpenCode asks about a repeated call | its `doom_loop` ask (build asks; the planner and explore refuse at once); unanswered, it stalls a run left alone | OpenCode, step 4 | mark, tell the phone |
 | The same call again | the same call three times or more in the last 12 | the flow, step 5 | mark |
 | Failing again | four failures or more in the last 8 | the flow, step 5 | mark |
@@ -1057,3 +1059,10 @@ Numbered in this document's order, 0047 to 0056: after design 0011's 0041 to 004
   that nothing listens there) is now set aside until a server answers on its port again (the watch's `server` line,
   any line naming the port) or its session is heard again, and the log says once that the window closed; a watcher
   started again has its flows read once it synced, not before; and a reading that keeps failing is said once.
+- **2026-10-29, the views revised after approval, at the owner's request** (decision 0151): Esc goes back from a view
+  to the one before, and from a session opened from a flow's box to the box, where Backspace did; Backspace only
+  erases what is typed.
+- **2026-10-29, §8 revised after approval, after the owner's report** (decision 0154): a cloud model's runs stopped
+  with nothing saying why: its thinking had used the output limit, the answer was cut, and OpenCode ended the run. A
+  rule of its own marks an answer cut off at the output limit (OpenCode's finish, `length`), naming the limit and the
+  thinking, and by default tells the model to go on, within the cap of two notes in a row.

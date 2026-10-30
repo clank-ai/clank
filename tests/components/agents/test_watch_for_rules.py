@@ -1,8 +1,10 @@
 """Design 0012 §8 and §11 step 8 (decision 0053): each Watch for rule is a pure function over a session's flow, and of
 the facts of the slot its requests reach; it fires on a synthetic flow made for it and stays quiet on a clean one, and
 each mark it leaves says why, naming what it rests on. A rule over a stretch of calls marks the call where a streak
-reached its count, and again only after the streak ended; a rule whose fact is not known stays quiet. The flows are
-made from OpenCode's shapes by the bridge's own functions (plan s15's `tests/support/flowlines.py`)."""
+reached its count, and again only after the streak ended; a rule whose fact is not known stays quiet. An answer
+OpenCode ended at the output limit (its finish `length`) is marked, naming the limit and how much of it was thinking
+(revised 2026-10-29: the owner's cloud model stopped twice with nothing saying why). The flows are made from OpenCode's
+shapes by the bridge's own functions (plan s15's `tests/support/flowlines.py`)."""
 
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
@@ -76,6 +78,13 @@ def with_tokens(made: dict[str, Any], total: int) -> dict[str, Any]:
     return made
 
 
+def cut_off(made: dict[str, Any], output: int, reasoning: int) -> dict[str, Any]:
+    """A step's tokens as OpenCode counts them: its output, and the part of it that was thinking."""
+    made["info"]["tokens"] = {"total": 2000 + output, "input": 2000, "output": output, "reasoning": reasoning,
+                              "cache": {"read": 0, "write": 0}}  # fmt: skip
+    return made
+
+
 def waiting_for_you() -> tuple[Flow, Facts]:
     working = step("msg_01", "msg_u0", BEGUN + APART, [
         tool("c1", "bash", "running", call="call_9", input={"command": "rm -r runs"}, title="rm -r runs"),
@@ -99,6 +108,12 @@ def loop_guard_stopped() -> tuple[Flow, Facts]:
     tripped = "the thinking repeated itself (its newest 2,000 characters compress to 4.1% of their size)"
     found = [request("r-1", BEGUN + APART + 300, error=words, looped=tripped)]
     return flow_of([said(), looped], requests=found), LIMITS
+
+
+def answer_cut() -> tuple[Flow, Facts]:
+    thinking = [text("p1", "first the parser, then the tests, then", "reasoning")]
+    cut = step("msg_01", "msg_u0", BEGUN + APART, thinking, completed=BEGUN + APART + 90_000, finish="length")
+    return flow_of([said(), cut_off(cut, 16_384, 15_902)], status("idle")), LIMITS
 
 
 def asks_about_a_repeat() -> tuple[Flow, Facts]:
@@ -170,6 +185,11 @@ CASES: dict[str, tuple[Callable[[], tuple[Flow, Facts]], str, list[str]]] = {
     "waiting_for_you": (waiting_for_you, "c1", ["bash", "approval", "rm -r runs"]),
     "engine_broke_off": (engine_broke_off, "msg_01", ["step 1", "the connection closed"]),
     "loop_guard_stopped": (loop_guard_stopped, "msg_01", ["step 1", "the thinking repeated itself", "not in"]),
+    "answer_cut": (
+        answer_cut,
+        "msg_01",
+        ["step 1", "cut off at the output limit", "16,384", "15,902 of them were thinking"],
+    ),
     "asks_about_a_repeat": (asks_about_a_repeat, "c1", ["read", "again"]),
     "same_call_again": (same_call_again, "c4", ["bash", "pytest -q", "3 times in the last 12"]),
     "failing_again": (failing_again, "c6", ["4 of the last 8", "bash", "read"]),
@@ -248,6 +268,19 @@ def test_a_rule_whose_fact_is_not_known_stays_quiet() -> None:
     assert found_by("budget_near", budget_near()[0], unknown) == []
     assert found_by("budget_near", budget_near()[0], Facts(context=262_144, output=16_384, thinking=-1)) == []
     assert found_by("engine_taken", engine_taken()[0], LIMITS) == [], "whose conversation the engine holds: unknown"
+
+
+def test_an_answer_cut_off_is_marked_once_whatever_is_known_of_the_limit_and_a_finished_one_never() -> None:
+    flow, _ = answer_cut()
+    [unknown] = found_by("answer_cut", flow, Facts())
+    assert unknown.key == "cut:msg_01"
+    assert "cut off at the output limit; 15,902 tokens of it were thinking" in unknown.why, "OpenCode's own count"
+    plain = step("msg_01", "msg_u0", BEGUN + APART, [text("p1", "first the parser", "reasoning")],
+                 completed=BEGUN + APART + 90_000, finish="length")  # fmt: skip
+    [counted] = found_by("answer_cut", flow_of([said(), plain], status("idle")), LIMITS)
+    assert "cut off at the output limit, 16,384 tokens" in counted.why, "the slot's limit, when OpenCode counted none"
+    done = step("msg_01", "msg_u0", BEGUN + APART, [text("p1", "done")], completed=BEGUN + APART + 9000)
+    assert found_by("answer_cut", flow_of([said(), done], status("idle")), LIMITS) == []
 
 
 def test_an_answer_within_a_tenth_of_the_output_limit_is_marked_naming_the_limit() -> None:

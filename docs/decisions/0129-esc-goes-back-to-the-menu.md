@@ -1,6 +1,8 @@
 # 0129. Esc goes back to the menu from anywhere in a page; a step back inside a page is Backspace
 
-- Status: Accepted (the owner's request of 2026-10-22, built as Claude's call)
+- Status: Accepted (the owner's request of 2026-10-22, built as Claude's call); superseded in part by
+  [0151](0151-backspace-erases-esc-goes-back.md) (2026-10-29: Backspace only erases, and Esc takes the steps back
+  inside a page)
 - Date: 2026-10-22
 - Decided by: Claude, at the owner's request
 

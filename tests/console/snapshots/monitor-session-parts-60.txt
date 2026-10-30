@@ -67,4 +67,4 @@
 
 
 
- f10 next view  enter open  bksp back  . stop  m note  ? explain  f1 help
+ f10 next view  enter open  . stop  m note  k compact  p pause  ? explain  f1 help

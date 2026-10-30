@@ -47,4 +47,4 @@ Files                 M9     │
                              │
                              │
  09:14  OpenRouter took the key; Clank keeps it (ends …-key)
- / search  s sort  f free  bksp back  enter pick  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu   ^p palette
+ / search  s sort  f free  esc back  enter pick  ? explain  f1 help  f5 machine column  q quit  ^b menu              ^p palette

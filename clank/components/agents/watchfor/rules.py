@@ -15,6 +15,8 @@ The facts come from the slot (design 0012 §4: whatever model is loaded): its wi
 budget of its preset, and, once design 0012's step 3 says it, whose conversation the engine holds. A rule whose fact is
 not known stays quiet: it never guesses a number. The compaction line is OpenCode's, the window less the output limit
 counted up to 32,000 (design 0012 §4.1); a step's size is OpenCode's total for it, else its prompt and answer added.
+An answer cut off at the output limit is OpenCode's own fact (its step's finish, `length`), so that rule marks it even
+when the limit is not known, and names the limit and the thinking when they are (decision 0154).
 """
 
 import itertools
@@ -77,6 +79,12 @@ RULES: dict[str, Rule] = {
     "waiting_for_you": Rule("Waiting for you", "an approval or a question waits", "OpenCode"),
     "engine_broke_off": Rule("The engine broke off", "the last request ended in the engine's error", "the gateway"),
     "loop_guard_stopped": Rule("The loop guard stopped an answer", "a request ended model_looped", "the gateway"),
+    "answer_cut": Rule(
+        "An answer cut off at the output limit",
+        "a step's answer reached the output limit before it ended (OpenCode's finish, length): a model's thinking "
+        "counts against the limit, and OpenCode ends the run there (e on the Presets page raises a cloud model's)",
+        "OpenCode",
+    ),
     "asks_about_a_repeat": Rule(
         "OpenCode asks about a repeated call",
         "OpenCode asks about the same call made again (its doom_loop ask); unanswered, it stalls a run left alone",
@@ -221,6 +229,21 @@ def _loop_guard_stopped(head: dict[str, Any], nodes: list[dict[str, Any]], facts
         where = "is not in the context" if step.get("context") == "left" else "stays in the context"
         why = f"step {step['n']}'s answer was stopped by the loop guard: {brief(what, WHY)}; that answer {where}"
         hits.append((f"looped:{step['id']}", step["id"], why, ""))
+    return hits
+
+
+def _answer_cut(head: dict[str, Any], nodes: list[dict[str, Any]], facts: Facts) -> list[Hit]:
+    hits: list[Hit] = []
+    for step in _of(nodes, "step"):
+        if step.get("finish") != "length":
+            continue
+        thinking = int((step.get("tokens") or {}).get("reasoning") or 0)  # OpenCode's count
+        why = f"step {step['n']}'s answer was cut off at the output limit"
+        if facts.output:
+            why += f", {facts.output:,} tokens" + (f"; {thinking:,} of them were thinking" if thinking else "")
+        elif thinking:
+            why += f"; {thinking:,} tokens of it were thinking"
+        hits.append((f"cut:{step['id']}", step["id"], why, ""))
     return hits
 
 
@@ -429,6 +452,7 @@ CHECKS: dict[str, Check] = {
     "waiting_for_you": _waiting_for_you,
     "engine_broke_off": _engine_broke_off,
     "loop_guard_stopped": _loop_guard_stopped,
+    "answer_cut": _answer_cut,
     "asks_about_a_repeat": _asks_about_a_repeat,
     "same_call_again": _same_call_again,
     "failing_again": _failing_again,

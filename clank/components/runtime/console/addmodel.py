@@ -8,7 +8,8 @@ no cost, consent or fit of its own, and checks no setting: the service refuses o
 commands and the phone's app to come walk the same steps in the same order and say the same things (the owner's rule
 of 2026-10-21). The keys are the console's own.
 
-Each step is a panel of the page, one at a time; Backspace goes back one step, Esc to the menu (decision 0129).
+Each step is a panel of the page, one at a time; Esc goes back one step, and from the first to the menu; Backspace
+only erases what you type (decision 0151).
 What a new user types: `c`, Enter, `y`, the key (pasted), Enter, a search or the arrows, Enter, Enter.
 
 1. **Add a model** (`choice`): `c` Cloud, `l` Local, as the guide words them (this machine's GPU and memory with Local).
@@ -77,7 +78,7 @@ LIMITS = ("day_usd", "month_usd")
 POLL_SECONDS = 0.2
 SHOWN_LINES = 6  # an operation's last lines the test screen shows
 GUIDE_READ_BY = {"all", "usable", "endpoints", "mcp", "docker", "slots", "machine", "presets"}
-ESC_BACK = PageKey("backspace", "back", "back")  # a step back; Esc is the menu (decision 0129)
+ESC_BACK = PageKey("escape", "back", "back")  # a step back; from the first step, Esc is the menu (decision 0151)
 SCREEN_KEYS: dict[str, tuple[PageKey, ...]] = {
     "choice": (
         PageKey("c", "cloud", "cloud", "a model at OpenRouter, with your key"),
@@ -89,6 +90,7 @@ SCREEN_KEYS: dict[str, tuple[PageKey, ...]] = {
         PageKey("n", "back", "back"),
         PageKey("space", "mark", "mark", "mark the highlighted MCP server local only, or not"),
         PageKey("o", "policy", "policy", "the data policy: only providers that keep no data (deny), or any (allow)"),
+        ESC_BACK,
     ),
     "key": (PageKey("enter", "check", "check it", "ask OpenRouter whether it takes the key"), ESC_BACK),
     "model": (  # Enter last: the keys a narrow bar keeps are those only this step has
@@ -252,8 +254,8 @@ class AddModelPage(Page):
         """What the page is, and the step on show."""
         return f"Add a model · {self.step(self.screen_name).get('title') or TITLES[self.screen_name]}", [
             "Add a model is the first step: a model Clank can run, in the cloud with your OpenRouter key, or on this "
-            "computer's GPU. Each step says what it does and what it costs, in the service's words; Backspace goes "
-            "back a step, Esc to the menu.",
+            "computer's GPU. Each step says what it does and what it costs, in the service's words; Esc goes back "
+            "a step (from the first, to the menu), and Backspace only erases what you type.",
             "A key is never shown, logged or copied: it goes once to the service, which asks OpenRouter whether it "
             "takes it and keeps it only then, in CLANK_HOME/secrets, readable by you alone.",
         ]
@@ -272,7 +274,7 @@ class AddModelPage(Page):
     def _press_provider(self, key: str) -> bool:
         if key == "enter":
             self._go("agreement")
-        elif key == "backspace":
+        elif key == "escape":
             self._back()
         else:
             return False
@@ -281,7 +283,7 @@ class AddModelPage(Page):
     def _press_agreement(self, key: str) -> bool:
         if key == "y":
             self._agree()
-        elif key in ("n", "backspace"):
+        elif key in ("n", "escape"):
             self._back()
         elif key == "o":
             self.policy = "allow" if self.policy == "deny" else "deny"
@@ -294,7 +296,7 @@ class AddModelPage(Page):
         return True
 
     def _press_key(self, key: str) -> bool:
-        if key == "backspace":
+        if key == "escape":
             self._back()
             return True
         return False
@@ -305,7 +307,7 @@ class AddModelPage(Page):
             search.value, self.search, search.display = "", "", False
             self._read_models()
             self.query_one("#add-models", ListView).focus()
-        elif key == "backspace":
+        elif key == "escape":
             self._back()
         elif key == "slash":
             search.display = True
@@ -321,7 +323,7 @@ class AddModelPage(Page):
         return True
 
     def _press_settings(self, key: str) -> bool:
-        if key == "backspace":
+        if key == "escape":
             self._back()
             return True
         return False
@@ -351,7 +353,7 @@ class AddModelPage(Page):
         return True
 
     def _press_local(self, key: str) -> bool:
-        if key == "backspace":
+        if key == "escape":
             self._back()
             return True
         return False

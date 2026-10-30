@@ -37,4 +37,4 @@
 
 
 
- f10 next view  enter open  bksp back  k compact  x drop  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu                           ^p palette
+ f10 next view  enter open  esc back  k compact  x drop  ? explain  f1 help  f5 machine column  q quit  ^b menu                                      ^p palette

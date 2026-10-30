@@ -47,4 +47,4 @@ Files                 M9     │
                              │
                              │
 
- enter check it  bksp back  ? explain  f1 help  esc menu  f5 machine column  q quit  ^b menu                         ^p palette
+ enter check it  esc back  ? explain  f1 help  f5 machine column  q quit  ^b menu                                    ^p palette

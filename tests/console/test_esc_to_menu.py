@@ -2,8 +2,9 @@
 "Unless otherwise stated (like when I am confirming something), the esc key should always bring me back to the Clank
 menu"). A window open closes first, as Esc always did; a row of buttons, a page's list or the page itself all go back
 to the menu, the page staying as it was. Beside a page that hides the menu (the Monitor), Esc shows it while it has the
-focus, the arrows pass the Monitor without hiding it, and going back into the page hides it again. A step back inside
-a page (the Monitor's view before, the Flow view's board D1, Add a model's step before) is Backspace."""
+focus, the arrows pass the Monitor without hiding it, and going back into the page hides it again. Where a page has a
+step back inside it (the Monitor's view before, the Flow view's board D1, Add a model's step before), Esc takes that
+step first (revised 2026-10-29, decision 0151; tests/console/test_backspace_erases.py), and Backspace only erases."""
 
 from typing import Any
 

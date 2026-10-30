@@ -92,8 +92,10 @@ def step(
     error: dict[str, Any] | None = None,
     session: str = SESSION,
     summary: bool = False,
+    finish: str | None = None,
 ) -> dict[str, Any]:
-    """A step (an answer), as OpenCode keeps it, with its parts (each made by `part`, `tool` or `text`)."""
+    """A step (an answer), as OpenCode keeps it, with its parts (each made by `part`, `tool` or `text`); its finish
+    OpenCode's for its parts unless given (`length`: cut off at the output limit)."""
     time: dict[str, Any] = {"created": created}
     if completed is not None:
         time["completed"] = completed
@@ -104,6 +106,8 @@ def step(
     }  # fmt: skip
     if completed is not None and error is None:
         info["finish"] = "tool-calls" if any(each["type"] == "tool" for each in parts) else "stop"
+    if finish is not None:
+        info["finish"] = finish
     if error is not None:
         info["error"] = error
     if summary:

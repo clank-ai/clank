@@ -327,7 +327,7 @@ def test_building_it_says_how_to_try_a_planning_that_failed_again_where_a_stacke
     assert "to try it again, in another terminal, cd /work/paper then clank flow attach; or n opens another" in said
 
 
-async def test_enter_opens_the_session_view_on_the_planning_session_and_backspace_comes_back(
+async def test_enter_opens_the_session_view_on_the_planning_session_and_esc_comes_back(
     kernel: Kernel, client: Client, home: Home, clock: FakeClock, folder: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     watched(kernel, clock, folder, monkeypatch)
@@ -339,7 +339,7 @@ async def test_enter_opens_the_session_view_on_the_planning_session_and_backspac
         await pilot.press("enter")
         await settle(pilot, lambda: page.view == "session")
         await settle(pilot, lambda: page.flows.opened_from == "planning")
-        await pilot.press("backspace")
+        await pilot.press("escape")
         await settle(pilot, lambda: page.view == "flow")
 
 

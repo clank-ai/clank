@@ -91,9 +91,9 @@ class SecretField(Widget, can_focus=True):
 
     async def on_event(self, event: events.Event) -> None:
         """A key typed or a paste is taken here, before Textual's handling, which logs each event it handles (with
-        TEXTUAL_LOG, to a file): what the field takes is never logged. Every character typed is the key's; Enter says
-        it is ready; Esc clears it and goes on to the window; Backspace on an empty field goes on too (a step back, on
-        Add a model, decision 0129); Tab, the arrows and the F-keys are the console's."""
+        TEXTUAL_LOG, to a file): what the field takes is never logged. Every character typed is the key's; Enter says it
+        is ready; Esc clears it and goes on to the window; Backspace erases, and on an empty field does nothing (it
+        never moves you: decision 0151); Tab, the arrows and the F-keys are the console's."""
         if isinstance(event, events.Paste):
             self._value += "".join(event.text.split())  # a key has no whitespace; a paste may end with a new line
         elif not isinstance(event, events.Key) or not self._takes(event):
@@ -111,8 +111,6 @@ class SecretField(Widget, can_focus=True):
         if event.key == "enter":
             self.post_message(self.Submitted(self))
         elif event.key == "backspace":
-            if not self._value:
-                return False
             self._value = self._value[:-1]
         elif event.is_printable and event.character and not event.character.isspace():
             self._value += event.character

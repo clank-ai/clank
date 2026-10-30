@@ -31,4 +31,4 @@ Setup              │
                    │
                    │
 
- enter go on  bksp back  ? explain  f1 help  esc menu  f5 machine column  q quit
+ enter go on  esc back  ? explain  f1 help  f5 machine column  q quit  ^b menu

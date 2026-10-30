@@ -528,6 +528,8 @@ export interface MonitorSettings {
   engine_broke_off: RuleSettings;
   /** When: a request ended model_looped. By default: mark, tell the model; a key left out keeps its default. */
   loop_guard_stopped: RuleSettings;
+  /** When: a step's answer reached the output limit before it ended (OpenCode's finish, length): a model's thinking counts against the limit, and OpenCode ends the run there (e on the Presets page raises a cloud model's). By default: mark, tell the model; a key left out keeps its default. */
+  answer_cut: RuleSettings;
   /** When: OpenCode asks about the same call made again (its doom_loop ask); unanswered, it stalls a run left alone. By default: mark, tell the phone; a key left out keeps its default. */
   asks_about_a_repeat: RuleSettings;
   /** When: the same call three times or more in the last 12. By default: mark; a key left out keeps its default. */

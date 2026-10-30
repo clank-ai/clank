@@ -158,6 +158,8 @@ and use the template below.
 | [0148](0148-the-console-opens-on-setup-while-anything-is-missing.md) | While anything the setup needs is missing, the console opens on Setup, whose model item opens Add a model | Accepted (the owner's instruction, design 0028); supersedes 0105's opening | 2026-10-27 |
 | [0149](0149-dev-mode-asks-any-provider-for-testing.md) | Dev mode: for testing, every cloud provider is asked for any of a model's providers, whatever its record says, and the header says so | Accepted (the owner's instruction); refines 0109 | 2026-10-29 |
 | [0150](0150-clank-takes-the-docker-group-at-once.md) | Clank takes the docker group at once through `sg docker`, so nobody logs out and in for it; `clank setup` goes on after joining, and restarts a service that started before | Accepted (the owner's instruction); revises design 0028 §3-§5 | 2026-10-29 |
+| [0151](0151-backspace-erases-esc-goes-back.md) | Backspace erases in a field you type in and never moves you; Esc goes back, a step inside a page, then to the menu; a field's own keys never reach the page | Accepted (the owner's report); supersedes 0129 in part, revises design 0011 §12.4 and design 0012's views |
+| [0154](0154-an-answer-cut-off-is-marked-and-the-model-goes-on.md) | An answer cut off at the output limit is a Watch for mark of its own, and by default the model is told to go on | Accepted (the owner's report); revises design 0012 §8 |
 
 ## Template
 

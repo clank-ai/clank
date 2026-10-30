@@ -1,6 +1,7 @@
 """Design 0012 §8 and §11 step 8 (decision 0053): what each Watch for rule does is the owner's to set, in a readable
 settings file, `config/monitor.json`, a settings kind with its schema: mark it, pause the session, tell the phone, or
-tell the model and go on, telling the model at most twice in a row. Its defaults are §8's table."""
+tell the model and go on, telling the model at most twice in a row. Its defaults are §8's table: an answer cut off at
+the output limit is marked and the model told to go on (revised 2026-10-29, decision 0154)."""
 
 import json
 from collections.abc import Iterator
@@ -29,6 +30,7 @@ def test_the_rules_defaults_are_the_designs_table(kernel: Kernel) -> None:
         "waiting_for_you": ["mark", "tell the phone"],
         "engine_broke_off": ["mark"],
         "loop_guard_stopped": ["mark", "tell the model"],
+        "answer_cut": ["mark", "tell the model"],
         "asks_about_a_repeat": ["mark", "tell the phone"],
         "same_call_again": ["mark"],
         "failing_again": ["mark"],
@@ -48,6 +50,10 @@ def test_the_rules_defaults_are_the_designs_table(kernel: Kernel) -> None:
         "Clank's loop guard stopped your last answer because it repeated itself, and that answer is not in your "
         "context. Go on from where you were, without writing it the same way again."
     ), "decision 0053's words"
+    assert settings.rule("answer_cut").note == (
+        "Clank's Monitor marked this in your session: {why}. Go on from where you were: think more briefly, and take "
+        "the work in smaller steps (a long file in parts)."
+    ), "decision 0154's words"
     assert all(settings.rule(name).note for name in MonitorSettings.RULES), "every rule has words for its note"
 
 

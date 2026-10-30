@@ -7,7 +7,8 @@ screen wherever the focus is. Help lists every key the pages declare, in board E
 of keys of its own; no panel's key letter is one of its page's keys (on a page with views, of the keys of the view the
 panel is in: the Monitor's Session view's `n` is its Now panel's, its Flow view's builds a new flow, design 0013 §15).
 No page's key acts anywhere, but a page's own menu key, pressed again while the page is on screen (the Monitor's F10,
-its next view: design 0012 §2)."""
+its next view: design 0012 §2), and Esc, which a page with a step back inside it declares as its own, `esc back`
+(revised 2026-10-29, decision 0151)."""
 
 import itertools
 from typing import Any
@@ -117,7 +118,7 @@ def test_each_page_declares_its_keys_as_named_actions_none_of_them_a_key_that_ac
     declared = 0
     for page in PAGES:
         others = {other.ENTRY.key.lower() for other in PAGES if other is not page}  # its own: pressed again on it
-        anywhere = {key.key for key in (*ANYWHERE, PALETTE)} | others
+        anywhere = ({key.key for key in (*ANYWHERE, PALETTE)} | others) - {"escape"}  # a step back: decision 0151
         assert isinstance(page.KEYS, tuple), page.ENTRY.id
         assert all(isinstance(key, PageKey) for key in page.KEYS), page.ENTRY.id
         actions = [key.action for key in page.KEYS]

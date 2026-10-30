@@ -1,11 +1,11 @@
-"""Design 0016 §14 and decision 0105: Add a model, the console's guided first step, one panel at a time, Backspace back
-one screen and Esc to the menu (decision 0129). Its first screen asks how Clank should run its model: Cloud (`c`), or
-Local (`l`) with this machine's GPU and memory. Cloud names OpenRouter and where to get a key; the agreement says what
-goes to OpenRouter, where, what never goes (the MCP servers marked local, each already added marked, Space unmarking
-one), that each workspace asks once, and that each request costs money; `o` changes the data policy, `n` and Backspace
-go back writing nothing, and `y` writes the record with the servers marked as shown (none named when none is listed),
-and Backspace from the key then skips the agreement done; an agreement whose words were not read cannot be agreed to. A
-provider already added starts at its key, or at the model once its key is set. Every screen fits at 128, 88 and 60
+"""Design 0016 §14 and decision 0105: Add a model, the console's guided first step, one panel at a time, Esc back one
+screen, and from the first to the menu (decision 0151). Its first screen asks how Clank should run its model: Cloud
+(`c`), or Local (`l`) with this machine's GPU and memory. Cloud names OpenRouter and where to get a key; the agreement
+says what goes to OpenRouter, where, what never goes (the MCP servers marked local, each already added marked, Space
+unmarking one), that each workspace asks once, and that each request costs money; `o` changes the data policy, `n` and
+Esc go back writing nothing, and `y` writes the record with the servers marked as shown (none named when none is
+listed), and Esc from the key then skips the agreement done; an agreement whose words were not read cannot be agreed to.
+A provider already added starts at its key, or at the model once its key is set. Every screen fits at 128, 88 and 60
 columns, its keys bar at 60 keeping the keys the step needs. Design 0016 §11 and §14, screens 4 to 6: the key typed into
 the hidden field is sent once; accepted, the next screen says its account (its label, its own limit and what is left);
 refused, the service's words, the field cleared; no frame holds the key either way. The model list is OpenRouter's (a
@@ -119,7 +119,7 @@ async def test_the_agreement_says_what_goes_where_and_what_never_goes_each_serve
         assert_frame(frame, "add-model-agreement")
 
 
-async def test_n_and_backspace_go_back_esc_goes_to_the_menu_and_nothing_is_written(
+async def test_n_and_esc_go_back_and_from_the_first_step_esc_goes_to_the_menu_writing_nothing(
     client: Client, home: Home, cloud_api: CloudBench
 ) -> None:
     app = make(client, home)
@@ -132,9 +132,9 @@ async def test_n_and_backspace_go_back_esc_goes_to_the_menu_and_nothing_is_writt
         assert AGREEMENT not in render_text(app)
         await pilot.press("enter")
         await on_screen(pilot, app, AGREEMENT)
-        await pilot.press("backspace")
+        await pilot.press("escape")
         await on_screen(pilot, app, "openrouter.ai")
-        await pilot.press("backspace")
+        await pilot.press("escape")
         await on_screen(pilot, app, CHOICE)
         await pilot.press("escape")
         await settle(pilot, lambda: app.focused is not None and app.focused.id == "menu")
@@ -173,7 +173,7 @@ async def test_an_added_provider_starts_at_its_key(client: Client, home: Home, c
         await on_screen(pilot, app, CHOICE)
         await pilot.press("c")
         await on_screen(pilot, app, KEY_SCREEN)
-        await pilot.press("backspace")  # the field is empty: a step back
+        await pilot.press("escape")  # the field clears (it is empty) and Esc goes on: a step back
         await on_screen(pilot, app, CHOICE)
     assert cloud_api.calls == []
 
@@ -496,7 +496,7 @@ async def test_with_no_server_listed_the_agreement_leaves_the_servers_to_the_ser
                                                                  "agree": True})  # fmt: skip
 
 
-async def test_once_agreed_backspace_from_the_key_skips_the_agreement_done(
+async def test_once_agreed_esc_from_the_key_skips_the_agreement_done(
     client: Client, home: Home, cloud_api: CloudBench
 ) -> None:
     app = make(client, home)
@@ -506,7 +506,7 @@ async def test_once_agreed_backspace_from_the_key_skips_the_agreement_done(
         await on_screen(pilot, app, AGREEMENT)
         await pilot.press("y")
         await settle(pilot, lambda: page_of(app).screen_name == "key")
-        await pilot.press("backspace")
+        await pilot.press("escape")
         await settle(pilot, lambda: page_of(app).screen_name == "choice")
 
 
@@ -527,8 +527,8 @@ async def test_at_60_columns_the_keys_bar_keeps_the_keys_each_step_needs(
         page_of(app).start("model")
         await on_screen(pilot, app, "Example Coder")
         bar = render_text(app).splitlines()[-1]
-        assert all(key in bar for key in ("/ search", "s sort", "f free", "bksp back")), bar
+        assert all(key in bar for key in ("/ search", "s sort", "f free", "esc back")), bar
         await pilot.press("enter")
         await on_screen(pilot, app, "Its settings")
         bar = render_text(app).splitlines()[-1]
-        assert all(key in bar for key in ("enter take", "tab next", "bksp back")), bar
+        assert all(key in bar for key in ("enter take", "tab next", "esc back")), bar

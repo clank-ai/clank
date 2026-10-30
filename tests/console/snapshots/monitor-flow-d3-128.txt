@@ -47,4 +47,4 @@
 
 
 
- a approve or go on  e edit, then approve  s send back  d diff  x stop the flow  bksp back to the flow  ? explain  f1 help  esc menu  f5 machine column  q quit
+ a approve or go on  e edit, then approve  s send back  d diff  x stop the flow  esc back to the flow  ? explain  f1 help  f5 machine column  q quit  ^b menu
