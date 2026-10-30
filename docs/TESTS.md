@@ -526,10 +526,10 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | The rule: through Clank, by allowance | `tests/components/gateway/test_proxy.py` (12), `tests/components/gateway/test_proxy_dev_mode.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5) |
 | 2 | The way out: a forward proxy at the gateway | `tests/components/gateway/test_proxy.py` (12), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10) |
-| 3 | A host the agent asks for | `tests/components/gateway/test_proxy_dev_mode.py` (7), `tests/components/workspaces/test_host_asks.py` (3) |
+| 3 | A host the agent asks for | `tests/components/agents/test_dev_mode_agent.py` (5), `tests/components/gateway/test_proxy_dev_mode.py` (7), `tests/components/workspaces/test_host_asks.py` (3) |
 | 4 | What the owner sees | `tests/components/gateway/test_network_views.py` (3), `tests/console/test_folder.py` (25) |
 | 5 | Packages, papers, data: the named sets | `tests/components/workspaces/test_network_sets.py` (4), `tests/console/test_folder.py` (25) |
-| 6 | Search | `tests/components/workspaces/test_network_sets.py` (4) |
+| 6 | Search | `tests/components/agents/test_dev_mode_agent.py` (5), `tests/components/workspaces/test_network_sets.py` (4) |
 | 7 | What is never reached | `tests/components/gateway/test_proxy.py` (12), `tests/components/gateway/test_proxy_dev_mode.py` (7) |
 | 8 | Order of work | none yet |
 
@@ -976,6 +976,16 @@ Design 0023 §3: the conversation stream, `GET /agents/conversation/stream`, ove
 - a client resumes from its version or gets a snapshot when behind and follows a new session
 - a folder with no session yet gets a snapshot saying so
 - a conversation the bridge cannot read ends the stream saying why and the response whole
+
+### `tests/components/agents/test_dev_mode_agent.py`
+
+Design 0024 §3 and §6 (decision 0152): dev mode, for the agent. OpenCode may fetch and search (`webfetch` and `websearch` allowed in its configuration) once it starts in a folder while dev mode is on, and not otherwise; a window already open keeps what it started with until it starts again. The agent's network instructions say, in dev mode, that every public host answers at once, with no question and no wait, and that private addresses still never do; off, they are the file as it is. They are one file, written at each start of the agent as dev mode says then, and written again in every running workspace's container whenever dev mode is turned on or off, so none of dev mode's words is left in a container once it is off, an agent starting while it is turned off included.
+
+- in dev mode opencode may fetch and search and otherwise not
+- in dev mode the instructions say every public host answers at once and private addresses never
+- starting the agent in dev mode gives it the web and says so and turning it off takes the words back
+- a change of dev mode writes the instructions in every running container and no other
+- dev mode turned off while an agent starts leaves none of its words
 
 ### `tests/components/agents/test_figures.py`
 

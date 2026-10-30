@@ -55,10 +55,10 @@ clone failed with 403.
   before; the routes carry `dev_mode` (`Gateway.routes`, the runtime's setting), `Routes.dev_mode()`, `main` hands it
   to the proxy. Tests with a fake upstream and a flag (`test_proxy_dev_mode.py`), the service's routes
   (`test_service.py`).
-- [ ] 2. **OpenCode may fetch and search** (`agents/adapters/program.py`, `opencode.py`, `agents/service.py`):
+- [x] 2. **OpenCode may fetch and search** (`agents/adapters/program.py`, `opencode.py`, `agents/service.py`):
   `configuration(web=)`, `webfetch` and `websearch` allowed with it; `prepare` and `configure` pass dev mode. Tests
   in `test_dev_mode_agent.py`.
-- [ ] 3. **The agent is told** (`workspaces/image/instructions/dev/network.md`, `workspaces/sandbox.py`,
+- [x] 3. **The agent is told** (`workspaces/image/instructions/dev/network.md`, `workspaces/sandbox.py`,
   `workspaces/service.py`, `agents/service.py`): `network_instructions(dev_mode)`, `agent_files(dev_mode=)`,
   `network_file`; `prepare` and `configure` write them as dev mode says, under the lock; a change of dev mode writes
   them again in every running container (`Agents.tell_network`, heard from `settings.changed`, off the thread that

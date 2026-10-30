@@ -45,6 +45,14 @@ are always this Clank's whatever image its container was made from; and its way 
 0004 §3: the edge running, forwarding the gateway's and the proxy's ports, on the workspace's network), what was put
 right said in `prepare`'s notes.
 
+Dev mode (decisions 0149 and 0152), read from the runtime's settings at each start: while it is on, OpenCode's
+configuration allows its web tools (`webfetch`, `websearch`), and the agent's network instructions say every public
+host answers at once, with no question and no wait (private addresses still never). When dev mode is turned on or off,
+the network instructions are written again in every running workspace's container (`tell_network`, heard from the
+runtime's `settings.changed`, in a thread of its own); a start and that writing hold one lock while they read dev mode
+and write, so neither leaves the other's words: none of dev mode's is left in a container once it is off. A window
+already open keeps the configuration it started with until it starts again.
+
 Each workspace's OpenCode, and Clank's MCP server in its container, send the workspace's own key to the gateway (design
 0016 §9, from the gateway's service); a workspace allowed the cloud gets no MCP server marked local only, and Clank's
 server there lists no Notion tool; the gateway is given the names of the tools that never go to the cloud
@@ -224,7 +232,9 @@ class Agents:
         self._notices: dict[str, dict[str, Any]] = {}  # each workspace's window told its model changed (design 0013 §7)
         self._notices_lock = threading.Lock()
         self._prepared: list[Callable[[str, int], None]] = []  # told each window prepared (design 0013 §15)
+        self._network_lock = threading.Lock()  # dev mode read and the network instructions written, together (0152)
         kernel.events.subscribe(self._heard_tools)  # the tools that never go to the cloud, given to the gateway
+        kernel.events.subscribe(self._heard_dev_mode)  # the network instructions written again (decision 0152)
 
     def on_prepared(self, told: Callable[[str, int], None]) -> None:
         """Be told each OpenCode window `prepare` gives a command for: its workspace and its port (a flow's planning
@@ -499,8 +509,7 @@ class Agents:
         model, notes = self._model(workspace)
         notes += workspaces.reach(workspace)
         servers = self._given(workspace, model.key)
-        configuration = adapter.configuration(model, servers, self._read_only(workspace))
-        workspaces.put_files(workspace, [*self._agent_files(), *adapter.files(), configuration], container=container)
+        self._write_agent(workspace, adapter, model, servers, container)
         with self._notices_lock:  # its configuration has the model's limits now: nothing more to tell its window
             self._notices.pop(workspace, None)
         one_window = bool(self.kernel.settings.get("workspace", workspace).record.model_dump().get("one_window", True))
@@ -541,15 +550,63 @@ class Agents:
         model, _ = self._model(workspace)
         container = workspaces.container_of(workspace)  # refused first when its container does not run
         workspaces.reach(workspace)
-        configuration = adapter.configuration(model, self._given(workspace, model.key), self._read_only(workspace))
-        workspaces.put_files(workspace, [*self._agent_files(), *adapter.files(), configuration], container=container)
+        self._write_agent(workspace, adapter, model, self._given(workspace, model.key), container)
         return self.agent_env(workspace, program)
 
-    def _agent_files(self) -> list[tuple[str, str]]:
-        """Clank's MCP server and instructions, as this Clank has them, for the agent's home in the container."""
+    def dev_mode(self) -> bool:
+        """Whether dev mode is on, as the runtime's settings say now (decisions 0149 and 0152): OpenCode may then fetch
+        and search, and the agent is told every public host answers at once."""
+        runtime: Runtime = self.kernel.parts["runtime"]
+        return runtime.settings().dev_mode
+
+    def _write_agent(
+        self, workspace: str, adapter: AgentProgram, model: AgentModel, servers: dict[str, "Server"], container: str
+    ) -> None:
+        """The program's configuration and Clank's files for the agent (its MCP server and instructions, as this Clank
+        has them) written into its home in the container, in one go: its web tools and its network instructions as dev
+        mode says, read under the lock `tell_network` holds, so a change of dev mode meanwhile is written after them
+        (decision 0152)."""
         from clank.components.workspaces.service import agent_files
 
-        return list(agent_files())
+        workspaces: Workspaces = self.kernel.parts["workspaces"]
+        read_only = self._read_only(workspace)
+        with self._network_lock:
+            dev = self.dev_mode()
+            configuration = adapter.configuration(model, servers, read_only, web=dev)
+            files = [*agent_files(dev_mode=dev), *adapter.files(), configuration]
+            workspaces.put_files(workspace, files, container=container)
+
+    def tell_network(self) -> list[str]:
+        """The agent's network instructions written again, as dev mode says now, in each workspace's container that
+        runs (decision 0152: none of dev mode's words left once it is off); the workspaces they were written in. One
+        whose container does not run is passed by: its agent's next start writes them."""
+        from clank.components.workspaces.service import WorkspaceUnavailable, network_file
+
+        workspaces: Workspaces = self.kernel.parts["workspaces"]
+        told: list[str] = []
+        with self._network_lock:
+            file = network_file(self.dev_mode())
+            for loaded in self.kernel.settings.records("workspace"):
+                try:
+                    workspaces.put_files(loaded.id, [file])
+                except WorkspaceUnavailable:
+                    continue
+                told.append(loaded.id)
+        return told
+
+    def _heard_dev_mode(self, event: Any) -> None:
+        """Dev mode turned on or off: the network instructions written again in every running container, in a thread
+        of their own (a `docker exec` each), never on the thread that changed it (decision 0152)."""
+        if event.type != "settings.changed" or not isinstance(event.data, dict) or event.data.get("kind") != "runtime":
+            return
+        if any(change.get("field") == "dev_mode" for change in event.data.get("changes") or []):
+            threading.Thread(target=self._retold, name="agents: dev mode's instructions", daemon=True).start()
+
+    def _retold(self) -> None:
+        try:
+            self.tell_network()
+        except Exception:
+            log.exception("the agent's network instructions could not be written again after dev mode changed")
 
     def _port(self, workspace: str, notes: list[str]) -> int | None:
         """A port of its own for the program's API, so its session can be reached (design 0005 §2); None, and why in

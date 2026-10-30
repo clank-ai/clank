@@ -5,13 +5,14 @@ at the gateway through the edge, its key the workspace's own there (design 0016 
 gateway routes (`agent`), named after the preset that runs it, with its context (the engine's window less the margin
 kept for one step's tool results, decision 0089) and output limits, its reasoning (interleaved, as llama.cpp's
 `reasoning_content`), tool calls, and images when its model reads them (else OpenCode sends it none). It is OpenCode's
-only provider; OpenCode may not touch anything outside the folder, and has no web tools (the container has no route
-out). OpenCode runs offline: no updates, no fetch of its list of models, no downloads of language servers, no default
-plugins, no sharing, no reading of another assistant's files, and no file watcher (slow across Docker's mount of a
-Windows folder). These choices were measured with OpenCode in the prototype's sandbox (PROTOTYPE.md); its version is the
-image's. The MCP servers it gets (design 0004 §10) are its `mcp`, each a `local` command it starts in the container with
-its environment; OpenCode reads no `.mcp.json` of its own. It asks before every change to a file (`edit: ask`): Clank
-answers, after the owner's review or at once in auto mode (design 0007 §3).
+only provider; OpenCode may not touch anything outside the folder, and has no web tools of its own (the agent reaches
+the internet through Clank's proxy, by the owner's allowances) but in dev mode, where `webfetch` and `websearch` are
+allowed (decision 0152). OpenCode runs offline: no updates, no fetch of its list of models, no downloads of language
+servers, no default plugins, no sharing, no reading of another assistant's files, and no file watcher (slow across
+Docker's mount of a Windows folder). These choices were measured with OpenCode in the prototype's sandbox
+(PROTOTYPE.md); its version is the image's. The MCP servers it gets (design 0004 §10) are its `mcp`, each a `local`
+command it starts in the container with its environment; OpenCode reads no `.mcp.json` of its own. It asks before
+every change to a file (`edit: ask`): Clank answers, after the owner's review or at once in auto mode (design 0007 §3).
 
 Its agents are OpenCode's `build`, and Clank's `planner` in place of OpenCode's `plan` (design 0009 §3, decision 0038),
 so Tab switches between Build and Planner. The planner's instructions are `prompts/planner.md`; its rules, its own and
@@ -164,9 +165,12 @@ class OpenCode(AgentProgram):
         model: AgentModel,
         servers: Mapping[str, Server] | None = None,
         read_only: Mapping[str, Sequence[str]] | None = None,
+        web: bool = False,
     ) -> tuple[str, str]:
         """Clank's gateway as its one provider, the role as its one model; each MCP server it gets, a local command;
-        the planner in place of OpenCode's `plan`, and `/implement`."""
+        the planner in place of OpenCode's `plan`, and `/implement`; its `webfetch` and `websearch` allowed with `web`
+        (dev mode, decision 0152), denied otherwise."""
+        web_tools = "allow" if web else "deny"
         described = {
             "name": model.title,
             "reasoning": True,
@@ -192,7 +196,7 @@ class OpenCode(AgentProgram):
             "enabled_providers": [PROVIDER],
             "autoupdate": False,
             "share": "disabled",
-            "permission": {"external_directory": "deny", "webfetch": "deny", "websearch": "deny", "edit": "ask"},
+            "permission": {"external_directory": "deny", "webfetch": web_tools, "websearch": web_tools, "edit": "ask"},
             "instructions": [CLANK_INSTRUCTIONS],
             "agent": {
                 "plan": {"disable": True},
