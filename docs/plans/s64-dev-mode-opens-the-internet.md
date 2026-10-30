@@ -49,7 +49,7 @@ clone failed with 403.
 
 ## Tasks
 
-- [ ] 1. **The proxy in dev mode** (`gateway/proxy.py`, `routing.py`, `server.py`, `service.py`): `Proxy(dev_mode=)`,
+- [x] 1. **The proxy in dev mode** (`gateway/proxy.py`, `routing.py`, `server.py`, `service.py`): `Proxy(dev_mode=)`,
   a callable; while it says on, a public host not allowed is let out at once, logged why `dev mode`, never asked for;
   a connection held while the owner is asked is let out once dev mode is turned on; private addresses refused as
   before; the routes carry `dev_mode` (`Gateway.routes`, the runtime's setting), `Routes.dev_mode()`, `main` hands it

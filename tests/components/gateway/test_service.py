@@ -89,6 +89,7 @@ async def test_the_routes_give_the_main_slots_engine_its_model_name_and_its_limi
         "cost": {"day_usd": 0.0, "month_usd": 0.0, "taken": 0, "run": "", "limit_day_usd": None,
                  "limit_month_usd": None},
         "network": {},
+        "dev_mode": False,
     }  # fmt: skip
     rig.gpu[:] = [GpuMemory(16303, 2041), GpuMemory(16303, 3150)]
     async with rig.kernel.operations.running():

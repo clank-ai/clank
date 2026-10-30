@@ -113,7 +113,7 @@ from clank.components.gateway.keys import Keys
 from clank.components.gateway.kinds import GatewaySettings
 from clank.components.gateway.loops import LoopGuard
 from clank.components.gateway.marks import LocalMarks, held_back, local_calls, whose
-from clank.components.gateway.proxy import HOLD_SECONDS, NetworkLog, Proxy, network_token
+from clank.components.gateway.proxy import HOLD_SECONDS, Ask, NetworkLog, Proxy, network_token
 from clank.components.gateway.records import TrafficLog
 from clank.components.gateway.routing import NO_KEY, Routes, SlotRoute
 from clank.components.gateway.sessions import session_of
@@ -1577,6 +1577,16 @@ def follow(routes: Routes, fetch: Any, stop: threading.Event) -> None:
         stop.wait(FOLLOW_SECONDS)
 
 
+def agent_proxy(routes: Routes, local: str, log: NetworkLog | None, ask: Ask | None) -> Proxy:
+    """The agent's way to the internet (design 0024 §2), as the gateway's process makes it: by the routes' allowances
+    and dev mode (decision 0152), each workspace's token derived from the local token, a host not allowed asked for
+    with `ask`."""
+    return Proxy(
+        hosts=routes.hosts_of, token_of=lambda workspace: network_token(local, workspace), log=log, ask=ask,
+        dev_mode=routes.dev_mode,
+    )  # fmt: skip
+
+
 def settings_of(raw: Mapping[str, Any] | None) -> GatewaySettings:
     """The gateway's settings from its file's values, or its built-in ones."""
     values = {key: value for key, value in (raw or {}).items() if key != "schema"}
@@ -1706,12 +1716,7 @@ def main(argv: list[str] | None = None) -> int:
     spool = Spool(home.state)  # and the cloud requests the service has not taken yet (design 0016 §12)
     routes.followed = True  # what the service says now decides a cloud request (design 0016 §9)
     local = local_token(home)
-    proxy = Proxy(  # the agent's way to the internet (design 0024 §2), by the routes' allowances
-        hosts=routes.hosts_of,
-        token_of=lambda workspace: network_token(local, workspace),
-        log=NetworkLog(home.logs / "network", settings.network_days),
-        ask=ask_host,
-    )
+    proxy = agent_proxy(routes, local, NetworkLog(home.logs / "network", settings.network_days), ask_host)
     app = create_gateway(
         routes,
         settings,

@@ -524,13 +524,13 @@ Each test file begins with a docstring naming the design sections it verifies (d
 
 | § | Section | Tests |
 | --- | --- | --- |
-| 1 | The rule: through Clank, by allowance | `tests/components/gateway/test_proxy.py` (12), `tests/components/workspaces/test_workspace_commands.py` (5) |
+| 1 | The rule: through Clank, by allowance | `tests/components/gateway/test_proxy.py` (12), `tests/components/gateway/test_proxy_dev_mode.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5) |
 | 2 | The way out: a forward proxy at the gateway | `tests/components/gateway/test_proxy.py` (12), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10) |
-| 3 | A host the agent asks for | `tests/components/workspaces/test_host_asks.py` (3) |
+| 3 | A host the agent asks for | `tests/components/gateway/test_proxy_dev_mode.py` (7), `tests/components/workspaces/test_host_asks.py` (3) |
 | 4 | What the owner sees | `tests/components/gateway/test_network_views.py` (3), `tests/console/test_folder.py` (25) |
 | 5 | Packages, papers, data: the named sets | `tests/components/workspaces/test_network_sets.py` (4), `tests/console/test_folder.py` (25) |
 | 6 | Search | `tests/components/workspaces/test_network_sets.py` (4) |
-| 7 | What is never reached | `tests/components/gateway/test_proxy.py` (12) |
+| 7 | What is never reached | `tests/components/gateway/test_proxy.py` (12), `tests/components/gateway/test_proxy_dev_mode.py` (7) |
 | 8 | Order of work | none yet |
 
 ## Design 0025: Clank for iPhone (M9)
@@ -2552,6 +2552,18 @@ Design 0024 §1, §2 and §7 (decision 0141): the forward proxy at the gateway, 
 - the gateway serves the proxy with its application on the proxy port
 - the routes carry each workspaces hosts for the proxy
 - a host not allowed is asked for and let out on once or always and refused on no
+
+### `tests/components/gateway/test_proxy_dev_mode.py`
+
+Design 0024 §1, §3 and §7 (decision 0152): dev mode opens the agent's internet. While the routes say dev mode is on, the proxy lets every public host out at once, for any workspace, whatever its allowances, and asks the owner nothing; each exchange it let out is logged with why `dev mode`, by host, bytes and time as always, and one to a host allowed as before. Private addresses stay refused, before resolving and after: this machine, the local networks, the tailnet's range, Clank's own service on the edge. Turned on or off, dev mode applies from the next connection with nothing restarted, and a connection held while the owner is asked goes out at once when it is turned on. The routes the gateway's process follows carry dev mode as the runtime's settings have it, and the proxy its process makes reads it there.
+
+- in dev mode every public host goes out at once unasked and is logged why
+- in dev mode private addresses stay refused before resolving and after
+- dev mode turned on or off applies from the next connection with nothing restarted
+- a connection held while the owner is asked goes out at once when dev mode is turned on
+- the routes carry dev mode for the proxy
+- the proxy the gateways process makes follows dev mode as the routes carry it
+- the services routes say dev mode as the runtime has it
 
 ### `tests/components/gateway/test_reasoning_field.py`
 

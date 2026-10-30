@@ -15,7 +15,8 @@ status it answers (`problem`). `activity` asks the gateway what it does now, for
 always, unloaded when off, and after its idle minutes when on demand). `routes` is what the gateway asks for every
 second: each slot as the runtime reports it (`Runtime.route`) and the roles (`agent` is the main slot's, and any other
 name too; `completion` is the fast slot's, design 0006; `vision` the vision slot's, loaded on demand), each with its
-preset's facts (design 0012 §4), and `facts` gives any preset's. `completion` asks the gateway for its last
+preset's facts (design 0012 §4), and what the agent's proxy follows (each workspace's hosts, and the runtime's dev mode,
+decision 0152); `facts` gives any preset's. `completion` asks the gateway for its last
 completions, for the CPU models page. `pause`, `resume` and `release` set a session's pause in the gateway (design 0012
 §9.4, decision 0055), with the service's local token, which the gateway's routes for it take (decision 0084); `holds`
 says what is paused and held.
@@ -345,15 +346,17 @@ class Gateway:
         return self.completion()
 
     def routes(self) -> dict[str, Any]:
-        """Where each role's requests go, as the gateway's process asks for it; and how the role loaded on demand is
-        (the vision model's mode, design 0008 §7)."""
-        slots = {name: self.runtime.route(name) for name in self.runtime.settings().slots}
+        """Where each role's requests go, as the gateway's process asks for it; how the role loaded on demand is (the
+        vision model's mode, design 0008 §7); and what the agent's proxy follows: each workspace's hosts, and whether
+        dev mode is on (decision 0152: every public host goes out)."""
+        settings = self.runtime.settings()
+        slots = {name: self.runtime.route(name) for name in settings.slots}
         demand = {"vision": self.vision_settings().mode} if "vision" in slots else {}
         return {
             "slots": slots, "roles": dict(ROLES), "default_slot": "main", "demand": demand,
             "workspaces": self.bounds.routes(), "local_only": self.local_only(),
             "local_only_given": self._local_only is not None, "cost": self.costs.routes(),
-            "network": self.network_routes(),
+            "network": self.network_routes(), "dev_mode": settings.dev_mode,
         }  # fmt: skip
 
     def network_log(self, limit: int = 30, workspace: str = "") -> dict[str, Any]:
