@@ -34,7 +34,7 @@ each with a recommendation.
 | 1 | What the owner gets | Approved 2026-10-18 |
 | 2 | The page: its views, its panels and its keys | Approved 2026-10-18 |
 | 3 | Which session the page follows, and which the Guide acts on | Approved 2026-10-18; revised 2026-10-19 with step 2 (what the gateway names; a session's subagents' requests only when asked) |
-| 4 | The context window | Approved 2026-10-18; revised 2026-10-18 at the owner's request (whatever model is loaded) and comment (§4.7: where the figures come from); revised 2026-10-20 after a session failed at the context's limit (§4.1: the margin OpenCode is not told of, and a full context answered as an overflow); revised 2026-10-20 with step 12 (§4.2: how the estimate was built) |
+| 4 | The context window | Approved 2026-10-18; revised 2026-10-18 at the owner's request (whatever model is loaded) and comment (§4.7: where the figures come from); revised 2026-10-20 after a session failed at the context's limit (§4.1: the margin OpenCode is not told of, and a full context answered as an overflow); revised 2026-10-20 with step 12 (§4.2: how the estimate was built); §4.1 revised after approval 2026-10-29 (the owner's request: OpenCode told the whole most output above its own cap of 32,000, decision 0153) |
 | 5 | Now | Approved 2026-10-18; revised 2026-10-19 with step 2 (§5.2: the tokens counted by kind) |
 | 6 | The session's branching flow | Approved 2026-10-18; revised 2026-10-19 with step 6 (§6.3: how it is laid out, a band holds what it folds; §6.4: a fold opens for the newest node while it works); revised 2026-10-26 (§6.1: a flow whose server ended is not read again until a server answers on its port; a watcher started again reads its flows once it synced) |
 | 7 | Tool calls and the live text | Approved 2026-10-18; revised 2026-10-19 with step 2 (the live text's route) |
@@ -245,8 +245,13 @@ declarations Clank keeps per engine and per model.
   compaction reads. It changes when a step ends, since the engine reports usage only at a request's end.
 - **The compaction line.** OpenCode compacts when that total reaches the window it is told less the output limit
   (counted up to 32,000), here 262,144 − 16,384 − 16,384 = **229,376** tokens (OpenCode's `session/overflow.ts`), or
-  when the engine reports that the context overflowed. **Left before OpenCode compacts** is 229,376 less the used
-  total. The step's tool results go with the next request unchecked, and KVMem refuses a prompt that with `max_tokens`
+  when the engine reports that the context overflowed. *Revised after approval 2026-10-29 (the owner's request;
+  decision 0153):* above 32,000 the whole output limit is counted: OpenCode caps an answer at 32,000 unless
+  `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX` says more, and Clank sets it to an output limit above 32,000 when OpenCode
+  starts, so OpenCode both sends and keeps room for all of it (read in OpenCode 1.19.4's source, the image's version:
+  `provider/transform.ts`, `session/llm/request.ts`, `session/overflow.ts`). **Left before OpenCode compacts** is
+  229,376 less the used total. The step's tool results go with the next request unchecked, and KVMem refuses a prompt
+  that with `max_tokens`
   passes its window: told the window itself (a line of 245,760), a session failed when a step ended 35 tokens under the
   line and its result of 1,206 tokens pushed the next request over. With the margin, the results of a step that does
   not compact fit, up to 16,384 tokens: one tool output as OpenCode cuts it (51,200 bytes or 2,000 lines) of code or
@@ -259,11 +264,14 @@ declarations Clank keeps per engine and per model.
   there), and OpenCode compacts and goes on; the record and the Requests page mark it `full`
   ([decision 0090](../decisions/0090-a-full-context-is-answered-as-an-overflow-opencode-compacts-on.md)).
 - **What a compaction keeps**: a summary and the newest turns, up to min(15,000, max(2,000, a quarter of 229,376)) =
-  **15,000** tokens (OpenCode's `session/compaction.ts`). The panel can preview "after compacting: a summary and the
+  **15,000** tokens (OpenCode's `session/compaction.ts`). *Revised after approval 2026-10-29:* that quarter is of the
+  window told less the output limit counted up to 32,000, whatever the variable (OpenCode 1.19.4's
+  `preserveRecentBudget` leaves it out). The panel can preview "after compacting: a summary and the
   last 15,000 tokens".
 - **The bar** runs from the parts in use, through the free room to the compaction line, to the room kept beyond it:
-  the margin for a step's tool results and the 16,384 kept for the answer. Turning OpenCode's `compaction.auto` off, or setting `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX`, changes the
-  rule; the panel then says so.
+  the margin for a step's tool results and the 16,384 kept for the answer. Turning OpenCode's `compaction.auto` off
+  changes the rule; the panel then says so (Clank never does). Clank sets `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX`
+  itself, above 32,000, and the rule counts it (revised after approval 2026-10-29).
 - **Read from the cache**: the share of the last prompt the engine had cached (the gateway keeps the engine's
   `prompt_cache_hit_tokens` in each record).
 
@@ -1057,3 +1065,8 @@ Numbered in this document's order, 0047 to 0056: after design 0011's 0041 to 004
   that nothing listens there) is now set aside until a server answers on its port again (the watch's `server` line,
   any line naming the port) or its session is heard again, and the log says once that the window closed; a watcher
   started again has its flows read once it synced, not before; and a reading that keeps failing is said once.
+- **2026-10-29, §4.1 revised after approval** (the owner's request to raise a cloud model's most output; decision 0153):
+  OpenCode caps an answer at 32,000 tokens unless `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX` says more, so Clank now sets
+  it to an output limit above 32,000 when OpenCode starts. The compaction line counts the whole limit, as OpenCode then
+  does; what a compaction keeps is still counted with 32,000, as OpenCode 1.19.4 counts it. Read in OpenCode 1.19.4's
+  source, the image's version (plan s65).

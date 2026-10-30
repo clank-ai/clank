@@ -48,8 +48,8 @@ OpenRouter.
 | 3 | What OpenRouter offers, as its documentation says | Approved 2026-10-20 for building, the owner's go-ahead (each fact cited; what is unsaid is marked) |
 | 4 | The provider's record, and its key | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (the owner's instruction: dev mode, decision 0149) |
 | 5 | How the gateway gets the key | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0106) |
-| 6 | The OpenRouter adapter | Approved 2026-10-20 for building, the owner's go-ahead |
-| 7 | Cloud presets, and the main slot running one | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0107) |
+| 6 | The OpenRouter adapter | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (the owner's request: a cloud preset's most output at most half its context, decision 0153) |
+| 7 | Cloud presets, and the main slot running one | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0107); revised after approval 2026-10-29 (the owner's request: a cloud preset's settings changed after it is written, the slot that runs it following at once; OpenCode told the whole most output, decision 0153) |
 | 8 | The gateway forwards to OpenRouter | Approved 2026-10-20 for building, the owner's go-ahead (Claude's calls, decisions 0109 and 0110; decision 0074 built); revised after approval 2026-10-21 (decision 0115: a refusal not to be retried is never answered 503) and 2026-10-29 (dev mode, decision 0149; a data policy's refusal known by its words, the account's privacy settings named; a free model's daily limit not retried) |
 | 9 | Where a workspace's requests may go | Approved 2026-10-20 (the owner's answers: 2; decision 0103); how it asks is Claude's call (decision 0112) |
 | 10 | Local-only content never reaches the cloud: how it is enforced | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0111) |
@@ -57,8 +57,8 @@ OpenRouter.
 | 12 | How cost is known and kept | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0108) |
 | 13 | What the Monitor shows of a cloud model | Approved 2026-10-20 for building, the owner's go-ahead |
 | 14 | The first run: Add a model | Approved 2026-10-20 (the owner's answers: 4; decision 0105) |
-| 15 | The Providers and models page, and the other pages | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (dev mode's key and pill, decision 0149) |
-| 16 | The commands | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (`clank dev`, decision 0149) |
+| 15 | The Providers and models page, and the other pages | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (dev mode's key and pill, decision 0149; and the owner's request: `e` on Presets changes a cloud preset's settings) |
+| 16 | The commands | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (`clank dev`, decision 0149; and the owner's request: `clank preset change`) |
 | 17 | The phone and VS Code | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-21 (the owner's instruction: a subsection For the phone app) |
 | 18 | Tests, the fake OpenRouter, and the checks owed with a real key | Approved 2026-10-20 for building, the owner's go-ahead |
 | 19 | Build steps | Approved 2026-10-20 for building, the owner's go-ahead |
@@ -244,7 +244,8 @@ Its interface (the kind's, so the next provider meets it too):
 - `URL`, `REACH`, `AUTH`: `https://openrouter.ai/api/v1`, `cloud`, `bearer` (§4).
 - `provider_options()`: the record's `options`: `data_collection` (`deny`, `allow`) and `zdr` (a boolean).
 - `options(model)`: a cloud preset's options (§7): `context` (at most the model's), `max_output` (16,384 or the model's
-  `top_provider.max_completion_tokens` when smaller), `reasoning` (`default`, or an effort the model lists in
+  `top_provider.max_completion_tokens` when smaller; and at most half the context, revised after approval
+  2026-10-29, §7 and decision 0153), `reasoning` (`default`, or an effort the model lists in
   `reasoning.supported_efforts`, else one of OpenRouter's seven), and `images` (from `architecture.input_modalities`).
 - `account(answer)`: `GET /key` read into what clients show: its label, its limit and what is left, its use today and
   this month (OpenRouter's own count, UTC), whether it is a free-tier key, a budget that refuses and when it resets.
@@ -346,6 +347,28 @@ optional beside `endpoint`, never both, never neither); its `model` is the id Op
 - **`clank work`, `clank code` and This folder** use what the main slot runs, else its last configuration that worked,
   else the runtime's `fallback_preset` (design 0015 §13): on a machine with only a cloud model, the last that worked is
   the cloud preset Add a model loaded.
+- **Changed after it is written** (revised after approval 2026-10-29, the owner's request: "after the model is set
+  up, I would like to be able to increase the number of output tokens from the number that I initially set up"). A
+  cloud preset's context, most output (`max_output`) and thinking effort (`reasoning`) change through
+  `PATCH /api/v1/runtime/presets/{name}` (by its id or its title), `clank preset change` (§16) and `e` on the
+  Presets page (§15): merged into its options, checked by its adapter against the model's limits as the
+  provider lists them now, and written over the record at its revision with who changed it. A value beyond the
+  model is refused in the adapter's words ("max_output is at most 32,768 for example-vendor/example-coder, not
+  99,999"); a local preset's options are its engine's, changed in its file, which the refusal says (`o` on
+  Presets, then `e` on Launch options). The slot that runs it follows at once: its launch's kept route is
+  planned again as a load plans it, with nothing sent, so the gateway adds the new thinking effort from the next
+  request and the next agent started is told the new limits; the last configuration that worked keeps them too.
+  A preset's file changed by hand applies at its next load, as before. The change is an event
+  (`runtime.preset_changed`), and its answer says in words what changed, where it applies, and that an OpenCode
+  window open keeps the limits it started with until it starts again; each window open is told so, as a flow's
+  switch tells it (`agents.model_changed`, This folder's notice, VS Code).
+- **The most output holds the thinking and the answer** (revised after approval 2026-10-29; decision 0153). A
+  model's thinking counts against the preset's most output, so a reasoning model that thinks longer than it
+  stops mid-thought. OpenCode caps an answer at 32,000 tokens unless `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX`
+  says more (read in OpenCode 1.19.4's source, the image's version): above 32,000, Clank sets it to the most
+  output when OpenCode starts, and says so. OpenCode keeps that much room free in every request, so a larger
+  most output makes it compact sooner, and a cloud preset's most output is at most half its context (its default
+  within it too), which leaves the conversation at least a quarter of it beside the margin (decision 0089).
 - **OpenCode's limits follow the route** (`agents/service.py:126`): the window less the margin (decision 0089), and
   the output limit; its configuration says `attachment` from `images`. A model that does not take tool calls is never
   offered for the main slot (§6).
@@ -650,7 +673,11 @@ from there. Nothing in Add a model needs Docker.
   first with the call it makes (revised after approval 2026-10-29, decision 0149), the policy line then saying dev
   mode beside the record's own.
 - **Presets (9) and the picker** show a cloud preset's provider as `cloud openrouter` and its prices; a switch to it is
-  a switch like any (§7).
+  a switch like any (§7). On the Presets page, `e` changes a cloud preset's context, most output and thinking effort
+  in a form filled with them, the model's limits in its labels ("Most output, in tokens: its thinking and its answer
+  together (at most 32,768, the model's most)"), sending only what was changed; the service's answer shows in a
+  window, a refusal on the message line. On a local preset, `e` says where its options change instead (revised after
+  approval 2026-10-29, the owner's request; §7).
 - **Models (8)** shows the main slot's cloud model: its provider, its window, its last health, "not reached since …".
 - **This folder (F4)** shows the model's line with "cloud", the workspace's bound ("this workspace: may use the cloud"
   or "kept on this machine"), `u` to change it (asked first; `c` stays VS Code's), the MCP servers held back as local
@@ -676,6 +703,7 @@ clank endpoint preset openrouter MODEL [--title T] [--context N] [--output N] [-
 clank endpoint check openrouter [--model MODEL]    §6
 clank endpoint remove openrouter                   with its key; refused while a slot runs it or a preset names it
 clank model load "cloud: Example Coder"            as for any preset (§7)
+clank preset change PRESET [--output N] [--context N] [--reasoning EFFORT] [--json]   its settings changed (§7)
 clank workspace allow FOLDER --cloud | --local [--yes]       a workspace's bound, asked first unless --yes (§9)
 clank mcp local NAME [--off]                       mark an MCP server local only, or not (§10)
 clank cost [--today | --month | --sessions | --flows] [--json]
@@ -838,6 +866,9 @@ a fake of it until s34's routes land. Each task is one commit that starts with a
 - [0115](../decisions/0115-a-refusal-not-to-retry-is-never-answered-with-a-status-opencode-retries.md): a refusal
   OpenCode must not retry is never answered with a status it retries by (Claude's call, at the review of plan s34;
   §8).
+- [0153](../decisions/0153-opencode-is-told-the-whole-most-output.md): OpenCode is told the whole most output, above
+  32,000 by `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX`, and a cloud preset's most output is at most half its context
+  (Claude's call, building the owner's request of 2026-10-29; §6, §7).
 
 ## Revision log
 
@@ -859,3 +890,10 @@ a fake of it until s34's routes land. Each task is one commit that starts with a
   whatever its status (404 or 503), pointing to OpenRouter's account settings when the request allowed any provider
   or OpenRouter names them; and a free model's daily limit is not retried, since retrying cannot help until the
   next UTC day. Both read OpenRouter's words as of 2025, *to be checked with a real key* (§18).
+- **2026-10-29, §6, §7, §15 and §16 revised after approval:** at the owner's request ("after the model is set up, I
+  would like to be able to increase the number of output tokens from the number that I initially set up"; a free
+  reasoning model stopping at its thinking limit), a cloud preset's settings change after it is written: its context,
+  most output and thinking effort, through `PATCH /runtime/presets/{name}`, `clank preset change` and `e` on Presets,
+  the slot that runs it following at once and each OpenCode window open told that it keeps its limits until it starts
+  again. OpenCode is told the whole most output above its own cap of 32,000, and a most output is at most half the
+  context (decision 0153, plan s65).

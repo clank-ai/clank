@@ -158,6 +158,7 @@ and use the template below.
 | [0148](0148-the-console-opens-on-setup-while-anything-is-missing.md) | While anything the setup needs is missing, the console opens on Setup, whose model item opens Add a model | Accepted (the owner's instruction, design 0028); supersedes 0105's opening | 2026-10-27 |
 | [0149](0149-dev-mode-asks-any-provider-for-testing.md) | Dev mode: for testing, every cloud provider is asked for any of a model's providers, whatever its record says, and the header says so | Accepted (the owner's instruction); refines 0109 | 2026-10-29 |
 | [0150](0150-clank-takes-the-docker-group-at-once.md) | Clank takes the docker group at once through `sg docker`, so nobody logs out and in for it; `clank setup` goes on after joining, and restarts a service that started before | Accepted (the owner's instruction); revises design 0028 §3-§5 | 2026-10-29 |
+| [0153](0153-opencode-is-told-the-whole-most-output.md) | OpenCode is told the whole most output: above 32,000, Clank sets `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX` to it and counts all of it in the compaction line; a cloud preset's most output is at most half its context | Accepted (Claude's call, building the owner's request); revises design 0012 §4.1 | 2026-10-29 |
 
 ## Template
 
