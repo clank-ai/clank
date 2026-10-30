@@ -13,8 +13,9 @@ reached its count, and again only after the count fell below it: a loop of twent
 
 The facts come from the slot (design 0012 §4: whatever model is loaded): its window and output limit, the thinking
 budget of its preset, and, once design 0012's step 3 says it, whose conversation the engine holds. A rule whose fact is
-not known stays quiet: it never guesses a number. The compaction line is OpenCode's, the window less the output limit
-counted up to 32,000 (design 0012 §4.1); a step's size is OpenCode's total for it, else its prompt and answer added.
+not known stays quiet: it never guesses a number. The compaction line is OpenCode's, the window less the output limit,
+all of it since Clank lifts OpenCode's own cap of 32,000 above it (design 0012 §4.1, decision 0153: `counted_output`);
+a step's size is OpenCode's total for it, else its prompt and answer added.
 """
 
 import itertools
@@ -25,6 +26,7 @@ from collections.abc import Callable, Hashable
 from dataclasses import dataclass
 from typing import Any
 
+from clank.components.agents.adapters.opencode import counted_output
 from clank.components.agents.sessionflow.text import brief
 
 LOOP_WORDS = "Clank's loop guard stopped the answer"  # the gateway's words (its `LOOPED`), as OpenCode keeps them
@@ -33,7 +35,6 @@ SAME_CALL = (3, 12)  # the same call this many times or more in the last so many
 FAILING = (4, 8)  # failures
 ONE_FILE = (6, 30)  # edits of one file
 NEAR = 0.9  # within a tenth of a budget
-OUTPUT_MOST = 32_000  # OpenCode counts the output limit up to this much when it sets its compaction line
 PACE_STEPS = 3  # the last finished steps whose growth gives the pace
 RETRIES = 5  # OpenCode's attempts at most
 EDITS = ("edit", "write", "multiedit", "patch", "apply_patch")
@@ -374,7 +375,8 @@ def size(step: dict[str, Any]) -> int:
 def _compaction_near(head: dict[str, Any], nodes: list[dict[str, Any]], facts: Facts) -> list[Hit]:
     if not facts.context or not facts.output:
         return []
-    line = facts.context - min(facts.output, OUTPUT_MOST)
+    counted = counted_output(facts.output)
+    line = facts.context - counted
     bands = [index for index, node in enumerate(nodes) if node.get("kind") == "band"]
     since = nodes[bands[-1] + 1 :] if bands else nodes
     finished = [step for step in _of(since, "step")
@@ -388,7 +390,7 @@ def _compaction_near(head: dict[str, Any], nodes: list[dict[str, Any]], facts: F
     if used + pace < line:
         return []
     why = (f"{used:,} of {line:,} tokens used before OpenCode compacts (the window {facts.context:,} less the output "
-           f"limit {min(facts.output, OUTPUT_MOST):,}), growing about {pace:,} a step: the next step would likely pass "
+           f"limit {counted:,}), growing about {pace:,} a step: the next step would likely pass "
            f"it")  # fmt: skip
     return [(f"compaction:{len(bands)}", finished[-1]["id"], why, "")]
 

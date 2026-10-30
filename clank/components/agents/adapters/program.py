@@ -3,7 +3,8 @@ design 0004 §4).
 
 An agent program runs in a workspace's container, from Clank's sandbox image, as the container's user, in the
 workspace's folder. Its adapter says the command that starts it in a terminal (`argv`), the environment it runs with
-(`env`), and its configuration for a model (`configuration`): the file's path in the container's home (never in the
+(`env`, for a model when the program reads one of its limits from there, which `env_said` says in words), and its
+configuration for a model (`configuration`): the file's path in the container's home (never in the
 user's folder) and its text, for a model reached at a URL (the gateway, through the edge), named as the gateway routes
 it (a role, decision 0008), with that model's limits, so the program knows when to compact a conversation, and the MCP
 servers it gets (design 0004 §10), each a command it starts in the container. The program
@@ -71,8 +72,13 @@ class AgentProgram(Adapter):
         the container's loopback, so its session can be reached (design 0005 §2)."""
 
     @abstractmethod
-    def env(self) -> dict[str, str]:
-        """The environment it runs with."""
+    def env(self, model: AgentModel | None = None) -> dict[str, str]:
+        """The environment it runs with; for `model`, what of its limits the program reads from there too (OpenCode's
+        cap on an answer, decision 0153)."""
+
+    def env_said(self, model: AgentModel) -> list[str]:
+        """What `env` sets for a model that the owner should know, each in words; nothing by default."""
+        return []
 
     @abstractmethod
     def server_entry(self, server: Server) -> dict[str, object]:

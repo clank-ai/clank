@@ -103,7 +103,9 @@ def test_262144_and_16384_give_a_compaction_line_of_245760_and_a_compaction_keep
     assert rule is not None
     assert (rule.line, rule.keeps) == (245760, 15000)
     assert "OpenCode" in rule.rule
-    assert OpenCode().compaction(262144, 64000).line == 262144 - 32000, "the output limit counted up to 32,000"
+    assert OpenCode().compaction(262144, 64000).line == 262144 - 64000, (
+        "all of it: Clank lifts OpenCode's cap of 32,000"
+    )
     assert OpenCode().compaction(8192, 128).keeps == 2016, "a quarter of the line"
     assert OpenCode().compaction(4096, 1024).keeps == 2000, "at least 2,000"
     shown = context(doing(), route("daily-262k"))

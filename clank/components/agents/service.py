@@ -484,6 +484,7 @@ class Agents:
         """What the program would be given, writing nothing: its model, that model's limits, and notes."""
         adapter = self._adapter(program)
         model, notes = self._model()
+        notes += adapter.env_said(model)
         return {"program": adapter.LABEL, "model": model.title, "limits": limits(model), "notes": notes}
 
     def prepare(self, workspace: str, program: str = "opencode") -> dict[str, Any]:
@@ -498,6 +499,7 @@ class Agents:
         container = workspaces.container_of(workspace)
         model, notes = self._model(workspace)
         notes += workspaces.reach(workspace)
+        notes += adapter.env_said(model)
         servers = self._given(workspace, model.key)
         configuration = adapter.configuration(model, servers, self._read_only(workspace))
         workspaces.put_files(workspace, [*self._agent_files(), *adapter.files(), configuration], container=container)
@@ -509,7 +511,7 @@ class Agents:
             windows = "the OpenCode window" if closed == 1 else f"the {closed} OpenCode windows"
             notes.append(f"closed {windows} open in {workspace} first: one at a time (w on This folder changes that)")
         port = self._port(workspace, notes)
-        env = {**adapter.env(), **workspaces.agent_env(workspace)}
+        env = {**adapter.env(model), **workspaces.agent_env(workspace)}
         argv = workspaces.exec_argv(workspace, adapter.argv(port), env, container=container)
         if port is not None:
             for told in list(self._prepared):
@@ -528,10 +530,13 @@ class Agents:
             "notes": notes,
         }
 
-    def agent_env(self, workspace: str, program: str = "opencode") -> dict[str, str]:
-        """The environment an agent program runs with in the workspace (one started without a terminal too)."""
+    def agent_env(self, workspace: str, program: str = "opencode", model: AgentModel | None = None) -> dict[str, str]:
+        """The environment an agent program runs with in the workspace (one started without a terminal too), for its
+        model (the role's slot's, unless given): OpenCode's cap on an answer is the model's output limit above 32,000
+        (decision 0153)."""
         workspaces: Workspaces = self.kernel.parts["workspaces"]
-        return {**self._adapter(program).env(), **workspaces.agent_env(workspace)}
+        model = model or self._model()[0]
+        return {**self._adapter(program).env(model), **workspaces.agent_env(workspace)}
 
     def configure(self, workspace: str, program: str = "opencode") -> dict[str, str]:
         """Write the program's configuration (the model, the MCP servers it gets) as `prepare` does, for one started
@@ -543,7 +548,7 @@ class Agents:
         workspaces.reach(workspace)
         configuration = adapter.configuration(model, self._given(workspace, model.key), self._read_only(workspace))
         workspaces.put_files(workspace, [*self._agent_files(), *adapter.files(), configuration], container=container)
-        return self.agent_env(workspace, program)
+        return self.agent_env(workspace, program, model)
 
     def _agent_files(self) -> list[tuple[str, str]]:
         """Clank's MCP server and instructions, as this Clank has them, for the agent's home in the container."""
