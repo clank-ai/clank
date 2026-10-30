@@ -50,23 +50,23 @@ default the smaller of 16,384 and the model's own), and nothing changed a cloud 
 
 ## Tasks
 
-- [ ] 1. The service: `Endpoints.change_preset` and `PATCH /runtime/presets/{name}`; the half-context rule in
+- [x] 1. The service: `Endpoints.change_preset` and `PATCH /runtime/presets/{name}`; the half-context rule in
   `preset_options`; the slot that runs it following at once (`cloud.follow`); the event `runtime.preset_changed`; the
   words (`guide.preset_changed_said`, `guide.preset_settings`, the view's `settings`). Tests first:
   `tests/components/runtime/test_cloud_preset_change.py`.
-- [ ] 2. The command: `clank preset change PRESET [--output N] [--context N] [--reasoning R] [--json]`, printing the
+- [x] 2. The command: `clank preset change PRESET [--output N] [--context N] [--reasoning R] [--json]`, printing the
   service's words. Tests first: `tests/cli/test_preset_change_command.py`.
-- [ ] 3. The console: `e` on the Presets page (a form filled with the preset's settings, the limits in its labels; the
+- [x] 3. The console: `e` on the Presets page (a form filled with the preset's settings, the limits in its labels; the
   answer in a window, a refusal on the message line; on a local preset, where its options change), the keys bar and
   the page's explanation. Tests first: `tests/console/test_preset_change.py`.
-- [ ] 4. OpenCode's cap: the variable set from the most output above 32,000 (`prepare`, `configure`), its note, and
+- [x] 4. OpenCode's cap: the variable set from the most output above 32,000 (`prepare`, `configure`), its note, and
   the compaction rule and Watch for's line in step. Tests first: `tests/components/agents/test_opencode_output.py`, and
   the rule's own tests revised.
-- [ ] 5. Open windows told: the agents hear `runtime.preset_changed` and tell each OpenCode window open. Tests first:
+- [x] 5. Open windows told: the agents hear `runtime.preset_changed` and tell each OpenCode window open. Tests first:
   in `tests/components/agents/test_model_changed.py`.
-- [ ] 6. Records: designs 0016 §6, §7, §15 and §16, 0003 §8.2 and 0012 §4.1 revised; decision 0153; the console's page and
+- [x] 6. Records: designs 0016 §6, §7, §15 and §16, 0003 §8.2 and 0012 §4.1 revised; decision 0153; the console's page and
   getting started; the generated pages.
 
 ## Progress
 
-Written 2026-10-29, at the owner's request.
+Written 2026-10-29, at the owner's request, and built the same day (tasks 1-6). Left to the lead: the console's notice of why an answer stopped (cut at its most output), and the known issue's line once merged.
