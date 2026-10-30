@@ -1,7 +1,8 @@
 """Test support: the console's frames compared with the snapshots checked in under `tests/console/snapshots/`
 (decision 0027). What changes from run to run (the service's port, the ids of questions and operations, Clank's
 version, the sandbox image's tag) is replaced by a fixed stand-in of the same width first; `CLANK_UPDATE_SNAPSHOTS=1`
-rewrites the snapshots instead of comparing.
+rewrites the snapshots instead of comparing. `CLANK_SCREENS=<folder>` also writes each compared frame as the console
+draws it, colors and all, to `<folder>/<name>.svg` (Textual's own export), for the website's screenshots.
 """
 
 import difflib
@@ -20,6 +21,7 @@ from clank.console.snapshot import render_text
 
 SNAPSHOTS = Path(__file__).resolve().parent / "snapshots"
 FOLDER = "/work/paper"  # the folder a console in a frame was started in: the same on every machine
+SHOWN: list[App[Any]] = []  # the app whose frame was read last, which `CLANK_SCREENS` draws
 STAND_INS: list[tuple[re.Pattern[str], str | Callable[[re.Match[str]], str]]] = [
     (re.compile(r"127\.0\.0\.1:\d{5}\b"), "127.0.0.1:47720"),
     (re.compile(r"\bq-[0-9a-f]{6}\b"), "q-000000"),
@@ -54,6 +56,10 @@ def assert_frame(frame: str, name: str) -> None:
     """The frame is the snapshot of this name (or becomes it, with CLANK_UPDATE_SNAPSHOTS=1)."""
     path = SNAPSHOTS / f"{name}.txt"
     shown = normalized(frame)
+    screens = os.environ.get("CLANK_SCREENS")
+    if screens and SHOWN and SHOWN[-1].is_running:  # this test's app, still on screen
+        Path(screens).mkdir(parents=True, exist_ok=True)
+        (Path(screens) / f"{name}.svg").write_text(SHOWN[-1].export_screenshot(title="clank"), encoding="utf-8")
     if os.environ.get("CLANK_UPDATE_SNAPSHOTS") == "1":
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(shown, encoding="utf-8", newline="\n")
@@ -87,6 +93,7 @@ async def steady_frame(pilot: Pilot[Any], app: App[Any], seconds: float = 10) ->
     taken between a change and the layout that follows it (a row of panels stacks on its first resize, and its panels
     then draw their titles again for their new widths)."""
     deadline = time.monotonic() + seconds
+    SHOWN[:] = [app]
     frame = render_text(app)
     while time.monotonic() < deadline:
         await pilot.pause(0.1)
