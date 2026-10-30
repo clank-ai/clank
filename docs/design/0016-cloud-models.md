@@ -46,7 +46,7 @@ OpenRouter.
 | 1 | What the owner gets, and what this design takes from design 0015 | Approved 2026-10-20 for building, the owner's go-ahead |
 | 2 | OpenRouter, the first cloud provider | Approved 2026-10-20 (the owner's answers: 1; decision 0102) |
 | 3 | What OpenRouter offers, as its documentation says | Approved 2026-10-20 for building, the owner's go-ahead (each fact cited; what is unsaid is marked) |
-| 4 | The provider's record, and its key | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (the owner's instruction: dev mode, decision 0149; the owner's request the same day: dev mode opens the agent's internet too, decision 0152) |
+| 4 | The provider's record, and its key | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (the owner's instruction: dev mode, decision 0149; the owner's request the same day: dev mode opens the agent's internet too, decision 0152, built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md))) |
 | 5 | How the gateway gets the key | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0106) |
 | 6 | The OpenRouter adapter | Approved 2026-10-20 for building, the owner's go-ahead |
 | 7 | Cloud presets, and the main slot running one | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0107) |
@@ -57,8 +57,8 @@ OpenRouter.
 | 12 | How cost is known and kept | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0108) |
 | 13 | What the Monitor shows of a cloud model | Approved 2026-10-20 for building, the owner's go-ahead |
 | 14 | The first run: Add a model | Approved 2026-10-20 (the owner's answers: 4; decision 0105) |
-| 15 | The Providers and models page, and the other pages | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (dev mode's key and pill, decision 0149; the pill's words, shown whatever providers there are, and `D` without a provider, decision 0152) |
-| 16 | The commands | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (`clank dev`, decision 0149; what it says, decision 0152) |
+| 15 | The Providers and models page, and the other pages | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (dev mode's key and pill, decision 0149; the pill's words, shown whatever providers there are, and `D` without a provider, decision 0152, built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md))) |
+| 16 | The commands | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (`clank dev`, decision 0149; what it says, decision 0152, built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md))) |
 | 17 | The phone and VS Code | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-21 (the owner's instruction: a subsection For the phone app) |
 | 18 | Tests, the fake OpenRouter, and the checks owed with a real key | Approved 2026-10-20 for building, the owner's go-ahead |
 | 19 | Build steps | Approved 2026-10-20 for building, the owner's go-ahead |
@@ -688,7 +688,7 @@ clank workspace allow FOLDER --cloud | --local [--yes]       a workspace's bound
 clank mcp local NAME [--off]                       mark an MCP server local only, or not (§10)
 clank cost [--today | --month | --sessions | --flows] [--json]
 clank cost limit [--day USD|none] [--month USD|none]
-clank dev [on | off] [--json]                       dev mode, for testing (decision 0149): any provider, whatever the record says; every public host for the agent (decision 0152)
+clank dev [on | off] [--json]                       dev mode, for testing: any provider, any host (decisions 0149, 0152)
 ```
 
 - Each is a client of the API (design 0002 §2.15), with `--json`. A key is never an argument (§4).
