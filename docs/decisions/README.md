@@ -170,6 +170,7 @@ and use the template below.
 | [0160](0160-the-consoles-show-and-hide-classes-are-the-widgets-own.md) | The menu's and the machine column's show and hide classes are theirs, not the screen's: a toggle restyles them alone, not every page | Accepted (the audit of 2026-10-30, measured); revises design 0011 §12.5 |
 | [0161](0161-a-thinking-models-default-output-is-32768.md) | A thinking model with a large context gets a most output of 32,768 by default, its thinking and its answer together | Accepted (the owner's report and the audit); revises design 0016 §6 |
 | [0162](0162-a-host-question-nobody-answered-is-not-a-no.md) | A host question nobody answered is not the owner's no: no quiet period, and the agent is told to ask the owner | Accepted (the owner's report and the audit); revises design 0024 §3 |
+| [0163](0163-clank-update-follows-published-releases.md) | `clank update` follows published releases, never a bare tag, and quotes every value its helper writes | Accepted (the audit of 2026-10-30); revises design 0026 §1 and §2 |
 
 ## Template
 

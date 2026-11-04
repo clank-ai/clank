@@ -6,6 +6,10 @@ dependencies changed) is installed by a helper that runs after `clank update` en
 it; a dry run says each step and changes nothing; no answer from GitHub is said, never taken for "up to date"."""
 
 import json
+import shutil
+import subprocess
+import urllib.error
+from email.message import Message
 from pathlib import Path
 from typing import Any
 
@@ -168,3 +172,41 @@ def test_check_says_what_is_installed_what_is_newer_and_what_it_contacted(monkey
     as_json = json.loads(CliRunner().invoke(update, ["--check", "--json"]).output)
     assert as_json["install"]["kind"] == "release"
     assert as_json["newer"]["latest"] == "v0.3.1"
+
+
+def test_the_helper_takes_a_home_path_with_quotes_and_dollars_as_it_is(tmp_path: Path) -> None:
+    log = tmp_path / "o'brien $HOME" / "update.log"
+    command = updates.install_command(updates.Install("release", "0.3.0b1", "v0.3.0b1", ""), {"latest": "v0.3.1"})
+    windows = updates.helper_script(command, log, 41, windows=True)
+    [line] = [each for each in windows.splitlines() if each.startswith("$log = ")]
+    assert line == "$log = '" + str(log).replace("'", "''") + "'", "a quote doubled, nothing expanded"
+    posix = updates.helper_script(command, log, 41, windows=False)
+    [line] = [each for each in posix.splitlines() if each.startswith("log=")]
+    sh = shutil.which("sh")
+    if sh is None:
+        pytest.skip("no sh here to read the script")
+    said = subprocess.run([sh, "-c", f'{line}; printf %s "$log"'], capture_output=True, check=False)
+    assert said.stdout.decode("utf-8") == str(log), "the path comes back whole, $HOME not expanded"
+    script = tmp_path / "update.sh"
+    script.write_text(posix, encoding="utf-8", newline="\n")
+    assert subprocess.run([sh, "-n", str(script)], capture_output=True, check=False).returncode == 0, "it parses"
+
+
+def test_only_pre_releases_follow_the_newest_published_one_never_a_bare_tag(monkeypatch: pytest.MonkeyPatch) -> None:
+    install = updates.Install("release", "0.3.0b4", "v0.3.0b4", "")
+    asked: list[str] = []
+
+    def fetch(url: str) -> Any:
+        asked.append(url)
+        if url.endswith("/releases/latest"):
+            raise urllib.error.HTTPError(url, 404, "Not Found", Message(), None)
+        if url.endswith("/releases"):
+            return [{"tag_name": "v0.3.0b7", "draft": True}, {"tag_name": "v0.3.0b6", "draft": False}]
+        return [{"name": "v0.3.0b9"}]  # a tag CI never passed: never followed
+
+    found = updates.newer(install, fetch=fetch)
+    assert (found["latest"], found["error"]) == ("v0.3.0b6", "")
+    assert not any(url.endswith("/tags") for url in asked)
+    odd = updates.newer(install, fetch=lambda url: {"tag_name": "v0.3.1; rm -rf ~"})
+    assert odd["newer"] is None
+    assert "names no version" in odd["error"]

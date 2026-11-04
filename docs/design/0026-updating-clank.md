@@ -8,8 +8,8 @@ easily". Before it, getting-started said to run the installer again.
 
 | § | Section | Status |
 | --- | --- | --- |
-| 1 | What is installed, and what is newer | Approved 2026-10-26 (the owner's request); built 2026-10-26 ([plan s61](../plans/s61-updating-clank.md)) |
-| 2 | Updating | Approved 2026-10-26 (the owner's request); built 2026-10-26 ([plan s61](../plans/s61-updating-clank.md)) |
+| 1 | What is installed, and what is newer | Approved 2026-10-26 (the owner's request); built 2026-10-26 ([plan s61](../plans/s61-updating-clank.md)); revised 2026-11-04 (published releases only, decision 0163) |
+| 2 | Updating | Approved 2026-10-26 (the owner's request); built 2026-10-26 ([plan s61](../plans/s61-updating-clank.md)); revised 2026-11-04 (every value the helper writes quoted for its shell, decision 0163) |
 | 3 | Saying it where the owner looks | Approved 2026-10-26 (the owner's request); `clank update --check` built; the console's line and VS Code's next |
 
 ## 1. What is installed, and what is newer
@@ -20,8 +20,8 @@ easily". Before it, getting-started said to run the installer again.
   a **release** (the installer's `uv tool install` from `git+https://github.com/clank-ai/clank@<tag>`), a **clone**
   (an editable install of a working copy, a developer's or the owner's), or **another way** (Clank then says it cannot
   update it and how it was found).
-- **What is newer**: for a release, the latest release on GitHub (its tag, from GitHub's API, the newest tag when there
-  is no release yet) against the version installed; for a clone, the commits its branch is behind its upstream after a
+- **What is newer**: for a release, the latest release on GitHub (its tag, from GitHub's API; when every release is a
+  pre-release, the newest published one, never a tag without a release, decision 0163) against the version installed; for a clone, the commits its branch is behind its upstream after a
   `git fetch`, with their titles (the ten newest), and whether its working tree has changes of its own.
 - **What it contacts**, in its words: GitHub's API, or the clone's own remote. Nothing else, with a short timeout; no
   answer is said as such ("GitHub did not answer in 10 s"), never as "up to date".

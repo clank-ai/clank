@@ -13,6 +13,7 @@ tests replace.
 
 import json
 import re
+import shlex
 import subprocess
 import sys
 import tomllib
@@ -132,8 +133,8 @@ def _release(install: Install, fetch: Fetch) -> dict[str, Any]:
             error.close()  # its answer's body, unread, is let go of here
             if error.code != 404:
                 raise
-            tags = fetch(f"{API}/tags")  # no release yet: its newest tag
-            latest = str(tags[0]["name"]) if tags else ""
+            published = fetch(f"{API}/releases")  # only pre-releases: the newest published, never a bare tag
+            latest = next((str(each["tag_name"]) for each in published if not each.get("draft")), "")
     except OSError as error:
         return {"newer": None, "latest": "", "contacted": contacted, "error": f"GitHub did not answer: {error}"}
     except (ValueError, KeyError, IndexError, TypeError) as error:
@@ -143,6 +144,9 @@ def _release(install: Install, fetch: Fetch) -> dict[str, Any]:
             "contacted": contacted,
             "error": f"GitHub's answer could not be read: {error}",
         }
+    if latest and not VERSION.fullmatch(latest):
+        return {"newer": None, "latest": "", "contacted": contacted,
+                "error": f"GitHub's newest release names no version Clank reads: {latest[:40]!r}"}  # fmt: skip
     return {"newer": later(latest, install.version), "latest": latest, "contacted": contacted, "error": ""}
 
 
@@ -184,12 +188,12 @@ def helper_script(command: list[str], log: Path, waits_for: int, windows: bool) 
     """The script that finishes an update after `clank update` (process `waits_for`) ended: it installs with `command`
     (Git allowed long paths for that one download, as the installer does), starts the service again, and writes each
     step to `log` (decision 0145)."""
-    shown = " ".join(command)
+    shown = " ".join(command).replace("'", "")  # said in a log line: no quote of its own to break the line
     if windows:
-        quoted = " ".join(f"'{part}'" for part in command[1:])
+        quoted = " ".join(_powershell(part) for part in command[1:])
         return "\n".join([
             "# Clank's update, finishing after `clank update` ended (decision 0145). Each step goes to the log below.",
-            f"$log = '{log}'",
+            f"$log = {_powershell(str(log))}",
             "function Say($text) {",
             "  Add-Content -Path $log -Value ((Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' ' + $text)",
             "}",
@@ -205,11 +209,11 @@ def helper_script(command: list[str], log: Path, waits_for: int, windows: bool) 
             "Say 'done: clank status says what runs'",
             "",
         ])  # fmt: skip
-    quoted = " ".join(f"'{part}'" for part in command)
+    quoted = " ".join(shlex.quote(part) for part in command)
     return "\n".join([
         "#!/bin/sh",
         "# Clank's update, finishing after `clank update` ended (decision 0145). Each step goes to the log below.",
-        f"log='{log}'",
+        f"log={shlex.quote(str(log))}",
         'say() { echo "$(date "+%Y-%m-%d %H:%M:%S") $1" >> "$log"; }',
         f"say 'waiting for clank update (process {waits_for}) to end'",
         f"while kill -0 {waits_for} 2>/dev/null; do sleep 0.3; done",
@@ -222,6 +226,11 @@ def helper_script(command: list[str], log: Path, waits_for: int, windows: bool) 
         "say 'done: clank status says what runs'",
         "",
     ])  # fmt: skip
+
+
+def _powershell(text: str) -> str:
+    """`text` as one PowerShell string that expands nothing: in single quotes, each of its own doubled."""
+    return "'" + text.replace("'", "''") + "'"
 
 
 def restart_service() -> bool:
