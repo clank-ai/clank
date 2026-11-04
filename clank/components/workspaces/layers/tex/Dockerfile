@@ -16,6 +16,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Clank's LaTeX helper: builds in a scratch tree, latexdiff, a PDF's pages and words, SyncTeX (design 0020 §8-§10).
-COPY latex_build.py /opt/clank/
+# Its own folder: /opt/clank is where Clank mounts its programs in every container it runs (decision 0142), which
+# hides whatever the image has there.
+COPY latex_build.py /opt/clank-tex/
 
 USER agent

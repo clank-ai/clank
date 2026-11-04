@@ -27,9 +27,13 @@ from typing import Any
 
 from clank.components.agents.latex.citations import uncommented
 
-HELPER = "/opt/clank/latex_build.py"  # the build helper, in the TeX layer
+HELPER = "/opt/clank-tex/latex_build.py"  # the build helper, in the TeX layer: never under the mounted /opt/clank
 SECONDS = 120.0  # a build's limit
 NO_TEX = "TeX is not in {workspace}'s container, so the document could not be built: `clank latex setup` adds it"
+NO_HELPER = (
+    "Clank's LaTeX helper is not in {workspace}'s container, so the document could not be built: its TeX layer is "
+    "older than this Clank, and `clank latex setup --restart` moves the workspace to a new one"
+)
 MAGIC_ROOT = re.compile(r"%\s*!\s*TEX\s+root\s*=\s*(\S.*?)\s*$", re.I | re.M)
 MAGIC_PROGRAM = re.compile(r"%\s*!\s*TEX\s+(?:TS-)?program\s*=\s*(\w+)", re.I)
 INCLUDES = re.compile(r"\\(?:input|include|subfile)\s*\{([^}]+)\}")
@@ -219,7 +223,7 @@ class Builder:
             said: dict[str, Any] = json.loads(answer.output)
         except ValueError:
             missing = "No such file" in answer.errors or "can't open file" in answer.errors
-            why = NO_TEX.format(workspace=workspace) if missing else (answer.errors or answer.output).strip()[-400:]
+            why = NO_HELPER.format(workspace=workspace) if missing else (answer.errors or answer.output).strip()[-400:]
             return {"unbuilt": why or "the build helper said nothing"}
         if said.get("missing"):
             return {"unbuilt": NO_TEX.format(workspace=workspace)}

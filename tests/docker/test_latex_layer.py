@@ -1,7 +1,8 @@
-"""Design 0020 §8-§10, run in the TeX layer's image on this machine's Docker (`-m docker`; skipped when the image is
-not built): a build of a changed document answers its log and changes nothing in the folder, though the folder holds
-the owner's own `.aux` and PDF of that document; latexdiff's marked-up PDF is kept under `.clank/`; a PDF's pages become
-images with their words in boxes; and SyncTeX gives back the line a point of a page comes from."""
+"""Design 0020 §8-§10, run in the TeX layer's image on this machine's Docker (`-m docker`; skipped when the image is not
+built), with Clank's programs mounted at /opt/clank as in every workspace's container: a build of a changed document
+answers its log and changes nothing in the folder, though the folder holds the owner's own `.aux` and PDF of that
+document; latexdiff's marked-up PDF is kept under `.clank/`; a PDF's pages become images with their words in boxes;
+and SyncTeX gives back the line a point of a page comes from."""
 
 import json
 import subprocess
@@ -10,7 +11,8 @@ from typing import Any
 
 import pytest
 
-from clank.components.workspaces.sandbox import layered_tag
+from clank.components.agents.latex.building import HELPER
+from clank.components.workspaces.sandbox import PROGRAMS, image_folder, layered_tag
 from clank.kernel.processes import background_flags
 from tests.docker.conftest import for_the_agent
 
@@ -27,8 +29,8 @@ def helper(folder: Path, asked: dict[str, Any]) -> dict[str, Any]:
     if subprocess.run(["docker", "image", "inspect", image], capture_output=True, check=False).returncode != 0:
         pytest.skip(f"the TeX layer's image {image} is not built here: clank latex setup builds it")
     done = subprocess.run(
-        ["docker", "run", "--rm", "-i", "-v", f"{folder}:/workspace", "-w", "/workspace", image,
-         "python3", "/opt/clank/latex_build.py"],
+        ["docker", "run", "--rm", "-i", "-v", f"{folder}:/workspace", "-v", f"{image_folder()}:{PROGRAMS}:ro",
+         "-w", "/workspace", image, "python3", HELPER],
         input=json.dumps(asked).encode(), capture_output=True, timeout=600, check=False,
         creationflags=background_flags(),
     )  # fmt: skip

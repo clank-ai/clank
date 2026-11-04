@@ -462,7 +462,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner gets | none yet |
 | 2 | The owner's choices | none yet |
-| 3 | TeX in the container | `tests/cli/test_latex_commands.py` (3), `tests/components/agents/test_latex_build.py` (3), `tests/components/workspaces/test_image_layers.py` (5), `tests/docker/test_latex_live.py` (1) |
+| 3 | TeX in the container | `tests/cli/test_latex_commands.py` (3), `tests/components/agents/test_latex_build.py` (3), `tests/components/agents/test_latex_helper_place.py` (2), `tests/components/workspaces/test_image_layers.py` (5), `tests/docker/test_latex_live.py` (1) |
 | 4 | Which files the model may write | `tests/components/agents/test_latex_review.py` (6) |
 | 5 | The checks on every change | `tests/components/agents/test_latex_review.py` (6), `tests/docker/test_latex_live.py` (1) |
 | 6 | Citations and the bibliography | `tests/components/agents/test_latex_citations.py` (6), `tests/docker/test_latex_live.py` (1) |
@@ -1167,6 +1167,13 @@ Design 0020 §11 and §12: comments the owner left on lines of LaTeX files go to
 - the route sends the comments to the agent and refuses with no agent or no comment
 - a number left unanswered is asked for once when the turn ends
 - a reply answering every number asks nothing
+
+### `tests/components/agents/test_latex_helper_place.py`
+
+Design 0020 §3: the TeX layer's helper is where the mount of Clank's programs (/opt/clank, decision 0142) cannot hide it, so a workspace with the TeX layer builds its documents; a container whose layer lacks the helper is said to need a new layer, not to lack TeX.
+
+- the helper is copied to its own folder outside the mounted one
+- a container without the helper is told its layer is old not that tex is missing
 
 ### `tests/components/agents/test_latex_pages.py`
 
@@ -4798,7 +4805,7 @@ Design 0004 §3 and §8, design 0002 §3.3 (M4's escape tests), on this machine'
 
 ### `tests/docker/test_latex_layer.py`
 
-Design 0020 §8-§10, run in the TeX layer's image on this machine's Docker (`-m docker`; skipped when the image is not built): a build of a changed document answers its log and changes nothing in the folder, though the folder holds the owner's own `.aux` and PDF of that document; latexdiff's marked-up PDF is kept under `.clank/`; a PDF's pages become images with their words in boxes; and SyncTeX gives back the line a point of a page comes from.
+Design 0020 §8-§10, run in the TeX layer's image on this machine's Docker (`-m docker`; skipped when the image is not built), with Clank's programs mounted at /opt/clank as in every workspace's container: a build of a changed document answers its log and changes nothing in the folder, though the folder holds the owner's own `.aux` and PDF of that document; latexdiff's marked-up PDF is kept under `.clank/`; a PDF's pages become images with their words in boxes; and SyncTeX gives back the line a point of a page comes from.
 
 - a build of a change answers its log and writes nothing in the folder
 - a changes marked up pdf is kept under clank

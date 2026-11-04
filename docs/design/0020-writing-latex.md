@@ -12,7 +12,7 @@ that it may end up making so that we can change certain things." Diagrams come l
 | --- | --- | --- |
 | 1 | What the owner gets | Approved 2026-10-25 |
 | 2 | The owner's choices | Recorded 2026-10-25 |
-| 3 | TeX in the container | Approved 2026-10-25 |
+| 3 | TeX in the container | Approved 2026-10-25; revised 2026-11-04: the build helper moved to `/opt/clank-tex/`, since the mount of Clank's programs at `/opt/clank` (decision 0142) hid it and no document could be built |
 | 4 | Which files the model may write | Approved 2026-10-25 |
 | 5 | The checks on every change | Approved 2026-10-25 |
 | 6 | Citations and the bibliography | Approved 2026-10-25 |
@@ -58,7 +58,9 @@ image add tex`, offered the first time a workspace has a `.tex` file the agent w
 `pdftoppm` and `pdftotext`; the packages a document needs beyond the set are installed with `tlmgr` into the layer, as
 a change the owner approves. Clank's VS Code window sets LaTeX Workshop to build in that container (its Docker
 setting), so the owner's own builds and Clank's checks use the same TeX. Each package is pinned to the TeX Live year;
-the layer's packages get a decision record before they are built (as decision 0133 did for Manim's).
+the layer's packages get a decision record before they are built (as decision 0133 did for Manim's). Clank's
+build helper lives in the layer at `/opt/clank-tex/`, where the read-only mount of Clank's programs at `/opt/clank`
+(decision 0142) cannot hide it.
 
 ## 4. Which files the model may write
 

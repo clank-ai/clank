@@ -198,7 +198,7 @@ def test_without_tex_in_the_container_the_owner_is_asked_and_told_why(
 ) -> None:
     port, _ = served
     review = watched(kernel, paper, port, monkeypatch)
-    latex(kernel).builder.run = lambda *args: Answer(2, "", "python3: can't open file '/opt/clank/latex_build.py'")
+    latex(kernel).builder.run = lambda *args: Answer(0, json.dumps({"missing": True}), "")
     review.switch("paper", "auto", actor=USER)
     note = "\\documentclass{article}\n\\begin{document}\nA note.\n\\end{document}\n"
     feed("permission.asked", ask_write("per_1", "note.tex", note))
