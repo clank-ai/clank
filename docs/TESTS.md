@@ -81,7 +81,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.4 | Operations | `tests/components/workspaces/test_docker_operations.py` (17), `tests/console/test_pages.py` (10), `tests/kernel/test_operations.py` (15) |
 | 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (15), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (18), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
 | 2.6 | Policy | none yet |
-| 2.7 | Callers and access | `tests/components/gateway/test_callers.py` (6), `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (7), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (18), `vscode/test/live.test.ts` (1) |
+| 2.7 | Callers and access | `tests/components/gateway/test_callers.py` (6), `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (7), `vscode/test/connection.test.ts` (5), `vscode/test/controller.test.ts` (18), `vscode/test/live.test.ts` (1) |
 | 2.8 | Secrets | `tests/components/tools/test_servers.py` (7), `tests/kernel/test_secrets.py` (4) |
 | 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_sandbox.py` (10), `tests/kernel/test_processes.py` (8), `tests/kernel/test_programs_found.py` (6) |
 | 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (9), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
@@ -136,7 +136,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (15), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
 | 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (25), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (9), `tests/docker/test_escape.py` (5) |
 | 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (11), `tests/console/test_folder.py` (25), `tests/contract/test_agent_program.py` (2) |
-| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_docker_containers.py` (19), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
+| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_docker_containers.py` (19), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (13), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
 | 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_workspace_operations.py` (17) |
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (5) |
@@ -486,7 +486,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (4), `vscode/test/readout.test.ts` (12) |
 | 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (3), `vscode/test/conversation.test.ts` (9) |
-| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (11), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (5) |
+| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (12), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (7) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
@@ -863,7 +863,7 @@ Design 0021 §5: Clank's own MCP server gives the agent `make_artifact(name, tit
 
 ### `tests/components/agents/test_artifacts.py`
 
-Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copies the files the agent named into the artifact's next version (`.clank/artifacts/<name>/v<n>/`), keeping their layout from their common folder, its entry page first; `artifact.json` keeps its title, kind and every version (when, its entry, its files, its note, the session that made it); `agents.artifact_made` is recorded. A Markdown artifact gets Clank's page that renders it with the kept libraries, math included, and so does an SVG one. A name, a kind, a file not the folder's, too many or too large files, an entry page that names the network, or an HTML page that would show broken (a file it reads missing from where it looks, math in dollar signs auto-render would leave as text), are refused, saying why. The owner's comment on a version goes to the session that made it, in one message naming the artifact and its version (through a server that runs in the workspace when the service has not heard from that session since it started), and `agents.artifact_commented` is recorded.
+Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copies the files the agent named into the artifact's next version (`.clank/artifacts/<name>/v<n>/`), keeping their layout from their common folder, its entry page first; `artifact.json` keeps its title, kind and every version (when, its entry, its files, its note, the session that made it); `agents.artifact_made` is recorded. A Markdown artifact gets Clank's page that renders it with the kept libraries, math included, and so does an SVG one. A name, a kind, a file not the folder's, too many or too large files, an entry page that names the network, or an HTML page that would show broken (a file it reads missing from where it looks, math in dollar signs auto-render would leave as text), are refused, saying why. The owner's comment on a version goes to the session that made it, in one message naming the artifact and its version (through a server that runs in the workspace when the service has not heard from that session since it started), and `agents.artifact_commented` is recorded. An export carries Clank's content policy before anything but its doctype, so it reaches nothing on the network in a browser either (decision 0156).
 
 - making one copies its files as a version keeping their layout and records it
 - a markdown or svg artifact gets clanks page that renders it
@@ -875,6 +875,7 @@ Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copi
 - a comment after a restart goes to that session through a server that runs in the workspace
 - the routes make list and read artifacts and take the owners comment
 - an export is one file with its libraries and data inside that needs nothing else
+- an export carries the content policy first so it reaches nothing on the network
 - clank artifact lists a folders artifacts and exports the newest version
 
 ### `tests/components/agents/test_board_export.py`
@@ -5417,6 +5418,7 @@ Design 0004 §5: in Clank's VS Code window the agent starts beside the files: fo
 - a folder that is not ready says what is missing and how to get it ready, and writes nothing
 - OpenCode is not started while it cannot reach the model: the problem is said with its fix
 - a problem that does not stop OpenCode comes with its terminal, and a service without the check starts it as before
+- the agent's terminal runs only docker, wsl or ssh: any other program the service names is refused, saying why
 - a slow check holds nothing up: the terminal starts, and the check's answer comes after
 - a service too slow to answer ends the start with its words, never a wait without end
 - the starting terminal says where OpenCode starts, each step, and a problem with its fix and what Enter does
@@ -5441,6 +5443,8 @@ Design 0021 §5: artifacts in VS Code. The service's `agents.artifact_made` name
 - a page without a head or a body still gets them
 - the versions are said newest first, the one shown marked
 - the bar names the artifact, lists its versions and asks for a comment or a browser, its words escaped
+- a 'browser' message alone opens nothing: the owner is asked first, naming the artifact, and only Open opens it
+- a panel asks one question at a time, and none for a moment after each answer
 
 ### `vscode/test/board.page.test.ts`
 
@@ -5496,10 +5500,13 @@ Design 0006 §5: completion asks the gateway only while it is on and its slot se
 
 ### `vscode/test/connection.test.ts`
 
-Design 0002 §2.7: the extension finds the service through CLANK_HOME (its setting, else the environment, else `.clank` in the home folder), reading the connection file and the local token each time; a missing or unreadable file means the service is not running.
+Design 0002 §2.7: the extension finds the service through CLANK_HOME (its setting, else the environment, else `.clank` in the home folder), reading the connection file and the local token each time; a missing or unreadable file means the service is not running. Revised 2026-11-04 (decision 0156): only a service on this machine is trusted (http to 127.0.0.1, localhost or [::1]; any other address is refused, saying why), and CLANK_HOME and whether the agent starts come from the user's settings alone: the manifest gives both settings machine scope and leaves them out of restricted mode, and the extension reads only their user value, so a folder's own settings never choose them.
 
 - the setting wins, then the environment, then .clank in the home folder
 - the connection file and the token are read when both are there
+- only a service on this machine is trusted: any other address is refused, saying why
+- CLANK_HOME and whether the agent starts come from the user's settings alone, never a folder's
+- the manifest keeps those settings to the user's (machine scope), and restricted mode leaves them out
 
 ### `vscode/test/controller.test.ts`
 

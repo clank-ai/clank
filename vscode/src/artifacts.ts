@@ -1,7 +1,8 @@
 // Artifacts in VS Code (design 0021 §5): a webview panel per artifact, in the files' group, showing a version's page as
 // `core/artifacts.ts` makes it ready (Clank's policy, its <base>, the libraries' place, the bar). The bar's version
 // shows that version; Comment asks for the owner's words and sends them to the session that made it; Open in browser
-// has the service export the version as one page and opens it. `Clank: Open an artifact` lists the folder's.
+// asks the owner first, in VS Code's own question (`BrowserQuestions`, decision 0156), then has the service export the
+// version as one page and opens it. `Clank: Open an artifact` lists the folder's.
 
 import { randomBytes } from "node:crypto";
 import { posix } from "node:path";
@@ -9,9 +10,17 @@ import { posix } from "node:path";
 import * as vscode from "vscode";
 
 import type { ClankClient } from "./core/client";
-import { artifactBar, type ArtifactMade, artifactPage, versionsSaid } from "./core/artifacts";
+import { artifactBar, type ArtifactMade, artifactPage, BrowserQuestions, versionsSaid } from "./core/artifacts";
 
 export const ARTIFACT = "clank.artifact";
+
+/** An open artifact's panel: what it shows, and the questions it asks before a browser opens. */
+interface Open {
+  panel: vscode.WebviewPanel;
+  made: ArtifactMade;
+  shown: number;
+  questions: BrowserQuestions;
+}
 
 interface Kept {
   name: string;
@@ -30,7 +39,7 @@ export interface ArtifactHost {
 
 /** The open artifacts' panels, one per artifact. */
 export class ArtifactPanels implements vscode.Disposable {
-  private readonly open = new Map<string, { panel: vscode.WebviewPanel; made: ArtifactMade; shown: number }>();
+  private readonly open = new Map<string, Open>();
 
   constructor(
     private readonly extension: vscode.Uri,
@@ -69,7 +78,7 @@ export class ArtifactPanels implements vscode.Disposable {
         { enableScripts: true, localResourceRoots: [home, lib], retainContextWhenHidden: true },
       );
       panel.iconPath = new vscode.ThemeIcon("graph");
-      open = { panel, made: { ...made, title: kept.title }, shown };
+      open = { panel, made: { ...made, title: kept.title }, shown, questions: new BrowserQuestions() };
       this.open.set(key, open);
       const opened = open;
       panel.onDidDispose(() => this.open.delete(key));
@@ -96,10 +105,7 @@ export class ArtifactPanels implements vscode.Disposable {
     open.panel.reveal(undefined, true);
   }
 
-  private async received(
-    open: { panel: vscode.WebviewPanel; made: ArtifactMade; shown: number },
-    message: { type?: string; version?: number },
-  ): Promise<void> {
+  private async received(open: Open, message: { type?: string; version?: number }): Promise<void> {
     const { made } = open;
     if (message.type === "version" && message.version) {
       await this.show(made, message.version);
@@ -123,8 +129,13 @@ export class ArtifactPanels implements vscode.Disposable {
           this.host.info(said.said);
         }
       } else if (message.type === "browser") {
-        const done = await client.post<{ file: string }>(`${path}/export`, { version: open.shown });
-        await vscode.env.openExternal(vscode.Uri.file(done.file));
+        const version = open.shown;
+        await open.questions.open(made.title, made.name, version, {
+          confirm: (question, detail, button) =>
+            Promise.resolve(vscode.window.showWarningMessage(question, { modal: true, detail }, button)),
+          exported: async () => (await client.post<{ file: string }>(`${path}/export`, { version })).file,
+          open: (file) => Promise.resolve(vscode.env.openExternal(vscode.Uri.file(file))),
+        });
       }
     } catch (error) {
       this.host.warn(error instanceof Error ? error.message : String(error));

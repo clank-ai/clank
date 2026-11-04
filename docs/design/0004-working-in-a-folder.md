@@ -30,7 +30,7 @@ recommendation, built as recommended so the owner can try it, and changed if the
 | 2 | The gateway, first slice | Proposed 2026-10-13 |
 | 3 | Workspaces, the image and the container | Proposed 2026-10-13; revised 2026-10-26 (the edge kept on every workspace's network, whatever made it again) |
 | 4 | The agent: OpenCode in the container | Proposed 2026-10-13 |
-| 5 | The VS Code window | Built 2026-10-14 (the agent's status bar item waits) |
+| 5 | The VS Code window | Built 2026-10-14 (the agent's status bar item waits); revised 2026-11-04 (`clank.agent.openOnStart` the owner's setting alone, and the agent's terminal runs only docker, wsl or ssh: decision 0156) |
 | 6 | The desktop stays responsive | Proposed 2026-10-13 |
 | 7 | NInfer's context | Retired 2026-10-13 with NInfer (decision 0034) |
 | 8 | What the tests must prove, and what waits | Proposed 2026-10-13 |
@@ -187,6 +187,10 @@ rather than a profile; PROTOTYPE.md).
   beside the files when the window opens (trying again while the service comes up; a reloaded window that kept its
   terminal gets no second one); `Clank: Start the agent beside the files` does it on demand. The status bar shows the
   model (design 0003 §8.3); the agent's own item waits.
+- **The owner's settings alone (revised 2026-11-04, decision 0156)**: `clank.agent.openOnStart` and `clank.home` have
+  machine scope and are left out of Restricted Mode, so only the user's settings (Clank's window writes its own there)
+  start the agent or choose the service, never a folder's. The agent's terminal runs only `docker`, `wsl` or `ssh`
+  (named alone or by a full path); any other program the service names is refused, and the agent's place says so.
 - **The agent at the right edge (2026-10-15, the owner: "OpenCode should always open to the right of the screen, where
   the model lives")**: the extension opens the agent's terminal in a new editor group at the right edge (VS Code locks a
   group that holds a terminal, so files never open in it). When the window opens with the agent's group elsewhere (a

@@ -4,11 +4,25 @@
 // webview's own files, inline scripts and styles), a <base> at its version's folder (so its relative paths work), its
 // `clank-lib/` names pointed at the extension's copy of the libraries, and Clank's bar (versions, Comment, Open in
 // browser) in a shadow root of its own at the end of its body, so neither's styles touch the other's.
+//
+// Revised 2026-11-04 (decision 0156): a version opens in the browser only once the owner answers a question VS Code
+// asks, naming the artifact: a message from the page alone (the bar's, or one its own scripts send) opens nothing.
+// A panel asks one question at a time, and none for a moment after each answer.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { artifactBar, artifactMade, artifactPage, versionsSaid } from "../src/core/artifacts";
+import {
+  artifactBar,
+  artifactMade,
+  artifactPage,
+  BrowserQuestions,
+  type BrowserSteps,
+  OPEN_IN_BROWSER,
+  openInBrowser,
+  QUIET_MS,
+  versionsSaid,
+} from "../src/core/artifacts";
 
 const MADE = {
   name: "agents.artifact_made",
@@ -73,4 +87,68 @@ test("the bar names the artifact, lists its versions and asks for a comment or a
   assert.ok(shown.includes('<option value="1" selected>version 1</option>'));
   assert.ok(shown.includes('data-act="comment"') && shown.includes('data-act="browser"'));
   assert.ok(shown.includes("attachShadow"), "in a shadow root: its styles and the page's never meet");
+});
+
+/** The steps of opening a version in the browser, each one kept as it happens; the owner answers `answer`. */
+function browserSteps(answer: string | undefined): BrowserSteps & { done: string[] } {
+  const done: string[] = [];
+  return {
+    done,
+    async confirm(question, detail, button) {
+      done.push(`asked: ${question} | ${detail} | ${button}`);
+      return answer;
+    },
+    async exported() {
+      done.push("exported");
+      return "D:\work\paper\.clank\artifacts\sweep\export\sweep-v2.html";
+    },
+    async open(file) {
+      done.push(`opened ${file}`);
+    },
+  };
+}
+
+test("a 'browser' message alone opens nothing: the owner is asked first, naming the artifact, and only Open opens it", async () => {
+  const declined = browserSteps(undefined);
+  assert.equal(await openInBrowser("Sweep results", "sweep", 2, declined), undefined);
+  assert.equal(declined.done.length, 1, "asked, then nothing exported and nothing opened");
+  assert.match(declined.done[0], /^asked: Open the artifact "Sweep results" \(sweep, version 2\) in your browser\?/);
+  assert.match(declined.done[0], new RegExp(`\| ${OPEN_IN_BROWSER}$`));
+  const other = browserSteps("Cancel");
+  assert.equal(await openInBrowser("Sweep results", "sweep", 2, other), undefined, "any other answer opens nothing");
+  assert.equal(other.done.length, 1);
+  const confirmed = browserSteps(OPEN_IN_BROWSER);
+  const file = "D:\work\paper\.clank\artifacts\sweep\export\sweep-v2.html";
+  assert.equal(await openInBrowser("Sweep results", "sweep", 2, confirmed), file);
+  assert.deepEqual(confirmed.done.slice(1), ["exported", `opened ${file}`], "exported once confirmed, then opened");
+});
+
+test("a panel asks one question at a time, and none for a moment after each answer", async () => {
+  let now = 1_000;
+  const questions = new BrowserQuestions(() => now);
+  let answer: (said: string | undefined) => void = () => undefined;
+  const asked: string[] = [];
+  const slow: BrowserSteps = {
+    confirm: (question) => {
+      asked.push(question);
+      return new Promise((done) => {
+        answer = done;
+      });
+    },
+    exported: async () => "x.html",
+    open: async () => undefined,
+  };
+  const first = questions.open("Sweep", "sweep", 1, slow);
+  assert.equal(await questions.open("Sweep", "sweep", 1, slow), undefined, "a second message while it is asked");
+  answer(undefined);
+  assert.equal(await first, undefined);
+  assert.equal(asked.length, 1, "asked once");
+  now += QUIET_MS - 1;
+  assert.equal(await questions.open("Sweep", "sweep", 1, slow), undefined, "just after the answer: not asked");
+  assert.equal(asked.length, 1);
+  now += 1;
+  const later = questions.open("Sweep", "sweep", 1, slow);
+  answer(OPEN_IN_BROWSER);
+  assert.equal(await later, "x.html", "asked again once the moment has passed");
+  assert.equal(asked.length, 2);
 });

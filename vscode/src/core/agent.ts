@@ -9,8 +9,9 @@
 // each step as it starts (`startingLines`); each call has a time limit, so a slow service is said, never waited on
 // without end; and the agent's way to the model (`reach.ts`) is checked beside the configuration: while OpenCode would
 // fail at once (its terminal closing with it), it is not started and the problem is said with its fix. A check slower
-// than the configuration holds nothing up: the terminal starts and its answer comes after (`later`). Tested without
-// VS Code.
+// than the configuration holds nothing up: the terminal starts and its answer comes after (`later`). Decision 0156:
+// the terminal runs only the programs Clank starts the agent with (`terminalProgram`); any other is refused, saying
+// why. Tested without VS Code.
 
 import { inTime } from "./client";
 import { type Reach, type ReachFix, readReach } from "./reach";
@@ -26,6 +27,17 @@ export interface AgentApi {
 export const LIMITS = { folder: 15_000, prepare: 60_000 };
 /** Once the configuration is written, how much longer the way to the model is waited for before OpenCode starts. */
 export const REACH_GRACE_MS = 2_000;
+
+/** The programs the agent's terminal may run (decision 0156): Docker's command, which starts the agent in its
+ * workspace's container, and WSL's and SSH's; whatever else the service named would be run as the owner. */
+export const TERMINAL_PROGRAMS = ["docker", "wsl", "ssh"];
+
+/** Whether the agent's terminal may run a program: one of `TERMINAL_PROGRAMS`, named alone or by its full path, with
+ * or without `.exe`. */
+export function terminalProgram(program: string): boolean {
+  const name = (program.split(/[\\/]/).pop() ?? "").toLowerCase();
+  return TERMINAL_PROGRAMS.some((allowed) => name === allowed || name === `${allowed}.exe`);
+}
 
 /** A terminal that runs the agent: its name, its program and the program's arguments, and whether it replaces the
  * window's agent terminals (one window per workspace) or is added beside them. */
@@ -91,6 +103,10 @@ export async function agentStart(
     return waited.fix ? { problem, fix: waited.fix, workspace, reach: waited } : { problem, workspace, reach: waited };
   }
   const [program, ...args] = prepared.argv;
+  if (!terminalProgram(program ?? "")) {
+    const named = program || "no program";
+    return { problem: `the agent's terminal runs only docker, wsl or ssh, and the service named ${named}: not started`, workspace };
+  }
   const replaces = prepared.one_window === true;
   const terminal = { name: `${prepared.program} · ${workspace}`, program, args, replaces };
   if (waited === "later") {

@@ -211,8 +211,8 @@ cd ..
 uv run --no-dev python -m tools.vsix
 ```
 
-The last command writes `vscode/clank-<version>.vsix` (the extension's own version, 0.10.4 now). Clank's VS Code window
-installs it by itself; to have it in your usual VS Code too: `code --install-extension vscode/clank-0.10.4.vsix`.
+The last command writes `vscode/clank-<version>.vsix` (the extension's own version, 0.10.5 now). Clank's VS Code window
+installs it by itself; to have it in your usual VS Code too: `code --install-extension vscode/clank-0.10.5.vsix`.
 
 ## 3. After installing
 

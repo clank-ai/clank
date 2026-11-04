@@ -163,6 +163,7 @@ and use the template below.
 | [0153](0153-opencode-is-told-the-whole-most-output.md) | OpenCode is told the whole most output: above 32,000, Clank sets `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX` to it and counts all of it in the compaction line; a cloud preset's most output is at most half its context | Accepted (Claude's call, building the owner's request); revises design 0012 §4.1 | 2026-10-29 |
 | [0154](0154-an-answer-cut-off-is-marked-and-the-model-goes-on.md) | An answer cut off at the output limit is a Watch for mark of its own, and by default the model is told to go on | Accepted (the owner's report); revises design 0012 §8 |
 | [0155](0155-clank-starts-the-programs-it-means.md) | Clank runs itself again with `python -P -m clank`, and on Windows finds a program named without its folder on the PATH alone, never in the current folder | Accepted (the audit of 2026-10-30); revises design 0002 §2.9 |
+| [0156](0156-the-extension-trusts-only-the-owners-settings-and-asks-before-a-browser.md) | The VS Code extension reads `clank.home` and `clank.agent.openOnStart` from the owner's settings alone, connects only to a service on this machine, runs only docker, wsl or ssh in the agent's terminal, and asks before it opens an artifact in the browser; an export carries the webview's content policy | Accepted (the audit of 2026-10-30); revises design 0002 §2.7, design 0004 §5 and design 0021 §5 | 2026-11-04 |
 
 ## Template
 

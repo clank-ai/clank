@@ -2,7 +2,8 @@
 // ready to show (`artifactPage`): the agent's page as it wrote it, with Clank's content security policy first in its
 // head (nothing from the network: the webview's own files, inline scripts and styles, and `eval`, which Plotly's and
 // Mermaid's builds use), a <base> at its version's folder so its relative paths work, its `clank-lib/` names pointed
-// at the extension's copy of the libraries (decision 0135), and Clank's bar at the end of its body. Pure:
+// at the extension's copy of the libraries (decision 0135), and Clank's bar at the end of its body. Its Open in
+// browser opens the version only once the owner answers VS Code's own question (`openInBrowser`, decision 0156). Pure:
 // `artifacts.ts` beside `extension.ts` opens the panels and reads the files.
 
 import type { ServerEvent } from "./events";
@@ -104,4 +105,63 @@ export function versionsSaid(count: number, shown: number): Array<{ version: num
     found.push({ version, label: `version ${version}${version === count ? " (newest)" : ""}`, shown: version === shown });
   }
   return found;
+}
+
+/** The answer that opens a version in the browser. */
+export const OPEN_IN_BROWSER = "Open in browser";
+
+/** What opening a version in the browser needs of VS Code and the service: the owner's answer to a question (VS Code's
+ * own, outside the page), the version exported as one page (its file), and that file opened. */
+export interface BrowserSteps {
+  confirm(question: string, detail: string, button: string): Promise<string | undefined>;
+  exported(): Promise<string>;
+  open(file: string): Promise<unknown>;
+}
+
+/** A 'browser' message from an artifact's page: the owner is asked first, naming the artifact, since a message from the
+ * page cannot be told from a click on the bar (decision 0156); only the answer Open in browser exports the version and
+ * opens it. The file opened, or undefined when the owner said anything else. */
+export async function openInBrowser(
+  title: string,
+  name: string,
+  version: number,
+  steps: BrowserSteps,
+): Promise<string | undefined> {
+  const answer = await steps.confirm(
+    `Open the artifact "${title}" (${name}, version ${version}) in your browser?`,
+    "It is exported as one page and opened in your default browser, outside VS Code. Its page was written by the agent.",
+    OPEN_IN_BROWSER,
+  );
+  if (answer !== OPEN_IN_BROWSER) {
+    return undefined;
+  }
+  const file = await steps.exported();
+  await steps.open(file);
+  return file;
+}
+
+/** How long after the owner answered a page's question no other is asked for it. */
+export const QUIET_MS = 3_000;
+
+/** The questions one artifact's panel asks: one at a time, and none for a moment after each answer, so a page that
+ * sends its 'browser' message again and again cannot keep VS Code's question in front of the owner. */
+export class BrowserQuestions {
+  private asking = false;
+  private quietUntil = 0;
+
+  constructor(private readonly now: () => number = Date.now) {}
+
+  /** `openInBrowser`, unless a question is open or was just answered: then nothing is asked and nothing opens. */
+  async open(title: string, name: string, version: number, steps: BrowserSteps): Promise<string | undefined> {
+    if (this.asking || this.now() < this.quietUntil) {
+      return undefined;
+    }
+    this.asking = true;
+    try {
+      return await openInBrowser(title, name, version, steps);
+    } finally {
+      this.asking = false;
+      this.quietUntil = this.now() + QUIET_MS;
+    }
+  }
 }
