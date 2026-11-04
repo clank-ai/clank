@@ -31,6 +31,7 @@ from pydantic_core import to_jsonable_python
 
 from clank.kernel.clock import Clock, from_text, to_text
 from clank.kernel.events import CLANK, Actor, EventLog, EventType, Subject
+from clank.kernel.handoff import Handoff
 from clank.kernel.questions import Answer, Question, QuestionDraft, QuestionError, Questions
 from clank.kernel.records import StateKind
 from clank.kernel.store import Store
@@ -281,8 +282,7 @@ class Operations:
         self._waiting: dict[str, anyio.Event] = {}
         self._done: dict[str, anyio.Event] = {}
         self._group: TaskGroup | None = None
-        self._token: Any = None
-        self._loop_thread: int | None = None
+        self._handoff: Handoff | None = None
         questions.on_resolved(self._resolved)
 
     def add_type(self, kind: OperationType) -> None:
@@ -296,8 +296,7 @@ class Operations:
         """Run operations while the block lasts; leaving it stops those still in flight, as a stop of the service."""
         async with anyio.create_task_group() as group:
             self._group = group
-            self._token = anyio.lowlevel.current_token()
-            self._loop_thread = threading.get_ident()
+            self._handoff = Handoff()
             try:
                 yield
             finally:
@@ -681,10 +680,8 @@ class Operations:
             waiter = self._waiting.get(question.operation_id)
         if waiter is None:
             return
-        if threading.get_ident() == self._loop_thread:
-            waiter.set()
-        else:
-            anyio.from_thread.run_sync(waiter.set, token=self._token)
+        if self._handoff is not None:
+            self._handoff.call(waiter.set)  # never waits for the loop (decision 0158)
 
     def _is_canceled(self, id: str) -> bool:
         with self._lock:

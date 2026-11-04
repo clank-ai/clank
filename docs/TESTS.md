@@ -77,7 +77,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | The kernel | see its subsections |
 | 2.1 | A component | `tests/components/machine/test_doctor.py` (4), `tests/console/test_pages.py` (10), `tests/kernel/test_core.py` (2), `tests/test_architecture.py` (7) |
 | 2.2 | Records | `tests/components/flows/test_proposals_auto.py` (3), `tests/components/runtime/test_state.py` (4), `tests/console/test_records.py` (4), `tests/kernel/test_grouped_settings.py` (5), `tests/kernel/test_records.py` (5), `tests/kernel/test_settings.py` (15), `tests/kernel/test_settings_checks.py` (3), `tests/kernel/test_store.py` (9), `tests/tools/test_schemas.py` (1), `tests/tools/test_tstypes.py` (5), `vscode/test/kinds.test.ts` (1) |
-| 2.3 | Events | `tests/kernel/test_clock.py` (4), `tests/kernel/test_event_attention.py` (3), `tests/kernel/test_events.py` (9), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_eventsdoc.py` (1), `vscode/test/events.test.ts` (2), `vscode/test/state.test.ts` (1) |
+| 2.3 | Events | `tests/kernel/test_clock.py` (4), `tests/kernel/test_event_attention.py` (3), `tests/kernel/test_events.py` (9), `tests/kernel/test_handoff.py` (3), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_eventsdoc.py` (1), `vscode/test/events.test.ts` (2), `vscode/test/state.test.ts` (1) |
 | 2.4 | Operations | `tests/components/workspaces/test_docker_operations.py` (17), `tests/console/test_pages.py` (10), `tests/kernel/test_operations.py` (15) |
 | 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (15), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (18), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
 | 2.6 | Policy | none yet |
@@ -4947,6 +4947,14 @@ Design 0002 §2.2 and design 0013 §11 (decision 0066): a settings kind may keep
 - a grouped record is written into its groups folder over its revision and refused over another
 - an id that names no group or climbs out of the kinds folder is refused
 - the record routes read and write a grouped record by its id
+
+### `tests/kernel/test_handoff.py`
+
+Design 0002 §2.3: a thread that records an event, or hands the service's event loop any other work, never waits for the loop to take it, so a thread holding a lock the loop then waits for (review mode's, which a flow's box takes as it starts) cannot freeze the service (decision 0158).
+
+- a thread holding a lock records an event while the loop waits for that lock
+- work handed to a busy loop from a thread returns at once and runs in order
+- nothing in clank waits for the event loop from a thread
 
 ### `tests/kernel/test_home.py`
 

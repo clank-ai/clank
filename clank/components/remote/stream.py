@@ -23,6 +23,7 @@ import anyio.lowlevel
 import anyio.to_thread
 
 from clank.kernel.events import Event
+from clank.kernel.handoff import Handoff
 
 if TYPE_CHECKING:
     from clank.components.remote.service import Remote
@@ -63,20 +64,19 @@ async def phone_stream(
     """The stream's text (the module's docstring says what comes)."""
     kernel = remote.kernel
     send, receive = anyio.create_memory_object_stream[object](max_buffer_size=1000)
-    token = anyio.lowlevel.current_token()
-    loop = threading.get_ident()
+    handoff = Handoff()
     closing = threading.Event()
 
-    def deliver(item: object) -> None:
+    def put(item: object) -> None:
         try:
-            if threading.get_ident() == loop:
-                send.send_nowait(item)
-            else:
-                anyio.from_thread.run_sync(send.send_nowait, item, token=token)
+            send.send_nowait(item)
         except anyio.WouldBlock:
             pass  # a wake is due anyway: the events are read from the log, not from what was delivered
-        except (anyio.ClosedResourceError, anyio.BrokenResourceError, RuntimeError):
+        except (anyio.ClosedResourceError, anyio.BrokenResourceError):
             pass
+
+    def deliver(item: object) -> None:
+        handoff.call(put, item)  # never waits for the loop (decision 0158)
 
     def wake(event: Event) -> None:
         if event.id is not None:

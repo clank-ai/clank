@@ -28,6 +28,7 @@ import anyio.to_thread
 
 from clank.components.agents.sessions import SessionError
 from clank.components.workspaces.service import WorkspaceUnavailable
+from clank.kernel.handoff import Handoff
 
 if TYPE_CHECKING:
     from clank.components.agents.service import Agents
@@ -56,20 +57,19 @@ async def conversation_stream(
     `after_session`; another session's versions mean nothing, so a client that followed the folder's newest gets a
     snapshot when the newest is another."""
     send, receive = anyio.create_memory_object_stream[object](max_buffer_size=1000)
-    token = anyio.lowlevel.current_token()
-    loop = threading.get_ident()
+    handoff = Handoff()
     closing = threading.Event()
 
-    def deliver(item: object) -> None:
+    def put(item: object) -> None:
         try:
-            if threading.get_ident() == loop:
-                send.send_nowait(item)
-            else:
-                anyio.from_thread.run_sync(send.send_nowait, item, token=token)
+            send.send_nowait(item)
         except anyio.WouldBlock:
             pass  # a flush is due anyway: the versions are read from the mirror, not from what was delivered
-        except (anyio.ClosedResourceError, anyio.BrokenResourceError, RuntimeError):
+        except (anyio.ClosedResourceError, anyio.BrokenResourceError):
             pass
+
+    def deliver(item: object) -> None:
+        handoff.call(put, item)  # never waits for the loop (decision 0158)
 
     def close() -> None:
         closing.set()

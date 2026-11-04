@@ -163,6 +163,7 @@ and use the template below.
 | [0153](0153-opencode-is-told-the-whole-most-output.md) | OpenCode is told the whole most output: above 32,000, Clank sets `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX` to it and counts all of it in the compaction line; a cloud preset's most output is at most half its context | Accepted (Claude's call, building the owner's request); revises design 0012 §4.1 | 2026-10-29 |
 | [0154](0154-an-answer-cut-off-is-marked-and-the-model-goes-on.md) | An answer cut off at the output limit is a Watch for mark of its own, and by default the model is told to go on | Accepted (the owner's report); revises design 0012 §8 |
 | [0155](0155-clank-starts-the-programs-it-means.md) | Clank runs itself again with `python -P -m clank`, and on Windows finds a program named without its folder on the PATH alone, never in the current folder | Accepted (the audit of 2026-10-30); revises design 0002 §2.9 |
+| [0158](0158-no-thread-waits-for-the-event-loop.md) | Work is handed to the service's event loop without waiting: a thread holding a lock can no longer freeze the service with the loop | Accepted (the audit of 2026-10-30, reproduced); revises design 0002 §2.3 |
 
 ## Template
 

@@ -89,6 +89,7 @@ from clank.components.flows.verdicts import Verdict, VerdictRefused, given
 from clank.components.flows.verdicts import text as verdict_text
 from clank.components.workspaces.service import WorkspaceUnavailable
 from clank.kernel.events import Actor, EventType, Subject
+from clank.kernel.handoff import Handoff
 from clank.kernel.operations import (
     UNFINISHED,
     Busy,
@@ -328,8 +329,7 @@ class Runner:
         self.proposing: Proposing = Proposing(self)
         self._lock = threading.RLock()
         self._send: MemoryObjectSendStream[None] | None = None
-        self._token: Any = None
-        self._loop: int | None = None
+        self._loop: Handoff | None = None
         self._working: dict[tuple[str, str], Working] = {}
         self._found: dict[str, str] = {}  # what reconciling an interrupted box found: working, ended or gone
         self._stopping: dict[str, Actor] = {}  # runs stopped while their box works, by name: who stopped them
@@ -744,7 +744,7 @@ class Runner:
         changes."""
         send, receive = anyio.create_memory_object_stream[None](math.inf)
         with self._lock:
-            self._send, self._token, self._loop = send, anyio.lowlevel.current_token(), threading.get_ident()
+            self._send, self._loop = send, Handoff()
         try:
             await self._recover()
             await self._drive()
@@ -758,7 +758,7 @@ class Runner:
                     await self._drive()
         finally:
             with self._lock:
-                self._send = self._token = self._loop = None
+                self._send = self._loop = None
             send.close()
 
     def nudge(self) -> None:
@@ -771,25 +771,15 @@ class Runner:
             if self._send is not None:
                 self._send.send_nowait(None)
 
-        if self._token is None:
+        if self._loop is None:
             return  # the runner does not run: its driver looks at every run when it starts
-        if threading.get_ident() == self._loop:
-            send()
-            return
-        threading.Thread(target=self._call, args=(send,), name="flows: a nudge", daemon=True).start()
+        self._call(send)
 
     def _call(self, function: Callable[[], Any]) -> None:
         """Run `function` on the service's event loop, from any thread (never while holding the runner's lock)."""
         with self._lock:
-            token, loop = self._token, self._loop
-        if token is None:
-            return
-        if threading.get_ident() == loop:
-            function()
-            return
-        try:
-            anyio.from_thread.run_sync(function, token=token)
-        except RuntimeError:
+            handoff = self._loop
+        if handoff is not None and not handoff.call(function):  # never waits for the loop (decision 0158)
             log.debug("the service's event loop has ended")
 
     async def _drive(self) -> None:
@@ -2949,7 +2939,7 @@ class Runner:
         answered on the event loop, which never waits for the proposals' lock."""
         if question.about is None or question.about.kind != "flow":
             return
-        if question.status == "answered" and threading.get_ident() == self._loop:
+        if question.status == "answered" and self._loop is not None and self._loop.here():
             threading.Thread(target=self._answered, args=(question,), name="flows: an answer", daemon=True).start()
             return
         self._answered(question)

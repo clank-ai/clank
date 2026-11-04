@@ -46,7 +46,7 @@ each designed at the start of their own milestone (§3.1), in a design document 
 | § | Section | Status |
 | --- | --- | --- |
 | 1 | The whole system | Approved 2026-10-11; two terms renamed, the `machine` component listed, and two sentences aligned with the outside review after approval (revision log); revised after approval 2026-10-26: a dropped client no longer closes a server's socket on Windows, and a service that holds its home's lock without answering is named in `state/service.pid` and ended by `clank stop` (the owner's service went deaf that day and could be neither stopped nor started) |
-| 2 | The kernel | Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021; §2.9 revised after approval 2026-11-04: Clank runs itself again with `-P`, and on Windows finds a program named alone on the PATH alone (decision 0155) |
+| 2 | The kernel | Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021; §2.9 revised after approval 2026-11-04: Clank runs itself again with `-P`, and on Windows finds a program named alone on the PATH alone (decision 0155); §2.3 revised 2026-11-04: a thread that records an event never waits for the event loop (decision 0158) |
 | 3 | The skeleton (M0) and the order of milestones | Approved 2026-10-11, after its revision for the outside review |
 
 ## 1. The whole system
@@ -217,7 +217,9 @@ referenced, not copied).
 - Clients receive them on one stream, `GET /api/v1/events` (Server-Sent Events), filtered by type and subject. A
   client that reconnects gives the last id it saw: if that event is still kept, the stream resumes after it and the
   client misses nothing; if it is older than anything kept (a phone that was off for weeks), the stream says so, and
-  the client reloads the records it shows before following again. Clients never poll (design 0001 §5.7).
+  the client reloads the records it shows before following again. Clients never poll (design 0001 §5.7). A thread
+  that records an event never waits for the streams to take it: each is handed to the event loop, which sends it
+  when it can (decision 0158).
 - Some events are live only: streamed, never kept, such as the text a model is writing or progress ticks. The record
   they belong to keeps the result.
 - Each component declares its event types, their fields and their summary; `docs/EVENTS.md` is generated from the
@@ -674,3 +676,4 @@ Every change to an approved section, with its reason. Approvals themselves are i
 | 2026-10-11 | Sections | The parts built on the kernel (workspaces, network, agents and modes, tools and skills, the phone, VS Code, the console's screens) moved out of this document: each is designed at the start of its milestone (§3.1) | The owner: start building the skeleton soon, and let each built step inform the next design |
 | 2026-10-11 | §1 | "The kernel does not change" became "should not need to change, and when it must, it changes by a decision"; the push example shows the exact push that is approved, and git's own check | The outside review: the owner asked for "minimal need to change the foundation", not none; an approval covers exactly what it showed (§2.5) |
 | 2026-11-04 | §2.9 | A program Clank starts is the one it means: Clank runs itself again as `python -P -m clank`, and on Windows a program named without its folder is found on the PATH alone (decision 0155) | The audit of 2026-10-30: Clank's commands start in a project's folder, where `-m` would import a folder named clank and Windows looks for a program before the PATH |
+| 2026-11-04 | §2.3 | A thread that records an event never waits for the streams to take it: work is handed to the event loop without waiting (decision 0158) | The audit of 2026-10-30: a thread holding review mode's lock waited for a loop that waited for that lock, and the service froze for good (reproduced) |

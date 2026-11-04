@@ -44,6 +44,7 @@ from clank.kernel.access import CLIENT_HEADER, client_actor
 from clank.kernel.clock import to_text
 from clank.kernel.core import Kernel
 from clank.kernel.events import CLANK, Event, Subject
+from clank.kernel.handoff import Handoff
 from clank.kernel.operations import Busy, OperationError
 from clank.kernel.questions import QuestionError
 from clank.kernel.records import RegistryError, Settings
@@ -374,21 +375,20 @@ async def event_stream(
     """The event stream's text: the kept events after `after` (none if it is None), then, if `follow`, each new one
     until the stream is closed: while it is open, `closers` holds the function that closes it."""
     send, receive = anyio.create_memory_object_stream[Event | None](max_buffer_size=1000)
-    token = anyio.lowlevel.current_token()
-    loop = threading.get_ident()
+    handoff = Handoff()
     overflow = threading.Event()
     closing = threading.Event()
 
-    def deliver(item: Event | None) -> None:
+    def put(item: Event | None) -> None:
         try:
-            if threading.get_ident() == loop:
-                send.send_nowait(item)
-            else:
-                anyio.from_thread.run_sync(send.send_nowait, item, token=token)
+            send.send_nowait(item)
         except anyio.WouldBlock:
             overflow.set()
-        except (anyio.ClosedResourceError, anyio.BrokenResourceError, RuntimeError):
+        except (anyio.ClosedResourceError, anyio.BrokenResourceError):
             pass
+
+    def deliver(item: Event | None) -> None:
+        handoff.call(put, item)  # never waits for the loop (decision 0158)
 
     def wake(event: Event) -> None:
         if _matches(event, types, subject):
