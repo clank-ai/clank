@@ -1694,7 +1694,7 @@ def main(argv: list[str] | None = None) -> int:
                 if decided.get("status") != "waiting":
                     return str(decided.get("decision") or "no")
                 time.sleep(0.5)
-            return "no"
+            return "unanswered"  # nobody answered in time: not the owner's no (decision 0162)
         except Exception as error:
             logging.getLogger(__name__).warning(
                 "the service could not be asked about %s for %s: %s", host, workspace, error

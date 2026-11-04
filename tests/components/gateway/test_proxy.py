@@ -352,7 +352,7 @@ def test_the_routes_carry_each_workspaces_hosts_for_the_proxy() -> None:
 
 def test_a_host_not_allowed_is_asked_for_and_let_out_on_once_or_always_and_refused_on_no(tmp_path: Path) -> None:
     """Design 0024 §3: the connection is held while the owner is asked; the answer decides this request."""
-    decisions = {"echo.test": "once", "docs.test": "always", "nope.test": "no"}
+    decisions = {"echo.test": "once", "docs.test": "always", "nope.test": "no", "late.test": "unanswered"}
     asked: list[tuple[str, str]] = []
 
     async def ask(workspace: str, host: str) -> str:
@@ -374,15 +374,22 @@ def test_a_host_not_allowed_is_asked_for_and_let_out_on_once_or_always_and_refus
         assert "nope.test is not allowed for the workspace other" in words
         assert "asked" in words
         assert "did not allow" in words
-        assert asked == [("other", "echo.test"), ("other", "docs.test"), ("other", "nope.test")]
+        status, body = get(served, "http://late.test/", auth("other", "tok-other"))
+        assert status == 403
+        words = body.decode()
+        assert "the owner has not answered yet" in words, "nobody answered: not the owner's no (decision 0162)"
+        assert "did not allow" not in words
+        assert "ask the owner" in words.lower()
+        assert asked == [("other", "echo.test"), ("other", "docs.test"), ("other", "nope.test"), ("other", "late.test")]
         for _ in range(100):
-            if len(served.lines()) == 3:
+            if len(served.lines()) == 4:
                 break
             threading.Event().wait(0.05)
         assert [(line["host"], line["status"], line.get("why")) for line in served.lines()] == [
             ("echo.test", 200, "asked: once"), ("docs.test", 200, "asked: always"), ("nope.test", 403, "asked: no"),
+            ("late.test", 403, "asked: unanswered"),
         ]  # fmt: skip
         assert get(served, "http://docs.test/b", auth("paper", "tok-paper")) == (200, b"page /b")
-        assert asked[-1] == ("other", "nope.test"), "a host allowed is never asked for"
+        assert asked[-1] == ("other", "late.test"), "a host allowed is never asked for"
     finally:
         served.close()

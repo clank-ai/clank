@@ -1,8 +1,9 @@
 """Design 0024 §3 (decision 0141): a host the agent reaches without an allowance is asked for. The service allows at
 once when the record does, refuses at once within the quiet period, else asks the owner one question per workspace
 and host (the same question while it waits): answered always, the host joins the record and the request goes out;
-once, it goes out this time; no, or unanswered within `HOLD_SECONDS`, it is refused and the host is not asked again for
-`QUIET_MINUTES`. The routes the gateway's proxy uses: `POST /workspaces/{name}/hosts/wanted` and
+once, it goes out this time; no, it is refused and the host is not asked again for `QUIET_MINUTES`. A question nobody
+answered within `HOLD_SECONDS` refuses this request as unanswered, never as the owner's no: the host is asked again at
+the next request (decision 0162). The routes the gateway's proxy uses: `POST /workspaces/{name}/hosts/wanted` and
 `GET /workspaces/hosts/wanted/{question}`."""
 
 from collections.abc import Iterator
@@ -78,7 +79,7 @@ def test_a_host_not_allowed_is_asked_for_once_per_host_and_always_writes_the_all
     )
 
 
-def test_no_or_no_answer_refuses_and_keeps_the_host_quiet_for_a_while(
+def test_no_refuses_and_keeps_the_host_quiet_for_a_while_and_no_answer_is_not_a_no(
     kernel: Kernel, clock: FakeClock, tmp_path: Path
 ) -> None:
     workspaces = paper(kernel, tmp_path)
@@ -93,8 +94,10 @@ def test_no_or_no_answer_refuses_and_keeps_the_host_quiet_for_a_while(
     assert asked_again["question"] is not None, "after the quiet period, asked again"
     clock.advance(network.HOLD_SECONDS + 1)
     kernel.questions.expire_due()
-    assert workspaces.network.decision(asked_again["question"]) == {"status": "expired", "decision": "no"}
-    assert workspaces.network.wanted("paper", "tracker.test")["quiet"] is True, "unanswered: quiet too"
+    assert workspaces.network.decision(asked_again["question"]) == {"status": "expired", "decision": "unanswered"}
+    again = workspaces.network.wanted("paper", "tracker.test")
+    assert again["quiet"] is False, "nobody answered: not a no, so no quiet period"
+    assert again["question"] not in (None, asked_again["question"]), "asked again, a new question"
     assert workspaces.network.decision("q-nobody") == {"status": "unknown", "decision": "no"}
 
 

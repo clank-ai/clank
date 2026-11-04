@@ -167,6 +167,7 @@ and use the template below.
 | [0158](0158-no-thread-waits-for-the-event-loop.md) | Work is handed to the service's event loop without waiting: a thread holding a lock can no longer freeze the service with the loop | Accepted (the audit of 2026-10-30, reproduced); revises design 0002 §2.3 |
 | [0159](0159-clank-follows-no-link-in-the-folder.md) | Clank follows no link in a workspace's folder: the files it keeps in `.clank/` are read and written only below the folder, through no link | Accepted (the audit of 2026-10-30); revises design 0004 §3 |
 | [0161](0161-a-thinking-models-default-output-is-32768.md) | A thinking model with a large context gets a most output of 32,768 by default, its thinking and its answer together | Accepted (the owner's report and the audit); revises design 0016 §6 |
+| [0162](0162-a-host-question-nobody-answered-is-not-a-no.md) | A host question nobody answered is not the owner's no: no quiet period, and the agent is told to ask the owner | Accepted (the owner's report and the audit); revises design 0024 §3 |
 
 ## Template
 

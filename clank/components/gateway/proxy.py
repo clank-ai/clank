@@ -51,6 +51,7 @@ HEAD_MOST = 64 * 1024  # bytes of a request's head read before it is refused as 
 KEEP_DAYS = 30
 HOLD_SECONDS = 60  # how long a connection is held while the owner is asked about its host (design 0024 §3)
 DEV = "dev mode"  # why an exchange went out to a host not allowed: dev mode was on (decision 0152)
+UNANSWERED = "unanswered"  # the owner was asked about a host and nobody answered in time (decision 0162)
 DEV_LOOK_SECONDS = 0.5  # how often a connection held for the owner's answer looks whether dev mode was turned on
 PRIVATE_NAMES = ("localhost", "edge", "host.docker.internal", "gateway.docker.internal")
 PRIVATE_SUFFIXES = (".localhost", ".local", ".internal", ".home.arpa")
@@ -320,6 +321,8 @@ class Proxy:
                 raise Refused(403, "not allowed", _not_allowed(host, workspace))
             else:
                 decision = await self._asked(workspace, host)  # the connection held meanwhile (design 0024 §3)
+                if decision == UNANSWERED:
+                    raise Refused(403, "asked: unanswered", _unanswered(host, workspace))
                 if decision not in ("always", "once", DEV):
                     raise Refused(403, "asked: no", _not_allowed(host, workspace, asked=True))
                 why = DEV if decision == DEV else f"asked: {decision}"
@@ -464,6 +467,15 @@ def _host_port(authority: str, default: int) -> tuple[str, int]:
     if not host or not port_text.isdigit():
         return authority, default
     return host, int(port_text)
+
+
+def _unanswered(host: str, workspace: str) -> str:
+    return (
+        f"{host} is not allowed for the workspace {workspace} yet: Clank asked the owner, and the owner has not "
+        f"answered yet (the question waited {HOLD_SECONDS} seconds; they may not be watching Clank). Ask the owner in "
+        f"your reply to allow {host} (they answer Clank's question in its console, VS Code or the phone, or run `clank "
+        f"workspace allow` in the folder with `--host {host}`), then try again; asking again now asks them again."
+    )
 
 
 def _not_allowed(host: str, workspace: str, asked: bool = False) -> str:

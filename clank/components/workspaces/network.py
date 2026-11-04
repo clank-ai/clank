@@ -144,8 +144,9 @@ class HostAsks:
         return {"allowed": False, "quiet": False, "question": question.id}
 
     def decision(self, question: str) -> dict[str, Any]:
-        """How a question went: `waiting`; `answered` with `always`, `once` or `no`; `expired` or `withdrawn` (a no);
-        `unknown` (a no) for one that is not a host's."""
+        """How a question went: `waiting`; `answered` with `always`, `once` or `no`; `expired` or `withdrawn`, which
+        nobody answered (`unanswered`, never the owner's no: decision 0162); `unknown` (a no) for one that is not a
+        host's."""
         with self._lock:
             known = question in self._pairs
         if not known:
@@ -158,7 +159,7 @@ class HostAsks:
             return {"status": "waiting", "decision": None}
         if found.status == "answered" and found.answer is not None and found.answer.option in ("always", "once", "no"):
             return {"status": "answered", "decision": found.answer.option}
-        return {"status": found.status, "decision": "no"}
+        return {"status": found.status, "decision": "unanswered"}
 
     def _waiting(self, question: str) -> bool:
         try:
@@ -167,7 +168,8 @@ class HostAsks:
             return False
 
     def _resolved(self, question: Question) -> None:
-        """A host's question answered, expired or withdrawn: the allowance written, or the quiet period begun."""
+        """A host's question answered, expired or withdrawn: the allowance written, or the quiet period begun on the
+        owner's no alone (one nobody answered is asked again, decision 0162)."""
         with self._lock:
             key = self._pairs.get(question.id)
             if key is None:
@@ -179,6 +181,6 @@ class HostAsks:
         if option == "always":
             by = question.answer.by if question.answer is not None else ASKER
             self.allow(workspace, host, True, actor=by)
-        elif option != "once":
+        elif option == "no":
             with self._lock:
                 self._quiet[key] = self.kernel.clock.now() + timedelta(minutes=QUIET_MINUTES)

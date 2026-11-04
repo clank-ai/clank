@@ -14,7 +14,7 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 | --- | --- | --- |
 | 1 | The rule: through Clank, by allowance | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)): the allowances, `clank workspace allow --host`; the console's and VS Code's keys with §4; revised after approval 2026-10-29 (the owner's request: dev mode lifts the allowances, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
 | 2 | The way out: a forward proxy at the gateway | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)); revised after approval 2026-10-26 (the edge made again joins every workspace's network back) |
-| 3 | A host the agent asks for | Approved 2026-10-26; built 2026-10-26 ([plan s54](../plans/s54-the-ask.md)); revised after approval 2026-10-29 (the owner's request: nothing held or asked in dev mode, and the instructions say so, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
+| 3 | A host the agent asks for | Approved 2026-10-26; built 2026-10-26 ([plan s54](../plans/s54-the-ask.md)); revised after approval 2026-10-29 (the owner's request: nothing held or asked in dev mode, and the instructions say so, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)); revised 2026-11-04 (a question nobody answered is not a no, decision 0162) |
 | 4 | What the owner sees | Approved 2026-10-26; built 2026-10-26 ([plan s56](../plans/s56-the-network-views.md)) but the Monitor's fetching line, which comes with the Monitor's move to the stream (design 0023 step 4); revised after approval 2026-10-29 (the owner's request: This folder and the log say dev mode, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
 | 5 | Packages, papers, data: the named sets | Approved 2026-10-26; built 2026-10-26 ([plan s55](../plans/s55-the-named-sets.md)): the file, `clank workspace allow --set`; the console's key with the views |
 | 6 | Search | Approved 2026-10-26; the literature calls built 2026-10-26 in the agent's instructions ([plan s55](../plans/s55-the-named-sets.md)); a web search provider is the owner's choice, when the need shows; revised after approval 2026-10-29 (the owner's request: OpenCode's own web tools in dev mode, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
@@ -74,9 +74,10 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 - When the agent reaches a host that is not allowed, the proxy **holds the connection** for up to `ASK_SECONDS` (60)
   and raises a question to the owner through the kernel (as a permission is raised): "readout-check's agent wants
   `api.semanticscholar.org`: allow once, always for this workspace, or not?". Answered *always*, the host joins the
-  record and the request goes out; *once*, it goes out this time; *no* or unanswered, `403` with the words of §2, and
-  the same host is not asked again for `QUIET_MINUTES` (10) in that workspace, so a retrying program does not flood
-  the owner.
+  record and the request goes out; *once*, it goes out this time; *no*, `403` with the words of §2, and the same host
+  is not asked again for `QUIET_MINUTES` (10) in that workspace, so a retrying program does not flood the owner.
+  Unanswered (expired or withdrawn), `403` saying the owner has not answered yet, so the agent asks the owner in its
+  reply, and the next request asks again: nobody's answer is not a no (revised 2026-11-04, decision 0162).
 - The question shows in the console (Waiting for you), in VS Code (as a permission does) and on the phone later; the
   agent's instructions (`network.md`) say that a refused host may be asked for once, in words, and otherwise to work
   without it.
@@ -192,3 +193,6 @@ by the owner's allowances per workspace and host; private addresses are refused 
   so the tailnet's range written as a mapped IPv6 address passed, as a literal or resolved from a name. An IPv6 address
   that carries an IPv4 one (mapped, 6to4, Teredo) is now judged by that IPv4 address too, and any address that is not
   public is refused (decision 0157).
+- **2026-11-04, §3 revised after approval** (decision 0162): a host question that expired or was withdrawn was taken
+  for the owner's no, with the words of a refusal and ten quiet minutes, though the owner, in OpenCode's terminal,
+  never saw it. Unanswered now starts no quiet period, and the agent is told to ask the owner.
