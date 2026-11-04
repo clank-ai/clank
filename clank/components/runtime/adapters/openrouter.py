@@ -41,6 +41,18 @@ from clank.kernel.adapters import Capability
 
 EFFORTS = ("max", "xhigh", "high", "medium", "low", "minimal", "none")  # its reasoning efforts (design 0016 §3)
 MAX_OUTPUT = 16384  # a cloud preset's output unless the model's most is smaller (design 0016 §6)
+THINKING_OUTPUT = 32768  # a thinking model's with a large window: its thinking and its answer share it (decision 0161)
+THINKING_WINDOW = 131072  # the context from which a thinking model gets THINKING_OUTPUT
+
+
+def default_output(most: int | None, context: int, thinking: bool) -> int:
+    """A cloud preset's most output when the owner set none (design 0016 §6): 16,384, or 32,768 for a model that thinks
+    with a context of at least 131,072 (its thinking counts against the limit, and 16,384 cut its answers); never more
+    than the model's most, nor half the context (§7)."""
+    wanted = THINKING_OUTPUT if thinking and context >= THINKING_WINDOW else MAX_OUTPUT
+    return max(1, min(wanted, most or wanted, context // 2 or wanted))
+
+
 FREE_LIMITS = "20 a minute, 50 a day; 1,000 a day once 10 credits were bought"
 PRESET_OPTIONS = ("context", "max_output", "reasoning", "images")
 KEY_ADVICE = (
@@ -137,8 +149,9 @@ class OpenRouter(EndpointAdapter):
         )
 
     def preset_options(self, model: ModelLine, wanted: Mapping[str, Any]) -> dict[str, Any]:
-        """Its context (at most the model's window), its output (16,384 or the model's most when smaller, and at most
-        half the context: the agent keeps room for a whole answer in every request, design 0016 §7), its thinking
+        """Its context (at most the model's window), its output (`default_output`: 16,384, 32,768 for a thinking model
+        with a large window, or the model's most when smaller, and at most half the context: the agent keeps room for
+        a whole answer in every request, design 0016 §7), its thinking
         effort (`default`, or one the model lists, else one of OpenRouter's seven) and whether it reads images (the
         model's)."""
         problems = self.option_problems(wanted)
@@ -149,7 +162,7 @@ class OpenRouter(EndpointAdapter):
         if context > model.window:
             raise ValueError(f"context is at most {model.window:,} for {model.id}, not {context:,}")
         half = context // 2 or most
-        output = int(wanted.get("max_output") or max(1, min(MAX_OUTPUT, most, half)))
+        output = int(wanted.get("max_output") or default_output(model.output, context, model.thinking))
         if output > most:
             raise ValueError(f"max_output is at most {most:,} for {model.id}, not {output:,}")
         if output > half:
@@ -296,7 +309,7 @@ class OpenRouter(EndpointAdapter):
         tokens, no one conversation; its figures read from OpenRouter's usage; its words for a full context once a
         real key showed them (none yet); where it was read."""
         window = min(int(options.get("context") or model.window), model.window)
-        output = int(options.get("max_output") or min(MAX_OUTPUT, model.output or MAX_OUTPUT))
+        output = int(options.get("max_output") or default_output(model.output, window, model.thinking))
         return ContextFacts(
             window=window, output=output, thinking_budget=None, exact=None, on_gpu=False, counts_tokens=False,
             one_conversation=False,

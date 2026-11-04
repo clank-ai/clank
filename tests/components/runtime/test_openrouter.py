@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from clank.components.runtime.adapters.openrouter import OpenRouter
+from clank.components.runtime.adapters.openrouter import OpenRouter, default_output
 
 KEY = "made-up-openrouter-key"
 CODER: dict[str, Any] = {
@@ -293,11 +293,19 @@ def test_a_generations_record_gives_its_total_cost(openrouter: OpenRouter) -> No
     assert openrouter.generation_cost({"data": {"id": "gen-made-up"}}) is None
 
 
+def test_a_presets_most_output_by_default_leaves_a_thinking_model_room_to_answer() -> None:
+    assert default_output(None, 262144, thinking=False) == 16384, "a model that does not think"
+    assert default_output(None, 131072, thinking=True) == 32768, "a thinking model with a large window"
+    assert default_output(None, 65536, thinking=True) == 16384, "a smaller window keeps room for the conversation"
+    assert default_output(20000, 262144, thinking=True) == 20000, "never more than the model's most"
+    assert default_output(None, 20000, thinking=False) == 10000, "never more than half the context"
+
+
 def test_a_presets_options_follow_the_model(openrouter: OpenRouter) -> None:
     [coder, free] = openrouter.models(LISTED)
     assert openrouter.preset_options(coder, {}) == {
-        "context": 200000, "max_output": 16384, "reasoning": "default", "images": False
-    }  # fmt: skip
+        "context": 200000, "max_output": 32768, "reasoning": "default", "images": False
+    }, "it thinks, with a large window: its thinking and its answer share the limit (decision 0161)"  # fmt: skip
     assert openrouter.preset_options(free, {"context": 16384}) == {
         "context": 16384, "max_output": 8192, "reasoning": "default", "images": True
     }, "at most half the context"  # fmt: skip

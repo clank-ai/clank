@@ -97,7 +97,7 @@ def test_each_listed_model_carries_its_words_and_settings(
     assert coder["said"]["about"].startswith("example-vendor/example-coder: A made-up model for coding.")
     assert coder["said"]["test"] == "about $0.000031"
     assert [field["id"] for field in coder["settings"]] == ["title", "context", "max_output", "reasoning"]
-    assert [field["value"] for field in coder["settings"]] == ["cloud: Example Coder", "262144", "16384", "default"]
+    assert [field["value"] for field in coder["settings"]] == ["cloud: Example Coder", "262144", "32768", "default"]
     assert small["said"]["facts"].startswith("33K window · free (20 a minute")
     assert "most output not said" in small["said"]["about"], "a model whose output is not listed"
     assert small["said"]["test"] == "nothing (a free model)"

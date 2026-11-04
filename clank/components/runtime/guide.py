@@ -21,6 +21,8 @@ answers (plan s34's interface; plan s35 lists what it asks for).
 import re
 from typing import Any
 
+from clank.components.runtime.adapters.openrouter import MAX_OUTPUT as OUTPUT
+from clank.components.runtime.adapters.openrouter import default_output
 from clank.money import money, size, tokens
 
 STEPS = ("choice", "provider", "agreement", "key", "model", "settings", "test", "ready", "local")
@@ -42,7 +44,6 @@ SORTED = {
     "newest": "newest first",
 }
 EFFORTS = ("max", "xhigh", "high", "medium", "low", "minimal", "none")  # OpenRouter's, when a model lists none
-OUTPUT = 16384  # the output a preset takes by default, or the model's most when smaller
 CAPPED = 32000  # OpenCode's own cap on an answer, which Clank lifts to the most output above it (decision 0153)
 NAMES = {"context": "context", "max_output": "most output", "reasoning": "thinking effort", "images": "images"}
 IN_TOKENS = ("context", "max_output")  # a cloud preset's settings counted in tokens: OpenCode's limits
@@ -295,12 +296,13 @@ def model_settings(model: dict[str, Any]) -> list[dict[str, str]]:
     """A cloud preset's settings for a model, each field's words and its value as filled."""
     thinks = f"one of {', '.join(efforts(model))}" if model["thinking"] else "default: it does not think"
     output = min(model["output"] or OUTPUT, model["window"] // 2 or OUTPUT)  # and at most half the context (§7)
+    shared = ": its thinking and its answer together" if model["thinking"] else ""
     return [
         {"id": "title", "said": "Its title, as the pickers show it", "value": f"cloud: {model['name']}"},
         {"id": "context", "said": f"Its context, in tokens (the model's window, {model['window']:,}; a smaller one "
          "makes OpenCode compact sooner and each request cost less)", "value": str(model["window"])},
-        {"id": "max_output", "said": f"Its most output, in tokens (at most {output:,})",
-         "value": str(min(OUTPUT, output))},
+        {"id": "max_output", "said": f"Its most output, in tokens{shared} (at most {output:,})",
+         "value": str(default_output(model["output"], model["window"], bool(model["thinking"])))},
         {"id": "reasoning", "said": f"Its thinking effort ({thinks})", "value": "default"},
     ]  # fmt: skip
 

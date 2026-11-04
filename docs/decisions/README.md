@@ -166,6 +166,7 @@ and use the template below.
 | [0157](0157-what-the-phone-serves-and-the-proxy-lets-through.md) | A file an agent sent is seen in place on the phone only when it is a raster image, a PDF or plain text, else saved as a download, always in a sandbox; the proxy judges an IPv6 address by the IPv4 one it carries and refuses any address that is not public; the phone's log masks an install claim in the bodies it keeps | Accepted (the audit of 2026-10-30); revises design 0025 §2 and §8, and design 0024 §7 | 2026-11-04 |
 | [0158](0158-no-thread-waits-for-the-event-loop.md) | Work is handed to the service's event loop without waiting: a thread holding a lock can no longer freeze the service with the loop | Accepted (the audit of 2026-10-30, reproduced); revises design 0002 §2.3 |
 | [0159](0159-clank-follows-no-link-in-the-folder.md) | Clank follows no link in a workspace's folder: the files it keeps in `.clank/` are read and written only below the folder, through no link | Accepted (the audit of 2026-10-30); revises design 0004 §3 |
+| [0161](0161-a-thinking-models-default-output-is-32768.md) | A thinking model with a large context gets a most output of 32,768 by default, its thinking and its answer together | Accepted (the owner's report and the audit); revises design 0016 §6 |
 
 ## Template
 

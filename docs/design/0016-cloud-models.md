@@ -48,7 +48,7 @@ OpenRouter.
 | 3 | What OpenRouter offers, as its documentation says | Approved 2026-10-20 for building, the owner's go-ahead (each fact cited; what is unsaid is marked) |
 | 4 | The provider's record, and its key | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (the owner's instruction: dev mode, decision 0149; the owner's request the same day: dev mode opens the agent's internet too, decision 0152, built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md))) |
 | 5 | How the gateway gets the key | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0106) |
-| 6 | The OpenRouter adapter | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (the owner's request: a cloud preset's most output at most half its context, decision 0153) |
+| 6 | The OpenRouter adapter | Approved 2026-10-20 for building, the owner's go-ahead; revised after approval 2026-10-29 (the owner's request: a cloud preset's most output at most half its context, decision 0153) and 2026-11-04 (a thinking model's most output 32,768 by default, decision 0161) |
 | 7 | Cloud presets, and the main slot running one | Approved 2026-10-20 for building, the owner's go-ahead (Claude's call, decision 0107); revised after approval 2026-10-29 (the owner's request: a cloud preset's settings changed after it is written, the slot that runs it following at once; OpenCode told the whole most output, decision 0153) |
 | 8 | The gateway forwards to OpenRouter | Approved 2026-10-20 for building, the owner's go-ahead (Claude's calls, decisions 0109 and 0110; decision 0074 built); revised after approval 2026-10-21 (decision 0115: a refusal not to be retried is never answered 503) and 2026-10-29 (dev mode, decision 0149; a data policy's refusal known by its words, the account's privacy settings named; a free model's daily limit not retried) |
 | 9 | Where a workspace's requests may go | Approved 2026-10-20 (the owner's answers: 2; decision 0103); how it asks is Claude's call (decision 0112) |
@@ -246,7 +246,8 @@ Its interface (the kind's, so the next provider meets it too):
 
 - `URL`, `REACH`, `AUTH`: `https://openrouter.ai/api/v1`, `cloud`, `bearer` (§4).
 - `provider_options()`: the record's `options`: `data_collection` (`deny`, `allow`) and `zdr` (a boolean).
-- `options(model)`: a cloud preset's options (§7): `context` (at most the model's), `max_output` (16,384 or the model's
+- `options(model)`: a cloud preset's options (§7): `context` (at most the model's), `max_output` (16,384, or 32,768
+  for a model that thinks with a context of at least 131,072, decision 0161; or the model's
   `top_provider.max_completion_tokens` when smaller; and at most half the context, revised after approval
   2026-10-29, §7 and decision 0153), `reasoning` (`default`, or an effort the model lists in
   `reasoning.supported_efforts`, else one of OpenRouter's seven), and `images` (from `architecture.input_modalities`).
@@ -911,3 +912,6 @@ a fake of it until s34's routes land. Each task is one commit that starts with a
   the slot that runs it following at once and each OpenCode window open told that it keeps its limits until it starts
   again. OpenCode is told the whole most output above its own cap of 32,000, and a most output is at most half the
   context (decision 0153, plan s65).
+- **2026-11-04, §6 revised after approval** (decision 0161): a model that thinks, with a context of at least 131,072,
+  gets a most output of 32,768 by default; its thinking counts against the limit, and at 16,384 the owner's runs were
+  cut before they answered.

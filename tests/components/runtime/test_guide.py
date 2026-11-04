@@ -86,8 +86,10 @@ def test_a_models_words_are_its_line_itself_and_what_a_short_request_costs() -> 
 
 def test_a_models_settings_are_filled_from_it_and_the_limits_as_they_are() -> None:
     fields = {field["id"]: field["value"] for field in guide.model_settings(MODEL)}
-    assert fields == {"title": "cloud: Example Coder", "context": "262144", "max_output": "16384",
-                      "reasoning": "default"}  # fmt: skip
+    assert fields == {"title": "cloud: Example Coder", "context": "262144", "max_output": "32768",
+                      "reasoning": "default"}, "a thinking model with a large window (decision 0161)"  # fmt: skip
+    said = {field["id"]: field["said"] for field in guide.model_settings(MODEL)}
+    assert said["max_output"].startswith("Its most output, in tokens: its thinking and its answer together")
     limits = {field["id"]: field["value"] for field in guide.limit_fields({"day_usd": 5.0, "month_usd": None})}
     assert limits == {"day_usd": "5", "month_usd": ""}
 
