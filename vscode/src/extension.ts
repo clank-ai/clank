@@ -34,7 +34,7 @@ import * as vscode from "vscode";
 import { agentTerminalOpen, rightward } from "./core/agent";
 import { ClankClient } from "./core/client";
 import { Completer, type CompletionPresenter } from "./core/completion";
-import { clankHome, readConnection } from "./core/connection";
+import { clankHome, readConnection, userSetting } from "./core/connection";
 import { Controller } from "./core/controller";
 import { type GateAction, type GateButton, type GatePresenter, Gates, type Side } from "./core/gates";
 import type { Question } from "./core/kinds";
@@ -581,10 +581,17 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
   clankItem.command = "clank.click";
   const dockerItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
   dockerItem.command = "clank.docker";
+  // CLANK_HOME and whether the agent starts are the user's settings alone, never a folder's (decision 0156)
   const home = (): string =>
-    clankHome(vscode.workspace.getConfiguration("clank").get<string>("home"), process.env, homedir());
+    clankHome(userSetting(vscode.workspace.getConfiguration("clank").inspect<string>("home")), process.env, homedir());
+  let refusal = ""; // the last address refused, said once
   const connect = (): ClankClient | undefined => {
-    const found = readConnection(home());
+    const found = readConnection(home(), (why) => {
+      if (why !== refusal) {
+        refusal = why;
+        void vscode.window.showWarningMessage(`Clank: ${why}`);
+      }
+    });
     return found ? new ClankClient(found.url, found.token) : undefined;
   };
   const presenter = new VsCodePresenter(clankItem, dockerItem);
@@ -773,7 +780,7 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
   readoutItem.show();
   controller.start();
   readout.start();
-  if (vscode.workspace.getConfiguration("clank").get<boolean>("agent.openOnStart") && !agentOpen()) {
+  if (userSetting(vscode.workspace.getConfiguration("clank").inspect<boolean>("agent.openOnStart")) && !agentOpen()) {
     void starter.start().then(() => onTheRight.keep()); // its place shows at once; OpenCode takes it when ready
   } else {
     void onTheRight.keep();

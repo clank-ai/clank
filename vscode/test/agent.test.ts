@@ -12,6 +12,9 @@
 // configuration, and OpenCode is not started while it would fail at once: the problem is said with its fix instead. A
 // slow check holds nothing up: the terminal starts and the check's answer comes after. OpenCode that ends by itself
 // with an error (its terminal closing with it) is told apart, and its place says why, with the fix.
+//
+// Revised 2026-11-04 (decision 0156): the terminal runs only the programs Clank starts the agent with (docker, wsl or
+// ssh, named alone or by their full path); any other program the service names is refused, saying why.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -130,6 +133,28 @@ test("a problem that does not stop OpenCode comes with its terminal, and a servi
   const old = service(RUNNING, PREPARED, () => Promise.reject(new Error("the service answered 404")));
   const before = await agentStart(old, "C:\\work\\paper");
   assert.ok("terminal" in before && before.reach === undefined && before.later === undefined);
+});
+
+test("the agent's terminal runs only docker, wsl or ssh: any other program the service names is refused, saying why", async () => {
+  for (const program of [
+    "docker",
+    "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+    "/usr/bin/docker",
+    "wsl.exe",
+    "C:\\Windows\\System32\\wsl.exe",
+    "/usr/bin/ssh",
+  ]) {
+    const found = await agentStart(service(RUNNING, { ...PREPARED, argv: [program, "exec", "-it"] }), "C:\\work\\paper");
+    assert.ok("terminal" in found && found.terminal.program === program, program);
+  }
+  for (const program of ["C:\\work\\paper\\run.exe", "powershell.exe", "/bin/sh", "docker.cmd", "dockerx", ""]) {
+    const found = await agentStart(service(RUNNING, { ...PREPARED, argv: [program, "-c", "x"] }), "C:\\work\\paper");
+    assert.ok(!("terminal" in found), program);
+    assert.match(found.problem, /docker, wsl or ssh/, "it says what the terminal runs");
+    assert.ok(found.problem.includes(program || "no program"), "and names the program refused");
+  }
+  const none = await agentStart(service(RUNNING, { ...PREPARED, argv: [] }), "C:\\work\\paper");
+  assert.ok(!("terminal" in none), "no program at all is refused too");
 });
 
 test("a slow check holds nothing up: the terminal starts, and the check's answer comes after", async () => {

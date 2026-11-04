@@ -2,7 +2,7 @@
   "name": "clank",
   "displayName": "Clank",
   "description": "Clank in VS Code: the service and Docker in the status bar, the questions Clank asks you, the agent beside your files, each change it makes for you to review, completion as you type, figures to mark up for the agent, the agent's proposals for your Notion to review, and the gates of your flows.",
-  "version": "0.10.4",
+  "version": "0.10.5",
   "publisher": "clank",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -21,7 +21,12 @@
   ],
   "capabilities": {
     "untrustedWorkspaces": {
-      "supported": true
+      "supported": "limited",
+      "restrictedConfigurations": [
+        "clank.home",
+        "clank.agent.openOnStart"
+      ],
+      "description": "In Restricted Mode, the folder's own settings never choose CLANK_HOME (so the Clank service the extension connects to) or start the agent: clank.home and clank.agent.openOnStart are read from your user settings alone."
     }
   },
   "main": "./out/src/extension.js",
@@ -184,12 +189,14 @@
         "clank.home": {
           "type": "string",
           "default": "",
-          "description": "CLANK_HOME, the folder that holds Clank's settings and state. Empty: the CLANK_HOME environment variable, else .clank in your home folder."
+          "scope": "machine",
+          "description": "CLANK_HOME, the folder that holds Clank's settings and state. Empty: the CLANK_HOME environment variable, else .clank in your home folder. Read from your user settings alone, never a folder's."
         },
         "clank.agent.openOnStart": {
           "type": "boolean",
           "default": false,
-          "description": "Start the agent (OpenCode) in a terminal beside the files when the window opens a folder whose Clank workspace runs. Clank's own VS Code window (`clank code`) turns it on."
+          "scope": "machine",
+          "description": "Start the agent (OpenCode) in a terminal beside the files when the window opens a folder whose Clank workspace runs. Clank's own VS Code window (`clank code`) turns it on. Read from your user settings alone, never a folder's."
         },
         "clank.readout.openWithAgent": {
           "type": "boolean",

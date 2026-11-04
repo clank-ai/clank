@@ -46,7 +46,7 @@ each designed at the start of their own milestone (§3.1), in a design document 
 | § | Section | Status |
 | --- | --- | --- |
 | 1 | The whole system | Approved 2026-10-11; two terms renamed, the `machine` component listed, and two sentences aligned with the outside review after approval (revision log); revised after approval 2026-10-26: a dropped client no longer closes a server's socket on Windows, and a service that holds its home's lock without answering is named in `state/service.pid` and ended by `clank stop` (the owner's service went deaf that day and could be neither stopped nor started) |
-| 2 | The kernel | Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021; §2.9 revised after approval 2026-11-04: Clank runs itself again with `-P`, and on Windows finds a program named alone on the PATH alone (decision 0155); §2.3 revised 2026-11-04: a thread that records an event never waits for the event loop (decision 0158) |
+| 2 | The kernel | Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021; §2.9 revised after approval 2026-11-04: Clank runs itself again with `-P`, and on Windows finds a program named alone on the PATH alone (decision 0155); §2.3 revised 2026-11-04: a thread that records an event never waits for the event loop (decision 0158) |; Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021; §2.9 revised after approval 2026-11-04: Clank runs itself again with `-P`, and on Windows finds a program named alone on the PATH alone (decision 0155); §2.7 revised after approval 2026-11-04: VS Code reads CLANK_HOME from the owner's settings alone and connects only to a service on this machine (decision 0156) |
 | 3 | The skeleton (M0) and the order of milestones | Approved 2026-10-11, after its revision for the outside review |
 
 ## 1. The whole system
@@ -345,6 +345,9 @@ The API listens on this machine (`127.0.0.1`; WSL makes it reachable from Window
 included. The service answers only requests addressed to its own host names (a defense against DNS rebinding), sends
 no CORS headers, and never puts a token in a URL or a record. Local clients find its address in
 `CLANK_HOME/state/connection.json`. Every route declares its access level, and a test checks that none is missing.
+VS Code's extension takes CLANK_HOME from the owner's own settings, never a folder's, and connects only to an address
+on this machine (`http://` to `127.0.0.1`, `localhost` or `[::1]`); any other address in the file is refused, saying
+so, and the local token is never sent to it (decision 0156).
 Clients tell the service when the user is active (a key pressed in the console, typing in VS Code), at most once a
 minute; the remote component uses this to decide whether the user is away.
 
@@ -677,3 +680,4 @@ Every change to an approved section, with its reason. Approvals themselves are i
 | 2026-10-11 | §1 | "The kernel does not change" became "should not need to change, and when it must, it changes by a decision"; the push example shows the exact push that is approved, and git's own check | The outside review: the owner asked for "minimal need to change the foundation", not none; an approval covers exactly what it showed (§2.5) |
 | 2026-11-04 | §2.9 | A program Clank starts is the one it means: Clank runs itself again as `python -P -m clank`, and on Windows a program named without its folder is found on the PATH alone (decision 0155) | The audit of 2026-10-30: Clank's commands start in a project's folder, where `-m` would import a folder named clank and Windows looks for a program before the PATH |
 | 2026-11-04 | §2.3 | A thread that records an event never waits for the streams to take it: work is handed to the event loop without waiting (decision 0158) | The audit of 2026-10-30: a thread holding review mode's lock waited for a loop that waited for that lock, and the service froze for good (reproduced) |
+| 2026-11-04 | §2.7 | VS Code's extension takes CLANK_HOME from the owner's settings alone (the setting's machine scope, and only its user value read) and connects only to a service on this machine (decision 0156) | The audit of 2026-10-30: a folder's own settings could choose which service the extension trusted |

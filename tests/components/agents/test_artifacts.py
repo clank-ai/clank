@@ -7,7 +7,8 @@ an entry page that names the network, or an HTML page that would show broken (a 
 looks, math in dollar signs auto-render would leave as text), are refused, saying why. The owner's comment on a
 version goes to the session that made it, in one message naming the artifact and its version (through a server that
 runs in the workspace when the service has not heard from that session since it started), and
-`agents.artifact_commented` is recorded."""
+`agents.artifact_commented` is recorded. An export carries Clank's content policy before anything but its doctype, so
+it reaches nothing on the network in a browser either (decision 0156)."""
 
 import json
 import os
@@ -259,6 +260,24 @@ def test_an_export_is_one_file_with_its_libraries_and_data_inside_that_needs_not
     assert "window.fetch" in page
     with pytest.raises(ArtifactError, match="has no version 4"):
         artifacts.export("paper", "sweep", 4)
+
+
+def test_an_export_carries_the_content_policy_first_so_it_reaches_nothing_on_the_network(
+    kernel: Kernel, folder: Path
+) -> None:
+    artifacts = artifacts_of(kernel)
+    artifacts.make("paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"])
+    page = Path(artifacts.export("paper", "sweep", 1)["file"]).read_text(encoding="utf-8")
+    first = '<!doctype html><meta http-equiv="Content-Security-Policy" content="'
+    assert page.startswith(first), "before anything the page has (a script ahead of its head too), but its doctype"
+    policy = page[len(first) :].split('"', 1)[0]
+    assert "default-src 'none'" in policy
+    assert "connect-src data: blob:;" in policy, "its own files are answered inside it: nothing is fetched"
+    assert "script-src 'unsafe-inline' 'unsafe-eval';" in policy, "its libraries run inside it, as in VS Code"
+    assert "form-action 'none'" in policy
+    assert not any(each in policy for each in ("http", "*", "'self'")), "no address at all"
+    assert "Plotly" in page, "its libraries still inside it"
+    assert "window.fetch" in page, "and its files, answered when it fetches them"
 
 
 def test_clank_artifact_lists_a_folders_artifacts_and_exports_the_newest_version(

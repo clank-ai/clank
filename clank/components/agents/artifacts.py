@@ -51,6 +51,14 @@ TYPES = {
     ".gif": "image/gif", ".webp": "image/webp", ".js": "text/javascript", ".css": "text/css", ".html": "text/html",
     ".woff2": "font/woff2",
 }  # fmt: skip
+# An export's content policy, first in the page (decision 0156): the webview's, but for the webview's own files, which
+# an export has inside it, so in a browser too it reaches nothing on the network, submits no form and moves no base
+EXPORT_POLICY = (
+    "default-src 'none'; img-src data: blob:; media-src data: blob:; font-src data:; style-src 'unsafe-inline'; "
+    "script-src 'unsafe-inline' 'unsafe-eval'; connect-src data: blob:; form-action 'none'; base-uri 'none'"
+)
+POLICY = f'<meta http-equiv="Content-Security-Policy" content="{EXPORT_POLICY}">'
+DOCTYPE = re.compile(r"\s*<!doctype[^>]*>", re.IGNORECASE)
 # An exported page's own files, answered when it fetches them (the page opened from disk may not read files beside it)
 FETCH = """<script>
 (() => {{
@@ -263,7 +271,8 @@ class Artifacts:
     def export(self, workspace: str, name: str, version: int) -> dict[str, Any]:
         """One version as one self-contained page (`.clank/artifacts/<name>/export/<name>-v<n>.html`): its libraries
         inlined (KaTeX's fonts as data), its other files inside it, answered when it fetches them, and its images and
-        links to them as data; it opens from disk, in any browser, with no network."""
+        links to them as data; it opens from disk, in any browser, with no network, which its content policy, before
+        anything else in it, holds it to (`EXPORT_POLICY`)."""
         kept = self.one(workspace, name)
         made = next((each for each in kept["versions"] if each["version"] == version), None)
         if made is None:
@@ -295,6 +304,9 @@ class Artifacts:
         )
         opened = re.search(r"<head[^>]*>", page, re.IGNORECASE)
         page = page[: opened.end()] + shim + page[opened.end() :] if opened else shim + page
+        declared = DOCTYPE.match(page)  # the policy before anything the page has, but its doctype
+        at = declared.end() if declared else 0
+        page = page[:at] + POLICY + page[at:]
         target = _inside(home, f"export/{name}-v{version}.html")
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(page, encoding="utf-8")
