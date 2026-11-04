@@ -3,7 +3,8 @@ A request names its workspace by the token in the proxy's URL (derived from the 
 the workspace and nothing need be handed); a host the workspace is allowed, exact or by suffix, is reached: a
 `CONNECT` tunnel carries bytes both ways and is never opened, plain HTTP is forwarded with its path recorded; any
 other host is refused with 403 and the words that say how it is allowed; a private address is refused before
-resolving and after, whatever the allowance; a wrong token gets 407; a name that cannot be resolved 502; every
+resolving and after, whatever the allowance, and so is any address that is not public, an IPv6 address by the IPv4 one
+it carries too (mapped, 6to4, Teredo; decision 0157); a wrong token gets 407; a name that cannot be resolved 502; every
 exchange is logged by time, workspace, host, method, status, bytes each way and duration, never a body, one file a
 day, the days older than kept removed."""
 
@@ -29,7 +30,10 @@ from clank.components.gateway.routing import Routes
 from clank.components.gateway.server import create_gateway
 from tests.support.served import free_port
 
-HOSTS = {"paper": ["docs.test", ".example.test", "echo.test", "private.test", "10.0.0.9", "localhost"], "other": []}
+HOSTS = {
+    "paper": ["docs.test", ".example.test", "echo.test", "private.test", "mapped.test", "10.0.0.9", "localhost"],
+    "other": [],
+}
 TOKENS = {"paper": "tok-paper", "other": "tok-other"}
 Ask = Callable[[str, str], Awaitable[str]]
 
@@ -90,6 +94,8 @@ class Served:
             return [("127.0.0.1", self.shouts.server_address[1])]
         if host == "private.test":
             return [("10.0.0.5", port)]
+        if host == "mapped.test":  # the tailnet's range, written as IPv6
+            return [("::ffff:100.64.0.1", port)]
         raise OSError(f"{host} cannot be resolved")
 
     def _run(self) -> None:
@@ -247,6 +253,29 @@ def test_a_private_address_is_refused_before_resolving_and_after_whatever_the_al
         assert private_address(ip) is True, ip
     for ip in ("8.8.8.8", "151.101.1.63", "2606:4700::1", "172.32.0.1", "100.128.0.1"):
         assert private_address(ip) is False, ip
+
+
+def test_an_ipv6_address_carrying_a_private_ipv4_one_is_refused_as_a_literal_and_as_a_name_resolved_to_it(
+    served: Served,
+) -> None:
+    status, body, _ = connect(served, "[::ffff:100.64.0.1]:443", auth("paper", "tok-paper"))
+    assert status == 403, "the tailnet's range written as IPv6, as a literal"
+    assert "private" in body.decode()
+    status, body, _ = connect(served, "mapped.test:443", auth("paper", "tok-paper"))
+    assert status == 403, "a name that resolves to it, though the host is allowed"
+    assert "private" in body.decode()
+    assert [line["why"] for line in served.lines()] == ["private", "private"]
+    for ip in (
+        "::ffff:100.64.0.1", "::ffff:100.127.255.254", "::ffff:10.0.0.1", "::ffff:127.0.0.1", "::ffff:169.254.1.1",
+        "::ffff:192.168.1.1", "::ffff:172.16.0.1", "::ffff:0.0.0.0", "::ffff:192.0.2.1", "::ffff:224.0.0.1",
+        "2002:6440:1::1", "2002:a00:1::1",  # 6to4, carrying 100.64.0.1 and 10.0.0.1
+        "2001:0:4136:e378:8000:63bf:9bbf:fffe",  # Teredo: a public server, the client 100.64.0.1
+        "2001:0:a00:1:8000:63bf:f7f7:f7f7",  # Teredo: the server 10.0.0.1
+        "64:ff9b::6440:1", "::100.64.0.1", "192.0.2.1", "198.18.0.1", "240.0.0.1", "255.255.255.255",
+    ):  # fmt: skip
+        assert private_address(ip) is True, ip
+    for ip in ("::ffff:8.8.8.8", "::ffff:151.101.1.63", "8.8.8.8"):
+        assert private_address(ip) is False, f"{ip}: a public address, however written"
 
 
 def test_a_wrong_or_missing_token_is_refused_with_407(served: Served) -> None:

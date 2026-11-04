@@ -18,7 +18,7 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 | 4 | What the owner sees | Approved 2026-10-26; built 2026-10-26 ([plan s56](../plans/s56-the-network-views.md)) but the Monitor's fetching line, which comes with the Monitor's move to the stream (design 0023 step 4); revised after approval 2026-10-29 (the owner's request: This folder and the log say dev mode, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
 | 5 | Packages, papers, data: the named sets | Approved 2026-10-26; built 2026-10-26 ([plan s55](../plans/s55-the-named-sets.md)): the file, `clank workspace allow --set`; the console's key with the views |
 | 6 | Search | Approved 2026-10-26; the literature calls built 2026-10-26 in the agent's instructions ([plan s55](../plans/s55-the-named-sets.md)); a web search provider is the owner's choice, when the need shows; revised after approval 2026-10-29 (the owner's request: OpenCode's own web tools in dev mode, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
-| 7 | What is never reached | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)); revised after approval 2026-10-29 (the owner's request: private addresses refused in dev mode too, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
+| 7 | What is never reached | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)); revised after approval 2026-10-29 (the owner's request: private addresses refused in dev mode too, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)); revised after approval 2026-11-04 (the audit of 2026-10-30: an IPv6 address judged by the IPv4 one it carries, and any address that is not public refused, decision 0157) |
 | 8 | Order of work | Approved 2026-10-26 |
 
 ## 1. The rule: through Clank, by allowance
@@ -143,7 +143,10 @@ Search is not a host but a provider, and a choice of the owner's:
 - **Private addresses**: the machine (`host.docker.internal`, the host's own addresses), the local networks (the RFC
   1918 ranges, link-local, the tailnet's range), other containers; the proxy refuses them before resolving and after
   (a public name that resolves to a private address is refused too), dev mode or not (revised after approval
-  2026-10-29, decision 0152: dev mode opens the internet, never Clank's own service or the owner's network).
+  2026-10-29, decision 0152: dev mode opens the internet, never Clank's own service or the owner's network). Any other
+  address that is not public is refused too, and an IPv6 address that carries an IPv4 one (mapped, `::ffff:a.b.c.d`;
+  6to4; Teredo) is judged by that IPv4 address as well, so no way of writing a private address passes (revised after
+  approval 2026-11-04, decision 0157).
 - **The gateway and the service**: reached only on the edge's gateway port as today, never through the proxy.
 - **Plain HTTP to a host allowed for HTTPS** is allowed (the allowance is the host's), but recorded with its path.
 - The proxy never opens a tunnel's bytes, keeps no body, and holds no credential of the owner's: a site that needs a
@@ -185,3 +188,7 @@ by the owner's allowances per workspace and host; private addresses are refused 
   use `webfetch` and `websearch` from its next start; the instructions say so and are written again whenever dev mode
   changes; This folder says the agent reaches every public host; private addresses stay refused
   ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)).
+- **2026-11-04, §7 revised after approval** (the audit of 2026-10-30): the proxy judged an IPv6 address only as IPv6,
+  so the tailnet's range written as a mapped IPv6 address passed, as a literal or resolved from a name. An IPv6 address
+  that carries an IPv4 one (mapped, 6to4, Teredo) is now judged by that IPv4 address too, and any address that is not
+  public is refused (decision 0157).

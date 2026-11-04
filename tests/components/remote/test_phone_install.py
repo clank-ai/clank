@@ -6,7 +6,9 @@ into the app), a claim is spent once and lapses after an hour; a device's token 
 after thirty days unused (no ceiling from its pairing). The page the Home Screen icon is added from names the PNG
 icon, which iOS takes (it takes no SVG for one). The listener's log keeps where each request came from, as
 Tailscale's proxy says it (the address it names last, the login it vouches for, the browser's name), and why one was
-refused, for the checkup (when the page does not load); a pair link's code and an install claim are masked in it."""
+refused, for the checkup (when the page does not load); a pair link's code and an install claim are masked in it,
+in the links asked for and in the pages and the manifest sent (decision 0157): the claim `/pair` issued is nowhere in
+the log."""
 
 import json
 import re
@@ -140,17 +142,30 @@ def test_the_log_keeps_where_each_request_came_from_and_why_it_was_refused_never
 ) -> None:
     made = kernel.parts["remote"].pair_link("my phone", actor=YOU)
     iphone = {**THROUGH_TAILSCALE, "X-Forwarded-For": "100.64.0.7", "User-Agent": "Mozilla/5.0 (iPhone)"}
-    assert phone.get("/pair", params={"code": made["code"]}, headers=iphone).status_code == 200
-    phone.get("/", params={"claim": "a-claim-of-the-icon"}, headers=iphone)
+    opened = phone.get("/pair", params={"code": made["code"]}, headers=iphone)
+    assert opened.status_code == 200
+    found = re.search(r"manifest\.webmanifest\?claim=([A-Za-z0-9_-]+)", opened.text)
+    assert found is not None, "the page the icon is added from carries the claim it issued"
+    claim = found.group(1)
+    manifest = phone.get("/manifest.webmanifest", params={"claim": claim}, headers=iphone)
+    assert manifest.json()["start_url"] == f"./?claim={claim}"
+    phone.cookies.clear()
+    launch_answer = phone.get("/", params={"claim": claim}, headers=iphone)
+    assert COOKIE in launch_answer.cookies, "the issued claim, traded at the icon's first launch"
     stranger = {"Tailscale-User-Login": "someone@else.com", "X-Forwarded-For": "203.0.113.9, 100.64.0.9"}
     assert phone.get("/", headers=stranger).status_code == 403
     files = sorted((kernel.home.logs / "phone").glob("*.jsonl"))
     kept = [json.loads(line) for file in files for line in file.read_text(encoding="utf-8").splitlines()]
-    pairing, launch, refused = kept[-3:]
+    pairing, manifested, launch, refused = kept[-4:]
     assert (pairing["path"], pairing["query"]) == ("/pair", "code=••••••••")
+    assert (manifested["path"], manifested["query"]) == ("/manifest.webmanifest", "claim=••••••••")
     assert (launch["path"], launch["query"]) == ("/", "claim=••••••••")
+    assert "manifest.webmanifest?claim=••••••••" in pairing["response"], "the page is kept, its claim masked"
+    assert manifested["response"]["start_url"] == "./?claim=••••••••", "the manifest is kept, its claim masked"
     assert made["code"] not in json.dumps(kept)
-    assert "a-claim-of-the-icon" not in json.dumps(kept)
+    assert claim not in json.dumps(kept), "the claim /pair issued is nowhere in the log"
+    exchanges = [kernel.parts["remote"].traffic.exchange(each["id"]) for each in kept]
+    assert claim not in json.dumps(exchanges), "nor in what the console and the phone's log tab read"
     assert pairing["origin"] == {"address": "100.64.0.7", "login": OWNER, "agent": "Mozilla/5.0 (iPhone)"}
     assert "refused" not in pairing
     assert refused["origin"]["address"] == "100.64.0.9", "the address Tailscale's proxy named, not the one sent to it"

@@ -272,10 +272,16 @@ function waitingBoxes(overview, only = null) {
   return boxes;
 }
 
+// A file an agent sent: an image, a PDF or text opens to be seen; any other kind the listener serves only as a download
+// (its type `application/octet-stream`, decision 0157), so the link saves it.
+function saved(file) {
+  return (file.mime || "application/octet-stream") === "application/octet-stream" ? file.file : null;
+}
+
 function fileRow(file) {
   const href = `api/files/${encodeURIComponent(file.workspace)}/${encodeURIComponent(file.file)}`;
   const image = (file.mime || "").startsWith("image/");
-  return el("a", { class: "row", href, target: "_blank", rel: "noopener" },
+  return el("a", { class: "row", href, target: "_blank", rel: "noopener", download: saved(file) },
     image ? el("img", { class: "thumb", src: href, alt: "", loading: "lazy" }) : el("span", { class: "thumb doc" }, "[f]"),
     el("div", { class: "main" }, el("div", { class: "line" }, file.caption || file.from || file.file),
       el("div", { class: "sub" }, `${file.workspace} · ${ago(file.sent)}`)),
@@ -285,7 +291,7 @@ function fileRow(file) {
 function fileTile(file) {
   const href = `api/files/${encodeURIComponent(file.workspace)}/${encodeURIComponent(file.file)}`;
   const image = (file.mime || "").startsWith("image/");
-  return el("a", { class: "file", href, target: "_blank", rel: "noopener" },
+  return el("a", { class: "file", href, target: "_blank", rel: "noopener", download: saved(file) },
     image ? el("img", { src: href, alt: file.caption || file.file, loading: "lazy" }) : el("div", { class: "doc" }, "[file]"),
     el("div", { class: "cap" }, file.caption || file.from || file.file, el("div", { class: "dim" }, `${file.workspace} · ${ago(file.sent)}`)));
 }
