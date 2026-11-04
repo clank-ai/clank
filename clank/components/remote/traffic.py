@@ -7,7 +7,8 @@ path and the query, the status, how long it took, the bytes each way, and both b
 for anything else (a picture sent) its type and size; where the request came from, as Tailscale's proxy says it (the
 tailnet address it names, the login it vouches for, the browser's name), and why it was refused, for the phone's
 checkup (design 0025 §2). Nothing secret is kept: the device's token never (it travels in a cookie, and no other header
-is kept), and a pairing code is masked, typed or in a pair link, as is an install claim in the icon's link. An answer
+is kept), and a pairing code is masked, typed or in a pair link, as is an install claim wherever a link carries it:
+asked for, or in a page or the manifest sent (decision 0157). An answer
 the same as the last one to the same request from the same device (the page asks every few seconds) is kept as
 `same_as` that one's id, so a page left open costs little. Each exchange is written as a line of
 `logs/phone/<day>.jsonl`, the last `KEPT` are also kept in memory, and files older than `KEEP_DAYS` are removed. A
@@ -32,6 +33,7 @@ BODY = 64 * 1024  # the most of a body kept, in characters
 MASKED = "••••••••"
 LOG_PATH = "/api/traffic"
 SECRET_QUERY = re.compile(r"(^|&)(code|claim)=[^&]*")  # a pair link's code, the icon's claim
+SECRET_LINK = re.compile(rb"(\bclaim=)[^&\"'\s<>#\\]+")  # an install claim in a link a body carries (the icon's)
 
 
 class Traffic:
@@ -140,12 +142,13 @@ class Traffic:
 
 
 def _body(raw: bytes, kind: str, path: str) -> Any:
-    """A body as kept: JSON as it was, text as text, anything else by its type and size; a pairing code masked."""
+    """A body as kept: JSON as it was, text as text, anything else by its type and size; a pairing code and an install
+    claim masked."""
     if not raw:
         return None
     if "json" in kind or (not kind and raw[:1] in (b"{", b"[")):
         try:
-            value = json.loads(raw)
+            value = json.loads(_masked(raw))
         except ValueError:
             value = None
         if value is not None:
@@ -154,6 +157,11 @@ def _body(raw: bytes, kind: str, path: str) -> Any:
             text = json.dumps(value, ensure_ascii=False)
             return value if len(text) <= BODY else text[:BODY] + f" … [{len(text):,} characters]"
     if kind.startswith("text/") or kind.endswith("javascript"):
-        text = raw.decode("utf-8", errors="replace")
+        text = _masked(raw).decode("utf-8", errors="replace")
         return text if len(text) <= BODY else text[:BODY] + f" … [{len(text):,} characters]"
     return f"[{kind or 'bytes'}, {len(raw):,} bytes]"
+
+
+def _masked(raw: bytes) -> bytes:
+    """A body with every install claim in a link masked (the page the icon is added from, the manifest's start link)."""
+    return SECRET_LINK.sub(lambda found: found.group(1) + MASKED.encode(), raw)

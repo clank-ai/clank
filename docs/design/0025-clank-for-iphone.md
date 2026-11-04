@@ -16,7 +16,7 @@ page and push alerts, a service the owner switches on and off) and design 0023 ย
 | ยง | Section | Status |
 | --- | --- | --- |
 | 1 | What it is, and what leaves the PC | Approved 2026-10-21 (the canvas); written 2026-10-26 |
-| 2 | Install once | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)): the pair link's QR on the console, the code spent by scanning it, the install claim, tokens renewed on use; revised after approval 2026-10-26: when the page does not load, the PC checks the phone's way in and says what to do (the owner's first scan loaded nothing, and nothing said why), and the keys as the console has them |
+| 2 | Install once | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)): the pair link's QR on the console, the code spent by scanning it, the install claim, tokens renewed on use; revised after approval 2026-10-26: when the page does not load, the PC checks the phone's way in and says what to do (the owner's first scan loaded nothing, and nothing said why), and the keys as the console has them; revised after approval 2026-11-04: the log masks an install claim in the page and the manifest sent too (decision 0157; the audit of 2026-10-30) |
 | 3 | Live: one stream, and when it drops | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)): the stream, the shell and its service worker, the reconnecting and offline screens; revised after approval 2026-10-26: the app shell (one column the size of the screen, only its middle scrolls: the tab bar sat higher on every tab too short to scroll, on the owner's iPhone) and a launch screen that says what it waits for |
 | 4 | Notifications | Approved 2026-10-21 (the canvas); written 2026-10-26; its dependency decided when built |
 | 5 | Now | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)) on the live stream; the Flows tab shows the flows' questions until step 2 brings the Flow view |
@@ -86,7 +86,9 @@ is on (`checkup.py`).
   says it (the address it names, the login it vouches for, the browser's name) and why one was refused: which device and
   when, the last refusal in words with its fix (a code spent or expired: a new QR; another Tailscale account: sign in
   with the PC's), or "no phone has reached Clank today" ("since the QR was made", while one waits). This PC's own
-  requests do not count. A pair link's code and the icon's install claim are masked in the log, as a typed code is.
+  requests do not count. A pair link's code and the icon's install claim are masked in the log, as a typed code is:
+  the claim in the links asked for and in the page and the manifest sent (revised after approval 2026-11-04,
+  decision 0157).
 - **Funnel**: on for any port of this PC, it gives the PC's name public addresses (Tailscale's relays), which do not
   carry the phone's port. A phone that does not ask Tailscale's DNS for the name (iCloud Private Relay does so for
   Safari; or an answer kept from before Tailscale was on) loads for a while, then cannot connect, and nothing reaches the
