@@ -347,6 +347,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/kernel/files.py` | Files of CLANK_HOME that another program may be reading while Clank changes them (design 0002 §2.16: the state |
 | `clank/kernel/handoff.py` | Work handed to the service's event loop from any thread, never waited for (decision 0158). |
 | `clank/kernel/home.py` | CLANK_HOME: the one folder that holds everything of one user on one machine (design 0001 §7.2, design 0002 §2.16). |
+| `clank/kernel/infolder.py` | Files in a workspace's folder that Clank reads or writes as the owner (decision 0159). |
 | `clank/kernel/kinds.py` | The kernel's own declarations: its kinds of record and its event types, collected for `clank.registry`. |
 | `clank/kernel/locks.py` | Locks a process holds on a file for as long as it runs, such as the one that keeps a second service off a |
 | `clank/kernel/operations.py` | Operations: anything that takes more than a moment runs in the service as an operation (design 0002 §2.4). |

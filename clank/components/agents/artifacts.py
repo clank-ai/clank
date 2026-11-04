@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Any
 
 from clank.kernel.clock import to_text
 from clank.kernel.events import CLANK, Actor, EventType, Subject
+from clank.kernel.infolder import Outside, inside
 
 if TYPE_CHECKING:
     from clank.components.agents.sessions import Sessions
@@ -175,13 +176,13 @@ class Artifacts:
         if kind == "html":
             _check_page(paths[0].read_text(encoding="utf-8", errors="replace"),
                         [path.relative_to(folder).as_posix() for path in paths])  # fmt: skip
-        home = folder / FOLDER / name
-        kept = self._kept(home) or {"name": name, "title": title, "kind": kind, "versions": []}
+        home = _inside(folder, f"{FOLDER}/{name}")
+        kept = self._kept(folder, name) or {"name": name, "title": title, "kind": kind, "versions": []}
         number = len(kept["versions"]) + 1
-        target = home / f"v{number}"
+        target = _inside(home, f"v{number}")
         root = Path(os.path.commonpath([str(path.parent) for path in paths]))
         for path in paths:
-            copied = target / path.relative_to(root)
+            copied = _inside(target, path.relative_to(root).as_posix())  # nothing written through a link (0159)
             copied.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, copied)
         entry = paths[0].relative_to(root).as_posix()
@@ -189,7 +190,7 @@ class Artifacts:
             page = MARKDOWN if kind == "markdown" else SVG
             text = paths[0].read_text(encoding="utf-8", errors="replace")
             source = json.dumps(text).replace("</", "<\\/")
-            (target / "index.html").write_text(
+            _inside(target, "index.html").write_text(
                 page.format(title=_escaped(title), source=source, svg=_escaped(entry)), encoding="utf-8"
             )
             entry = "index.html"
@@ -198,7 +199,7 @@ class Artifacts:
                                  "files": [path.relative_to(root).as_posix() for path in paths], "note": note.strip(),
                                  "session": session})  # fmt: skip
         home.mkdir(parents=True, exist_ok=True)
-        (home / "artifact.json").write_text(json.dumps(kept, indent=2) + "\n", encoding="utf-8")
+        _inside(home, "artifact.json").write_text(json.dumps(kept, indent=2) + "\n", encoding="utf-8")
         shown = f"{FOLDER}/{name}/v{number}/{entry}"
         self.kernel.events.record(
             "agents.artifact_made", summary=f"{workspace}: the artifact {title} ({name}), version {number}",
@@ -215,8 +216,8 @@ class Artifacts:
 
     def list(self, workspace: str) -> list[dict[str, Any]]:
         """The workspace's artifacts, the newest made first: each one's name, title, kind and versions."""
-        root = self._folder(workspace) / FOLDER
-        found = [kept for each in sorted(root.glob("*")) if (kept := self._kept(each)) is not None]
+        folder = self._folder(workspace)
+        found = [kept for each in sorted((folder / FOLDER).glob("*")) if (kept := self._kept(folder, each.name))]
         brief = [
             {"name": kept["name"], "title": kept["title"], "kind": kept["kind"], "versions": len(kept["versions"]),
              "made": kept["versions"][-1]["made"]}
@@ -227,7 +228,7 @@ class Artifacts:
     def one(self, workspace: str, name: str) -> dict[str, Any]:
         """An artifact whole: its title, kind and every version, with the folder it is in."""
         folder = self._folder(workspace)
-        kept = self._kept(folder / FOLDER / name) if NAME.fullmatch(name) else None
+        kept = self._kept(folder, name) if NAME.fullmatch(name) else None
         if kept is None:
             raise ArtifactError(f"{workspace} has no artifact {name!r}")
         return {**kept, "workspace": workspace, "folder": str(folder), "home": f"{FOLDER}/{name}"}
@@ -267,15 +268,16 @@ class Artifacts:
         made = next((each for each in kept["versions"] if each["version"] == version), None)
         if made is None:
             raise ArtifactError(f"the artifact {name} has no version {version}")
-        home = Path(kept["folder"]) / FOLDER / name
-        root = home / f"v{version}"
+        home = _inside(Path(kept["folder"]), f"{FOLDER}/{name}")
+        root = _inside(home, f"v{version}")
         entry = str(made["entry"])
-        page = (root / entry).read_text(encoding="utf-8", errors="replace")
+        page = _inside(root, entry).read_text(encoding="utf-8", errors="replace")  # its record is the agent's (0159)
         entry_dir = posixpath.dirname(entry)
         files = {
             path.relative_to(root).as_posix(): (TYPES.get(path.suffix.lower(), "application/octet-stream"),
                                                 base64.b64encode(path.read_bytes()).decode("ascii"))
-            for path in sorted(root.rglob("*")) if path.is_file() and path.relative_to(root).as_posix() != entry
+            for path in sorted(root.rglob("*"))
+            if path.relative_to(root).as_posix() != entry and _plain_file(root, path)
         }  # fmt: skip
         page = LIB_SCRIPT.sub(lambda found: f"<script>{_library(found.group(1))}</script>", page)
         page = LIB_STYLE.sub(lambda found: f"<style>{_style(found.group(1))}</style>", page)
@@ -293,7 +295,7 @@ class Artifacts:
         )
         opened = re.search(r"<head[^>]*>", page, re.IGNORECASE)
         page = page[: opened.end()] + shim + page[opened.end() :] if opened else shim + page
-        target = home / "export" / f"{name}-v{version}.html"
+        target = _inside(home, f"export/{name}-v{version}.html")
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(page, encoding="utf-8")
         return {"file": str(target), "said": f"{name} version {version} as one page: {target}"}
@@ -317,12 +319,28 @@ class Artifacts:
         return path
 
     @staticmethod
-    def _kept(home: Path) -> dict[str, Any] | None:
+    def _kept(folder: Path, name: str) -> dict[str, Any] | None:
         try:
-            found: dict[str, Any] = json.loads((home / "artifact.json").read_text(encoding="utf-8"))
-        except (OSError, ValueError):
+            found: dict[str, Any] = json.loads(inside(folder, f"{FOLDER}/{name}/artifact.json").read_text("utf-8"))
+        except (OSError, ValueError):  # Outside too: a record reached through a link is none
             return None
         return found
+
+
+def _inside(folder: Path, relative: str) -> Path:
+    """A path below `folder` reached through no link (decision 0159); `ArtifactError` saying why for any other."""
+    try:
+        return inside(folder, relative)
+    except Outside as error:
+        raise ArtifactError(str(error)) from error
+
+
+def _plain_file(root: Path, path: Path) -> bool:
+    """Whether `path`, found below `root`, is a file reached through no link."""
+    try:
+        return inside(root, path.relative_to(root).as_posix()).is_file()
+    except Outside:
+        return False
 
 
 def _check_page(page: str, files: list[str]) -> None:

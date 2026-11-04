@@ -8,6 +8,9 @@ reaches them through the gateway: start, status and stop. The readout carries th
 workspace, and `clank jobs` lists, shows and stops them."""
 
 import json
+import os
+import shutil
+import sys
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -205,3 +208,23 @@ def test_clank_jobs_lists_shows_and_stops_them(kernel: Kernel, folder: Path, mon
     assert "paper  job 1  sweep: running for" in listed.output
     assert "seed 1: 0.41" in shown.output
     assert "job 1 (sweep) is being stopped" in stopped.output
+
+
+def test_a_job_folder_that_is_a_link_is_never_read(kernel: Kernel, folder: Path, tmp_path: Path) -> None:
+    jobs = jobs_of(kernel)
+    jobs.start("paper", "python anneal.py", "anneal", 90)
+    elsewhere = tmp_path / "elsewhere"
+    shutil.copytree(folder / ".clank/jobs/agent/1", elsewhere)
+    (elsewhere / "log").write_text("the owner's own\n", encoding="utf-8")
+    shutil.rmtree(folder / ".clank/jobs/agent/1")
+    if sys.platform == "win32":
+        import _winapi
+
+        _winapi.CreateJunction(str(elsewhere), str(folder / ".clank/jobs/agent/1"))
+    else:
+        os.symlink(elsewhere, folder / ".clank/jobs/agent/1", target_is_directory=True)
+    with pytest.raises(JobsError, match="is a link"):
+        jobs.one("paper", 1)
+    assert jobs.list("paper") == [], "a job reached through a link is not listed"
+    jobs.watch_once()
+    assert json.loads((elsewhere / "job.json").read_text(encoding="utf-8"))["ended"] is None, "nor written"

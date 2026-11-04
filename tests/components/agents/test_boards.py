@@ -9,7 +9,10 @@ the upper middle of fig-1"). A figure that is not a file of the folder, a kind t
 is not on the board, is refused, saying why. The routes answer the same."""
 
 import json
+import os
+import shutil
 import struct
+import sys
 import zlib
 from collections.abc import Iterator
 from pathlib import Path
@@ -229,3 +232,22 @@ def test_the_agent_closes_a_pin_it_dealt_with(kernel: Kernel, folder: Path) -> N
     boards.update("resonance", "fig3", "pin-1", {"open": False})
     assert on_disk(folder)["items"][0]["open"] is False
     assert 'pin-1: a pin on the board, answered: "Mark Q"' in boards.describe("resonance", "fig3")
+
+
+def test_a_boards_history_is_never_written_through_a_link(kernel: Kernel, folder: Path, tmp_path: Path) -> None:
+    boards = boards_of(kernel)
+    boards.new("resonance", "fig3", folder="figures")
+    boards.add("resonance", "fig3", "figure", {"file": "figures/amp.png"})
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    history = folder / ".clank" / "boards" / "figures-fig3" / "history"
+    shutil.rmtree(history)
+    if sys.platform == "win32":
+        import _winapi
+
+        _winapi.CreateJunction(str(elsewhere), str(history))
+    else:
+        os.symlink(elsewhere, history, target_is_directory=True)
+    with pytest.raises(BoardError, match="is a link"):
+        boards.remove("resonance", "fig3", "fig-1")
+    assert list(elsewhere.iterdir()) == [], "nothing written through the link"

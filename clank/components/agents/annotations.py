@@ -28,6 +28,7 @@ from clank.components.agents.latex.answers import Answers
 from clank.components.agents.latex.pages import PageMarks, page_image
 from clank.kernel.clock import to_text
 from clank.kernel.events import Actor, EventType, Subject
+from clank.kernel.infolder import Outside, inside
 
 if TYPE_CHECKING:
     from clank.components.agents.sessions import Sessions
@@ -61,6 +62,14 @@ EVENT_TYPES = [
 
 class AnnotationError(Exception):
     """An annotation that cannot be sent, and why."""
+
+
+def _inside(folder: Path, relative: str) -> Path:
+    """A path below `folder` reached through no link (decision 0159); `AnnotationError` saying why for any other."""
+    try:
+        return inside(folder, relative)
+    except Outside as error:
+        raise AnnotationError(str(error)) from error
 
 
 class Annotations:
@@ -110,16 +119,16 @@ class Annotations:
         target = self._target(workspace)
         attached = self.reads_images()
         with self._lock:
-            kept = root.joinpath(*KEPT)
+            kept = _inside(root, "/".join(KEPT))  # nothing written through a link (decision 0159)
             kept.mkdir(parents=True, exist_ok=True)
-            ignore = kept / ".gitignore"
+            ignore = _inside(kept, ".gitignore")
             if not ignore.exists():
                 ignore.write_text("*\n", encoding="utf-8")
             stem = re.sub(r"[^A-Za-z0-9_.-]+", "-", Path(relative).stem) or "figure"
             number = 1
-            while (kept / f"{stem}-{number}.png").exists():
+            while (kept / f"{stem}-{number}.png").exists() or (kept / f"{stem}-{number}.png").is_symlink():
                 number += 1
-            copy = kept / f"{stem}-{number}.png"
+            copy = _inside(kept, f"{stem}-{number}.png")
             copy.write_bytes(marked)
         shown = "/".join([*KEPT, copy.name])
         seen = "" if attached or not marks else self.read_image(marked, READING)
@@ -132,7 +141,7 @@ class Annotations:
             "geometry": geometry is not None, "attached": attached, "seen": seen, "workspace": workspace,
             "port": target["port"], "session": target["session"], "time": to_text(self.kernel.clock.now()),
         }  # fmt: skip
-        copy.with_suffix(".json").write_text(json.dumps(record, ensure_ascii=False, indent=1), encoding="utf-8")
+        _inside(kept, f"{stem}-{number}.json").write_text(json.dumps(record, ensure_ascii=False, indent=1), "utf-8")
         self.sessions.send(workspace, target["port"], target["session"], text, actor=actor, files=files)
         if rule and self.answers is not None:
             numbers = [int(mark.get("n") or 0) for mark in marks if mark.get("n")]
@@ -186,10 +195,10 @@ class Annotations:
     @staticmethod
     def _geometry(root: Path, relative: str, data: bytes) -> dict[str, Any] | None:
         """The figure's geometry, when Matplotlib saved it in the workspace and it is still this figure's."""
-        kept = root.joinpath(".clank", "figures", *f"{relative}.json".split("/"))
         try:
+            kept = inside(root, f".clank/figures/{relative}.json")  # read through no link (decision 0159)
             geometry: dict[str, Any] = json.loads(kept.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
+        except (OSError, ValueError):  # Outside too: a record reached through a link is none
             return None
         return geometry if geometry.get("sha256") == hashlib.sha256(data).hexdigest() else None
 

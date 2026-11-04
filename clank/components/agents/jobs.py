@@ -23,6 +23,7 @@ import anyio
 
 from clank.components.workspaces.service import jobs as runner
 from clank.kernel.events import CLANK, EventType, Subject
+from clank.kernel.infolder import Outside, inside, linked
 
 if TYPE_CHECKING:
     from clank.components.agents.sessions import Sessions
@@ -81,11 +82,12 @@ class AgentJobs:
             raise JobsError(f"a job's minutes are 1 to {MOST_MINUTES:,} (a week)")
         root = self._root(workspace)
         number = 1 + max((int(each.name) for each in root.glob("*") if each.name.isdigit()), default=0)
+        own = self._own(workspace, number)  # nothing written through a link (decision 0159)
         folder = f"{FOLDER}/{number}"
         kept = {"title": title, "command": command, "minutes": minutes, "session": session,
                 "started": self._now(), "ended": None, "status": None, "said": ""}  # fmt: skip
-        (root / str(number)).mkdir(parents=True, exist_ok=True)
-        self._keep(root / str(number), kept)
+        own.mkdir(parents=True, exist_ok=True)
+        self._keep(own, kept)
         try:
             runner.start(self.workspaces, workspace, folder, command, minutes)
         except runner.JobError as error:
@@ -106,11 +108,15 @@ class AgentJobs:
         """The workspace's jobs, newest first, briefly."""
         root = self._root(workspace)
         numbers = sorted((int(each.name) for each in root.glob("*") if each.name.isdigit()), reverse=True)
-        return [self._view(workspace, root / str(number), number, whole=False) for number in numbers]
+        views = []
+        for number in numbers:
+            with contextlib.suppress(JobsError):  # a job reached through a link is none (decision 0159)
+                views.append(self._view(workspace, self._own(workspace, number), number, whole=False))
+        return views
 
     def one(self, workspace: str, number: int) -> dict[str, Any]:
         """One job whole: its state, how long it ran, its log's last lines and the files it wrote."""
-        folder = self._root(workspace) / str(number)
+        folder = self._own(workspace, number)
         if not (folder / "job.json").is_file():
             raise JobsError(f"{workspace} has no job {number}")
         return self._view(workspace, folder, number, whole=True)
@@ -130,8 +136,8 @@ class AgentJobs:
             root = Path(record["path"]) / FOLDER
             for folder in sorted(root.glob("*")) if root.is_dir() else []:
                 if folder.name.isdigit():
-                    with contextlib.suppress(OSError, ValueError, KeyError):
-                        self._watch(workspace, folder, int(folder.name))
+                    with contextlib.suppress(OSError, ValueError, KeyError, JobsError):
+                        self._watch(workspace, self._own(workspace, int(folder.name)), int(folder.name))
 
     async def run(self) -> None:
         """Watch the jobs while the service runs."""
@@ -201,6 +207,18 @@ class AgentJobs:
             found["tail"] = runner.tail(folder)
             found["written"] = runner.written(folder.parents[3], float(kept["started"]), f"{FOLDER}/{number}")
         return found
+
+    def _own(self, workspace: str, number: int) -> Path:
+        """A job's own folder, `.clank/jobs/agent/<n>`, when neither it nor a folder on the way to it nor one of its
+        files is a link (decision 0159): `JobsError` otherwise."""
+        try:
+            own = inside(self._root(workspace).parents[2], f"{FOLDER}/{number}")
+        except Outside as error:
+            raise JobsError(str(error)) from error
+        for name in ("job.json", "log", "pid", "exit"):
+            if linked(own / name):
+                raise JobsError(f"{FOLDER}/{number}/{name} is a link: Clank follows no link in the folder")
+        return own
 
     def _root(self, workspace: str) -> Path:
         try:

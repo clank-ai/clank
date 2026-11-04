@@ -28,7 +28,7 @@ recommendation, built as recommended so the owner can try it, and changed if the
 | --- | --- | --- |
 | 1 | What the owner does | Proposed 2026-10-13 |
 | 2 | The gateway, first slice | Proposed 2026-10-13 |
-| 3 | Workspaces, the image and the container | Proposed 2026-10-13; revised 2026-10-26 (the edge kept on every workspace's network, whatever made it again) |
+| 3 | Workspaces, the image and the container | Proposed 2026-10-13; revised 2026-10-26 (the edge kept on every workspace's network, whatever made it again); revised 2026-11-04 (Clank follows no link in the folder, decision 0159) |
 | 4 | The agent: OpenCode in the container | Proposed 2026-10-13 |
 | 5 | The VS Code window | Built 2026-10-14 (the agent's status bar item waits) |
 | 6 | The desktop stays responsive | Proposed 2026-10-13 |
@@ -154,6 +154,9 @@ Design 0001 §6, the part the agent needs:
   image carries the common tools). Network grants (PyPI, GitHub pull and push) are M7.
 - Escape tests (design 0002 §3.3, M4): no file outside the folder can be read, through symlinks and subprocesses
   included; nothing but the edge answers from inside (direct addresses, names, IPv6, the host, other workspaces).
+- **The files Clank keeps in the folder** (`.clank/`: artifacts, jobs, boards, figures' copies) are the agent's to
+  write too, so the service reads and writes them only below the folder and through no link: a name that leaves the
+  folder, or a link on the way, is refused (decision 0159).
 
 ## 4. The agent: OpenCode in the container
 

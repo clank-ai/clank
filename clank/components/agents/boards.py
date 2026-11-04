@@ -33,6 +33,7 @@ from clank.components.agents.boardexport import Art, ExportError, art_of_picture
 from clank.components.agents.boardlatex import build, flatten
 from clank.components.agents.boardplace import GRID, INSET, TITLE, PlaceError, frame_of, place
 from clank.kernel.events import CLANK, EventType, Subject
+from clank.kernel.infolder import Outside, inside, linked
 
 if TYPE_CHECKING:
     from clank.components.workspaces.service import Workspaces
@@ -223,20 +224,27 @@ class Boards:
         return board
 
     @staticmethod
-    def _kept(folder: Path, path: Path) -> Path:
-        """Where Clank keeps a board's own files: its history, its compiled LaTeX."""
-        return folder / FOLDER / path.relative_to(folder).with_suffix("").as_posix().replace("/", "-")
+    def _kept(folder: Path, path: Path, *more: str) -> Path:
+        """Where Clank keeps a board's own files (its history, its compiled LaTeX), and `more` below it, reached through
+        no link (decision 0159): `BoardError` otherwise."""
+        name = path.relative_to(folder).with_suffix("").as_posix().replace("/", "-")
+        try:
+            return inside(folder, "/".join([FOLDER, name, *more]))
+        except Outside as error:
+            raise BoardError(str(error)) from error
 
     def _save(self, folder: Path, path: Path, board: dict[str, Any], *, keep: bool) -> None:
         if keep and path.is_file():
-            kept = self._kept(folder, path) / "history"
+            kept = self._kept(folder, path, "history")
             kept.mkdir(parents=True, exist_ok=True)
             older = sorted(kept.glob(f"*{SUFFIX}"), key=lambda each: int(each.stem))
             number = int(older[-1].stem) + 1 if older else 1
-            shutil.copyfile(path, kept / f"{number}{SUFFIX}")
+            shutil.copyfile(path, self._kept(folder, path, "history", f"{number}{SUFFIX}"))
             for gone in older[: max(0, len(older) + 1 - HISTORY)]:
                 gone.unlink(missing_ok=True)
         written = path.with_name(f".{path.name}.writing")
+        if linked(written):
+            raise BoardError(f"{written.name} is a link: Clank follows no link in the folder")
         written.write_text(json.dumps(board, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         os.replace(written, path)
 
@@ -563,7 +571,7 @@ class Boards:
         """The drawing of `source` with the board's preamble, built once and kept by their hash; or why not."""
         preamble = str((board.get("settings") or {}).get("preamble") or "")
         key = hashlib.sha256(f"{preamble}\0{source}".encode()).hexdigest()[:16]
-        kept = self._kept(root, path) / "latex" / f"{key}.svg"
+        kept = self._kept(root, path, "latex", f"{key}.svg")
         if not kept.is_file():
             svg, error = build(self.kernel.parts["workspaces"].run_in, workspace, source, preamble)
             if error:
@@ -617,7 +625,7 @@ class Boards:
         if format == "svg":
             out.write_text(composed, encoding="utf-8")
         else:
-            kept = self._kept(root, path) / "export" / f"{out.stem}.svg"
+            kept = self._kept(root, path, "export", f"{out.stem}.svg")
             kept.parent.mkdir(parents=True, exist_ok=True)
             kept.write_text(composed, encoding="utf-8")
             size = ["-d", str(dpi), "-p", str(dpi)] if format == "png" else []

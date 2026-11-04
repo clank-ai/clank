@@ -10,6 +10,9 @@ runs in the workspace when the service has not heard from that session since it 
 `agents.artifact_commented` is recorded."""
 
 import json
+import os
+import shutil
+import sys
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -280,3 +283,53 @@ def test_clank_artifact_lists_a_folders_artifacts_and_exports_the_newest_version
     assert exported.exit_code == 0, exported.output
     assert "sweep version 2 as one page" in exported.output
     assert (folder / ".clank/artifacts/sweep/export/sweep-v2.html").is_file()
+
+
+def _link_folder(link: Path, target: Path) -> None:
+    """A link to a folder, as the agent could make one in its folder: a junction on Windows, else a symbolic link."""
+    if sys.platform == "win32":
+        import _winapi
+
+        _winapi.CreateJunction(str(target), str(link))
+    else:
+        os.symlink(target, link, target_is_directory=True)
+
+
+def test_an_export_reads_and_writes_only_below_the_version_and_follows_no_link(
+    kernel: Kernel, folder: Path, tmp_path: Path
+) -> None:
+    artifacts = artifacts_of(kernel)
+    artifacts.make("paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"])
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    (elsewhere / "secret.txt").write_text("the owner's own", encoding="utf-8")
+    kept = folder / ".clank/artifacts/sweep/artifact.json"
+    record = json.loads(kept.read_text(encoding="utf-8"))
+    for entry in [str(elsewhere / "secret.txt"), "../../../../../elsewhere/secret.txt"]:
+        record["versions"][0]["entry"] = entry
+        kept.write_text(json.dumps(record), encoding="utf-8")
+        with pytest.raises(ArtifactError, match="not a path inside the folder"):
+            artifacts.export("paper", "sweep", 1)
+    record["versions"][0]["entry"] = "report/index.html"
+    kept.write_text(json.dumps(record), encoding="utf-8")
+    _link_folder(folder / ".clank/artifacts/sweep/v1/linked", elsewhere)
+    page = Path(artifacts.export("paper", "sweep", 1)["file"]).read_text(encoding="utf-8")
+    assert "the owner's own" not in page, "a file reached through a link is left out"
+    assert "secret.txt" not in page
+    target = folder / ".clank/artifacts/sweep/export"
+    shutil.rmtree(target)
+    _link_folder(target, elsewhere)
+    with pytest.raises(ArtifactError, match="is a link"):
+        artifacts.export("paper", "sweep", 1)
+    assert sorted(each.name for each in elsewhere.iterdir()) == ["secret.txt"], "nothing written through the link"
+
+
+def test_a_new_version_is_never_written_through_a_link(kernel: Kernel, folder: Path, tmp_path: Path) -> None:
+    artifacts = artifacts_of(kernel)
+    artifacts.make("paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"])
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    _link_folder(folder / ".clank/artifacts/sweep/v2", elsewhere)
+    with pytest.raises(ArtifactError, match="is a link"):
+        artifacts.make("paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"])
+    assert list(elsewhere.iterdir()) == [], "nothing written through the link"

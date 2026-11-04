@@ -134,7 +134,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner does | `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (25), `tests/console/test_terminal.py` (5) |
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (15), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
-| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (25), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (9), `tests/docker/test_escape.py` (5) |
+| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (25), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (9), `tests/docker/test_escape.py` (5), `tests/kernel/test_infolder.py` (4) |
 | 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (11), `tests/console/test_folder.py` (25), `tests/contract/test_agent_program.py` (2) |
 | 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_docker_containers.py` (19), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (12), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
 | 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_workspace_operations.py` (17) |
@@ -486,8 +486,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (4), `vscode/test/readout.test.ts` (12) |
 | 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (3), `vscode/test/conversation.test.ts` (9) |
-| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (11), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (5) |
-| 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (7), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/components/workspaces/test_jobs_runner.py` (2) |
+| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (13), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (5) |
+| 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (8), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
 | 9 | Seeing images | `tests/components/agents/test_agent_files.py` (3), `tests/components/agents/test_look.py` (3) |
@@ -498,10 +498,10 @@ Each test file begins with a docstring naming the design sections it verifies (d
 
 | § | Section | Tests |
 | --- | --- | --- |
-| 1 | A board is a file in the folder | `tests/components/agents/test_boards.py` (9) |
-| 2 | What a board holds | `tests/components/agents/test_boards.py` (9), `vscode/test/board.test.ts` (11) |
+| 1 | A board is a file in the folder | `tests/components/agents/test_boards.py` (10) |
+| 2 | What a board holds | `tests/components/agents/test_boards.py` (10), `vscode/test/board.test.ts` (11) |
 | 3 | The owner on the board | `vscode/test/board.page.test.ts` (2), `vscode/test/board.test.ts` (11) |
-| 4 | The agent on the board | `tests/components/agents/test_board_place.py` (7), `tests/components/agents/test_board_tools.py` (3), `tests/components/agents/test_boards.py` (9) |
+| 4 | The agent on the board | `tests/components/agents/test_board_place.py` (7), `tests/components/agents/test_board_tools.py` (3), `tests/components/agents/test_boards.py` (10) |
 | 5 | Asking the agent about the board | none yet |
 | 6 | LaTeX on the board | `tests/components/agents/test_board_latex.py` (6), `tests/docker/test_board_layer.py` (1), `vscode/test/board.test.ts` (11) |
 | 7 | A board's figures out: export | `tests/components/agents/test_board_export.py` (5), `tests/components/agents/test_board_export_service.py` (3), `tests/components/agents/test_board_tools.py` (3), `tests/docker/test_board_layer.py` (1), `vscode/test/board.test.ts` (11) |
@@ -832,6 +832,7 @@ Design 0021 §6: the agent the owner talks to starts a long computation as a job
 - the routes start follow and stop a job and list every workspaces
 - the readout carries the jobs running in the folders workspace
 - clank jobs lists shows and stops them
+- a job folder that is a link is never read
 
 ### `tests/components/agents/test_agent_servers.py`
 
@@ -876,6 +877,8 @@ Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copi
 - the routes make list and read artifacts and take the owners comment
 - an export is one file with its libraries and data inside that needs nothing else
 - clank artifact lists a folders artifacts and exports the newest version
+- an export reads and writes only below the version and follows no link
+- a new version is never written through a link
 
 ### `tests/components/agents/test_board_export.py`
 
@@ -939,6 +942,7 @@ Design 0022 §1, §2 and §4: a board is a `.board` file of the folder, JSON: it
 - the routes make read and change a board
 - clank board makes lists and shows a folders boards
 - the agent closes a pin it dealt with
+- a boards history is never written through a link
 
 ### `tests/components/agents/test_changes.py`
 
@@ -4964,6 +4968,15 @@ Design 0001 §7.2 and design 0002 §2.16: everything of one user lives under CLA
 - the default is dot clank in the home folder
 - ensure creates every folder
 - a homes id is the same every time and differs between homes
+
+### `tests/kernel/test_infolder.py`
+
+Design 0004 §3: Clank reads and writes the files it keeps in a workspace's folder only below the folder and never through a link the agent could have made there: a name that is absolute or climbs out with .., or a link on the way (a symbolic link, a Windows junction), is refused (decision 0159).
+
+- a name below the folder is its path there even before the file is made
+- a name that is absolute or climbs out is refused
+- a link to a folder anywhere on the way is refused
+- a link to a file is refused
 
 ### `tests/kernel/test_live_stream.py`
 
