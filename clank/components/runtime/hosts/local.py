@@ -181,8 +181,8 @@ def _identity(host: str, pid: int) -> ProcessIdentity | None:
         return None
     try:
         process = psutil.Process(pid)
-        if process.status() == psutil.STATUS_ZOMBIE:
-            return None
+        if sys.platform != "win32" and process.status() == psutil.STATUS_ZOMBIE:  # Windows has none, and its status()
+            return None  # reads every process and thread, for every status the gateway is asked for
         return ProcessIdentity(host, pid, _start(process), command_hash(process.cmdline()))
     except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
         return None

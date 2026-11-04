@@ -168,3 +168,17 @@ def test_a_files_facts_and_a_ports_listener_are_read(tmp_path: Path) -> None:
 def test_a_step_whose_program_is_missing_is_refused_in_the_hosts_words(tmp_path: Path) -> None:
     with pytest.raises(HostError, match="cannot run clank-no-such-program"):
         LocalHost().run_step(["clank-no-such-program"], {}, str(tmp_path), lambda text: None, lambda: False)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows has no zombies, and its status() reads every process")
+def test_on_windows_knowing_a_process_never_reads_the_whole_process_table(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Design 0003 §2: psutil's status() snapshots every process and thread on Windows, holding the interpreter 23 to
+    30 ms, for every gateway status the service reads; a zombie, which it rules out, is a Unix process's state."""
+
+    def whole_table(self: psutil.Process) -> str:
+        raise AssertionError("status() read the whole process table")
+
+    monkeypatch.setattr(psutil.Process, "status", whole_table)
+    found = local._identity("local", os.getpid())
+    assert found is not None
+    assert found.pid == os.getpid()
