@@ -15,6 +15,10 @@ Whatever is started to run on its own (the service, an engine, an application) g
 console of its own that has no window, never none at all, since a program without a console that starts a console
 program (a virtual environment's python.exe starts the real interpreter) opens a new, visible window for it. Starting,
 adopting and stopping the engines Clank runs is the hosts' (`components/runtime/hosts`).
+A program named without a folder is found on the PATH alone (`resolved`): Windows looks in the current folder first,
+which is often a project's, so a file there named like a helper would run in its place; `search_path_only` tells
+Windows, and Python's `shutil.which`, the same for everything this process starts. Clank runs itself again as
+`clank_command` says: `python -P -m clank`, since `-m` alone imports a `clank` folder found in the current folder.
 """
 
 import contextlib
@@ -24,7 +28,7 @@ import subprocess
 import sys
 import threading
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -68,6 +72,57 @@ class TimedAnswer(Protocol):
         """Its exit status, output and errors; `input`, when given, is what it reads."""
 
 
+SEARCH_PATH_ONLY = "NoDefaultCurrentDirectoryInExePath"  # Windows: programs by name never from the current folder
+RUNNABLE = ".exe"  # what Windows adds to a program named without its extension
+
+
+def search_path_only(environ: MutableMapping[str, str] | None = None, platform: str = sys.platform) -> None:
+    """On Windows, keep the current folder out of the search for a program named without its folder, for this process
+    and every program it starts (they inherit the variable); `shutil.which` reads it too. Elsewhere nothing: the current
+    folder is searched only when PATH names it."""
+    if platform == "win32":
+        (os.environ if environ is None else environ).setdefault(SEARCH_PATH_ONLY, "1")
+
+
+def found_on_path(name: str, path: str | None = None) -> str | None:
+    """Where the PATH's folders hold the program `name` (.exe added when it has no extension, as Windows adds it), the
+    current folder never searched; None when none does."""
+    folders = (os.environ.get("PATH", "") if path is None else path).split(os.pathsep)
+    named = name if os.path.splitext(name)[1] else name + RUNNABLE
+    for folder in folders:
+        if not folder.strip() or folder.strip() == os.curdir:
+            continue
+        candidate = os.path.join(folder, named)
+        if os.path.exists(candidate) and not os.path.isdir(candidate):  # an app alias (wt, winget) is not a plain file
+            return candidate
+    return None
+
+
+def resolved(arguments: Sequence[str], platform: str = sys.platform, path: str | None = None) -> list[str]:
+    """The command with its program found on the PATH alone when it is named without a folder, on Windows (the module's
+    docstring); elsewhere, and for a program given with its folder, as it is. One the PATH does not have is missing
+    (FileNotFoundError, as starting a missing program raises): Windows would look for it in the current folder."""
+    command = list(arguments)
+    if platform != "win32" or not command or os.path.dirname(command[0]):
+        return command
+    found = found_on_path(command[0], path)
+    if found is None:
+        raise FileNotFoundError(f"{command[0]} is not on the PATH")
+    return [found, *command[1:]]
+
+
+def clank_command(*arguments: str, python: str | None = None) -> list[str]:
+    """The command that runs this Clank again (`python -P -m clank ...`): `-P` keeps the current folder off the module
+    path, where a folder named clank would be imported in place of the installed package."""
+    return [python or sys.executable, "-P", "-m", "clank", *arguments]
+
+
+def windows_powershell(environ: Mapping[str, str] = os.environ) -> str:
+    """Windows PowerShell's own program, in the system's folder, never one found by its name."""
+    system = os.path.join(environ.get("SYSTEMROOT") or r"C:\Windows", "System32")
+    return os.path.join(system, "WindowsPowerShell", "v1.0", "powershell.exe")
+
+
 def decode(output: bytes) -> str:
     """A program's output as text: UTF-16 when it has the zero bytes UTF-16 puts in plain text, else UTF-8."""
     if output.count(b"\x00") > len(output) // 4:
@@ -96,7 +151,7 @@ def run_answer(
         flags = subprocess.CREATE_NO_WINDOW
     try:
         process = subprocess.Popen(
-            list(arguments),
+            resolved(arguments),
             stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -129,7 +184,7 @@ def launch_program(arguments: Sequence[str]) -> bool:
     waiting for it: whether it started. A thread waits for its end, so it is never left unreaped."""
     try:
         process = subprocess.Popen(
-            list(arguments),
+            resolved(arguments),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -164,7 +219,7 @@ def stream_command(
         flags = subprocess.CREATE_NO_WINDOW
     try:
         process = subprocess.Popen(
-            list(arguments),
+            resolved(arguments),
             cwd=cwd,
             env={**os.environ, **env} if env else None,
             stdin=subprocess.DEVNULL,

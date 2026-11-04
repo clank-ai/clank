@@ -670,7 +670,7 @@ class Gateway:
             if holder is not None:
                 self.problem = f"port {port} is held by {holder}: give the gateway another port in config/gateway.json"
                 return self.status()
-            argv = [sys.executable, "-m", "clank.components.gateway.server", "--port", str(port)]
+            argv = [sys.executable, "-P", "-m", "clank.components.gateway.server", "--port", str(port)]
             socket, refused = self._ready_socket()
             if socket is not None:
                 argv += ["--socket-folder", str(socket.parent)]

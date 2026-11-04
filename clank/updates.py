@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from clank import __version__
-from clank.kernel.processes import background_flags
+from clank.kernel.processes import background_flags, clank_command, resolved, windows_powershell
 
 REPO = "https://github.com/clank-ai/clank"
 API = "https://api.github.com/repos/clank-ai/clank"
@@ -58,8 +58,8 @@ def run(argv: list[str], cwd: str) -> tuple[int, str]:
     """A command's status and what it said (its errors too when it failed)."""
     try:
         done = subprocess.run(
-            argv, cwd=cwd or None, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120,
-            check=False, creationflags=background_flags(),
+            resolved(argv), cwd=cwd or None, capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=120, check=False, creationflags=background_flags(),
         )  # fmt: skip
     except (OSError, subprocess.TimeoutExpired) as error:
         return 1, str(error)
@@ -226,25 +226,25 @@ def helper_script(command: list[str], log: Path, waits_for: int, windows: bool) 
 
 def restart_service() -> bool:
     """Start the service again on the new code, when it runs; whether it ran."""
-    status, _ = run([sys.executable, "-m", "clank", "status"], "")
+    status, _ = run(clank_command("status"), "")
     if status != 0:
         return False
-    run([sys.executable, "-m", "clank", "stop"], "")
-    run([sys.executable, "-m", "clank", "serve", "--background"], "")
+    run(clank_command("stop"), "")
+    run(clank_command("serve", "--background"), "")
     return True
 
 
 def stop_running() -> None:
     """Stop the service and the gateway, whose files are the tool's (decision 0145)."""
-    run([sys.executable, "-m", "clank", "stop"], "")
-    run([sys.executable, "-m", "clank", "gateway", "stop"], "")
+    run(clank_command("stop"), "")
+    run(clank_command("gateway", "stop"), "")
 
 
 def start_helper(script: Path) -> None:
     """Start the helper detached, so it outlives `clank update`."""
     if sys.platform == "win32":
         flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-        argv = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)]
+        argv = [windows_powershell(), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)]
         subprocess.Popen(argv, creationflags=flags, close_fds=True)
     else:
         subprocess.Popen(["sh", str(script)], start_new_session=True, close_fds=True)

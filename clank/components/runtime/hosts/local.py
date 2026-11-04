@@ -26,7 +26,7 @@ from typing import ClassVar
 import psutil
 
 from clank.components.runtime.hosts.host import EngineHost, HostError, ProcessIdentity, Stopped, command_hash
-from clank.kernel.processes import background_flags, stream_command
+from clank.kernel.processes import background_flags, resolved, stream_command
 
 CHUNK = 8 * 1024 * 1024
 BECOME_SECONDS = 10.0  # the most a start waits for its process to show the command line it was started with
@@ -51,7 +51,7 @@ class LocalHost(EngineHost):
         with log.open("ab") as output:
             try:
                 process = subprocess.Popen(
-                    list(argv),
+                    resolved(argv),
                     cwd=cwd or None,
                     env={**os.environ, **env},
                     stdin=subprocess.DEVNULL,
@@ -108,7 +108,7 @@ class LocalHost(EngineHost):
             flags = subprocess.CREATE_NO_WINDOW
         try:
             done = subprocess.run(
-                list(argv), capture_output=True, timeout=60, stdin=subprocess.DEVNULL, creationflags=flags
+                resolved(argv), capture_output=True, timeout=60, stdin=subprocess.DEVNULL, creationflags=flags
             )
         except (OSError, subprocess.TimeoutExpired):
             return None

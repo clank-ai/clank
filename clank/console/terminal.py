@@ -24,6 +24,8 @@ from typing import Any, Protocol
 from textual import events
 from textual.geometry import Size
 
+from clank.kernel.processes import resolved
+
 Terminal = Callable[[Sequence[str]], int]
 STD_INPUT_HANDLE = -10
 
@@ -50,7 +52,7 @@ def attached(argv: Sequence[str]) -> int:
     """Run a program in this terminal and wait for its end; Ctrl+C is the program's meanwhile."""
     previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
     try:
-        return subprocess.call(list(argv))
+        return subprocess.call(resolved(argv))
     finally:
         signal.signal(signal.SIGINT, previous)
 

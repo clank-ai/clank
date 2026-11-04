@@ -31,6 +31,7 @@ from urllib.parse import quote
 import click
 
 from clank.cli import common
+from clank.kernel.processes import resolved
 from clank.kernel.where import REMOTE, vscode_place, vscode_request, where_to_open
 
 WORKSPACE = click.option("-w", "--workspace", default="", help="The flow's workspace; default: this folder's.")
@@ -478,7 +479,7 @@ LOOK = "in the console's Flow view: F10, or `clank console --page monitor --view
 
 def terminal(argv: list[str]) -> int:
     """Run a command attached to this terminal (OpenCode, on the planning session); its exit status."""
-    return subprocess.call(list(argv))
+    return subprocess.call(resolved(argv))
 
 
 def open_vscode(client: Any, folder: str) -> None:

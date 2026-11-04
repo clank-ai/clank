@@ -32,6 +32,7 @@ from clank.cli import common, follow
 from clank.client import Client, ClientError, NotRunning
 from clank.kernel import where
 from clank.kernel.home import Home
+from clank.kernel.processes import resolved
 from clank.kernel.service import ServiceError, start_detached
 
 DEFAULT_PRESET = "daily-262k"
@@ -40,7 +41,7 @@ Terminal = Callable[[Sequence[str]], int]
 
 def terminal(argv: Sequence[str]) -> int:
     """Run a command attached to this terminal; its exit status."""
-    return subprocess.call(list(argv))
+    return subprocess.call(resolved(argv))
 
 
 @click.command()

@@ -20,6 +20,7 @@ from clank.cli.autostart import autostart
 from clank.cli.console import console
 from clank.cli.service import serve, status, stop
 from clank.cli.update import update
+from clank.kernel.processes import search_path_only
 
 
 class Clank(click.Group):
@@ -45,8 +46,10 @@ def main(context: click.Context) -> None:
 
 
 def run() -> None:
-    """The `clank` command's entry, its script's: the docker group taken first where the account joined it since its
-    last login (decision 0150), then the command."""
+    """The `clank` command's entry, its script's: programs named without a folder found on the PATH alone, never in the
+    current folder (`search_path_only`), the docker group taken where the account joined it since its last login
+    (decision 0150), then the command."""
+    search_path_only()
     dockergroup.take(sys.argv[1:])
     main()
 

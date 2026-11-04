@@ -70,7 +70,7 @@ def test_windows_terminals_split_is_its_documented_command_line_with_clanks_home
     python = r"C:\work\.venv\Scripts\python.exe"
     argv = split_argv(r"C:\work\study; two", "myproject", python, {})
     assert argv == ["wt", "-w", "0", "split-pane", "-V", "-d", r"C:\work\study\; two",
-                    python, "-m", "clank", "flow", "attach", "--workspace", "myproject"]  # fmt: skip
+                    python, "-P", "-m", "clank", "flow", "attach", "--workspace", "myproject"]  # fmt: skip
     homed = split_argv(r"C:\work", "myproject", python, {"CLANK_HOME": r"D:\clank"})
     assert homed[-2:] == ["--home", r"D:\clank"], "a new pane does not inherit the console's environment"
 

@@ -17,6 +17,7 @@ import sys
 from collections.abc import Sequence
 
 from clank.components.workspaces.adapters.docker_engine import docker_group
+from clank.kernel.processes import clank_command
 
 GUARD = "CLANK_DOCKER_GROUP"  # set in a command run again through sg, which is never run again
 WINDOWS = sys.platform == "win32"
@@ -25,7 +26,7 @@ WINDOWS = sys.platform == "win32"
 def command(argv: Sequence[str]) -> list[str]:
     """The command line that runs this `clank` command again with the docker group: through `sg docker`, which hands
     the command to /bin/sh as one line."""
-    return ["sg", "docker", "-c", shlex.join([sys.executable, "-m", "clank", *argv])]
+    return ["sg", "docker", "-c", shlex.join(clank_command(*argv))]
 
 
 def pending() -> bool:

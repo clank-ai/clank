@@ -46,7 +46,7 @@ each designed at the start of their own milestone (§3.1), in a design document 
 | § | Section | Status |
 | --- | --- | --- |
 | 1 | The whole system | Approved 2026-10-11; two terms renamed, the `machine` component listed, and two sentences aligned with the outside review after approval (revision log); revised after approval 2026-10-26: a dropped client no longer closes a server's socket on Windows, and a service that holds its home's lock without answering is named in `state/service.pid` and ended by `clank stop` (the owner's service went deaf that day and could be neither stopped nor started) |
-| 2 | The kernel | Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021 |
+| 2 | The kernel | Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021; §2.9 revised after approval 2026-11-04: Clank runs itself again with `-P`, and on Windows finds a program named alone on the PATH alone (decision 0155) |
 | 3 | The skeleton (M0) and the order of milestones | Approved 2026-10-11, after its revision for the outside review |
 
 ## 1. The whole system
@@ -365,6 +365,10 @@ only what it started; after its own restart, it finds its processes and containe
 process on a port or the GPU is reported, never touched. Containers are run through a container-platform adapter
 (Docker Desktop first; Docker Engine on Linux).
 
+A program Clank starts is the one it means, whatever folder the command was typed in (decision 0155): Clank runs
+itself again as `python -P -m clank`, never importing a `clank` folder found in the current folder, and on Windows a
+program named without its folder is found on the PATH alone, never in the current folder.
+
 ### 2.10 Adapters
 
 Each kind of adapter (engine, endpoint, dialect, container platform, agent program, channel, registry) has an
@@ -669,3 +673,4 @@ Every change to an approved section, with its reason. Approvals themselves are i
 | 2026-10-11 | §1 | "Requests" to the user renamed *questions*; the "reach" component renamed *remote*; the `machine` component listed | A model request and the verb "reach" already used those words, and a name must mean one thing (principle 4); §2 and §3 need the `machine` component |
 | 2026-10-11 | Sections | The parts built on the kernel (workspaces, network, agents and modes, tools and skills, the phone, VS Code, the console's screens) moved out of this document: each is designed at the start of its milestone (§3.1) | The owner: start building the skeleton soon, and let each built step inform the next design |
 | 2026-10-11 | §1 | "The kernel does not change" became "should not need to change, and when it must, it changes by a decision"; the push example shows the exact push that is approved, and git's own check | The outside review: the owner asked for "minimal need to change the foundation", not none; an approval covers exactly what it showed (§2.5) |
+| 2026-11-04 | §2.9 | A program Clank starts is the one it means: Clank runs itself again as `python -P -m clank`, and on Windows a program named without its folder is found on the PATH alone (decision 0155) | The audit of 2026-10-30: Clank's commands start in a project's folder, where `-m` would import a folder named clank and Windows looks for a program before the PATH |

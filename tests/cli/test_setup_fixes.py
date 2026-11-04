@@ -167,6 +167,7 @@ def test_the_terminal_runner_inherits_the_terminal_so_sudo_asks_itself_and_nothi
         return 0
 
     monkeypatch.setattr(subprocess, "call", call)
+    monkeypatch.setattr(setupcli, "resolved", list)  # the program as named (Windows has a sudo of its own)
     assert setupcli.attached(list(START)) == 0
     assert calls == [(list(START), {})], "no stdin, stdout, stderr or capture: the terminal's own"
 
@@ -291,7 +292,7 @@ def test_the_models_step_asks_once_cloud_local_or_both_and_hands_the_terminal_to
 ) -> None:
     platform.images.add(image_tag())
     shown = run(home, input=f"{answer}\nn\n")
-    add = [sys.executable, "-m", "clank", "model", "add"]
+    add = [sys.executable, "-P", "-m", "clank", "model", "add"]
     assert terminal.ran == [[*add, f"--{path}"] for path in paths], "the cloud first, then local"
     assert "in the cloud through OpenRouter (c), on this computer's GPU (l), or both (b)" in said(shown)
 

@@ -41,7 +41,6 @@ import os
 import shutil
 import signal
 import subprocess
-import sys
 import textwrap
 import time
 from collections.abc import Callable, Sequence
@@ -57,6 +56,7 @@ from clank.components.agents import checklist, setupfacts
 from clank.components.workspaces.service import DockerError, start_platform
 from clank.kernel.access import read_connection
 from clank.kernel.home import Home
+from clank.kernel.processes import clank_command, resolved
 from clank.kernel.service import AlreadyRunning, ServiceError, start_detached
 
 MARK = 12  # the state's column: its mark and its word
@@ -169,7 +169,7 @@ def attached(argv: Sequence[str]) -> int | str:
     while it runs. Its exit status, or why it could not start."""
     previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
     try:
-        return subprocess.call(list(argv))
+        return subprocess.call(resolved(argv))
     except OSError as error:
         return f"{argv[0] if argv else 'it'} could not start: {error}"
     finally:
@@ -320,7 +320,7 @@ class Fixes:
             self.later.append(item)
             return
         for path in paths:
-            outcome = attached([sys.executable, "-m", "clank", "model", "add", f"--{path}"])
+            outcome = attached(clank_command("model", "add", f"--{path}"))
             if outcome != 0:
                 echo(f"Add a model ended without a {path} model; `clank model add` tries again.", "  ")
                 return

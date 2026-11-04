@@ -28,6 +28,8 @@ from pathlib import PurePosixPath, PureWindowsPath
 from typing import Any
 from urllib.parse import quote
 
+from clank.kernel.processes import clank_command
+
 which = shutil.which
 SPLIT_SECONDS = 10.0  # how long `wt` may take to hand the split to Windows Terminal
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
@@ -129,7 +131,9 @@ def console_opening(env: Mapping[str, str], look: Look | None = None) -> str:
 def split_argv(folder: str, workspace: str, python: str, env: Mapping[str, str]) -> list[str]:
     """Windows Terminal's command that splits its current window, `clank flow attach` in the new pane on the right."""
     home = env.get("CLANK_HOME")
-    command = [python, "-m", "clank", "flow", "attach", "--workspace", workspace, *(["--home", home] if home else [])]
+    command = clank_command(
+        "flow", "attach", "--workspace", workspace, *(["--home", home] if home else []), python=python
+    )
     return ["wt", "-w", "0", "split-pane", "-V", "-d", *(part.replace(";", "\\;") for part in [folder, *command])]
 
 

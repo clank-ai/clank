@@ -41,7 +41,7 @@ from clank.kernel.core import Kernel, open_kernel
 from clank.kernel.events import CLANK
 from clank.kernel.home import Home
 from clank.kernel.locks import LockHeld, hold
-from clank.kernel.processes import background_flags
+from clank.kernel.processes import background_flags, clank_command
 from clank.kernel.service_kinds import ServiceSettings
 
 log = logging.getLogger(__name__)
@@ -314,7 +314,7 @@ def start_detached(home: Home, port: int | None = None, timeout: float = 30) -> 
     existing = answering(home)
     if existing is not None:
         raise AlreadyRunning(existing, home)
-    arguments = [sys.executable, "-m", "clank", "serve", *(["--port", str(port)] if port else [])]
+    arguments = clank_command("serve", *(["--port", str(port)] if port else []))
     environment = {**os.environ, "CLANK_HOME": str(home.root)}
     log_file = home.logs / "service.log"
     offset = log_file.stat().st_size if log_file.exists() else 0

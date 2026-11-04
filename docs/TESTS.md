@@ -83,7 +83,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.6 | Policy | none yet |
 | 2.7 | Callers and access | `tests/components/gateway/test_callers.py` (6), `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (7), `vscode/test/connection.test.ts` (2), `vscode/test/controller.test.ts` (18), `vscode/test/live.test.ts` (1) |
 | 2.8 | Secrets | `tests/components/tools/test_servers.py` (7), `tests/kernel/test_secrets.py` (4) |
-| 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_sandbox.py` (10), `tests/kernel/test_processes.py` (8) |
+| 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_sandbox.py` (10), `tests/kernel/test_processes.py` (8), `tests/kernel/test_programs_found.py` (6) |
 | 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (9), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
 | 2.11 | The library: what the user installs | `tests/components/tools/test_servers.py` (7) |
 | 2.12 | Files for the user | none yet |
@@ -4995,6 +4995,17 @@ Design 0002 §2.9: Clank runs a program to read its answer with a time limit; a 
 - output in utf16 is decoded
 - a streamed commands lines come as written then its exit status
 - a canceled command is ended with the processes it started
+
+### `tests/kernel/test_programs_found.py`
+
+Design 0002 §2.9: a program Clank starts is the one it means. Clank runs itself again with `python -P -m clank`, so a folder named clank in the current folder is never imported in place of the installed package; on Windows a program named without its folder is found on the PATH alone, never in the current folder, which is often a project's, and the whole process (and every program it starts) is told the same (NoDefaultCurrentDirectoryInExePath).
+
+- clank run again from a folder holding a clank package runs the installed one
+- every way clank runs itself again keeps the current folder off the module path
+- on windows a program named alone is found on the path never in the current folder
+- the clank command tells windows to keep the current folder out of every search
+- on windows a helper planted in the current folder never runs
+- the update helper runs windows powershell from the systems folder
 
 ### `tests/kernel/test_question_numbers.py`
 

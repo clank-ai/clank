@@ -41,7 +41,7 @@ def test_a_command_joined_since_the_last_login_runs_again_through_sg_with_its_ar
         dockergroup.take(["setup", "--check", "it's here"])
     assert linux["file"] == "sg"
     assert linux["argv"][:3] == ["sg", "docker", "-c"]
-    assert shlex.split(linux["argv"][3]) == [sys.executable, "-m", "clank", "setup", "--check", "it's here"]
+    assert shlex.split(linux["argv"][3]) == [sys.executable, "-P", "-m", "clank", "setup", "--check", "it's here"]
     assert linux["env"][dockergroup.GUARD] == "1", "run again once"
 
 
