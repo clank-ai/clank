@@ -25,12 +25,14 @@ import type { Choice } from "./core/presenter";
 import { headerLink, nextWait, pagesAfterSnapshot, pollsAfter, RETRY_MS, streamParameters } from "./core/following";
 import { type FootLine, footLine, type Readout } from "./core/readout";
 import { applyEvent, emptyTalk, failed, liveItems, sent, type Talk } from "./core/talking";
+import { Throttle } from "./core/throttle";
 
 export const AGENT = "clank.agent";
 const AGENT_TERMINAL = "OpenCode · ";
 const BUSY_MS = 2000; // polling, when the stream fails: while the session works
 const IDLE_MS = 8000; // and while it does not
 const DRAW_MS = 100; // the page is drawn at most this often
+const READOUT_MS = 1000; // the readout is asked for at most this often, however many snapshots come
 const PAGE = 30;
 const PASTED = ".clank/pasted";
 const SKIPPED = "{**/node_modules/**,**/.git/**,**/.clank/**,**/__pycache__/**}";
@@ -276,6 +278,7 @@ export class AgentPanel implements vscode.Disposable {
           continue;
         }
         let reopen = false;
+        const readouts = new Throttle(READOUT_MS, () => this.refreshReadout(client, folder)); // once a second at most
         try {
           const parameters = streamParameters(this.talk, folder, this.pinned, PAGE);
           for await (const event of client.stream("agents/conversation/stream", parameters, control.signal)) {
@@ -285,9 +288,9 @@ export class AgentPanel implements vscode.Disposable {
             this.talk = applyEvent(this.talk, event);
             if (event.name === "snapshot") {
               ({ older: this.older, cursor: this.cursor } = pagesAfterSnapshot(before, this.talk.conversation, this.older, this.cursor));
-              void this.refreshReadout(client, folder);
+              readouts.run();
             } else if (event.name === "status" && !(event.data as { busy?: boolean }).busy) {
-              void this.refreshReadout(client, folder); // idle again: the foot's numbers once more
+              readouts.run(); // idle again: the foot's numbers once more
             }
             if (this.talk.reconnect !== null) {
               this.forget(); // the folder's newest session changed: the stream is opened on it
