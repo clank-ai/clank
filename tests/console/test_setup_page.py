@@ -71,7 +71,7 @@ async def test_each_item_shows_what_it_is_now_and_what_to_do_with_the_key_that_d
         frame = await frame_when(pilot, app, TITLE, "Next:", "Clank's VS Code window")
         text = said(app)
         for words in ("Docker installed", "Fake Docker 4.85.0", "no model has answered a test request yet",
-                      "press m", "press f", "This computer has NVIDIA GeForce RTX 5080, 16 GB: local models can run",
+                      "press m", "press f", "16 GB: local models need an engine built by hand",
                       "optional: VS Code is not installed"):  # fmt: skip
             assert words in text, words
         assert "Next:  b build the sandbox image" in frame

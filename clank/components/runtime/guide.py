@@ -196,7 +196,7 @@ def guide(
             "said": ["Paste your OpenRouter key (openrouter.ai, Keys). It is never shown: dots, then its last four."],
             "placeholder": "paste your OpenRouter key",
             "hint": "Clank asks OpenRouter whether it takes the key (which costs nothing) and keeps it only then, in "
-            "CLANK_HOME/secrets, readable by you alone. It is never shown, logged or copied.",
+            "its own folder's secrets (~/.clank/secrets), readable by you alone. It is never shown, logged or copied.",
             "refused": "The field is cleared: paste the key again.",
         },
         {"id": "model", "said": ["OpenRouter's live list of the models that take tool calls (the agent needs them)."]},
@@ -405,7 +405,8 @@ def local_steps(needs: dict[str, Any], preset: str) -> list[dict[str, Any]]:
         words = f"{engine['label']} {engine['version']} is not installed here, and Clank has no recipe for it"
         return [{
             "kind": "cannot", "said": words, "title": "Not installed",
-            "asks": f"{words}: build it, then adopt it where it is (clank engine adopt); or choose Cloud.",
+            "asks": f"{words}: build it, then adopt it where it is (clank engine adopt); or choose Cloud. Its build "
+            "steps: github.com/clank-ai/clank, docs/models (written for Windows with WSL and an RTX 50 so far).",
             "call": None,
         }]  # fmt: skip
     if not engine["installed"] and engine["recipe"]:

@@ -29,7 +29,7 @@ from tests.support.cloud import CloudBench
 
 pytestmark = pytest.mark.anyio
 
-KEY = "made-up-openrouter-key"
+KEY = "sk-or-v1-made-up-key"
 HIDDEN = KEY[:-4]  # the part of the key no frame may hold
 NOW = datetime(2026, 10, 21, 9, 14, tzinfo=UTC)
 
@@ -43,7 +43,7 @@ def make(client: Client, home: Home) -> ClankConsole:
 def test_a_key_draws_as_dots_then_its_last_four() -> None:
     assert hidden("") == ""
     assert hidden("abc") == "•••", "a few characters: dots alone"
-    assert hidden(KEY) == "••••••••••••••••••…-key"
+    assert hidden(KEY) == "•" * (len(KEY) - 4) + "…-key", "a dot for each character but its last four"
     assert hidden("x" * 200).endswith("…xxxx")
     assert len(hidden("x" * 200)) <= 30, "a long key never draws wider than its field"
 

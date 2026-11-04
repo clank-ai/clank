@@ -27,7 +27,7 @@ def test_a_name_below_the_folder_is_its_path_there_even_before_the_file_is_made(
     assert inside(tmp_path, "./a/./b") == tmp_path / "a" / "b"
 
 
-@pytest.mark.parametrize("named", ["/etc/passwd", r"C:\Users\someone\.ssh\id_ed25519", "../outside", "a/../../b", ""])
+@pytest.mark.parametrize("named", ["/etc/passwd", r"D:\outside\notes.txt", "../outside", "a/../../b", ""])
 def test_a_name_that_is_absolute_or_climbs_out_is_refused(tmp_path: Path, named: str) -> None:
     with pytest.raises(Outside):
         inside(tmp_path, named)

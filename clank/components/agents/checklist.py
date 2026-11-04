@@ -376,7 +376,7 @@ def _model(facts: Facts) -> Item:
     if facts.system == "darwin":
         gpu = "A Mac has no NVIDIA GPU: the cloud is the way"
     elif facts.gpus:
-        gpu = f"This computer has {facts.gpus[0]}: local models can run on it"
+        gpu = f"This computer has {facts.gpus[0]}: local models need an engine built by hand"  # no recipe runs yet
     else:
         gpu = "This computer has no NVIDIA GPU Clank can use: the cloud is the way"
     said = f"no model has answered a test request yet. {gpu}"

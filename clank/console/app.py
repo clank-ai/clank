@@ -100,7 +100,7 @@ ACTIVITY_SECONDS = 2.0
 MACHINE_FROM = 130  # the narrowest terminal the machine column shows in by itself
 WIDER_FROM = 170  # from here the column is wider (`-wider` in clank.tcss), so processes' names fit
 MENU_NAME = 22  # a menu entry's key and name, before its badge
-SMALL_FROM = 100  # narrower than this, the menu narrows (`-small` in clank.tcss): its names shortened, "coming" hidden
+SMALL_FROM = 100  # narrower than this, the menu narrows (`-small` in clank.tcss): its names shortened, "later" hidden
 SMALL_NAME = 16  # a menu entry's key and name in a small terminal
 MACHINE_TOPICS = {"all", "meters", "operations", "connection", "activity"}
 
@@ -686,7 +686,7 @@ class ClankConsole(App[str]):
         for page in PAGES:
             entry = page.ENTRY
             yield ListItem(Label(menu_name(entry, MENU_NAME)), id=f"menu-{entry.id}", classes="page")
-        yield ListItem(Label("coming"), id="menu-coming", classes="divider", disabled=True)
+        yield ListItem(Label("later"), id="menu-coming", classes="divider", disabled=True)
         for entry in PLANNED:
             yield ListItem(Label(f"{entry.label:<22}{entry.milestone}"), id=f"menu-{entry.id}", classes="planned")
 

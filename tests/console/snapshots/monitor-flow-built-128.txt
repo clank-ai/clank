@@ -47,4 +47,4 @@
  │   sends work back and answers the run's questions as you would, within    │  │ - plan sees data/grid.csv, which is not in the folder, and neither plan   │
  │   limits you set. O again: it only watches. L shows its ledger.           │  │   nor a box before it writes it                                           │
 
- f10 next view  enter open  p pause  O orchestrator  + bigger boxes  - smaller boxes  L ledger  e edit the box  o open in VS Code  ? explain  f1 help
+ f10 next view  n new flow  r run from here  h run log  enter open  O orchestrator  L ledger  e edit the box  o open in VS Code  p pause  ? explain  f1 help

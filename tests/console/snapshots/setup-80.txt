@@ -23,7 +23,7 @@ Setup              │ │ press b                                              
                    │ │  6  A model                                          │
                    │ │ ✗ no model has answered a test request yet. This     │
                    │ │ computer has NVIDIA GeForce RTX 5080, 16 GB: local   │
-                   │ │ models can run on it                                 │
+                   │ │ models need an engine built by hand                  │
                    │ │ → Add a model: in the cloud through OpenRouter (with │
                    │ │ your OpenRouter key), on this computer's GPU, or     │
                    │ │ both (the cloud first, then local) · press m         │

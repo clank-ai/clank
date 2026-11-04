@@ -6,8 +6,8 @@ It answers OpenRouter's routes under `/api/v1`: `GET /key` (the key's facts), `G
 those that take tool calls when asked `supported_parameters=tools`; refused, as OpenRouter refuses it, when asked
 `category` beside it), `POST /chat/completions` (a whole answer, or a
 stream of the recorded lines, comment lines among them) and `GET /generation` (a request's record afterward, once
-`generations_ready`). Every route takes only its key, `made-up-openrouter-key` (never one that starts with `sk-`, so
-the repository's secrets check passes): any other is refused as the recording's `key refused` says. What a chat request
+`generations_ready`). Every route takes only its key, `sk-or-v1-made-up-key` (shaped as OpenRouter's, and too short for
+the repository's secrets check): any other is refused as the recording's `key refused` says. What a chat request
 is answered with is the next of `plays` (an exchange's name: `tool call`, `thinking`, `comments`, `mid-stream error`,
 `cut`, `no credits`, `budget`, `no model`, `rate limited`, `no provider`, `key refused`; or `silent`, nothing at all
 for `silence` seconds), else `stream` or `answer` as the request asks. `cost` replaces every usage's cost,
@@ -33,7 +33,7 @@ from tests.support.served import free_port
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "openrouter"
 DOCUMENTED = FIXTURES / "documented" / "http.json"
-KEY = "made-up-openrouter-key"
+KEY = "sk-or-v1-made-up-key"
 
 
 def recordings() -> list[Path]:

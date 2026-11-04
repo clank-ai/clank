@@ -49,9 +49,9 @@ def test_cloud_and_local_skip_the_choice(cloud_api: CloudBench) -> None:
 
 def test_a_refused_key_is_said_and_asked_again(cloud_api: CloudBench) -> None:
     cloud_api.add(key=False)
-    done = run("c\n" + "made-up-wrong-key\n" + f"{KEY}\n" + "2\n" + KEEP_SETTINGS)
+    done = run("c\n" + "sk-or-v1-wrong-key\n" + f"{KEY}\n" + "2\n" + KEEP_SETTINGS)
     assert done.exit_code == 0, done.output
-    assert "OpenRouter refused the key" in done.output
+    assert "OpenRouter did not take this key: check that it was copied whole" in done.output
     assert "The field is cleared: paste the key again." in done.output
     assert "cloud: Example Small (free) runs in the main slot." in done.output
 

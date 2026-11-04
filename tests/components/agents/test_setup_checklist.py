@@ -314,7 +314,7 @@ def test_the_image_not_built_is_to_do_and_one_being_built_shows_its_operation() 
         (
             "linux",
             ("NVIDIA GeForce RTX 5080, 16 GB",),
-            "This computer has NVIDIA GeForce RTX 5080, 16 GB: local models",
+            "This computer has NVIDIA GeForce RTX 5080, 16 GB: local models need an engine built by hand",
         ),
         ("linux", (), "no NVIDIA GPU Clank can use: the cloud is the way"),
         ("darwin", (), "A Mac has no NVIDIA GPU: the cloud is the way"),

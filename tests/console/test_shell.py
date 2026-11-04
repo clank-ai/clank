@@ -138,14 +138,14 @@ async def test_a_menu_highlight_overtaken_by_a_newer_one_never_takes_the_menu_ba
         menu = app.query_one("#menu", ListView)
         items = list(menu.query(ListItem).results(ListItem))
         first = next(item for item in items if item.id == "menu-home")
-        agents = next(n for n, item in enumerate(items) if item.id == "menu-agents")
+        agents = next(n for n, item in enumerate(items) if item.id == "menu-skills")
         menu.post_message(ListView.Highlighted(menu, first))  # Home's highlight, not heard yet...
         menu.index = agents  # ...when a newer one moves the menu on (a quick key, or a test's own move)
         pages = app.query_one("#pages", ContentSwitcher)
-        await settle(pilot, lambda: pages.current == "page-agents")
+        await settle(pilot, lambda: pages.current == "page-skills")
         for _ in range(10):
             await pilot.pause()
-            assert (menu.index, pages.current) == (agents, "page-agents"), "the older highlight took the menu back"
+            assert (menu.index, pages.current) == (agents, "page-skills"), "the older highlight took the menu back"
 
 
 async def test_the_header_shows_the_services_uptime_dockers_state_and_the_questions_waiting(

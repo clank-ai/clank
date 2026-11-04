@@ -57,4 +57,4 @@
  │ │ Enter opens its session: the Session view and its Guide                │ │
  │ └────────────────────────────────────────────────────────────────────────┘ │
 
- f10 next view  enter open  p pause  O orchestrator  ? explain  f1 help
+ f10 next view  n new flow  r run from here  h run log  ? explain  f1 help

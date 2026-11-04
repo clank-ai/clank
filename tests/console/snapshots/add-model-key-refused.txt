@@ -5,15 +5,15 @@ F4 This folder   ✗ │ ┌─ Your OpenRouter key ─────────�
 3 History          │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
 4 Docker         ● │ │ ▊ paste your OpenRouter key                                  ▎ │
 5 Machine          │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
-6 Operations       │ │ OpenRouter refused the key: it may have been deleted or        │
-7 Records          │ │ disabled. Set a new one: Providers and models, k; or clank     │
-8 Models         ● │ │ endpoint key openrouter (OpenRouter said: Made-up words: no    │
-9 Presets          │ │ auth credentials found)                                        │
-0 Providers and…   │ │ The field is cleared: paste the key again.                     │
-F1 Help            │ │                                                                │
-F2 Launch optio…   │ │ Enter: Clank asks OpenRouter whether it takes the key (which   │
-F3 MCP servers     │ │ costs nothing) and keeps it only then, in CLANK_HOME/secrets,  │
-F6 Workspaces      │ │ readable by you alone. It is never shown, logged or copied.    │
+6 Operations       │ │ OpenRouter did not take this key: check that it was copied     │
+7 Records          │ │ whole (an OpenRouter key starts sk-or-v1-, with nothing before │
+8 Models         ● │ │ or after it), or make a new one at openrouter.ai, Keys         │
+9 Presets          │ │ The field is cleared: paste the key again.                     │
+0 Providers and…   │ │                                                                │
+F1 Help            │ │ Enter: Clank asks OpenRouter whether it takes the key (which   │
+F2 Launch optio…   │ │ costs nothing) and keeps it only then, in its own folder's     │
+F3 MCP servers     │ │ secrets (~/.clank/secrets), readable by you alone. It is never │
+F6 Workspaces      │ │ shown, logged or copied.                                       │
 F7 Requests        │ └────────────────────────────────────────────────────────────────┘
 F8 CPU models      │
 F9 Phone         ● │
@@ -30,5 +30,5 @@ Setup              │
                    │
                    │
                    │
- 09:14  ! OpenRouter refused the key: it may have been deleted or disabled. Set a new on
+ 09:14  ! OpenRouter did not take this key: check that it was copied whole (an OpenRoute
  enter check it  esc back  ? explain  f1 help  f5 machine column  q quit  ^b menu

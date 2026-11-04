@@ -13,13 +13,14 @@ F4 This folder   ✗ │ ┌─ Its settings ───────────�
 F1 Help            │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
 F2 Launch optio…   │ │ ▊  262144                        ▎ │
 F3 MCP servers     │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
-F6 Workspaces      │ │ Its most output, in tokens (at     │
-F7 Requests        │ │ most 32,768)                       │
-F8 CPU models      │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
-F9 Phone         ● │ │ ▊  16384                         ▎ │
-F10 Monitor        │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
-F12 Add a model    │ │ Its thinking effort (one of        │
-Setup              │ │ default, low, medium, high)        │
+F6 Workspaces      │ │ Its most output, in tokens: its    │
+F7 Requests        │ │ thinking and its answer together   │
+F8 CPU models      │ │ (at most 32,768)                   │
+F9 Phone         ● │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
+F10 Monitor        │ │ ▊  32768                         ▎ │
+F12 Add a model    │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
+Setup              │ │ Its thinking effort (one of        │
+                   │ │ default, low, medium, high)        │
                    │ │ ▊▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▎ │
                    │ │ ▊  default                       ▎ │
                    │ │ ▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎ │
@@ -41,7 +42,6 @@ Setup              │ │ default, low, medium, high)        │
                    │ │ One short request: about $0.000031 │
                    │ │ at its prices. Enter takes these.  │
                    │ └────────────────────────────────────┘
-                   │
                    │
                    │
                    │

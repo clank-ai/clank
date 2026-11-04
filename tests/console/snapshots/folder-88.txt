@@ -10,16 +10,17 @@ F4 This folder   ✗ │ ┌─ Get ready to work here ────────�
 8 Models         ● │ │                        workspace                               │
 9 Presets          │ │  5  Its software       ✗ cannot install: this folder is        │
 0 Providers and…   │ │                        refused                                 │
-F1 Help            │ │  6  A model            ✗ none is loaded (never started)        │
-F2 Launch optio…   │ │                        press l to load a model                 │
-F3 MCP servers     │ │  7  The gateway        ✗ stopped   press g to start the        │
-F6 Workspaces      │ │                        gateway                                 │
-F7 Requests        │ │ Next:  l load a model  g get everything ready                  │
-F8 CPU models      │ └────────────────────────────────────────────────────────────────┘
-F9 Phone         ● │
-F10 Monitor        │ ┌─ Then work ────────────────────────────────────────────────────┐
-F12 Add a model    │ │  a OpenCode in this terminal; the menu comes back when you     │
-Setup              │ │    leave it                                                    │
+F1 Help            │ │  6  A model            ✗ no model yet: F12, Add a model, sets  │
+F2 Launch optio…   │ │                        one up (a cloud model, or one on this   │
+F3 MCP servers     │ │                        computer's GPU)   press l to add one    │
+F6 Workspaces      │ │  7  The gateway        ✗ stopped   press g to start the        │
+F7 Requests        │ │                        gateway                                 │
+F8 CPU models      │ │ Next:  l add a model  g get everything ready                   │
+F9 Phone         ● │ └────────────────────────────────────────────────────────────────┘
+F10 Monitor        │
+F12 Add a model    │ ┌─ Then work ────────────────────────────────────────────────────┐
+Setup              │ │  a OpenCode in this terminal; the menu comes back when you     │
+                   │ │    leave it                                                    │
                    │ │  c VS Code on this folder, OpenCode beside your files (it      │
                    │ │    gets every step above done first)                           │
                    │ │  f a flow built with the model, OpenCode beside this console:  │
@@ -40,7 +41,6 @@ Setup              │ │    leave it                                          
                    │ ┌─ Waiting for you ──────────────────────────────────────────────┐
                    │ │ ✓ No question waits.                                           │
                    │ └────────────────────────────────────────────────────────────────┘
-                   │
                    │
                    │
                    │

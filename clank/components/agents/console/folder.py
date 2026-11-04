@@ -104,11 +104,26 @@ Step = tuple[str, str, bool | None, str]  # its name, what it is now, done (None
 MENDED = ("cut", "stale")  # a running workspace's way to the model as the service says it, put right by o or by `a`
 
 
+NO_MODEL = "no model yet: F12, Add a model, sets one up (a cloud model, or one on this computer's GPU)"
+
+
+def no_model(data: ConsoleData) -> bool:
+    """Whether no model can be had at all: the main slot runs none, none of its presets can load here, and none has
+    worked before, so l and g have nothing to load but a preset that was never set up."""
+    main = next((slot for slot in data.slots if slot["name"] == "main"), None)
+    usable = data.usable or {}
+    if main is None or main["status"] != "stopped" or usable.get("usable") is not False:
+        return False
+    return not (main.get("last_good") or {}).get("preset")
+
+
 def slot_text(data: ConsoleData) -> tuple[str, bool]:
     """The main slot: what it runs and whether it is ready."""
     main = next((slot for slot in data.slots if slot["name"] == "main"), None)
     if main is None:
         return "not read yet", False
+    if no_model(data):
+        return NO_MODEL, False
     titles = {preset["id"]: preset["title"] for preset in data.presets}
     title = titles.get(main["preset"] or "", main["preset"] or "")
     cloud = any(preset["id"] == main["preset"] and preset.get("endpoint") for preset in data.presets)
@@ -282,7 +297,8 @@ def checklist_rows(steps: list[Step], active: str = "", frame: int = 0) -> list[
             rows.append((head, Content.assemble((f"{spinner(frame)} working on it…", "$clank-now"))))
             continue
         sign = mark("done") if done else (mark("cut") if done is None else mark("failed"))
-        press = f"   press {key} to {DOING[key]}" if done is False and key in DOING else ""
+        doing = "add one" if now == NO_MODEL else DOING.get(key, "")  # l opens Add a model then
+        press = f"   press {key} to {doing}" if done is False and key in DOING else ""
         rows.append((head, painted(f"{sign} {now}{press}", sign, now.split(":")[0])))
     return rows
 
@@ -306,8 +322,8 @@ def blocking(found: list[tuple[str, str]]) -> list[tuple[str, str]]:
     return [(what, key) for what, key in found if what not in OPTIONAL]
 
 
-def next_line(found: list[tuple[str, str]]) -> Content:
-    """What to press next."""
+def next_line(found: list[tuple[str, str]], adding: bool = False) -> Content:
+    """What to press next (`adding`: no model to be had, so l adds one)."""
     if not blocking(found):
         first = " · e installs the folder's software first" if found else ""
         return painted(
@@ -319,10 +335,11 @@ def next_line(found: list[tuple[str, str]]) -> Content:
         return painted(f"Not ready: {found[0][0]} cannot be done from here (? says why).", "Not ready")
     what, key = keys[0]
     more = " · or g to do every step that is not done" if len(keys) > 1 else ""
-    return Content(f"Next: press {key} to {DOING.get(key, what)}{more}.")
+    doing = "add a model" if adding and key == "l" else DOING.get(key, what)
+    return Content(f"Next: press {key} to {doing}{more}.")
 
 
-def next_keys(found: list[tuple[str, str]]) -> tuple[str, list[str | tuple[str, str]]]:
+def next_keys(found: list[tuple[str, str]], adding: bool = False) -> tuple[str, list[str | tuple[str, str]]]:
     """The row of buttons under the steps (board K2): "Next:" and the key of the first step not done (and `g` when more
     are), or "Ready:" and the ways to start working; no keys when what is missing cannot be done from here (the line
     `next_line` says then why)."""
@@ -334,7 +351,8 @@ def next_keys(found: list[tuple[str, str]]) -> tuple[str, list[str | tuple[str, 
         return "", []
     first = keys[0]
     more = ["g"] if len(keys) > 1 and first != "g" else []
-    return "Next:", [(first, DOING[first]) if first != "g" else "g", *more]
+    doing = "add a model" if adding and first == "l" else DOING.get(first, "")
+    return "Next:", [(first, doing) if first != "g" else "g", *more]
 
 
 def readiness(found: list[tuple[str, str]]) -> str:
@@ -459,12 +477,12 @@ class FolderPage(Page):
             self.query_one("#folder-path", Label).update(Content(f"Folder: {self.console.folder}"))
             self._draw_running(data, self.console.frame)
             found = missing(data, self.view, self.gateway)
-            lead, keys = next_keys(found)
+            lead, keys = next_keys(found, no_model(data))
             group = self.query_one("#folder-next", Buttons)
             group.show(from_keys(self.KEYS, *keys), lead=lead)
             group.display = bool(keys)
             ready = self.query_one("#folder-ready", Label)
-            ready.update(next_line(found))
+            ready.update(next_line(found, no_model(data)))
             ready.display = not keys
             self.query_one("#folder-ways", Buttons).recheck()
             self.query_one("#folder-work", Label).update(self._work_lines(data))
@@ -961,8 +979,13 @@ class FolderPage(Page):
         self.run_worker(work, thread=True, group="folder-hosts", exclusive=True, exit_on_error=False)
 
     def _pick_model(self) -> None:
-        """A preset to run in the main slot, the slot's last that worked first (else the runtime's fallback)."""
+        """A preset to run in the main slot, the slot's last that worked first (else the runtime's fallback); with no
+        model to be had, Add a model."""
         data = self.console.data
+        if no_model(data):
+            self.console.say(NO_MODEL)
+            self.console.action_page("addmodel")
+            return
         main = next((slot for slot in data.slots if slot["name"] == "main"), None)
         first = ((main or {}).get("last_good") or {}).get("preset") or _fallback(data.usable)
         choices = preset_choices(data.presets)
@@ -1076,6 +1099,9 @@ class FolderPage(Page):
             return True
         if preset is None and main["status"] in ("starting", "stopping"):
             return self._until_ready()
+        if preset is None and no_model(self.console.data):
+            self._say(f"{NO_MODEL}; then g again", True)  # never a preset that was never set up
+            return False
         chosen = preset or (main.get("last_good") or {}).get("preset") or _fallback(self.console.data.usable)
         verb = "switch" if main["status"] == "ready" else "load"
         return self._follow(client.post(f"runtime/slots/main/{verb}", {"preset": chosen}))

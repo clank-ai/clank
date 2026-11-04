@@ -213,6 +213,13 @@ class EndpointAdapter(Adapter):
         """A request as the provider takes it: as the tool sent it, its `model` the listed id, `adds` added where the
         tool set none; a note for each addition; the request given is not changed."""
 
+    NEW_KEY_ADVICE = "The provider did not take this key: check that it was copied whole"  # a key pasted, not kept
+
+    def key_problem(self, key: str) -> str:
+        """What is wrong with a key as pasted, before it is sent to the provider ("" when nothing is): a provider whose
+        keys have a known shape says so."""
+        return ""
+
     @abstractmethod
     def headers(self, key: str, session: str) -> dict[str, str]:
         """The headers of a request to it: the key, and the session for its cache when there is one."""

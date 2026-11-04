@@ -153,7 +153,7 @@ async def test_backspace_in_a_setting_erases_there_and_outside_a_field_does_noth
         output.focus()
         await settle(pilot, lambda: app.focused is output)
         await pilot.press("end", "backspace")
-        assert output.value == "1638"
+        assert output.value == "3276"
         assert adding(app).screen_name == "settings"
         app.set_focus(None)  # the focus on no field
         await pilot.press("backspace")

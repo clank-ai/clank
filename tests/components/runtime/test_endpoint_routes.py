@@ -121,9 +121,24 @@ def test_a_key_openrouter_refuses_is_not_kept_and_says_why(
     assert answer.status_code == 400
     error = answer.json()["error"]
     assert error["code"] == "key_refused"
-    assert error["message"].startswith("OpenRouter refused the key")
+    assert error["message"].startswith("OpenRouter did not take this key: check that it was copied whole"), (
+        "a key pasted now was mistyped, not deleted or disabled"
+    )
     assert not (rig.kernel.home.secrets / "endpoint" / "openrouter" / "key").exists()
     assert KEY not in answer.text
+
+
+@pytest.mark.parametrize("pasted", ["made-up-openrouter-key", "sk-or-v1-made up", "Key: sk-or-v1-made-up"])
+def test_a_key_not_shaped_as_openrouters_is_refused_before_it_is_sent(
+    rig: Rig, http: TestClient, openrouter: FakeOpenRouter, pasted: str
+) -> None:
+    add_openrouter(rig, key=False)
+    sent = len(openrouter.sent)
+    answer = http.put(f"{ROUTES}/openrouter/key", json={"key": pasted}, headers=AUTH)
+    assert (answer.status_code, answer.json()["error"]["code"]) == (400, "key_refused")
+    assert "one starts sk-or-v1- and holds no spaces" in answer.json()["error"]["message"]
+    assert len(openrouter.sent) == sent, "never sent to OpenRouter"
+    assert not (rig.kernel.home.secrets / "endpoint" / "openrouter" / "key").exists()
 
 
 def test_a_key_is_not_kept_when_openrouter_does_not_answer(rig: Rig, http: TestClient, monkeypatch: Any) -> None:

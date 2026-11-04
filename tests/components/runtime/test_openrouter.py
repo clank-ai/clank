@@ -22,7 +22,7 @@ import pytest
 
 from clank.components.runtime.adapters.openrouter import OpenRouter, default_output
 
-KEY = "made-up-openrouter-key"
+KEY = "sk-or-v1-made-up-key"
 CODER: dict[str, Any] = {
     "id": "example-vendor/example-coder",
     "canonical_slug": "example-vendor/example-coder-2026",

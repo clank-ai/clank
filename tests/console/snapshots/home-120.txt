@@ -20,11 +20,11 @@ F9 Phone               ●     │
 F10 Monitor                  │ ┌─ History ────────────────────────────────────────────────────────────────────────────┐
 F12 Add a model              │ │ Nothing recorded yet.                                                                │
 Setup                        │ └──────────────────────────────────────────────────────────────────────────────────────┘
-───────────────────────────▄▄│
-coming                       │
+─────────────────────────────│
+later                        │
 Sampling              M3     │
-Sessions              M3     │
-Keys                  M3     │
 Layout                M2     │
+Tests and trials      M2     │
+Skills                M8     │
 
  s start or stop Docker  d run the doctor  v the question whole  ? explain  f1 help

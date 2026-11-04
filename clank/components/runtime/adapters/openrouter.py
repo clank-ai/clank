@@ -55,6 +55,11 @@ def default_output(most: int | None, context: int, thinking: bool) -> int:
 
 FREE_LIMITS = "20 a minute, 50 a day; 1,000 a day once 10 credits were bought"
 PRESET_OPTIONS = ("context", "max_output", "reasoning", "images")
+KEY_START = "sk-or-v1-"  # how every OpenRouter key begins
+NEW_KEY_ADVICE = (
+    f"OpenRouter did not take this key: check that it was copied whole (an OpenRouter key starts {KEY_START}, with "
+    "nothing before or after it), or make a new one at openrouter.ai, Keys"
+)
 KEY_ADVICE = (
     "OpenRouter refused the key: it may have been deleted or disabled. Set a new one: Providers and models, k; or "
     "clank endpoint key openrouter"
@@ -89,6 +94,7 @@ class OpenRouter(EndpointAdapter):
     REACH = "cloud"
     AUTH = "bearer"
     FULL: ClassVar[tuple[str, ...]] = ()  # its words for a full context: to be checked with a real key (§18)
+    NEW_KEY_ADVICE = NEW_KEY_ADVICE
 
     @classmethod
     def provider_options(cls) -> list[ProviderOption]:
@@ -230,6 +236,15 @@ class OpenRouter(EndpointAdapter):
             sent["reasoning"] = dict(reasoning)
             notes.append(f"reasoning.effort {reasoning.get('effort')} added (the preset's thinking effort)")
         return sent, notes
+
+    def key_problem(self, key: str) -> str:
+        """A key that does not start as OpenRouter's do, or holds spaces: copied in part, or with other text."""
+        if not key.startswith(KEY_START) or any(each.isspace() for each in key):
+            return (
+                f"This is not an OpenRouter key as pasted: one starts {KEY_START} and holds no spaces. Copy it whole "
+                "from openrouter.ai, Keys, and paste it again"
+            )
+        return ""
 
     def headers(self, key: str, session: str) -> dict[str, str]:
         """The bearer key, and `x-session-id` when the tool named its session (OpenRouter's cache keeps a session on

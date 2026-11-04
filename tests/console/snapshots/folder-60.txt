@@ -16,12 +16,14 @@ F3 MCP servers     │ │  5  Its software                 │
 F6 Workspaces      │ │ ✗ cannot install: this folder is │
 F7 Requests        │ │ refused                          │
 F8 CPU models      │ │  6  A model                      │
-F9 Phone         ● │ │ ✗ none is loaded (never started) │
-F10 Monitor        │ │ press l to load a model          │
-F12 Add a model    │ │  7  The gateway                  │
-Setup              │ │ ✗ stopped   press g to start the │
+F9 Phone         ● │ │ ✗ no model yet: F12, Add a       │
+F10 Monitor        │ │ model, sets one up (a cloud      │
+F12 Add a model    │ │ model, or one on this computer's │
+Setup              │ │ GPU)   press l to add one        │
+                   │ │  7  The gateway                  │
+                   │ │ ✗ stopped   press g to start the │
                    │ │ gateway                          │
-                   │ │ Next:  l load a model            │
+                   │ │ Next:  l add a model             │
                    │ │        g get everything ready    │
                    │ └──────────────────────────────────┘
                    │
@@ -49,12 +51,10 @@ Setup              │ │ ✗ stopped   press g to start the │
                    │ │  r review or auto                │
                    │ │  w one window or several         │
                    │ │  i implement a plan              │
-                   │ └──────────────────────────────────┘
+                   │ └──────────────────────────────────┘▄▄
                    │
                    │ ┌─ What runs from here ────────────┐
                    │ │ Nothing runs from here.          │
-                   │ └──────────────────────────────────┘▆▆
-                   │
-                   │ ┌─ Waiting for you ────────────────┐
+                   │ └──────────────────────────────────┘
 
  g get everything ready  a OpenCode here  ? explain  f1 help

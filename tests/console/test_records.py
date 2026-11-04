@@ -80,12 +80,12 @@ async def test_question_mark_on_a_planned_menu_entry_names_its_milestone_and_des
     app = make(client, home)
     async with app.run_test(size=(120, 40)) as pilot:
         menu = app.query_one("#menu", ListView)
-        await focus_on(pilot, app, menu, next(n for n, item in enumerate(menu.children) if item.id == "menu-agents"))
+        await focus_on(pilot, app, menu, next(n for n, item in enumerate(menu.children) if item.id == "menu-skills"))
         await pilot.press("question_mark")
         await settle(pilot, lambda: isinstance(app.screen, DetailsScreen))
         explained = " ".join(str(label.content) for label in app.screen.query(Label).results(Label))
-        assert "coming in M5" in explained
-        assert "design 0002 §3.3" in explained
+        assert "coming in M8" in explained
+        assert "design 0002 §2.11" in explained
 
 
 async def test_the_command_palette_finds_pages_and_actions_by_name_and_runs_them(client: Client, home: Home) -> None:

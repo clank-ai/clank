@@ -374,9 +374,9 @@ class MonitorPage(Page):
     BOARDS = ("d2", "d3", "d4")  # the Flow view's boards beside D1 (design 0013 §12)
     VIEW_KEYS: ClassVar[dict[str, tuple[str, ...]]] = {
         "session": ("f10", "enter", "escape", "full_stop", "m", "k", "p", "u", "x", "l"),
-        "flow": ("f10", "enter", "O", "L", "e", "o", "p", "r", "h", "n", "N", "plus", "minus"),
+        "flow": ("f10", "n", "r", "h", "enter", "O", "L", "e", "o", "p", "N", "plus", "minus"),
         "context": ("f10", "enter", "escape", "k", "x"),
-    }  # the keys each view's keys bar shows, from `KEYS`
+    }  # the keys each view's keys bar shows, from `KEYS`, in this order: a narrow bar keeps the first
     BUILDING_KEYS = ("f10", "enter", "O", "n", "N")  # the Flow view's, while a flow is built with the model
     MACHINE_COLUMN = False  # its panels take the column's room (design 0012 §2); F5 shows it
     MENU_COLUMN = (
@@ -729,7 +729,9 @@ class MonitorPage(Page):
             wanted = self.BUILDING_KEYS
         if self.view == "session" and not self.flows.opened_from:
             wanted = tuple(key for key in wanted if key != "escape")  # no box to go back to: Esc is the menu's
-        return tuple(key for key in self.KEYS if key.key in wanted)
+        declared = {key.key: key for key in self.KEYS}
+        return tuple(declared[name] for name in wanted if name in declared)  # in the view's order: a narrow bar keeps
+        # the first (the Flow view's own words say r and n, which a bar in KEYS' order left out)
 
     def draw_keys(self) -> None:
         """The keys bar shows the view's keys, while the page is on screen."""

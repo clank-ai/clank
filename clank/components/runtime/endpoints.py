@@ -308,7 +308,15 @@ class Endpoints:
         key = key.strip()
         if not key:
             raise ApiError(400, "invalid", "the key is empty")
-        account = self._read_account(id, key)
+        problem = self.adapter(id).key_problem(key)
+        if problem:
+            raise ApiError(400, "key_refused", problem)  # never sent: a key copied in part is not one
+        try:
+            account = self._read_account(id, key)
+        except ApiError as error:  # a key never kept was mistyped, not deleted: say so, not what a saved one hears
+            if error.code == "key_refused":
+                raise ApiError(400, "key_refused", self.adapter(id).NEW_KEY_ADVICE) from error
+            raise
         self.kernel.secrets.put(scope(id), "key", key, actor=actor)
         read_at = to_text(self.kernel.clock.now())
         self._accounts[id] = (self._now(), account, read_at)

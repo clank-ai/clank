@@ -17,22 +17,22 @@ F6 Workspaces                │ │                                     workspa
 F7 Requests                  │ │  6  The sandbox image               ○ waits until this account can use Docker        │
 F8 CPU models                │ │  7  A model                         ✗ no model has answered a test request yet. This │
 F9 Phone               ●     │ │                                     computer has NVIDIA GeForce RTX 5080, 16 GB:     │
-F10 Monitor                  │ │                                     local models can run on it                       │
+F10 Monitor                  │ │                                     local models need an engine built by hand        │
 F12 Add a model              │ │                                     → Add a model: in the cloud through OpenRouter   │
 Setup                        │ │                                     (with your OpenRouter key), on this computer's   │
 ─────────────────────────────│ │                                     GPU, or both (the cloud first, then local) ·     │
-coming                       │ │                                     press m                                          │
+later                        │ │                                     press m                                          │
 Sampling              M3     │ │  8  A folder                        ✗ no folder is a workspace yet. The agent works  │
-Sessions              M3     │ │                                     in a folder you choose, in a container that sees │
-Keys                  M3     │ │                                     only it                                          │
-Layout                M2     │ │                                     → This folder opens the folder `clank` was       │
-Tests and trials      M2     │ │                                     started in as a workspace · press f              │
-Agents                M5     │ │  9  Clank's VS Code window          ○ optional: VS Code is not installed; the agent  │
-Modes                 M5     │ │                                     works in the terminal without it                 │
-Changes               M6     │ │                                     → install VS Code (code.visualstudio.com), then  │
-Network access        M7     │ │                                     `clank code` in a folder                         │
-Skills                M8     │ │ Not ready yet: Docker running, Docker usable by this account, The sandbox image, A   │
-Files                 M9     │ │ model, A folder.                                                                     │
+Layout                M2     │ │                                     in a folder you choose, in a container that sees │
+Tests and trials      M2     │ │                                     only it                                          │
+Skills                M8     │ │                                     → This folder opens the folder `clank` was       │
+                             │ │                                     started in as a workspace · press f              │
+                             │ │  9  Clank's VS Code window          ○ optional: VS Code is not installed; the agent  │
+                             │ │                                     works in the terminal without it                 │
+                             │ │                                     → install VS Code (code.visualstudio.com), then  │
+                             │ │                                     `clank code` in a folder                         │
+                             │ │ Not ready yet: Docker running, Docker usable by this account, The sandbox image, A   │
+                             │ │ model, A folder.                                                                     │
                              │ │ Next:  t run `sudo systemctl start docker` in this terminal                          │
                              │ └──────────────────────────────────────────────────────────────────────────────────────┘
                              │

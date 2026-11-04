@@ -7,32 +7,32 @@ F4 This folder         ✗ 4   │ ┌─ Get ready to work here ─────
 5 Machine                    │ │  4  The sandbox image  ✗ not built yet: opening the workspace builds it (once)   press o to  │
 6 Operations                 │ │                        open the workspace                                                    │
 7 Records                    │ │  5  Its software       ✗ cannot install: this folder is refused                              │
-8 Models               ●     │ │  6  A model            ✗ none is loaded (never started)   press l to load a model            │
-9 Presets                    │ │  7  The gateway        ✗ stopped   press g to start the gateway                              │
-0 Providers and models       │ │ Next:  l load a model  g get everything ready                                                │
-F1 Help                      │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
-F2 Launch options            │
-F3 MCP servers               │ ┌─ Then work ──────────────────────────────────────────┐  ┌─ What runs from here ──────────────┐
-F6 Workspaces                │ │  a OpenCode in this terminal; the menu comes back    │  │ Nothing runs from here.            │
-F7 Requests                  │ │    when you leave it                                 │  │                                    │
-F8 CPU models                │ │  c VS Code on this folder, OpenCode beside your      │  │                                    │
-F9 Phone               ●     │ │    files (it gets every step above done first)       │  │                                    │
-F10 Monitor                  │ │  f a flow built with the model, OpenCode beside      │  │                                    │
-F12 Add a model              │ │    this console: the Flow view shows it built        │  │                                    │
-Setup                        │ │    OpenCode will use the model Clank runs: 24,576    │  │                                    │
-─────────────────────────────│ │    tokens of context (the engine's 32,768 less 8,192 │  │                                    │
-coming                       │ │    kept for a step's tool results), 8,192 out        │  │                                    │
-Sampling              M3     │ │    MCP servers: open the workspace (o) to choose     │  │                                    │
-Sessions              M3     │ │    which its agent gets                              │  │                                    │
-Keys                  M3     │ │  m MCP servers  h hosts  p plan  r review or auto    │  │                                    │
-Layout                M2     │ │  w one window or several  i implement a plan         │  │                                    │
-Tests and trials      M2     │ └──────────────────────────────────────────────────────┘  └────────────────────────────────────┘
-Agents                M5     │
-Modes                 M5     │ ┌─ Waiting for you ────────────────────────────────────────────────────────────────────────────┐
-Changes               M6     │ │ ✓ No question waits.                                                                         │
-Network access        M7     │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
-Skills                M8     │
-Files                 M9     │
+8 Models               ●     │ │  6  A model            ✗ no model yet: F12, Add a model, sets one up (a cloud model, or one  │
+9 Presets                    │ │                        on this computer's GPU)   press l to add one                          │
+0 Providers and models       │ │  7  The gateway        ✗ stopped   press g to start the gateway                              │
+F1 Help                      │ │ Next:  l add a model  g get everything ready                                                 │
+F2 Launch options            │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+F3 MCP servers               │
+F6 Workspaces                │ ┌─ Then work ──────────────────────────────────────────┐  ┌─ What runs from here ──────────────┐
+F7 Requests                  │ │  a OpenCode in this terminal; the menu comes back    │  │ Nothing runs from here.            │
+F8 CPU models                │ │    when you leave it                                 │  │                                    │
+F9 Phone               ●     │ │  c VS Code on this folder, OpenCode beside your      │  │                                    │
+F10 Monitor                  │ │    files (it gets every step above done first)       │  │                                    │
+F12 Add a model              │ │  f a flow built with the model, OpenCode beside      │  │                                    │
+Setup                        │ │    this console: the Flow view shows it built        │  │                                    │
+─────────────────────────────│ │    OpenCode will use the model Clank runs: 24,576    │  │                                    │
+later                        │ │    tokens of context (the engine's 32,768 less 8,192 │  │                                    │
+Sampling              M3     │ │    kept for a step's tool results), 8,192 out        │  │                                    │
+Layout                M2     │ │    MCP servers: open the workspace (o) to choose     │  │                                    │
+Tests and trials      M2     │ │    which its agent gets                              │  │                                    │
+Skills                M8     │ │  m MCP servers  h hosts  p plan  r review or auto    │  │                                    │
+                             │ │  w one window or several  i implement a plan         │  │                                    │
+                             │ └──────────────────────────────────────────────────────┘  └────────────────────────────────────┘
+                             │
+                             │ ┌─ Waiting for you ────────────────────────────────────────────────────────────────────────────┐
+                             │ │ ✓ No question waits.                                                                         │
+                             │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+                             │
                              │
                              │
                              │

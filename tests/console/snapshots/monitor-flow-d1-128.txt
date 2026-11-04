@@ -47,4 +47,4 @@
  │ ┌─ Live ────────────────────────────────────────────────────────────────┐ │  │                                                                           │
  │ │ idle                                                                  │ │  │                                                                           │
 
- f10 next view  enter open  p pause  O orchestrator  + bigger boxes  - smaller boxes  L ledger  e edit the box  o open in VS Code  ? explain  f1 help
+ f10 next view  n new flow  r run from here  h run log  enter open  O orchestrator  L ledger  e edit the box  o open in VS Code  p pause  ? explain  f1 help

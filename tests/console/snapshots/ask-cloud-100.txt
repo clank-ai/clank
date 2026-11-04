@@ -20,15 +20,15 @@ F9 Ph│ n  Keep local: it stays on this machine; not asked again               
 F10 M│                                                                                        │   │
 F12 A│ y or n answers; Esc leaves it waiting.                                                 │   │
 Setup└────────────────────────────────────────────────────────────────────────────────────────┘   │
-───────────────────────────  │ └──────────────────────────────────────────────────────────────────┘
-coming                       │
+─────────────────────────────│ └──────────────────────────────────────────────────────────────────┘
+later                        │
 Sampling              M3     │ ┌─ History ────────────────────────────────────────────────────────┐
-Sessions              M3     │ │ Nothing recorded yet.                                            │
-Keys                  M3     │ └──────────────────────────────────────────────────────────────────┘
-Layout                M2     │
-Tests and trials      M2     │
-Agents                M5   ▅▅│
-Modes                 M5     │
-Changes               M6     │
+Layout                M2     │ │ Nothing recorded yet.                                            │
+Tests and trials      M2     │ └──────────────────────────────────────────────────────────────────┘
+Skills                M8     │
+                             │
+                             │
+                             │
+                             │
 
  s start or stop Docker  d run the doctor  v the question whole  ? explain  f1 help

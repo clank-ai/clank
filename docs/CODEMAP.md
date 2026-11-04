@@ -424,6 +424,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/core/show.ts` | The files the agent opens for the owner (design 0018 §7): the service's event `agents.shown` names a workspace's |
 | `vscode/src/core/state.ts` | What the extension shows, as last read: the service, Docker, the questions waiting, and the runtime's slots and |
 | `vscode/src/core/talking.ts` | The agent panel's live state (design 0023 §3 and §5), built from the conversation stream's events: a `snapshot` |
+| `vscode/src/core/throttle.ts` | A task run at most once a period, never twice at once (the agent panel's readout, design 0021 §3): a call that comes |
 | `vscode/src/extension.ts` | The Clank extension's entry point: the thin glue between VS Code and the controller (design 0002 §3.2, M0.6). It |
 | `vscode/src/figures.ts` | Clank's figure annotator in VS Code (design 0008 §6): a custom editor for PNG and JPEG files that shows the |
 | `vscode/src/notion.ts` | The Notion changes in VS Code (design 0010 §6), the glue over `core/notion.ts`: the "Notion changes" view (a tree in |
@@ -458,3 +459,4 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/test/show.test.ts` | Design 0018 §7.2 and §7.3: the files the agent opened (the event `agents.shown`) are read from the event with their |
 | `vscode/test/state.test.ts` | Design 0002 §1 and §2.3: what the extension shows is read from the API and kept current by events: a question's |
 | `vscode/test/talking.test.ts` | Design 0023 §3 and §5: the agent panel's live state, built from the conversation stream's events (pure). A snapshot |
+| `vscode/test/throttle.test.ts` | Design 0021 §3: the agent panel asks for the model's readout at most once a second, never twice at once, however |

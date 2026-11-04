@@ -296,7 +296,7 @@ def test_a_key_set_brings_the_fresh_providers_and_whether_a_model_is_usable(
     client.delete("runtime/endpoints/openrouter/key")
     with following(client, kernel.events.last_id()) as updates:
         take(updates, lambda update: update.topic == "connection")
-        client.put("runtime/endpoints/openrouter/key", {"key": "made-up-openrouter-key"})
+        client.put("runtime/endpoints/openrouter/key", {"key": "sk-or-v1-made-up-key"})
         taken = take(updates, lambda update: update.topic == "usable" and update.data["usable"])
     endpoints = next(update.data for update in reversed(taken) if update.topic == "endpoints")
     assert endpoints[0]["key"]["set"]

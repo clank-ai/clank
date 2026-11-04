@@ -68,10 +68,13 @@ def test_no_option_of_any_command_takes_a_key() -> None:
 
 def test_a_refused_key_says_why_and_exits_one(cloud_api: CloudBench) -> None:
     cloud_api.add(key=False)
-    refused = run("key", "openrouter", "--stdin", given="made-up-wrong-key\n")
+    refused = run("key", "openrouter", "--stdin", given="sk-or-v1-wrong-key\n")
     assert refused.exit_code == 1
-    assert "OpenRouter refused the key" in refused.output
-    assert "made-up-wrong" not in refused.output
+    assert "OpenRouter did not take this key: check that it was copied whole" in refused.output
+    assert "wrong-key" not in refused.output
+    shaped = run("key", "openrouter", "--stdin", given="made-up-wrong-key\n")
+    assert shaped.exit_code == 1
+    assert "This is not an OpenRouter key as pasted: one starts sk-or-v1-" in shaped.output
     assert cloud_api.key() is None
 
 

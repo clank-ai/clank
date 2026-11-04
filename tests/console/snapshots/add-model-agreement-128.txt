@@ -21,18 +21,18 @@ F10 Monitor                  │ │ MCP servers (each one you have is marked lo
 F12 Add a model              │ │ lit  local only: never offered to the cloud model                                            │
 Setup                        │ └──────────────────────────────────────────────────────────────────────────────────────────────┘
 ─────────────────────────────│
-coming                       │
+later                        │
 Sampling              M3     │
-Sessions              M3     │
-Keys                  M3     │
 Layout                M2     │
 Tests and trials      M2     │
-Agents                M5     │
-Modes                 M5     │
-Changes               M6     │
-Network access        M7     │
 Skills                M8     │
-Files                 M9     │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
                              │
                              │
                              │

@@ -40,7 +40,17 @@ from textual.widgets import Label
 from clank.cli import console as console_command
 from clank.cli.main import main
 from clank.client import Client
-from clank.components.agents.console.folder import Step, checklist, checklist_rows, missing, next_line, readiness
+from clank.components.agents.console.folder import (
+    NO_MODEL,
+    Step,
+    checklist,
+    checklist_rows,
+    missing,
+    next_keys,
+    next_line,
+    no_model,
+    readiness,
+)
 from clank.components.agents.console.monitor import MonitorPage
 from clank.components.gateway.service import Gateway
 from clank.components.tools import service as tools_service
@@ -130,7 +140,7 @@ async def test_a_new_folder_shows_what_is_not_ready_each_with_its_key(
 ) -> None:
     app = console(client, kernel, project)
     async with app.run_test(size=(220, 50)) as pilot:
-        await settle(pilot, lambda: "not opened yet" in text(app) and "none is loaded" in text(app))
+        await settle(pilot, lambda: "not opened yet" in text(app) and "no model yet" in text(app))
         shown = text(app)
     assert f"Folder: {project}" in shown
     assert " 1  Docker             ✓ running" in shown
@@ -138,8 +148,8 @@ async def test_a_new_folder_shows_what_is_not_ready_each_with_its_key(
     assert " 3  Its workspace      ✗ not opened yet   press o to open the workspace" in shown
     assert " 4  The sandbox image  ✗ not built yet: opening the workspace builds it (once)" in shown
     assert " 5  Its software       ✓ nothing to install (no pyproject.toml or requirements.txt)" in shown
-    assert " 6  A model            ✗ none is loaded" in shown
-    assert "press l to load a model" in shown
+    assert " 6  A model            ✗ no model yet: F12, Add a model, sets one up" in shown, "none can load here"
+    assert "press l to add one" in shown
     assert " 7  The gateway        ✓ running on port 18210" in shown
     assert "Next:  o open the workspace  g get everything ready" in shown, "its keys, buttons (design 0011 §12.1)"
     assert " a OpenCode in this terminal; the menu comes back when you leave it" in shown
@@ -304,7 +314,7 @@ async def test_a_says_what_is_not_ready_and_starts_nothing(
     ran: list[list[str]] = []
     app = console(client, kernel, project, terminal=recorder(ran))
     async with app.run_test(size=(220, 50)) as pilot:
-        await settle(pilot, lambda: "not opened yet" in text(app) and "none is loaded" in text(app))
+        await settle(pilot, lambda: "not opened yet" in text(app) and "no model yet" in text(app))
         await pilot.press("a")
         await settle(pilot, lambda: "Not ready yet:" in message(app))
         assert "its workspace (o) · a model (l)" in message(app)
@@ -487,6 +497,21 @@ def test_readiness_names_each_missing_item_with_its_key() -> None:
     )
     assert readiness([]) == "Ready: a starts OpenCode here; leaving it brings you back to this page."
     assert missing(ConsoleData(connected=False), None, None) == [("the Clank service", "")]
+
+
+def test_with_no_model_to_be_had_the_model_step_says_add_a_model_not_a_preset_never_set_up() -> None:
+    stopped = {"name": "main", "status": "stopped", "preset": None, "reason": "nothing loaded", "last_good": None}
+    none = ConsoleData(connected=True, docker={"state": "running"}, slots=[stopped],
+                       usable={"usable": False, "why": "no model", "fallback": "daily-262k"})  # fmt: skip
+    assert no_model(none)
+    steps = {name: (now, done, key) for name, now, done, key in checklist(none, None, None)}
+    assert steps["A model"] == (NO_MODEL, False, "l"), "F12, Add a model: not daily 262K, never set up here"
+    assert next_keys([("a model", "l")], adding=True) == ("Next:", [("l", "add a model")]), "the Next row too"
+    assert "press l to add a model" in next_line([("a model", "l")], adding=True).plain
+    worked = {**stopped, "last_good": {"preset": "cloud-example"}}
+    assert not no_model(ConsoleData(connected=True, slots=[worked], usable={"usable": False}))
+    assert not no_model(ConsoleData(connected=True, slots=[stopped], usable={"usable": True}))
+    assert not no_model(ConsoleData(connected=True, slots=[stopped], usable=None)), "not known: as before"
 
 
 def test_a_running_workspace_cut_off_from_the_model_says_so_and_the_agent_may_still_start() -> None:

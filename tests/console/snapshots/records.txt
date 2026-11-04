@@ -21,18 +21,18 @@ F10 Monitor                  │ │ title              ""                      
 F12 Add a model              │ │ host               "127.0.0.1"                                        Address        │
 Setup                        │ │ port               7720                                               Port           │
 ─────────────────────────────│ │ events_kept_days   30                                                 History kept   │
-coming                       │ └──────────────────────────────────────────────────────────────────────────────────────┘
+later                        │ └──────────────────────────────────────────────────────────────────────────────────────┘
 Sampling              M3     │
-Sessions              M3     │
-Keys                  M3     │
 Layout                M2     │
 Tests and trials      M2     │
-Agents                M5     │
-Modes                 M5     │
-Changes               M6     │
-Network access        M7     │
 Skills                M8     │
-Files                 M9     │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
+                             │
                              │
                              │
                              │

@@ -127,3 +127,15 @@ async def test_enter_on_the_bars_enter_open_presses_the_views_enter_once(
         await pilot.press("enter")
         await settle(pilot, lambda: page.view == "session")
         assert pressed == ["enter"]
+
+
+async def test_a_narrow_flow_views_bar_keeps_run_from_here_and_new_flow_which_its_words_name(
+    kernel: Kernel, client: Client, home: Home, clock: FakeClock, folder: Path
+) -> None:
+    app = make(kernel, client, home, clock, folder)
+    async with app.run_test(size=(88, 50)) as pilot:
+        page = await flow_view(app, pilot)
+        fitted, _ = fit_keys(page.shown_keys(), 88)
+        shown = [key.key for key in fitted]
+        assert "n" in shown, "new flow: the view's words name it"
+        assert "r" in shown, "run from here: the view's words name it"

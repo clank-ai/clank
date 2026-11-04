@@ -230,12 +230,12 @@ async def test_a_key_refused_shows_the_services_words_and_clears_the_field(
     app = make(client, home)
     async with app.run_test(size=(88, 34)) as pilot:
         await to_key(pilot, app, cloud_api)
-        app.post_message(events.Paste("made-up-wrong-key"))
+        app.post_message(events.Paste("sk-or-v1-wrong-key"))
         await settle(pilot, lambda: "…-key" in render_text(app))
         await pilot.press("enter")
-        frame = await on_screen(pilot, app, "OpenRouter refused the key")
+        frame = await on_screen(pilot, app, "OpenRouter did not take this key")
         assert not app.query_one("#add-key-field", SecretField).filled
-        assert "made-up-wrong" not in frame
+        assert "wrong-key" not in frame
         assert_frame(frame, "add-model-key-refused")
     assert cloud_api.key() is None
 
@@ -277,7 +277,7 @@ async def test_enter_on_a_model_fills_its_settings_and_enter_writes_the_preset_a
         await settle(pilot, lambda: "cloud-example-coder" in cloud_api.presets and cloud_api.limits["day_usd"] == 5)
     written = [body for method, path, body in cloud_api.calls if path.endswith("/presets")]
     typed = {"model": "example-vendor/example-coder", "title": "cloud: Example Coder", "context": "262144",
-             "max_output": "16384", "reasoning": "default"}  # fmt: skip
+             "max_output": "32768", "reasoning": "default"}  # fmt: skip
     assert written == [typed], "as typed: the service checks them"
     assert ("PUT", "gateway/cost/limits", {"day_usd": 5.0}) in cloud_api.calls
 
