@@ -36,7 +36,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 5.4 | Explain anything | `tests/console/test_records.py` (4) |
 | 5.5 | Changing how it looks and what it shows | `tests/console/test_shell.py` (21) |
 | 5.6 | Panels are modules | `tests/console/test_pages.py` (10) |
-| 5.7 | Redraws and load | `tests/console/test_data.py` (20), `tests/console/test_flow_panel.py` (8), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_panel.py` (12), `tests/console/test_shell.py` (21) |
+| 5.7 | Redraws and load | `tests/console/test_data.py` (20), `tests/console/test_flow_panel.py` (8), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_panel.py` (12), `tests/console/test_shell.py` (21), `tests/console/test_toggles_restyle_little.py` (1) |
 | 5.8 | Without a screen | `tests/components/runtime/test_model_commands.py` (3), `tests/console/test_command.py` (4) |
 | 6 | The gateway | `tests/components/gateway/test_recent_requests.py` (6), `tests/console/test_requests_page.py` (11) |
 | 6.1 | The path of a request | `tests/components/gateway/test_server.py` (23) |
@@ -512,7 +512,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What the owner felt, measured | none yet |
-| 2 | The conversation is read from the service's mirror | `tests/components/agents/test_conversation_mirror.py` (1), `tests/components/agents/test_mirror.py` (7), `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_monitor_watch.py` (12) |
+| 2 | The conversation is read from the service's mirror | `tests/components/agents/test_conversation_mirror.py` (1), `tests/components/agents/test_mirror.py` (8), `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_monitor_watch.py` (12) |
 | 3 | Pushed, not polled: the conversation stream | `tests/components/agents/test_conversation_stream.py` (5), `tests/components/remote/test_phone_session.py` (3), `vscode/test/talking.test.ts` (4), `tests/phone/talk.test.mjs` (6) |
 | 4 | Acting without waiting: the resident bridge | `tests/components/agents/test_conversation_mirror.py` (1), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_sessions.py` (16), `tests/components/agents/test_watch_channel.py` (9) |
 | 5 | What the owner sees | `vscode/test/following.test.ts` (3), `vscode/test/talking.test.ts` (4) |
@@ -1229,6 +1229,7 @@ Design 0023 §2 (decision 0139): the mirror the service keeps of the sessions cl
 - permissions and questions open are those asked and not yet answered
 - the sessions a watcher saw are known newest first with their status and port
 - the mirror is bounded old text falls back to its brief and sessions unread are forgotten
+- past the bound old tool outputs are cut too and only a cut asks for a snapshot
 - a server the watch no longer follows leaves its sessions without a port and idle
 - each change is kept with its version and subscribers hear each new one
 
@@ -4710,6 +4711,12 @@ Design 0002 §3.2: the console shows a state in color: green when it is as wante
 - each mark is colored where it next appears and the text is never read as markup
 - money is cents from a dollar up and two significant digits below an estimate marked
 - a window of tokens is said in thousands
+
+### `tests/console/test_toggles_restyle_little.py`
+
+Design 0001 §5.7: the console stays quick to the keys. Showing or hiding the menu (Ctrl+B, and Esc to it) or the machine column (F5), and opening a page beside which either hides, restyle the menu or the column alone, never every widget of every page: their classes are theirs, not the screen's (decision 0160).
+
+- the menu and the machine column show and hide restyling only themselves
 
 ### `tests/console/test_windows.py`
 

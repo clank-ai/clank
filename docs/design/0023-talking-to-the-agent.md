@@ -14,7 +14,7 @@ the experience; this document says what holds it up.
 | § | Section | Status |
 | --- | --- | --- |
 | 1 | What the owner felt, measured | Approved 2026-10-26 |
-| 2 | The conversation is read from the service's mirror | Approved 2026-10-26; built 2026-10-26 ([plan s50](../plans/s50-the-mirror.md)) |
+| 2 | The conversation is read from the service's mirror | Approved 2026-10-26; built 2026-10-26 ([plan s50](../plans/s50-the-mirror.md)); revised 2026-11-04: past the bound, tool outputs are cut too, down to 90% of it, and only a cut is a snapshot (a long session of tool calls sent its whole page for every token) |
 | 3 | Pushed, not polled: the conversation stream | Approved 2026-10-26; built 2026-10-26 ([plan s51](../plans/s51-the-stream.md)); revised 2026-10-26: the batch window is 50 ms, not 100 (with 100, a change was on the stream 111 ms behind the mirror, §6) |
 | 4 | Acting without waiting: the resident bridge | Approved 2026-10-26; built 2026-10-26 ([plan s52](../plans/s52-the-resident-bridge.md)); revised 2026-10-26 after the owner's lag: a bridge from before the channel is known by its silence to `hello`, the bridge answers within its own deadline, a server that ended is said at once |
 | 5 | What the owner sees | Approved 2026-10-26; built 2026-10-26 for the agent panel ([plan s51](../plans/s51-the-stream.md)); the Monitor and the phone with steps 4 and 5 |
@@ -58,7 +58,8 @@ and question arrives there the moment it happens. The panel does not use it; the
 - **History once.** When a session is first followed, its messages before the mirror began are read once from OpenCode
   (the bridge's `page`, a page at a time, newest first) and kept; older pages are read when a client scrolls back.
 - **Bounded.** Full parts are kept for followed sessions only, up to `FULL_BYTES` (4 MB) a session; past it the oldest
-  parts fall back to their brief and are read whole again on demand (`part`). A session no client has followed for
+  parts' text and tool outputs fall back to their brief, down to 90% of it so that what streams next fits, and are
+  read whole again on demand (`part`); only a cut asks the clients for a snapshot (revised 2026-11-04). A session no client has followed for
   `FORGET_MINUTES` (30) falls back to the brief the Monitor keeps today.
 - **The route stays.** `GET /agents/conversation` keeps its shape (design 0021 §4) and answers from the mirror in
   microseconds; `before` pages from the mirror, else from OpenCode once. The console and the phone, which read it

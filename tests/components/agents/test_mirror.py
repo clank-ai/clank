@@ -168,7 +168,7 @@ def test_the_sessions_a_watcher_saw_are_known_newest_first_with_their_status_and
 def test_the_mirror_is_bounded_old_text_falls_back_to_its_brief_and_sessions_unread_are_forgotten(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(mirror_module, "FULL_BYTES", 43_000)  # five parts of 10,000; two cut to their brief fit
+    monkeypatch.setattr(mirror_module, "FULL_BYTES", 43_000)  # five parts of 10,000: cut to 90% of it, three fell back
     now = [0.0]
     mirror = Mirror(clock=lambda: now[0])
     mirror.follow(W, S)
@@ -179,7 +179,7 @@ def test_the_mirror_is_bounded_old_text_falls_back_to_its_brief_and_sessions_unr
     found = mirror.conversation(W, S, 10)
     assert found is not None
     texts = [m["parts"][0] for m in found["messages"]]
-    assert [len(t["text"]) < 10_000 for t in texts] == [True, True, False, False, False], "the oldest fell back"
+    assert [len(t["text"]) < 10_000 for t in texts] == [True, True, True, False, False], "the oldest fell back"
     assert texts[0]["length"] == 10_000, "its length still says what it was"
     assert texts[0].get("whole") is False
     assert texts[-1]["whole"] is True
@@ -189,6 +189,39 @@ def test_the_mirror_is_bounded_old_text_falls_back_to_its_brief_and_sessions_unr
     assert mirror.forget() == [(W, S)], "no client read it for half an hour"
     assert mirror.conversation(W, S, 10) is None
     assert mirror.followed(W) == []
+
+
+def test_past_the_bound_old_tool_outputs_are_cut_too_and_only_a_cut_asks_for_a_snapshot(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A session of many tool calls (each output up to 200,000 characters): past the bound, the oldest outputs fall back
+    to their brief as the text does, down to 90% of it, so the next deltas fit: they are deltas, not one snapshot each
+    (each a whole page sent to every follower, and a readout asked for)."""
+    monkeypatch.setattr(mirror_module, "FULL_BYTES", 100_000)
+    mirror = Mirror()
+    mirror.follow(W, S)
+    mirror.merge(W, S, {"messages": [], "next": ""})
+    for n in range(1, 13):
+        mirror.heard(W, message_line(f"msg_{n:02}", "assistant", n * 100))
+        mirror.heard(W, {"type": "part", "port": 4096, "session": S, "part": {
+            "id": f"prt_{n:02}", "message": f"msg_{n:02}", "type": "tool", "tool": "bash", "status": "completed",
+            "output": "y" * 10_000, "length": 10_000, "whole": True,
+        }})  # fmt: skip
+    found = mirror.conversation(W, S, 20)
+    assert found is not None
+    outputs = [len(m["parts"][0]["output"]) for m in found["messages"]]
+    assert outputs[0] < 10_000, "the oldest output fell back to its brief"
+    assert outputs[-1] == 10_000
+    assert sum(outputs) <= 100_000, "within the bound"
+    assert outputs.count(10_000) >= 2, "cut to 90% when crossed: room for the next ones, not every output cut"
+    mirror.heard(W, message_line("msg_99", "assistant", 9900))
+    version = mirror.version(W, S)
+    for size in [100] * 10 + [5_000] + [100] * 10:  # the 5,000 crosses the bound again
+        mirror.heard(W, delta_line("prt_99", "msg_99", "z" * size))
+    changes = mirror.changes_since(W, S, version)
+    assert changes is not None
+    kinds = [event["type"] for _, event in changes]
+    assert kinds == ["delta"] * 11 + ["snapshot"] + ["delta"] * 10, "a snapshot only when something was cut"
 
 
 def test_a_server_the_watch_no_longer_follows_leaves_its_sessions_without_a_port_and_idle() -> None:

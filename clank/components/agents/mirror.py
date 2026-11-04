@@ -29,6 +29,7 @@ from typing import Any
 
 FORGET_MINUTES = 30  # a session no client read for this long is forgotten
 FULL_BYTES = 4_000_000  # of a session's text and outputs held whole, at most
+TRIMMED = 0.9  # past FULL_BYTES, the oldest parts are cut until this share of it is held: room for what comes next
 TEXT = 6000  # the brief a part's text falls back to (the bridge's TEXT)
 CHANGES = 2000  # changes kept with their versions for the stream (design 0023 §3); a client behind them gets a snapshot
 AT_WORK = ("busy", "retry")  # a session's status while it works (as `sessions.py` says it)
@@ -321,19 +322,24 @@ class Mirror:
         return {"type": "removed", "message": message}
 
     def _bound(self, held: Conversation) -> bool:
-        """Past `FULL_BYTES`, the oldest parts' text falls back to its brief; whether anything fell back."""
+        """Past `FULL_BYTES`, the oldest parts' text and tool outputs fall back to their brief until `TRIMMED` of it
+        is held, so that what streams next fits without another cut; whether anything was cut (a snapshot is due only
+        then)."""
         total = held.bytes_held()
         if total <= FULL_BYTES:
             return False
+        goal, cut = FULL_BYTES * TRIMMED, False
         for message in held.ordered():
             for part in message["parts"]:
-                text = str(part.get("text") or "")
-                if part.get("whole") and len(text) > TEXT:
-                    part["text"], part["whole"] = _cut(text, TEXT), False
-                    total -= len(text) - len(part["text"])
-                    if total <= FULL_BYTES:
-                        return True
-        return True
+                for key in ("text", "output"):
+                    value = str(part.get(key) or "")
+                    if len(value) > TEXT and (key == "output" or part.get("whole")):
+                        part[key] = _cut(value, TEXT)
+                        part["whole"], cut = False, True
+                        total -= len(value) - len(part[key])
+                if total <= goal:
+                    return cut
+        return cut
 
     # -- history
 
