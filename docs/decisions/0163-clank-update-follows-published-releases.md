@@ -29,4 +29,5 @@
 ## Consequences
 
 - A release appears to `clank update` only once it is published, with its extension and checksums.
-- The installers still name the newest tag; they follow the same rule in the website's next release.
+- The installers still take the newest tag (Git's list, no API): they are to follow the same rule with the release
+  gate (a version the website publishes with each release), so that a tag reaches no one before its release.
