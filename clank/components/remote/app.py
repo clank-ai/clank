@@ -7,6 +7,8 @@ internet is refused. But for the page itself and pairing, it must carry a paired
 keeps after pairing): the login is the first factor, the device the second. Every action carries the header
 `X-Clank-Phone`, which a page from elsewhere cannot send without asking first, and this app never says yes, so another
 site cannot act through the owner's browser. What a device does is recorded as that device (`Actor(kind="device")`).
+A file an agent sent is served under a policy of its own, `sandbox`, and as a download unless it is of a kind seen in
+place (`outbox.py`, decision 0157), so nothing in an outbox runs as the app.
 Every exchange is logged (`traffic.py`) with where it came from as Tailscale's proxy says it, never used to decide
 anything, and a refusal with its kind, so the phone's checkup can say which device reached the PC and what to do
 (design 0025 §2).
@@ -26,6 +28,7 @@ from pydantic import BaseModel, Field
 from clank.components.remote.devices import TTL_DAYS, PairingError
 from clank.components.remote.flowsapi import flow_routes
 from clank.components.remote.icon import icon_png
+from clank.components.remote.outbox import SAVED, served_type
 from clank.components.remote.sessionapi import CONVERSATION_STREAM_PATH, session_routes
 from clank.components.remote.stream import phone_stream
 from clank.kernel.events import Actor
@@ -50,6 +53,8 @@ CONTENT_POLICY = (
     "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; "
     "frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
 )
+FILES_PATH = "/api/files"  # the files the agents sent, and their list
+FILE_POLICY = "sandbox"  # what is served there never runs as the app: no script, no form, an origin of its own
 
 
 class PairBody(BaseModel):
@@ -203,7 +208,8 @@ def create_phone_app(remote: "Remote") -> FastAPI:
     async def headers(request: Request, call_next: Any) -> Response:
         response: Response = await call_next(request)
         response.headers.setdefault("Cache-Control", "no-store")
-        response.headers["Content-Security-Policy"] = CONTENT_POLICY
+        files = request.url.path == FILES_PATH or request.url.path.startswith(FILES_PATH + "/")
+        response.headers["Content-Security-Policy"] = FILE_POLICY if files else CONTENT_POLICY
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
         return response
@@ -384,18 +390,22 @@ def create_phone_app(remote: "Remote") -> FastAPI:
             raise HTTPException(404, "no such exchange of this device")
         return found
 
-    @app.get("/api/files")
+    @app.get(FILES_PATH)
     async def files(request: Request) -> dict[str, Any]:
         device_of(request)
         return {"files": await anyio.to_thread.run_sync(remote.files)}
 
-    @app.get("/api/files/{workspace}/{name}")
+    @app.get(FILES_PATH + "/{workspace}/{name}")
     async def file(workspace: str, name: str, request: Request) -> Response:
+        """A file an agent sent: an image, a PDF or plain text to be seen in place, as its own type (never sniffed for
+        another); any other kind only as a download (decision 0157)."""
         device_of(request)
         path = await anyio.to_thread.run_sync(remote.file_path, workspace, name)
         if path is None:
             raise HTTPException(404, "no such file was sent")
-        return FileResponse(path)
+        kind = served_type(name)
+        shown = "attachment" if kind == SAVED else "inline"
+        return FileResponse(path, media_type=kind, filename=name, content_disposition_type=shown)
 
     @app.post("/api/signout")
     async def signout(request: Request) -> Response:

@@ -22,7 +22,7 @@ page and push alerts, a service the owner switches on and off) and design 0023 �
 | 5 | Now | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s57](../plans/s57-the-phone-app.md)) on the live stream; the Flows tab shows the flows' questions until step 2 brings the Flow view |
 | 6 | Flows: the list, a flow, building one, a gate | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s58](../plans/s58-the-phone-flows.md)): the list from the service's summaries with its filters, a flow with its controls, boxes, proposals and planning steps, a gate as its question with the files it shows; the deliverables' sizes wait for the file screen (step 3) |
 | 7 | A session, the Guide, its context | Approved 2026-10-21 (the canvas); written 2026-10-26; built 2026-10-26 ([plan s59](../plans/s59-the-phone-session.md)): the session's screen on the conversation stream (the words as the model writes them, the live item marked, a message shown at once), the Guide and the context as sheets, every action the device's; the thought is folded by its characters (the Monitor's length); the figures and artifacts an agent shows wait for the file screen (step 3) |
-| 8 | Work and Files | Approved 2026-10-21 (the canvas); written 2026-10-26 |
+| 8 | Work and Files | Approved 2026-10-21 (the canvas); written 2026-10-26; revised after approval 2026-11-04: a file an agent sent is seen in place only when it is a raster image, a PDF or plain text, else saved as a download, always in a sandbox (decision 0157; the audit of 2026-10-30) |
 | 9 | More: activity, models, cost, settings | Approved 2026-10-21 (the canvas); written 2026-10-26 |
 | 10 | Choices made since the canvas | Proposed 2026-10-26 (the owner may change any) |
 | 11 | Order of work | Proposed 2026-10-26; step 1 built 2026-10-26; step 2 built 2026-10-26 (its flows half, then its session half); chat (§12) comes next, before steps 3-5 |
@@ -196,7 +196,10 @@ The home screen, in this order:
 - **Files**: changed today, by workspace, newest first: the file, its folder, which box or session, when, its change
   (`+38 −4`, `new +61`, "asks to edit it" for one waiting). The flow's own file too.
 - **A file**: read only; its changes one at a time (`Previous change`, `Next change`) as a diff with line numbers, or
-  the whole file. The outbox's files (design 0005 §3) show here too.
+  the whole file. The outbox's files (design 0005 §3) show here too: a raster image (PNG, JPEG, GIF, WebP), a PDF
+  or plain text is seen in place, as its own type; any other file (a page, a drawing, a script) is saved as a
+  download, never shown as its own kind; and every one is served in a sandbox (`Content-Security-Policy: sandbox`),
+  so nothing an agent sent runs as the app (revised after approval 2026-11-04, decision 0157).
 
 ## 9. More: activity, models, cost, settings
 
