@@ -5,6 +5,57 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
+## 0.3.0b7: the audit's first fixes: safer around a project's files, no frozen service, a quicker console (2026-11-04)
+
+From a full audit of 0.3.0b6 (speed, security, technical debt and the experience of a first day). Clank now starts only
+the programs it means, follows no link in a project's folder, serves the phone's files as downloads, and never lets a
+folder's own settings point VS Code at another service. A lock that could freeze the whole service is gone. The menu,
+F5 and Esc no longer lag, a long session no longer resends itself for every word, LaTeX builds again, and a thinking
+model gets room to answer by default. From 0.3.0b2 or later, `clank update`; from 0.3.0b1, run the installer again.
+
+### Security
+
+- **Clank starts the programs it means** (decision 0155): it runs itself again as `python -P -m clank`, so a folder
+  named `clank` in the current folder is never imported, and on Windows a program named without its folder (docker,
+  wt, nvidia-smi, git, winget) is found on the PATH alone, never in the current folder.
+- **Clank follows no link in a workspace's folder** (decision 0159): the files it keeps under `.clank/` (artifacts,
+  jobs, boards, figures' copies) are read and written only below the folder and through no link.
+- **VS Code trusts only your own settings and this computer's service** (decision 0156, extension 0.10.5): `clank.home`
+  and `clank.agent.openOnStart` are read from your user settings alone, the service must answer on this computer, and
+  the agent's terminal runs only docker, wsl or ssh. An artifact page opens in your browser only after you say so,
+  and its export allows no address of any kind.
+- **The phone serves the files an agent sent as downloads** (decision 0157), but pictures, PDFs and plain text, which
+  it shows; every file is served in a sandbox. The phone's traffic log masks the install claim in every body it keeps.
+- **The proxy reads an IPv6 address by the IPv4 one it carries** (decision 0157), and refuses any address that is not
+  public.
+- **`clank update` follows published releases only, never a bare tag**, and quotes every value its helper writes
+  (decision 0163).
+
+### Fixed
+
+- **The service could freeze for good** (decision 0158): a thread holding a lock waited for the event loop, which waited
+  for that lock (review mode beside a flow). No thread waits for the loop now.
+- **The console lagged on Esc, F5, Ctrl+B and the Monitor** (decision 0160): each restyled every widget of every page
+  (about 690); now only the menu or the machine column.
+- **A long session sent its whole conversation for every streamed word** to the agent panel, and asked for a readout
+  each time: past the conversation's bound, old tool outputs are cut too, and the panel asks for the readout at most
+  once a second.
+- **LaTeX workspaces could build nothing**: the TeX layer's helper was hidden by the mount of Clank's programs. A
+  workspace with the TeX layer builds it again when next opened (`clank latex setup --restart` moves it now).
+- **A network question you never saw counted as your no** (decision 0162): unanswered, the agent is told you have not
+  answered and asks you, and the host is asked about again; your no still keeps it quiet for ten minutes.
+- **On Windows, each gateway status read every process on the computer**; it no longer does.
+- **A profile path with an apostrophe left Clank stopped after `clank update`.**
+
+### Changed
+
+- **A thinking model's most output is 32,768 by default** when its context is at least 131,072 (decision 0161): its
+  thinking and its answer share the limit, which the setting now says. Presets already made keep theirs.
+- **The words a newcomer meets**: with no model yet, This folder says so and `l` opens Add a model; at the GPU's
+  choice, Clank says a local engine is built by hand today; a key pasted wrong is said to be copied wrong, and one not
+  shaped as OpenRouter's is never sent; the menu lists only what is still to come; the Flow view's keys bar keeps
+  `n` and `r` first.
+
 ## 0.3.0b6: Backspace erases, a model's output limit you can change, and dev mode opens the internet (2026-10-30)
 
 From the owner's first days testing on Linux with a free cloud model. Typing in the console no longer jumps back a step

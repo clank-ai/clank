@@ -9,6 +9,7 @@ Update this page in the same commit as the fix.
 
 | Issue | What the owner sees | Where | Next |
 | --- | --- | --- | --- |
+| With no model loaded, Clank waits about 28 s to know which model can load | The console's start, Add a model and `clank work` wait while each local preset's files are asked of WSL, one call each | `runtime/service.py` (`usable`, `needs`), `hosts/wsl.py` | Decide from Clank's records; ask the host only when a load plans (the 2026-10-26 fix covered the case with a model loaded) |
 | A flow's box can stay working with nothing behind it | The box says it works, nothing runs, and only Stop then Run from frees it; it follows a failure while the box's try was being settled | `flows/runner.py` (`_settle_anyway`, `_advance`, `_recover`) | Named transitions with a check when a run is saved: a working box has an operation or a question |
 | Run from, after a stop, can stop its own first box | "Stopped by you before its session started" | `flows/runner.py` (`stop` leaves its mark until a box's operation ends) | Clear the mark in Run from and when a review checkpoint ends |
 | After a job, a box can resume on the orchestrator's model and tools | A try recorded with its own preset ran on another, or failed with "session gone" | `flows/runner.py` (`_wait_on_job`, `_orchestrate`) | Run a job's checkpoint on the box's own preset and server |
@@ -16,10 +17,23 @@ Update this page in the same commit as the fix.
 | Retrying a flow's operation from the Operations page goes around the flow | The run's box can be tried twice, or a checkpoint dropped | `kernel/operations.py`, `flows/runner.py` (`_box`) | Flows' operations are not retried there; the flow's own Run from is |
 | Some errors read as something else | "Its preset is not there", or "there is no workspace", for any error | `flows/runner.py`, `agents/artifacts.py`, `agents/boards.py`, `agents/jobs.py` | Catch the errors meant |
 | CI takes 29 to 35 minutes, and console frame tests fail now and then | A red run after a push that broke nothing; each push cancels the run before it | `tests/console/frames.py` (a frame called steady after 0.1 s, less than the console's 0.25 s update period), one CI job for everything | Wait until the console is quiet (no update queued, no worker); pytest-xdist; a first job of lint, types and generated files |
-| The console still says some confusing things | "Nothing runs from here" while OpenCode runs; the Monitor opens on an empty Flow view; Watch for shows another workspace's mark; a dozen "coming" menu entries | `agents/console/folder.py`, the Monitor, `console/app.py` | A pass over the console's words (the menu's entries change every frame's snapshot) |
+| The console still says some confusing things | "Nothing runs from here" while OpenCode runs; the Monitor opens on an empty Flow view; Watch for shows another workspace's mark | `agents/console/folder.py`, the Monitor, `console/app.py` | A pass over the console's words (the menu's entries change every frame's snapshot) |
 | pytest is not in the sandbox image | The agent's test runs fail with "No module named pytest" while This folder says nothing needs installing | `workspaces/image/Dockerfile` | Add it at the next change of the image |
 | No scriptable way to give the agent a task | `opencode run` rejects every edit under review mode, and Clank does not see its session | `clank work` | `clank work --message`, on the start route Clank already has |
 | The phone's chat (design 0025 §12) | Not built yet: a normal chat, the workspaces with the saved ones first, any session picked up, figures and the agent's questions in place | `remote/page/` | Plan s60 (branch `feature/phone-chat`, begun) |
+
+## Fixed on 2026-11-04
+
+| Issue | Cause | Commit |
+| --- | --- | --- |
+| The service could stop answering for good, `clank stop` too | A thread holding review mode's lock waited for the event loop, which waited for that lock | 365a403 (decision 0158) |
+| The console lagged on Esc, F5, Ctrl+B and the Monitor | Each toggled a class of the screen, which restyled every widget of every page (about 690) | 09d2234 (decision 0160) |
+| A long session's panel lagged, and asked for a readout with every word | Past the conversation's bound only long text was cut, and each streamed chunk was sent as a whole snapshot | 444a398, f0ab1c8 |
+| A LaTeX workspace built nothing ("TeX is not in the container") | The mount of Clank's programs at `/opt/clank` hid the TeX layer's helper | 935ad5b |
+| An unseen network question counted as the owner's no, for ten minutes | An expired question was taken for a no | eb444a2 (decision 0162) |
+| A thinking model's answers were cut at 16,384 tokens by default | Its thinking counts against the most output | b4bb005 (decision 0161) |
+| `clank update` could follow a tag with no release, and a profile path with an apostrophe left Clank stopped | It took the newest tag when every release is a pre-release; its helper quoted values bare | b08b7a4 (decision 0163) |
+| With no model, This folder's `l` and `g` tried a preset never set up; a mistyped key was called deleted; the menu listed built features as coming | The words of a page written before Add a model | 00ac4ef |
 
 ## Fixed on 2026-10-29 and 10-30
 
