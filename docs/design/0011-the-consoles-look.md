@@ -43,7 +43,7 @@ color is a theme variable"): every color becomes a named element of the style.
 | 9 | Narrow windows | Approved 2026-10-18 |
 | 10 | What changes in the tests | Approved 2026-10-18 |
 | 11 | Build steps | Approved 2026-10-18 |
-| 12 | Every key a button | Approved 2026-10-21 (the owner: K2); built 2026-10-21 (plan s36) |
+| 12 | Every key a button | Approved 2026-10-21 (the owner: K2); built 2026-10-21 (plan s36); §12.5 revised 2026-11-04 (the menu's show and hide classes its own, decision 0160) |
 | 13 | The console as the website draws it, and its recording | Approved 2026-10-22 (the owner's request); built 2026-10-22 (plan s39; decisions 0125-0126) |
 
 ## 1. What the owner gets
@@ -749,3 +749,6 @@ lines and the arrows' order reworked).
   should be esc while backspace is reserved for actually erasing things." Esc takes the steps back inside a page that
   Backspace took, and goes to the menu from a page with none; Backspace only erases, and a field's own keys never reach
   the page under it (the page had heard Backspace before the field: on Add a model it went back a step mid-word).
+- **2026-11-04, §12.5 revised after approval** (decision 0160): the classes that show and hide the menu and the
+  machine column are those widgets' own, not the screen's, so Ctrl+B, Esc to the menu and F5 restyle them alone
+  (they restyled every widget of every page, about 690, 0.1 to 0.3 seconds each).

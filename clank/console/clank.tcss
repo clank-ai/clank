@@ -61,22 +61,24 @@ Screen.-small #menu .planned, Screen.-small #menu .divider {
 }
 
 /* Beside a page that takes the whole width (Page.MENU_COLUMN: the Monitor, as the website draws it, decision 0125), the
-   menu is hidden until Ctrl+B shows it; Ctrl+B shows or hides it on any page. The page keys still open every page. */
-Screen.-no-menu-column #menu {
+   menu is hidden until Ctrl+B shows it; Ctrl+B shows or hides it on any page. The page keys still open every page.
+   These classes are the menu's own, and the machine column's below: a class of the screen's restyles every widget of
+   every page each time it changes (decision 0160). */
+Screen #menu.-no-menu-column {
     display: none;
 }
 
-Screen.-menu-on #menu {
+Screen #menu.-menu-on {
     display: block;
 }
 
-Screen.-menu-off #menu {
+Screen #menu.-menu-off {
     display: none;
 }
 
 /* Esc, or Left from the page's first list, puts the focus on the menu: it shows while it has the focus, beside any page,
    and the arrows in it pass the Monitor without hiding it (decision 0129). */
-Screen.-menu-focus #menu {
+Screen #menu.-menu-focus {
     display: block;
 }
 
@@ -107,15 +109,15 @@ Screen.-wider #machine {
 
 /* Beside a page whose panels need the room (Page.MACHINE_COLUMN: the Monitor, design 0012 §2), the machine column is
    hidden whatever the width, until F5 shows it. */
-Screen.-no-machine-column #machine {
+Screen #machine.-no-machine-column {
     display: none;
 }
 
-Screen.-machine-on #machine {
+Screen #machine.-machine-on {
     display: block;
 }
 
-Screen.-machine-off #machine {
+Screen #machine.-machine-off {
     display: none;
 }
 

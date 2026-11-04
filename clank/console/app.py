@@ -329,8 +329,8 @@ class ClankConsole(App[str]):
         self.query_one("#keys", KeysBar).show_keys(self._current().shown_keys())
         machine = self.query_one("#machine", MachineColumn)
         hidden = not machine.display
-        self.screen.set_class(not self._current().MACHINE_COLUMN, "-no-machine-column")
-        self.screen.set_class(not self._current().MENU_COLUMN, "-no-menu-column")
+        machine.set_class(not self._current().MACHINE_COLUMN, "-no-machine-column")
+        self.query_one("#menu").set_class(not self._current().MENU_COLUMN, "-no-menu-column")
         if hidden and machine.display:
             self._draw_machine()  # it drew nothing while hidden
         menu = self.query_one("#menu", ListView)
@@ -369,19 +369,19 @@ class ClankConsole(App[str]):
     def menu_hidden(self) -> bool:
         """Whether the menu is hidden now: by Ctrl+B, or beside a page that takes the whole width (as its classes say,
         before the screen is drawn again)."""
-        screen = self.screen
-        if screen.has_class("-menu-focus"):
+        menu = self.query_one("#menu")
+        if menu.has_class("-menu-focus"):
             return False
-        if screen.has_class("-menu-off"):
+        if menu.has_class("-menu-off"):
             return True
-        return not self._current().MENU_COLUMN and not screen.has_class("-menu-on")
+        return not self._current().MENU_COLUMN and not menu.has_class("-menu-on")
 
     def action_menu(self) -> None:
         """Ctrl+B: show the menu on the left, or hide it, on any page (decision 0125); a hidden menu's focus goes into
         the page."""
         hiding = not self.menu_hidden()
-        self.screen.set_class(hiding, "-menu-off")
-        self.screen.set_class(not hiding, "-menu-on")
+        self.query_one("#menu").set_classes([*self._others(self.query_one("#menu"), "-menu-off", "-menu-on"),
+                                             "-menu-off" if hiding else "-menu-on"])  # fmt: skip
         if hiding and self.focused is self.query_one("#menu", ListView):
             self.call_after_refresh(self.action_inward)
 
@@ -390,14 +390,20 @@ class ClankConsole(App[str]):
         while it has the focus, beside a page that hides it too."""
         self._present()
         menu = self.query_one("#menu", ListView)
-        self.screen.set_class(True, "-menu-focus")
+        menu.set_class(True, "-menu-focus")
         menu.focus()
+
+    @staticmethod
+    def _others(widget: Widget, *dropped: str) -> list[str]:
+        """The widget's classes but `dropped`, so that two of them change in one restyle."""
+        return [each for each in widget.classes if each not in dropped]
 
     def action_machine(self) -> None:
         """F5: show the machine column, or hide it, whatever the terminal's width."""
-        shown = self.query_one("#machine").display
-        self.screen.set_class(shown, "-machine-off")
-        self.screen.set_class(not shown, "-machine-on")
+        machine = self.query_one("#machine")
+        shown = machine.display
+        machine.set_classes([*self._others(machine, "-machine-off", "-machine-on"),
+                             "-machine-off" if shown else "-machine-on"])  # fmt: skip
         self._draw_machine()
 
     def run_doctor(self) -> None:
@@ -537,7 +543,7 @@ class ClankConsole(App[str]):
             return  # the console is quitting: its screens are taken down, and a focus still heard has nothing to tidy
         screen = self.screen  # the menu Esc showed hides again once the focus is elsewhere (as it is now)
         if not screen.is_modal and (screen.focused is None or screen.focused.id != "menu"):
-            screen.remove_class("-menu-focus")
+            self.query_one("#menu").remove_class("-menu-focus")
         page = self._shown_page()
         if page is not None and page in event.widget.ancestors:
             self._left[self._page] = event.widget

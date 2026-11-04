@@ -36,7 +36,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 5.4 | Explain anything | `tests/console/test_records.py` (4) |
 | 5.5 | Changing how it looks and what it shows | `tests/console/test_shell.py` (21) |
 | 5.6 | Panels are modules | `tests/console/test_pages.py` (10) |
-| 5.7 | Redraws and load | `tests/console/test_data.py` (20), `tests/console/test_flow_panel.py` (8), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_panel.py` (12), `tests/console/test_shell.py` (21), `tests/console/test_toggles_restyle_little.py` (1) |
+| 5.7 | Redraws and load | `tests/console/test_data.py` (20), `tests/console/test_flow_panel.py` (8), `tests/console/test_monitor_context.py` (15), `tests/console/test_monitor_flow.py` (9), `tests/console/test_monitor_now.py` (9), `tests/console/test_monitor_page.py` (16), `tests/console/test_panel.py` (12), `tests/console/test_shell.py` (21) |
 | 5.8 | Without a screen | `tests/components/runtime/test_model_commands.py` (3), `tests/console/test_command.py` (4) |
 | 6 | The gateway | `tests/components/gateway/test_recent_requests.py` (6), `tests/console/test_requests_page.py` (11) |
 | 6.1 | The path of a request | `tests/components/gateway/test_server.py` (23) |
@@ -246,7 +246,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 12.2 | One group, one cursor | `tests/console/test_button_groups.py` (9), `tests/console/test_buttons.py` (9) |
 | 12.3 | Pressing a button | `tests/console/test_button_groups.py` (9), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_one_door.py` (6) |
 | 12.4 | How the focus moves | `tests/console/test_backspace_erases.py` (7), `tests/console/test_button_groups.py` (9), `tests/console/test_button_hints.py` (5), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_monitor_flow_buttons.py` (4) |
-| 12.5 | Where the focus starts | `tests/console/test_arrows.py` (8), `tests/console/test_confirm.py` (6), `tests/console/test_esc_to_menu.py` (6) |
+| 12.5 | Where the focus starts | `tests/console/test_arrows.py` (8), `tests/console/test_confirm.py` (6), `tests/console/test_esc_to_menu.py` (6), `tests/console/test_toggles_restyle_little.py` (1) |
 | 12.6 | The message line says what the focused button does | `tests/console/test_button_hints.py` (5) |
 | 12.7 | A button that cannot act now | `tests/console/test_folder_buttons.py` (5), `tests/console/test_one_door.py` (6) |
 | 12.8 | The look, in the style | `tests/console/test_buttons.py` (9), `tests/console/test_console_style.py` (14) |
@@ -362,18 +362,18 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner gets, and what this design takes from design 0015 | none yet |
 | 2 | OpenRouter, the first cloud provider | none yet |
-| 3 | What OpenRouter offers, as its documentation says | `tests/components/runtime/test_openrouter.py` (18), `tests/real/test_openrouter.py` (5) |
-| 4 | The provider's record, and its key | `tests/cli/test_endpoint_commands.py` (12), `tests/components/runtime/test_dev_mode.py` (7), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/console/test_secret_field.py` (6) |
+| 3 | What OpenRouter offers, as its documentation says | `tests/components/runtime/test_openrouter.py` (19), `tests/real/test_openrouter.py` (5) |
+| 4 | The provider's record, and its key | `tests/cli/test_endpoint_commands.py` (12), `tests/components/runtime/test_dev_mode.py` (7), `tests/components/runtime/test_endpoint_routes.py` (18), `tests/components/runtime/test_endpoints.py` (6), `tests/console/test_secret_field.py` (6) |
 | 5 | How the gateway gets the key | `tests/components/gateway/test_cloud_keys.py` (6) |
-| 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (18) |
-| 7 | Cloud presets, and the main slot running one | `tests/cli/test_preset_change_command.py` (4), `tests/components/agents/test_model_changed.py` (6), `tests/components/agents/test_opencode_output.py` (5), `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_preset_change.py` (7), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_openrouter.py` (18), `tests/console/test_data.py` (20), `tests/console/test_preset_change.py` (5) |
-| 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_dev_mode.py` (7), `tests/components/runtime/test_openrouter.py` (18), `tests/docker/test_cloud_live.py` (1) |
-| 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
-| 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
+| 6 | The OpenRouter adapter | `tests/components/runtime/test_endpoint_check.py` (6), `tests/components/runtime/test_endpoint_routes.py` (18), `tests/components/runtime/test_endpoints.py` (6), `tests/components/runtime/test_openrouter.py` (19) |
+| 7 | Cloud presets, and the main slot running one | `tests/cli/test_preset_change_command.py` (4), `tests/components/agents/test_model_changed.py` (6), `tests/components/agents/test_opencode_output.py` (5), `tests/components/agents/test_work.py` (11), `tests/components/flows/test_cloud_box.py` (3), `tests/components/runtime/test_cloud_preset_change.py` (7), `tests/components/runtime/test_cloud_presets.py` (8), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_openrouter.py` (19), `tests/console/test_data.py` (20), `tests/console/test_preset_change.py` (5) |
+| 8 | The gateway forwards to OpenRouter | `tests/components/gateway/test_cloud_forwarding.py` (9), `tests/components/gateway/test_reasoning_field.py` (4), `tests/components/gateway/test_server.py` (23), `tests/components/runtime/test_dev_mode.py` (7), `tests/components/runtime/test_openrouter.py` (19), `tests/docker/test_cloud_live.py` (1) |
+| 9 | Where a workspace's requests may go | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/flows/test_cloud_box.py` (3), `tests/components/gateway/test_agent_calls.py` (4), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_workspace_keys.py` (4), `tests/components/runtime/test_endpoint_routes.py` (18), `tests/components/workspaces/test_cloud_bound.py` (6), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
+| 10 | Local-only content never reaches the cloud: how it is enforced | `tests/cli/test_cloud_commands.py` (7), `tests/components/agents/test_workspace_key_config.py` (6), `tests/components/gateway/test_cloud_bounds.py` (12), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_local_only.py` (6), `tests/components/gateway/test_state_files.py` (4), `tests/components/runtime/test_endpoint_routes.py` (18), `tests/components/workspaces/test_cloudwords.py` (2), `tests/console/test_folder.py` (25) |
 | 11 | Cost: each request, session and flow, and the limits | `tests/cli/test_cloud_commands.py` (7), `tests/components/gateway/test_cloud_gate.py` (7), `tests/components/gateway/test_cost_limits.py` (8), `tests/components/gateway/test_cost_views.py` (8), `tests/console/test_add_model.py` (25), `tests/console/test_cost_pause.py` (2), `tests/console/test_data.py` (20), `tests/console/test_home.py` (15), `tests/console/test_monitor_cloud.py` (3), `tests/console/test_requests_page.py` (11), `tests/console/test_text.py` (4), `tests/kernel/test_event_attention.py` (3) |
 | 12 | How cost is known and kept | `tests/components/gateway/test_cloud_cost.py` (5), `tests/components/gateway/test_cost_views.py` (8), `tests/components/gateway/test_state_files.py` (4) |
 | 13 | What the Monitor shows of a cloud model | `tests/components/runtime/test_cloud_facts.py` (5), `tests/console/test_monitor_cloud.py` (3) |
-| 14 | The first run: Add a model | `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_endpoint_routes.py` (17), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (20), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (21) |
+| 14 | The first run: Add a model | `tests/cli/test_model_add.py` (7), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_cloud_slot.py` (17), `tests/components/runtime/test_endpoint_routes.py` (18), `tests/components/runtime/test_guide.py` (9), `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_add_model.py` (25), `tests/console/test_data.py` (20), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_secret_field.py` (6), `tests/console/test_shell.py` (21) |
 | 15 | The Providers and models page, and the other pages | `tests/components/runtime/test_guide_routes.py` (7), `tests/console/test_data.py` (20), `tests/console/test_dev_mode_console.py` (5), `tests/console/test_folder.py` (25), `tests/console/test_pages.py` (10), `tests/console/test_preset_change.py` (5), `tests/console/test_providers_cloud.py` (7) |
 | 16 | The commands | `tests/cli/test_cloud_commands.py` (7), `tests/cli/test_dev_command.py` (1), `tests/cli/test_endpoint_commands.py` (12), `tests/cli/test_model_add.py` (7), `tests/cli/test_preset_change_command.py` (4), `tests/cli/test_work_cloud.py` (3), `tests/components/runtime/test_dev_mode.py` (7) |
 | 17 | The phone and VS Code | `tests/kernel/test_event_attention.py` (3), `vscode/test/controller.test.ts` (18) |
@@ -3214,6 +3214,7 @@ Design 0016 §4, §6, §9, §10 and §14: adding a cloud provider needs the owne
 - an mcp server is marked local only or not and one added says which
 - an mcp server added without saying which is local only while a provider is agreed
 - a key openrouter refuses is not kept and says why
+- a key not shaped as openrouters is refused before it is sent
 - a key is not kept when openrouter does not answer
 - a key it takes is kept shown by its last four and never anywhere else
 - the account is read with the key at most once a minute
@@ -3419,6 +3420,7 @@ Design 0016 §3, §6, §7 and §8: what the OpenRouter adapter reads of OpenRout
 - no full context words are declared until a real key shows them
 - a requests cost is openrouters figure else an estimate that says so
 - a generations record gives its total cost
+- a presets most output by default leaves a thinking model room to answer
 - a presets options follow the model
 - a window of zero beside the providers real one says nothing
 - a router priced per request is left out since its cost cannot be said before
@@ -3759,10 +3761,10 @@ Design 0008 §3: when Matplotlib saves a raster figure inside the workspace's fo
 
 ### `tests/components/workspaces/test_host_asks.py`
 
-Design 0024 §3 (decision 0141): a host the agent reaches without an allowance is asked for. The service allows at once when the record does, refuses at once within the quiet period, else asks the owner one question per workspace and host (the same question while it waits): answered always, the host joins the record and the request goes out; once, it goes out this time; no, or unanswered within `HOLD_SECONDS`, it is refused and the host is not asked again for `QUIET_MINUTES`. The routes the gateway's proxy uses: `POST /workspaces/{name}/hosts/wanted` and `GET /workspaces/hosts/wanted/{question}`.
+Design 0024 §3 (decision 0141): a host the agent reaches without an allowance is asked for. The service allows at once when the record does, refuses at once within the quiet period, else asks the owner one question per workspace and host (the same question while it waits): answered always, the host joins the record and the request goes out; once, it goes out this time; no, it is refused and the host is not asked again for `QUIET_MINUTES`. A question nobody answered within `HOLD_SECONDS` refuses this request as unanswered, never as the owner's no: the host is asked again at the next request (decision 0162). The routes the gateway's proxy uses: `POST /workspaces/{name}/hosts/wanted` and `GET /workspaces/hosts/wanted/{question}`.
 
 - a host not allowed is asked for once per host and always writes the allowance
-- no or no answer refuses and keeps the host quiet for a while
+- no refuses and keeps the host quiet for a while and no answer is not a no
 - the routes the proxy uses ask and read the decision
 
 ### `tests/components/workspaces/test_image_layers.py`
@@ -4714,7 +4716,7 @@ Design 0002 §3.2: the console shows a state in color: green when it is as wante
 
 ### `tests/console/test_toggles_restyle_little.py`
 
-Design 0001 §5.7: the console stays quick to the keys. Showing or hiding the menu (Ctrl+B, and Esc to it) or the machine column (F5), and opening a page beside which either hides, restyle the menu or the column alone, never every widget of every page: their classes are theirs, not the screen's (decision 0160).
+Design 0011 §12.5: the console stays quick to the keys. Showing or hiding the menu (Ctrl+B, and Esc to it) or the machine column (F5), and opening a page beside which either hides, restyle the menu or the column alone, never every widget of every page: their classes are theirs, not the screen's (decision 0160).
 
 - the menu and the machine column show and hide restyling only themselves
 
