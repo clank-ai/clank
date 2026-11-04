@@ -67,7 +67,9 @@ async def test_a_thread_holding_a_lock_records_an_event_while_the_loop_waits_for
 
 @pytest.mark.anyio
 async def test_work_handed_to_a_busy_loop_from_a_thread_returns_at_once_and_runs_in_order() -> None:
-    handoff, ran, returned = Handoff(), [], []
+    handoff = Handoff()
+    ran: list[int] = []
+    returned: list[float] = []
 
     def hand() -> None:
         began = time.monotonic()
