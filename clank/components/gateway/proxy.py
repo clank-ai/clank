@@ -9,8 +9,9 @@ survives every restart, and it names the workspace; a request without the right 
 `Proxy` serves HTTP/1.1 on the loopback: a `CONNECT host:port` (TLS, or any stream) to a host the workspace is
 allowed (`allowed_host`: an exact name, or a suffix `.example.org` for the name and every name under it) is resolved
 here (the container has no way to the internet's names), refused when the name or any address it resolves to is
-private (`private_address`: the machine, the local networks, the carrier range the tailnet uses, link-local), else
-joined to the first address found, bytes both ways, counted and never read; a plain request (`GET http://host/path`)
+private (`private_address`: the machine, the local networks, the carrier range the tailnet uses, link-local, any
+address that is not public; an IPv6 address that carries an IPv4 one, mapped, 6to4 or Teredo, by that one too,
+decision 0157), else joined to the first address found, bytes both ways, counted and never read; a plain request (`GET http://host/path`)
 is forwarded to its host with the proxy's own headers dropped and `Connection: close`, one request a connection, its
 path recorded. A host not allowed is asked for when the proxy has an `ask` (design 0024 §3: the connection held up to
 `HOLD_SECONDS` while the service asks the owner; `always` or `once` let the request out, logged as asked), else, or
@@ -83,14 +84,29 @@ def allowed_host(host: str, patterns: list[str]) -> bool:
 
 
 def private_address(ip: str) -> bool:
-    """Whether an address is one the agent must never reach: the machine, a local network, the tailnet's range."""
+    """Whether an address is one the agent must never reach: the machine, a local network, the tailnet's range, any
+    address that is not public. An IPv6 address that carries an IPv4 one is judged by that one too (decision 0157):
+    a mapped one (`::ffff:a.b.c.d`, which reaches a.b.c.d) by it alone, a 6to4 one and a Teredo one (its server and
+    its client) by each as well as by itself, so no way of writing a private IPv4 address passes."""
     try:
         address = ipaddress.ip_address(ip)
     except ValueError:
         return True  # not an address at all: nothing to reach
-    if address.is_private or address.is_loopback or address.is_link_local or address.is_unspecified:
+    if isinstance(address, ipaddress.IPv6Address):
+        if address.ipv4_mapped is not None:
+            return _not_public(address.ipv4_mapped)
+        carried = [address.sixtofour, *(address.teredo or ())]
+        if any(each is not None and _not_public(each) for each in carried):
+            return True
+    return _not_public(address)
+
+
+def _not_public(address: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """Whether one address, as written, is not a public one: not global as `ipaddress` says, private, the machine,
+    link-local, unspecified, multicast, reserved, or in `PRIVATE_NETWORKS`."""
+    if not address.is_global or address.is_private or address.is_loopback or address.is_link_local:
         return True
-    if address.is_multicast or address.is_reserved:
+    if address.is_unspecified or address.is_multicast or address.is_reserved:
         return True
     return any(address in network for network in PRIVATE_NETWORKS)
 

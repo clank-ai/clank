@@ -524,13 +524,13 @@ Each test file begins with a docstring naming the design sections it verifies (d
 
 | § | Section | Tests |
 | --- | --- | --- |
-| 1 | The rule: through Clank, by allowance | `tests/components/gateway/test_proxy.py` (12), `tests/components/gateway/test_proxy_dev_mode.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5) |
-| 2 | The way out: a forward proxy at the gateway | `tests/components/gateway/test_proxy.py` (12), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10) |
+| 1 | The rule: through Clank, by allowance | `tests/components/gateway/test_proxy.py` (13), `tests/components/gateway/test_proxy_dev_mode.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5) |
+| 2 | The way out: a forward proxy at the gateway | `tests/components/gateway/test_proxy.py` (13), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10) |
 | 3 | A host the agent asks for | `tests/components/agents/test_dev_mode_agent.py` (5), `tests/components/gateway/test_proxy_dev_mode.py` (7), `tests/components/workspaces/test_host_asks.py` (3) |
 | 4 | What the owner sees | `tests/components/gateway/test_network_views.py` (3), `tests/console/test_dev_mode_console.py` (5), `tests/console/test_folder.py` (25) |
 | 5 | Packages, papers, data: the named sets | `tests/components/workspaces/test_network_sets.py` (4), `tests/console/test_folder.py` (25) |
 | 6 | Search | `tests/components/agents/test_dev_mode_agent.py` (5), `tests/components/workspaces/test_network_sets.py` (4) |
-| 7 | What is never reached | `tests/components/gateway/test_proxy.py` (12), `tests/components/gateway/test_proxy_dev_mode.py` (7) |
+| 7 | What is never reached | `tests/components/gateway/test_proxy.py` (13), `tests/components/gateway/test_proxy_dev_mode.py` (7) |
 | 8 | Order of work | none yet |
 
 ## Design 0025: Clank for iPhone (M9)
@@ -2570,13 +2570,14 @@ Design 0010 §3: the agent reaches Notion through the gateway, which forwards to
 
 ### `tests/components/gateway/test_proxy.py`
 
-Design 0024 §1, §2 and §7 (decision 0141): the forward proxy at the gateway, the agent's only way to the internet. A request names its workspace by the token in the proxy's URL (derived from the service's local token, so it names the workspace and nothing need be handed); a host the workspace is allowed, exact or by suffix, is reached: a `CONNECT` tunnel carries bytes both ways and is never opened, plain HTTP is forwarded with its path recorded; any other host is refused with 403 and the words that say how it is allowed; a private address is refused before resolving and after, whatever the allowance; a wrong token gets 407; a name that cannot be resolved 502; every exchange is logged by time, workspace, host, method, status, bytes each way and duration, never a body, one file a day, the days older than kept removed.
+Design 0024 §1, §2 and §7 (decision 0141): the forward proxy at the gateway, the agent's only way to the internet. A request names its workspace by the token in the proxy's URL (derived from the service's local token, so it names the workspace and nothing need be handed); a host the workspace is allowed, exact or by suffix, is reached: a `CONNECT` tunnel carries bytes both ways and is never opened, plain HTTP is forwarded with its path recorded; any other host is refused with 403 and the words that say how it is allowed; a private address is refused before resolving and after, whatever the allowance, and so is any address that is not public, an IPv6 address by the IPv4 one it carries too (mapped, 6to4, Teredo; decision 0157); a wrong token gets 407; a name that cannot be resolved 502; every exchange is logged by time, workspace, host, method, status, bytes each way and duration, never a body, one file a day, the days older than kept removed.
 
 - a connect to an allowed host is a tunnel both ways logged without its bytes
 - plain http to an allowed host is forwarded and its path recorded
 - a host not allowed is refused in plain words and the refusal logged
 - a suffix allows the name and every name under it
 - a private address is refused before resolving and after whatever the allowance
+- an ipv6 address carrying a private ipv4 one is refused as a literal and as a name resolved to it
 - a wrong or missing token is refused with 407
 - a host that cannot be resolved is answered 502
 - the workspace token is derived from the local token and names the workspace
