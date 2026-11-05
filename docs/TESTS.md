@@ -82,7 +82,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (15), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (19), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
 | 2.6 | Policy | none yet |
 | 2.7 | Callers and access | `tests/components/gateway/test_callers.py` (6), `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (7), `vscode/test/connection.test.ts` (5), `vscode/test/controller.test.ts` (19), `vscode/test/live.test.ts` (1) |
-| 2.8 | Secrets | `tests/components/tools/test_servers.py` (7), `tests/kernel/test_secrets.py` (4) |
+| 2.8 | Secrets | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_work.py` (11), `tests/components/tools/test_project_check.py` (8), `tests/components/tools/test_servers.py` (7), `tests/components/workspaces/test_docker_containers.py` (19), `tests/console/test_folder.py` (26), `tests/console/test_terminal.py` (6), `tests/kernel/test_handed_environment.py` (2), `tests/kernel/test_secrets.py` (4), `vscode/test/agent.test.ts` (14) |
 | 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_sandbox.py` (10), `tests/kernel/test_processes.py` (8), `tests/kernel/test_programs_found.py` (6) |
 | 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (9), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
 | 2.11 | The library: what the user installs | `tests/components/tools/test_servers.py` (7) |
@@ -132,11 +132,11 @@ Each test file begins with a docstring naming the design sections it verifies (d
 
 | § | Section | Tests |
 | --- | --- | --- |
-| 1 | What the owner does | `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (26), `tests/console/test_terminal.py` (5) |
+| 1 | What the owner does | `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (26), `tests/console/test_terminal.py` (6) |
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (15), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
 | 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (26), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (9), `tests/docker/test_escape.py` (5), `tests/kernel/test_infolder.py` (12) |
 | 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (11), `tests/console/test_folder.py` (26), `tests/contract/test_agent_program.py` (2) |
-| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_docker_containers.py` (19), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (13), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (19), `vscode/test/reach.test.ts` (4) |
+| 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_docker_containers.py` (19), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (14), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (19), `vscode/test/reach.test.ts` (4) |
 | 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_workspace_operations.py` (17) |
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (5) |
@@ -3707,7 +3707,7 @@ Design 0004 §3 and design 0002 §2.9: every adapter's container commands, on a 
 - a container joins and leaves a network and a network is removed each twice without error
 - a command docker refuses raises its own words
 - a container is read started stopped and removed and a missing one is no error
-- a terminal enters a container as its user in its folder with its environment
+- a terminal enters a container as its user in its folder naming its environment alone
 - a file is written in a container as its user
 - a container says its networks and joining one says whether it joined now
 - a start refused because a network is gone says so
@@ -4767,6 +4767,7 @@ Design 0004 §1: handing the console's terminal to a program. The console steps 
 - headless the program runs without stepping aside
 - a terminal resized while the program ran tells the console its size
 - a program runs attached with ctrl c its own and the console s handler back after
+- the program runs with the environment given beside its command
 
 ### `tests/console/test_text.py`
 
@@ -5043,6 +5044,13 @@ Design 0002 §2.2 and design 0013 §11 (decision 0066): a settings kind may keep
 - a grouped record is written into its groups folder over its revision and refused over another
 - an id that names no group or climbs out of the kinds folder is refused
 - the record routes read and write a grouped record by its id
+
+### `tests/kernel/test_handed_environment.py`
+
+Design 0002 §2.8: a command the service hands a client to run (the agent's `docker exec`) names each variable of its environment alone; the client runs it with the values given beside it over its own environment, where docker reads them, so no value is on a command line.
+
+- a handed command runs with its values over this processes environment
+- the program it starts reads a value named alone from its environment
 
 ### `tests/kernel/test_handoff.py`
 
@@ -5545,6 +5553,7 @@ Design 0021 §4, in a real browser: the agent panel's page (media/agent.html, as
 Design 0004 §5: in Clank's VS Code window the agent starts beside the files: for the folder the window has open, the folder's workspace is read; when its container runs, the agent's configuration is written into it and the terminal runs the command the service answers, named after the program and the workspace; otherwise it says what is missing and how to get it ready, and writes nothing. A window that has the agent's terminal (running, or only its tab, restored with a reloaded window before VS Code revives it) does not start another. With one OpenCode window per workspace (the service closed the others first), the new terminal replaces the window's agent terminals. The agent's group stays at the right edge: moved there when it is not, the keyboard given back to the group that had it.
 
 - a folder whose container runs gets the agent's terminal, with the command the service answers
+- the terminal runs with the environment the service gave beside the command, its values never in the command
 - with one window per workspace the new terminal replaces the window's agent terminals, and otherwise adds one
 - a folder that is not ready says what is missing and how to get it ready, and writes nothing
 - OpenCode is not started while it cannot reach the model: the problem is said with its fix

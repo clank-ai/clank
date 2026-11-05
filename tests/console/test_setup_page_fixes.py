@@ -6,7 +6,7 @@ the sandbox image in the background, asked first (S4). A key that has nothing to
 stopped, that Clank never starts it, and the command `t` runs. `t` runs only a command the checklist builds, whoever
 gave it: another is refused, its words naming it."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 
 import pytest
@@ -37,7 +37,7 @@ class Terminal:
     def __init__(self) -> None:
         self.ran: list[list[str]] = []
 
-    def __call__(self, argv: Sequence[str]) -> int:
+    def __call__(self, argv: Sequence[str], env: Mapping[str, str]) -> int:
         self.ran.append(list(argv))
         return 0
 

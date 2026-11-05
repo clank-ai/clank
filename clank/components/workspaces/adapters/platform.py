@@ -272,7 +272,9 @@ class ContainerPlatform(Adapter):
         terminal: bool = True,
     ) -> list[str]:
         """The command that runs `argv` in a container, in `workdir`, as its user, with `env`: for a terminal, else
-        talked to over its input and output (`terminal=False`: an MCP server)."""
+        talked to over its input and output (`terminal=False`: an MCP server). The command names each variable of
+        `env` and holds none of its values: whoever runs it runs it with `env` added to its own environment, where the
+        platform's command reads them (design 0002 §2.8)."""
 
     def after_start(self, log: Callable[[str], None]) -> None:
         """Put right what starting the platform disturbed on this machine, saying what it does; most need nothing."""

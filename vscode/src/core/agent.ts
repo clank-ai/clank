@@ -11,7 +11,8 @@
 // fail at once (its terminal closing with it), it is not started and the problem is said with its fix. A check slower
 // than the configuration holds nothing up: the terminal starts and its answer comes after (`later`). Decision 0156:
 // the terminal runs only the programs Clank starts the agent with (`terminalProgram`); any other is refused, saying
-// why. Tested without VS Code.
+// why. Design 0002 §2.8: the command names each variable of its environment alone, and the terminal runs it with the
+// values the service gave beside it (`env`), where docker reads them. Tested without VS Code.
 
 import { inTime } from "./client";
 import { type Reach, type ReachFix, readReach } from "./reach";
@@ -39,12 +40,14 @@ export function terminalProgram(program: string): boolean {
   return TERMINAL_PROGRAMS.some((allowed) => name === allowed || name === `${allowed}.exe`);
 }
 
-/** A terminal that runs the agent: its name, its program and the program's arguments, and whether it replaces the
- * window's agent terminals (one window per workspace) or is added beside them. */
+/** A terminal that runs the agent: its name, its program and the program's arguments, the environment it runs them
+ * with over VS Code's (the values of the variables the arguments name), and whether it replaces the window's agent
+ * terminals (one window per workspace) or is added beside them. */
 export interface AgentTerminal {
   name: string;
   program: string;
   args: string[];
+  env: Record<string, string>;
   replaces: boolean;
 }
 
@@ -64,6 +67,7 @@ interface Prepared {
   workspace: string;
   program: string;
   argv: string[];
+  env?: Record<string, string>; // the values of the variables argv names; absent from a service from before
   one_window?: boolean; // absent from a service from before one window per workspace
 }
 
@@ -108,7 +112,8 @@ export async function agentStart(
     return { problem: `the agent's terminal runs only docker, wsl or ssh, and the service named ${named}: not started`, workspace };
   }
   const replaces = prepared.one_window === true;
-  const terminal = { name: `${prepared.program} · ${workspace}`, program, args, replaces };
+  const env = { ...(prepared.env ?? {}) };
+  const terminal = { name: `${prepared.program} · ${workspace}`, program, args, env, replaces };
   if (waited === "later") {
     return { terminal, workspace, later: reaching };
   }

@@ -13,7 +13,7 @@ import os
 import re
 import sys
 import threading
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, timedelta
 from pathlib import Path
 from typing import Any
@@ -89,7 +89,7 @@ def lines_of(app: ClankConsole, id: str) -> str:
     return re.sub(r"\s+", " ", " ".join(line.strip() for line in text.splitlines()))
 
 
-def not_handed(argv: Sequence[str]) -> int:
+def not_handed(argv: Sequence[str], env: Mapping[str, str]) -> int:
     raise AssertionError(f"the console handed its terminal to {list(argv)[:3]}")
 
 

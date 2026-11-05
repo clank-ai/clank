@@ -115,13 +115,18 @@ def parse_entry(raw: Mapping[str, Any]) -> Server:
     return Server(transport, url=url, headers=_pairs(raw, "headers"))
 
 
-def through(server: Server, argv: Callable[[list[str], dict[str, str]], list[str]]) -> Server:
+def through(
+    server: Server, argv: Callable[[list[str], dict[str, str]], list[str]], base: Mapping[str, str] | None = None
+) -> Server:
     """A stdio server started through another command that runs it elsewhere (a workspace's container: `argv` gives
-    that command for the server's own and its environment), so a check talks to it where an agent would."""
+    that command for the server's own and its environment, `base` with the server's own over it), so a check talks
+    to it where an agent would. That command names each variable alone (design 0002 §2.8): the values are the
+    environment of the server returned, which the check adds to the process it starts, where the command reads them."""
     if server.transport != "stdio":
         raise McpError("only a server started by a command runs in a workspace; one reached by address does not")
-    command, *args = argv([server.command, *server.args], dict(server.env))
-    return Server("stdio", command=command, args=args)
+    env = {**(base or {}), **server.env}
+    command, *args = argv([server.command, *server.args], dict(env))
+    return Server("stdio", command=command, args=args, env=env)
 
 
 def check(server: Server, seconds: float = 30.0) -> Checked:

@@ -25,10 +25,13 @@ its network) says so in its step, in the service's words, marked as changing; th
 the edge right first), and `o` opens the workspace, which puts it right at once.
 
 Design 0014 §2: `s` starts Docker only when Clank starts it; a Docker the system runs (Docker Engine) is shown with the
-command to run, in the status's words, and nothing is started."""
+command to run, in the status's words, and nothing is started.
+
+Design 0002 §2.8: `a` runs the agent's command with the environment the service gave beside it, the command naming
+each variable alone."""
 
 import contextlib
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -99,11 +102,15 @@ def project(tmp_path: Path) -> Path:
     return folder
 
 
-def recorder(ran: list[list[str]]) -> Callable[[Sequence[str]], int]:
-    """A terminal that keeps what it was asked to run, and says it ended well."""
+def recorder(
+    ran: list[list[str]], environments: list[Mapping[str, str]] | None = None
+) -> Callable[[Sequence[str], Mapping[str, str]], int]:
+    """A terminal that keeps what it was asked to run, and with what environment, and says it ended well."""
 
-    def run(argv: Sequence[str]) -> int:
+    def run(argv: Sequence[str], env: Mapping[str, str]) -> int:
         ran.append(list(argv))
+        if environments is not None:
+            environments.append(env)
         return 0
 
     return run
@@ -341,7 +348,8 @@ async def test_a_starts_opencode_in_the_folders_container_and_the_console_comes_
 
     monkeypatch.setattr(ClankConsole, "suspend", stepped)
     ran: list[list[str]] = []
-    app = console(client, kernel, project, terminal=recorder(ran))
+    environments: list[Mapping[str, str]] = []
+    app = console(client, kernel, project, terminal=recorder(ran, environments))
     async with app.run_test(size=(220, 50)) as pilot:
         await settle(pilot, lambda: "Ready:  a start OpenCode here" in text(app), seconds=20)
         await pilot.press("a")
@@ -349,7 +357,8 @@ async def test_a_starts_opencode_in_the_folders_container_and_the_console_comes_
         assert app.is_running
     [argv] = ran
     assert argv[-3:] == ["/workspace", name, "opencode"]
-    assert "OPENCODE_DISABLE_MODELS_FETCH=1" in argv
+    assert argv[argv.index("OPENCODE_DISABLE_MODELS_FETCH") - 1] == "--env", "design 0002 §2.8: named alone"
+    assert environments[0]["OPENCODE_DISABLE_MODELS_FETCH"] == "1", "its value in the environment it runs with"
     assert (name, CONFIG) in platform.files, "its configuration is written before it starts"
     assert stepped_aside == [], "headless, the program runs without the console stepping aside"
 
@@ -413,7 +422,7 @@ async def test_f_opens_a_planning_and_brings_the_console_to_the_monitors_flow_vi
     monkeypatch.setenv("SSH_CONNECTION", "10.0.0.2 51022 10.0.0.9 22")  # nothing opens on the PC's own screen
     kernel.settings.write("workspace", "paper", {"path": str(project)}, base=None, actor=YOU)
 
-    def never(argv: Sequence[str]) -> int:
+    def never(argv: Sequence[str], env: Mapping[str, str]) -> int:
         raise AssertionError(f"the console handed its terminal to {list(argv)[:3]}")
 
     app = console(client, kernel, project, terminal=never)
@@ -436,7 +445,7 @@ async def test_the_pages_keys_do_nothing_while_a_window_is_over_it(
 ) -> None:
     kernel.settings.write("workspace", "paper", {"path": str(project)}, base=None, actor=YOU)
 
-    def never(argv: Sequence[str]) -> int:
+    def never(argv: Sequence[str], env: Mapping[str, str]) -> int:
         raise AssertionError(f"the console handed its terminal to {list(argv)[:3]}")
 
     app = console(client, kernel, project, terminal=never)

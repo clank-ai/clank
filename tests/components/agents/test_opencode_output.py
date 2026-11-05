@@ -102,7 +102,8 @@ def test_opencode_started_from_a_terminal_gets_the_variable_and_its_note_says_so
     kernel: Kernel, bridge: FakeBridge
 ) -> None:
     prepared = agents(kernel).prepare("paper")
-    assert f"{OUTPUT_VARIABLE}=65536" in prepared["argv"]
+    assert prepared["env"][OUTPUT_VARIABLE] == "65536"
+    assert OUTPUT_VARIABLE in prepared["argv"], "named on the command line, its value in the environment it runs with"
     assert NOTE in prepared["notes"]
     assert NOTE in agents(kernel).plan()["notes"]
 

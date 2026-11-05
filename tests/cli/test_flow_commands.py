@@ -18,11 +18,13 @@ opens Clank's VS Code window, as does a command run in VS Code's terminal; over 
 saying why; a planning open in the workspace is set aside only with `--set-aside`, else refused saying so. `attach`
 runs OpenCode in this terminal on the workspace's open planning, saying what the one-window rule closed and naming
 the session, and once OpenCode ends whether the flow was built, through the service's own answer too; with none open
-it says how to open one; `--home` names Clank's home."""
+it says how to open one; `--home` names Clank's home.
+
+Design 0002 §2.8: `attach` runs OpenCode's command with the environment the service gave beside it."""
 
 import json
 import os
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -493,7 +495,7 @@ def test_flow_new_opens_opencode_here_and_says_the_flow_was_built_and_how_to_loo
     opened = planning_opened(kernel, monkeypatch, project)
     ran: list[list[str]] = []
 
-    def talked(argv: list[str]) -> int:
+    def talked(argv: list[str], env: Mapping[str, str]) -> int:
         ran.append(list(argv))
         kernel.parts["flows"].building._change("myproject/study-2", status="built")  # the model's draft, written
         return 0
@@ -516,12 +518,12 @@ def test_flow_new_says_when_the_flow_was_not_built_and_why_its_session_failed(
     kernel: Kernel, project: Path, monkeypatch: pytest.MonkeyPatch, owner_terminal: None
 ) -> None:
     planning_opened(kernel, monkeypatch, project)
-    monkeypatch.setattr(flow_cli, "terminal", lambda argv: 0)
+    monkeypatch.setattr(flow_cli, "terminal", lambda argv, env: 0)
     result = run("new")
     assert result.exit_code == 0, result.output
     assert "myproject/flow is not built yet" in result.output
 
-    def failed(argv: list[str]) -> int:
+    def failed(argv: list[str], env: Mapping[str, str]) -> int:
         kernel.parts["flows"].building._failed("myproject/flow-2", "no OpenCode window answered on port 4096")
         return 0
 
@@ -540,7 +542,7 @@ def test_flow_new_in_vs_code_opens_clanks_vs_code_window_and_in_vs_codes_termina
     opened = planning_opened(kernel, monkeypatch, project)
     windows: list[str] = []
     monkeypatch.setattr(flow_cli, "open_vscode", lambda client, folder: windows.append(folder))
-    monkeypatch.setattr(flow_cli, "terminal", lambda argv: pytest.fail("nothing runs in this terminal"))
+    monkeypatch.setattr(flow_cli, "terminal", lambda argv, env: pytest.fail("nothing runs in this terminal"))
     result = run("new", "--vscode")
     assert result.exit_code == 0, result.output
     assert windows == [str(project)]
@@ -559,7 +561,7 @@ def test_over_ssh_flow_new_opens_in_this_terminal_whatever_asked_and_says_why(
     monkeypatch.setattr(flow_cli, "open_vscode", lambda client, folder: pytest.fail("no window on the PC's screen"))
     ran: list[list[str]] = []
 
-    def here(argv: list[str]) -> int:
+    def here(argv: list[str], env: Mapping[str, str]) -> int:
         ran.append(list(argv))
         return 0
 
@@ -600,7 +602,7 @@ def test_flow_attach_runs_opencode_here_on_the_open_planning_and_says_what_the_o
     asked = attaching(kernel, monkeypatch, closed=1)
     ran: list[list[str]] = []
 
-    def talked(argv: list[str]) -> int:
+    def talked(argv: list[str], env: Mapping[str, str]) -> int:
         ran.append(list(argv))
         kernel.parts["flows"].building._change("myproject/flow", status="built")
         return 0
@@ -620,21 +622,25 @@ def test_flow_attach_runs_the_command_of_the_services_own_answer(
 ) -> None:
     kernel.parts["flows"].building.begin("myproject", "", "attach", actor=Actor(kind="user", via="console"))
     argv = ["docker", "exec", "-it", "clank-myproject", "opencode", "--port", "4098"]
+    env = {"OPENCODE_DISABLE_AUTOUPDATE": "1"}
     prepared = {"workspace": "myproject", "container": "clank-myproject", "program": "OpenCode",
-                "model": "frontier 262K", "limits": {}, "servers": [], "port": 4098, "argv": argv,
+                "model": "frontier 262K", "limits": {}, "servers": [], "port": 4098, "argv": argv, "env": env,
                 "one_window": True, "closed": 0, "notes": []}  # fmt: skip
     monkeypatch.setattr(kernel.parts["agents"], "prepare", lambda workspace: dict(prepared))  # no container runs
     monkeypatch.setattr(kernel.parts["workspaces"], "runs_current_image", lambda workspace: True)
     ran: list[list[str]] = []
+    environments: list[Mapping[str, str]] = []
 
-    def talked(given: list[str]) -> int:
+    def talked(given: list[str], env: Mapping[str, str]) -> int:
         ran.append(list(given))
+        environments.append(env)
         return 0
 
     monkeypatch.setattr(flow_cli, "terminal", talked)
     result = run("attach")
     assert result.exit_code == 0, result.output
     assert ran == [argv]
+    assert environments == [env], "design 0002 §2.8: the command runs with the environment the service gave beside it"
     assert "“flow · building the flow”" in result.output
 
 
@@ -642,7 +648,7 @@ def test_flow_attach_with_no_planning_open_says_how_to_open_one(
     kernel: Kernel, project: Path, monkeypatch: pytest.MonkeyPatch, owner_terminal: None
 ) -> None:
     attaching(kernel, monkeypatch)
-    monkeypatch.setattr(flow_cli, "terminal", lambda argv: pytest.fail("nothing to attach to"))
+    monkeypatch.setattr(flow_cli, "terminal", lambda argv, env: pytest.fail("nothing to attach to"))
     result = run("attach", "--workspace", "myproject")
     assert result.exit_code == 1
     assert "no planning is open in myproject" in result.output

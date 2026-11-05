@@ -323,15 +323,16 @@ class Tools:
 
     def _in_workspace(self, server: Server, workspace: str, box: str = "") -> Server:
         """The server started in a workspace's running container (`box`, when just found running), with the agent's
-        environment (design 0004 §10)."""
+        environment (design 0004 §10); its `docker exec` names each variable alone, the values in the environment of
+        the process the check starts (design 0002 §2.8)."""
         from clank.components.workspaces.service import Workspaces, WorkspaceUnavailable
 
         workspaces: Workspaces = self.kernel.parts["workspaces"]
         try:
-            base = workspaces.agent_env(workspace)
             return through(
                 server,
-                lambda argv, env: workspaces.exec_argv(workspace, argv, {**base, **env}, terminal=False, container=box),
+                lambda argv, env: workspaces.exec_argv(workspace, argv, env, terminal=False, container=box),
+                workspaces.agent_env(workspace),
             )
         except (McpError, WorkspaceUnavailable) as error:
             raise ApiError(409, "refused", str(error)) from error

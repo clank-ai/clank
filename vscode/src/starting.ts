@@ -286,6 +286,7 @@ export class AgentStarter implements vscode.Disposable {
       name: found.terminal.name,
       shellPath: found.terminal.program,
       shellArgs: found.terminal.args,
+      env: found.terminal.env, // the values of the variables its arguments name (design 0002 §2.8)
       location: { viewColumn: column, preserveFocus: !focus },
       // Never revived by VS Code: a revived terminal ran its saved command again, with a port another OpenCode had by
       // then, out of Clank's reach (2026-10-16). A reloaded window starts the agent afresh instead.

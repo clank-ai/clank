@@ -10,6 +10,8 @@ it runs, not the console's), keys typed into the terminal and left unread (dropp
 so none of them is taken as one of its keys), and a terminal resized meanwhile (its new size is sent to the console,
 since Windows' terminal does not say it on resume). Where the console cannot step aside (its headless tests, a
 snapshot), the program runs without suspending. The program that runs is the console's `terminal`, replaced in tests.
+It runs with the environment the service gave beside its command over the console's own (the agent's `docker exec`
+names each variable alone, design 0002 §2.8).
 """
 
 import contextlib
@@ -18,15 +20,15 @@ import os
 import signal
 import subprocess
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any, Protocol
 
 from textual import events
 from textual.geometry import Size
 
-from clank.kernel.processes import resolved
+from clank.kernel.processes import resolved, with_environment
 
-Terminal = Callable[[Sequence[str]], int]
+Terminal = Callable[[Sequence[str], Mapping[str, str]], int]
 STD_INPUT_HANDLE = -10
 
 
@@ -48,11 +50,12 @@ class Console(Protocol):
         """Send itself a message."""
 
 
-def attached(argv: Sequence[str]) -> int:
-    """Run a program in this terminal and wait for its end; Ctrl+C is the program's meanwhile."""
+def attached(argv: Sequence[str], env: Mapping[str, str] | None = None) -> int:
+    """Run a program in this terminal, with `env` over the console's environment, and wait for its end; Ctrl+C is the
+    program's meanwhile."""
     previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
     try:
-        return subprocess.call(resolved(argv))
+        return subprocess.call(resolved(argv), env=with_environment(env))
     finally:
         signal.signal(signal.SIGINT, previous)
 
@@ -71,24 +74,28 @@ def forget_typed_ahead() -> None:
 
 
 def hand_over(
-    console: Console, argv: Sequence[str], run: Terminal, forget: Callable[[], None] = forget_typed_ahead
+    console: Console,
+    argv: Sequence[str],
+    run: Terminal,
+    forget: Callable[[], None] = forget_typed_ahead,
+    env: Mapping[str, str] | None = None,
 ) -> int | str:
-    """Run a program in the console's terminal and take the terminal back; its exit status, or why it could not run.
-    Call it on the console's own thread."""
+    """Run a program in the console's terminal, with `env` over the console's environment, and take the terminal back;
+    its exit status, or why it could not run. Call it on the console's own thread."""
     if console.is_headless:
-        return _run(argv, run)
+        return _run(argv, run, env or {})
     with console.suspend():
-        outcome = _run(argv, run)
+        outcome = _run(argv, run, env or {})
         with contextlib.suppress(OSError, ValueError, AttributeError):
             forget()
     _resize(console)
     return outcome
 
 
-def _run(argv: Sequence[str], run: Terminal) -> int | str:
+def _run(argv: Sequence[str], run: Terminal, env: Mapping[str, str]) -> int | str:
     """The program's exit status, or why it could not run: nothing may leave the console suspended."""
     try:
-        return run(argv)
+        return run(argv, env)
     except (OSError, ValueError) as error:
         return f"{argv[0] if argv else 'it'} could not start: {error}"
     except KeyboardInterrupt:

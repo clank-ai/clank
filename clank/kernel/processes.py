@@ -19,6 +19,9 @@ A program named without a folder is found on the PATH alone (`resolved`): Window
 which is often a project's, so a file there named like a helper would run in its place; `search_path_only` tells
 Windows, and Python's `shutil.which`, the same for everything this process starts. Clank runs itself again as
 `clank_command` says: `python -P -m clank`, since `-m` alone imports a `clank` folder found in the current folder.
+A command the service hands a client to run (the agent's `docker exec`) names each variable of its environment alone,
+never a value (design 0002 §2.8): the client runs it with the values given beside it over its own environment
+(`with_environment`), where docker reads them.
 """
 
 import contextlib
@@ -110,6 +113,12 @@ def resolved(arguments: Sequence[str], platform: str = sys.platform, path: str |
     if found is None:
         raise FileNotFoundError(f"{command[0]} is not on the PATH")
     return [found, *command[1:]]
+
+
+def with_environment(added: Mapping[str, str] | None) -> dict[str, str]:
+    """This process's environment with `added` over it: what a command handed over by the service runs with, since it
+    names each variable alone and its program reads the values there (design 0002 §2.8)."""
+    return {**os.environ, **(added or {})}
 
 
 def clank_command(*arguments: str, python: str | None = None) -> list[str]:

@@ -703,7 +703,7 @@ class Building:
                 raise BuildError(f"OpenCode's window cannot be started in {workspace}: {error}") from error
             if prepared["port"] is None:
                 self._failed(planning.flow, "its window's session cannot be reached: " + "; ".join(prepared["notes"]))
-            keys = ("argv", "program", "port", "model", "notes")
+            keys = ("argv", "env", "program", "port", "model", "notes")
             return {**said, "window": "started", **{key: prepared[key] for key in keys}}
         if where == "attach":  # beside the console: the window `clank flow attach` prepares (decision 0100)
             command = f"cd {said['folder']} then clank flow attach"
@@ -765,7 +765,7 @@ class Building:
                 target=self._show, args=(planning.flow, port, planning.session, actor), name=f"flows: {planning.flow}",
                 daemon=True,
             ).start()  # fmt: skip
-        keys = ("argv", "program", "port", "model", "notes", "closed", "one_window")
+        keys = ("argv", "env", "program", "port", "model", "notes", "closed", "one_window")
         return {"flow": planning.flow, "name": planning.name, "title": session_title(planning),
                 "status": planning.status, **{key: prepared.get(key) for key in keys}}  # fmt: skip
 

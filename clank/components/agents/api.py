@@ -2,8 +2,10 @@
 
 `GET /agents/plan` says what the agent program would be given (its model and limits), writing nothing. `POST
 /agents/prepare` writes the agent program's configuration into the workspace's container and answers the command a
-terminal runs to start it; it is quick, so it is a request, not an operation. A workspace whose container does not run,
-or a program Clank has no adapter for, is refused with the reason (409). `POST /agents/vscode` opens a folder in Clank's
+terminal runs to start it (`argv`, naming each variable of its environment alone) with the environment the client runs
+it with (`env`, their values: design 0002 §2.8); it is quick, so it is a request, not an operation. A workspace whose
+container does not run, or a program Clank has no adapter for, is refused with the reason (409). `POST /agents/vscode`
+opens a folder in Clank's
 VS Code window, OpenCode beside the files: an operation (`vscode.py`), since the first time installs the window's
 extensions; from a terminal of VS Code's Remote-SSH, the client's `remote` opens it in the other computer's VS Code
 instead (design 0018 §8). The agent's jobs (design 0021 §6): `POST /agents/jobs`, `/agents/jobs/status` and
@@ -306,7 +308,10 @@ def router(agents: "Agents") -> APIRouter:
 
     @routes.post("/agents/prepare")
     async def prepare(wanted: PrepareRequest) -> dict[str, Any]:
-        """Write the agent's configuration into the workspace's container; the command that starts the agent there."""
+        """Write the agent's configuration into the container; the command that starts the agent, and its environment.
+
+        The command (`argv`) names each variable alone; the client runs it with their values (`env`) over its own
+        environment (design 0002 §2.8)."""
         try:
             found: dict[str, Any] = await anyio.to_thread.run_sync(agents.prepare, wanted.workspace, wanted.program)
         except (AgentError, WorkspaceUnavailable) as error:

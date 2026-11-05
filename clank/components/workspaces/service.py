@@ -667,7 +667,8 @@ class Workspaces:
     ) -> list[str]:
         """The command that runs `argv` in a workspace's container, in its folder, with `env`: in a terminal, else
         talked to over its input and output (an MCP server); `container`, when the caller has just found it running,
-        is not asked of Docker again."""
+        is not asked of Docker again. It names each variable of `env` alone: whoever runs it runs it with `env` over its
+        own environment, where docker reads the values (design 0002 §2.8)."""
         found = container or self.container_of(workspace)
         try:
             return self.platform.exec_argv(found, argv, workdir=WORKSPACE, env=env, terminal=terminal)

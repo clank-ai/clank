@@ -544,7 +544,9 @@ class Agents:
         return {"program": adapter.LABEL, "model": model.title, "limits": limits(model), "notes": notes}
 
     def prepare(self, workspace: str, program: str = "opencode") -> dict[str, Any]:
-        """Write the program's configuration into the workspace's container; the command that starts it there. With one
+        """Write the program's configuration into the workspace's container; the command that starts it there (`argv`),
+        which names each variable of its environment alone, and the environment the client runs it with (`env`, its
+        values: design 0002 §2.8). With one
         window at a time (the workspace's record, design 0004 §5), the OpenCode windows open there are closed first.
         The edge, the agent's way to the model, is put right first (design 0004 §3), and what was put right is said in
         the notes. The container is asked of Docker once and every file goes in one `docker exec` (a VS Code window
@@ -580,6 +582,7 @@ class Agents:
             "servers": sorted(servers),
             "port": port,
             "argv": argv,
+            "env": env,
             "one_window": one_window,
             "closed": closed,
             "notes": notes,

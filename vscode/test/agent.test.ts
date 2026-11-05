@@ -15,6 +15,9 @@
 //
 // Revised 2026-11-04 (decision 0156): the terminal runs only the programs Clank starts the agent with (docker, wsl or
 // ssh, named alone or by their full path); any other program the service names is refused, saying why.
+//
+// Design 0002 §2.8: the command names each variable of its environment alone, and the terminal runs it with the
+// values the service gave beside it, where docker reads them.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -36,7 +39,8 @@ const PREPARED = {
   workspace: "paper",
   program: "OpenCode",
   model: "daily 262K",
-  argv: ["docker", "exec", "-it", "-w", "/workspace", "clank-h1-paper", "opencode"],
+  argv: ["docker", "exec", "-it", "--env", "OPENCODE_DISABLE_AUTOUPDATE", "-w", "/workspace", "clank-h1-paper", "opencode"],
+  env: { OPENCODE_DISABLE_AUTOUPDATE: "1" },
   one_window: true,
   closed: 1,
 };
@@ -80,7 +84,7 @@ test("a folder whose container runs gets the agent's terminal, with the command 
   const said: string[] = [];
   const found = await agentStart(api, "C:\\work\\paper", (line) => said.push(line));
   assert.deepEqual(found, {
-    terminal: { name: "OpenCode · paper", program: "docker", args: PREPARED.argv.slice(1), replaces: true },
+    terminal: { name: "OpenCode · paper", program: "docker", args: PREPARED.argv.slice(1), env: PREPARED.env, replaces: true },
     workspace: "paper",
   });
   assert.deepEqual(api.asked, [
@@ -92,6 +96,15 @@ test("a folder whose container runs gets the agent's terminal, with the command 
     "reading the folder's workspace",
     "writing OpenCode's configuration into paper's container, and checking its way to the model",
   ]);
+});
+
+test("the terminal runs with the environment the service gave beside the command, its values never in the command", async () => {
+  const found = await agentStart(service(RUNNING), "C:\\work\\paper");
+  assert.ok("terminal" in found);
+  assert.deepEqual(found.terminal.env, { OPENCODE_DISABLE_AUTOUPDATE: "1" });
+  assert.ok(!found.terminal.args.some((part) => part.includes("=")), "each variable named alone");
+  const older = await agentStart(service(RUNNING, { ...PREPARED, env: undefined }), "C:\\work\\paper");
+  assert.ok("terminal" in older && Object.keys(older.terminal.env).length === 0, "a service from before gives none");
 });
 
 test("with one window per workspace the new terminal replaces the window's agent terminals, and otherwise adds one", async () => {

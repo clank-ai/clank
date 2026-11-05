@@ -321,7 +321,8 @@ class FakePlatform(ContainerPlatform):
         env: Mapping[str, str] | None = None,
         terminal: bool = True,
     ) -> list[str]:
-        given = [part for key, value in (env or {}).items() for part in ("--env", f"{key}={value}")]
+        """As Docker's: each variable named alone, its value in the environment the caller runs the command with."""
+        given = [part for key in (env or {}) for part in ("--env", key)]
         tty = ["--tty"] if terminal else []
         return ["docker", "exec", "--interactive", *tty, *given, "--workdir", workdir, name, *argv]
 

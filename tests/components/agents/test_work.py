@@ -13,7 +13,10 @@ for the other computer; in a terminal of VS Code's Remote-SSH it opens the other
 Design 0016 §7: with no model running and none that worked yet, `clank work` loads the runtime's fallback preset.
 
 Design 0014 §2: `clank work` and `clank code` start Docker only when Clank starts it; a Docker the system runs (Docker
-Engine) is shown with what to do, in the status's words, and nothing is started."""
+Engine) is shown with what to do, in the status's words, and nothing is started.
+
+Design 0002 §2.8: `clank work` runs the agent's command with the environment the service gave beside it, the command
+naming each variable alone."""
 
 import json
 from collections.abc import Iterator, Mapping, Sequence
@@ -95,7 +98,8 @@ def test_prepare_writes_the_programs_configuration_and_answers_its_command(
     assert prepared["notes"] == ["no model runs: its limits are 32,768 and 8,192 tokens until one does"]
     argv = prepared["argv"]
     assert argv[:4] == ["docker", "exec", "--interactive", "--tty"]
-    assert "OPENCODE_DISABLE_MODELS_FETCH=1" in argv
+    assert argv[argv.index("OPENCODE_DISABLE_MODELS_FETCH") - 1] == "--env"
+    assert prepared["env"]["OPENCODE_DISABLE_MODELS_FETCH"] == "1", "its value in the environment docker runs with"
     assert argv[-7:] == ["/workspace", container, "opencode", "--port", "4097", "--hostname", "127.0.0.1"], (
         "its API on a port of its own, so its session can be reached (design 0005 §2)"
     )
@@ -164,9 +168,11 @@ def test_clank_work_starts_docker_opens_the_folder_and_runs_the_agent_here(
     monkeypatch.chdir(folder)
     kernel.parts["runtime"].state.set_slot("main", "ready", "a test", actor=YOU, preset="daily-262k")
     commands: list[Sequence[str]] = []
+    environments: list[Mapping[str, str]] = []
 
-    def here(argv: Sequence[str]) -> int:
+    def here(argv: Sequence[str], env: Mapping[str, str]) -> int:
         commands.append(argv)
+        environments.append(env)
         return 0
 
     monkeypatch.setattr(agents_cli, "terminal", here)
@@ -177,6 +183,9 @@ def test_clank_work_starts_docker_opens_the_folder_and_runs_the_agent_here(
     assert f"OpenCode in paper ({folder} at /workspace), with daily 262K" in result.output
     [argv] = commands
     assert argv[-3:] == ["/workspace", names(kernel.home.id).container("paper"), "opencode"]
+    [env] = environments
+    assert env["OPENCODE_DISABLE_AUTOUPDATE"] == "1", "design 0002 §2.8: run with the values the service gave"
+    assert argv[argv.index("OPENCODE_DISABLE_AUTOUPDATE") - 1] == "--env", "named alone on the command line"
     assert (names(kernel.home.id).container("paper"), CONFIG) in platform.files
 
 
@@ -191,7 +200,7 @@ def test_work_never_asks_a_docker_the_system_runs_to_start(
     folder.mkdir()
     monkeypatch.chdir(folder)
     kernel.parts["runtime"].state.set_slot("main", "ready", "a test", actor=YOU, preset="daily-262k")
-    monkeypatch.setattr(agents_cli, "terminal", lambda argv: pytest.fail("the agent ran without Docker"))
+    monkeypatch.setattr(agents_cli, "terminal", lambda argv, env: pytest.fail("the agent ran without Docker"))
     result = run("work")
     assert result.exit_code == 1, result.output
     assert f"Fake Docker is stopped: {SYSTEMS}" in result.output
@@ -223,7 +232,7 @@ def test_with_no_model_running_clank_loads_the_slots_last_good_one_and_says_why_
     monkeypatch.chdir(folder)
     good = LastGood(preset="daily-262k", options={}, time=kernel.clock.now())
     kernel.parts["runtime"].state.remember_good("main", good)
-    monkeypatch.setattr(agents_cli, "terminal", lambda argv: pytest.fail("the agent ran without a model"))
+    monkeypatch.setattr(agents_cli, "terminal", lambda argv, env: pytest.fail("the agent ran without a model"))
     result = run("work", "--yes")
     assert "No model runs: loading daily-262k" in result.output
     assert result.exit_code == 1, "a test's home has no engine installed: the load fails, saying so"
@@ -241,7 +250,7 @@ def test_with_no_model_running_and_none_that_worked_clank_loads_the_preset_the_r
     kernel.settings.reload_changed()
     ready = {"engine": {"installed": True}, "model": {"downloaded": True}}
     monkeypatch.setattr(type(kernel.parts["runtime"]), "needs", lambda self, preset: ready)  # every preset can load
-    monkeypatch.setattr(agents_cli, "terminal", lambda argv: pytest.fail("the agent ran without a model"))
+    monkeypatch.setattr(agents_cli, "terminal", lambda argv, env: pytest.fail("the agent ran without a model"))
     result = run("work", "--yes")
     assert "No model runs: loading frontier-262k" in result.output, "the setting's, not the first that can load"
 

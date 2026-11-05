@@ -28,6 +28,7 @@ from clank.components.runtime.adapters.openrouter import OpenRouter
 from clank.components.workspaces.service import Workspaces
 from clank.kernel.core import Kernel
 from clank.kernel.events import Actor
+from clank.kernel.processes import with_environment
 from clank.kernel.service import server_config
 from tests.docker.conftest import gateway_port
 from tests.docker.test_escape import on_docker_engine, opened
@@ -111,7 +112,7 @@ if sys.platform != "win32":  # the gateway's socket: the type checker knows `lis
                 routes.update(machine.parts["gateway"].routes())  # the workspace's key, as the next routes have it
                 argv = workspaces.exec_argv(name, ["opencode", "run", ASKED], env, terminal=False)
                 return subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True,
-                                      timeout=OPENCODE_SECONDS, check=False)  # fmt: skip
+                                      timeout=OPENCODE_SECONDS, check=False, env=with_environment(env))  # fmt: skip
         finally:
             shutil.rmtree(sockets, ignore_errors=True)
 

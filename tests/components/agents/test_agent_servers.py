@@ -177,29 +177,33 @@ def test_the_agent_starts_as_many_threads_as_its_container_has_cpus(
     agents: Agents = kernel.parts["agents"]
     opened(kernel, platform, folder)
     platform.cpus_memory = (32, 65536)
-    argv = agents.prepare("paper")["argv"]
+    prepared = agents.prepare("paper")
     for variable in ("OMP_NUM_THREADS", "NUMBA_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
-        assert f"{variable}=16" in argv, "half of what Docker has, as the container's limit"
+        assert prepared["env"][variable] == "16", "half of what Docker has, as the container's limit"
+        assert prepared["argv"][prepared["argv"].index(variable) - 1] == "--env", "named alone, its value in env"
     loaded = kernel.settings.get("workspace", "paper")
     kernel.settings.write(
         "workspace", "paper", {**loaded.record.model_dump(), "cpus": 3.5}, base=loaded.revision, actor=YOU
     )
-    assert "NUMBA_NUM_THREADS=3" in agents.prepare("paper")["argv"]
+    assert agents.prepare("paper")["env"]["NUMBA_NUM_THREADS"] == "3"
 
 
 def test_a_server_is_checked_in_the_workspaces_container_through_docker_exec_without_a_terminal() -> None:
-    server = Server("stdio", command="myproject-mcp", args=["--x"], env={"NUMBA_NUM_THREADS": "4"})
+    """Design 0002 §2.8: the command names each variable alone; the values go in the environment of the docker
+    process the check starts (the server's own over the agent's), never on its command line."""
+    server = Server("stdio", command="myproject-mcp", args=["--x"], env={"KEY": "k1"})
 
     def argv(command: list[str], env: dict[str, str]) -> list[str]:
-        given = [part for key, value in env.items() for part in ("--env", f"{key}={value}")]
+        given = [part for key in env for part in ("--env", key)]
         return ["docker", "exec", "--interactive", *given, "--workdir", "/workspace", "box", *command]
 
-    inside = through(server, argv)
+    inside = through(server, argv, {"NUMBA_NUM_THREADS": "4", "KEY": "the agent's"})
     assert inside == Server(
         "stdio",
         command="docker",
-        args=["exec", "--interactive", "--env", "NUMBA_NUM_THREADS=4", "--workdir", "/workspace", "box",
+        args=["exec", "--interactive", "--env", "NUMBA_NUM_THREADS", "--env", "KEY", "--workdir", "/workspace", "box",
               "myproject-mcp", "--x"],
+        env={"NUMBA_NUM_THREADS": "4", "KEY": "k1"},
     )  # fmt: skip
 
 

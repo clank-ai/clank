@@ -22,7 +22,7 @@ stops, saying how to allow it.
 
 import os
 import subprocess
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -32,16 +32,17 @@ from clank.cli import common, follow
 from clank.client import Client, ClientError, NotRunning
 from clank.kernel import where
 from clank.kernel.home import Home
-from clank.kernel.processes import resolved
+from clank.kernel.processes import resolved, with_environment
 from clank.kernel.service import ServiceError, start_detached
 
 DEFAULT_PRESET = "daily-262k"
-Terminal = Callable[[Sequence[str]], int]
+Terminal = Callable[[Sequence[str], Mapping[str, str]], int]
 
 
-def terminal(argv: Sequence[str]) -> int:
-    """Run a command attached to this terminal; its exit status."""
-    return subprocess.call(resolved(argv))
+def terminal(argv: Sequence[str], env: Mapping[str, str] | None = None) -> int:
+    """Run a command attached to this terminal, with `env` over this process's environment (the command names each
+    variable alone, design 0002 §2.8); its exit status."""
+    return subprocess.call(resolved(argv), env=with_environment(env))
 
 
 @click.command()
@@ -58,7 +59,7 @@ def work(folder: str | None, yes: bool) -> None:
     for note in prepared["notes"]:
         click.echo(f"  {note}")
     click.echo(f"{prepared['program']} in {opened['workspace']} ({path} at /workspace), with {prepared['model']}")
-    raise click.exceptions.Exit(terminal(prepared["argv"]))
+    raise click.exceptions.Exit(terminal(prepared["argv"], prepared.get("env") or {}))
 
 
 @click.command()

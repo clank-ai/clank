@@ -12,7 +12,7 @@ it instead; tests give the console or the command a runner of their own."""
 import os
 import shutil
 import tempfile
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import pytest
@@ -40,7 +40,7 @@ def pytest_unconfigure(config: pytest.Config) -> None:
 def _no_program_takes_the_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
     """A program run in the terminal for real fails the test instead."""
 
-    def refused(argv: Sequence[str]) -> int:
+    def refused(argv: Sequence[str], env: Mapping[str, str] | None = None) -> int:
         raise AssertionError(f"a test ran {list(argv)[:3]} in its terminal: give it a runner of its own")
 
     monkeypatch.setattr("clank.console.terminal.attached", refused)

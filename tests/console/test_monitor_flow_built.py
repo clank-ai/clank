@@ -8,7 +8,7 @@ attach. `clank console --page monitor --view flow` opens on the Flow view, for a
 and `n` and `r` act there. Everything runs against a service served in the test; nothing runs OpenCode."""
 
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC
 from pathlib import Path
 from typing import Any
@@ -157,7 +157,7 @@ async def test_r_starts_a_flow_that_has_not_run_once_confirmed(
     assert started.started_by == Actor(kind="user", via="console")
 
 
-def never(argv: Sequence[str]) -> int:
+def never(argv: Sequence[str], env: Mapping[str, str]) -> int:
     raise AssertionError(f"the console handed its terminal to {list(argv)[:3]}")
 
 

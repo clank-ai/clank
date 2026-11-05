@@ -315,8 +315,10 @@ class DockerCli(ContainerPlatform):
         env: Mapping[str, str] | None = None,
         terminal: bool = True,
     ) -> list[str]:
-        """`docker exec`, with a terminal unless told not to, as the container's own user."""
-        given = [part for key, value in (env or {}).items() for part in ("--env", f"{key}={value}")]
+        """`docker exec`, with a terminal unless told not to, as the container's own user: each variable of `env` named
+        alone (`--env NAME`), so docker takes its value from its own environment, which the caller gives it; a value
+        is never on the command line, which every program on this computer can read (design 0002 §2.8)."""
+        given = [part for key in (env or {}) for part in ("--env", key)]
         tty = ["--tty"] if terminal else []
         return self._argv("exec", "--interactive", *tty, *given, "--workdir", workdir, name, *argv)
 

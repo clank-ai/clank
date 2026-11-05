@@ -3,7 +3,7 @@ cloud model in the main slot and the workspace not answered, it asks the workspa
 service's words, before OpenCode starts, answered through the question's own route: `n` keeps the workspace on this
 machine and stops before OpenCode, saying how to allow it; `y` allows it and goes on."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 import pytest
@@ -20,7 +20,7 @@ def started(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
     """The folder's workspace ready without Docker (`paper`), and what the terminal was asked to run."""
     ran: list[list[str]] = []
 
-    def run(argv: Sequence[str]) -> int:
+    def run(argv: Sequence[str], env: Mapping[str, str]) -> int:
         ran.append(list(argv))
         return 0
 

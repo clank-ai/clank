@@ -4,7 +4,9 @@ container not running, another folder's workspace named, or a server reached by 
 how to check it, and nothing is started. A check of a folder's server says whether the workspace's agent may use it as
 it is now: not allowed yet, allowed, or changed since it was allowed (its command, its arguments or its environment),
 which counts as not allowed until it is allowed again; `clank mcp check` prints it. Your own servers are checked on this
-computer as before."""
+computer as before.
+
+Design 0002 §2.8: the `docker exec` that starts it names each variable alone, its value in docker's environment."""
 
 import json
 from collections.abc import Iterator
@@ -131,8 +133,9 @@ async def test_a_folders_server_is_checked_in_its_workspaces_running_container_w
     for server in runner.started:
         assert (server.command, server.args[:2]) == ("docker", ["exec", "--interactive"])
         assert server.args[-3:] == [box, "myproject-mcp", "--quiet"], "its own command, in the container"
-        assert "MODE=fast" in server.args, "with its environment, given to the container"
-        assert server.env == {}, "nothing of its own is started here"
+        assert server.args[server.args.index("MODE") - 1] == "--env", "its environment named for the container"
+        assert server.env["MODE"] == "fast", "design 0002 §2.8: the value in docker's environment, not its arguments"
+        assert not any("fast" in part for part in server.args)
     remembered = kernel.parts["tools"].checked("myproject", "project", str(folder))
     assert remembered is not None
     assert remembered["where"] == "paper's container"

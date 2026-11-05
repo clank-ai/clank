@@ -13,7 +13,10 @@ Python reading them from its input), one by one only in a container without Pyth
 
 Design 0014 §4: on Docker Engine a workspace's own network is made with the bridge's option that gives this computer no
 address on it (`com.docker.network.bridge.inhibit_ipv4`); Docker Desktop's are made as before; a network's options are
-read as it was made."""
+read as it was made.
+
+Design 0002 §2.8: the command a terminal runs names each variable of its environment alone (`--env NAME`), docker
+taking its value from its own environment, so no value is on the command line."""
 
 import json
 import subprocess
@@ -204,12 +207,16 @@ def test_a_container_is_read_started_stopped_and_removed_and_a_missing_one_is_no
     assert adapter(Docker({})).container("clank-abc-y") is None
 
 
-def test_a_terminal_enters_a_container_as_its_user_in_its_folder_with_its_environment(adapter: Kind) -> None:
-    argv = adapter(Docker({})).exec_argv("clank-abc-x", ["opencode"], workdir="/workspace", env={"A": "1"})
+def test_a_terminal_enters_a_container_as_its_user_in_its_folder_naming_its_environment_alone(adapter: Kind) -> None:
+    """Design 0002 §2.8: each variable is named on the command line (`--env NAME`), and docker takes its value from
+    its own environment, which whoever runs the command gives it; no value is ever on the command line."""
+    env = {"A": "1", "CLANK_MCP_NOTES__KEY": "k1-value"}
+    argv = adapter(Docker({})).exec_argv("clank-abc-x", ["opencode"], workdir="/workspace", env=env)
     assert argv == [
-        *adapter.prefix, "exec", "--interactive", "--tty", "--env", "A=1", "--workdir", "/workspace", "clank-abc-x",
-        "opencode"
+        *adapter.prefix, "exec", "--interactive", "--tty", "--env", "A", "--env", "CLANK_MCP_NOTES__KEY",
+        "--workdir", "/workspace", "clank-abc-x", "opencode"
     ]  # fmt: skip
+    assert not any(part == "1" or "k1-value" in part for part in argv)
 
 
 def test_a_file_is_written_in_a_container_as_its_user(adapter: Kind) -> None:

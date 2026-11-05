@@ -1246,7 +1246,7 @@ class FolderPage(Page):
     def _hand_over(self, prepared: dict[str, Any]) -> None:
         """Step aside for the agent, on the console's thread, and say how it ended once back."""
         run = self.console.terminal or terminal.attached
-        outcome = terminal.hand_over(self.console, prepared["argv"], run)
+        outcome = terminal.hand_over(self.console, prepared["argv"], run, env=prepared.get("env") or {})
         ended = "ended" if outcome == 0 else f"ended: {outcome if isinstance(outcome, str) else f'exit {outcome}'}"
         self.console.say(f"{prepared['program']} {ended}", outcome != 0)
         self._read()
