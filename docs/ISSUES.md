@@ -34,6 +34,7 @@ Update this page in the same commit as the fix.
 | A thinking model's answers were cut at 16,384 tokens by default | Its thinking counts against the most output | b4bb005 (decision 0161) |
 | `clank update` could follow a tag with no release, and a profile path with an apostrophe left Clank stopped | It took the newest tag when every release is a pre-release; its helper quoted values bare | b08b7a4 (decision 0163) |
 | With no model, This folder's `l` and `g` tried a preset never set up; a mistyped key was called deleted; the menu listed built features as coming | The words of a page written before Add a model | 00ac4ef |
+| An artifact opened in the browser showed without its own script and style sheet | Since 0.3.0b7 the export's content policy allowed inline scripts and styles but not data, as which the export writes a page's own files | 94bad3f (decision 0165) |
 
 ## Fixed on 2026-10-29 and 10-30
 
