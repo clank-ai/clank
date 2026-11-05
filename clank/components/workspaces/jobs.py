@@ -3,20 +3,20 @@ so no model is held waiting on a tool call. Flows' boxes start them (`flows/jobs
 talks to (`agents/jobs.py`); this is the part that runs them, given to other components through `service.py`.
 
 **Its files are its state.** A job's folder is in the workspace, so the service reads it as files of the folder, never
-asking the container: `command` (its words), `pid` (the process whose session it runs in), `log` (all it printed) and,
-once it ended, `exit` (its exit status). `START` writes them: the command runs at the lowest CPU priority (`nice -n
-19`: the model on the same machine keeps its speed), under `timeout` (its minutes, then `TERM`, then `KILL`
-`KILL_AFTER` seconds later), in a session of its own (`setsid`), with nothing tying it to the `docker exec` that started
-it. `END` ends the whole session (`pkill -s`), for a job past its minutes or no longer wanted, and writes `exit` as
-`TERMINATED` when nothing else did. `ALIVE` says whether any process of the session runs, for a job whose `exit` never
-came (the container restarted, a kill).
+asking the container, and through no link (`kernel/infolder.py`, decision 0164): `command` (its words), `pid` (the
+process whose session it runs in), `log` (all it printed) and, once it ended, `exit` (its exit status). `START` writes
+them: the command runs at the lowest CPU priority (`nice -n 19`: the model on the same machine keeps its speed), under
+`timeout` (its minutes, then `TERM`, then `KILL` `KILL_AFTER` seconds later), in a session of its own (`setsid`), with
+nothing tying it to the `docker exec` that started it. `END` ends the whole session (`pkill -s`), for a job past its
+minutes or no longer wanted, and writes `exit` as `TERMINATED` when nothing else did. `ALIVE` says whether any process
+of the session runs, for a job whose `exit` never came (the container restarted, a kill).
 """
 
 import contextlib
-import os
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING
+
+from clank.kernel.infolder import Outside, Place
 
 if TYPE_CHECKING:
     from clank.components.workspaces.service import Workspaces
@@ -28,6 +28,7 @@ TERMINATED = 143  # a job Clank ended
 ROOT = ".clank/jobs"  # in the workspace's folder
 TAIL_LINES = 60
 TAIL_CHARACTERS = 6_000
+TAIL_BYTES = 256 * 1024  # the end of a log read for its last lines
 WRITTEN_SHOWN = 20  # the files a job wrote, said: at most these, newest first
 WRITTEN_LOOKED = 50_000  # the entries of the folder looked at for them, at most
 PASSED = {".git", ".clank", "node_modules", "__pycache__", ".venv", ".mypy_cache", ".pytest_cache"}
@@ -62,22 +63,22 @@ class State:
     status: int | None
 
 
-def read_state(folder: Path) -> State:
-    """A job's state from its files (`folder` on this machine)."""
-    started = (folder / "pid").is_file()
-    ended = (folder / "exit").is_file()
+def read_state(job: Place) -> State:
+    """A job's state from its files (`job` its folder in the workspace's)."""
+    started = (job / "pid").is_file()
+    ended = (job / "exit").is_file()
     status = None
     if ended:
-        with contextlib.suppress(OSError, ValueError):
-            status = int((folder / "exit").read_text(encoding="utf-8").strip())
+        with contextlib.suppress(OSError, ValueError):  # Outside too, a ValueError
+            status = int((job / "exit").read_text(errors="replace").strip())
     return State(started=started, ended=ended, status=status)
 
 
-def tail(folder: Path, lines: int = TAIL_LINES, characters: int = TAIL_CHARACTERS) -> str:
+def tail(job: Place, lines: int = TAIL_LINES, characters: int = TAIL_CHARACTERS) -> str:
     """The end of a job's log: its last `lines` lines, at most `characters`."""
     try:
-        text = (folder / "log").read_text(encoding="utf-8", errors="replace")
-    except OSError:
+        text = (job / "log").read_bytes(last=TAIL_BYTES).decode("utf-8", errors="replace")
+    except (OSError, Outside):
         return ""
     end = "\n".join(text.replace("\r\n", "\n").rstrip("\n").split("\n")[-lines:])
     return end[-characters:]
@@ -110,25 +111,16 @@ def span(seconds: float) -> str:
     return unit(minutes, "minute") if minutes else unit(rest, "second")
 
 
-def written(folder: Path, since: float, job: str) -> list[str]:
-    """The files of the workspace's folder (on this machine) written since `since` (seconds since the epoch), newest
-    first, `/`-separated, the job's own folder and the folders no work is in (`PASSED`) left out; at most
-    `WRITTEN_SHOWN`, of at most `WRITTEN_LOOKED` entries looked at."""
-    found: list[tuple[float, str]] = []
-    looked = 0
+def written(root: Place, since: float, job: str) -> list[str]:
+    """The files of the workspace's folder (`root`) written since `since` (seconds since the epoch), newest first,
+    `/`-separated, the job's own folder, the folders no work is in (`PASSED`) and links left out; at most
+    `WRITTEN_SHOWN`, of at most `WRITTEN_LOOKED` files looked at."""
     own = job.rstrip("/") + "/"
-    for top, folders, files in os.walk(folder):
-        folders[:] = [each for each in folders if each not in PASSED]
-        for name in files:
-            looked += 1
-            path = Path(top) / name
-            with contextlib.suppress(OSError):
-                modified = path.stat().st_mtime
-                relative = path.relative_to(folder).as_posix()
-                if modified >= since and not relative.startswith(own):
-                    found.append((modified, relative))
-        if looked >= WRITTEN_LOOKED:
-            break
+    found = [
+        (info.st_mtime, relative)
+        for relative, info in root.files(skip=PASSED, most=WRITTEN_LOOKED)
+        if info.st_mtime >= since and not relative.startswith(own)
+    ]
     return [path for _, path in sorted(found, reverse=True)[:WRITTEN_SHOWN]]
 
 

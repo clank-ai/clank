@@ -23,7 +23,7 @@ import anyio
 
 from clank.components.workspaces.service import jobs as runner
 from clank.kernel.events import CLANK, EventType, Subject
-from clank.kernel.infolder import Outside, inside, linked
+from clank.kernel.infolder import Outside, Place, place
 
 if TYPE_CHECKING:
     from clank.components.agents.sessions import Sessions
@@ -54,6 +54,11 @@ EVENT_TYPES = [
 ]  # fmt: skip
 
 
+def _numbers(root: Place) -> list[int]:
+    """The jobs' numbers: the folders under the jobs' folder named by a number, links left out."""
+    return [int(name) for name, kind in root.entries() if kind == "folder" and name.isdigit()]
+
+
 class JobsError(Exception):
     """A job that cannot be started, found or stopped, and why."""
 
@@ -80,14 +85,12 @@ class AgentJobs:
             raise JobsError("a job needs a command")
         if not 1 <= minutes <= MOST_MINUTES:
             raise JobsError(f"a job's minutes are 1 to {MOST_MINUTES:,} (a week)")
-        root = self._root(workspace)
-        number = 1 + max((int(each.name) for each in root.glob("*") if each.name.isdigit()), default=0)
-        own = self._own(workspace, number)  # nothing written through a link (decision 0159)
+        number = 1 + max(_numbers(self._root(workspace)), default=0)
+        own = self._own(workspace, number)
         folder = f"{FOLDER}/{number}"
         kept = {"title": title, "command": command, "minutes": minutes, "session": session,
                 "started": self._now(), "ended": None, "status": None, "said": ""}  # fmt: skip
-        own.mkdir(parents=True, exist_ok=True)
-        self._keep(own, kept)
+        self._keep(own, kept)  # through no link (decision 0164)
         try:
             runner.start(self.workspaces, workspace, folder, command, minutes)
         except runner.JobError as error:
@@ -106,19 +109,21 @@ class AgentJobs:
 
     def list(self, workspace: str) -> list[dict[str, Any]]:
         """The workspace's jobs, newest first, briefly."""
-        root = self._root(workspace)
-        numbers = sorted((int(each.name) for each in root.glob("*") if each.name.isdigit()), reverse=True)
         views = []
-        for number in numbers:
-            with contextlib.suppress(JobsError):  # a job reached through a link is none (decision 0159)
+        for number in sorted(_numbers(self._root(workspace)), reverse=True):
+            with contextlib.suppress(JobsError):  # a job reached through a link, or one the agent broke, is none
                 views.append(self._view(workspace, self._own(workspace, number), number, whole=False))
         return views
 
     def one(self, workspace: str, number: int) -> dict[str, Any]:
         """One job whole: its state, how long it ran, its log's last lines and the files it wrote."""
         folder = self._own(workspace, number)
-        if not (folder / "job.json").is_file():
-            raise JobsError(f"{workspace} has no job {number}")
+        try:
+            (folder / "job.json").read_bytes(most=1)
+        except Outside as error:  # a job reached through a link is said to be one (decision 0164)
+            raise JobsError(str(error)) from error
+        except OSError as error:
+            raise JobsError(f"{workspace} has no job {number}") from error
         return self._view(workspace, folder, number, whole=True)
 
     def stop(self, workspace: str, number: int) -> dict[str, Any]:
@@ -133,11 +138,11 @@ class AgentJobs:
         """End the jobs past their minutes, and record and tell the ones that ended (module docstring)."""
         for record in self.workspaces.records():
             workspace = str(record["name"])
-            root = Path(record["path"]) / FOLDER
-            for folder in sorted(root.glob("*")) if root.is_dir() else []:
-                if folder.name.isdigit():
-                    with contextlib.suppress(OSError, ValueError, KeyError, JobsError):
-                        self._watch(workspace, self._own(workspace, int(folder.name)), int(folder.name))
+            with contextlib.suppress(OSError, ValueError):  # Outside too: a folder whose name leaves it
+                root = place(Path(record["path"]), FOLDER)
+                for number in sorted(_numbers(root)):
+                    with contextlib.suppress(OSError, ValueError, KeyError, TypeError, JobsError):
+                        self._watch(workspace, root / str(number), number)
 
     async def run(self) -> None:
         """Watch the jobs while the service runs."""
@@ -148,7 +153,7 @@ class AgentJobs:
                 log.exception("watching the agent's jobs failed")
             await anyio.sleep(WATCH_SECONDS)
 
-    def _watch(self, workspace: str, folder: Path, number: int) -> None:
+    def _watch(self, workspace: str, folder: Place, number: int) -> None:
         kept = self._kept(folder)
         if kept.get("ended") is not None:
             return
@@ -176,12 +181,12 @@ class AgentJobs:
         if port is not None:
             self.sessions.send(workspace, port, session, self._told(summary, folder, number, kept), actor=CLANK)
 
-    def _told(self, summary: str, folder: Path, number: int, kept: dict[str, Any]) -> str:
+    def _told(self, summary: str, folder: Place, number: int, kept: dict[str, Any]) -> str:
         """What the session that started a job is sent when it ends."""
         end = runner.tail(folder)
         where = f"{FOLDER}/{number}/log"
         log_said = f"The last lines of its log, {where}:\n```\n{end}\n```" if end else f"Its log, {where}, is empty."
-        files = runner.written(folder.parents[3], float(kept["started"]), f"{FOLDER}/{number}")
+        files = runner.written(place(folder.folder), float(kept["started"]), f"{FOLDER}/{number}")
         wrote = (
             "Files written in the folder while it ran, newest first: " + ", ".join(files) + "."
             if files
@@ -189,7 +194,7 @@ class AgentJobs:
         )
         return f"{summary}. {log_said}\n{wrote}\nGo on from here: read what you need of its output."
 
-    def _view(self, workspace: str, folder: Path, number: int, *, whole: bool) -> dict[str, Any]:
+    def _view(self, workspace: str, folder: Place, number: int, *, whole: bool) -> dict[str, Any]:
         kept = self._kept(folder)
         state = runner.read_state(folder)
         status = state.status if state.ended else kept.get("status")
@@ -205,35 +210,37 @@ class AgentJobs:
         }  # fmt: skip
         if whole:
             found["tail"] = runner.tail(folder)
-            found["written"] = runner.written(folder.parents[3], float(kept["started"]), f"{FOLDER}/{number}")
+            found["written"] = runner.written(place(folder.folder), float(kept["started"]), f"{FOLDER}/{number}")
         return found
 
-    def _own(self, workspace: str, number: int) -> Path:
-        """A job's own folder, `.clank/jobs/agent/<n>`, when neither it nor a folder on the way to it nor one of its
-        files is a link (decision 0159): `JobsError` otherwise."""
-        try:
-            own = inside(self._root(workspace).parents[2], f"{FOLDER}/{number}")
-        except Outside as error:
-            raise JobsError(str(error)) from error
-        for name in ("job.json", "log", "pid", "exit"):
-            if linked(own / name):
-                raise JobsError(f"{FOLDER}/{number}/{name} is a link: Clank follows no link in the folder")
-        return own
+    def _own(self, workspace: str, number: int) -> Place:
+        """A job's own folder, `.clank/jobs/agent/<n>`: read and written through no link (decision 0164)."""
+        return self._root(workspace) / str(number)
 
-    def _root(self, workspace: str) -> Path:
+    def _root(self, workspace: str) -> Place:
         try:
-            return Path(self.workspaces.folder_of(workspace)) / FOLDER
+            folder = Path(self.workspaces.folder_of(workspace))
         except Exception as error:  # the workspaces' own refusal: no such workspace
             raise JobsError(f"there is no workspace {workspace!r}") from error
+        return place(folder, FOLDER)
 
     def _now(self) -> float:
         return self.kernel.clock.now().timestamp()
 
     @staticmethod
-    def _kept(folder: Path) -> dict[str, Any]:
-        found: dict[str, Any] = json.loads((folder / "job.json").read_text(encoding="utf-8"))
+    def _kept(folder: Place) -> dict[str, Any]:
+        """A job's record; `JobsError` when it cannot be read, is reached through a link, or is not one of Clank's."""
+        try:
+            found = json.loads((folder / "job.json").read_text())
+        except (OSError, ValueError) as error:  # Outside too, a ValueError
+            raise JobsError(f"{folder.relative}/job.json cannot be read: {error}") from error
+        if not isinstance(found, dict) or not {"title", "command", "minutes", "started"} <= found.keys():
+            raise JobsError(f"{folder.relative}/job.json is not a job's record")
         return found
 
     @staticmethod
-    def _keep(folder: Path, kept: dict[str, Any]) -> None:
-        (folder / "job.json").write_text(json.dumps(kept, indent=2) + "\n", encoding="utf-8")
+    def _keep(folder: Place, kept: dict[str, Any]) -> None:
+        try:
+            (folder / "job.json").write_text(json.dumps(kept, indent=2) + "\n")
+        except Outside as error:
+            raise JobsError(str(error)) from error

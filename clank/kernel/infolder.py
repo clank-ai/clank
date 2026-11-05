@@ -28,7 +28,7 @@ import time
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
-from typing import Literal
+from typing import BinaryIO, Literal
 
 NAME_SURROGATE = 0x20000000  # a reparse point that stands for another name: a symbolic link, a junction, WSL's links
 DEVICES = frozenset(
@@ -64,6 +64,13 @@ def _joined(where: str, name: str) -> str:
 
 def _link_words(where: str) -> str:
     return f"{where} is a link: Clank follows no link in the folder"
+
+
+def _take(file: BinaryIO, most: int | None, last: int | None) -> bytes:
+    """An open file's bytes: its last `last` only when given, at most `most`."""
+    if last is not None:
+        file.seek(max(0, os.fstat(file.fileno()).st_size - last))
+    return file.read() if most is None else file.read(most)
 
 
 def _part_name() -> str:
@@ -196,7 +203,7 @@ if sys.platform == "win32":
                 raise NotADirectoryError(errno.ENOTDIR, "not a folder", where)
             return _Here(path, handle, where)
 
-        def read(self, name: str, most: int | None) -> bytes:
+        def read(self, name: str, most: int | None, last: int | None = None) -> bytes:
             path, share = self._of(name), _SHARE_READ | _SHARE_WRITE | _SHARE_DELETE
             handle = _handle(path, _GENERIC_READ, share, _OPEN_REPARSE_POINT)
             attributes, tag = _tag(handle)
@@ -208,14 +215,14 @@ if sys.platform == "win32":
                 raise OSError(errno.EINVAL, "not a plain file", _joined(self.where, name))
             with os.fdopen(msvcrt.open_osfhandle(handle, os.O_RDONLY), "rb") as itself:
                 if not attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT:
-                    return itself.read() if most is None else itself.read(most)
+                    return _take(itself, most, last)
                 # A reparse point that names no other place (a cloud file not yet on the disk) is read as Windows
                 # gives it, when what opens is the very file the first opening found
                 with open(path, "rb") as given:
                     first, then = os.fstat(itself.fileno()), os.fstat(given.fileno())
                     if (first.st_dev, first.st_ino) != (then.st_dev, then.st_ino):
                         raise Outside(f"{_joined(self.where, name)} changed while it was read")
-                    return given.read() if most is None else given.read(most)
+                    return _take(given, most, last)
 
         def write(self, name: str, data: bytes, *, new: bool) -> None:
             target = self._of(name)
@@ -301,11 +308,11 @@ else:
                 fd = self._open(name, os.O_RDONLY | _DIRECTORY)
             return _Here(fd, _joined(self.where, name))
 
-        def read(self, name: str, most: int | None) -> bytes:
+        def read(self, name: str, most: int | None, last: int | None = None) -> bytes:
             with os.fdopen(self._open(name, os.O_RDONLY | _NONBLOCK), "rb") as file:
                 if not stat.S_ISREG(os.fstat(file.fileno()).st_mode):
                     raise OSError(errno.EINVAL, "not a plain file", _joined(self.where, name))
-                return file.read() if most is None else file.read(most)
+                return _take(file, most, last)
 
         def write(self, name: str, data: bytes, *, new: bool) -> None:
             flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
@@ -418,10 +425,10 @@ class Place:
             raise IsADirectoryError(errno.EISDIR, "the folder itself is no file", str(self.folder))
         return self.parts[-1]
 
-    def read_bytes(self, most: int | None = None) -> bytes:
-        """The file's bytes, at most `most`."""
+    def read_bytes(self, most: int | None = None, *, last: int | None = None) -> bytes:
+        """The file's bytes, at most `most`; its last `last` only, when given (the end of a log)."""
         with held(self.folder, self.parts[:-1]) as here:
-            return here.read(self._last(), most)
+            return here.read(self._last(), most, last)
 
     def read_text(self, errors: str = "strict", most: int | None = None) -> str:
         """The file's text, as UTF-8."""

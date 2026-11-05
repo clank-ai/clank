@@ -18,6 +18,7 @@ import pytest
 from clank.components.flows import jobs
 from clank.kernel.clock import FakeClock
 from clank.kernel.home import Home
+from clank.kernel.infolder import place
 from clank.kernel.processes import Answer
 from tests.components.flows.rig import WORKSPACE, Rig, make_rig
 
@@ -27,18 +28,19 @@ def test_a_jobs_folder_is_named_by_its_flow_run_box_and_number() -> None:
 
 
 def test_its_state_is_read_from_its_files() -> None:
-    assert jobs.read_state(Path("/nonexistent")) == jobs.State(started=False, ended=False, status=None)
+    assert jobs.read_state(place(Path("/nonexistent"), "job")) == jobs.State(started=False, ended=False, status=None)
 
 
 def test_a_job_that_ended_says_its_status_and_the_end_of_its_log(tmp_path: Path) -> None:
     folder = tmp_path / ".clank/jobs/flow/1/search-1"
     folder.mkdir(parents=True)
+    job = place(tmp_path, ".clank/jobs/flow/1/search-1")
     (folder / "pid").write_text("123\n", encoding="utf-8")
     (folder / "log").write_text("".join(f"line {n}\n" for n in range(200)), encoding="utf-8")
-    assert jobs.read_state(folder) == jobs.State(started=True, ended=False, status=None)
+    assert jobs.read_state(job) == jobs.State(started=True, ended=False, status=None)
     (folder / "exit").write_text("0\n", encoding="utf-8")
-    assert jobs.read_state(folder) == jobs.State(started=True, ended=True, status=0)
-    tail = jobs.tail(folder)
+    assert jobs.read_state(job) == jobs.State(started=True, ended=True, status=0)
+    tail = jobs.tail(job)
     assert tail.endswith("line 199")
     assert "line 100" not in tail, "the end of its log only"
 
@@ -67,7 +69,7 @@ def test_the_start_and_end_scripts_run_a_command_detached_and_end_it_with_its_gr
     while not (folder / "exit").exists():
         assert time.monotonic() < deadline
         time.sleep(0.05)
-    assert jobs.read_state(folder).status == jobs.TERMINATED
+    assert jobs.read_state(place(tmp_path, "job")).status == jobs.TERMINATED
     assert "late" not in (folder / "log").read_text()
 
 
@@ -84,20 +86,20 @@ def test_a_job_started_in_the_workspace_writes_its_files_and_is_ended_by_clank(r
     done = jobs.folder_of(f"{WORKSPACE}/study", 1, "search", 1)
     rig.bridge.commands["python anneal.py"] = Answer(0, "best 0.25\n", "")
     jobs.start(workspaces, WORKSPACE, done, "python anneal.py", minutes=30)
-    folder = rig.folder / done
+    folder, job = rig.folder / done, place(rig.folder, done)
     deadline = time.monotonic() + 5
-    while not jobs.read_state(folder).ended:
+    while not jobs.read_state(job).ended:
         assert time.monotonic() < deadline
         time.sleep(0.01)
-    assert jobs.read_state(folder) == jobs.State(started=True, ended=True, status=0)
+    assert jobs.read_state(job) == jobs.State(started=True, ended=True, status=0)
     assert (folder / "command").read_text(encoding="utf-8") == "python anneal.py\n"
-    assert jobs.tail(folder) == "best 0.25"
+    assert jobs.tail(job) == "best 0.25"
     held = jobs.folder_of(f"{WORKSPACE}/study", 1, "search", 2)
     rig.bridge.hold["python long.py"] = threading.Event()
     jobs.start(workspaces, WORKSPACE, held, "python long.py", minutes=30)
     assert jobs.alive(workspaces, WORKSPACE, held) is True
     jobs.end(workspaces, WORKSPACE, held)
-    assert jobs.read_state(rig.folder / held).status == jobs.TERMINATED
+    assert jobs.read_state(place(rig.folder, held)).status == jobs.TERMINATED
     assert rig.bridge.jobs_ended == [held]
 
 
@@ -126,4 +128,23 @@ def test_the_files_it_wrote_are_the_folders_newer_ones_but_its_own_and_gits(tmp_
     since = time.time() + 5
     for path in ("runs/seed-1.json", ".git/index", ".clank/jobs/flow/1/search-1/log"):
         os.utime(tmp_path / path, (since + 1, since + 1))
-    assert jobs.written(tmp_path, since, ".clank/jobs/flow/1/search-1") == ["runs/seed-1.json"]
+    assert jobs.written(place(tmp_path), since, ".clank/jobs/flow/1/search-1") == ["runs/seed-1.json"]
+
+
+def test_a_jobs_files_reached_through_a_link_are_never_read(tmp_path: Path) -> None:
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    for name, text in (("pid", "1\n"), ("exit", "0\n"), ("log", "the owner's own\n")):
+        (elsewhere / name).write_text(text, encoding="utf-8")
+    (tmp_path / "project/.clank/jobs/flow/1").mkdir(parents=True)
+    for linked in (tmp_path / "project/.clank/jobs/flow/1/search-1", tmp_path / "project/results"):
+        if sys.platform == "win32":
+            import _winapi
+
+            _winapi.CreateJunction(str(elsewhere), str(linked))
+        else:
+            os.symlink(elsewhere, linked, target_is_directory=True)
+    job = place(tmp_path / "project", ".clank/jobs/flow/1/search-1")
+    assert jobs.read_state(job) == jobs.State(started=False, ended=False, status=None)
+    assert jobs.tail(job) == ""
+    assert jobs.written(place(tmp_path / "project"), 0.0, "") == [], "nothing found through a link"

@@ -317,7 +317,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 14 | Build steps | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_runs.py` (7), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_view.py` (12), `tests/kernel/test_settings_checks.py` (3), `vscode/test/gates.test.ts` (16) |
 | 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_flow_tools.py` (9), `tests/components/agents/test_sessions.py` (16), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (26), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (11) |
 | 16 | The orchestrator: a model that steers the run | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (9), `tests/components/flows/test_orchestrator.py` (18), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_orchestrator_panel.py` (6) |
-| 17 | Jobs, and the work done while one runs | `tests/components/flows/test_box_jobs.py` (8), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_jobs.py` (9), `tests/components/flows/test_side_work.py` (7), `tests/console/test_side_work_panel.py` (3) |
+| 17 | Jobs, and the work done while one runs | `tests/components/flows/test_box_jobs.py` (8), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_jobs.py` (10), `tests/components/flows/test_side_work.py` (7), `tests/console/test_side_work_panel.py` (3) |
 
 ## Design 0014: Linux without Docker Desktop, and small machines
 
@@ -1993,6 +1993,7 @@ Design 0013 §17 (decision 0132): a job, a long computation a box starts with `f
 - a job whose workspace does not run does not start
 - its time is said in words
 - the files it wrote are the folders newer ones but its own and gits
+- a jobs files reached through a link are never read
 
 ### `tests/components/flows/test_model_per_box.py`
 

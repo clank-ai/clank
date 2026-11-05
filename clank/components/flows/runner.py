@@ -90,6 +90,7 @@ from clank.components.flows.verdicts import text as verdict_text
 from clank.components.workspaces.service import WorkspaceUnavailable
 from clank.kernel.events import Actor, EventType, Subject
 from clank.kernel.handoff import Handoff
+from clank.kernel.infolder import place
 from clank.kernel.operations import (
     UNFINISHED,
     Busy,
@@ -1547,7 +1548,7 @@ class Runner:
         if job is None:
             return f"{box} started a job, which has ended since."
         so_far = (self.kernel.clock.now() - job.started).total_seconds()
-        end = jobs.tail(folder.joinpath(*job.folder.split("/")), lines=30)
+        end = jobs.tail(place(folder, job.folder), lines=30)
         log = f"```\n{end}\n```" if end else "(nothing yet)"
         return (
             f"{box} started a job and waits on it: job {job.number}, {job.title or 'untitled'}. Its command:\n\n"
@@ -2224,7 +2225,7 @@ class Runner:
         its minutes, or its process is gone; the run stopped ends it. Its end is kept on the try and sent to the same
         session, which works again; the try's outcome ("" while it goes on), why, and the seconds waited."""
         workspace = self._workspaces
-        folder = Path(workspace.folder_of(run.workspace)).joinpath(*job.folder.split("/"))
+        folder = place(Path(workspace.folder_of(run.workspace)), job.folder)  # read through no link (0164)
         began = self.kernel.clock.now()
         ending = job.started + timedelta(minutes=job.minutes, seconds=accepting.KILL_AFTER + jobs.GRACE)
         looked = time.monotonic()
@@ -2287,10 +2288,10 @@ class Runner:
             await self._stop_session(working, working.stopped_by or RUNNER)
             return "stopped", stopped, waited
         end = jobs.tail(folder)
-        since = (folder / "pid").stat().st_mtime if (folder / "pid").exists() else 0.0
-        files = await anyio.to_thread.run_sync(
-            jobs.written, Path(workspace.folder_of(run.workspace)), since, job.folder
-        )
+        pid = (folder / "pid").stat()
+        since = pid.st_mtime if pid is not None else 0.0
+        root = place(workspace.folder_of(run.workspace))
+        files = await anyio.to_thread.run_sync(jobs.written, root, since, job.folder)
         seconds = (now - job.started).total_seconds()
         written = {each.note for each in run.orchestration.sides if each.job == key and each.state == "done"}
         found = [
