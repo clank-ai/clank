@@ -21,7 +21,7 @@ from collections.abc import Callable
 from typing import Any
 
 from clank.components.notion.client import NotionRefused
-from clank.components.notion.markdown import blocks_markdown
+from clank.components.notion.markdown import LISTS, blocks_markdown
 
 RUN = 2000  # the most characters of one rich text run
 INLINE = [
@@ -330,8 +330,12 @@ def page_changes(now: list[dict[str, Any]], proposed: list[dict[str, Any]]) -> l
 
 
 def _in_place(now: dict[str, Any], proposed: dict[str, Any]) -> bool:
-    """Whether a block can become the proposed one in place: the same kind, and the same children (an update changes
-    a block's own content only)."""
-    return bool(now["type"] == proposed["type"]) and blocks_markdown(now.get("children") or []) == blocks_markdown(
-        proposed.get("children") or []
-    )
+    """Whether a block can become the proposed one in place: the same kind, and, for a list item or a paragraph, whose
+    children the Markdown shows, the same children (an update changes a block's own content only). A heading, a quote
+    or a callout is written as its words alone, so what it holds never reached the agent: the same kind is enough, and
+    Notion keeps its children (removing it and adding it again would delete them)."""
+    if now["type"] != proposed["type"]:
+        return False
+    if now["type"] not in LISTS and now["type"] != "paragraph":
+        return True
+    return blocks_markdown(now.get("children") or []) == blocks_markdown(proposed.get("children") or [])

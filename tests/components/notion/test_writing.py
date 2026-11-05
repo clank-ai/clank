@@ -145,3 +145,25 @@ def test_a_proposed_page_is_compared_with_the_page_now_block_by_block() -> None:
     nested = [block("n1", "- a point\n  - an inner point")]
     moved = page_changes(nested, markdown_blocks("- a point\n  - another inner point"))
     assert [each["op"] for each in moved] == ["remove", "add"], "children changed: an update would keep the old ones"
+
+
+@pytest.mark.parametrize(
+    ("kind", "content", "reworded"),
+    [
+        ("callout", {"icon": {"type": "emoji", "emoji": "💡"}}, "> **Callout:** Read this second."),
+        ("quote", {}, "> Read this second."),
+        ("heading_2", {"is_toggleable": True}, "## Read this second."),
+    ],
+)
+def test_rewording_a_block_whose_children_the_markdown_does_not_show_changes_it_in_place(
+    kind: str, content: dict[str, Any], reworded: str
+) -> None:
+    """A heading, a quote and a callout are written as their words alone, so the blocks inside one (a toggle heading's,
+    a callout's list) never reach the agent: the same kind is enough to update it, and Notion keeps what it holds."""
+    [inner] = markdown_blocks("- kept inside")
+    words = [{"type": "text", "text": {"content": "Read this first."}, "plain_text": "Read this first.",
+              "annotations": {}}]  # fmt: skip
+    now = [{"id": "b1", "type": kind, kind: {"rich_text": words, **content}, "has_children": True,
+            "children": [{**inner, "id": "c1"}]}]  # fmt: skip
+    changes = page_changes(now, markdown_blocks(reworded))
+    assert [(each["op"], each.get("id")) for each in changes] == [("update", "b1")], "never removed with what it holds"
