@@ -291,8 +291,7 @@ async def test_the_machine_column_is_hidden_on_the_monitor_at_160_columns_and_ba
         seconds = len(app.data.meters)
         assert f"{seconds}s " in str(drawn.render()), "the CPU's graph covers one second a reading"
         await opened(pilot, app)
-        await settle(pilot, lambda: not column.display)
-        assert "RTX 5080" not in render_text(app)
+        await settle(pilot, lambda: not column.display and "RTX 5080" not in render_text(app))  # hidden, then drawn so
         width = app.query_one("#page-monitor").outer_size.width
         assert width == 160 - 2, "the page takes the column's room and the menu's (decision 0125): 158 columns"
         meters_arrive(kernel, 3)

@@ -264,6 +264,10 @@ def test_an_ipv6_address_carrying_a_private_ipv4_one_is_refused_as_a_literal_and
     status, body, _ = connect(served, "mapped.test:443", auth("paper", "tok-paper"))
     assert status == 403, "a name that resolves to it, though the host is allowed"
     assert "private" in body.decode()
+    for _ in range(100):  # a refusal's line is written once its answer is sent
+        if len(served.lines()) == 2:
+            break
+        threading.Event().wait(0.05)
     assert [line["why"] for line in served.lines()] == ["private", "private"]
     for ip in (
         "::ffff:100.64.0.1", "::ffff:100.127.255.254", "::ffff:10.0.0.1", "::ffff:127.0.0.1", "::ffff:169.254.1.1",
