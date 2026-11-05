@@ -12,7 +12,7 @@
   <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-7aa2f7?style=flat-square"></a>
   <a href="CHANGELOG.md"><img alt="Version 0.3.0b7, public beta" src="https://img.shields.io/badge/version-0.3.0b7%20beta-ff9e64?style=flat-square"></a>
   <img alt="Python 3.12 or newer" src="https://img.shields.io/badge/python-3.12%2B-9ece6a?style=flat-square">
-  <img alt="Windows; macOS and Linux untested" src="https://img.shields.io/badge/runs%20on-Windows-bb9af7?style=flat-square">
+  <img alt="Windows and Linux; macOS untested" src="https://img.shields.io/badge/runs%20on-Windows%20%7C%20Linux-bb9af7?style=flat-square">
 </p>
 
 <p align="center">

@@ -50,7 +50,8 @@ Its program is `llama-kvmem-server`, run in a WSL distribution (Ubuntu 22.04 her
 The build Clank runs here, as its checkout and build folder said on 2026-10-20, rebuilt with Clank's patch on
 2026-10-27:
 
-- **Source**: the public repository <https://github.com/kvmem/kvmem-llama.cpp>, at its tag `v0.16.0-rc1` (commit
+- **Source**: the public repository <https://github.com/kvmem/kvmem> (named `kvmem-llama.cpp` when this build was
+  made; the old address leads to it), at its tag `v0.16.0-rc1` (commit
   `db4bc22ee6e8f4b590188dcc0457e72022eb1bbe`, "Pin shared-library mode for reproducible prebuilt builds").
 - **One upstream fix on top**: commit `7e20823` of KVMem's master, "fix: handle multimodal query replay exceeding KV
   budget" (2026-09-23, released in v0.17.0), cherry-picked onto the tag. Without it, one tool result larger than the
@@ -158,8 +159,8 @@ commands run from its working copy.
 3. **Build KVMem** in that distribution, by KVMem's README, with the fix picked onto the tag before the patches:
 
    ```text
-   git clone --recurse-submodules https://github.com/kvmem/kvmem-llama.cpp.git
-   cd kvmem-llama.cpp
+   git clone --recurse-submodules https://github.com/kvmem/kvmem.git
+   cd kvmem
    git checkout v0.16.0-rc1        # commit db4bc22
    git submodule update --init     # llama.cpp at KVMem's pin, b81c99b
    git cherry-pick -n 7e20823      # the replay fix, from KVMem's master, left uncommitted

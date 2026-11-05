@@ -12,9 +12,9 @@ Linux on Docker Engine (design 0014's lane L), `clank setup` (design 0028) and d
 Windows, the first slices of M3, M4, M5 and M10 are built and in use: the console, the gateway, workspaces in Docker,
 OpenCode with review, auto and the Planner, the Monitor, flows, cloud models through OpenRouter, local models with
 llama.cpp and KVMem, and the VS Code extension. M2's console look is partly built; M7's network access and M9's
-installed app have their first steps built; M6 and the rest of M8 are to design; M11 (Linux, small machines,
-endpoints) is designed and not built. In these records, "the owner" is the person who directs Clank's building
-([glossary](GLOSSARY.md)).
+installed app have their first steps built; M6 (VS Code as the place of work) is designed and largely built; the rest of
+M8 is to design; M11's lane for Linux with Docker Engine is built, and its small machines and endpoints are designed,
+not built. In these records, "the owner" is the person who directs Clank's building ([glossary](GLOSSARY.md)).
 
 ## Milestones
 
