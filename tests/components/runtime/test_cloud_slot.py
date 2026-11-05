@@ -109,6 +109,27 @@ async def test_an_engines_route_says_its_provider_and_reach(rig: Rig) -> None:
         LocalHost().stop(ProcessIdentity("local", slot.pid or 0, slot.started or "", slot.command or ""), 5)
 
 
+async def test_an_engines_route_says_what_was_launched_though_its_preset_changed_or_went_since(rig: Rig) -> None:
+    """Design 0003 §3: a change to a running preset applies at its next start, so the route keeps the limits the engine
+    was started with; and a preset file deleted while its engine runs leaves the route answering, from its launch."""
+    async with rig.kernel.operations.running():
+        done = await run(rig, "runtime.load", preset="fake KVMem")
+    try:
+        assert done.status == "done", done.error
+        assert rig.runtime.route("main")["context"] == 8192
+        rig.preset("fake-kvmem", {"title": "fake KVMem", "engine": "kvmem-llamacpp", "engine_version": "v0.16.0-rc1",
+                                  "model": "tiny", "options": {"context": 65536, "kvmem.budget": 4096}})  # fmt: skip
+        route = rig.runtime.route("main")
+        assert (route["context"], route["engine"], route["status"]) == (8192, "kvmem-llamacpp", "ready"), "as started"
+        (rig.kernel.home.config / "presets" / "fake-kvmem.json").unlink()
+        rig.kernel.settings.reload_changed()
+        gone = rig.runtime.route("main")
+        assert (gone["context"], gone["preset"], gone["port"]) == (8192, "fake-kvmem", route["port"])
+    finally:
+        slot = rig.runtime.state.slot("main")
+        LocalHost().stop(ProcessIdentity("local", slot.pid or 0, slot.started or "", slot.command or ""), 5)
+
+
 @pytest.mark.parametrize(
     ("missing", "words"),
     [

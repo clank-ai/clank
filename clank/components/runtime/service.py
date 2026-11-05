@@ -164,7 +164,9 @@ class Runtime:
         while an engine runs, the engine's port, serving setup and version, the model name it answers to, the preset,
         and the preset's context and output limits, whether its model reads images (its `vision` option is not off,
         design 0008 §5), its thinking budget, when its engine has one and thinking is on (design 0012 §8), and the
-        preset's facts (`facts`); and its provider (`engine`, reach `this-machine`). A cloud slot's (design 0016 §7) is
+        preset's facts (`facts`); and its provider (`engine`, reach `this-machine`). The engine, its version and the
+        options are its launch's, what was started (a preset edited since applies at its next start, design 0003 §3),
+        and a preset file gone while its engine runs leaves the route answering. A cloud slot's (design 0016 §7) is
         its launch's kept route, its reach and agreement read now (`cloud.route`): the provider (`endpoint`), its base
         URL, the model's listed id, the read timeout, what the gateway adds to each request, the model's prices."""
         slot = self.state.slot(name)
@@ -183,12 +185,30 @@ class Runtime:
             view.update({key: value for key, value in kept.items() if key in ROUTE_FIELDS})
             view.update(preset=slot.preset, title=self.title(slot.preset), facts=self.facts(slot.preset))
             return {key: view[key] for key in ROUTE_FIELDS}
-        _, preset = launching.preset_of(self, slot.preset)
-        adapter = ENGINES.get(preset.engine)(preset.engine_version)
-        values = {option.key: preset.options.get(option.key, option.default) for option in adapter.options()}
+        try:
+            _, preset = launching.preset_of(self, slot.preset)
+        except PresetNotFound:  # its file deleted or renamed while its engine runs: the launch says what runs
+            preset = None
+        try:
+            launch = self.state.launch(slot.launch_id) if slot.launch_id is not None else None
+        except KeyError:
+            launch = None
+        if launch is not None:  # what was started: a change to the preset applies at its next start (design 0003 §3)
+            engine, version, options = launch.engine, launch.engine_version, launch.options
+        elif preset is not None:
+            engine, version, options = preset.engine, preset.engine_version, preset.options
+        else:
+            return {key: view[key] for key in ROUTE_FIELDS}
+        try:
+            adapter = ENGINES.get(engine)(version)
+            values = {option.key: options.get(option.key, option.default) for option in adapter.options()}
+        except (AdapterError, EngineError):  # an engine no longer known: the options as kept
+            values = dict(options)
+        model = preset.model if preset is not None else slot.preset
         view.update(
-            port=slot.port, engine=preset.engine, version=preset.engine_version, preset=slot.preset,
-            model_name=self.settings().model_name or preset.model, title=preset.title or slot.preset,
+            port=slot.port, engine=engine, version=version, preset=slot.preset,
+            model_name=self.settings().model_name or model,
+            title=(preset.title if preset is not None else "") or slot.preset,
             context=values.get("context"), output=values.get("max_output"),
             images=str(values.get("vision") or "off") != "off",
             thinking=values.get("thinking.budget") if values.get("thinking", True) else None,
