@@ -137,6 +137,43 @@ def test_an_ended_job_is_recorded_once_and_the_session_that_started_it_told(
     assert "Job 1 (anneal) exited 0" in events[0].summary
 
 
+def test_a_jobs_end_reaches_its_session_after_a_restart_and_a_refused_send_is_tried_again_until_it_goes(
+    kernel: Kernel, folder: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """After the service restarted, no watcher has named the idle session that started the job: it is reached as a
+    comment is, through a server of the folder that lists it. A send the bridge refuses is tried again the next round,
+    and the job is told only once."""
+    from clank.components.agents.sessions import SessionError
+
+    jobs = jobs_of(kernel)
+    sessions = kernel.parts["agents"].sessions
+    sent: list[tuple[int, str]] = []
+    refusing = [True]
+
+    def send(workspace: str, port: int, session: str, text: str, *, actor: Any) -> dict[str, Any]:
+        if refusing[0]:
+            raise SessionError("the bridge did not answer in time")
+        sent.append((port, session))
+        return {}
+
+    monkeypatch.setattr(sessions, "runs", lambda workspace, session: None)
+    monkeypatch.setattr(sessions, "servers", lambda workspace: [{"port": 4097, "sessions": [{"id": "ses_1"}]}])
+    monkeypatch.setattr(sessions, "send", send)
+    jobs.start("paper", "python anneal.py", "anneal", 90, session="ses_1")
+    own = folder / ".clank/jobs/agent/1"
+    (own / "pid").write_text("41\n", encoding="utf-8")
+    (own / "exit").write_text("0\n", encoding="utf-8")
+    jobs.watch_once()
+    assert sent == []
+    assert json.loads((own / "job.json").read_text(encoding="utf-8"))["told"] is False, "not told yet"
+    refusing[0] = False
+    jobs.watch_once()
+    jobs.watch_once()
+    assert sent == [(4097, "ses_1")], "told once, on the server that lists the session"
+    assert json.loads((own / "job.json").read_text(encoding="utf-8"))["told"] is True
+    assert len(kernel.events.latest(10, types=["agents.job_ended"])) == 1, "its end recorded once"
+
+
 def test_a_job_past_its_minutes_is_ended_and_one_is_stopped_when_asked(
     kernel: Kernel, folder: Path, ran: list[list[str]], clock: FakeClock
 ) -> None:

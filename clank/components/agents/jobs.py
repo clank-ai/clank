@@ -10,7 +10,8 @@ beside it. Its state: `starting` (no process written yet), `running`, `ended` (i
 `watch_once`, every `WATCH_SECONDS` while the service runs, looks at every workspace's jobs not seen to end: one past
 its minutes and `GRACE` is ended; one whose exit came, or whose process the container says is gone, is recorded once
 (`agents.job_ended`), and the session that started it, when it named one, is sent what happened: how it ended and after
-how long, its log's last lines and the files it wrote.
+how long, its log's last lines and the files it wrote. `told` in `job.json` keeps whether that went out; until it did,
+it is tried again each round (after a restart, or while no window of the folder runs).
 """
 
 import contextlib
@@ -21,6 +22,7 @@ from typing import TYPE_CHECKING, Any
 
 import anyio
 
+from clank.components.agents.sessions import SessionError
 from clank.components.workspaces.service import jobs as runner
 from clank.kernel.events import CLANK, EventType, Subject
 from clank.kernel.infolder import Outside, Place, place
@@ -36,6 +38,7 @@ DEFAULT_MINUTES = 240
 MOST_MINUTES = 7 * 24 * 60
 GRACE = 60  # seconds past a job's minutes (and `timeout`'s kill) before Clank ends it itself
 WATCH_SECONDS = 10.0
+TELL_DAYS = 7  # an ended job's session no server reaches is tried this long (its window may open again)
 EVENT_TYPES = [
     EventType(
         "agents.job_started",
@@ -156,6 +159,7 @@ class AgentJobs:
     def _watch(self, workspace: str, folder: Place, number: int) -> None:
         kept = self._kept(folder)
         if kept.get("ended") is not None:
+            self._tell(workspace, folder, number, kept)  # an end not told yet is tried again
             return
         state = runner.read_state(folder)
         if not state.started:
@@ -167,7 +171,9 @@ class AgentJobs:
         if not state.ended and runner.alive(self.workspaces, workspace, f"{FOLDER}/{number}") is not False:
             return
         said = runner.ended_words(state.status, minutes=int(kept["minutes"]))
-        self._keep(folder, {**kept, "ended": self._now(), "status": state.status, "said": said})
+        told = False if kept.get("session") else None  # None: no session to tell
+        kept = {**kept, "ended": self._now(), "status": state.status, "said": said, "told": told}
+        self._keep(folder, kept)
         title = str(kept["title"])
         summary = f"Job {number} ({title}) {said} after {runner.span(ran)}"
         self.kernel.events.record(
@@ -176,10 +182,27 @@ class AgentJobs:
             data={"workspace": workspace, "job": number, "title": title, "status": state.status, "said": said,
                   "seconds": round(ran)},
         )  # fmt: skip
+        self._tell(workspace, folder, number, kept)
+
+    def _tell(self, workspace: str, folder: Place, number: int, kept: dict[str, Any]) -> None:
+        """Tell the session that started an ended job how it ended, once: reached as a comment is, through a server of
+        the folder that lists it, since after a restart no watcher has named an idle session; a session no server
+        reaches now, or a send refused, is tried again each round for `TELL_DAYS`. A record from before `told` was
+        kept counts as told."""
         session = str(kept.get("session") or "")
-        port = self.sessions.runs(workspace, session) if session else None
-        if port is not None:
+        if not session or kept.get("told") is not False or self._now() - float(kept["ended"]) > TELL_DAYS * 86400:
+            return
+        port = self.sessions.reach(workspace, session)
+        if port is None:
+            return
+        ran = float(kept["ended"]) - float(kept["started"])
+        summary = f"Job {number} ({kept['title']}) {kept['said']} after {runner.span(ran)}"
+        try:
             self.sessions.send(workspace, port, session, self._told(summary, folder, number, kept), actor=CLANK)
+        except SessionError as error:
+            log.info("job %s of %s: its end is told again next round: %s", number, workspace, error)
+            return
+        self._keep(folder, {**kept, "told": True})
 
     def _told(self, summary: str, folder: Place, number: int, kept: dict[str, Any]) -> str:
         """What the session that started a job is sent when it ends."""
