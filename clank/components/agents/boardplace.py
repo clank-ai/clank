@@ -14,6 +14,7 @@ Frames are not in the way of items: they hold them. Annotations (pen strokes, ar
 the way either.
 """
 
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -43,6 +44,16 @@ class Placed:
 def snap(value: float, grid: int = GRID) -> int:
     """A length on the grid: the nearest multiple of its step."""
     return int(round(value / grid) * grid)
+
+
+def _up(value: float, grid: int) -> int:
+    """The grid's step at or past `value`."""
+    return int(math.ceil(value / grid) * grid)
+
+
+def _down(value: float, grid: int) -> int:
+    """The grid's step at or before `value`."""
+    return int(math.floor(value / grid) * grid)
 
 
 def _box(item: Mapping[str, Any]) -> tuple[float, float, float, float]:
@@ -115,17 +126,18 @@ Box = tuple[float, float, float, float]
 def _beside(items: Sequence[Mapping[str, Any]], ref: Mapping[str, Any], side: str, solid: list[Box], w: float, h: float,
             grid: int) -> Placed:  # fmt: skip
     rx, ry, rw, rh = _box(ref)
-    x = {"right_of": rx + rw + GAP, "left_of": rx - GAP - w}.get(side, rx)
-    y = {"below": ry + rh + GAP, "above": ry - GAP - h}.get(side, ry)
-    x, y = snap(x, grid), snap(y, grid)
+    # Rounded onto the grid away from the item it is beside, never back into the gap kept around it (to the nearest
+    # step, an edge off the grid came too close, and the item was taken past it on the other axis)
+    x = {"right_of": _up(rx + rw + GAP, grid), "left_of": _down(rx - GAP - w, grid)}.get(side, snap(rx, grid))
+    y = {"below": _up(ry + rh + GAP, grid), "above": _down(ry - GAP - h, grid)}.get(side, snap(ry, grid))
     for _ in range(TRIES):
         hit = next((box for box in solid if _overlaps((x, y, w, h), box, GAP)), None)
         if hit is None:
             break
         if side in ("right_of", "left_of"):
-            y = snap(hit[1] + hit[3] + GAP, grid)
+            y = _up(hit[1] + hit[3] + GAP, grid)
         else:
-            x = snap(hit[0] + hit[2] + GAP, grid)
+            x = _up(hit[0] + hit[2] + GAP, grid)
     frame = frame_of(items, ref)
     grown = None
     if frame is not None:

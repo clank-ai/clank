@@ -75,3 +75,12 @@ def test_beside_an_item_in_a_frame_is_in_that_frame_which_grows_to_hold_it() -> 
     assert placed.box == (480, 100, 300, 200), "the frame is not in the way"
     assert placed.grown == ("frame-5", 740, 300)
     assert place([frame, inside], 300, 200, {"below": "frame-5"}).grown is None, "under the frame is outside it"
+
+
+def test_a_place_beside_an_item_off_the_grid_rounds_away_from_it_and_keeps_to_its_side() -> None:
+    tall = box("fig-9", "figure", 80, 80, 360, 205)  # its bottom off the grid: 325 rounded to the nearest is too close
+    assert place([tall], 300, 200, {"below": "fig-9"}).box == (80, 340, 300, 200), "below it, not beside it"
+    wide = box("fig-9", "figure", 80, 80, 285, 240)
+    assert place([wide], 300, 200, {"right_of": "fig-9"}).box == (420, 80, 300, 200), "right of it, not under it"
+    assert place([FIG], 300, 210, {"above": "fig-1"}).box == (80, -180, 300, 210), "above it, a whole gap clear"
+    assert place([FIG], 290, 200, {"left_of": "fig-1"}).box == (-260, 80, 290, 200), "left of it, a whole gap clear"
