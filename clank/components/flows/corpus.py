@@ -3,11 +3,18 @@
 
 Clank keeps the index, `CORPUS.md` beside the notes, never the model: each note's path and its first line, rewritten
 whole after each side task, so a box or a checkpoint handed it reads only the notes it needs. A note is found by its
-name; anything else in the folder is left alone.
+name; anything else in the folder is left alone. The notes are the agent's, so they are read, and the index written,
+through no link (`kernel/infolder.py`, decision 0164).
 """
 
+import contextlib
+import logging
 import re
 from pathlib import Path
+
+from clank.kernel.infolder import Outside, Place, place
+
+log = logging.getLogger(__name__)
 
 INDEX = "CORPUS.md"
 NOTE = re.compile(r"^([1-9][0-9]*)-([1-9][0-9]*)-[a-z0-9-]+\.md$")
@@ -26,11 +33,11 @@ def note_path(corpus: str, run: int, number: int, title: str) -> str:
     return f"{corpus}/{run}-{number}-{slug(title)}.md"
 
 
-def summary(note: Path) -> str:
+def summary(note: Place) -> str:
     """A note's first line that says anything, without a heading's marks."""
     try:
-        lines = note.read_text(encoding="utf-8", errors="replace").splitlines()
-    except OSError:
+        lines = note.read_text(errors="replace", most=1 << 16).splitlines()
+    except (OSError, ValueError):  # Outside too, a ValueError
         return ""
     first = next((line.strip().lstrip("#").strip() for line in lines if line.strip().lstrip("#").strip()), "")
     return first[:SUMMARY_LENGTH]
@@ -39,13 +46,12 @@ def summary(note: Path) -> str:
 def entries(folder: Path, corpus: str) -> list[tuple[str, str]]:
     """Each note of the corpus, by run and number: its path in the workspace's folder and its summary."""
     found: list[tuple[int, int, str, str]] = []
-    where = folder.joinpath(*corpus.split("/"))
-    if not where.is_dir():
-        return []
-    for note in where.iterdir():
-        matched = NOTE.match(note.name)
-        if matched and note.is_file():
-            found.append((int(matched[1]), int(matched[2]), f"{corpus}/{note.name}", summary(note)))
+    with contextlib.suppress(Outside):
+        where = place(folder, corpus)
+        for name, kind in where.entries():  # links left out
+            matched = NOTE.match(name)
+            if matched and kind == "file":
+                found.append((int(matched[1]), int(matched[2]), f"{corpus}/{name}", summary(where / name)))
     return [(path, said) for _, _, path, said in sorted(found)]
 
 
@@ -57,8 +63,9 @@ def index_text(found: list[tuple[str, str]]) -> str:
 def write_index(folder: Path, corpus: str) -> str:
     """Write `CORPUS.md` from the notes as they are; its lines."""
     lines = index_text(entries(folder, corpus))
-    where = folder.joinpath(*corpus.split("/"))
-    where.mkdir(parents=True, exist_ok=True)
     head = "# Corpus\n\nThe flow's side notes, kept by Clank: each note's path and its first line.\n\n"
-    (where / INDEX).write_bytes((head + (lines or "No note yet.") + "\n").encode("utf-8"))
+    try:
+        place(folder, f"{corpus}/{INDEX}").write_text(head + (lines or "No note yet.") + "\n")
+    except Outside as error:
+        log.warning("the corpus's index is not written: %s", error)
     return lines

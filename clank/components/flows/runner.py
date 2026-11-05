@@ -61,7 +61,6 @@ import hashlib
 import json
 import logging
 import math
-import shutil
 import threading
 import time
 from collections.abc import Callable
@@ -90,7 +89,7 @@ from clank.components.flows.verdicts import text as verdict_text
 from clank.components.workspaces.service import WorkspaceUnavailable
 from clank.kernel.events import Actor, EventType, Subject
 from clank.kernel.handoff import Handoff
-from clank.kernel.infolder import place
+from clank.kernel.infolder import file_of, place
 from clank.kernel.operations import (
     UNFINISHED,
     Busy,
@@ -1516,10 +1515,10 @@ class Runner:
         """A checkpoint's first message: the box's report with its handoff note, the question with its answers, the
         run, the brief, the ledger and the budget (`orchestrating.message`)."""
         box = _box_of(flow, checkpoint.box)
-        note_file = folder.joinpath(*handoff.path(run.flow, checkpoint.box).split("/"))
-        note = (
-            note_file.read_text(encoding="utf-8", errors="replace") if box is not None and note_file.is_file() else ""
-        )
+        note = ""
+        if box is not None and (noted := file_of(folder, handoff.path(run.flow, checkpoint.box))) is not None:
+            with contextlib.suppress(OSError, ValueError):  # gone meanwhile, or reached through a link (0164)
+                note = noted[0].read_text(errors="replace")
         report = orchestrating.report(flow, run, box, folder, note) if box is not None else ""
         question = ""
         if checkpoint.question:
@@ -2335,8 +2334,8 @@ class Runner:
         against the run's side budget."""
         limits = flow.orchestrator.side
         folder = self._folder(run)
-        note = folder.joinpath(*side.note.split("/"))
-        before = note.stat().st_mtime_ns if note.is_file() else None
+        noted = file_of(folder, side.note)
+        before = noted[1].st_mtime_ns if noted is not None else None
         fresh = self.runs.load(run.flow, run.number)
         port = fresh.server
         began = self.kernel.clock.now()
@@ -2408,7 +2407,8 @@ class Runner:
             state, reason = "failed", f"its session could not be started: {error}"
         finally:
             self._forget(working)
-        if state == "done" and not (note.is_file() and note.stat().st_mtime_ns != before):
+        noted = file_of(folder, side.note)
+        if state == "done" and not (noted is not None and noted[1].st_mtime_ns != before):
             state, reason = "failed", f"it wrote no note at {side.note}"
         corpus.write_index(folder, limits.corpus)
         now = self.kernel.clock.now()
@@ -2526,10 +2526,7 @@ class Runner:
         copies = self.runs.try_folder(run, box_id, attempt.number) / "deliverables"
         for kept in now:
             if kept.sha256 and kept.size <= flow.defaults.copied_up_to:
-                target = copies.joinpath(*kept.path.split("/"))
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(folder.joinpath(*kept.path.split("/")), target)
-                kept.copied = True
+                kept.copied = _copied(folder, kept.path, copies.joinpath(*kept.path.split("/")))
         note = self._handoff(run, flow, box, attempt, folder)
         tokens = working.tokens() if working is not None else 0
 
@@ -2587,10 +2584,7 @@ class Runner:
         if not written(attempt.handoff_before, now):
             return None
         if now.size <= flow.defaults.copied_up_to:
-            target = self.runs.try_folder(run, box.id, attempt.number) / "handoff.md"
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(folder.joinpath(*now.path.split("/")), target)
-            now.copied = True
+            now.copied = _copied(folder, now.path, self.runs.try_folder(run, box.id, attempt.number) / "handoff.md")
         return now
 
     def _finished(self, flow_id: str, number: int, working: Working | None) -> None:
@@ -3000,6 +2994,20 @@ class Runner:
         )
 
 
+def _copied(folder: Path, path: str, target: Path) -> bool:
+    """Copy a file of the folder, read through no link (decision 0164), into a try's folder; whether it was."""
+    found = file_of(folder, path)
+    if found is None:
+        return False
+    try:
+        data = found[0].read_bytes()
+    except (OSError, ValueError):  # gone meanwhile, or reached through a link (Outside, a ValueError)
+        return False
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(data)
+    return True
+
+
 def _box_of(flow: Flow, id: str) -> Box | None:
     return next((box for box in flow.boxes if box.id == id), None)
 
@@ -3125,12 +3133,9 @@ def _changed(
     for each in kept:
         if each.path in editing or not each.sha256:
             continue
-        try:
-            stat = folder.joinpath(*each.path.split("/")).stat()
-            if (stat.st_size, stat.st_mtime_ns) == (each.size, each.modified):
-                continue  # as delivered: not read again
-        except OSError:
-            pass
+        delivered = file_of(folder, each.path)  # its own stat, through no link (decision 0164)
+        if delivered is not None and (delivered[1].st_size, delivered[1].st_mtime_ns) == (each.size, each.modified):
+            continue  # as delivered: not read again
         now = fingerprint(folder, each.path)
         if now.sha256 == each.sha256:
             continue

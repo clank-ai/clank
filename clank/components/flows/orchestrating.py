@@ -20,6 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from clank.components.flows.kinds import Box, Flow
 from clank.kernel.events import Actor
+from clank.kernel.infolder import file_of
 
 if TYPE_CHECKING:
     from clank.components.flows.runs import Run
@@ -460,8 +461,8 @@ def report(flow: Flow, run: "Run", box: Box, folder: Path, note: str) -> str:
         said.append(f"- Its failure's class: {failure_class(last.reason)}")
     said.append(f"- Tokens written: {last.tokens:,}")
     for path in box.writes:
-        file = folder.joinpath(*path.split("/"))
-        size = file.stat().st_size if file.is_file() else 0
+        found = file_of(folder, path)  # through no link (decision 0164)
+        size = found[1].st_size if found is not None else 0
         said.append(f"- Deliverable {path}: " + (f"{size:,} bytes" if size else "not written"))
     if last.verdict is not None:
         said.append(f"- Its verdict: {last.verdict.result}")
@@ -551,8 +552,11 @@ def _brief(flow: Flow, folder: Path) -> str:
     first = flow.boxes[0]
     texts = []
     for path in first.writes:
-        file = folder.joinpath(*path.split("/"))
-        text = file.read_text(encoding="utf-8", errors="replace") if file.is_file() else ""
+        found = file_of(folder, path)
+        try:
+            text = found[0].read_text(errors="replace") if found is not None else ""
+        except (OSError, ValueError):  # gone meanwhile, or reached through a link
+            text = ""
         texts.append(f"{path}:\n\n{_cut(text, WHOLE)}" if text else f"{path}: not written")
     return "\n\n".join(texts) or "(the flow's first box writes no brief)"
 

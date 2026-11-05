@@ -19,7 +19,6 @@ import contextlib
 import json
 import logging
 import re
-import shutil
 from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -28,6 +27,7 @@ from clank.components.flows.deliverables import fingerprint
 from clank.components.flows.kinds import Flow
 from clank.components.flows.runs import order
 from clank.kernel.events import Actor, EventType, Subject
+from clank.kernel.infolder import file_of, place
 from clank.kernel.questions import Option, Question, QuestionDraft, QuestionError
 from clank.kernel.settings import DEFAULTS, SettingsError, render
 
@@ -229,12 +229,15 @@ class Following:
             return raise_or_return(forced, f"{flow} makes no next flow: {why}")
         by, brief = found
         folder = Path(self.kernel.parts["workspaces"].folder_of(flow.split("/", 1)[0]))
-        source = folder.joinpath(*brief.split("/"))
-        if not source.is_file():
+        source = file_of(folder, brief)  # the agent's file, read through no link (decision 0164)
+        try:
+            text = source[0].read_bytes().decode("utf-8-sig", errors="replace") if source is not None else None
+        except (OSError, ValueError):
+            text = None
+        if text is None:
             why = f"{by} wrote no {brief}"
             self._said(flow, number, "", brief, why, actor)
             return raise_or_return(forced, f"{flow} makes no next flow: {why}")
-        text = source.read_bytes().decode("utf-8-sig", errors="replace")
         template: dict[str, Any] = json.loads(TEMPLATE.read_text(encoding="utf-8"))
         taken = {loaded.id for loaded in self.kernel.settings.records(Flow.KIND)}
         name = next_name(flow, taken)
@@ -301,16 +304,18 @@ class Following:
         if not into or into == brief:
             return
         folder = Path(self.kernel.parts["workspaces"].folder_of(flow.split("/", 1)[0]))
-        source, target = folder.joinpath(*brief.split("/")), folder.joinpath(*into.split("/"))
+        source = file_of(folder, brief)  # read and written through no link (decision 0164)
         follows = made.follows.flow
-        if not source.is_file():
+        if source is None:
             said, copied = f"{brief} is no longer in the folder: {into} is kept as it is", False
         elif fingerprint(folder, into).sha256 != made.follows.replaces:
             said, copied = f"you changed {into} since {flow} was made: it is kept as you left it", False
         else:
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(source, target)
-            said, copied = f"{into} now holds {brief}, the brief {made.follows.by} of {follows} wrote", True
+            try:
+                place(folder, into).write_bytes(source[0].read_bytes())
+                said, copied = f"{into} now holds {brief}, the brief {made.follows.by} of {follows} wrote", True
+            except (OSError, ValueError) as error:  # Outside too
+                said, copied = f"{into} could not be written from {brief}: {error}", False
         self._record(
             "flows.next_brief", flow, number, f"{made.title or flow}: {said}", FOLLOWER,
             follows=follows, brief=brief, into=into, copied=copied,

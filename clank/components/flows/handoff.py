@@ -14,6 +14,7 @@ out, and a VERIFY is handed none: it is handed only the brief and the deliverabl
 made them (design 0013 §2). `first.py` quotes each, cut at the flow's `note_up_to`.
 """
 
+import contextlib
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,6 +23,7 @@ from typing import TYPE_CHECKING
 from clank.components.flows.kinds import Box, Flow
 from clank.components.flows.proposals import Batches
 from clank.components.flows.runs import Run, Runs, Try, order
+from clank.kernel.infolder import place
 
 if TYPE_CHECKING:
     from clank.components.flows.verdicts import Verdict
@@ -68,14 +70,13 @@ def keep_out_of_git(folder: Path, flow: str) -> None:
     """Make the folder's `.clank/handoff/<flow>/` ready for a note, `.clank/handoff/` kept out of git by a `.gitignore`
     of its own when it has none (one there is left as it is); a folder that cannot be written is said in the log, and
     the box goes on (its model writes the note, or says why it cannot)."""
-    kept = folder.joinpath(*FOLDER.split("/"))
+    kept = place(folder, FOLDER)  # through no link (decision 0164)
     try:
-        kept.joinpath(_name(flow)).mkdir(parents=True, exist_ok=True)
-        ignore = kept / ".gitignore"
-        if not ignore.exists():
-            ignore.write_bytes(IGNORE.encode("utf-8"))
-    except OSError as error:
-        log.warning("the handoff notes' folder %s cannot be made ready: %s", kept, error)
+        (kept / _name(flow)).make()
+        with contextlib.suppress(FileExistsError):  # one there, or a link there, is left as it is
+            (kept / ".gitignore").write_text(IGNORE, new=True)
+    except (OSError, ValueError) as error:  # Outside too: the flow's name, or a link on the way
+        log.warning("the handoff notes' folder %s cannot be made ready: %s", kept.path, error)
 
 
 def notes_before(runs: Runs, run: Run | None, flow: str, made: Flow, box: Box) -> list[Note]:

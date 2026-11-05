@@ -25,6 +25,7 @@ from clank.components.flows import corpus, handoff
 from clank.components.flows.handoff import Note, writes_note
 from clank.components.flows.kinds import Box, Flow
 from clank.components.flows.runs import Run, order
+from clank.kernel.infolder import Place, file_of
 
 BACKTICKS = re.compile(r"`{3,}")
 
@@ -249,8 +250,8 @@ def _delivered(flow: Flow, box: Box, folder: Path) -> str:
         return ""
     lines = []
     for path in shown:
-        file = folder.joinpath(*path.split("/"))
-        said = f"{file.stat().st_size:,} bytes" if file.is_file() else "not in the folder"
+        found = file_of(folder, path)
+        said = f"{found[1].st_size:,} bytes" if found is not None else "not in the folder"
         lines.append(f"- `{path}` (from {writers[path]}): {said}")
     return "\n\n".join([heading, lead + "\n" + "\n".join(lines)])
 
@@ -284,11 +285,11 @@ def _files(flow: Flow, box: Box, folder: Path, paths: list[str]) -> tuple[list[s
     for path in paths:
         source = came_from(flow, box, path)
         where = f"from {source}" if source else "from the folder"
-        file = folder.joinpath(*path.split("/"))
-        if not file.is_file():
+        found = file_of(folder, path)  # the agent's files, read through no link (decision 0164)
+        if found is None:
             named.append(f"- `{path}` ({where}): not in the folder yet")
             continue
-        size = file.stat().st_size
+        file, size = found[0], found[1].st_size
         if size > flow.defaults.whole_up_to:
             named.append(
                 f"- `{path}` ({where}): {size:,} bytes, more than {flow.defaults.whole_up_to:,} handed whole: read it "
@@ -313,7 +314,7 @@ def _deliverable(flow: Flow, box: Box, name: str, folder: Path) -> str:
     parts = ["## Your deliverable"]
     if box.writes:
         parts.append("Write these files in the folder:\n" + "\n".join(f"- {path}" for path in box.writes))
-    if there := [path for path in box.writes if folder.joinpath(*path.split("/")).is_file()]:
+    if there := [path for path in box.writes if file_of(folder, path) is not None]:
         one = len(there) == 1
         it, them, each = ("it", "it", "it") if one else ("they", "them", "each")
         parts.append(
@@ -353,11 +354,11 @@ def _deliverable(flow: Flow, box: Box, name: str, folder: Path) -> str:
     return "\n\n".join(parts)
 
 
-def _text(file: Path) -> str | None:
-    """A file's text, or None when it is not text (not UTF-8, or holding a NUL)."""
+def _text(file: Place) -> str | None:
+    """A file's text, or None when it is not text (not UTF-8, or holding a NUL), or cannot be read."""
     try:
         raw = file.read_bytes()
         text = raw.decode("utf-8-sig")
-    except (OSError, UnicodeDecodeError):
+    except (OSError, ValueError):  # UnicodeDecodeError and Outside are ValueErrors
         return None
     return None if "\x00" in text else text.replace("\r\n", "\n")

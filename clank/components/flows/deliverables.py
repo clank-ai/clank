@@ -18,6 +18,7 @@ from pathlib import Path
 
 from clank.components.agents.service import is_plan
 from clank.components.flows.runs import Kept
+from clank.kernel.infolder import file_of
 
 CHECKLIST = re.compile(r"^(\s*[-*+]\s+\[)([ xX])(\].*)$")
 HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
@@ -26,23 +27,23 @@ LARGEST_PLAN = 1_000_000  # bytes of a Markdown file read to split a plan's prog
 
 
 def fingerprint(folder: Path, path: str) -> Kept:
-    """A file of the folder (named from it with '/') as it is now; an empty fingerprint when it does not exist."""
-    file = folder.joinpath(*path.split("/"))
+    """A file of the folder (named from it with '/') as it is now, read through no link; an empty fingerprint when it
+    does not exist or is reached through one."""
+    found = file_of(folder, path)
+    if found is None:
+        return Kept(path=path)
+    file, stat = found
+    digest = hashlib.sha256()
     try:
-        stat = file.stat()
-        if not file.is_file():
-            return Kept(path=path)
-        digest = hashlib.sha256()
-        with file.open("rb") as reading:
-            for chunk in iter(lambda: reading.read(1 << 20), b""):
-                digest.update(chunk)
-    except OSError:
+        for chunk in file.chunks():
+            digest.update(chunk)
+    except (OSError, ValueError):  # Outside too, a ValueError
         return Kept(path=path)
     rest = progress = ""
     if path.lower().endswith(".md") and stat.st_size <= LARGEST_PLAN:
         try:
-            text = file.read_bytes().decode("utf-8-sig", errors="replace").replace("\r\n", "\n")
-        except OSError:
+            text = file.read_bytes(most=LARGEST_PLAN).decode("utf-8-sig", errors="replace").replace("\r\n", "\n")
+        except (OSError, ValueError):
             text = ""
         if is_plan(text):
             rest_text, progress_text = split(text)

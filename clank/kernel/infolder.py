@@ -203,7 +203,8 @@ if sys.platform == "win32":
                 raise NotADirectoryError(errno.ENOTDIR, "not a folder", where)
             return _Here(path, handle, where)
 
-        def read(self, name: str, most: int | None, last: int | None = None) -> bytes:
+        def open(self, name: str) -> BinaryIO:
+            """A file of this folder, opened to read without following it."""
             path, share = self._of(name), _SHARE_READ | _SHARE_WRITE | _SHARE_DELETE
             handle = _handle(path, _GENERIC_READ, share, _OPEN_REPARSE_POINT)
             attributes, tag = _tag(handle)
@@ -213,16 +214,22 @@ if sys.platform == "win32":
             if _GetFileType(handle) != _FILE_TYPE_DISK:
                 _CloseHandle(handle)
                 raise OSError(errno.EINVAL, "not a plain file", _joined(self.where, name))
-            with os.fdopen(msvcrt.open_osfhandle(handle, os.O_RDONLY), "rb") as itself:
-                if not attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT:
-                    return _take(itself, most, last)
-                # A reparse point that names no other place (a cloud file not yet on the disk) is read as Windows
-                # gives it, when what opens is the very file the first opening found
-                with open(path, "rb") as given:
-                    first, then = os.fstat(itself.fileno()), os.fstat(given.fileno())
-                    if (first.st_dev, first.st_ino) != (then.st_dev, then.st_ino):
-                        raise Outside(f"{_joined(self.where, name)} changed while it was read")
-                    return _take(given, most, last)
+            itself = os.fdopen(msvcrt.open_osfhandle(handle, os.O_RDONLY), "rb")
+            if not attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT:
+                return itself
+            # A reparse point that names no other place (a cloud file not yet on the disk) is read as Windows gives
+            # it, when what opens is the very file the first opening found
+            with itself:
+                given = open(path, "rb")  # noqa: SIM115 (given to the caller, who closes it)
+                first, then = os.fstat(itself.fileno()), os.fstat(given.fileno())
+                if (first.st_dev, first.st_ino) != (then.st_dev, then.st_ino):
+                    given.close()
+                    raise Outside(f"{_joined(self.where, name)} changed while it was read")
+                return given
+
+        def read(self, name: str, most: int | None, last: int | None = None) -> bytes:
+            with self.open(name) as file:
+                return _take(file, most, last)
 
         def write(self, name: str, data: bytes, *, new: bool) -> None:
             target = self._of(name)
@@ -308,10 +315,16 @@ else:
                 fd = self._open(name, os.O_RDONLY | _DIRECTORY)
             return _Here(fd, _joined(self.where, name))
 
+        def open(self, name: str) -> BinaryIO:
+            """A file of this folder, opened to read without following it (never waiting on a pipe)."""
+            file = os.fdopen(self._open(name, os.O_RDONLY | _NONBLOCK), "rb")
+            if not stat.S_ISREG(os.fstat(file.fileno()).st_mode):
+                file.close()
+                raise OSError(errno.EINVAL, "not a plain file", _joined(self.where, name))
+            return file
+
         def read(self, name: str, most: int | None, last: int | None = None) -> bytes:
-            with os.fdopen(self._open(name, os.O_RDONLY | _NONBLOCK), "rb") as file:
-                if not stat.S_ISREG(os.fstat(file.fileno()).st_mode):
-                    raise OSError(errno.EINVAL, "not a plain file", _joined(self.where, name))
+            with self.open(name) as file:
                 return _take(file, most, last)
 
         def write(self, name: str, data: bytes, *, new: bool) -> None:
@@ -430,6 +443,12 @@ class Place:
         with held(self.folder, self.parts[:-1]) as here:
             return here.read(self._last(), most, last)
 
+    def chunks(self, size: int = 1 << 20) -> Iterator[bytes]:
+        """The file's bytes in pieces of `size`, the way held while they are read (a file too big to read whole)."""
+        with held(self.folder, self.parts[:-1]) as here, here.open(self._last()) as file:
+            while piece := file.read(size):
+                yield piece
+
     def read_text(self, errors: str = "strict", most: int | None = None) -> str:
         """The file's text, as UTF-8."""
         return self.read_bytes(most).decode("utf-8", errors=errors)
@@ -477,9 +496,11 @@ class Place:
         except (OSError, Outside):
             return []
 
-    def files(self, *, skip: Iterable[str] = (), most: int | None = None) -> list[tuple[str, os.stat_result]]:
-        """Every file below the folder, by its path from it, with its stat: links left out, folders named in `skip` not
-        looked in, at most `most` files."""
+    def files(
+        self, *, skip: Iterable[str] = (), most: int | None = None, hidden: bool = True
+    ) -> list[tuple[str, os.stat_result]]:
+        """Every file below the folder, by its path from it, with its stat: links left out, folders named in `skip` (and
+        hidden ones, whose names start with a dot, unless `hidden`) not looked in, at most `most` files."""
         skipped = frozenset(skip)
         found: list[tuple[str, os.stat_result]] = []
 
@@ -489,7 +510,7 @@ class Place:
                     return
                 if kind == "file":
                     found.append((prefix + name, info))
-                elif name not in skipped:
+                elif name not in skipped and (hidden or not name.startswith(".")):
                     with contextlib.suppress(OSError, Outside), _child(here, name) as inner:
                         walk(inner, f"{prefix}{name}/")
 
@@ -511,6 +532,17 @@ def place(folder: Path | str, relative: str | PurePath = "") -> Place:
     """The place `relative` names below `folder` (the folder itself when it names nothing); `Outside` for a name that
     leaves it."""
     return Place(Path(folder), _parts(relative))
+
+
+def file_of(folder: Path | str, relative: str | PurePath) -> tuple[Place, os.stat_result] | None:
+    """A file below `folder` with its own stat, when it is a plain file reached through no link; None otherwise (not
+    there, a folder, a link, or a name that leaves the folder)."""
+    try:
+        found = place(folder, relative)
+    except Outside:
+        return None
+    info = found.stat()
+    return (found, info) if info is not None and stat.S_ISREG(info.st_mode) else None
 
 
 def linked(path: Path) -> bool:
