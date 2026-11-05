@@ -14,8 +14,9 @@ once, so it does not hold `a` back. The line under the list says what to press n
 starts OpenCode in this terminal once every required step is done (the console steps aside while it runs and comes back
 when it is left: `clank.console.terminal`), with the model it will be given and that model's limits (and, after a flow's
 box switched the main slot, that the window's model changed, until OpenCode next starts here: design 0013 §7), and lists
-the MCP servers: whether the agent gets each (yours unless taken away, the folder's own once allowed) and its tools once
-checked; `m` gives one or takes it away, and checks one given in the workspace's container. `f` builds a flow with the
+the MCP servers: whether the agent gets each (yours unless taken away, one of yours with secrets only once given here,
+whose values the agent can then read, decision 0168; the folder's own once allowed) and its tools once checked; `m`
+gives one or takes it away, and checks one given in the workspace's container. `f` builds a flow with the
 model (design 0013 §15, decision 0100; `f`, since `n` answers a question here): it brings the console to the Monitor's
 Flow view, which opens the planning beside the console as its own `n` does and shows the flow built. `c` does every step
 not done, then opens VS Code on the folder: Clank's window on the PC, or over SSH (design 0018 §8) the other computer's
@@ -639,10 +640,11 @@ class FolderPage(Page):
             "needs, writes BRIEF.md and drafts the flow) and shows it built: over SSH, run `clank flow attach` in "
             "another terminal to talk with the model; in Windows Terminal its window splits for it; in VS Code's "
             "terminal, Clank's VS Code window opens. Once Clank wrote the flow: look, then r runs it.",
-            "m gives an MCP server to the agent or takes it away: yours (F3) are given unless you take one away here; "
-            "the folder's own (its .mcp.json) only once you allow it, and again after its entry changes. A server "
-            "given is checked at once in the workspace's container, where the agent will start it: its tools show "
-            "beside it. The agent gets the servers when it next starts (a or c).",
+            "m gives an MCP server to the agent or takes it away: yours (F3) are given unless you take one away here, "
+            "but one of yours with secrets is given only to the workspaces you give it to (m), and the agent there "
+            "can read its values; the folder's own (its .mcp.json) only once you allow it, and again after its entry "
+            "changes. A server given is checked at once in the workspace's container, where the agent will start it: "
+            "its tools show beside it. The agent gets the servers when it next starts (a or c).",
             "A folder is refused when its container would see more than it: a drive's root, your home folder, or a "
             "folder that holds Clank's own folder (its secrets) or lies inside it.",
             "w switches between one OpenCode window (the default) and several: with one, opening OpenCode (a, c, or "

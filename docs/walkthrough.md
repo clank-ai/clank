@@ -57,8 +57,9 @@ switches a slot to another preset, `u` unloads, `c` checks one.
    - `e` installs the folder's software into the workspace (Clank proposes the command from `pyproject.toml` or
      `requirements.txt`, for `myproject` `pip install -e '.[dev]'`; it downloads in a container of its own, so the
      agent's never reaches the internet).
-   - `m` gives an MCP server to the agent: yours (F3) always, the folder's own (its `.mcp.json`, for `myproject` its
-     simulator's tools) once you allow it. Its tools show beside it.
+   - `m` gives an MCP server to the agent: yours (F3) unless you take one away, but one of yours with secrets only to
+     the workspaces you give it to (`m`), and the agent there can read its values; the folder's own (its `.mcp.json`,
+     for `myproject` its simulator's tools) once you allow it. Its tools show beside it.
 4. **How changes are made.** Under "then work", `r` shows **review** (the default: the agent asks before it changes a
    file) or **auto**. Keep review until you trust the task.
 5. **The image model** (local models only). On **CPU models** (F8), Vision says **on demand** (the default: loaded when

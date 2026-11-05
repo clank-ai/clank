@@ -30,7 +30,8 @@ same checklist in a terminal, without the service if need be, and `clank setup` 
    scripts and MCP server. Clank proposes the command from `pyproject.toml` or `requirements.txt`; `e` shows it in a
    form to change or take as it is. It downloads in a container of its own; the agent's reaches the internet only
    through Clank's proxy, host by host as you allow (below).
-4. **MCP servers** (`m`): listed under "Then work". Yours (F3) are given to the agent; a folder's own (its
+4. **MCP servers** (`m`): listed under "Then work". Yours (F3) are given to the agent, but one of yours with secrets
+   only to the workspaces you give it to (`m`), and the agent there can read its values; a folder's own (its
    `.mcp.json`) only once you allow it. `m` gives one or takes it away, and checks one given in the workspace's
    container: its tools show beside it. The **MCP servers** page (F3) shows them all with their state (running,
    stopped or failed while an agent runs; on or off while none does) and their tools: Enter lists a server's tools
