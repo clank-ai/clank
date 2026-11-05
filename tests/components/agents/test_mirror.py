@@ -281,3 +281,41 @@ def test_each_change_is_kept_with_its_version_and_subscribers_hear_each_new_one(
     assert kept is not None
     assert len(kept) == 2
     assert mirror.changes_since("elsewhere", S, 0) is None, "not held: a snapshot says so"
+
+
+def test_a_conversation_a_stream_follows_is_kept_however_long_no_client_read_it() -> None:
+    """Design 0023 §2: a session is followed while a client's stream names it; only one nobody follows is forgotten."""
+    now = [0.0]
+    mirror = Mirror(clock=lambda: now[0])
+    mirror.follow(W, S)
+    mirror.merge(W, S, {"messages": [], "next": ""})
+    stop = mirror.subscribe(W, S, lambda version: None)
+    now[0] = FORGET_MINUTES * 60 * 4
+    assert mirror.forget() == [], "a stream still follows it"
+    mirror.heard(W, message_line("msg_02", "user", 200))
+    found = mirror.conversation(W, S, 10)
+    assert found is not None
+    assert [m["info"]["id"] for m in found["messages"]] == ["msg_02"], "its lines still kept"
+    stop()
+    now[0] += FORGET_MINUTES * 60 + 1
+    assert mirror.forget() == [(W, S)], "the stream closed, and no client read it for half an hour"
+
+
+def test_a_version_from_an_earlier_life_of_the_conversation_brings_a_snapshot() -> None:
+    """Design 0023 §3: a client's version from before the conversation was held anew (forgotten and followed again, or
+    the service restarted) means nothing to the new one: a snapshot is due, not changes since."""
+    wall = [1000.0]
+    before = Mirror(wall=lambda: wall[0])
+    before.follow(W, S)
+    before.merge(W, S, {"messages": [], "next": ""})
+    for n in range(1, 40):
+        before.heard(W, message_line(f"msg_{n:02}", "user", n))
+    old = before.version(W, S)
+    wall[0] += 5  # the service restarted, five seconds on
+    after = Mirror(wall=lambda: wall[0])
+    after.follow(W, S)
+    after.merge(W, S, {"messages": [], "next": ""})
+    assert after.version(W, S) > old, "a conversation held anew starts past the versions an earlier one gave"
+    assert after.changes_since(W, S, old) is None, "a version before its life: a snapshot"
+    assert after.changes_since(W, S, after.version(W, S) + 5) is None, "a version it never reached: a snapshot"
+    assert after.changes_since(W, S, after.version(W, S)) == []

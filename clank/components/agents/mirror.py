@@ -6,21 +6,24 @@ workspace (its title, parent and times, the port of the server that runs it), a 
 followed session a `message` line a message's info, a `part` line a part whole (the watch says them whole for followed
 sessions), a `delta` line text appended to a part as it is written, a `removed` line a message or a part taken back;
 `asked`, `replied`, `question` and `answered` keep the permissions and questions open. A session is followed from
-`follow` until `forget` drops it (no client read it for `FORGET_MINUTES`); its history before the mirror began comes
-from OpenCode once, a page at a time, through `merge`.
+`follow` until `forget` drops it (no client read it for `FORGET_MINUTES`, and no stream follows it); its history before
+the mirror began comes from OpenCode once, a page at a time, through `merge`.
 
 `conversation` answers from memory, in the agent panel's shape: the newest `limit` messages (or those before a message
 named), each with its parts in order, the cursor of the message to read before (`next`) and, when what comes before is
 not held, OpenCode's own cursor for it (`from_opencode`), so the route reads that page once and merges it; whether the
 session works, its title, its port, the waits open, and a version that moves with every change (the stream of design
-0023 §3 is built on it). `sessions` lists the sessions a workspace's watcher saw, newest first, as the bridge's
-`servers` lists them, so the route needs no process to find the newest one.
+0023 §3 is built on it: a conversation held anew starts its versions at the wall clock's milliseconds, past those an
+earlier life of it gave, so a client's version from then brings a snapshot). `sessions` lists the sessions a
+workspace's watcher saw, newest first, as the bridge's `servers` lists them, so the route needs no process to find the
+newest one.
 
 Bounded: past `FULL_BYTES` of text in one session, the oldest parts' text falls back to the Monitor's brief (cut at
 `TEXT`, its length kept, `whole` false); the bridge's `part` action gives it whole again on demand.
 """
 
 import threading
+import time
 from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -87,8 +90,9 @@ class Conversation:
 class Mirror:
     """The conversations held for the sessions clients follow, and the sessions each watcher saw."""
 
-    def __init__(self, clock: Callable[[], float] = monotonic) -> None:
+    def __init__(self, clock: Callable[[], float] = monotonic, wall: Callable[[], float] = time.time) -> None:
         self._clock = clock
+        self._wall = wall  # where a conversation held anew starts its versions (the module's docstring says why)
         self._lock = threading.RLock()
         self._known: dict[str, dict[str, dict[str, Any]]] = {}  # by workspace, then session id
         self._held: dict[tuple[str, str], Conversation] = {}
@@ -104,7 +108,9 @@ class Mirror:
         with self._lock:
             held = self._held.get((workspace, session))
             if held is None:
-                held = self._held[(workspace, session)] = Conversation(workspace, session)
+                start = int(self._wall() * 1000)
+                held = Conversation(workspace, session, version=start, log_from=start + 1)
+                self._held[(workspace, session)] = held
             held.read_at = self._clock()
 
     def followed(self, workspace: str) -> list[str]:
@@ -119,10 +125,13 @@ class Mirror:
             return held is not None and held.complete
 
     def forget(self) -> list[tuple[str, str]]:
-        """Drop the sessions no client read for `FORGET_MINUTES`; which."""
+        """Drop the sessions no client read for `FORGET_MINUTES` and no stream follows (design 0023 §2); which."""
         with self._lock:
             now = self._clock()
-            gone = [key for key, held in self._held.items() if now - held.read_at > FORGET_MINUTES * 60]
+            gone = [
+                key for key, held in self._held.items()
+                if now - held.read_at > FORGET_MINUTES * 60 and not self._subscribers.get(key)
+            ]  # fmt: skip
             for key in gone:
                 del self._held[key]
             return gone
@@ -175,15 +184,18 @@ class Mirror:
                 listeners = self._subscribers.get(key, [])
                 if told in listeners:
                     listeners.remove(told)
+                if not listeners:
+                    self._subscribers.pop(key, None)
 
         return stop
 
     def changes_since(self, workspace: str, session: str, version: int) -> list[tuple[int, dict[str, Any]]] | None:
-        """The changes after `version`, each with its own; None when the log no longer reaches back that far, or the
-        session is not held: a snapshot is due then."""
+        """The changes after `version`, each with its own; None when the log no longer reaches back that far, the
+        version is not one of this life of the conversation (before it, or past it), or the session is not held: a
+        snapshot is due then."""
         with self._lock:
             held = self._held.get((workspace, session))
-            if held is None or version + 1 < held.log_from:
+            if held is None or version + 1 < held.log_from or version > held.version:
                 return None
             return [(each, event) for each, event in held.changes if each > version]
 
