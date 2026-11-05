@@ -141,3 +141,20 @@ def test_an_outbox_reached_through_a_link_is_neither_listed_nor_served(
     assert phone.get("/api/files/other/secret.txt", headers=THROUGH_TAILSCALE).status_code == 404
     named = phone.get("/api/files/paper/..%2Fother%2Fsecret.txt", headers=THROUGH_TAILSCALE)
     assert named.status_code == 404, "a name with a folder in it is no sent file"
+
+
+def test_a_json_file_sent_is_listed_and_served_and_one_holding_an_array_breaks_nothing(
+    phone: TestClient, tmp_path: Path
+) -> None:
+    box = tmp_path / "paper" / ".clank" / "outbox"
+    sent = "20261105-101500-results.json"  # as Clank's MCP server names a sent file: when, then its own name
+    (box / sent).write_bytes(b"[1, 2, 3]")
+    note = {"file": sent, "caption": "the results", "from": "results.json", "sent": 1792039999.0}
+    (box / f"{sent}.json").write_text(json.dumps(note), encoding="utf-8")
+    listed = {file["file"]: file["mime"] for file in phone.get("/api/files", headers=THROUGH_TAILSCALE).json()["files"]}
+    assert listed[sent] == "application/octet-stream", "a JSON file is sent as a download"
+    assert "plot.png" in listed, "the other files are listed all the same"
+    assert f"{sent}.json" not in listed, "a note is no file sent"
+    answer = phone.get(f"/api/files/paper/{sent}", headers=THROUGH_TAILSCALE)
+    assert (answer.status_code, answer.content) == (200, b"[1, 2, 3]")
+    assert phone.get(f"/api/files/paper/{sent}.json", headers=THROUGH_TAILSCALE).status_code == 404, "never its note"

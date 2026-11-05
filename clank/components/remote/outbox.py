@@ -16,7 +16,7 @@ from typing import Any
 from urllib.parse import quote
 
 from clank.kernel.clock import to_text
-from clank.kernel.infolder import place
+from clank.kernel.infolder import Place, place
 
 OUTBOX = ".clank/outbox"
 LARGEST = 50 << 20  # what Clank's MCP server sends at most (`phone_mcp.LARGEST`)
@@ -39,9 +39,19 @@ def disposition(shown: str, file: str) -> str:
 
 
 def _plain(file: str) -> bool:
-    """Whether `file` is a sent file's own name: no folder, and not a note."""
+    """Whether `file` can be a sent file's own name: no folder in it."""
     folders = "/" in file or "\\" in file
-    return bool(file) and not folders and file not in (".", "..") and not file.endswith(".json")
+    return bool(file) and not folders and file not in (".", "..")
+
+
+def _note(box: Place, file: str) -> dict[str, Any] | None:
+    """A sent file's note, as Clank's MCP server writes it: `<file>.json` beside it, an object naming that file; None
+    for a file no note names (a note itself, a JSON file sent, a stray) or a note the agent broke."""
+    try:
+        said = json.loads((box / f"{file}.json").read_text())
+    except (OSError, ValueError):  # Outside too, a ValueError
+        return None
+    return said if isinstance(said, dict) and said.get("file") == file else None
 
 
 def files(workspaces: list[tuple[str, str]], limit: int = 100) -> list[dict[str, Any]]:
@@ -50,13 +60,12 @@ def files(workspaces: list[tuple[str, str]], limit: int = 100) -> list[dict[str,
     for name, folder in workspaces:
         with contextlib.suppress(ValueError):  # Outside: a folder whose name leaves it
             box = place(folder, OUTBOX)
-            for note, kind in box.entries():  # links left out
-                if kind != "file" or not note.endswith(".json"):
-                    continue
+            present = {entry for entry, kind in box.entries() if kind == "file"}  # links left out
+            for file in sorted(present):
+                if f"{file}.json" not in present or (said := _note(box, file)) is None:
+                    continue  # a note, or a file no note names
                 with contextlib.suppress(OSError, ValueError, TypeError, OverflowError):  # a note the agent broke
-                    said = json.loads((box / note).read_text())
-                    file = str(said.get("file") or "")
-                    info = (box / file).stat() if _plain(file) else None
+                    info = (box / file).stat()
                     if info is None or not stat.S_ISREG(info.st_mode):
                         continue
                     when = float(said.get("sent") or 0.0)
@@ -71,10 +80,13 @@ def files(workspaces: list[tuple[str, str]], limit: int = 100) -> list[dict[str,
 
 def read_sent(folder: str, file: str) -> bytes | None:
     """The bytes of the sent file of this name in a workspace's outbox, read through no link; None when there is none
-    (or the name is not a plain one, or it is reached through a link)."""
+    (or the name is not a plain one, no note names it, or it is reached through a link)."""
     if not _plain(file):
         return None
     try:
-        return place(folder, f"{OUTBOX}/{file}").read_bytes(most=LARGEST)
+        box = place(folder, OUTBOX)
+        if _note(box, file) is None:
+            return None
+        return (box / file).read_bytes(most=LARGEST)
     except (OSError, ValueError):  # Outside too, a ValueError
         return None
