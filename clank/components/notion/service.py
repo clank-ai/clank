@@ -135,6 +135,7 @@ class Notion:
         self.sleep: Callable[[float], None] = time.sleep
         self.store = Batches(kernel.home.state / "notion" / "batches", kernel.clock)
         self.agent: Any = AgentLink(kernel)  # how a batch sent back reaches its agent (a test's fake)
+        self._writing: set[str] = set()  # the batches being written to Notion now, held under the store's lock
 
     def settings(self) -> NotionSettings:
         """Where Notion's API is, and the version Clank speaks."""
@@ -344,7 +345,9 @@ class Notion:
         (or a new one in the workspace's window); the batch in brief, where it went and what it said."""
         if actor.kind == "session":
             raise NotAllowed("only the owner sends a batch back")
-        batch = self.batch(id)
+        with self.store.lock:
+            batch = self.batch(id)
+            self._not_writing(id)
         if batch["state"] not in ("ready", "partly written", "returned"):
             raise NotionRefused(f"batch {id} is {batch['state']}: only a batch being reviewed is sent back")
         unsent = [each for each in batch.get("comments") or [] if not each["sent"]]
@@ -405,11 +408,43 @@ class Notion:
         written (whole or in part), failed and are left."""
         if actor.kind == "session":
             raise NotAllowed("the agent cannot approve its own proposals: only the owner approves them")
-        batch = self.batch(id)
-        if batch["state"] == "open":
-            raise NotionRefused(f"batch {id} is still being staged: the agent submits it first")
-        if batch["state"] == "rejected":
-            raise NotionRefused(f"batch {id} was rejected: nothing of it is written")
+        with self.store.lock:  # one writing of a batch at a time: never an entry twice (design 0010 §8)
+            batch = self.batch(id)
+            if batch["state"] == "open":
+                raise NotionRefused(f"batch {id} is still being staged: the agent submits it first")
+            if batch["state"] == "rejected":
+                raise NotionRefused(f"batch {id} was rejected: nothing of it is written")
+            self._not_writing(id)
+            self._writing.add(id)
+        try:
+            return self._approve(id, batch, proposals, parts, actor)
+        finally:
+            with self.store.lock:
+                self._writing.discard(id)
+
+    def _not_writing(self, id: str) -> None:
+        """Refuse what changes a batch while it is being written (under the store's lock)."""
+        if id in self._writing:
+            raise NotionRefused(f"batch {id} is being written now: wait until it is, then look again")
+
+    def _keep_written(self, id: str, proposal: dict[str, Any]) -> None:
+        """A proposal's progress and result, as just written, kept on the batch as it is now (a comment or a reply
+        made meanwhile stays)."""
+        with self.store.lock:
+            fresh = self.batch(id)
+            for each in fresh["proposals"]:
+                if each["id"] == proposal["id"]:
+                    each.update({key: proposal[key] for key in ("done", "result") if key in proposal})
+            self.store.save(fresh)
+
+    def _approve(
+        self,
+        id: str,
+        batch: dict[str, Any],
+        proposals: list[str] | None,
+        parts: dict[str, list[str]] | None,
+        actor: Actor,
+    ) -> dict[str, Any]:
         ids = [each["id"] for each in batch["proposals"]]
         if parts is None:
             parts = {each: [] for each in (ids if proposals is None else proposals)}
@@ -419,13 +454,16 @@ class Notion:
         chosen = [(each, asked) for each in batch["proposals"] if each["id"] in parts
                   for asked in [_asked(each, parts[each["id"]])] if asked]  # fmt: skip
         now = to_text(self.kernel.clock.now())
-        self._read(lambda client: applying.write(client, batch, chosen, now), id)
-        whole = [each for each in batch["proposals"] if not applying.left(each)]
-        if len(whole) == len(batch["proposals"]):
-            batch["state"] = "written"
-        elif any(each.get("done") for each in batch["proposals"]):
-            batch["state"] = "partly written"
-        self.store.save(batch)
+        self._read(lambda client: applying.write(client, batch, chosen, now, lambda done: self._keep_written(id, done)),
+                   id)  # fmt: skip
+        with self.store.lock:
+            batch = self.batch(id)  # as it is now, each proposal written kept on it
+            whole = [each for each in batch["proposals"] if not applying.left(each)]
+            if len(whole) == len(batch["proposals"]):
+                batch["state"] = "written"
+            elif any(each.get("done") for each in batch["proposals"]):
+                batch["state"] = "partly written"
+            self.store.save(batch)
         counts = {
             "written": sum(1 for each, _ in chosen if "error" not in each["result"]),
             "failed": sum(1 for each, _ in chosen if "error" in each["result"]),
@@ -444,11 +482,13 @@ class Notion:
         """Reject a batch with a reason: nothing of it is written."""
         if actor.kind == "session":
             raise NotAllowed("the agent cannot reject its own proposals: only the owner rejects them")
-        batch = self.batch(id)
-        if batch["state"] in ("written", "rejected"):
-            raise NotionRefused(f"batch {id} is {batch['state']} already")
-        batch["state"], batch["reason"] = "rejected", reason.strip()
-        self.store.save(batch)
+        with self.store.lock:
+            batch = self.batch(id)
+            self._not_writing(id)
+            if batch["state"] in ("written", "rejected"):
+                raise NotionRefused(f"batch {id} is {batch['state']} already")
+            batch["state"], batch["reason"] = "rejected", reason.strip()
+            self.store.save(batch)
         self.kernel.events.record(
             "notion.rejected", summary=f"{actor.describe()} rejected batch {id}", actor=actor,
             subject=Subject(kind="notion-batch", id=id), data={"batch": id},

@@ -4,7 +4,7 @@ or its page) writes only those, and the rest stays staged until approved later, 
 changes (each changed cell with what it was), removes and adds, and, around them, the entries it leaves as they are
 (their neighbors, or all of them when asked)."""
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 
 import pytest
@@ -15,6 +15,7 @@ from clank import registry
 from clank.cli import common
 from clank.cli.main import main
 from clank.client import Client
+from clank.components.notion import applying
 from clank.components.notion.service import Notion, NotionRefused
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
@@ -73,6 +74,38 @@ def test_a_change_approved_in_part_writes_those_parts_and_the_rest_later(part: N
     assert notion.blocks["lit-1"][1]["paragraph"]["rich_text"][0]["plain_text"] == "Rewritten."
     assert part.batch(batch)["proposals"][1]["result"]["written"] is True
     assert part.batches()[0]["left"] == 2, "a batch in brief says how many of its proposals wait"
+
+
+def test_a_batch_being_written_is_left_alone_each_proposal_kept_as_written_and_a_comment_meanwhile_kept(
+    part: Notion, notion: FakeNotion, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Design 0010 §8, never an entry twice: an approval again while the batch is written (a client that gave up
+    waiting, two clients at once) is refused, and so are a rejection and a sending back; each proposal's progress is
+    kept on the batch as soon as it is written, so a stop midway writes nothing twice; a comment made meanwhile
+    stays."""
+    batch = batch_of_three(part)
+    seen: dict[str, list[str]] = {}
+    remove = applying._remove
+
+    def meanwhile(client: object, proposal: dict[str, object]) -> object:
+        attempts: list[Callable[[], object]] = [
+            lambda: part.approve(batch, actor=YOU), lambda: part.reject(batch, "too late", actor=YOU),
+            lambda: part.send_back(batch, actor=YOU),
+        ]  # fmt: skip
+        for attempt in attempts:
+            with pytest.raises(NotionRefused, match="being written now"):
+                attempt()
+        part.comment(batch, "Check the year.", actor=YOU)
+        seen["kept"] = [str(each["id"]) for each in part.batch(batch)["proposals"] if each.get("done")]
+        return remove(client, proposal)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(applying, "_remove", meanwhile)
+    done = part.approve(batch, actor=YOU)
+    assert (done["state"], done["written"], done["left"]) == ("written", 3, 0)
+    assert seen["kept"] == ["p1", "p2"], "the entry and the change kept before the removal was written"
+    assert [each["text"] for each in part.batch(batch)["comments"]] == ["Check the year."]
+    made = [page for page in notion.pages.values() if title_of(page) == "A third made-up paper"]
+    assert len(made) == 1
 
 
 def test_a_new_entry_approved_in_part_is_made_with_those_and_the_rest_written_to_it_later(

@@ -14,6 +14,7 @@ the proposal too: written whole (with the entry's id and address), written in pa
 its own proposal. What Notion only answers (a run's `plain_text` and `href`) is never sent.
 """
 
+from collections.abc import Callable
 from typing import Any
 
 from clank.components.notion.client import NotionClient, NotionError, NotionRefused
@@ -42,36 +43,54 @@ def title_name(proposal: dict[str, Any]) -> str:
 
 
 def write(
-    client: NotionClient, batch: dict[str, Any], chosen: list[tuple[dict[str, Any], list[str]]], now: str
+    client: NotionClient,
+    batch: dict[str, Any],
+    chosen: list[tuple[dict[str, Any], list[str]]],
+    now: str,
+    kept: Callable[[dict[str, Any]], None] | None = None,
 ) -> None:
-    """Write the chosen parts of a batch's proposals, in order, each one's progress and result kept on it."""
+    """Write the chosen parts of a batch's proposals, in order, each one's progress and result kept on it, and handed
+    to `kept` as soon as it is written (so a stop midway never writes it twice)."""
     written = {
         f"proposal:{proposal['id']}": proposal["done"]["id"] for proposal in batch["proposals"] if proposal.get("done")
     }
     titles = {f"proposal:{proposal['id']}": proposal["title"] for proposal in batch["proposals"]}
     for proposal, asked in sorted(chosen, key=lambda each: ORDER[each[0]["kind"]]):
-        page: dict[str, Any] | None
-        try:
-            if proposal["kind"] == "entry" and not proposal.get("done"):
-                page = _create(client, proposal, asked, written, titles)
-                written[f"proposal:{proposal['id']}"] = page["id"]
-            elif proposal["kind"] == "removal":
-                page = _remove(client, proposal)
-            else:
-                page = _change(client, proposal, asked, written, titles)
-        except NotionError as error:
-            proposal["result"] = {"written": False, "error": f"Notion answered: {error}", "at": now}
-            continue
-        except NotionRefused as refused:
-            proposal["result"] = {"written": False, "error": str(refused), "at": now}
-            continue
-        if page is None:
-            proposal["result"] = {**_edited(), "at": now}
-            continue
-        whole = not left(proposal)
-        proposal["result"] = {"written": whole, "id": page["id"], "url": page.get("url", ""), "at": now}
-        if not whole:
-            proposal["result"]["partly"] = True
+        _write_one(client, proposal, asked, written, titles, now)
+        if kept is not None:
+            kept(proposal)
+
+
+def _write_one(
+    client: NotionClient,
+    proposal: dict[str, Any],
+    asked: list[str],
+    written: dict[str, str],
+    titles: dict[str, str],
+    now: str,
+) -> None:
+    page: dict[str, Any] | None
+    try:
+        if proposal["kind"] == "entry" and not proposal.get("done"):
+            page = _create(client, proposal, asked, written, titles)
+            written[f"proposal:{proposal['id']}"] = page["id"]
+        elif proposal["kind"] == "removal":
+            page = _remove(client, proposal)
+        else:
+            page = _change(client, proposal, asked, written, titles)
+    except NotionError as error:
+        proposal["result"] = {"written": False, "error": f"Notion answered: {error}", "at": now}
+        return
+    except NotionRefused as refused:
+        proposal["result"] = {"written": False, "error": str(refused), "at": now}
+        return
+    if page is None:
+        proposal["result"] = {**_edited(), "at": now}
+        return
+    whole = not left(proposal)
+    proposal["result"] = {"written": whole, "id": page["id"], "url": page.get("url", ""), "at": now}
+    if not whole:
+        proposal["result"]["partly"] = True
 
 
 def _done(proposal: dict[str, Any], page: dict[str, Any], written: list[str]) -> None:
