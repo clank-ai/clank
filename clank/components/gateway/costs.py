@@ -412,6 +412,10 @@ class Costs:
             urgency="high",
             about=Subject(kind="cost", id=f"{by}:{period['local']}"),
         )  # fmt: skip
+        for stale in self.kernel.questions.waiting():  # one from before a restart: its numbers may have changed since
+            if stale.about is not None and stale.about.kind == "cost":
+                with suppress(QuestionError):
+                    self.kernel.questions.withdraw(stale.id, reason="asked again with the numbers now", by=GATEWAY)
         question = self.kernel.questions.ask(draft, asked_by=GATEWAY)
         self._paused = {
             "by": by, "since": to_text(self.kernel.clock.now()), "spent_usd": spent, "limit_usd": limit,
@@ -454,8 +458,11 @@ class Costs:
 
     def _resolved(self, question: Question) -> None:
         """The limit question answered: *double* or *raise* writes the new limit, recorded with who answered; *keep*
-        (or no answer) leaves the cloud paused until the period ends."""
+        (or no answer) leaves the cloud paused until the period ends. Only the pause's own question does: any other
+        about the limit (one asked before a restart) changes nothing, so the limit is never raised twice."""
         if question.about is None or question.about.kind != "cost" or question.status != "answered":
+            return
+        if self._paused is None or question.id != self._paused["question"]:
             return
         if question.answer is None or question.answer.option not in ("double", "raise"):
             return

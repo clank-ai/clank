@@ -18,7 +18,7 @@ import pytest
 from clank.components.gateway.service import Gateway
 from clank.components.gateway.spool import Spool
 from clank.kernel.events import Actor
-from clank.kernel.questions import QuestionError
+from clank.kernel.questions import QuestionDraft, QuestionError
 from tests.components.gateway.test_cloud_forwarding import ASKS, WORKSPACE_KEY, cloud_slot, forwarding
 from tests.components.gateway.test_cost_views import entry
 from tests.components.gateway.test_server import engine, table  # noqa: F401  (engine: a fixture)
@@ -168,6 +168,28 @@ def test_at_the_limit_the_owner_is_asked_once_and_double_raises_it(rig: Rig) -> 
     assert gateway.cost()["paused"] is None
     [raised] = rig.kernel.events.latest(types=["gateway.limit_raised"])
     assert raised.data == {"by": "day", "limit_usd": 10.0, "who": "device phone"}
+
+
+def test_after_a_restart_while_paused_one_question_waits_and_only_the_pauses_own_raises_the_limit(rig: Rig) -> None:
+    """The pause is held in memory, its question in the state database: after a restart the question is asked again
+    with the numbers as they are now, the one from before withdrawn, and an answer to any other question about the limit
+    changes nothing."""
+    gateway = limited(rig, 5.0, [5.02])
+    gateway.costs.check_limits()
+    [before] = rig.kernel.questions.waiting()
+    gateway.costs._paused = None  # the service restarted: its pause was in memory, its question kept
+    gateway.costs.check_limits()
+    [question] = rig.kernel.questions.waiting()
+    assert question.id != before.id
+    assert rig.kernel.questions.get(before.id).status == "withdrawn"
+    assert gateway.cost()["paused"]["question"] == question.id
+    stray = rig.kernel.questions.ask(QuestionDraft(**{
+        **question.model_dump(include={"type", "title", "detail", "options", "default", "urgency", "about"}),
+    }), asked_by=Actor(kind="clank", via="gateway"))  # fmt: skip
+    rig.kernel.questions.answer(stray.id, by=PHONE, option="double")
+    assert gateway.cost()["limits"]["day_usd"] == 5.0, "not the pause's question: nothing raised"
+    rig.kernel.questions.answer(question.id, by=PHONE, option="double")
+    assert gateway.cost()["limits"]["day_usd"] == 10.0
 
 
 def test_a_raise_that_still_leaves_the_spending_at_the_limit_asks_again(rig: Rig) -> None:
