@@ -35,23 +35,13 @@ from clank.components.runtime.adapters.endpoint import (
     ModelLine,
     ProviderOption,
     Refusal,
+    default_output,
+    most_output,
 )
 from clank.components.runtime.adapters.engine import ContextFacts
 from clank.kernel.adapters import Capability
 
 EFFORTS = ("max", "xhigh", "high", "medium", "low", "minimal", "none")  # its reasoning efforts (design 0016 §3)
-MAX_OUTPUT = 16384  # a cloud preset's output unless the model's most is smaller (design 0016 §6)
-THINKING_OUTPUT = 32768  # a thinking model's with a large window: its thinking and its answer share it (decision 0161)
-THINKING_WINDOW = 131072  # the context from which a thinking model gets THINKING_OUTPUT
-
-
-def default_output(most: int | None, context: int, thinking: bool) -> int:
-    """A cloud preset's most output when the owner set none (design 0016 §6): 16,384, or 32,768 for a model that thinks
-    with a context of at least 131,072 (its thinking counts against the limit, and 16,384 cut its answers); never more
-    than the model's most, nor half the context (§7)."""
-    wanted = THINKING_OUTPUT if thinking and context >= THINKING_WINDOW else MAX_OUTPUT
-    return max(1, min(wanted, most or wanted, context // 2 or wanted))
-
 
 FREE_LIMITS = "20 a minute, 50 a day; 1,000 a day once 10 credits were bought"
 PRESET_OPTIONS = ("context", "max_output", "reasoning", "images")
@@ -163,10 +153,10 @@ class OpenRouter(EndpointAdapter):
         problems = self.option_problems(wanted)
         if problems:
             raise ValueError("; ".join(problems))
-        most = model.output or MAX_OUTPUT
         context = int(wanted.get("context") or model.window)
         if context > model.window:
             raise ValueError(f"context is at most {model.window:,} for {model.id}, not {context:,}")
+        most = most_output(model.output, context, model.thinking)
         half = context // 2 or most
         output = int(wanted.get("max_output") or default_output(model.output, context, model.thinking))
         if output > most:

@@ -21,8 +21,7 @@ answers (plan s34's interface; plan s35 lists what it asks for).
 import re
 from typing import Any
 
-from clank.components.runtime.adapters.openrouter import MAX_OUTPUT as OUTPUT
-from clank.components.runtime.adapters.openrouter import default_output
+from clank.components.runtime.adapters.endpoint import default_output, most_output
 from clank.money import money, size, tokens
 
 STEPS = ("choice", "provider", "agreement", "key", "model", "settings", "test", "ready", "local")
@@ -296,7 +295,8 @@ def efforts(model: dict[str, Any]) -> tuple[str, ...]:
 def model_settings(model: dict[str, Any]) -> list[dict[str, str]]:
     """A cloud preset's settings for a model, each field's words and its value as filled."""
     thinks = f"one of {', '.join(efforts(model))}" if model["thinking"] else "default: it does not think"
-    output = min(model["output"] or OUTPUT, model["window"] // 2 or OUTPUT)  # and at most half the context (§7)
+    most = most_output(model["output"], model["window"], bool(model["thinking"]))
+    output = min(most, model["window"] // 2 or most)  # and at most half the context (§7)
     shared = ": its thinking and its answer together" if model["thinking"] else ""
     return [
         {"id": "title", "said": "Its title, as the pickers show it", "value": f"cloud: {model['name']}"},
@@ -360,7 +360,7 @@ def preset_settings(options: dict[str, Any], model: dict[str, Any] | None) -> li
     window = int(model["window"]) if model else 0
     context = int(options.get("context") or window)
     if model:
-        most = int(model["output"] or OUTPUT)
+        most = most_output(model["output"], context, bool(model["thinking"]))
         bound = min(most, context // 2 or most)
         whose = "the model's most" if model["output"] else "Clank's most for a model that says none"
         limit = "half the context" if bound < most else whose

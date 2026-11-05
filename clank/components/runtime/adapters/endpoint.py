@@ -135,6 +135,26 @@ class Cost:
     tokens: dict[str, int] = field(default_factory=dict)
 
 
+MAX_OUTPUT = 16384  # a cloud preset's output unless the model's most is smaller (design 0016 §6)
+THINKING_OUTPUT = 32768  # a thinking model's with a large window: its thinking and its answer share it (decision 0161)
+THINKING_WINDOW = 131072  # the context from which a thinking model gets THINKING_OUTPUT
+
+
+def most_output(most: int | None, context: int, thinking: bool) -> int:
+    """The most output a cloud preset may set (design 0016 §6): the model's most when its provider lists one, else
+    Clank's own for a model that says none, the default it fills in (16,384, or 32,768 for a model that thinks with a
+    context of at least 131,072, decision 0161). Half the context bounds it as well (§7), said apart."""
+    return most or (THINKING_OUTPUT if thinking and context >= THINKING_WINDOW else MAX_OUTPUT)
+
+
+def default_output(most: int | None, context: int, thinking: bool) -> int:
+    """A cloud preset's most output when the owner set none (design 0016 §6): 16,384, or 32,768 for a model that thinks
+    with a context of at least 131,072 (its thinking counts against the limit, and 16,384 cut its answers); never more
+    than the model's most (`most_output`), nor half the context (§7)."""
+    wanted = THINKING_OUTPUT if thinking and context >= THINKING_WINDOW else MAX_OUTPUT
+    return max(1, min(wanted, most_output(most, context, thinking), context // 2 or wanted))
+
+
 class EndpointAdapter(Adapter):
     """A provider someone else runs, reached at its URL."""
 

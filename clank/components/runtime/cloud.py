@@ -31,7 +31,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from clank.components.runtime.adapters import ENDPOINTS
-from clank.components.runtime.adapters.endpoint import EndpointAdapter, ModelLine
+from clank.components.runtime.adapters.endpoint import EndpointAdapter, ModelLine, default_output
 from clank.components.runtime.kinds import Endpoint, Preset
 from clank.components.runtime.state import LastGood, SlotRecord
 from clank.kernel.api import ApiError
@@ -106,7 +106,7 @@ def prepare(runtime: "Runtime", preset_id: str, preset: Preset) -> CloudPrepared
         raise CloudError(f"{model.id} does not take tool calls, and the agent cannot work without them")
     options = preset.options
     window = min(int(options.get("context") or model.window), model.window)
-    output = int(options.get("max_output") or min(16384, model.output or 16384))
+    output = int(options.get("max_output") or default_output(model.output, window, model.thinking))
     images = bool(options["images"]) if "images" in options else model.images
     reasoning = str(options.get("reasoning") or "default")
     route = {

@@ -20,7 +20,8 @@ from typing import Any
 
 import pytest
 
-from clank.components.runtime.adapters.openrouter import OpenRouter, default_output
+from clank.components.runtime import guide
+from clank.components.runtime.adapters.openrouter import OpenRouter, default_output, most_output
 
 KEY = "sk-or-v1-made-up-key"
 CODER: dict[str, Any] = {
@@ -324,6 +325,24 @@ def test_a_presets_options_follow_the_model(openrouter: OpenRouter) -> None:
         "reasoning is one of default, max, xhigh, high, medium, low, minimal, none, not 'loud'",
         "openrouter has no preset option speed",
     ]
+
+
+def test_a_thinking_model_that_lists_no_most_output_takes_the_default_it_is_given(openrouter: OpenRouter) -> None:
+    """OpenRouter lists many thinking models without their most output: the bound Clank keeps for one is the default
+    it fills in (decision 0161), in the preset's options, Add a model's form and the cloud load alike."""
+    unsaid = {**CODER, "top_provider": {"context_length": 200000, "max_completion_tokens": None}}
+    [model] = openrouter.models({"data": [unsaid]})
+    assert model.output is None
+    assert most_output(None, 200000, thinking=True) == 32768
+    assert most_output(None, 200000, thinking=False) == 16384
+    assert most_output(None, 40000, thinking=True) == 16384, "a smaller window: Clank's own most"
+    assert openrouter.preset_options(model, {})["max_output"] == 32768
+    with pytest.raises(ValueError, match="max_output is at most 32,768"):
+        openrouter.preset_options(model, {"max_output": 40000})
+    line = {"name": "Example Coder", "window": 200000, "output": None, "thinking": True, "efforts": []}
+    [field] = [field for field in guide.model_settings(line) if field["id"] == "max_output"]
+    assert field["value"] == "32768"
+    assert "(at most 32,768)" in field["said"], "the most the form says is the one it fills in"
 
 
 # Two lines of OpenRouter's public list (2026-10-28), cut to what the line reads.
