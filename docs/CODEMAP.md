@@ -414,6 +414,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `vscode/src/core/following.ts` | The agent panel's decisions about the stream it follows (design 0023 §5), pure so Node tests them: which parameters |
 | `vscode/src/core/gates.ts` | Gates in VS Code (design 0013 §10, §14 step 7). A question about a flow (a gate, a YOU box, a failed box, a box whose |
 | `vscode/src/core/kinds.ts` | The TypeScript types of Clank's kinds of record, as the API sends them (decisions 0015, 0028). |
+| `vscode/src/core/math.ts` | Math in the model's text (design 0021 §4), set aside before Markdown reads it so its underscores stay math, then drawn |
 | `vscode/src/core/notion.ts` | The Notion changes in VS Code (design 0010 §6): the batches of proposals the local agent submitted for Notion, in a |
 | `vscode/src/core/pdf.ts` | "Annotate this PDF" (design 0020 §10): the service renders a PDF of the window's folder as pages (built by Clank first |
 | `vscode/src/core/plans.ts` | Plans in the editor (design 0009 §7, §8): a Markdown file whose header says `kind: plan` gets buttons that hand it to |

@@ -67,15 +67,10 @@
   if (window.marked) {
     window.marked.use({ renderer: { html: (token) => escaped(typeof token === "string" ? token : token.text) } });
   }
-  const MATH = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\$([^$\n]+?)\$|\\\(([\s\S]+?)\\\)/g;
-
-  /** Markdown with its math drawn by KaTeX (math set aside first, so its underscores stay math). */
+  /** Markdown with its math drawn by KaTeX (math set aside first, so its underscores stay math; never inside code, as
+   * the agent panel's: core/math.ts). */
   function markdown(text) {
-    const math = [];
-    const kept = String(text).replace(MATH, (whole, display, bracket, inline, paren) => {
-      math.push({ text: display ?? bracket ?? inline ?? paren, display: display !== undefined || bracket !== undefined });
-      return `@@MATH${math.length - 1}@@`;
-    });
+    const { text: kept, math } = Core.splitMath(String(text));
     const html = window.marked ? window.marked.parse(kept) : escaped(kept);
     return html.replace(/@@MATH(\d+)@@/g, (whole, index) => {
       const piece = math[Number(index)];

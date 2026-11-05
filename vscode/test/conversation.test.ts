@@ -115,6 +115,21 @@ test("math is set aside before Markdown reads the text and drawn in its place", 
   ]);
 });
 
+test("math is never looked for in code, nor between two prices", () => {
+  const fenced = "Run it:\n```bash\nexport PATH=$HOME/bin:$PATH\n```\nthen $x_1$.";
+  assert.deepEqual(splitMath(fenced), { text: fenced.replace("$x_1$", "@@MATH0@@"), math: [{ text: "x_1", display: false }] });
+  const inline = "A template `${a} and ${b}`, and ``a `$x$` b`` too.";
+  assert.deepEqual(splitMath(inline), { text: inline, math: [] }, "inline code, of one backtick or more");
+  const tilde = "~~~latex\n$$\\sum_i x_i$$\n~~~";
+  assert.deepEqual(splitMath(tilde), { text: tilde, math: [] }, "a fence of tildes, whose source the owner asked for");
+  assert.deepEqual(splitMath("It costs $5 and $10 a month."), { text: "It costs $5 and $10 a month.", math: [] });
+  assert.deepEqual(splitMath("From $5$ to $10$."), {
+    text: "From @@MATH0@@ to @@MATH1@@.", math: [{ text: "5", display: false }, { text: "10", display: false }],
+  });  // prettier-ignore
+  const open = "```\nnever closed $a$";
+  assert.deepEqual(splitMath(open), { text: open, math: [] }, "a fence left open runs to the end, as Markdown reads it");
+});
+
 test("what waits in the session comes as items: each permission with what it asks, each question", () => {
   const waiting: Conversation["waiting"] = {
     permissions: [{ id: "per_1", session: "ses_1", permission: "bash", patterns: ["rm -r out"], metadata: {} }],

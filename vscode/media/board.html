@@ -3,7 +3,8 @@
      policy's sources, the nonce of the scripts, and the addresses of the style sheets and scripts. The board's core
      (core/board.ts, compiled as CommonJS) is loaded after marked and KaTeX (whose loaders would put themselves on an
      `exports` object), with an `exports` object of its own, which it keeps using, and is kept as `BoardCore`, so
-     the page and the extension decide moves, snaps and edits the same way. marked and KaTeX are the artifacts'
+     the page and the extension decide moves, snaps and edits the same way; core/math.ts, loaded onto the same
+     object, sets a note's math aside as the agent panel does (never inside code). marked and KaTeX are the artifacts'
      libraries (decision 0135). Nothing comes from the network. -->
 <html lang="en">
   <head>
@@ -72,6 +73,7 @@
     <script nonce="{{nonce}}" src="{{katex}}"></script>
     <script nonce="{{nonce}}">window.exports = {};</script>
     <script nonce="{{nonce}}" src="{{core}}"></script>
+    <script nonce="{{nonce}}" src="{{math}}"></script>
     <script nonce="{{nonce}}">window.BoardCore = window.exports;</script>
     <script nonce="{{nonce}}" src="{{script}}"></script>
   </body>

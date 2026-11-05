@@ -6,7 +6,8 @@
 // compaction. Clank's own message that a job ended is a notice (design 0021 §6), and an owner's comment on an
 // artifact that Clank relays is the owner's words (§5). `callView` says what each call did as the panel shows it (an
 // icon, a verb, what it was done to); `blocks` folds three calls or more in a row under one line of how many and how
-// long. `splitMath` sets math aside before Markdown reads a text, so its underscores stay math; `waitingItems` makes
+// long. `splitMath` (math.ts) sets math aside before Markdown reads a text, so its underscores stay math, never inside
+// code; `waitingItems` makes
 // what waits in the session into items too. Pure: `agentPanel.ts` asks the route and the webview draws.
 
 /** A message as the page gives it. */
@@ -101,7 +102,6 @@ const IMAGE = /\.(png|jpe?g|gif|webp|svg)$/i;
 const CONTAINER = "/workspace/";
 // what a call was given, by its tool, when OpenCode gave it no title
 const GIVEN = ["command", "filePath", "path", "pattern", "url", "name", "query", "description"];
-const MATH = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\$([^$\n]+?)\$|\\\(([\s\S]+?)\\\)/g;
 // Clank's messages to the agent (agents/jobs.py, agents/artifacts.py), read back for what the owner should see
 const JOB_ENDED = /^Job (\d+) \((.*?)\) (.+?) after ([^.\n]+)\.(?: The last lines of its log, (\S+?):| Its log, (\S+?), is empty\.)?/;
 const JOB_WROTE = /Files written in the folder while it ran, newest first: ([^\n]+?)\.\n/;
@@ -336,12 +336,4 @@ export function waitingItems(waiting: Conversation["waiting"]): Item[] {
   ];
 }
 
-/** A text with its math set aside (`@@MATHn@@` in its place), for Markdown to read; then each piece is drawn by KaTeX. */
-export function splitMath(text: string): { text: string; math: Array<{ text: string; display: boolean }> } {
-  const math: Array<{ text: string; display: boolean }> = [];
-  const kept = text.replace(MATH, (_whole, display?: string, bracket?: string, inline?: string, paren?: string) => {
-    math.push({ text: display ?? bracket ?? inline ?? paren ?? "", display: display !== undefined || bracket !== undefined });
-    return `@@MATH${math.length - 1}@@`;
-  });
-  return { text: kept, math };
-}
+export { splitMath } from "./math"; // never in code (math.ts), and shared with the board's page

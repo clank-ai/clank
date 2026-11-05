@@ -92,6 +92,7 @@ export class BoardEditor implements vscode.CustomTextEditorProvider {
       .replace("{{css}}", file("board.css"))
       .replace("{{script}}", file("board.js"))
       .replace("{{core}}", webview.asWebviewUri(vscode.Uri.joinPath(out, "src", "core", "board.js")).toString())
+      .replace("{{math}}", webview.asWebviewUri(vscode.Uri.joinPath(out, "src", "core", "math.js")).toString())
       .replace("{{marked}}", file("lib", "marked.min.js"))
       .replace("{{katex}}", file("lib", "katex.min.js"))
       .replace("{{katexCss}}", file("lib", "katex.min.css"));

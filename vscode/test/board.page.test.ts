@@ -60,7 +60,8 @@ async function key(browser: Browser, name: string, code: string, modifiers = 0):
 test("the board's page draws a board and turns the owner's mouse and keys into edits", { skip: EDGE ? false : "no Edge here" }, async () => {
   const folder = mkdtempSync(path.join(tmpdir(), "clank-board-"));
   const files = {
-    css: "board.css", script: "board.js", core: "../out/src/core/board.js", marked: `${LIB}/marked.min.js`,
+    css: "board.css", script: "board.js", core: "../out/src/core/board.js", math: "../out/src/core/math.js",
+    marked: `${LIB}/marked.min.js`,
     katex: `${LIB}/katex.min.js`, katexCss: `${LIB}/katex.min.css`,
   };  // prettier-ignore
   const browser = await Browser.open(webviewPage(folder, "board.html", files), path.join(folder, "profile"));
@@ -152,7 +153,8 @@ test("the board's page draws a board and turns the owner's mouse and keys into e
 test("the board's view follows what the agent places until the owner zooms, and waits for a size to fit", { skip: EDGE ? false : "no Edge here" }, async () => {
   const folder = mkdtempSync(path.join(tmpdir(), "clank-board-"));
   const files = {
-    css: "board.css", script: "board.js", core: "../out/src/core/board.js", marked: `${LIB}/marked.min.js`,
+    css: "board.css", script: "board.js", core: "../out/src/core/board.js", math: "../out/src/core/math.js",
+    marked: `${LIB}/marked.min.js`,
     katex: `${LIB}/katex.min.js`, katexCss: `${LIB}/katex.min.css`,
   };  // prettier-ignore
   const browser = await Browser.open(webviewPage(folder, "board.html", files), path.join(folder, "profile"));
