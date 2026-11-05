@@ -17,6 +17,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+import anyio
 import httpx2
 import pytest
 import uvicorn
@@ -269,3 +270,23 @@ def test_the_page_shows_a_session_at_work_by_the_services_flag_so_one_trying_aga
     script = (Path(create_phone_app.__code__.co_filename).parent / "page" / "app.js").read_text(encoding="utf-8")
     assert 'session.status === "busy"' not in script, "a status of its own would miss a session that tries again"
     assert script.count("session.working") >= 2, "a session's row and its workspace's line read the service's flag"
+
+
+def test_a_listener_whose_port_is_taken_leaves_the_service_running_says_why_and_is_tried_again(kernel: Kernel) -> None:
+    remote = kernel.parts["remote"]
+
+    class Taken:
+        """A listener whose port another program holds: uvicorn says so, then exits."""
+
+        started = False
+        config = uvicorn.Config(app=None, port=7721)
+
+        async def serve(self) -> None:
+            raise SystemExit(3)
+
+    server = Taken()
+    remote._server = server
+    anyio.run(remote._serve, server)  # it returns: the service goes on
+    assert remote._server is None, "tried again at the next round"
+    assert "7721" in remote._problem
+    assert "taken" in remote._problem

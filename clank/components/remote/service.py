@@ -276,6 +276,13 @@ class Remote:
     async def _serve(self, server: PhoneServer) -> None:
         try:
             await server.serve()
+        except SystemExit:  # uvicorn exits when it cannot listen: that ends the listener alone, never the service
+            port = server.config.port
+            self._problem = (
+                f"the phone's listener cannot listen on port {port}: it is taken by another program; it is tried "
+                f"again every few seconds (the port is set in config/remote.json)"
+            )
+            log.warning("the phone's listener cannot listen on port %s, taken by another program", port)
         except Exception as error:
             self._problem = f"the phone's listener stopped: {error}"
             log.exception("the phone's listener stopped")
