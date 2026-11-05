@@ -134,7 +134,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | --- | --- | --- |
 | 1 | What the owner does | `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (26), `tests/console/test_terminal.py` (5) |
 | 2 | The gateway, first slice | `tests/components/gateway/test_activity.py` (22), `tests/components/gateway/test_engine_errors.py` (2), `tests/components/gateway/test_full_context.py` (4), `tests/components/gateway/test_loops.py` (12), `tests/components/gateway/test_recent_requests.py` (6), `tests/components/gateway/test_server.py` (23), `tests/components/gateway/test_service.py` (15), `tests/components/gateway/test_titles.py` (3), `tests/components/runtime/test_request_fields.py` (3), `tests/console/test_requests_page.py` (11) |
-| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (26), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (9), `tests/docker/test_escape.py` (5), `tests/kernel/test_infolder.py` (4) |
+| 3 | Workspaces, the image and the container | `tests/components/gateway/test_callers.py` (6), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/console/test_folder.py` (26), `tests/console/test_workspaces_page.py` (4), `tests/contract/test_container_platform.py` (9), `tests/docker/test_escape.py` (5), `tests/kernel/test_infolder.py` (10) |
 | 4 | The agent: OpenCode in the container | `tests/components/agents/test_opencode.py` (8), `tests/components/agents/test_work.py` (11), `tests/console/test_folder.py` (26), `tests/contract/test_agent_program.py` (2) |
 | 5 | The VS Code window | `tests/components/agents/test_one_window.py` (3), `tests/components/agents/test_reach.py` (9), `tests/components/agents/test_vscode.py` (8), `tests/components/agents/test_work.py` (11), `tests/components/workspaces/test_docker_containers.py` (19), `vscode/test/agent.page.test.ts` (3), `vscode/test/agent.test.ts` (13), `vscode/test/client.test.ts` (7), `vscode/test/controller.test.ts` (18), `vscode/test/reach.test.ts` (4) |
 | 6 | The desktop stays responsive | `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_workspace_operations.py` (17) |
@@ -5002,12 +5002,18 @@ Design 0001 §7.2 and design 0002 §2.16: everything of one user lives under CLA
 
 ### `tests/kernel/test_infolder.py`
 
-Design 0004 §3: Clank reads and writes the files it keeps in a workspace's folder only below the folder and never through a link the agent could have made there: a name that is absolute or climbs out with .., or a link on the way (a symbolic link, a Windows junction), is refused (decision 0159).
+Design 0004 §3: Clank reads and writes a workspace's folder only below the folder and never through a link the agent could have made there, even one it makes while Clank is at work: a name that is absolute or climbs out with .., or a link on the way (a symbolic link, a Windows junction), is refused; a file is written whole under a name of its own and then put in place, so a link in its name is replaced, never written through; a folder swapped for a link while Clank reads and writes never takes it outside (decisions 0159 and 0164).
 
-- a name below the folder is its path there even before the file is made
+- a place below the folder is read and written there its folders made
+- a new file is written only when nothing has its name
 - a name that is absolute or climbs out is refused
-- a link to a folder anywhere on the way is refused
-- a link to a file is refused
+- on windows a device or a name windows would change is refused
+- a link to a folder anywhere on the way is refused for every use
+- a link in a files own name is never read and is replaced when written
+- a folders files are listed below it without links and without the folders skipped
+- a file is removed and a missing one says so
+- a folder swapped for a link while clank works never takes it outside
+- on windows a folder on the way cannot be renamed while clank holds it
 
 ### `tests/kernel/test_live_stream.py`
 

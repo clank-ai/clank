@@ -28,7 +28,7 @@ recommendation, built as recommended so the owner can try it, and changed if the
 | --- | --- | --- |
 | 1 | What the owner does | Proposed 2026-10-13 |
 | 2 | The gateway, first slice | Proposed 2026-10-13 |
-| 3 | Workspaces, the image and the container | Proposed 2026-10-13; revised 2026-10-26 (the edge kept on every workspace's network, whatever made it again); revised 2026-11-04 (Clank follows no link in the folder, decision 0159) |
+| 3 | Workspaces, the image and the container | Proposed 2026-10-13; revised 2026-10-26 (the edge kept on every workspace's network, whatever made it again); revised 2026-11-04 (Clank follows no link in the folder, decision 0159; nothing on the way changes while Clank reads or writes it, and every read of the agent's files goes the same way, decision 0164) |
 | 4 | The agent: OpenCode in the container | Proposed 2026-10-13 |
 | 5 | The VS Code window | Built 2026-10-14 (the agent's status bar item waits); revised 2026-11-04 (`clank.agent.openOnStart` the owner's setting alone, and the agent's terminal runs only docker, wsl or ssh: decision 0156) |
 | 6 | The desktop stays responsive | Proposed 2026-10-13 |
@@ -157,6 +157,11 @@ Design 0001 §6, the part the agent needs:
 - **The files Clank keeps in the folder** (`.clank/`: artifacts, jobs, boards, figures' copies) are the agent's to
   write too, so the service reads and writes them only below the folder and through no link: a name that leaves the
   folder, or a link on the way, is refused (decision 0159).
+- **Nothing on the way changes while Clank reads or writes** (revised 2026-11-04, decision 0164): each folder from
+  the workspace's down is opened without following it and held until the file is read or written (opened from the
+  one before it on Linux; held against renaming on Windows), a file is written whole under a name of its own and
+  then put in place, and every read of the agent's own files (an artifact's sources, deliverables, a review's
+  files, a job's log, the outbox) goes the same way.
 
 ## 4. The agent: OpenCode in the container
 

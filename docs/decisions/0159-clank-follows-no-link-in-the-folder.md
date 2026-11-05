@@ -1,6 +1,6 @@
 # 0159. Clank follows no link in a workspace's folder
 
-- Status: Accepted (the audit of 2026-10-30); revises design 0004 §3
+- Status: Accepted (the audit of 2026-10-30); revises design 0004 §3; refined by 0164 (the way held while used)
 - Date: 2026-11-04
 
 ## Context
