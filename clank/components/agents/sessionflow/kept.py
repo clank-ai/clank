@@ -31,7 +31,6 @@ import logging
 import posixpath
 import threading
 from collections.abc import Callable, Iterable
-from pathlib import Path
 from time import monotonic
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -42,6 +41,7 @@ from clank.components.agents.plans import is_plan, plan_path
 from clank.components.agents.sessionflow.branches import same_file
 from clank.components.agents.sessionflow.flow import Flow
 from clank.components.agents.sessions import ServerGone
+from clank.kernel.infolder import place
 
 if TYPE_CHECKING:
     from clank.kernel.core import Kernel
@@ -462,14 +462,11 @@ def plan_reader(kernel: "Kernel") -> Read:
         relative = posixpath.normpath(relative.replace("\\", "/"))
         if not plan_path(relative):
             return None
-        try:
-            folder = Path(kernel.parts["workspaces"].folder_of(workspace)).resolve()
-            path = folder.joinpath(*relative.split("/")).resolve()
-            if not path.is_relative_to(folder) or path.stat().st_size > LARGEST:
-                return None
-            text = path.read_bytes().decode("utf-8", errors="replace")
+        try:  # the agent's file, read through no link and never outside the folder (decision 0164)
+            raw = place(kernel.parts["workspaces"].folder_of(workspace), relative).read_bytes(most=LARGEST + 1)
         except Exception:
             return None
-        return text if is_plan(text) else None
+        text = raw.decode("utf-8", errors="replace")
+        return text if len(raw) <= LARGEST and is_plan(text) else None
 
     return read

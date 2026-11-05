@@ -14,15 +14,14 @@ message, sent by `build`, is `/implement`'s instructions with the plan's path, t
 `build`. `plans` lists the folder's plans with their steps done, for the console's folder page.
 """
 
-import os
 import threading
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from clank.components.agents.adapters.opencode import prompt
 from clank.components.agents.plans import SETTINGS, is_plan, plan_path
 from clank.kernel.events import CLANK, Actor, EventType, Subject
+from clank.kernel.infolder import Place, file_of, place
 
 if TYPE_CHECKING:
     from clank.components.agents.review import Review
@@ -128,8 +127,8 @@ class Modes:
             raise ModeError(f"a plan is implemented in review or auto mode, not {mode}")
         relative = plan.replace("\\", "/").strip("/")
         workspaces: Workspaces = self.kernel.parts["workspaces"]
-        path = Path(workspaces.folder_of(workspace), *relative.split("/"))
-        if not plan_path(relative) or not path.is_file() or not is_plan(_read(path)):
+        found = file_of(workspaces.folder_of(workspace), relative)  # through no link (decision 0164)
+        if not plan_path(relative) or found is None or not is_plan(_read(found[0])):
             raise ModeError(
                 f"{plan} is not a plan of {workspace}: a Markdown file of its folder whose header says kind: plan"
             )
@@ -151,18 +150,11 @@ class Modes:
     def plans(self, workspace: str) -> list[dict[str, Any]]:
         """The folder's plans, newest first: each one's path, title, status, and steps done of all."""
         workspaces: Workspaces = self.kernel.parts["workspaces"]
-        folder = Path(workspaces.folder_of(workspace))
+        top = place(workspaces.folder_of(workspace))
         found = []
-        for root, folders, files in os.walk(folder):
-            folders[:] = sorted(name for name in folders if name not in SKIPPED and not name.startswith("."))
-            for name in files:
-                path = Path(root, name)
-                relative = path.relative_to(folder).as_posix()
-                if not plan_path(relative):
-                    continue
-                text = _read(path)
-                if is_plan(text):
-                    found.append({"path": relative, **_described(text), "modified": path.stat().st_mtime})
+        for relative, info in top.files(skip=SKIPPED, hidden=False):  # links left out (decision 0164)
+            if plan_path(relative) and is_plan(text := _read(top / relative)):
+                found.append({"path": relative, **_described(text or ""), "modified": info.st_mtime})
         return sorted(found, key=lambda each: -each["modified"])
 
     def _to(self, workspace: str, wanted: str, actor: Actor) -> str:
@@ -212,14 +204,13 @@ class Modes:
         return window.port if window is not None and window.port in ports else ports[0]
 
 
-def _read(path: Path) -> str | None:
+def _read(path: Place) -> str | None:
     """A file's text when it is small enough to be a plan; None otherwise or when it cannot be read."""
     try:
-        if path.stat().st_size > LARGEST_PLAN:
-            return None
-        return path.read_text(encoding="utf-8", errors="replace")
-    except OSError:
+        raw = path.read_bytes(most=LARGEST_PLAN + 1)
+    except (OSError, ValueError):  # Outside too, a ValueError
         return None
+    return None if len(raw) > LARGEST_PLAN else raw.decode("utf-8", errors="replace")
 
 
 def _described(text: str | None) -> dict[str, Any]:

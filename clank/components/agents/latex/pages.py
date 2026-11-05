@@ -21,6 +21,7 @@ from typing import Any
 
 from clank.components.agents.figures import COLORS
 from clank.components.agents.latex.building import HELPER, engine_of
+from clank.kernel.infolder import Outside, file_of, place
 
 PAGES = ".clank/latex/pages"
 BUILDS = ".clank/latex/build"
@@ -46,11 +47,11 @@ def page_image(folder: Path, image: str) -> tuple[dict[str, Any], int] | None:
     pure = PurePosixPath(image.replace("\\", "/"))
     if not pure.as_posix().startswith(PAGES + "/") or not re.fullmatch(r"page-\d+\.png", pure.name):
         return None
-    try:
-        meta: dict[str, Any] = json.loads(folder.joinpath(*pure.parent.parts, "pages.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+    try:  # the agent's to write too: read through no link (decision 0164)
+        meta = json.loads(place(folder, f"{pure.parent.as_posix()}/pages.json").read_text())
+    except (OSError, ValueError):  # Outside too, a ValueError
         return None
-    return meta, int(re.sub(r"\D", "", pure.name))
+    return (meta, int(re.sub(r"\D", "", pure.name))) if isinstance(meta, dict) else None
 
 
 class PageMarks:
@@ -65,15 +66,18 @@ class PageMarks:
         pure = PurePosixPath(pdf.replace("\\", "/"))
         if pure.suffix.lower() != ".pdf" or pure.is_absolute() or ".." in pure.parts:
             raise PageError(f"{pdf} is not a PDF of the folder")
-        if not folder.joinpath(*pure.parts).is_file():
+        if file_of(folder, pure.as_posix()) is None:
             raise PageError(f"{pdf} is not a file of the folder")
         key = key_of(pure.as_posix())
         source = pure.with_suffix(".tex")
         shown, built = pure.as_posix(), False
-        tex = folder.joinpath(*source.parts)
-        if tex.is_file():
+        tex = file_of(folder, source.as_posix())
+        if tex is not None:
             keep = f"{BUILDS}/{key}"
-            engine = engine_of(tex.read_text(encoding="utf-8", errors="replace"))
+            try:
+                engine = engine_of(tex[0].read_text(errors="replace"))
+            except (OSError, ValueError) as error:  # gone meanwhile, or reached through a link
+                raise PageError(f"{source.as_posix()} cannot be read: {error}") from error
             said = self._ask(workspace, {"mode": "build", "root": source.as_posix(), "file": source.as_posix(),
                                          "text": None, "engine": engine, "seconds": 120, "keep": keep})  # fmt: skip
             if said.get("built") and (said.get("kept") or {}).get("pdf"):
@@ -84,9 +88,10 @@ class PageMarks:
             raise PageError(f"the pages of {pdf} could not be rendered: {said.get('error') or said}")
         meta = {"pdf": pure.as_posix(), "built": shown, "dpi": int(said.get("dpi") or self.dpi),
                 "words": str(said.get("words") or f"{keep}/words.json"), "pages": said["pages"]}  # fmt: skip
-        out = folder.joinpath(*keep.split("/"))
-        out.mkdir(parents=True, exist_ok=True)
-        (out / "pages.json").write_text(json.dumps(meta, indent=1), encoding="utf-8")
+        try:
+            place(folder, f"{keep}/pages.json").write_text(json.dumps(meta, indent=1))
+        except Outside as error:
+            raise PageError(str(error)) from error
         pages = [{"number": number, "image": str(page["image"])} for number, page in enumerate(said["pages"], start=1)]
         return {"pdf": pure.as_posix(), "built": built, "pages": pages}
 
@@ -97,9 +102,11 @@ class PageMarks:
             raise PageError(f"{image} is not a page Clank rendered")
         meta, number = found
         scale = 72.0 / float(meta.get("dpi") or DPI)  # points a pixel
-        try:
-            pages = json.loads(folder.joinpath(*str(meta["words"]).split("/")).read_text(encoding="utf-8"))
-        except (OSError, ValueError, KeyError):
+        try:  # `pages.json` is the agent's to write too: its `words` read through no link, never outside
+            pages = json.loads(place(folder, str(meta["words"])).read_text())
+        except (OSError, ValueError, KeyError):  # Outside too, a ValueError
+            pages = []
+        if not isinstance(pages, list):
             pages = []
         words = pages[number - 1]["words"] if number - 1 < len(pages) else []
         spots = [_spot(mark, scale) for mark in marks]

@@ -34,6 +34,7 @@ import contextlib
 import logging
 import ntpath
 import posixpath
+import stat
 import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -46,6 +47,7 @@ from clank.components.agents.sessions import SessionError
 from clank.components.agents.watch import Watchers
 from clank.kernel.clock import to_text
 from clank.kernel.events import Actor, EventType, Subject
+from clank.kernel.infolder import Outside, place
 from clank.kernel.questions import Option, Question, QuestionDraft, QuestionError
 
 if TYPE_CHECKING:
@@ -322,13 +324,19 @@ class Review:
         metadata = request.get("metadata") or {}
         file = str(metadata.get("filepath") or "")
         relative = posixpath.relpath(file, WORKSPACE) if file.startswith(WORKSPACE + "/") else file
-        path = Path(folder, *relative.split("/"))
         before, problem = None, ""
-        if path.is_file():
-            if path.stat().st_size > LARGEST:
+        try:  # the agent's file, read through no link (decision 0164)
+            target = place(folder, relative)
+        except Outside:
+            target, problem = None, "its file is not in the folder: its diff shows it"
+        found = target.stat() if target is not None else None
+        if target is not None and found is not None and stat.S_ISREG(found.st_mode):
+            if found.st_size > LARGEST:
                 problem = "too large to show beside its change: its diff shows it"
             else:
-                before = path.read_bytes().decode("utf-8", errors="replace")
+                with contextlib.suppress(OSError, ValueError):  # gone meanwhile, or reached through a link
+                    before = target.read_bytes(most=LARGEST).decode("utf-8", errors="replace")
+        path = target.path if target is not None else Path(folder, *relative.split("/"))
         after, exact = (None, False) if problem else proposed(before, given, str(metadata.get("diff") or ""))
         if after is not None:
             diff, added, removed = unified(before, after, relative)
@@ -337,7 +345,7 @@ class Review:
             added, removed = _counted(diff)
             problem = problem or "it could not be worked out from what the agent said: its diff shows it"
         plan = plan_path(relative) and (is_plan(before) or is_plan(after))
-        created = before is None and not path.exists()
+        created = before is None and target is not None and found is None
         latex = "" if plan else kind_of(relative) or ""
         mode = "auto" if plan else self.mode_of(workspace, request.get("sessionID"))
         if latex and self.latex.forced(workspace, relative, created):
@@ -441,10 +449,10 @@ class Review:
             change = self.store.get(id) if id else None
             if change is None:
                 return
-            path = Path(change["path"])
-            try:
-                made = path.read_bytes().decode("utf-8", errors="replace") if path.stat().st_size <= LARGEST else None
-            except OSError:
+            try:  # read through no link (decision 0164)
+                raw = place(change["folder"], change["relative"]).read_bytes(most=LARGEST + 1)
+                made = raw.decode("utf-8", errors="replace") if len(raw) <= LARGEST else None
+            except (OSError, ValueError):  # Outside too, a ValueError
                 made = None
             change["made"] = made
             change["written"] = to_text(self.kernel.clock.now())

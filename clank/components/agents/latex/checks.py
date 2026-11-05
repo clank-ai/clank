@@ -22,6 +22,7 @@ from clank.components.agents.latex.citations import Lookup, bib_entries, bibliog
 from clank.components.agents.latex.citations import missing_citations as missing
 from clank.components.agents.latex.sources import source_problems, unverified, values
 from clank.kernel.events import Actor, EventType, Subject
+from clank.kernel.infolder import Outside, Place, place
 
 if TYPE_CHECKING:
     from clank.kernel.core import Kernel
@@ -218,8 +219,10 @@ class LatexChecks:
         keys: set[str] = set()
         found = []
         for name in named:
-            path = folder.joinpath(*(here / name).parts)
-            text = _read(path)
+            try:
+                text = _read(place(folder, (here / name).as_posix()))
+            except Outside:  # a name that leaves the folder
+                text = None
             if text is not None:
                 keys |= set(bib_entries(text))
                 found.append((here / name).as_posix())
@@ -228,14 +231,12 @@ class LatexChecks:
     def _texts(self, folder: Path, relative: str, after: str) -> dict[str, str]:
         """The folder's `.tex` files, from the folder, with the changed file as it would be."""
         texts: dict[str, str] = {}
-        for top, folders, files in os.walk(folder):
-            folders[:] = sorted(each for each in folders if each not in SKIPPED)
-            for name in sorted(files):
-                if name.endswith(".tex") and len(texts) < MOST_TEX:
-                    path = Path(top, name)
-                    text = _read(path)
-                    if text is not None:
-                        texts[path.relative_to(folder).as_posix()] = text
+        top = place(folder)
+        for found, _ in top.files(skip=SKIPPED):  # the agent's files, read through no link (decision 0164)
+            if found.endswith(".tex") and len(texts) < MOST_TEX:
+                text = _read(top / found)
+                if text is not None:
+                    texts[found] = text
         texts[relative] = after
         return texts
 
@@ -247,8 +248,12 @@ class LatexChecks:
         if path.suffix.lower() != ".tex":
             raise BuildError(f"{file} is not a .tex file")
         workspace, folder = self._workspace_of(path)
-        relative = path.resolve().relative_to(folder.resolve()).as_posix()
-        texts = self._texts(folder, relative, _read(path) or "")
+        try:
+            source = place(folder, Path(os.path.relpath(path, folder)).as_posix())
+        except ValueError as error:  # on another drive, or a name that leaves the folder (Outside)
+            raise BuildError(f"{file} is not a file of the folder {folder}") from error
+        relative = source.relative
+        texts = self._texts(folder, relative, _read(source) or "")
         root = root_of(relative, texts) or relative
         built = self.builder.output(workspace, root, engine_of(texts.get(root, "")), folder.as_posix())
         if built.unbuilt:
@@ -298,10 +303,10 @@ class LatexChecks:
         return self.kernel.parts["workspaces"].run_in(workspace, argv, input=given, timeout=timeout)
 
 
-def _read(path: Path) -> str | None:
+def _read(path: Place) -> str | None:
+    """A file's text, read through no link; None when it is larger than `LARGEST`, or cannot be read."""
     try:
-        if path.stat().st_size > LARGEST:
-            return None
-        return path.read_text(encoding="utf-8", errors="replace")
-    except OSError:
+        raw = path.read_bytes(most=LARGEST + 1)
+    except (OSError, ValueError):  # Outside too, a ValueError
         return None
+    return None if len(raw) > LARGEST else raw.decode("utf-8", errors="replace")

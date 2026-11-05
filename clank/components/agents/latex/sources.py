@@ -16,6 +16,7 @@ import re
 from pathlib import Path, PurePosixPath
 
 from clank.components.agents.latex.citations import uncommented
+from clank.kernel.infolder import file_of
 
 ARGUMENTS = re.compile(
     r"\\(?:label|ref|eqref|cref|Cref|autoref|pageref|nameref|includegraphics|input|include|subfile|url|href|"
@@ -128,7 +129,5 @@ def _is_source(named: str, folder: Path, here: str, keys: set[str]) -> bool:
     pure = PurePosixPath(named.replace("\\", "/"))
     if pure.is_absolute() or ".." in pure.parts:
         return False
-    for base in (folder, folder.joinpath(*here.split("/")) if here else folder):
-        if base.joinpath(*pure.parts).is_file():
-            return True
-    return False
+    bases = ("", f"{here}/") if here else ("",)  # from the folder, or from the document's own folder
+    return any(file_of(folder, f"{base}{pure.as_posix()}") is not None for base in bases)
