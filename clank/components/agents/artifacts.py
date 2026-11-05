@@ -11,7 +11,8 @@ relative paths (`../results/sweep.json`) still work. A Markdown artifact gets Cl
 page.
 
 Refused, saying why: a name that is not lowercase letters, digits and dashes; a kind other than html, markdown or svg;
-no file, a file that is not the folder's (or is Clank's own, under `.clank/`), more than `MOST_FILES` files or more than
+no file, a file that is not the folder's (or is Clank's own, under `.clank/`, or is reached through a link: every read
+and write of the folder goes through `kernel/infolder.py`, decision 0164), more than `MOST_FILES` files or more than
 `MOST_BYTES` in all; a first file that is not a page of its kind; an entry page that names the network (a source, a
 link, a style or a fetch at `http://`, `https://` or `//`); and an HTML page that would show broken (`_check_page`): a
 file it loads or fetches that is not among its files from where the page is (the model's own mistake, 2026-10-25), or
@@ -19,17 +20,16 @@ math in `$...$` given to KaTeX's auto-render without the delimiters that make it
 """
 
 import base64
+import contextlib
 import json
-import os
 import posixpath
 import re
-import shutil
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Any
 
 from clank.kernel.clock import to_text
 from clank.kernel.events import CLANK, Actor, EventType, Subject
-from clank.kernel.infolder import Outside, inside
+from clank.kernel.infolder import Outside, Place, place
 
 if TYPE_CHECKING:
     from clank.components.agents.sessions import Sessions
@@ -169,45 +169,41 @@ class Artifacts:
             raise ArtifactError("a kind is html, markdown or svg")
         title = " ".join(title.split()) or name
         folder = self._folder(workspace)
-        paths = [self._file(folder, each) for each in files]
-        if not paths:
+        sources = [(each, _source(folder, each)) for each in files]
+        if not sources:
             raise ArtifactError("the artifact names no file: name its page first, then the files it reads")
-        if len(paths) > MOST_FILES or sum(path.stat().st_size for path in paths) > MOST_BYTES:
+        if len(sources) > MOST_FILES:
             raise ArtifactError(f"an artifact holds at most {MOST_FILES} files and {MOST_BYTES >> 20} MB in all")
-        if paths[0].suffix.lower() not in KINDS[kind]:
+        contents = _read_all(sources)  # once, through no link (decision 0164): what is checked is what is kept
+        first, page_place = contents[0].decode("utf-8", errors="replace"), sources[0][1]
+        if page_place.suffix.lower() not in KINDS[kind]:
             raise ArtifactError(f"its first file is its page: a {kind} file ({', '.join(KINDS[kind])})")
-        if NETWORK.search(paths[0].read_text(encoding="utf-8", errors="replace")):
+        if NETWORK.search(first):
             raise ArtifactError(
-                f"{paths[0].name} names the network: an artifact uses only its own files and Clank's libraries "
+                f"{page_place.name} names the network: an artifact uses only its own files and Clank's libraries "
                 "(clank-lib/plotly.min.js, katex.min.js, katex.min.css, marked.min.js, mermaid.min.js)"
             )
         if kind == "html":
-            _check_page(paths[0].read_text(encoding="utf-8", errors="replace"),
-                        [path.relative_to(folder).as_posix() for path in paths])  # fmt: skip
-        home = _inside(folder, f"{FOLDER}/{name}")
+            _check_page(first, [found.relative for _, found in sources])
+        home = _place(folder, f"{FOLDER}/{name}")
         kept = self._kept(folder, name) or {"name": name, "title": title, "kind": kind, "versions": []}
         number = len(kept["versions"]) + 1
-        target = _inside(home, f"v{number}")
-        root = Path(os.path.commonpath([str(path.parent) for path in paths]))
-        for path in paths:
-            copied = _inside(target, path.relative_to(root).as_posix())  # nothing written through a link (0159)
-            copied.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(path, copied)
-        entry = paths[0].relative_to(root).as_posix()
+        target = home / f"v{number}"
+        shared = _shared([found for _, found in sources])
+        laid = [PurePosixPath(*found.parts[shared:]).as_posix() for _, found in sources]
+        for relative, content in zip(laid, contents, strict=True):
+            _write(target / relative, content)
+        entry = laid[0]
         if kind != "html":
             page = MARKDOWN if kind == "markdown" else SVG
-            text = paths[0].read_text(encoding="utf-8", errors="replace")
-            source = json.dumps(text).replace("</", "<\\/")
-            _inside(target, "index.html").write_text(
-                page.format(title=_escaped(title), source=source, svg=_escaped(entry)), encoding="utf-8"
-            )
+            source = json.dumps(first).replace("</", "<\\/")
+            built = page.format(title=_escaped(title), source=source, svg=_escaped(entry))
+            _write(target / "index.html", built.encode("utf-8"))
             entry = "index.html"
         kept.update(title=title, kind=kind)
         kept["versions"].append({"version": number, "made": to_text(self.kernel.clock.now()), "entry": entry,
-                                 "files": [path.relative_to(root).as_posix() for path in paths], "note": note.strip(),
-                                 "session": session})  # fmt: skip
-        home.mkdir(parents=True, exist_ok=True)
-        _inside(home, "artifact.json").write_text(json.dumps(kept, indent=2) + "\n", encoding="utf-8")
+                                 "files": laid, "note": note.strip(), "session": session})  # fmt: skip
+        _write(home / "artifact.json", (json.dumps(kept, indent=2) + "\n").encode("utf-8"))
         shown = f"{FOLDER}/{name}/v{number}/{entry}"
         self.kernel.events.record(
             "agents.artifact_made", summary=f"{workspace}: the artifact {title} ({name}), version {number}",
@@ -225,12 +221,17 @@ class Artifacts:
     def list(self, workspace: str) -> list[dict[str, Any]]:
         """The workspace's artifacts, the newest made first: each one's name, title, kind and versions."""
         folder = self._folder(workspace)
-        found = [kept for each in sorted((folder / FOLDER).glob("*")) if (kept := self._kept(folder, each.name))]
-        brief = [
-            {"name": kept["name"], "title": kept["title"], "kind": kept["kind"], "versions": len(kept["versions"]),
-             "made": kept["versions"][-1]["made"]}
-            for kept in found
-        ]  # fmt: skip
+        names = [name for name, kind in place(folder, FOLDER).entries() if kind == "folder" and NAME.fullmatch(name)]
+        brief = []
+        for name in names:
+            kept = self._kept(folder, name)
+            if kept is None:
+                continue
+            with contextlib.suppress(KeyError, IndexError, TypeError):  # a record the agent broke is no artifact
+                brief.append({
+                    "name": kept["name"], "title": kept["title"], "kind": kept["kind"],
+                    "versions": len(kept["versions"]), "made": kept["versions"][-1]["made"],
+                })  # fmt: skip
         return sorted(brief, key=lambda each: str(each["made"]), reverse=True)
 
     def one(self, workspace: str, name: str) -> dict[str, Any]:
@@ -277,17 +278,20 @@ class Artifacts:
         made = next((each for each in kept["versions"] if each["version"] == version), None)
         if made is None:
             raise ArtifactError(f"the artifact {name} has no version {version}")
-        home = _inside(Path(kept["folder"]), f"{FOLDER}/{name}")
-        root = _inside(home, f"v{version}")
-        entry = str(made["entry"])
-        page = _inside(root, entry).read_text(encoding="utf-8", errors="replace")  # its record is the agent's (0159)
+        home = _place(Path(kept["folder"]), f"{FOLDER}/{name}")
+        root = home / f"v{version}"
+        try:
+            entry_place = root / str(made["entry"])  # its record is the agent's to write (decisions 0159, 0164)
+            page = entry_place.read_text(errors="replace")
+        except Outside as error:
+            raise ArtifactError(str(error)) from error
+        entry = PurePosixPath(*entry_place.parts[len(root.parts) :]).as_posix()
         entry_dir = posixpath.dirname(entry)
-        files = {
-            path.relative_to(root).as_posix(): (TYPES.get(path.suffix.lower(), "application/octet-stream"),
-                                                base64.b64encode(path.read_bytes()).decode("ascii"))
-            for path in sorted(root.rglob("*"))
-            if path.relative_to(root).as_posix() != entry and _plain_file(root, path)
-        }  # fmt: skip
+        files = {}
+        for relative, _ in root.files():  # a file reached through a link is left out
+            if relative != entry and (data := _read_or_none(root / relative)) is not None:
+                kind = TYPES.get(PurePosixPath(relative).suffix.lower(), "application/octet-stream")
+                files[relative] = (kind, base64.b64encode(data).decode("ascii"))
         page = LIB_SCRIPT.sub(lambda found: f"<script>{_library(found.group(1))}</script>", page)
         page = LIB_STYLE.sub(lambda found: f"<style>{_style(found.group(1))}</style>", page)
 
@@ -307,10 +311,9 @@ class Artifacts:
         declared = DOCTYPE.match(page)  # the policy before anything the page has, but its doctype
         at = declared.end() if declared else 0
         page = page[:at] + POLICY + page[at:]
-        target = _inside(home, f"export/{name}-v{version}.html")
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(page, encoding="utf-8")
-        return {"file": str(target), "said": f"{name} version {version} as one page: {target}"}
+        target = home / f"export/{name}-v{version}.html"
+        _write(target, page.encode("utf-8"))
+        return {"file": str(target.path), "said": f"{name} version {version} as one page: {target.path}"}
 
     def _folder(self, workspace: str) -> Path:
         workspaces: Workspaces = self.kernel.parts["workspaces"]
@@ -320,39 +323,79 @@ class Artifacts:
             raise ArtifactError(f"there is no workspace {workspace!r}") from error
 
     @staticmethod
-    def _file(folder: Path, named: str) -> Path:
-        """A file of the folder, named from it or under `/workspace/`; `ArtifactError` for any other."""
-        relative = named[len(CONTAINER) :] if named.startswith(CONTAINER) else named
-        parts = PurePosixPath(relative.replace("\\", "/")).parts
-        path = folder.joinpath(*parts)
-        inside = path.resolve().is_relative_to(folder.resolve()) and ".." not in parts and parts[:1] != (".clank",)
-        if not parts or not inside or not path.is_file():
-            raise ArtifactError(f"{named} is not a file of the folder")
-        return path
-
-    @staticmethod
     def _kept(folder: Path, name: str) -> dict[str, Any] | None:
+        """An artifact's record, when it is one: none when it is missing, broken, or reached through a link."""
         try:
-            found: dict[str, Any] = json.loads(inside(folder, f"{FOLDER}/{name}/artifact.json").read_text("utf-8"))
-        except (OSError, ValueError):  # Outside too: a record reached through a link is none
+            found = json.loads(place(folder, f"{FOLDER}/{name}/artifact.json").read_text())
+        except (OSError, ValueError):  # Outside too (a ValueError): a record reached through a link is none
+            return None
+        if not isinstance(found, dict) or not isinstance(found.get("versions"), list):
             return None
         return found
 
 
-def _inside(folder: Path, relative: str) -> Path:
-    """A path below `folder` reached through no link (decision 0159); `ArtifactError` saying why for any other."""
+def _place(folder: Path, relative: str) -> Place:
+    """A place below `folder` (decision 0164); `ArtifactError` saying why for a name that leaves it."""
     try:
-        return inside(folder, relative)
+        return place(folder, relative)
     except Outside as error:
         raise ArtifactError(str(error)) from error
 
 
-def _plain_file(root: Path, path: Path) -> bool:
-    """Whether `path`, found below `root`, is a file reached through no link."""
+def _source(folder: Path, named: str) -> Place:
+    """A file of the folder named for an artifact, from the folder or under `/workspace/`, never one of Clank's own
+    (under `.clank/`); `ArtifactError` for any other name."""
+    relative = named[len(CONTAINER) :] if named.startswith(CONTAINER) else named
     try:
-        return inside(root, path.relative_to(root).as_posix()).is_file()
-    except Outside:
-        return False
+        found = place(folder, relative)
+    except Outside as error:
+        raise ArtifactError(f"{named} is not a file of the folder") from error
+    if not found.parts or found.parts[0] == ".clank":
+        raise ArtifactError(f"{named} is not a file of the folder")
+    return found
+
+
+def _read_all(sources: list[tuple[str, Place]]) -> list[bytes]:
+    """Each named file's bytes, read through no link, at most `MOST_BYTES` in all; `ArtifactError` saying why."""
+    contents, left = [], MOST_BYTES
+    for named, found in sources:
+        try:
+            data = found.read_bytes(most=left + 1)
+        except Outside as error:
+            raise ArtifactError(str(error)) from error
+        except OSError as error:
+            raise ArtifactError(f"{named} is not a file of the folder") from error
+        left -= len(data)
+        if left < 0:
+            raise ArtifactError(f"an artifact holds at most {MOST_FILES} files and {MOST_BYTES >> 20} MB in all")
+        contents.append(data)
+    return contents
+
+
+def _read_or_none(found: Place) -> bytes | None:
+    """A file's bytes; none when it went meanwhile, or is reached through a link."""
+    try:
+        return found.read_bytes()
+    except (OSError, Outside):
+        return None
+
+
+def _write(where: Place, data: bytes) -> None:
+    """Write a file of the artifact whole, through no link (decision 0164); `ArtifactError` saying why."""
+    try:
+        where.write_bytes(data)
+    except Outside as error:
+        raise ArtifactError(str(error)) from error
+
+
+def _shared(sources: list[Place]) -> int:
+    """How many folders every file's path starts with: their common folder, which a version keeps its layout from."""
+    shared = 0
+    for column in zip(*(found.parts[:-1] for found in sources), strict=False):
+        if len(set(column)) != 1:
+            break
+        shared += 1
+    return shared
 
 
 def _check_page(page: str, files: list[str]) -> None:

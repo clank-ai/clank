@@ -486,7 +486,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (4), `vscode/test/readout.test.ts` (12), `vscode/test/throttle.test.ts` (2) |
 | 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (3), `vscode/test/conversation.test.ts` (9) |
-| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (14), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (7) |
+| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (16), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (7) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (8), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
@@ -882,6 +882,8 @@ Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copi
 - clank artifact lists a folders artifacts and exports the newest version
 - an export reads and writes only below the version and follows no link
 - a new version is never written through a link
+- a file reached through a link is never copied into a version
+- a record the agent broke is left out of the list
 
 ### `tests/components/agents/test_board_export.py`
 

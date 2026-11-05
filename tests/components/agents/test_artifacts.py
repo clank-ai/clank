@@ -352,3 +352,26 @@ def test_a_new_version_is_never_written_through_a_link(kernel: Kernel, folder: P
     with pytest.raises(ArtifactError, match="is a link"):
         artifacts.make("paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"])
     assert list(elsewhere.iterdir()) == [], "nothing written through the link"
+
+
+def test_a_file_reached_through_a_link_is_never_copied_into_a_version(
+    kernel: Kernel, folder: Path, tmp_path: Path
+) -> None:
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    (elsewhere / "secret.json").write_text('"the owner\'s own"', encoding="utf-8")
+    _link_folder(folder / "results" / "linked", elsewhere)
+    with pytest.raises(ArtifactError, match="is a link"):
+        artifacts_of(kernel).make(
+            "paper", "sweep", "Sweep results", "html", ["report/index.html", "results/linked/secret.json"]
+        )
+    assert not (folder / ".clank" / "artifacts" / "sweep").exists(), "no version was made"
+
+
+def test_a_record_the_agent_broke_is_left_out_of_the_list(kernel: Kernel, folder: Path) -> None:
+    artifacts = artifacts_of(kernel)
+    artifacts.make("paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"])
+    (folder / ".clank/artifacts/broken").mkdir()
+    (folder / ".clank/artifacts/broken/artifact.json").write_text('{"versions": []}', encoding="utf-8")
+    (folder / ".clank/artifacts/Not A Name").mkdir()
+    assert [each["name"] for each in artifacts.list("paper")] == ["sweep"]
