@@ -17,7 +17,7 @@ built (§11). The owner approved §3-§7 and §9-§11 the same day, chose the si
 | 2 | What the review found | Recorded 2026-10-25 |
 | 3 | The model's readout | Approved 2026-10-25 (the owner chose the panel under OpenCode, and every figure) |
 | 4 | The agent panel | Approved 2026-10-25 |
-| 5 | Artifacts | Approved 2026-10-25; revised after approval 2026-10-25: a page that would show broken is refused, saying what to change (the first live test's two mistakes); revised after approval 2026-11-04: Open in browser asks the owner first, and an export carries the webview's content policy (decision 0156, the audit of 2026-10-30) |
+| 5 | Artifacts | Approved 2026-10-25; revised after approval 2026-10-25: a page that would show broken is refused, saying what to change (the first live test's two mistakes); revised after approval 2026-11-04: Open in browser asks the owner first, and an export carries the webview's content policy (decision 0156, the audit of 2026-10-30); revised after approval 2026-11-04 again: the page runs in a sandboxed frame of Clank's panel, given whole as the one page the service builds for an export (decision 0165) |
 | 6 | Jobs: long work for the agent | Approved 2026-10-25 |
 | 7 | The engine keeps one conversation | Approved 2026-10-25 |
 | 8 | Sessions that stay fast | Proposed 2026-10-25; the owner decides later ("Decide later"): OpenCode compacts near the whole window, as now |
@@ -103,7 +103,7 @@ an explainer, a report, slides, a diagram. Local: nothing leaves the PC.
   and its formula showed as TeX.
 - **Shown** in VS Code on the left (a webview with its versions, Open in browser, Comment, Send to phone), in the agent
   panel as a card, and on the phone. Pages run with no network: the libraries they may use (charts, math, diagrams)
-  are served by Clank from its own copies, and a page reads only its own folder's files. A page whose data file
+  are Clank's own copies, put inside the page, and a page reads only its own version's files. A page whose data file
   changes (a job writing results, §6) is drawn again.
 - **Comments back**: the owner comments on a version (a note, or a mark on a point of the page, as on a figure);
   they go to the agent as one message naming the version, as LaTeX comments do (design 0020 §11).
@@ -113,7 +113,17 @@ an explainer, a report, slides, a diagram. Local: nothing leaves the PC.
   click on Clank's bar, so VS Code asks the owner in its own modal question, naming the artifact and its version, and
   only **Open in browser** exports the version and opens it (one question at a time, none for 3 seconds after an
   answer). An export carries the webview's content policy before anything else in it: in a browser too it reaches
-  nothing on the network. The page in a sandboxed iframe, which cannot send the bar's messages, comes later.
+  nothing on the network. The question stays now that the page is in a sandboxed frame (below): in the browser the
+  page runs outside any frame.
+- **The page in a sandboxed frame (revised 2026-11-04, decision 0165)**: the panel's document is Clank's alone: its
+  bar, the one call to VS Code's API, and an `<iframe sandbox="allow-scripts">` holding the page. The service builds
+  the page whole, the one an export writes (`GET /agents/artifacts/{workspace}/{name}/page`), and it reaches the frame
+  as its `srcdoc`; the panel loads nothing from disk. In the frame the page has an origin of its own: it reaches
+  neither the panel's document nor VS Code's API, and the panel listens to no message, so only the bar's clicks reach
+  the extension. The frame takes the panel's content policy as well as the page's, so the panel holds itself to the
+  page's, which also lets the page's own scripts and style sheets run as data. The page is drawn as a browser draws
+  it, on white. While it has the focus, VS Code's own keys (Ctrl+P) do not reach VS Code, until a click on the bar or
+  outside the panel.
 
 The libraries are a new dependency of Clank's (front-end files it serves), so they come with a decision record.
 

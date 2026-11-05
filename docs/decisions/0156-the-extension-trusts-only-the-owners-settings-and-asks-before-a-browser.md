@@ -1,6 +1,7 @@
 # 0156. The VS Code extension trusts only the owner's settings and this machine's service, and asks before a browser
 
-- Status: Accepted (the audit of 2026-10-30); revises design 0002 §2.7, design 0004 §5 and design 0021 §5
+- Status: Accepted (the audit of 2026-10-30); revises design 0002 §2.7, design 0004 §5 and design 0021 §5; its guard
+  on Open in browser completed by 0165 (the page in a sandboxed frame)
 - Date: 2026-11-04
 
 ## Context

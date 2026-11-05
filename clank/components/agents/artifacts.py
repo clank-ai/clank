@@ -10,6 +10,10 @@ relative paths (`../results/sweep.json`) still work. A Markdown artifact gets Cl
 `MARKDOWN`: its text rendered by marked, its math by KaTeX), and so does an SVG one (`SVG`); an HTML one is its own
 page.
 
+**A version is shown as one page** (`page`): its files and Clank's libraries inside it, held by its content policy to
+nothing on the network. The same page is what `export` writes for a browser and what VS Code's panel shows in a
+sandboxed frame (decision 0165), so the agent's page never runs where Clank's own code does.
+
 Refused, saying why: a name that is not lowercase letters, digits and dashes; a kind other than html, markdown or svg;
 no file, a file that is not the folder's (or is Clank's own, under `.clank/`, or is reached through a link: every read
 and write of the folder goes through `kernel/infolder.py`, decision 0164), more than `MOST_FILES` files or more than
@@ -51,11 +55,13 @@ TYPES = {
     ".gif": "image/gif", ".webp": "image/webp", ".js": "text/javascript", ".css": "text/css", ".html": "text/html",
     ".woff2": "font/woff2",
 }  # fmt: skip
-# An export's content policy, first in the page (decision 0156): the webview's, but for the webview's own files, which
-# an export has inside it, so in a browser too it reaches nothing on the network, submits no form and moves no base
+# A version's page's content policy, first in it (decisions 0156 and 0165): its files and libraries are inside it
+# (inline, or as data and blob; its own scripts and style sheets as data), so in a browser and in VS Code's frame alike
+# it reaches nothing on the network, submits no form and moves no base. VS Code's panel holds itself to the same policy,
+# which the frame takes as well.
 EXPORT_POLICY = (
-    "default-src 'none'; img-src data: blob:; media-src data: blob:; font-src data:; style-src 'unsafe-inline'; "
-    "script-src 'unsafe-inline' 'unsafe-eval'; connect-src data: blob:; form-action 'none'; base-uri 'none'"
+    "default-src 'none'; img-src data: blob:; media-src data: blob:; font-src data:; style-src 'unsafe-inline' data:; "
+    "script-src 'unsafe-inline' 'unsafe-eval' data:; connect-src data: blob:; form-action 'none'; base-uri 'none'"
 )
 POLICY = f'<meta http-equiv="Content-Security-Policy" content="{EXPORT_POLICY}">'
 DOCTYPE = re.compile(r"\s*<!doctype[^>]*>", re.IGNORECASE)
@@ -269,11 +275,23 @@ class Artifacts:
         )  # fmt: skip
         return {"said": f"Your comment on {name} version {version} was sent to the session that made it."}
 
+    def page(self, workspace: str, name: str, version: int) -> str:
+        """One version as one self-contained page: its libraries inlined (KaTeX's fonts as data), its other files inside
+        it, answered when it fetches them, and its images, scripts, style sheets and links to them as data, its content
+        policy before anything else in it (`EXPORT_POLICY`). It needs nothing else and reaches no network: `export`
+        writes it, and VS Code's panel shows it in a sandboxed frame (decision 0165)."""
+        return self._built(workspace, name, version)[1]
+
     def export(self, workspace: str, name: str, version: int) -> dict[str, Any]:
-        """One version as one self-contained page (`.clank/artifacts/<name>/export/<name>-v<n>.html`): its libraries
-        inlined (KaTeX's fonts as data), its other files inside it, answered when it fetches them, and its images and
-        links to them as data; it opens from disk, in any browser, with no network, which its content policy, before
-        anything else in it, holds it to (`EXPORT_POLICY`)."""
+        """One version's page (`page`) as one file, `.clank/artifacts/<name>/export/<name>-v<n>.html`, which opens from
+        disk in any browser."""
+        home, page = self._built(workspace, name, version)
+        target = home / f"export/{name}-v{version}.html"
+        _write(target, page.encode("utf-8"))
+        return {"file": str(target.path), "said": f"{name} version {version} as one page: {target.path}"}
+
+    def _built(self, workspace: str, name: str, version: int) -> tuple[Place, str]:
+        """The artifact's own folder, and one version's page built (`page`)."""
         kept = self.one(workspace, name)
         made = next((each for each in kept["versions"] if each["version"] == version), None)
         if made is None:
@@ -285,6 +303,9 @@ class Artifacts:
             page = entry_place.read_text(errors="replace")
         except Outside as error:
             raise ArtifactError(str(error)) from error
+        except OSError as error:  # gone since it was made, or no file
+            said = f"{name} version {version} has no page to show: {made['entry']} cannot be read"
+            raise ArtifactError(said) from error
         entry = PurePosixPath(*entry_place.parts[len(root.parts) :]).as_posix()
         entry_dir = posixpath.dirname(entry)
         files = {}
@@ -310,10 +331,7 @@ class Artifacts:
         page = page[: opened.end()] + shim + page[opened.end() :] if opened else shim + page
         declared = DOCTYPE.match(page)  # the policy before anything the page has, but its doctype
         at = declared.end() if declared else 0
-        page = page[:at] + POLICY + page[at:]
-        target = home / f"export/{name}-v{version}.html"
-        _write(target, page.encode("utf-8"))
-        return {"file": str(target.path), "said": f"{name} version {version} as one page: {target.path}"}
+        return home, page[:at] + POLICY + page[at:]
 
     def _folder(self, workspace: str) -> Path:
         workspaces: Workspaces = self.kernel.parts["workspaces"]

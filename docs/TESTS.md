@@ -486,7 +486,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (4), `vscode/test/readout.test.ts` (12), `vscode/test/throttle.test.ts` (2) |
 | 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (3), `vscode/test/conversation.test.ts` (9) |
-| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (16), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (7) |
+| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (19), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (7) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (8), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
@@ -867,7 +867,7 @@ Design 0021 §5: Clank's own MCP server gives the agent `make_artifact(name, tit
 
 ### `tests/components/agents/test_artifacts.py`
 
-Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copies the files the agent named into the artifact's next version (`.clank/artifacts/<name>/v<n>/`), keeping their layout from their common folder, its entry page first; `artifact.json` keeps its title, kind and every version (when, its entry, its files, its note, the session that made it); `agents.artifact_made` is recorded. A Markdown artifact gets Clank's page that renders it with the kept libraries, math included, and so does an SVG one. A name, a kind, a file not the folder's, too many or too large files, an entry page that names the network, or an HTML page that would show broken (a file it reads missing from where it looks, math in dollar signs auto-render would leave as text), are refused, saying why. The owner's comment on a version goes to the session that made it, in one message naming the artifact and its version (through a server that runs in the workspace when the service has not heard from that session since it started), and `agents.artifact_commented` is recorded. An export carries Clank's content policy before anything but its doctype, so it reaches nothing on the network in a browser either (decision 0156).
+Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copies the files the agent named into the artifact's next version (`.clank/artifacts/<name>/v<n>/`), keeping their layout from their common folder, its entry page first; `artifact.json` keeps its title, kind and every version (when, its entry, its files, its note, the session that made it); `agents.artifact_made` is recorded. A Markdown artifact gets Clank's page that renders it with the kept libraries, math included, and so does an SVG one. A name, a kind, a file not the folder's, too many or too large files, an entry page that names the network, or an HTML page that would show broken (a file it reads missing from where it looks, math in dollar signs auto-render would leave as text), are refused, saying why. The owner's comment on a version goes to the session that made it, in one message naming the artifact and its version (through a server that runs in the workspace when the service has not heard from that session since it started), and `agents.artifact_commented` is recorded. An export carries Clank's content policy before anything but its doctype, so it reaches nothing on the network in a browser either (decision 0156). A version is one self-contained page, the one an export writes, and `GET .../page` answers it, with the artifact's title and how many versions it has, for VS Code's panel to show in a sandboxed frame (decision 0165); a page's own scripts and style sheets are inside it as data, which its policy lets run, and a version whose page is gone is refused, saying so.
 
 - making one copies its files as a version keeping their layout and records it
 - a markdown or svg artifact gets clanks page that renders it
@@ -880,6 +880,9 @@ Design 0021 §5: artifacts, pages the agent makes for the owner. Making one copi
 - the routes make list and read artifacts and take the owners comment
 - an export is one file with its libraries and data inside that needs nothing else
 - an export carries the content policy first so it reaches nothing on the network
+- a version is one page which the export writes and the vscode panel shows
+- a pages own scripts and style sheets are inside it as data which its policy lets run
+- the page route answers a version as one page with its title and how many versions it has
 - clank artifact lists a folders artifacts and exports the newest version
 - an export reads and writes only below the version and follows no link
 - a new version is never written through a link

@@ -8,9 +8,11 @@ VS Code window, OpenCode beside the files: an operation (`vscode.py`), since the
 extensions; from a terminal of VS Code's Remote-SSH, the client's `remote` opens it in the other computer's VS Code
 instead (design 0018 §8). The agent's jobs (design 0021 §6): `POST /agents/jobs`, `/agents/jobs/status` and
 `/agents/jobs/stop` (the agent's, through the gateway) and `GET /agents/jobs`; its artifacts (§5): `POST
-/agents/artifacts` (the agent's), `GET /agents/artifacts`, `GET /agents/artifacts/{workspace}/{name}` and `POST
-.../comment` (the owner's, to the session that made the version). `GET /agents/servers` lists the MCP servers of a
-workspace's agent with whether it gets each, and `POST /agents/servers` gives one or takes it away (design 0004 §10).
+/agents/artifacts` (the agent's), `GET /agents/artifacts`, `GET /agents/artifacts/{workspace}/{name}`, `POST
+.../comment` (the owner's, to the session that made the version), `GET .../page` (a version as one page, which VS
+Code's panel shows in a sandboxed frame, decision 0165) and `POST .../export`. `GET /agents/servers` lists the MCP
+servers of a workspace's agent with whether it gets each, and `POST /agents/servers` gives one or takes it away (design
+0004 §10).
 The session bridge's routes (design 0005 §2): `GET /agents/sessions` (the OpenCode servers in a workspace's container,
 their sessions and what waits), a session's messages, one tool call whole (design 0012 §7), sending one, starting a
 session, stopping one, and replying to a permission or a question; the bridge's refusal is a 409 in its own words. The
@@ -856,6 +858,25 @@ def router(agents: "Agents") -> APIRouter:
                 lambda: agents.artifacts.comment(workspace, name, wanted.version, wanted.text, actor=actor)
             )
         except (ArtifactError, SessionError) as error:
+            raise ApiError(409, "refused", str(error)) from error
+        return found
+
+    @routes.get("/agents/artifacts/{workspace}/{name}/page")
+    async def artifact_page(workspace: str, name: str, version: int = 0) -> dict[str, Any]:
+        """One version as one self-contained page (the newest when none is named), the page an export writes: what
+        VS Code's panel shows in its sandboxed frame (decision 0165), with the artifact's title and how many versions
+        it has."""
+
+        def shown() -> dict[str, Any]:
+            kept = agents.artifacts.one(workspace, name)
+            number = version or len(kept["versions"])
+            html = agents.artifacts.page(workspace, name, number)
+            return {"name": name, "title": str(kept.get("title") or name), "kind": str(kept.get("kind") or "html"),
+                    "version": number, "versions": len(kept["versions"]), "html": html}  # fmt: skip
+
+        try:
+            found: dict[str, Any] = await anyio.to_thread.run_sync(shown)
+        except ArtifactError as error:
             raise ApiError(409, "refused", str(error)) from error
         return found
 

@@ -8,7 +8,10 @@ looks, math in dollar signs auto-render would leave as text), are refused, sayin
 version goes to the session that made it, in one message naming the artifact and its version (through a server that
 runs in the workspace when the service has not heard from that session since it started), and
 `agents.artifact_commented` is recorded. An export carries Clank's content policy before anything but its doctype, so
-it reaches nothing on the network in a browser either (decision 0156)."""
+it reaches nothing on the network in a browser either (decision 0156). A version is one self-contained page, the one an
+export writes, and `GET .../page` answers it, with the artifact's title and how many versions it has, for VS Code's
+panel to show in a sandboxed frame (decision 0165); a page's own scripts and style sheets are inside it as data, which
+its policy lets run, and a version whose page is gone is refused, saying so."""
 
 import json
 import os
@@ -273,11 +276,79 @@ def test_an_export_carries_the_content_policy_first_so_it_reaches_nothing_on_the
     policy = page[len(first) :].split('"', 1)[0]
     assert "default-src 'none'" in policy
     assert "connect-src data: blob:;" in policy, "its own files are answered inside it: nothing is fetched"
-    assert "script-src 'unsafe-inline' 'unsafe-eval';" in policy, "its libraries run inside it, as in VS Code"
+    assert "script-src 'unsafe-inline' 'unsafe-eval' data:;" in policy, "its libraries and scripts run inside it"
     assert "form-action 'none'" in policy
     assert not any(each in policy for each in ("http", "*", "'self'")), "no address at all"
     assert "Plotly" in page, "its libraries still inside it"
     assert "window.fetch" in page, "and its files, answered when it fetches them"
+
+
+def test_a_version_is_one_page_which_the_export_writes_and_the_vscode_panel_shows(kernel: Kernel, folder: Path) -> None:
+    artifacts = artifacts_of(kernel)
+    artifacts.make("paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"])
+    page = artifacts.page("paper", "sweep", 1)
+    assert page.startswith('<!doctype html><meta http-equiv="Content-Security-Policy" content="'), "its policy first"
+    assert "clank-lib/" not in page, "its libraries are inside it"
+    assert "Plotly" in page
+    assert "results/sweep.json" in page, "its data file is inside it, answered when the page fetches it"
+    assert "window.fetch" in page
+    exported = Path(artifacts.export("paper", "sweep", 1)["file"])
+    assert exported.read_bytes() == page.encode("utf-8"), "the export writes that same page"
+    with pytest.raises(ArtifactError, match="has no version 2"):
+        artifacts.page("paper", "sweep", 2)
+
+
+def test_a_pages_own_scripts_and_style_sheets_are_inside_it_as_data_which_its_policy_lets_run(
+    kernel: Kernel, folder: Path
+) -> None:
+    (folder / "report" / "app.js").write_text("document.title = 'drawn';", encoding="utf-8")
+    (folder / "report" / "style.css").write_text("body { margin: 0; }", encoding="utf-8")
+    (folder / "report" / "own.html").write_text(
+        '<!doctype html><html><head><link rel="stylesheet" href="style.css"><script defer src="app.js"></script>'
+        "</head><body><p>Own files</p></body></html>",
+        encoding="utf-8",
+    )
+    artifacts = artifacts_of(kernel)
+    artifacts.make("paper", "own", "Own files", "html", ["report/own.html", "report/app.js", "report/style.css"])
+    page = artifacts.page("paper", "own", 1)
+    assert '<script defer src="data:text/javascript;base64,' in page, "its script as data, loaded as it was"
+    assert '<link rel="stylesheet" href="data:text/css;base64,' in page
+    policy = page.split('content="', 1)[1].split('"', 1)[0]
+    directives = {each.split()[0]: each.split()[1:] for each in policy.split(";") if each.strip()}
+    assert "data:" in directives["script-src"], "a script as data runs: inline ones already do"
+    assert "data:" in directives["style-src"]
+    assert "data:" not in directives["default-src"], "and nothing else is let in"
+
+
+def test_the_page_route_answers_a_version_as_one_page_with_its_title_and_how_many_versions_it_has(
+    kernel: Kernel, folder: Path
+) -> None:
+    from fastapi.testclient import TestClient
+
+    from clank.kernel.api import create_app
+
+    artifacts = artifacts_of(kernel)
+    for _ in range(2):
+        artifacts.make("paper", "sweep", "Sweep results", "html", ["report/index.html", "results/sweep.json"])
+    headers = {"Authorization": "Bearer t"}
+    route = "/api/v1/agents/artifacts/paper/sweep/page"
+    with TestClient(create_app(kernel, token="t", port=7727), base_url="http://127.0.0.1:7727") as http:
+        first = http.get(route, params={"version": 1}, headers=headers).json()
+        newest = http.get(route, headers=headers).json()
+        missing = http.get(route, params={"version": 3}, headers=headers)
+        unknown = http.get("/api/v1/agents/artifacts/paper/nothing/page", headers=headers)
+        (folder / ".clank/artifacts/sweep/v2/report/index.html").unlink()
+        gone = http.get(route, params={"version": 2}, headers=headers)
+    shown = {key: first[key] for key in ("name", "title", "kind", "version", "versions")}
+    assert shown == {"name": "sweep", "title": "Sweep results", "kind": "html", "version": 1, "versions": 2}
+    assert first["html"] == artifacts.page("paper", "sweep", 1), "the page an export writes"
+    assert newest["version"] == 2, "the newest when no version is named"
+    assert missing.status_code == 409
+    assert "has no version 3" in missing.json()["error"]["message"]
+    assert unknown.status_code == 409
+    assert "has no artifact 'nothing'" in unknown.json()["error"]["message"]
+    assert gone.status_code == 409
+    assert "has no page to show" in gone.json()["error"]["message"], "a version whose page is gone, said"
 
 
 def test_clank_artifact_lists_a_folders_artifacts_and_exports_the_newest_version(
