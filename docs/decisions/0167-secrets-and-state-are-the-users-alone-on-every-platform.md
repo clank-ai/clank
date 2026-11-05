@@ -11,10 +11,9 @@
   an MCP server's keys), and `CLANK_HOME/state/` holds the local token that opens Clank's API and the state database.
   Design 0001 §7.2 and design 0002 §2.8 say they are readable only by the user.
 - `Home.ensure` made each one mode 0700. That holds them to their user on Linux and macOS, but Windows ignores a
-  file's mode: a folder takes the access list of the folder above it. Under the user's profile that is usually the
-  user, SYSTEM and Administrators, but a profile's list is whatever was granted on it (an account a tool's sandbox
-  runs as, for one), and a CLANK_HOME outside the profile (`D:\clank`) takes the drive's, which lets every signed-in
-  user read.
+  folder's mode: a folder takes the access list of the folder above it, the profile's, or the drive's for a CLANK_HOME
+  outside the profile (`D:\clank`). Who could open the two folders on Windows was then set by those lists, which
+  Clank neither sets nor reads, and not by Clank.
 - `clank doctor` did not look at who may open them.
 
 ## Decision
@@ -48,9 +47,9 @@
 - **Python's own `mkdir(mode=0o700)`**, which since 3.13 (and in the 3.12 releases with its fix) gives a new folder a
   protected list: it applies only when the folder is made, never to a folder already there (every existing
   CLANK_HOME), its list keeps Administrators, and it depends on the Python release.
-- **Keep Administrators in the list**, as the profile's own list does: an administrator can still take a folder's
-  ownership, but leaving the group out means a program run by another administrator account cannot read the keys
-  without doing that first. The owner's own account is in the list by its SID whether or not it is an administrator.
+- **Keep Administrators in the list**, as the profile's own list does: the owner's own account is in the list by its
+  SID whether or not it is an administrator, and SYSTEM covers Windows' own work, so the group would add only other
+  accounts; the list names the user and SYSTEM alone, as mode 0700 names the user alone elsewhere.
 - **Encrypt the secrets** (Windows' DPAPI): it would keep the keys from other accounts, but not the local token, which
   every client (the console, the commands, VS Code's extension) reads as a file, nor the state database; an access
   list covers both folders alike.
@@ -59,9 +58,10 @@
 
 ## Consequences
 
-- secrets/ and state/ are the user's alone on Windows wherever CLANK_HOME is, from the first start of this version on.
-  An account another tool runs as, granted access to the profile or to CLANK_HOME, no longer reads them, the local
-  token among them, so such a tool no longer reaches Clank's API on its own.
+- From the first start of this version on, secrets/ and state/ (the local token among them) can be opened on Windows
+  only by the user Clank runs as and by SYSTEM, wherever CLANK_HOME is and whatever the folders above it allow. An
+  entry added to either list by hand lasts until the service's next start, which puts the list right; the doctor
+  names it meanwhile.
 - A CLANK_HOME on a drive that keeps no access lists (FAT, exFAT) or a share that refuses them stops Clank at its start,
   saying why, as a failed `chmod` does on Linux.
 - The other folders of CLANK_HOME (config/, logs/, library/, artifacts/) keep what they inherit, as before.
