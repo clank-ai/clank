@@ -380,6 +380,9 @@ class FakePresenter implements Presenter {
     const wanted = this.picks.shift();
     return items.find((item) => item.label === wanted)?.value;
   }
+  async input(): Promise<string | undefined> {
+    return undefined;
+  }
   info(): void {}
   warn(): void {}
 }

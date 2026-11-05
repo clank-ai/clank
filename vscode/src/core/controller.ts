@@ -24,7 +24,7 @@ import { ClankError, NotRunning } from "./client";
 import type { Completer } from "./completion";
 import type { ServerEvent } from "./events";
 import { aboutFlow, type Gates } from "./gates";
-import type { Question, SlotRecord } from "./kinds";
+import type { Asked, Question, SlotRecord } from "./kinds";
 import type { NotionReviews } from "./notion";
 import type { Presenter } from "./presenter";
 import { markedUp, shown } from "./show";
@@ -418,9 +418,20 @@ export class Controller {
     }
   }
 
+  /** Answer with the option chosen; one that asks for a number (decision 0114) takes it in a box that checks it as the
+   * service does, and Escape there sends nothing, so the question still waits. */
   private async answer(api: Api, question: Question, option: string): Promise<void> {
+    const chosen = question.options.find((each) => each.id === option);
+    const asks = chosen?.asks;
+    let text: string | undefined;
+    if (chosen !== undefined && asks) {
+      text = await this.presenter.input(askedPrompt(chosen.label, asks), (typed) => numberProblem(asks, typed));
+      if (text === undefined) {
+        return;
+      }
+    }
     try {
-      await api.post(`questions/${question.id}/answer`, { option });
+      await api.post(`questions/${question.id}/answer`, text === undefined ? { option } : { option, text: text.trim() });
     } catch (error) {
       this.presenter.warn(words(error));
     }
@@ -514,4 +525,35 @@ function describe(question: Question): string {
 
 function words(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** A number as the owner reads it: 100,000 and 5.03. */
+function amount(value: number): string {
+  return value.toLocaleString("en-US", { maximumFractionDigits: 10 });
+}
+
+/** What the box asks for an option that asks for a number: its label, its bounds and unit, and its step. */
+export function askedPrompt(label: string, asks: Asked): string {
+  const unit = asks.unit ? ` ${asks.unit}` : "";
+  const step = asks.step ? `, in steps of ${amount(asks.step)}` : "";
+  return `${label}: a number between ${amount(asks.min)} and ${amount(asks.max)}${unit}${step}`;
+}
+
+/** What is wrong with a text as the number an option asks for (the service's own check, kernel/questions.py), or
+ * undefined. */
+export function numberProblem(asks: Asked, text: string): string | undefined {
+  const bounds = `a number between ${amount(asks.min)} and ${amount(asks.max)}${asks.unit ? ` ${asks.unit}` : ""}`;
+  const typed = text.trim();
+  const plain = typed.replace(/^\$/, "").replaceAll(",", "");
+  const value = Number(plain);
+  if (plain === "" || !Number.isFinite(value)) {
+    return bounds;
+  }
+  if (value < asks.min || value > asks.max) {
+    return `${bounds}, not ${typed}`;
+  }
+  if (asks.step && Math.abs(value / asks.step - Math.round(value / asks.step)) > 1e-6) {
+    return `a number in steps of ${amount(asks.step)}, not ${typed}`;
+  }
+  return undefined;
 }

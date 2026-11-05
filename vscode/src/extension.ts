@@ -133,6 +133,10 @@ class VsCodePresenter implements Presenter {
     return chosen?.value;
   }
 
+  async input(prompt: string, problem: (text: string) => string | undefined): Promise<string | undefined> {
+    return vscode.window.showInputBox({ prompt, ignoreFocusOut: true, validateInput: (text) => problem(text) });
+  }
+
   info(text: string): void {
     void vscode.window.showInformationMessage(`Clank: ${text}`);
   }

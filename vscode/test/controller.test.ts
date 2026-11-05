@@ -176,6 +176,15 @@ class FakePresenter implements Presenter {
     return this.chosen;
   }
 
+  typed: string[] = []; // what the owner types into each box asked for, in turn (none: Escape)
+  boxes: Array<{ prompt: string; problems: Array<string | undefined> }> = [];
+
+  async input(prompt: string, problem: (text: string) => string | undefined): Promise<string | undefined> {
+    const text = this.typed.shift();
+    this.boxes.push({ prompt, problems: ["", "abc", "5.02", "5.031", "12.50"].map(problem) });
+    return text;
+  }
+
   offered: Array<{ label: string; detail?: string }> = [];
 
   async pick<T>(items: Array<{ label: string; detail?: string; value: T }>): Promise<T | undefined> {
@@ -394,6 +403,42 @@ test("Switch model picks a preset and switches the main slot with a request key"
   assert.deepEqual(api.posts, [{ path: "runtime/slots/main/switch", body: { preset: "daily-262k" }, key: "key-1" }]);
   assert.deepEqual(presenter.told, ["Switching main to daily 262K; the status bar follows it."]);
   running.stop();
+});
+
+test("an option that asks for a number takes it in a box that checks its bounds, and Escape leaves it waiting", async () => {
+  const limit: Question = {
+    ...question("q-7", "Cloud spending reached today's limit of $5.00 ($5.02 spent): raise it?"),
+    options: [
+      { id: "double", label: "Raise today's limit to $10.00", effect: "", key: "y", asks: null },
+      { id: "raise", label: "Raise it to …", effect: "raise it to the amount you give", key: "r",
+        asks: { kind: "number", unit: "USD", min: 5.03, max: 100000, step: 0.01 } },
+      { id: "keep", label: "Keep the cloud paused", effect: "", key: "n", asks: null },
+    ],
+  };  // prettier-ignore
+  const api = new FakeApi();
+  const presenter = new FakePresenter();
+  presenter.chosen = "raise";
+  presenter.typed.push("12.50");
+  const running = controller(api, presenter);
+  running.start();
+  try {
+    await until(() => presenter.clankText.includes("Clank"));
+    api.questions = [limit];
+    api.send({ name: "question.asked", id: 44, data: { subject: { kind: "question", id: "q-7" } } });
+    await until(() => api.posts.length === 1);
+    assert.deepEqual(api.posts[0], { path: "questions/q-7/answer", body: { option: "raise", text: "12.50" }, key: undefined });
+    const [box] = presenter.boxes;
+    assert.equal(box?.prompt, "Raise it to …: a number between 5.03 and 100,000 USD, in steps of 0.01");
+    assert.deepEqual(box?.problems, [
+      "a number between 5.03 and 100,000 USD", "a number between 5.03 and 100,000 USD",
+      "a number between 5.03 and 100,000 USD, not 5.02", "a number in steps of 0.01, not 5.031", undefined,
+    ]);  // prettier-ignore
+    presenter.picks.push(limit.title, "Raise it to …");
+    await running.questions(); // Escape in the box: nothing is sent, and the question still waits
+    assert.equal(api.posts.length, 1);
+  } finally {
+    running.stop();
+  }
 });
 
 test("clicking the Clank item answers the questions when some wait, else switches the model", async () => {

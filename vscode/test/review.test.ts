@@ -368,6 +368,7 @@ test("the controller gives a question about a change to the review, not to a not
       return undefined;
     },
     pick: async () => undefined,
+    input: async () => undefined,
     info: () => undefined,
     warn: () => undefined,
   };

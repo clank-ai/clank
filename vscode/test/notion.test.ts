@@ -328,6 +328,7 @@ test("through the controller, the batches are read on connecting, followed with 
     docker: () => undefined,
     ask: async () => undefined,
     pick: async () => undefined,
+    input: async () => undefined,
     info: () => undefined,
     warn: () => undefined,
   };
