@@ -177,6 +177,10 @@ log = logging.getLogger(__name__)
 CLANK_SERVER = "clank"  # Clank's own MCP server, given to every agent: send_to_phone (design 0005 §3)
 NOTION_PREFIX = "clank_notion_"  # Clank's Notion tools, as OpenCode names them: never to the cloud (design 0016 §10)
 LOCAL_ONLY = "held back: local only, it never goes to the cloud model"
+# A server of yours with secrets that a running OpenCode does not know: its values reach OpenCode in its own environment
+# alone, as it starts (design 0002 §2.8), so it is never added live with them.
+SECRETS_AT_START = "its secret values reach OpenCode only in its environment, as it starts: the agent gets it then"
+UNKNOWN_TO_IT = "is not one of this agent's MCP servers"  # the bridge's words for a server its OpenCode does not know
 # Its tools that only read, which the planner may use (design 0010 §4): Notion's reading, never its proposals; and
 # finding figures and opening files for the owner to see (design 0018 §7).
 CLANK_READ_ONLY = (
@@ -190,6 +194,12 @@ STATES = {  # OpenCode's word for an MCP server's state, as the MCP servers page
     "connected": "running", "disabled": "stopped", "failed": "failed", "needs_auth": "needs sign-in",
     "needs_client_registration": "needs sign-in",
 }  # fmt: skip
+
+
+def secret_names(view: dict[str, Any]) -> list[str]:
+    """The names of the secret values one of your servers carries (its environment variables, then its headers), as
+    the tools component shows the server; none for a server without."""
+    return [*view.get("env", []), *view.get("headers", [])]
 
 
 def limits(model: AgentModel) -> dict[str, int]:
@@ -558,7 +568,7 @@ class Agents:
         model, notes = self._model(workspace)
         notes += workspaces.reach(workspace)
         notes += adapter.env_said(model)
-        servers = self._given(workspace, model.key)
+        servers, secret_env = adapter.by_reference(self._given(workspace, model.key), self._owners())
         self._write_agent(workspace, adapter, model, servers, container)
         with self._notices_lock:  # its configuration has the model's limits now: nothing more to tell its window
             self._notices.pop(workspace, None)
@@ -568,7 +578,7 @@ class Agents:
             windows = "the OpenCode window" if closed == 1 else f"the {closed} OpenCode windows"
             notes.append(f"closed {windows} open in {workspace} first: one at a time (w on This folder changes that)")
         port = self._port(workspace, notes)
-        env = {**adapter.env(model), **workspaces.agent_env(workspace)}
+        env = {**adapter.env(model), **workspaces.agent_env(workspace), **secret_env}
         argv = workspaces.exec_argv(workspace, adapter.argv(port), env, container=container)
         if port is not None:
             for told in list(self._prepared):
@@ -598,14 +608,16 @@ class Agents:
 
     def configure(self, workspace: str, program: str = "opencode") -> dict[str, str]:
         """Write the program's configuration (the model, the MCP servers it gets) as `prepare` does, for one started
-        without a terminal (design 0005 §2), the edge put right first as there; the environment it runs with."""
+        without a terminal (design 0005 §2), the edge put right first as there; the environment it runs with, the
+        values of your servers' secrets included (the configuration names them: design 0002 §2.8)."""
         workspaces: Workspaces = self.kernel.parts["workspaces"]
         adapter = self._adapter(program)
         model, _ = self._model(workspace)
         container = workspaces.container_of(workspace)  # refused first when its container does not run
         workspaces.reach(workspace)
-        self._write_agent(workspace, adapter, model, self._given(workspace, model.key), container)
-        return self.agent_env(workspace, program, model)
+        servers, secret_env = adapter.by_reference(self._given(workspace, model.key), self._owners())
+        self._write_agent(workspace, adapter, model, servers, container)
+        return {**self.agent_env(workspace, program, model), **secret_env}
 
     def dev_mode(self) -> bool:
         """Whether dev mode is on, as the runtime's settings say now (decisions 0149 and 0152): OpenCode may then fetch
@@ -736,17 +748,21 @@ class Agents:
 
     def switch(self, workspace: str, name: str, on: bool, *, actor: Actor) -> dict[str, Any]:
         """Start an MCP server for the workspace's agent or stop it: given or taken away for its next start, and
-        connected or disconnected now in the agents that run (`applied`: now, or at the agent's next start)."""
+        connected or disconnected now in the agents that run (`applied`: now, or at the agent's next start). One of
+        yours with secrets is connected only in an agent that knows it already, its values in OpenCode's environment
+        since it started; no entry with its values is sent to one that does not (design 0002 §2.8)."""
         row = self.allow(workspace, name, on, actor=actor)
         if on and not row["given"]:
             return {**row, "applied": "", "problem": row["why"]}
         config: dict[str, Any] = {}
-        if on:
+        secret = on and name in self._with_secrets()  # never added live: no entry, so no value, goes to OpenCode
+        if on and not secret:
             config = dict(self._adapter("opencode").server_entry(self._given(workspace)[name]))
         try:
             count = self.sessions.mcp_switch(workspace, name, on, config, actor=actor)
         except SessionError as error:
-            return {**row, "applied": "at the agent's next start", "problem": str(error)}
+            problem = SECRETS_AT_START if secret and UNKNOWN_TO_IT in str(error) else str(error)
+            return {**row, "applied": "at the agent's next start", "problem": problem}
         return {**row, "applied": "now" if count else "at the agent's next start", "problem": ""}
 
     def box_tools(self, workspace: str, port: int, wanted: list[str] | None) -> dict[str, Any]:
@@ -769,12 +785,16 @@ class Agents:
         stopped: list[str] = []
         said: dict[str, str] = {}  # what the bridge said of one it could not connect or disconnect
         entries: dict[str, Server] | None = None
+        secret = self._with_secrets()
         for name in sorted(given | set(state)):
             connected = state.get(name, {}).get("status") == "connected"
             on = name in chosen
             if on == connected:
                 continue
             config: dict[str, Any] = {}
+            if on and name not in state and name in secret:  # its values reach OpenCode as it starts, never live
+                said[name] = SECRETS_AT_START
+                continue
             if on and name not in state:  # not in its configuration: added with its entry
                 entries = entries if entries is not None else self._given(workspace)
                 config = dict(self._adapter("opencode").server_entry(entries[name]))
@@ -841,6 +861,17 @@ class Agents:
             else:
                 given[row["name"]] = tools.runnable(row["name"], folder, row["scope"], why=f"the agent of {workspace}")
         return given
+
+    def _owners(self) -> set[str]:
+        """Your own MCP servers (`clank mcp add`), by name: the values of their environment are secrets, which their
+        entries in the agent's configuration name and never hold (design 0002 §2.8)."""
+        tools: Tools = self.kernel.parts["tools"]
+        return {view["name"] for view in tools.servers() if view["scope"] == "user"}
+
+    def _with_secrets(self) -> set[str]:
+        """Those of your own MCP servers that carry secret values: an environment variable or a header."""
+        tools: Tools = self.kernel.parts["tools"]
+        return {view["name"] for view in tools.servers() if view["scope"] == "user" and secret_names(view)}
 
     def _read_only(self, workspace: str) -> dict[str, list[str]]:
         """Each server the agent gets, with the tools its last check marks read-only: all the planner may use of it

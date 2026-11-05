@@ -11,7 +11,14 @@ allowed (decision 0152). OpenCode runs offline: no updates, no fetch of its list
 servers, no default plugins, no sharing, no reading of another assistant's files, and no file watcher (slow across
 Docker's mount of a Windows folder). These choices were measured with OpenCode in the prototype's sandbox
 (PROTOTYPE.md); its version is the image's. The MCP servers it gets (design 0004 §10) are its `mcp`, each a `local`
-command it starts in the container with its environment; OpenCode reads no `.mcp.json` of its own. It asks before
+command it starts in the container with its environment; OpenCode reads no `.mcp.json` of its own. The secret values of
+the owner's own servers are never in that file (design 0002 §2.8, decision 0168): each is `{env:NAME}`, which OpenCode
+reads as the variable NAME of its own environment as it loads the file (its `ConfigVariable.substitute`), NAME being
+Clank's own for the server and variable (`secret_variable`), given to OpenCode as it starts (`by_reference`). OpenCode
+puts the variable's text into the file's text before it reads it as JSON, so the variable holds the value as JSON
+writes it inside a string, `{` written `\\u007b` so that no other of its references (`{file:...}`) can appear; it reads
+back the exact value. OpenCode starts each local server with its own whole environment and the entry's over it (its
+`MCP.connectLocal`, read in its 1.18 binary), so a server and the agent's shell see every such variable. It asks before
 every change to a file (`edit: ask`): Clank answers, after the owner's review or at once in auto mode (design 0007 §3).
 
 Its agents are OpenCode's `build`, and Clank's `planner` in place of OpenCode's `plan` (design 0009 §3, decision 0038),
@@ -44,9 +51,10 @@ lines or 51,200 bytes, the rest saved to a file (its `Truncate`), which the marg
 and its answer's room past the window, and KVMem refused it.
 """
 
+import dataclasses
 import json
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from importlib import resources
 from typing import Any
 
@@ -79,6 +87,22 @@ OUTPUT_COUNTED = 32_000  # OpenCode's own cap on an answer (its OUTPUT_TOKEN_MAX
 OUTPUT_VARIABLE = "OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX"  # set to an output limit above that cap (decision 0153)
 KEPT_MOST, KEPT_LEAST = 15_000, 2_000  # what a compaction keeps of the newest turns, at most and at least
 UNSAFE = re.compile(r"[^a-zA-Z0-9_-]")  # what OpenCode replaces in an MCP tool's name
+NOT_IN_A_NAME = re.compile(r"[^A-Za-z0-9_]")  # what a variable of Clank's own (`secret_variable`) has in place: `_`
+SECRET_PREFIX = "CLANK_MCP_"
+
+
+def secret_variable(server: str, key: str) -> str:
+    """The variable of OpenCode's environment that holds the value of one of a server's own variables (decision 0168):
+    `CLANK_MCP_<SERVER>__<KEY>`, the server's name in capitals, any other character than a letter, a digit or `_`
+    made `_`."""
+    return f"{SECRET_PREFIX}{NOT_IN_A_NAME.sub('_', server).upper()}__{NOT_IN_A_NAME.sub('_', key)}"
+
+
+def as_read_back(value: str) -> str:
+    """A value as the variable is to hold it, so that OpenCode, putting the variable's text into its configuration's
+    JSON as it is, reads back the exact value: escaped as JSON escapes a string's inside, and `{` written `\\u007b`,
+    so the text makes no other reference of OpenCode's."""
+    return json.dumps(value, ensure_ascii=False)[1:-1].replace("{", "\\u007b")
 
 
 def counted_output(output: int) -> int:
@@ -252,6 +276,28 @@ class OpenCode(AgentProgram):
         if servers:
             config["mcp"] = {name: self.server_entry(server) for name, server in sorted(servers.items())}
         return f"{self.HOME}/.config/opencode/opencode.json", json.dumps(config, indent=2) + "\n"
+
+    def by_reference(
+        self, servers: Mapping[str, Server], secret: Collection[str]
+    ) -> tuple[dict[str, Server], dict[str, str]]:
+        """Each server named in `secret` with every value of its environment made `{env:NAME}`, and each NAME with its
+        value as OpenCode reads it back (`secret_variable`, `as_read_back`); the other servers as they are. Two names
+        that would be the same once made a variable's are kept apart by a `_` more."""
+        named: dict[str, Server] = {}
+        env: dict[str, str] = {}
+        for name, server in sorted(servers.items()):
+            if name not in secret:
+                named[name] = server
+                continue
+            environment: dict[str, str] = {}
+            for key, value in server.env.items():
+                variable = secret_variable(name, key)
+                while variable in env:
+                    variable += "_"
+                env[variable] = as_read_back(value)
+                environment[key] = f"{{env:{variable}}}"
+            named[name] = dataclasses.replace(server, env=environment)
+        return named, env
 
     def server_entry(self, server: Server) -> dict[str, object]:
         """A local command with its environment, started with the agent."""

@@ -5,7 +5,9 @@ limits), and a window never is. A box's MCP servers are connected on the flow's 
 disconnected there, Clank's own always kept (it carries the flow's tools), the window's left as they are, a box naming
 none (or an empty list) getting every one the workspace's agent gets; a server the workspace's agent does not get is
 refused, saying why, while one the bridge fails to connect or disconnect is said and the others still change. Run
-against the fake bridge (`tests/fakes/bridge.py`), with no container and no OpenCode."""
+against the fake bridge (`tests/fakes/bridge.py`), with no container and no OpenCode.
+
+Design 0002 §2.8: one of your servers with secrets that the flow's server does not know is not added to it live."""
 
 import json
 from collections.abc import Iterator
@@ -14,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from clank import registry
-from clank.components.agents.service import AgentError, Agents, SessionError
+from clank.components.agents.service import SECRETS_AT_START, AgentError, Agents, SessionError
 from clank.components.workspaces import service as workspaces_service
 from clank.components.workspaces.sandbox import names
 from clank.kernel.clock import FakeClock
@@ -187,3 +189,17 @@ def test_an_mcp_server_the_workspaces_agent_does_not_get_is_refused_saying_why(
     with pytest.raises(AgentError, match="nowhere, which paper's agent does not get: it is no MCP server"):
         agents(kernel).box_tools("paper", served, ["nowhere"])
     assert (bridge.done("mcp-start"), bridge.done("mcp-stop")) == ([], []), "nothing changed"
+
+
+def test_a_server_of_yours_with_secrets_the_flows_server_does_not_know_is_not_added_there_with_its_values(
+    kernel: Kernel, bridge: FakeBridge
+) -> None:
+    """Design 0002 §2.8: its values reach OpenCode in its own environment, as it starts, so a server given after the
+    flow's server started gets it at that server's next start, said, and no entry goes to it now."""
+    served = agents(kernel).sessions.serve("paper", agents(kernel).configure("paper"))
+    tools = kernel.parts["tools"]
+    tools.add("notes", {"command": "notes-mcp", "env": {"KEY": "k1-value"}}, scope="user", folder="", actor=OWNER)
+    found = agents(kernel).box_tools("paper", served, None)
+    assert found["failed"] == {"notes": SECRETS_AT_START}
+    assert found["connected"] == ["clank"]
+    assert bridge.done("mcp-start") == [], "no entry, so no value, sent to the running server"

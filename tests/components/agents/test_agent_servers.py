@@ -2,7 +2,8 @@
 every workspace's agent unless held back from one; a folder's own (its `.mcp.json`) are offered, never trusted: given
 once allowed for that workspace, and not given again after their entry changes until allowed again. A server reached by
 address is not given (the container reaches nothing but the model). The agent's configuration carries the servers it
-gets, each a local command run in the container with its environment (secrets included); the agent runs with as many
+gets, each a local command run in the container with its environment, your servers' secrets named there and their
+values in OpenCode's own environment (design 0002 §2.8); the agent runs with as many
 threads as its container's CPUs. A workspace's server is checked where it runs: in the workspace's container, through
 `docker exec` without a terminal. Design 0009 §3: the planner gets the tools a server's last check marks read-only.
 Design 0013 §15: it gets `flow_draft` too, since the planning session that drafts a flow is the planner's; and
@@ -98,7 +99,8 @@ def test_your_servers_are_given_and_the_folders_only_once_allowed(
                   "environment": {"CLANK_GATEWAY": "http://edge:18210/v1", "CLANK_WORKSPACE_NAME": "paper",
                                   "CLANK_GATEWAY_KEY": key},
                   "enabled": True},
-        "notes": {"type": "local", "command": ["notes-mcp", "--quiet"], "environment": {"KEY": "k1"}, "enabled": True},
+        "notes": {"type": "local", "command": ["notes-mcp", "--quiet"],
+                  "environment": {"KEY": "{env:CLANK_MCP_NOTES__KEY}"}, "enabled": True},
         "myproject": {"type": "local", "command": ["myproject-mcp"], "environment": {}, "enabled": True},
     }  # fmt: skip
 

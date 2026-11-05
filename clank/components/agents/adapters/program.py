@@ -7,7 +7,9 @@ workspace's folder. Its adapter says the command that starts it in a terminal (`
 configuration for a model (`configuration`): the file's path in the container's home (never in the
 user's folder) and its text, for a model reached at a URL (the gateway, through the edge), named as the gateway routes
 it (a role, decision 0008), with that model's limits, so the program knows when to compact a conversation, and the MCP
-servers it gets (design 0004 §10), each a command it starts in the container. The program
+servers it gets (design 0004 §10), each a command it starts in the container. The secret values of the owner's own
+servers are never in that file (design 0002 §2.8): `by_reference` names a variable of the program's own environment
+for each, and gives the variables' values, which reach the program as it starts. The program
 runs in the container, not on this machine, so there is nothing of it to record here (`RECORDED = False`); the image
 pins its version. It says when it compacts a conversation for a model's limits, and what a compaction keeps
 (`compaction`), so the Monitor shows how much is left before it does (design 0012 §4.1).
@@ -19,7 +21,7 @@ engine's (decision 0089).
 """
 
 from abc import abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -83,6 +85,14 @@ class AgentProgram(Adapter):
     @abstractmethod
     def server_entry(self, server: Server) -> dict[str, object]:
         """An MCP server as its configuration names one (started by a command in the container)."""
+
+    def by_reference(
+        self, servers: Mapping[str, Server], secret: Collection[str]
+    ) -> tuple[dict[str, Server], dict[str, str]]:
+        """The servers as its configuration is to name them, each named in `secret` with every value of its environment
+        replaced by a reference to a variable of the program's own environment, and those variables with their values
+        (design 0002 §2.8). By default a program has no such reference: those servers with values are left out."""
+        return {name: server for name, server in servers.items() if name not in secret or not server.env}, {}
 
     @abstractmethod
     def configuration(
