@@ -17,6 +17,7 @@ anything, and a refusal with its kind, so the phone's checkup can say which devi
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
 from importlib import resources
 from typing import TYPE_CHECKING, Any
 
@@ -25,7 +26,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
-from clank.components.remote.devices import TTL_DAYS, PairingError
+from clank.components.remote.devices import SEEN_MINUTES, PairingError
 from clank.components.remote.flowsapi import flow_routes
 from clank.components.remote.icon import icon_png
 from clank.components.remote.outbox import SAVED, disposition, served_type
@@ -37,6 +38,9 @@ if TYPE_CHECKING:
     from clank.components.remote.service import Remote
 
 COOKIE = "clank_device"
+# The cookie's own life in the browser, the most browsers keep: the device lapses on the server, `TTL_DAYS` unused,
+# so the browser must never drop it first; it is sent again each time the device is renewed (design 0025 §2)
+COOKIE_DAYS = 400
 STREAM_PATH = "/api/stream"  # the live stream (design 0025 §3), logged as one line
 STREAM_PATHS = (STREAM_PATH, CONVERSATION_STREAM_PATH)  # the streams: each logged as one line, never read whole
 ACTION_HEADER = "x-clank-phone"
@@ -114,6 +118,11 @@ def page(name: str) -> bytes:
     return resources.files("clank.components.remote").joinpath("page", name).read_bytes()
 
 
+def keep_cookie(response: Response, token: str) -> None:
+    """Give the device its cookie: for `COOKIE_DAYS`, never to scripts, only over HTTPS, never to another site."""
+    response.set_cookie(COOKIE, token, max_age=COOKIE_DAYS * 86400, httponly=True, secure=True, samesite="strict")
+
+
 def create_phone_app(remote: "Remote") -> FastAPI:
     """The phone's app, over the remote component's part."""
     from clank.components.agents.service import AgentError, SessionError
@@ -135,11 +144,15 @@ def create_phone_app(remote: "Remote") -> FastAPI:
         return login
 
     def device_of(request: Request) -> Actor:
-        """The paired device asking, as the history names it (and the record of the exchange); or refused."""
-        found = remote.devices.device(request.cookies.get(COOKIE, ""), login_of(request))
+        """The paired device asking, as the history names it (and the record of the exchange); or refused. A device
+        renewed by this request (last seen more than `SEEN_MINUTES` ago) gets its cookie again, for as long."""
+        token = request.cookies.get(COOKIE, "")
+        found = remote.devices.device(token, login_of(request))
         if found is None:
             raise HTTPException(401, "pair this device first: a code from the computer (Clank's console, F9, p)")
         request.state.device = (found.id, found.name)
+        if remote.kernel.clock.now() - found.last_seen > timedelta(minutes=SEEN_MINUTES):
+            request.state.renewed = token
         return Actor(kind="device", via=found.name)
 
     def acting(request: Request) -> Actor:
@@ -212,6 +225,8 @@ def create_phone_app(remote: "Remote") -> FastAPI:
         response.headers["Content-Security-Policy"] = FILE_POLICY if files else CONTENT_POLICY
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
+        if renewed := getattr(request.state, "renewed", ""):
+            keep_cookie(response, renewed)
         return response
 
     @app.get("/")
@@ -225,8 +240,7 @@ def create_phone_app(remote: "Remote") -> FastAPI:
             if traded is not None:
                 device, token = traded
                 request.state.device = (device.id, device.name)
-                response.set_cookie(COOKIE, token, max_age=TTL_DAYS * 86400, httponly=True, secure=True,
-                                    samesite="strict")  # fmt: skip
+                keep_cookie(response, token)
         return response
 
     @app.get("/pair")
@@ -243,7 +257,7 @@ def create_phone_app(remote: "Remote") -> FastAPI:
         machine = remote.machine_name()
         text = page("install.html").decode("utf-8").replace("{{claim}}", claim).replace("{{machine}}", machine)
         response = Response(text, media_type="text/html; charset=utf-8")
-        response.set_cookie(COOKIE, token, max_age=TTL_DAYS * 86400, httponly=True, secure=True, samesite="strict")
+        keep_cookie(response, token)
         return response
 
     @app.get("/icon-180.png")
@@ -278,7 +292,7 @@ def create_phone_app(remote: "Remote") -> FastAPI:
             raise HTTPException(403, str(error)) from error
         request.state.device = (device.id, device.name)
         response = JSONResponse({"device": device.view()})
-        response.set_cookie(COOKIE, token, max_age=TTL_DAYS * 86400, httponly=True, secure=True, samesite="strict")
+        keep_cookie(response, token)
         return response
 
     @app.get(STREAM_PATH)

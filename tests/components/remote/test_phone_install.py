@@ -172,3 +172,18 @@ def test_the_log_keeps_where_each_request_came_from_and_why_it_was_refused_never
     assert refused["refused"] == {
         "kind": "account", "why": "this page answers only to this computer's own Tailscale user"
     }  # fmt: skip
+
+
+def test_the_devices_cookie_outlives_the_thirty_days_and_is_sent_again_each_time_the_device_is_renewed(
+    kernel: Kernel, clock: FakeClock, phone: TestClient
+) -> None:
+    code = kernel.parts["remote"].pair("my phone", actor=YOU)["code"]
+    paired = phone.post("/api/pair", json={"code": code}, headers=ACT)
+    assert "max-age=34560000" in paired.headers["set-cookie"].lower(), "400 days: the server, not the browser, ends it"
+    soon = phone.get("/api/me", headers=THROUGH_TAILSCALE)
+    assert "set-cookie" not in soon.headers, "not renewed again within minutes"
+    clock.advance(20 * 86400)
+    later = phone.get("/api/me", headers=THROUGH_TAILSCALE)
+    assert later.status_code == 200
+    assert COOKIE in later.headers.get("set-cookie", ""), "renewed on use: the cookie sent again"
+    assert "max-age=34560000" in later.headers["set-cookie"].lower()
