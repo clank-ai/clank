@@ -14,12 +14,12 @@ each proposal says the revision it was staged in. The owner's comments are kept 
 """
 
 import json
-import os
 import secrets
 import threading
 from pathlib import Path
 from typing import Any
 
+from clank.kernel import files
 from clank.kernel.clock import Clock, to_text
 
 STATES = ("open", "ready", "returned", "rejected", "written", "partly written")
@@ -102,10 +102,7 @@ class Batches:
         with self.lock:
             batch["updated"] = to_text(self.clock.now())
             self.folder.mkdir(parents=True, exist_ok=True)
-            path = self.folder / f"{batch['id']}.json"
-            partial = path.with_name(f".{path.name}.part")
-            partial.write_text(json.dumps(batch, indent=1, ensure_ascii=False), encoding="utf-8")
-            os.replace(partial, path)
+            files.replace(self.folder / f"{batch['id']}.json", json.dumps(batch, indent=1, ensure_ascii=False))
 
     def _next_number(self) -> int:
         return max((batch["number"] for batch in self.all()), default=0) + 1

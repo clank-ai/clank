@@ -48,7 +48,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 6.7 | What comes from the prototype's gateway | none yet |
 | 7 | Setup and portability | see its subsections |
 | 7.1 | Where Clank runs | none yet |
-| 7.2 | The user's Clank folder | `tests/kernel/test_files.py` (8), `tests/kernel/test_home.py` (4) |
+| 7.2 | The user's Clank folder | `tests/kernel/test_files.py` (11), `tests/kernel/test_home.py` (4) |
 | 7.3 | The first-run guide | `tests/components/machine/test_checks.py` (10), `tests/components/machine/test_detect.py` (5), `tests/components/machine/test_doctor.py` (4) |
 | 7.4 | Recipes for serving setups | `tests/components/runtime/test_install.py` (5) |
 | 7.5 | Models | `tests/components/runtime/test_download.py` (8) |
@@ -90,7 +90,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.13 | Clank's own traffic | none yet |
 | 2.14 | The API | `tests/kernel/test_api.py` (17), `tests/kernel/test_live_stream.py` (1), `tests/tools/test_apidoc.py` (1), `vscode/test/client.test.ts` (7) |
 | 2.15 | Commands and the console | `tests/cli/test_commands.py` (7), `tests/cli/test_docker_commands.py` (6), `tests/cli/test_mcp_commands.py` (7), `tests/cli/test_output.py` (1), `tests/cli/test_service_commands.py` (7), `tests/cli/test_setup_command.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5), `tests/console/test_command.py` (4), `tests/console/test_data.py` (20), `tests/console/test_shell.py` (21) |
-| 2.16 | Where things are | `tests/kernel/test_files.py` (8), `tests/kernel/test_home.py` (4) |
+| 2.16 | Where things are | `tests/kernel/test_files.py` (11), `tests/kernel/test_home.py` (4) |
 | 2.17 | The kernel against every feature asked for | none yet |
 | 2.18 | Choices this section makes | none yet |
 | 3 | The skeleton (M0) and the order of milestones | see its subsections |
@@ -4982,6 +4982,9 @@ Design 0002 §2.16 and design 0001 §7.2: a file of CLANK_HOME that another prog
 - a remove waits while another program holds the file
 - a remove never let through says so and leaves the file
 - a remove of a file that is not there is done
+- a read waits while another program holds the file then reads it whole
+- a read never let through raises
+- a replace can set the new files mode and time before it is in place
 
 ### `tests/kernel/test_grouped_settings.py`
 

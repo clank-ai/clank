@@ -19,7 +19,6 @@ their parameters, when, and where it ran; `checked` gives it while the server is
 
 import hashlib
 import json
-import os
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -27,6 +26,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from clank.components.tools.mcp import McpError, check, parse_entry
 from clank.components.tools.mcp import Server as Server  # for the components that use this one (design 0004 §10)
 from clank.components.tools.mcp import through as through
+from clank.kernel import files
 from clank.kernel.api import ApiError
 from clank.kernel.events import Actor, EventType, Subject
 from clank.kernel.operations import OperationContext, OperationType, StepSpec
@@ -258,11 +258,7 @@ class Tools:
 
     def _remember(self, key: str, check: dict[str, Any]) -> None:
         checks = {**self._checks(), key: {**check, "time": self.kernel.clock.now().isoformat()}}
-        file = self.kernel.home.state / CHECKS
-        file.parent.mkdir(parents=True, exist_ok=True)
-        partial = file.with_name(f".{CHECKS}.part")
-        partial.write_text(json.dumps(checks, indent=1) + "\n", encoding="utf-8", newline="\n")
-        os.replace(partial, file)
+        files.replace(self.kernel.home.state / CHECKS, json.dumps(checks, indent=1) + "\n")
 
     def _in_workspace(self, server: Server, workspace: str) -> Server:
         """The server started in a workspace's running container, with the agent's environment (design 0004 §10)."""
@@ -366,9 +362,7 @@ class Tools:
             servers.pop(name, None)
         else:
             servers[name] = entry
-        partial = file.with_name(f".{PROJECT_FILE}.part")
-        partial.write_text(json.dumps(raw, indent=2) + "\n", encoding="utf-8", newline="\n")
-        os.replace(partial, file)
+        files.replace(file, json.dumps(raw, indent=2) + "\n")
 
 
 def _key_of(server: Server) -> str:

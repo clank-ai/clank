@@ -14,9 +14,7 @@ every box later.
 """
 
 import json
-import os
 import re
-import time
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -26,6 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from clank.components.flows.accepting import Commanded
 from clank.components.flows.orchestrating import Orchestration
 from clank.components.flows.verdicts import Verdict
+from clank.kernel import files
 from clank.kernel.events import Actor
 
 if TYPE_CHECKING:
@@ -34,7 +33,7 @@ if TYPE_CHECKING:
 
 SCHEMA: Literal["flow-run/1"] = "flow-run/1"
 RUN = re.compile(r"^run-([1-9][0-9]*)$")
-REPLACE_WAITS = (0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.3, None)  # seconds between tries to replace a read file
+REPLACE_WAITS = (0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.3)  # seconds between tries on a file another reads
 BoxState = Literal["waiting", "running", "done", "failed", "stale", "skipped"]
 RunStatus = Literal["queued", "running", "done", "stopped"]
 Outcome = Literal["done", "failed", "stopped"]
@@ -315,26 +314,11 @@ def read_whole(path: Path) -> bytes:
     """A file of the runs, read whole. Windows refuses for a moment to open a file that another thread is replacing,
     so the read is tried again, a second at most, rather than taking the run for one that does not read (a second run
     of a flow could then start beside it)."""
-    for wait in REPLACE_WAITS[:-1]:
-        try:
-            return path.read_bytes()
-        except PermissionError:
-            time.sleep(wait or 0)
-    return path.read_bytes()
+    return files.read(path, REPLACE_WAITS)
 
 
 def write_whole(path: Path, text: str) -> None:
     """Write a file of the runs whole, at once. Windows refuses to replace a file that another thread is reading at
     that moment (the phone's page, VS Code, `clank flow`), so the write waits for that read to end, a second at most,
     rather than failing."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.writing")
-    temporary.write_bytes(text.encode("utf-8"))
-    for wait in REPLACE_WAITS:
-        try:
-            os.replace(temporary, path)
-            break
-        except PermissionError:
-            if wait is None:
-                raise
-            time.sleep(wait)
+    files.replace(path, text, REPLACE_WAITS)

@@ -123,3 +123,34 @@ def test_a_remove_never_let_through_says_so_and_leaves_the_file(
 
 def test_a_remove_of_a_file_that_is_not_there_is_done(tmp_path: Path) -> None:
     assert files.remove(tmp_path / "never.json") is True
+
+
+def test_a_read_waits_while_another_program_holds_the_file_then_reads_it_whole(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "run.json"
+    path.write_bytes(b'{"state": "running"}')
+    calls, attempt = refused(2, Path.read_bytes)
+    monkeypatch.setattr(Path, "read_bytes", attempt)
+    assert files.read(path) == b'{"state": "running"}'
+    assert calls[0] == 3
+
+
+def test_a_read_never_let_through_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, quick: None) -> None:
+    path = tmp_path / "run.json"
+    path.write_bytes(b"{}")
+    calls, attempt = refused(99, Path.read_bytes)
+    monkeypatch.setattr(Path, "read_bytes", attempt)
+    with pytest.raises(PermissionError):
+        files.read(path)
+    assert calls[0] == 4, "the first try and one after each of the three waits"
+
+
+def test_a_replace_can_set_the_new_files_mode_and_time_before_it_is_in_place(tmp_path: Path) -> None:
+    path = tmp_path / "secrets" / "openrouter" / "key"
+    files.replace(path, "made-up-key", mode=0o600, modified=1_700_000_000.0)
+    assert path.read_text(encoding="utf-8") == "made-up-key"
+    assert path.stat().st_mtime == 1_700_000_000.0
+    if os.name != "nt":
+        assert path.stat().st_mode & 0o777 == 0o600
+    assert beside(path) == []

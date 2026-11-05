@@ -14,7 +14,6 @@ each read of the key is recorded by the kernel (`secret.used`).
 
 import dataclasses
 import json
-import os
 import re
 from collections.abc import Mapping
 from pathlib import Path
@@ -26,6 +25,7 @@ from clank.components.runtime import guide
 from clank.components.runtime.adapters import ENDPOINTS
 from clank.components.runtime.adapters.endpoint import Account, EndpointAdapter, ModelLine, Place
 from clank.components.runtime.kinds import Endpoint, Preset
+from clank.kernel import files
 from clank.kernel.adapters import AdapterError
 from clank.kernel.api import ApiError
 from clank.kernel.clock import from_text, to_text
@@ -566,11 +566,7 @@ class Endpoints:
         for line in lines:
             mine[line.id] = dataclasses.asdict(line)
         known.setdefault(READ_AT, {})[id] = to_text(self.kernel.clock.now())
-        path = self._known_file()
-        path.parent.mkdir(parents=True, exist_ok=True)
-        partial = path.with_name(f".{path.name}.part")
-        partial.write_bytes((json.dumps(known, indent=1) + "\n").encode("utf-8"))
-        os.replace(partial, path)
+        files.replace(self._known_file(), json.dumps(known, indent=1) + "\n")
 
     def _known_file(self) -> Path:
         return self.kernel.home.state / KNOWN

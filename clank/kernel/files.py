@@ -22,6 +22,7 @@ never holds a writer back, and the first try goes through.
 
 import contextlib
 import os
+import sys
 import threading
 import time
 from collections.abc import Callable, Sequence
@@ -37,19 +38,39 @@ def held(error: OSError) -> bool:
     return isinstance(error, PermissionError)
 
 
-def replace(path: Path, data: str | bytes, waits: Sequence[float] | None = None) -> None:
+def replace(
+    path: Path,
+    data: str | bytes,
+    waits: Sequence[float] | None = None,
+    *,
+    mode: int | None = None,
+    modified: float | None = None,
+) -> None:
     """Write a file whole (text as UTF-8): beside it first, then put in its place in one step; while another program
     holds the place, tried again after each of the waits (`WAITS` unless given), then the error raised and the file as
-    it was."""
+    it was. `mode` (POSIX only) and `modified` (seconds since the epoch) are set on the new file before it is in place,
+    so it is never there without them."""
     path.parent.mkdir(parents=True, exist_ok=True)
     partial = path.with_name(f".{path.name}.{os.getpid()}-{threading.get_ident()}.writing")
     partial.write_bytes(data.encode("utf-8") if isinstance(data, str) else data)
     try:
+        if mode is not None and sys.platform != "win32":
+            partial.chmod(mode)
+        if modified is not None:
+            os.utime(partial, (modified, modified))
         _again(lambda: os.replace(partial, path), waits)
     except OSError:
         with contextlib.suppress(OSError):
             partial.unlink()
         raise
+
+
+def read(path: Path, waits: Sequence[float] | None = None) -> bytes:
+    """A file's bytes; while another program holds it (Windows refuses for a moment to open a file another thread is
+    replacing), tried again after each of the waits (`WAITS` unless given), then the refusal raised."""
+    found: list[bytes] = []
+    _again(lambda: found.append(path.read_bytes()), waits)
+    return found[0]
 
 
 def remove(path: Path, waits: Sequence[float] | None = None) -> bool:

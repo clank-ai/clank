@@ -10,13 +10,12 @@ values from whatever else is written (design 0002 §2.8's last rule) comes with 
 so far the components that hold secrets never pass their values to a record, an event or a log.
 """
 
-import os
 import re
-import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from clank.kernel import files
 from clank.kernel.clock import Clock, to_text
 from clank.kernel.events import Actor, EventLog, EventType, Subject
 from clank.kernel.home import Home
@@ -67,15 +66,8 @@ class Secrets:
     def put(self, scope: str, name: str, value: str, *, actor: Actor) -> None:
         """Keep a secret, replacing one of the same name."""
         path = self._path(scope, name)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        partial = path.with_name(f".{path.name}.part")
-        with partial.open("w", encoding="utf-8", newline="") as file:
-            file.write(value)
-        if sys.platform != "win32":
-            partial.chmod(0o600)
-        now = self.clock.now().timestamp()
-        os.utime(partial, (now, now))  # when it was set, by Clank's clock
-        os.replace(partial, path)
+        # only its owner reads it, and when it was set is Clank's clock's, both before it is in place
+        files.replace(path, value, mode=0o600, modified=self.clock.now().timestamp())
         self.events.record(
             "secret.set",
             summary=f"{actor.describe()} set the secret {name} of {scope}",

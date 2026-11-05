@@ -20,7 +20,6 @@ driver reads them), so none is told while the lock is held.
 
 import hashlib
 import json
-import os
 import re
 import threading
 from collections.abc import Callable, Iterable
@@ -30,6 +29,7 @@ from typing import Any, Literal
 
 from pydantic import ValidationError
 
+from clank.kernel import files
 from clank.kernel.clock import Clock
 from clank.kernel.events import Actor, Event, EventLog, EventType, Subject
 from clank.kernel.home import Home
@@ -539,10 +539,7 @@ def _revision(raw: bytes) -> str:
 
 
 def _write_atomically(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.writing")
-    temporary.write_bytes(text.encode("utf-8"))
-    os.replace(temporary, path)
+    files.replace(path, text)  # whole, and tried again while another program reads it
 
 
 def _path(location: tuple[Any, ...]) -> str:
