@@ -34,7 +34,9 @@ same checklist in a terminal, without the service if need be, and `clank setup` 
    `.mcp.json`) only once you allow it. `m` gives one or takes it away, and checks one given in the workspace's
    container: its tools show beside it. The **MCP servers** page (F3) shows them all with their state (running,
    stopped or failed while an agent runs; on or off while none does) and their tools: Enter lists a server's tools
-   with their parameters, `s` starts or stops it (at once in a running agent, and for its next start), `c` checks it.
+   with their parameters, `s` starts or stops it (at once in a running agent, and for its next start), `c` checks it
+   (a folder's own only in the workspace's container, never on this computer, saying whether the agent may use it as
+   it is now).
 5. **Hosts** (`h`): the internet hosts the workspace's agent may reach through Clank's proxy, listed under "Then
    work" (design 0024). `h` allows a named set (papers, python, code, data, docs: each says what it opens) or a
    host by name, or takes one back; a host the agent reaches without an allowance holds its request while a

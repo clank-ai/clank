@@ -9,9 +9,10 @@ what starts it (or its address), where it is defined, its secrets by name and la
 found, and why it is off or failed.
 
 Keys: Enter shows its tools, each with its parameters; `s` starts or stops it (at once in a running agent, and for the
-agent's next start); `c` checks it (in the workspace's container when it runs, where the agent runs it; else on this
-computer); `a` adds a server in a form; `d` removes one after a question. The page reads the state again every few
-seconds while it is on screen, changing only what changed.
+agent's next start); `c` checks it (one of yours in the workspace's container while an agent runs there, else on this
+computer; a project's only in the folder's workspace container, never on this computer, saying so when the folder is no
+workspace, and after its check whether the agent may use it as it is now); `a` adds a server in a form; `d` removes one
+after a question. The page reads the state again every few seconds while it is on screen, changing only what changed.
 
 Its panels are board E14's (design 0011 §8): "Workspace", "Servers" (the list under its column headings) and
 "Details · (the highlighted server)".
@@ -54,6 +55,10 @@ SOURCES = {"clank": "built in", "user": "yours", "project": "project"}
 COLORS = {"running": "$clank-good", "on": "$clank-now", "failed": "$clank-failed", "needs sign-in": "$clank-attention"}
 HEADER = f"  {'NAME':<20} {'SOURCE':<9} {'STATE':<14} TOOLS"
 DETAILS = "Details"  # the details' panel's title, and the highlighted server's name after it
+PROJECT_CHECK = (
+    "Clank checks it only in the folder's workspace container, never on this computer: open this folder as a "
+    "workspace first (F4, then o)"
+)
 
 
 def tool_count(server: dict[str, Any]) -> str:
@@ -253,8 +258,9 @@ class McpServersPage(Page):
             "folder; project ones are this folder's .mcp.json, used once you allow them (s).",
             "State: running, stopped or failed is what the agent running here says; on or off, while no agent runs, "
             "is whether it starts with the agent. s changes it at once in a running agent, and for its next start.",
-            "c checks a server: starts it where the agent would, asks for its tools, and ends it. Enter lists the "
-            "tools of its last check, with their parameters.",
+            "c checks a server: starts it where the agent would, asks for its tools, and ends it. A project one runs "
+            "only in this folder's workspace container, never on this computer, and the check says whether the agent "
+            "may use it as it is now. Enter lists the tools of its last check, with their parameters.",
             "Your servers' environment and header values are secrets, kept in CLANK_HOME/secrets and shown only by "
             "their last four characters.",
         ]
@@ -377,6 +383,9 @@ class McpServersPage(Page):
         if server["scope"] == "clank" and "workspace" not in body:
             self.console.say("Clank's own server runs in a workspace: open this folder as one first (F4, then o)", True)
             return
+        if server["scope"] == "project" and "workspace" not in body:
+            self.console.say(f"{name} is this folder's own (.mcp.json): {PROJECT_CHECK}", True)
+            return
 
         def work() -> None:
             client = self.console.client
@@ -392,8 +401,11 @@ class McpServersPage(Page):
                 return
             if done["status"] == "done":
                 count = len(done["result"]["tools"])
+                allowed = done["result"].get("allowed_said")
                 self.console.call_from_thread(
-                    self.console.say, f"{name} answers, with {count} tools (Enter lists them)"
+                    self.console.say,
+                    f"{name} answers, with {count} tools (Enter lists them)" + (f"; {allowed}" if allowed else ""),
+                    done["result"].get("allowed") is False,
                 )
             else:
                 self.console.call_from_thread(self.console.say, f"{name}: {done.get('error') or done['status']}", True)

@@ -527,24 +527,7 @@ class Workspaces:
         workspace's bound (`models`, `cloud_answered`, `cloud_question`; None without one). Docker's state is its last
         reading (the background check keeps it current); the container, the edge (while the container runs) and the
         image are asked of Docker."""
-        from clank.components.workspaces.folders import WorkspaceError, checked_folder
-
-        problem = ""
-        try:
-            path = checked_folder(folder, self.kernel.home.root, self.socket_folder())
-        except WorkspaceError as error:
-            path, problem = folder, str(error)
-        workspace = next(
-            (
-                found
-                for found in (
-                    (loaded.id, Workspace.model_validate(loaded.record.model_dump()))
-                    for loaded in self.kernel.settings.records("workspace")
-                )
-                if os.path.normcase(found[1].path) == os.path.normcase(path)
-            ),
-            None,
-        )
+        path, problem, workspace = self._in_folder(folder)
         name = workspace[0] if workspace else None
         docker = self.docker()
         running = docker["state"] == "running"
@@ -570,6 +553,34 @@ class Workspaces:
             **reach,
             **(self.cloud.view(name) if name else dict.fromkeys(BOUND)),
         }
+
+    def of_folder(self, folder: str) -> str | None:
+        """The workspace of a folder, as `folder_view` finds it; None when the folder is no workspace."""
+        workspace = self._in_folder(folder)[2]
+        return workspace[0] if workspace else None
+
+    def _in_folder(self, folder: str) -> tuple[str, str, tuple[str, Workspace] | None]:
+        """The folder as a workspace keeps it (else as given), why it cannot be one (empty when it can), and its
+        workspace's name and record, when it has one."""
+        from clank.components.workspaces.folders import WorkspaceError, checked_folder
+
+        problem = ""
+        try:
+            path = checked_folder(folder, self.kernel.home.root, self.socket_folder())
+        except WorkspaceError as error:
+            path, problem = folder, str(error)
+        workspace = next(
+            (
+                found
+                for found in (
+                    (loaded.id, Workspace.model_validate(loaded.record.model_dump()))
+                    for loaded in self.kernel.settings.records("workspace")
+                )
+                if os.path.normcase(found[1].path) == os.path.normcase(path)
+            ),
+            None,
+        )
+        return path, problem, workspace
 
     def runs_current_image(self, workspace: str) -> bool | None:
         """Whether the workspace's container runs Clank's sandbox image as this Clank builds it: False for one made

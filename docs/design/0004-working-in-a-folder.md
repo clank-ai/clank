@@ -35,7 +35,7 @@ recommendation, built as recommended so the owner can try it, and changed if the
 | 7 | NInfer's context | Retired 2026-10-13 with NInfer (decision 0034) |
 | 8 | What the tests must prove, and what waits | Proposed 2026-10-13 |
 | 9 | The console: easy to use, dynamic, the machine on the right | Built 2026-10-14; revised 2026-10-26 (a GPU whose handle its driver dropped) |
-| 10 | A project's own software and MCP servers | Built 2026-10-14 as proposed; verified on a simulator |
+| 10 | A project's own software and MCP servers | Built 2026-10-14 as proposed; verified on a simulator; revised after approval (2026-11-05): a folder's own MCP server is checked only in its workspace's container, never on this computer, and its check says whether the agent may use it as it is now (decision 0166) |
 
 ## 1. What the owner does
 
@@ -359,7 +359,18 @@ download (§3: no route out).
   image's, or the folder's software above).
 - **Checking a server where it runs**: `mcp.check` of a workspace's server runs it in the workspace's container
   (`docker exec --interactive`, no terminal) and asks it for its tools, so the folder's page says what the agent will
-  find before it starts.
+  find before it starts. *Revised after approval (2026-11-05), decision 0166: a folder's own server is checked only
+  there, never on this computer, since it is offered, never trusted, and the container is where it runs.* The service
+  finds the folder's workspace when none is named (`clank mcp check NAME` needs no `--workspace` for it). With no
+  workspace for the folder, its container not running, another folder's workspace named, or a server reached by
+  address, the check is refused, saying how to check it (`clank workspace open` makes the folder a workspace, or starts
+  its container), and nothing is started; the MCP servers page (F3) says the same on `c`. The check says whether the
+  workspace's agent may use the server as it is now: allowed, not allowed yet, or changed since it was allowed (its
+  command, its arguments or its environment), which counts as not allowed until the owner allows it again; the check
+  and the allowance read the same fingerprint of the entry. A check is not an allowance: a server not allowed may be
+  checked in the container, so its tools can be seen before it is allowed. The owner's own servers are checked as
+  before: on this computer, or in the folder's workspace when it is named (`--workspace`; on the page, while an agent
+  runs there).
 - **The folder's page**: a step "Its software" (installed with what, or the key `e` that installs it; `g` installs it
   too, asked first), and under "then work" each MCP server with whether the agent gets it and its tools once checked;
   `m` picks a server and gives it or takes it away (a given one is checked at once when the container runs).

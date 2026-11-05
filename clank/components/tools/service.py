@@ -10,7 +10,13 @@ not tell `Foo.json` from `foo.json`); a name in both places is asked about by `s
 scope is given. `check` is an operation (`mcp.check`): it starts or reaches the server, with its secrets (each use
 recorded), asks it what it is and what tools it offers, and ends it; given a workspace, it starts the server in that
 workspace's running container, with its agent's environment, where the agent will start it (design 0004 §10).
-Clank's own server (`clank`, scope `clank`: `send_to_phone`) is in the image, so it is checked in a workspace only.
+Clank's own server (`clank`, scope `clank`: `send_to_phone`) is in the image, so it is checked in a workspace only. A
+project's server is offered, never trusted (design 0002 §2.11), so it is never started on this computer: it is checked
+only in its folder's workspace container (the folder's workspace, found when none is named), and with no workspace for
+the folder, its container not running, another folder's workspace named, or a server reached by address, the check is
+refused, saying how to check it (decision 0166). Its check says whether that workspace's agent may use it as it is now:
+allowed, not allowed yet, or changed since it was allowed (`fingerprint`, the digest of its entry the agents component
+keeps when the owner allows it: a changed command, argument or environment counts as not allowed until allowed again).
 
 The last check of each server that answered is remembered (`state/mcp-checks.json`): what the server is, its tools with
 their parameters, when, and where it ran; `checked` gives it while the server is started or reached as it was then
@@ -204,17 +210,22 @@ class Tools:
         scope = params.get("scope") or None
         seconds = float(params.get("seconds") or CHECK_SECONDS)
         workspace = str(params.get("workspace") or "")
+        allowance: dict[str, Any] = {}
         async with context.step("check"):
             if scope == CLANK:
                 if not workspace:
                     raise ApiError(409, "refused", "Clank's own server is in the workspace's image: check it there")
-                server = self._clank()
+                server, place, box = self._clank(), CLANK, ""
             else:
                 server = self.runnable(name, folder, scope, why="a check")
-            key = self._key(name, str(scope or self._where(name, folder, None)), folder)
+                place, box = self._where(name, folder, scope), ""
+            if place == "project":  # never on this computer: in the folder's workspace container alone
+                workspace, box = self._projects_workspace(name, folder, workspace, server)
+                allowance = self._allowance(name, workspace, server)
+            key = self._key(name, place, folder)
             shown = server.command if server.transport == "stdio" else server.url
             if workspace:
-                server = self._in_workspace(server, workspace)
+                server = self._in_workspace(server, workspace, box)
                 context.log(f"in {workspace}'s container, as its agent starts it")
             context.log(f"asking {name} ({server.transport}: {shown}) what it is and what tools it offers")
             try:
@@ -224,6 +235,8 @@ class Tools:
             context.log(
                 f"{found.name} {found.version} answers (protocol {found.protocol}), with {len(found.tools)} tools"
             )
+            if allowance:
+                context.log(f"{name}: {allowance['allowed_said']}")
         result = {
             "name": found.name, "version": found.version, "protocol": found.protocol,
             "tools": [
@@ -235,8 +248,56 @@ class Tools:
             ],
         }  # fmt: skip
         where = f"{workspace}'s container" if workspace else "this computer"
-        self._remember(f"{scope or self._where(name, folder, None)}:{name}", {**result, "key": key, "where": where})
-        return result
+        self._remember(f"{place}:{name}", {**result, "key": key, "where": where})
+        return {**result, **allowance}  # whether it is allowed is the workspace's now, never remembered with the check
+
+    def _projects_workspace(self, name: str, folder: str, asked: str, server: Server) -> tuple[str, str]:
+        """Where a folder's own server is checked (design 0004 §10): the folder's workspace, found when not named, and
+        its running container's name. It is never started on this computer: with no workspace for the folder, its
+        container not running, another folder's workspace named, or a server reached by address (nothing but the model
+        is reachable from the container), the check is refused, saying how to check it."""
+        from clank.components.workspaces.service import Workspaces, WorkspaceUnavailable
+
+        own = (
+            f"{name} is this folder's own (.mcp.json): Clank checks it only in the folder's workspace container, "
+            "never on this computer"
+        )
+        if server.transport != "stdio":
+            raise ApiError(
+                409, "refused", f"{own}, and it is reached by address: nothing but the model is reachable from the "
+                "container yet, so it is not checked (nor does the agent get it)",
+            )  # fmt: skip
+        workspaces: Workspaces = self.kernel.parts["workspaces"]
+        found = workspaces.of_folder(folder)
+        if found is None:
+            raise ApiError(
+                409, "refused", f"{own}, and {folder} is no workspace yet: `clank workspace open` makes it one (in the "
+                "console, F4 then o); then check it again",
+            )  # fmt: skip
+        if asked and asked != found:
+            raise ApiError(409, "refused", f"{own}, and {asked} is not this folder's workspace: check it in {found}")
+        try:
+            box = workspaces.container_of(found)
+        except WorkspaceUnavailable as error:
+            raise ApiError(409, "refused", f"{own}, and {error}; then check it again") from error
+        return found, box
+
+    def _allowance(self, name: str, workspace: str, server: Server) -> dict[str, Any]:
+        """Whether the workspace's agent may use a folder's own server as it is now (design 0004 §10): allowed as it
+        is, not allowed yet, or changed since it was allowed (its command, its arguments or its environment), which
+        counts as not allowed until the owner allows it again."""
+        allowed = self.kernel.settings.get("workspace", workspace).record.model_dump().get("mcp_allowed") or {}
+        how = f"`clank mcp allow {name}` in the folder, or s on the MCP servers page (F3)"
+        if name not in allowed:
+            said = f"not allowed for {workspace}'s agent yet: {how} allows it as it is now"
+        elif allowed[name] != fingerprint(server):
+            said = (
+                f"its command, arguments or environment changed since you allowed it: {workspace}'s agent does not "
+                f"get it until you allow it again ({how})"
+            )
+        else:
+            return {"allowed": True, "allowed_said": f"allowed for {workspace}'s agent as it is now"}
+        return {"allowed": False, "allowed_said": said}
 
     def _clank(self) -> Server:
         from clank.components.workspaces.service import PHONE_PROGRAM
@@ -260,15 +321,17 @@ class Tools:
         checks = {**self._checks(), key: {**check, "time": self.kernel.clock.now().isoformat()}}
         files.replace(self.kernel.home.state / CHECKS, json.dumps(checks, indent=1) + "\n")
 
-    def _in_workspace(self, server: Server, workspace: str) -> Server:
-        """The server started in a workspace's running container, with the agent's environment (design 0004 §10)."""
+    def _in_workspace(self, server: Server, workspace: str, box: str = "") -> Server:
+        """The server started in a workspace's running container (`box`, when just found running), with the agent's
+        environment (design 0004 §10)."""
         from clank.components.workspaces.service import Workspaces, WorkspaceUnavailable
 
         workspaces: Workspaces = self.kernel.parts["workspaces"]
         try:
             base = workspaces.agent_env(workspace)
             return through(
-                server, lambda argv, env: workspaces.exec_argv(workspace, argv, {**base, **env}, terminal=False)
+                server,
+                lambda argv, env: workspaces.exec_argv(workspace, argv, {**base, **env}, terminal=False, container=box),
             )
         except (McpError, WorkspaceUnavailable) as error:
             raise ApiError(409, "refused", str(error)) from error
@@ -363,6 +426,12 @@ class Tools:
         else:
             servers[name] = entry
         files.replace(file, json.dumps(raw, indent=2) + "\n")
+
+
+def fingerprint(server: Server) -> str:
+    """A server's entry as the owner allows it, as a short digest: its command, its arguments or its environment
+    changed give another, so an allowance holds for the entry allowed alone (design 0004 §10)."""
+    return hashlib.sha256(json.dumps(server.entry(), sort_keys=True).encode("utf-8")).hexdigest()[:16]
 
 
 def _key_of(server: Server) -> str:

@@ -141,7 +141,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (5) |
 | 9 | The console: easy to use, dynamic, the machine on the right | `tests/components/machine/test_meters.py` (9), `tests/console/test_machine_column.py` (14) |
-| 10 | A project's own software and MCP servers | `tests/components/agents/test_agent_servers.py` (9), `tests/components/tools/test_console_servers.py` (1), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_setup.py` (10), `tests/console/test_workspaces_page.py` (4) |
+| 10 | A project's own software and MCP servers | `tests/components/agents/test_agent_servers.py` (9), `tests/components/tools/test_console_servers.py` (3), `tests/components/tools/test_project_check.py` (8), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_setup.py` (10), `tests/console/test_workspaces_page.py` (4) |
 
 ## Design 0005: the phone (the first slice of M9)
 
@@ -233,11 +233,11 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | What the owner gets | none yet |
 | 2 | The style: a file of named elements | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/kernel/test_console_kinds.py` (6) |
 | 3 | The style in the console | `tests/console/test_console_style.py` (14) |
-| 4 | The panel | `tests/components/tools/test_console_servers.py` (1), `tests/console/test_frames.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_pages_fit.py` (1), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_windows.py` (3), `tests/console/test_workspaces_page.py` (4) |
+| 4 | The panel | `tests/components/tools/test_console_servers.py` (3), `tests/console/test_frames.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_pages_fit.py` (1), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_windows.py` (3), `tests/console/test_workspaces_page.py` (4) |
 | 5 | Text never spills out of a panel | `tests/console/test_frames.py` (1), `tests/console/test_text.py` (5), `tests/console/test_windows.py` (3) |
 | 6 | No color written in a page | `tests/test_repository.py` (11), `tests/tools/test_check_colors.py` (8) |
 | 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (3), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_pages_fit.py` (1), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (21), `tests/console/test_windows.py` (3), `tests/console/test_windows_placed.py` (3) |
-| 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (5), `tests/components/tools/test_console_servers.py` (1), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_workspaces_page.py` (4) |
+| 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (5), `tests/components/tools/test_console_servers.py` (3), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_workspaces_page.py` (4) |
 | 9 | Narrow windows | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_machine_column.py` (14), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5) |
 | 10 | What changes in the tests | none yet |
 | 11 | Build steps | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_keys_bar.py` (10), `tests/console/test_machine_column.py` (14), `tests/console/test_pages_fit.py` (1), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_windows.py` (3) |
@@ -3582,9 +3582,11 @@ Design 0003 §2 and decision 0030: the WSL host does everything inside its distr
 
 ### `tests/components/tools/test_console_servers.py`
 
-Design 0004 §10 and the M8.0 plan, task 3: the console's MCP servers page lists every server this folder's agent can use, one row each with where it comes from, its state and its tools; the highlighted one's details show what starts it and its secrets by name and last four characters only; `a` adds one in a form (its command line split as a shell would); `c` checks one (on this computer when the folder is not a workspace), after which its row counts its tools and Enter lists them with their parameters; `s` asks for a workspace first; `d` removes one after a question. Design 0011 §4 and §8 (board E14): the details' panel is titled with the highlighted server's name.
+Design 0004 §10 and the M8.0 plan, task 3: the console's MCP servers page lists every server this folder's agent can use, one row each with where it comes from, its state and its tools; the highlighted one's details show what starts it and its secrets by name and last four characters only; `a` adds one in a form (its command line split as a shell would); `c` checks one (one of yours on this computer when the folder is not a workspace), after which its row counts its tools and Enter lists them with their parameters; `s` asks for a workspace first; `d` removes one after a question. A folder's own server (its `.mcp.json`) is checked only in the folder's workspace container: with no workspace, `c` says so and starts nothing; in the workspace, the page and the check's message say when its entry changed since it was allowed. Design 0011 §4 and §8 (board E14): the details' panel is titled with the highlighted server's name.
 
 - the page lists adds checks and removes servers
+- a folders own server is not checked on this computer when the folder is no workspace
+- a folders own server changed since it was allowed says so and is checked in the container
 
 ### `tests/components/tools/test_mcp.py`
 
@@ -3596,6 +3598,19 @@ Design 0002 §1 (the tools component) and the M8.0 plan: an MCP server's standar
 - a server that never answers is ended at its time limit saying so
 - a program that cannot start is named
 - an http server is checked keeping its session
+
+### `tests/components/tools/test_project_check.py`
+
+Design 0004 §10: a folder's own MCP server (its `.mcp.json`) is checked only in the folder's workspace container, never on this computer. The service finds the folder's workspace itself; with no workspace for the folder, its container not running, another folder's workspace named, or a server reached by address, the check is refused, saying how to check it, and nothing is started. A check of a folder's server says whether the workspace's agent may use it as it is now: not allowed yet, allowed, or changed since it was allowed (its command, its arguments or its environment), which counts as not allowed until it is allowed again; `clank mcp check` prints it. Your own servers are checked on this computer as before.
+
+- a folders server is not checked on this computer when the folder is no workspace
+- a folders server is not checked while its workspaces container does not run
+- a folders server is checked in its workspaces running container whether it is named or not
+- a folders server is checked in its own folders workspace alone
+- a folders server reached by address is not checked
+- a check says whether the workspaces agent may use a folders server as it is now
+- your own servers are still checked on this computer
+- clank mcp check refuses a folders server without its workspace and says whether it is allowed
 
 ### `tests/components/tools/test_servers.py`
 

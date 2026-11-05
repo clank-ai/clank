@@ -1,6 +1,8 @@
 """The tools component's commands: `clank mcp add|add-json|list|get|remove|check`, the way other harnesses add MCP
 servers (`claude mcp add`, `codex mcp add`; the M8.0 plan), and `clank mcp allow|hold NAME`, which give a server to
-this folder's agent or hold it back (`check --workspace` starts it where that agent will; design 0004 §10).
+this folder's agent or hold it back (design 0004 §10). `check` starts one of yours on this computer, or with
+`--workspace` where this folder's agent will; a folder's own (`.mcp.json`) only ever in the folder's workspace
+container, saying whether that workspace's agent may use it as it is now.
 
 `clank mcp add [options] NAME -- COMMAND [ARGS...]` adds a server Clank starts (stdio): everything after `--` is the
 server's own, so its options are never taken for Clank's; without `--`, the first word after the name is its command,
@@ -129,11 +131,14 @@ def remove(scope: str | None, name: str) -> None:
 @click.option("-s", "--scope", type=SCOPES, default=None, help="Which one, when the name is in both places.")
 @click.option("--seconds", type=float, default=30.0, show_default=True, help="How long it may take to answer.")
 @click.option(
-    "--workspace", "in_workspace", is_flag=True, help="Start it in this folder's workspace, as its agent would."
-)
+    "--workspace", "in_workspace", is_flag=True,
+    help="Start one of yours in this folder's workspace, as its agent would (a folder's own always starts there).",
+)  # fmt: skip
 @click.argument("name")
 def check(scope: str | None, seconds: float, in_workspace: bool, name: str) -> None:
-    """Start (or reach) an MCP server, ask it what it is and what tools it offers, and end it."""
+    """Start (or reach) an MCP server, ask it what it is and what tools it offers, and end it. One of yours runs on this
+    computer (in this folder's workspace with --workspace); a folder's own (.mcp.json) runs only in the folder's
+    workspace container, never on this computer, and the check says whether that workspace's agent may use it."""
     client = common.call(common.connect)
     body = {"folder": os.getcwd(), "scope": scope, "seconds": seconds}
     if in_workspace:
@@ -146,6 +151,8 @@ def check(scope: str | None, seconds: float, in_workspace: bool, name: str) -> N
     click.echo(f"{name}: {found['name']} {found['version']}, protocol {found['protocol']}, {len(found['tools'])} tools")
     for tool in found["tools"]:
         click.echo(f"  {tool['name']}: {tool['description'].splitlines()[0] if tool['description'] else ''}")
+    if found.get("allowed_said"):
+        click.echo(f"{name}: {found['allowed_said']}")
 
 
 @mcp.command()

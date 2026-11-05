@@ -63,8 +63,6 @@ server there lists no Notion tool; the gateway is given the names of the tools t
 (`give_local_only`, design 0016 §10) at each start of the service and each change of an MCP server.
 """
 
-import hashlib
-import json
 import logging
 import threading
 from collections.abc import AsyncGenerator, Callable, Collection
@@ -125,6 +123,7 @@ from clank.components.agents.showing import ShowError as ShowError  # for the ro
 from clank.components.agents.showing import Showing
 from clank.components.agents.watchfor.marks import EVENT_TYPES as WATCH_EVENTS
 from clank.components.agents.watchfor.marks import Marks, slot_facts
+from clank.components.tools.service import fingerprint  # an allowance's, as the check reads it (0004 §10)
 from clank.kernel.adapters import AdapterError
 from clank.kernel.clock import to_text
 from clank.kernel.core import Kernel
@@ -197,11 +196,6 @@ def limits(model: AgentModel) -> dict[str, int]:
     """What the program is told (`context`, `output`), the engine's own window and the margin kept free in it."""
     return {"context": model.context - model.margin, "output": model.output, "window": model.context,
             "margin": model.margin}  # fmt: skip
-
-
-def _fingerprint(entry: dict[str, Any]) -> str:
-    """A server's entry, as allowed: an entry changed since has another (design 0004 §10)."""
-    return hashlib.sha256(json.dumps(entry, sort_keys=True).encode("utf-8")).hexdigest()[:16]
 
 
 class AgentError(Exception):
@@ -693,9 +687,9 @@ class Agents:
                 continue  # Clank's own has the name
 
             name, scope = view["name"], view["scope"]
-            fingerprint = ""
+            current = ""
             if scope == "project":  # a project's server has no secret: reading it records no use
-                fingerprint = _fingerprint(tools.runnable(name, record["path"], scope, why="").entry())
+                current = fingerprint(tools.runnable(name, record["path"], scope, why=""))
             if view["transport"] != "stdio":
                 why = "reached by address: nothing but the model is reachable from the container yet"
             elif scope == "user" and view.get("local_only") and record.get("models") == "cloud":
@@ -706,7 +700,7 @@ class Agents:
                 why = "it has the name of one of yours, which the agent gets instead"
             elif name not in record["mcp_allowed"]:
                 why = "this folder's own (.mcp.json): not allowed yet (m allows it)"
-            elif record["mcp_allowed"][name] != fingerprint:
+            elif record["mcp_allowed"][name] != current:
                 why = "its entry changed since you allowed it: allow it again (m)"
             else:
                 why = ""
@@ -813,7 +807,7 @@ class Agents:
             tools: Tools = self.kernel.parts["tools"]
             allowed = {key: value for key, value in record["mcp_allowed"].items() if key != name}
             if given:
-                allowed[name] = _fingerprint(tools.runnable(name, record["path"], "project", why="").entry())
+                allowed[name] = fingerprint(tools.runnable(name, record["path"], "project", why=""))
             record["mcp_allowed"] = allowed
         self.kernel.settings.write("workspace", workspace, record, base=loaded.revision, actor=actor)
         return next(row for row in self.servers(workspace) if row["name"] == name)

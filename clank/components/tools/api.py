@@ -46,7 +46,11 @@ class CheckAsked(BaseModel):
         None, description="Where the server is, when its name is in both places; clank: Clank's own, in a workspace."
     )
     seconds: float = Field(30.0, gt=0, le=600, description="How long it may take to answer.")
-    workspace: str = Field("", description="Start it in this workspace's container, as its agent would.")
+    workspace: str = Field(
+        "",
+        description="Start it in this workspace's container, as its agent would; a folder's own server (.mcp.json) is "
+        "checked only in the folder's workspace, found when this is empty, never on this computer.",
+    )
 
 
 def router(tools: "Tools") -> APIRouter:
