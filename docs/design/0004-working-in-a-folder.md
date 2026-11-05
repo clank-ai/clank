@@ -354,9 +354,10 @@ download (§3: no route out).
   workspace's agent unless the owner takes one away for a workspace. *Revised after approval (2026-11-05), decision
   0168: one of the user's own that carries secret values (an environment variable or a header) is given only to the
   workspaces the owner names for it (the record's `mcp_secrets`: `clank mcp allow`, `m` here, `s` on the MCP servers
-  page), asked first, in the service's words, for a workspace that may use a cloud model; its values reach OpenCode in
-  its own environment, named from its configuration, never in a file in the container (design 0002 §2.8), and the agent
-  can read them.* A folder's own servers (its `.mcp.json`, which
+  page), asked first, in the service's words, for a workspace that may use a cloud model or whose question whether it
+  may waits (allowing a workspace the cloud names first each such server its agent gets, design 0016 §9); its values
+  reach OpenCode in its own environment, named from its configuration, never in a file in the container (design 0002
+  §2.8), and the agent can read them.* A folder's own servers (its `.mcp.json`, which
   other harnesses read too) are offered, never trusted (design 0002 §2.11): each is given once the owner allows it for
   that workspace, and the record keeps a fingerprint of the entry as allowed, so an entry changed since is not given
   until it is allowed again. A server reached by address (`http`, `sse`) is not given: nothing but the model is

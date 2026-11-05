@@ -362,12 +362,14 @@ removes the value of every secret it holds, wherever it appears.
 
 *Revised after approval (2026-11-05), decision 0168: the values of the user's own MCP servers (`clank mcp add`) enter
 a workspace's container, since such a server runs there beside the agent, and only the container of a workspace the
-user named for that server, asked first when the workspace may use a cloud model.* There they are in the agent
-program's own environment alone, never in a file: its configuration names a variable for each value (OpenCode's
-`{env:NAME}`), and the variables reach it by name. The agent can read them, as the servers it starts can, and a cloud
-model the workspace uses can read what the agent reads. No value is ever on a command line: every `docker exec` names
-each variable alone (`--env NAME`), its value in the environment of the process that runs it, the service's or the
-client's (`agents/prepare` answers the command and that environment, for the owner's own clients alone).
+user named for that server (a check of the server too), asked first when the workspace may use a cloud model or is
+asked whether it may; allowing a workspace the cloud names first each such server its agent gets.* There they are in
+the agent program's own environment alone, never in a file: its configuration names a variable for each value
+(OpenCode's `{env:NAME}`), and the variables reach it by name. The agent can read them, as the servers it starts can,
+and a cloud model the workspace uses can read what the agent reads. No value is ever on a command line: every `docker
+exec` names each variable alone (`--env NAME`), its value in the environment of the process that runs it, the
+service's or the client's (`agents/prepare` answers the command and that environment, for the owner's own clients
+alone).
 
 ### 2.9 Processes and containers
 

@@ -8,12 +8,18 @@ client calls `POST /workspaces/{name}/cloud/ask` first) or when the gateway hold
 a workspace that existed before the provider was agreed, that its earlier sessions and folder may hold research. *Allow*
 makes its bound `cloud`; *keep local* is kept, and it is not asked again until the owner changes it (`allow`); a
 question no one answered in 30 minutes leaves it unanswered, asked again next time. Each answer is the event
-`workspaces.cloud_answered`, saying who gave it."""
+`workspaces.cloud_answered`, saying who gave it.
 
+The question and the words said before the bound is changed (`cloud_confirm`) name each of your MCP servers with secrets
+the workspace's agent gets (decision 0168): the agents component, which knows them, tells this one how to read them
+(`carried`, set through `Workspaces.on_carried`), so allowing the cloud is asked knowing their values go with it.
+Whether a question waits (`asked`) is read by the agents component too: giving such a server meanwhile asks first."""
+
+from collections.abc import Callable
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
-from clank.components.workspaces.cloudwords import bound_said, confirm_said
+from clank.components.workspaces.cloudwords import bound_said, carried_said, confirm_said
 from clank.kernel.clock import to_text
 from clank.kernel.events import Actor, Event, EventType, Subject
 from clank.kernel.questions import Option, Question, QuestionDraft, QuestionError
@@ -51,6 +57,9 @@ class CloudBounds:
 
     def __init__(self, kernel: "Kernel") -> None:
         self.kernel = kernel
+        # Your MCP servers with secrets a workspace's agent gets, each with its values' names (decision 0168): none
+        # until the agents component, which knows them, says how to read them.
+        self.carried: Callable[[str], dict[str, list[str]]] = lambda name: {}
         kernel.questions.on_resolved(self._resolved)
         kernel.events.subscribe(self._heard)
 
@@ -77,7 +86,7 @@ class CloudBounds:
             question = None
         return {"models": values["models"], "cloud_answered": values["cloud_answered"], "cloud_question": question,
                 "cloud_said": bound_said(name, values["models"], values["cloud_answered"]),
-                "cloud_confirm": confirm_said(name)}  # fmt: skip
+                "cloud_confirm": confirm_said(name, self.carried(name))}  # fmt: skip
 
     def ask(self, name: str, cloud: str = "") -> dict[str, Any]:
         """Whether a workspace must be asked before its agent uses the main slot's model, and the question when it
@@ -105,7 +114,8 @@ class CloudBounds:
             return {"needed": True, "allowed": False, "question": open_question, "start": False,
                     "why": "asked: waiting for an answer"}  # fmt: skip
         title = str(main.get("title") or main.get("preset") or "the cloud model")
-        detail = " ".join([*([OLDER] if self._older(name) else []), GOES, NEVER])
+        secrets = carried_said(name, self.carried(name))
+        detail = " ".join([*([secrets] if secrets else []), *([OLDER] if self._older(name) else []), GOES, NEVER])
         draft = QuestionDraft(
             type="choice",
             title=f"Let {name}'s agent use the cloud model {title}?",
@@ -123,6 +133,11 @@ class CloudBounds:
         self.gateway.set_bound(name, question=question.id)
         return {"needed": True, "allowed": False, "question": question.id, "start": False,
                 "why": "asked: waiting for an answer"}  # fmt: skip
+
+    def asked(self, name: str) -> bool:
+        """Whether a question waits on whether the workspace may use the cloud model."""
+        question = (self.gateway.bound(name) or {}).get("question")
+        return bool(question) and self._waiting(str(question))
 
     def allow(self, name: str, allow: bool, *, actor: Actor) -> None:
         """The owner's answer, from a client: the bound written, given to the gateway, and announced; an open question

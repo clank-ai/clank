@@ -12,7 +12,8 @@ workspace's folder, with the program's environment and as many threads as the co
 workspaces (the container, the platform) and the gateway (its port, its routes) through their services.
 
 The MCP servers the agent gets (design 0004 §10) are written into its configuration too: yours (the tools component's)
-unless held back from the workspace (its record's `mcp_off`), and the folder's own (`.mcp.json`) once allowed for the
+unless held back from the workspace (its record's `mcp_off`), one of yours with secrets only once named for the
+workspace (`mcp_secrets`, decision 0168), and the folder's own (`.mcp.json`) once allowed for the
 workspace (`mcp_allowed`, with the fingerprint of the entry as allowed: an entry changed since is not given until
 allowed again). One reached by address is not given (the container reaches nothing but the model), nor a folder's
 server that has the name of one of yours. `servers` lists them with whether the agent gets each and why not; `allow`
@@ -61,6 +62,11 @@ Each workspace's OpenCode, and Clank's MCP server in its container, send the wor
 0016 §9, from the gateway's service); a workspace allowed the cloud gets no MCP server marked local only, and Clank's
 server there lists no Notion tool; the gateway is given the names of the tools that never go to the cloud
 (`give_local_only`, design 0016 §10) at each start of the service and each change of an MCP server.
+
+One of your MCP servers with secrets reaches a cloud model only after the owner was asked knowing it (decision 0168):
+giving it to a workspace that may use a cloud model, or whose question whether it may use one waits, asks first; and
+allowing a workspace the cloud names first each such server its agent gets, in the workspaces' words, which read them
+here (`cloud_secrets`, told to the workspaces' service as it is built).
 """
 
 import logging
@@ -177,6 +183,8 @@ log = logging.getLogger(__name__)
 CLANK_SERVER = "clank"  # Clank's own MCP server, given to every agent: send_to_phone (design 0005 §3)
 NOTION_PREFIX = "clank_notion_"  # Clank's Notion tools, as OpenCode names them: never to the cloud (design 0016 §10)
 LOCAL_ONLY = "held back: local only, it never goes to the cloud model"
+REACHED = "reached by address: nothing but the model is reachable from the container yet"
+HELD = "held back from this workspace (m gives it)"
 # A server of yours with secrets that a running OpenCode does not know: its values reach OpenCode in its own environment
 # alone, as it starts (design 0002 §2.8), so it is never added live with them.
 SECRETS_AT_START = "its secret values reach OpenCode only in its environment, as it starts: the agent gets it then"
@@ -204,14 +212,34 @@ def secret_names(view: dict[str, Any]) -> list[str]:
     return [*view.get("env", []), *view.get("headers", [])]
 
 
-def confirm_said(name: str, workspace: str, carried: list[str]) -> str:
+def confirm_said(name: str, workspace: str, carried: list[str], *, asked: bool = False) -> str:
     """What giving one of your servers with secrets to a workspace that may use a cloud model does, asked before it is
-    given (decision 0168)."""
+    given (decision 0168); `asked`, while the workspace's question whether it may use one waits."""
+    cloud = (
+        f"{workspace} is asked whether it may use a cloud model: allowed, a model at a provider will be able to read"
+        if asked
+        else f"{workspace} may use a cloud model: a model at a provider will be able to read"
+    )
     return (
         f"{name} carries secret values ({', '.join(carried)}): given to {workspace}, {workspace}'s agent can read "
-        f"them. {workspace} may use a cloud model: a model at a provider will be able to read what the agent reads, "
-        "those values too."
+        f"them. {cloud} what the agent reads, those values too."
     )
+
+
+def not_given(view: dict[str, Any], record: dict[str, Any], cloud: bool) -> str:
+    """Why one of your servers (as the tools component shows it) is not given to a workspace's agent (its record),
+    empty when it is: reached by address, local only while the workspace may use a cloud model (design 0016 §10), held
+    back from it, or carrying secret values it is not named for (decision 0168)."""
+    carried = secret_names(view)
+    if view["transport"] != "stdio":
+        return REACHED
+    if view.get("local_only") and cloud:
+        return LOCAL_ONLY
+    if view["name"] in record["mcp_off"]:
+        return HELD
+    if carried and view["name"] not in record.get("mcp_secrets", []):
+        return f"it carries secret values ({', '.join(carried)}): {SECRETS_NAMED} (m gives it)"
+    return ""
 
 
 def limits(model: AgentModel) -> dict[str, int]:
@@ -262,6 +290,10 @@ class Agents:
         kernel.events.subscribe(self._heard_tools)  # the tools that never go to the cloud, given to the gateway
         kernel.events.subscribe(self._heard_dev_mode)  # the network instructions written again (decision 0152)
         kernel.events.subscribe(self._heard_preset)  # the main slot's preset changed its limits: open windows told
+        # Allowing a workspace the cloud names first your MCP servers with secrets its agent gets (decision 0168).
+        if "workspaces" in kernel.parts:
+            workspaces: Workspaces = kernel.parts["workspaces"]
+            workspaces.on_carried(self.cloud_secrets)
 
     def on_prepared(self, told: Callable[[str, int], None]) -> None:
         """Be told each OpenCode window `prepare` gives a command for: its workspace and its port (a flow's planning
@@ -704,18 +736,20 @@ class Agents:
         when not, why (design 0004 §10); the names of the secret values one of yours carries (`secret_names`), and
         what giving it asks you first (`confirm`, empty when nothing is asked). One of yours with secrets is given
         only when the workspace names it (`mcp_secrets`, decision 0168), asked first while the workspace may use a
-        cloud model."""
+        cloud model or its question whether it may use one waits (allowing it the cloud names the servers with secrets
+        it gets: `cloud_secrets`), unless it is marked local only, which never goes with the cloud."""
         from clank.components.workspaces.service import CURRENT_PHONE
 
         loaded = self._workspace(workspace)
         record = loaded.record.model_dump()
         tools: Tools = self.kernel.parts["tools"]
+        workspaces: Workspaces = self.kernel.parts["workspaces"]
         held = CLANK_SERVER in record["mcp_off"]
         cloud = record.get("models") == "cloud"
+        asked = not cloud and workspaces.cloud_asked(workspace)
         rows: list[dict[str, Any]] = [{
             "name": CLANK_SERVER, "scope": "clank", "transport": "stdio", "shown": f"python3 {CURRENT_PHONE}",
-            "given": not held, "why": "held back from this workspace (m gives it)" if held else "",
-            "secret_names": [], "confirm": "",
+            "given": not held, "why": HELD if held else "", "secret_names": [], "confirm": "",
         }]  # fmt: skip
         mine = {view["name"] for view in tools.servers() if view["scope"] == "user"} | {CLANK_SERVER}
         for view in tools.servers(record["path"]):
@@ -724,20 +758,13 @@ class Agents:
 
             name, scope = view["name"], view["scope"]
             carried = secret_names(view) if scope == "user" else []
-            named = name in record.get("mcp_secrets", [])
             current = ""
             if scope == "project":  # a project's server has no secret: reading it records no use
                 current = fingerprint(tools.runnable(name, record["path"], scope, why=""))
-            if view["transport"] != "stdio":
-                why = "reached by address: nothing but the model is reachable from the container yet"
-            elif scope == "user" and view.get("local_only") and cloud:
-                why = LOCAL_ONLY  # design 0016 §10: what it gives the agent never goes to the cloud model
-            elif scope == "user" and name in record["mcp_off"]:
-                why = "held back from this workspace (m gives it)"
-            elif carried and not named:
-                why = f"it carries secret values ({', '.join(carried)}): {SECRETS_NAMED} (m gives it)"
-            elif scope == "user":
-                why = ""
+            if scope == "user":
+                why = not_given(view, record, cloud)
+            elif view["transport"] != "stdio":
+                why = REACHED
             elif name in mine:
                 why = "it has the name of one of yours, which the agent gets instead"
             elif name not in record["mcp_allowed"]:
@@ -747,13 +774,34 @@ class Agents:
             else:
                 why = ""
             shown = view["command"] if view["transport"] == "stdio" else view["url"]
+            ask = (
+                bool(carried and why and (cloud or asked) and not view.get("local_only"))
+                and view["transport"] == "stdio"
+            )
             rows.append({
                 "name": name, "scope": scope, "transport": view["transport"], "shown": " ".join([shown, *view["args"]]),
                 "given": not why, "why": why, "secret_names": carried,
-                "confirm": confirm_said(name, workspace, carried) if carried and why and cloud and why != LOCAL_ONLY
-                and view["transport"] == "stdio" else "",
+                "confirm": confirm_said(name, workspace, carried, asked=asked) if ask else "",
             })  # fmt: skip
         return rows
+
+    def cloud_secrets(self, workspace: str) -> dict[str, list[str]]:
+        """Your MCP servers with secrets the workspace's agent gets that it would still get with a cloud model (named
+        for it, not held back, not local only), each with the names of its values: allowing the workspace the cloud
+        names them first (decision 0168); none for a workspace that is no more."""
+        try:
+            record = self._workspace(workspace).record.model_dump()
+        except AgentError:
+            return {}
+        if not record.get("mcp_secrets"):
+            return {}  # named for none: nothing to read (every workspace's view asks)
+        tools: Tools = self.kernel.parts["tools"]
+        return {
+            view["name"]: secret_names(view)
+            for view in tools.servers()
+            if view["scope"] == "user" and view["name"] != CLANK_SERVER and secret_names(view)
+            and not not_given(view, record, cloud=True)
+        }  # fmt: skip
 
     def live(self, workspace: str) -> list[dict[str, Any]]:
         """The servers with their state and their last check's tools (`state`, `problem`, `agents`, `checked`)."""

@@ -418,6 +418,15 @@ class Workspaces:
         self._named(name)
         return self.cloud.view(name)
 
+    def cloud_asked(self, name: str) -> bool:
+        """Whether a question waits on whether the workspace may use the cloud model (design 0016 §9)."""
+        return self.cloud.asked(name)
+
+    def on_carried(self, carried: Callable[[str], dict[str, list[str]]]) -> None:
+        """Be told how to read each of your MCP servers with secrets a workspace's agent gets, with its values' names
+        (the agents component knows them, decision 0168): allowing the workspace the cloud names them first."""
+        self.cloud.carried = carried
+
     def allow_cloud(self, name: str, allow: bool, *, actor: Actor) -> dict[str, Any]:
         """Allow a workspace the cloud model, or keep it on this machine; its view after."""
         self._named(name)

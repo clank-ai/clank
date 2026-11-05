@@ -30,7 +30,16 @@
 - **Giving one to a workspace that may use a cloud model asks first**, in the service's words: its agent can read the
   server's values, and a model at a provider will be able to read what the agent reads, those values too. The service
   refuses without that confirmation (`409 unconfirmed`); `clank mcp allow` asks in the terminal (`--yes` answers it),
-  and the console asks in a window.
+  and the console asks in a window. A workspace whose question whether it may use the cloud model waits is asked the
+  same way, since its answer may allow it.
+- **Allowing a workspace the cloud names first each such server its agent gets** (design 0016 §9), with the names of
+  its values: its agent can read them, and with the cloud model a model at a provider will be able to read them too.
+  The question asked once says so in its detail, and so do the words `u` on the folder's page and `clank workspace allow
+  FOLDER --cloud` show before they change the bound (`cloud_confirm`); a server marked local only, which never goes
+  with the cloud, is not named. So whichever comes first, the server or the cloud, the owner is asked knowing the
+  values can reach a model at a provider. The agents component, which knows which servers a workspace gets, tells the
+  workspaces' service how to read them as it is built (`on_carried`), so no component uses the other in a cycle
+  (decision 0019).
 - **The values reach the agent in OpenCode's own environment, never in a file.** OpenCode's configuration names a
   variable for each value (`"KEY": "{env:CLANK_MCP_<SERVER>__KEY}"`); the variable's text is the value as JSON writes
   it inside a string (quotes, backslashes and line breaks escaped, and each `{` written as JSON's escape for it), so
@@ -63,6 +72,8 @@
   it is given like the others.
 - **Hold back a server with secrets from a cloud workspace altogether**: some servers are meant for exactly that work;
   the owner decides, told what it means.
+- **Take such servers away from a workspace when it is allowed the cloud, to be given again after**: two steps where
+  one, the cloud's own question naming them, tells the owner the same and lets the owner choose there.
 
 ## Consequences
 

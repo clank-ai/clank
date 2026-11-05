@@ -471,7 +471,11 @@ Today the gateway forwards only to an engine on this machine (`gateway/server.py
     and in VS Code. Its detail says what goes (every request of its sessions: the owner's messages, what the agent
     reads of the folder, command output) and what never does (§10). A workspace that existed before the provider was
     agreed says so first: its earlier sessions and its folder may hold research; a workspace made for the purpose is
-    recommended.
+    recommended. *Revised after approval (2026-11-05), decision 0168: the question, and the words `u` and `clank
+    workspace allow FOLDER --cloud` say before they change the bound, name first each of the owner's MCP servers with
+    secrets the workspace's agent gets (not one marked local only), with the names of its values, and say its agent can
+    read those values and a model at a provider will be able to read them too, so the owner allows the cloud knowing
+    they go with it; giving such a server while the question waits asks first, as for a workspace allowed the cloud.*
   - **At the gateway**, a request from a workspace not yet answered (the main slot switched to the cloud while its
     OpenCode ran, or a flow's box): held as a paused request is held (decision 0055: a 200 with comment lines for a
     stream, nothing for a whole one), while the question is asked on every client. *Allow* lets it go on the same
