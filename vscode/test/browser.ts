@@ -50,8 +50,13 @@ export class Browser {
 
   static async open(url: string, profile: string): Promise<Browser> {
     const port = await freePort();
+    // The page opens as a second tab, which Edge may take for one in the background and stop drawing: no frames, so no
+    // ResizeObserver callback and no animation frame (the board's fit once its view has a size waited for ever on a
+    // loaded machine). Backgrounding off, and the page brought to the front below, it is drawn as a page on screen is.
     const process = spawn(EDGE!, [`--headless=new`, `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`,
-      "--window-size=1100,800", "--allow-file-access-from-files", "--no-first-run", "about:blank"], { windowsHide: true, stdio: "ignore" });
+      "--window-size=1100,800", "--allow-file-access-from-files", "--no-first-run", "--disable-renderer-backgrounding",
+      "--disable-background-timer-throttling", "--disable-backgrounding-occluded-windows", "about:blank"],
+      { windowsHide: true, stdio: "ignore" });  // prettier-ignore
     process.unref(); // a browser left behind never keeps the tests from ending
     const browser = new Browser(process);
     let target: { webSocketDebuggerUrl: string } | undefined;
@@ -76,6 +81,7 @@ export class Browser {
       const message = JSON.parse(String(event.data)) as { id?: number; result?: unknown; error?: unknown };
       if (message.id !== undefined) browser.waiting.get(message.id)?.(message);
     };
+    await browser.send("Page.bringToFront");
     return browser;
   }
 
