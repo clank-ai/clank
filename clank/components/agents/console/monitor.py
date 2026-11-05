@@ -102,6 +102,7 @@ VIEWS = ("flow", "session", "context")  # the tabs, in board D1's order; F10 mov
 TITLES = {"flow": "Flow", "session": "Session", "context": "Context"}
 FIRST_VIEW = "flow"  # the website's look (decision 0125); board A was the first pick, before the website
 NO_FLOW = "no flow yet"
+NO_MARK = "nothing marked yet"  # Watch for, while the page follows a session no rule has marked
 HEADINGS = {
     "flow": ("No flow yet", "reading this folder's flows"),
     "session": ("No session yet", "reading this folder's sessions"),
@@ -1204,6 +1205,7 @@ class MonitorPage(Page):
             self._calls_said = NO_CALL if session else NO_SESSION
             said.update(self._calls_said)
         said.display = not calls.shown
+        relabel(self.query_one("#monitor-session-watch", Panel).query_one(Empty), NO_MARK if session else NO_SESSION)
         items = self.query_one("#monitor-biggest-list", BiggestList)
         items.show(seen.context)
         empty = self.query_one("#monitor-session-biggest", Panel).query_one(Empty)

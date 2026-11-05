@@ -3,7 +3,7 @@ its rule, its session and why, a mark not seen yet in the attention color; Enter
 (§2's keys: Enter opens a mark), each whole, and so they are seen. Beside "Monitor" in the menu, the count of marks
 not seen yet, gone once they are seen, from the console or elsewhere (the event stream says so). Until the page follows
 a session's marks (design 0012 §3), the panel lists the marks of every session; with none, it says what it said before
-("no session yet")."""
+("no session yet"), or, while the page follows a session, that nothing is marked yet."""
 
 from typing import Any
 
@@ -21,6 +21,9 @@ from clank.kernel.events import Actor
 from clank.kernel.home import Home
 from tests.components.agents.test_watch_for_rules import LIMITS, bash, steps_with
 from tests.console.frames import settle
+from tests.console.test_monitor_flow import board
+from tests.console.test_monitor_flow import make as flow_console
+from tests.console.test_monitor_flow import opened as flow_opened
 from tests.console.test_monitor_page import make, monitor, opened
 from tests.support.flowlines import SESSION, lines, updated
 
@@ -85,3 +88,16 @@ async def test_the_menu_shows_how_many_marks_are_not_seen_beside_monitor(
         kernel.parts["agents"].marks.seen(actor=YOU)
         await settle(pilot, lambda: menu_entry(app).strip() == "F10 Monitor")
         assert monitor(app).badge(0) is None
+
+
+async def test_with_a_session_followed_and_nothing_marked_the_panel_says_nothing_is_marked_yet(
+    client: Client, kernel: Kernel, home: Home
+) -> None:
+    board(kernel)  # the folder's session, followed; no rule has marked it (the rules run only when asked here)
+    app = flow_console(client, home)
+    async with app.run_test(size=(160, 50)) as pilot:
+        page = await flow_opened(pilot, app)
+        await pilot.press("f10")  # the Session view, where Watch for is
+        empty = page.query_one("#monitor-session-watch").query_one(Empty)
+        await settle(pilot, lambda: str(empty.content) == "nothing marked yet")
+        assert empty.display, "said while there is no mark"
