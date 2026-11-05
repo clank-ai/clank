@@ -20,7 +20,7 @@ Linux ([design 0014](0014-linux-and-small-machines.md) §2-§4, built at the own
 | 1 | Who sets Clank up, and the one path each follows | Proposed 2026-10-27; being built at the owner's instruction |
 | 2 | Rules every step of the setup keeps | Proposed 2026-10-27; being built at the owner's instruction |
 | 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9); revised 2026-10-29 at the owner's instruction (`install.sh` in color, `clank setup` offered at its end, no log out and in: decision 0150) |
-| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: the checklist (S2), the fixes (S3) and the sandbox image built in the background (S4), `clank setup` and the console's Setup page ([plan s62](../plans/s62-clank-setup.md)); Clank's VS Code window's install is said, not done by the setup; revised 2026-10-29 at the owner's instruction (in color; the docker group taken at once, decision 0150) |
+| 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: the checklist (S2), the fixes (S3) and the sandbox image built in the background (S4), `clank setup` and the console's Setup page ([plan s62](../plans/s62-clank-setup.md)); Clank's VS Code window's install is said, not done by the setup; revised 2026-10-29 at the owner's instruction (in color; the docker group taken at once, decision 0150); revised after approval (2026-11-05): an item says who else may open Clank's secrets and state, only while someone may (decision 0167) |
 | 5 | Docker, configured correctly on each system | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: each state's words and fix (S2), and the fixes Clank does, in the terminal on a yes (S3); revised 2026-10-29 at the owner's instruction (no log out and in: decision 0150) |
 | 6 | Clank's VS Code extension without building it | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction (S5) |
 | 7 | Local models: what is one step and what is not yet | Proposed 2026-10-27 |
@@ -166,6 +166,14 @@ set up, Setup is in the menu ("afterwards it is in the menu", above) and a resta
 A client runs a fix's command only when it is one the checklist builds (`checklist.runnable`: the installers' Docker
 steps, and Docker Engine's start, start with the computer and the docker group's for the client's own account),
 whoever gave it the checklist; any other is shown, for the person to run if they trust it.
+
+*Revised after approval (2026-11-05), decision 0167: the checklist also says who else may open Clank's secrets and
+state, which it did not read.* A last item, "Only you can open secrets and state", is shown only while someone other
+than the user (and SYSTEM, on Windows) may open CLANK_HOME's secrets/ or state/, read as `clank doctor` reads it
+(design 0001 §7.2): each other entry of their access lists by name, or a mode that lets others in, and the commands
+that remove it (`icacls`, or `chmod 700`). It is offered, not required, so Ready and where the console opens do not
+wait for it: Clank's service makes both folders private itself each time it starts. Its commands are the owner's to
+run; Clank runs none of them. A list that cannot be read leaves the checklist as it was (the doctor says why).
 
 As built (S3, 2026-10-27): `clank setup` prints the checklist, then asks about each item not done, in order, showing
 what its fix does and its exact command, and does it on a yes, reading the checklist again after each; without a

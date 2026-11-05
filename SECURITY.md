@@ -20,6 +20,13 @@ Clank is in beta: fixes go into the newest version only.
 - **Keys and tokens** (a cloud provider's API key, Notion's secret, an MCP server's keys) are kept one file each in
   `CLANK_HOME/secrets`, readable only by you, and nowhere else: no record, event or log holds them, and clients see only
   their last four characters.
+- **Your secrets and state folders** (`CLANK_HOME/secrets` and `CLANK_HOME/state`, which holds the local token) can be
+  opened only by you, whatever the folder above them allows, set each time Clank's service starts. On Linux and macOS
+  each is mode 0700. On Windows each has an access list of its own: inheritance from the folder above is turned off,
+  and only your account and SYSTEM (Windows itself) have access, full control, passed to every file inside; Clank reads
+  the list at each start and rewrites it only when it differs. `clank doctor` (and `clank setup`, while it applies)
+  names anyone else on those lists, with the `icacls` command that removes them (`chmod 700` elsewhere), for you to
+  run; it changes nothing itself.
 - **The phone page** is served only on your tailnet, through Tailscale, never the open internet: Clank refuses to
   publish it while Tailscale Funnel is on for its port, checks Tailscale's verified login on every request, and lets in
   only a device paired with a code made on the computer. Remote access is off until you turn it on.

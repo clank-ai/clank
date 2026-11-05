@@ -14,15 +14,18 @@ started then would keep the session's groups. An item waits while one it needs i
 and what each thing is for. A client runs only the commands the checklist builds, the docker group's for its own
 account alone (`runnable`), whoever gave it the checklist. The console opens on Setup only for what This folder does
 not put right on its way to the agent (`opens`, decision 0148): a Docker Desktop only stopped and a sandbox image not
-built for this Clank are This folder's to do."""
+built for this Clank are This folder's to do. Who else may open Clank's secrets and state is an item only when someone
+may, offered and not required, its commands the owner's to run (decision 0167)."""
 
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
 
 from clank.components.agents.checklist import Building, Facts, Item, Model, VsCode, items, ready, runnable, view
 from clank.components.workspaces.adapters.platform import PlatformSetup, PlatformStatus
 from clank.components.workspaces.service import SetupReading
+from clank.kernel.private import Exposed
 
 ENGINE = PlatformStatus(adapter="docker-engine", label="Docker Engine", state="running", version="28.0.4",
                         engine="28.0.4")  # fmt: skip
@@ -351,6 +354,22 @@ def test_clanks_vs_code_window_is_optional_and_says_how_to_get_it(vscode: VsCode
     assert (window.state, window.required) == (state, False)
     assert said in window.said
     assert ready(items(found)), "optional"
+
+
+def test_who_else_may_open_clanks_secrets_and_state_is_an_item_only_when_someone_may() -> None:
+    assert "private_folders" not in [each.id for each in items(facts())]
+    folder = "/srv/clank-home/secrets"
+    exposed = Exposed(Path(folder), "secrets/ has mode 750, so others may open it", (("chmod", "700", folder),))
+    found = facts(exposed=(exposed,))
+    private = item(found, "private_folders")
+    assert (private.title, private.state, private.required) == ("Only you can open secrets and state", "to do", False)
+    assert private.said == "secrets/ has mode 750, so others may open it"
+    assert private.fix is not None
+    assert (private.fix.does, private.fix.command) == ("", ()), "the owner's to run: Clank runs none of it"
+    assert f"`chmod 700 {folder}`" in private.fix.said
+    assert "Clank also sets them itself each time its service starts" in private.fix.said
+    shown = view(found)
+    assert (shown["ready"], shown["opens"]) == (True, False), "said, and Ready does not wait for it"
 
 
 def test_only_a_fix_that_runs_a_command_in_the_terminal_needs_administrator_rights() -> None:

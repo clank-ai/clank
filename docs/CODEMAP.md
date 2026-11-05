@@ -351,6 +351,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/kernel/kinds.py` | The kernel's own declarations: its kinds of record and its event types, collected for `clank.registry`. |
 | `clank/kernel/locks.py` | Locks a process holds on a file for as long as it runs, such as the one that keeps a second service off a |
 | `clank/kernel/operations.py` | Operations: anything that takes more than a moment runs in the service as an operation (design 0002 §2.4). |
+| `clank/kernel/private.py` | Folders only the user Clank runs as can open: CLANK_HOME's secrets/ and state/ (design 0001 §7.2, decision 0167). |
 | `clank/kernel/processes.py` | Processes: running a program to read its answer (design 0002 §2.9, the first of its part). |
 | `clank/kernel/questions.py` | Questions: the one way any part of Clank asks the user something and waits for the answer (design 0002 §2.5). |
 | `clank/kernel/records.py` | Records: everything Clank manages is a record of a kind (design 0002 §2.2). |

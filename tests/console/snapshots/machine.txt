@@ -11,22 +11,22 @@ F4 This folder         ✗ 4   │ ┌─ Profile ──────────
 9 Presets                    │ └──────────────────────────────────────────────────────────────────────────────────────┘
 0 Providers and models       │
 F1 Help                      │ ┌─ Doctor ─────────────────────────────────────────────────────────────────────────────┐
-F2 Launch options            │ │ 10 of 11 passed   (d runs it again)                                                  │
+F2 Launch options            │ │ 11 of 12 passed   (d runs it again)                                                  │
 F3 MCP servers               │ │ ok    Python 3.12 or newer                     as expected                           │
 F6 Workspaces                │ │ ok    CLANK_HOME can be written                as expected                           │
-F7 Requests                  │ │ ok    The state database is intact             as expected                           │
-F8 CPU models                │ │ ok    Room for models                          as expected                           │
-F9 Phone               ●     │ │ ok    An NVIDIA GPU                            as expected                           │
-F10 Monitor                  │ │ ok    WSL 2                                    as expected                           │
-F12 Add a model              │ │ ok    Hardware-accelerated GPU scheduling off  as expected                           │
-Setup                        │ │ ok    Docker installed                         as expected                           │
-─────────────────────────────│ │ warn  Docker running                           not running                           │
-later                        │ │                                                start it with `clank docker start`    │
-Sampling              M3     │ │ (or open Docker Desktop)                                                             │
-Layout                M2     │ │ ok    Docker limits memory                     as expected                           │
-Tests and trials      M2     │ │ ok    The API's port                           47720 is free for the service         │
-Skills                M8     │ └──────────────────────────────────────────────────────────────────────────────────────┘
-                             │
+F7 Requests                  │ │ ok    Only you can open secrets and state      as expected                           │
+F8 CPU models                │ │ ok    The state database is intact             as expected                           │
+F9 Phone               ●     │ │ ok    Room for models                          as expected                           │
+F10 Monitor                  │ │ ok    An NVIDIA GPU                            as expected                           │
+F12 Add a model              │ │ ok    WSL 2                                    as expected                           │
+Setup                        │ │ ok    Hardware-accelerated GPU scheduling off  as expected                           │
+─────────────────────────────│ │ ok    Docker installed                         as expected                           │
+later                        │ │ warn  Docker running                           not running                           │
+Sampling              M3     │ │                                                start it with `clank docker start`    │
+Layout                M2     │ │ (or open Docker Desktop)                                                             │
+Tests and trials      M2     │ │ ok    Docker limits memory                     as expected                           │
+Skills                M8     │ │ ok    The API's port                           47720 is free for the service         │
+                             │ └──────────────────────────────────────────────────────────────────────────────────────┘
                              │
                              │
                              │

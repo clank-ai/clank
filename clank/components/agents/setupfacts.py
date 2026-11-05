@@ -6,7 +6,8 @@ memory limits kept a few minutes), the preset that last answered a test request 
 `workspaces.image`, or an opening of a workspace in its image step), this computer's GPUs as the machine reads them,
 Clank's VS Code window, and the programs a fix of Docker runs. `offline` is `clank setup`'s when the service does not
 run: Docker as the doctor reads it (`read_setup`), Clank's VS Code window and the programs; the rest is the service's
-to say. Clank's VS Code window is read from its files alone (`vscode_state`): VS Code's program as Clank finds it, and
+to say. Both read who else may open CLANK_HOME's secrets/ and state/, as the doctor reads it (`Home.exposed`, decision
+0167). Clank's VS Code window is read from its files alone (`vscode_state`): VS Code's program as Clank finds it, and
 the newest version of Clank's extension in the window's own extensions folder (CLANK_HOME/vscode/extensions), so no
 program is started to know it.
 """
@@ -22,6 +23,7 @@ from clank.components.agents.checklist import Building, Facts, Model, VsCode
 from clank.components.agents.kinds import VsCodeSettings
 from clank.components.workspaces.service import read_setup
 from clank.kernel.home import Home
+from clank.kernel.private import Exposed
 from clank.kernel.settings import read_record
 
 if TYPE_CHECKING:
@@ -66,6 +68,7 @@ def offline(home: Home, folder: str = "") -> Facts:
         docker=read_setup(home, folder),
         vscode=vscode_state(home, vscode_settings(home).program),
         tools=checklist.found_tools(),
+        exposed=exposed(home),
     )
 
 
@@ -86,7 +89,17 @@ def from_service(kernel: "Kernel", folder: str = "", refresh: bool = False) -> F
         gpus=_gpus(machine),
         vscode=vscode_state(kernel.home, settings.program),
         tools=checklist.found_tools(),
+        exposed=exposed(kernel.home),
     )
+
+
+def exposed(home: Home) -> tuple[Exposed, ...]:
+    """Of CLANK_HOME's secrets/ and state/, those someone else may open; none when their lists cannot be read (the
+    doctor says why), so the checklist is never lost for it."""
+    try:
+        return tuple(home.exposed())
+    except OSError:
+        return ()
 
 
 def _gpus(machine: "Machine") -> tuple[str, ...]:

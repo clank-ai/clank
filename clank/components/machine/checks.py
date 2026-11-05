@@ -3,13 +3,16 @@
 
 Each check reads facts (`Facts`: CLANK_HOME, the machine profile, Docker as its container platform reports it, the
 platform, the API's port, Windows' GPU scheduling setting, the free disk space) and answers passed, warning, failed or
-skipped, with a detail and, when it is not passed, what to do. Docker is read through the workspaces component's adapter
-(design 0014 §2), never by a docker command of the doctor's own, so a stopped Docker Engine is never woken, and its
-checks say what the platform says, in its words: a Docker Clank does not start names the command its owner runs, an
-account outside the docker group how to join it. A warning means Clank can run but something will be missing or slow;
-failed means Clank cannot work as it is. Checks never change anything (design 0001 §4.7: Clank explains and offers, the
-user decides). After the machine's own, the checks other components declare run (`more`, design 0002 §2.1: the phone's
-way in, design 0025 §2); one that fails to run is said as a failed check.
+skipped, with a detail and, when it is not passed, what to do. Who may open CLANK_HOME's secrets/ and state/ is read
+from this computer itself whatever `platform` says (their access lists on Windows, their modes elsewhere, decision
+0167): anyone but the user (and SYSTEM) is a warning, named, with the commands that take it away. Docker is read
+through the workspaces component's adapter (design 0014 §2), never by a docker command of the doctor's own, so a
+stopped Docker Engine is never woken, and its checks say what the platform says, in its words: a Docker Clank does not
+start names the command its owner runs, an account outside the docker group how to join it. A warning means Clank can
+run but something will be missing or slow; failed means Clank cannot work as it is. Checks never change anything
+(design 0001 §4.7: Clank explains and offers, the user decides). After the machine's own, the checks other components
+declare run (`more`, design 0002 §2.1: the phone's way in, design 0025 §2); one that fails to run is said as a failed
+check.
 """
 
 import shutil
@@ -23,6 +26,7 @@ from typing import Any, Literal
 
 from clank.components.machine.kinds import MachineProfile
 from clank.components.workspaces.service import MEMORY_FIX, DockerReading, memory_said
+from clank.kernel import private
 from clank.kernel.home import Home
 
 Status = Literal["passed", "warning", "failed", "skipped"]
@@ -95,6 +99,19 @@ def _clank_home(facts: Facts) -> tuple[Status, str, str]:
     except (OSError, ValueError) as error:
         return "failed", f"{facts.home.root} cannot be written: {error}", "set CLANK_HOME to a folder you can write"
     return "passed", str(facts.home.root), ""
+
+
+def _private_folders(facts: Facts) -> tuple[Status, str, str]:
+    """Who else may open secrets/ and state/, as this computer says it (their access lists on Windows, their modes
+    elsewhere), with the commands that take it away for the owner to run (decision 0167); read, never changed."""
+    if not any(folder.is_dir() for folder in facts.home.private_folders):
+        return "skipped", "not created yet: Clank makes them yours alone when it creates them", ""
+    found = facts.home.exposed()
+    if found:
+        said, fix = private.words(found)
+        return "warning", said, fix
+    alone = "only you and SYSTEM" if sys.platform == "win32" else "only you"
+    return "passed", f"{alone} may open secrets/ and state/", ""
 
 
 def _state_database(facts: Facts) -> tuple[Status, str, str]:
@@ -203,6 +220,7 @@ def _port(facts: Facts) -> tuple[Status, str, str]:
 CHECKS: list[tuple[str, str, Callable[[Facts], tuple[Status, str, str]]]] = [
     ("python", "Python 3.12 or newer", _python),
     ("clank_home", "CLANK_HOME can be written", _clank_home),
+    ("private_folders", "Only you can open secrets and state", _private_folders),
     ("state_database", "The state database is intact", _state_database),
     ("disk", "Room for models", _disk),
     ("gpu", "An NVIDIA GPU", _gpu),

@@ -27,7 +27,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4.4 | Crashes and slowdowns while running | `tests/components/runtime/test_watcher.py` (7) |
 | 4.5 | Sessions and their cached context | none yet |
 | 4.6 | What Clank may stop | `tests/components/runtime/test_local_host.py` (11), `tests/components/runtime/test_watcher.py` (7) |
-| 4.7 | The rest of the computer | `tests/components/machine/test_checks.py` (10) |
+| 4.7 | The rest of the computer | `tests/components/machine/test_checks.py` (10), `tests/components/machine/test_private_folders.py` (8) |
 | 4.8 | Every change is recorded | `tests/components/runtime/test_state.py` (4), `tests/console/test_pages.py` (10) |
 | 5 | The console | `tests/console/test_lists.py` (2) |
 | 5.1 | What it is | `tests/console/test_arrows.py` (8), `tests/console/test_data.py` (20), `tests/console/test_one_door.py` (6), `tests/console/test_shell.py` (21) |
@@ -48,7 +48,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 6.7 | What comes from the prototype's gateway | none yet |
 | 7 | Setup and portability | see its subsections |
 | 7.1 | Where Clank runs | none yet |
-| 7.2 | The user's Clank folder | `tests/kernel/test_files.py` (11), `tests/kernel/test_home.py` (4) |
+| 7.2 | The user's Clank folder | `tests/components/machine/test_private_folders.py` (8), `tests/kernel/test_files.py` (11), `tests/kernel/test_home.py` (4), `tests/kernel/test_private.py` (6) |
 | 7.3 | The first-run guide | `tests/components/machine/test_checks.py` (10), `tests/components/machine/test_detect.py` (5), `tests/components/machine/test_doctor.py` (4) |
 | 7.4 | Recipes for serving setups | `tests/components/runtime/test_install.py` (5) |
 | 7.5 | Models | `tests/components/runtime/test_download.py` (8) |
@@ -580,8 +580,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | Who sets Clank up, and the one path each follows | none yet |
 | 2 | Rules every step of the setup keeps | none yet |
 | 3 | The installer on each system | none yet |
-| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_paint.py` (2), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (19), `tests/components/agents/test_setup_checklist.py` (30), `tests/components/workspaces/test_image_operation.py` (5), `tests/console/test_data.py` (20), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (8), `tests/console/test_shell.py` (21), `tests/docker/test_setup_live.py` (1) |
-| 5 | Docker, configured correctly on each system | `tests/cli/test_docker_group.py` (3), `tests/cli/test_setup_fixes.py` (19), `tests/components/agents/test_setup_checklist.py` (30), `tests/components/workspaces/test_platform_setup.py` (6), `tests/console/test_setup_page_fixes.py` (8), `tests/contract/test_container_platform.py` (9), `tests/docker/test_setup_live.py` (1) |
+| 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_paint.py` (2), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (19), `tests/components/agents/test_setup_checklist.py` (31), `tests/components/machine/test_private_folders.py` (8), `tests/components/workspaces/test_image_operation.py` (5), `tests/console/test_data.py` (20), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (8), `tests/console/test_shell.py` (21), `tests/docker/test_setup_live.py` (1) |
+| 5 | Docker, configured correctly on each system | `tests/cli/test_docker_group.py` (3), `tests/cli/test_setup_fixes.py` (19), `tests/components/agents/test_setup_checklist.py` (31), `tests/components/workspaces/test_platform_setup.py` (6), `tests/console/test_setup_page_fixes.py` (8), `tests/contract/test_container_platform.py` (9), `tests/docker/test_setup_live.py` (1) |
 | 6 | Clank's VS Code extension without building it | `tests/components/agents/test_vscode_release.py` (6), `tests/tools/test_release.py` (6) |
 | 7 | Local models: what is one step and what is not yet | none yet |
 | 8 | Tests and build steps | none yet |
@@ -1592,7 +1592,7 @@ Design 0005 §2-§3: the session bridge and the agent's outbox, run on this mach
 
 ### `tests/components/agents/test_setup_checklist.py`
 
-Design 0028 §4 and §5: `clank setup`'s checklist. Each item says its state and, while it is not done, what to do: its fix, and whether Clank does it on a yes. Each Docker state of §5 has its words and its fix: not installed, the installer's Docker step in the terminal (winget on Windows, Homebrew on macOS, Clank's installer on Linux), or where to get Docker when no command can; the snap's or rootless Docker, not supported, the commands shown and never run; Docker Engine stopped, `sudo systemctl start docker` in the terminal; Docker Desktop stopped, started by Clank through its own command; not started with the computer, `sudo systemctl enable docker`, offered and not required; no access outside the docker group, `sudo usermod -aG docker <account>` in the terminal, then nothing more where `sg` is installed (Clank takes the group at once, decision 0150), else a log out and in; no access inside it, Clank's service restarted where it started before the account joined and `sg` is installed, else the log out and in alone, which Clank does not do; no memory limits, the kernel setting, which Clank never makes; a folder the agent cannot write, how to let it. An administrator command runs only in the terminal. Without the service, the model and the folder are not known, and the service is to start, unless this account may not use Docker yet: a service started then would keep the session's groups. An item waits while one it needs is not done. Ready says what was set up and what each thing is for. A client runs only the commands the checklist builds, the docker group's for its own account alone (`runnable`), whoever gave it the checklist. The console opens on Setup only for what This folder does not put right on its way to the agent (`opens`, decision 0148): a Docker Desktop only stopped and a sandbox image not built for this Clank are This folder's to do.
+Design 0028 §4 and §5: `clank setup`'s checklist. Each item says its state and, while it is not done, what to do: its fix, and whether Clank does it on a yes. Each Docker state of §5 has its words and its fix: not installed, the installer's Docker step in the terminal (winget on Windows, Homebrew on macOS, Clank's installer on Linux), or where to get Docker when no command can; the snap's or rootless Docker, not supported, the commands shown and never run; Docker Engine stopped, `sudo systemctl start docker` in the terminal; Docker Desktop stopped, started by Clank through its own command; not started with the computer, `sudo systemctl enable docker`, offered and not required; no access outside the docker group, `sudo usermod -aG docker <account>` in the terminal, then nothing more where `sg` is installed (Clank takes the group at once, decision 0150), else a log out and in; no access inside it, Clank's service restarted where it started before the account joined and `sg` is installed, else the log out and in alone, which Clank does not do; no memory limits, the kernel setting, which Clank never makes; a folder the agent cannot write, how to let it. An administrator command runs only in the terminal. Without the service, the model and the folder are not known, and the service is to start, unless this account may not use Docker yet: a service started then would keep the session's groups. An item waits while one it needs is not done. Ready says what was set up and what each thing is for. A client runs only the commands the checklist builds, the docker group's for its own account alone (`runnable`), whoever gave it the checklist. The console opens on Setup only for what This folder does not put right on its way to the agent (`opens`, decision 0148): a Docker Desktop only stopped and a sandbox image not built for this Clank are This folder's to do. Who else may open Clank's secrets and state is an item only when someone may, offered and not required, its commands the owner's to run (decision 0167).
 
 - with everything done it is ready and says what each thing is for
 - docker not installed on linux offers clanks installer in the terminal with administrator rights
@@ -1619,6 +1619,7 @@ Design 0028 §4 and §5: `clank setup`'s checklist. Each item says its state and
 - the model says the gpu found or that the cloud is the way
 - a model that answered says where it runs
 - clanks vs code window is optional and says how to get it
+- who else may open clanks secrets and state is an item only when someone may
 - only a fix that runs a command in the terminal needs administrator rights
 - the view gives each items fix with its command as a list
 - the console opens on setup only for what this folder does not put right on its way
@@ -2810,6 +2811,19 @@ Design 0004 §9 (the owner's request, 2026-10-14: the console shows the machine'
 - an nvidia gpu is read from its driver
 - the last readings are kept and answered oldest first
 - a process whose name the system does not give is named by its id
+
+### `tests/components/machine/test_private_folders.py`
+
+Design 0001 §7.2 and §4.7: `clank doctor` says whether anyone but the user may open CLANK_HOME's secrets/ and state/, and changes nothing (decision 0167). On Windows it names every other entry of their access lists, who it is and what it allows, and the icacls commands that remove it, for the owner to run (an entry from the folder above goes with the command that turns inheritance off and grants the user and SYSTEM alone); on Linux and macOS it names a mode that lets others in, with `chmod 700`. Clank's service also puts them right as it starts. Design 0028 §4: `clank setup` reads the same, and a list it cannot read leaves its checklist whole. Always on a temporary home.
+
+- before the folders exist the check is skipped
+- once clank set them only the user and system may open them
+- an extra grant is named with the icacls command that removes it
+- an entry from the folder above is named with the command that turns inheritance off
+- the doctor reads the lists and writes none
+- clank setup reads what the doctor reads
+- a list that cannot be read leaves the setup whole
+- a mode that lets others in is named with chmod
 
 ### `tests/components/notion/test_applying.py`
 
@@ -5089,6 +5103,17 @@ Design 0002 §2.4: anything slow runs in the service as an operation: its steps 
 - after a restart unfinished operations are interrupted their questions withdrawn and reconciled
 - retrying an interrupted operation runs it again when its steps are repeatable
 - retrying is refused when a step that had started is not repeatable
+
+### `tests/kernel/test_private.py`
+
+Design 0001 §7.2: CLANK_HOME's secrets/ and state/ can be opened only by the user Clank runs as, whatever the folder above them allows (decision 0167). On Windows `Home.ensure` gives each an access list of its own, inheritance from the folder above turned off, with full control for the user and SYSTEM alone, inherited by everything made inside; it reads the list first and writes nothing when it is already so. On Linux and macOS each is mode 0700.
+
+- ensure gives secrets and state a list of their user and system alone with inheritance off
+- what is made inside them has those two entries alone made before or after
+- a second ensure reads the lists and writes nothing
+- ensure puts a list changed since right again
+- the other folders keep what they inherit
+- on linux and macos secrets and state are mode 0700
 
 ### `tests/kernel/test_processes.py`
 

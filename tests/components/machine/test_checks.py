@@ -68,7 +68,7 @@ def test_a_well_set_up_machine_passes_every_check(facts: Facts, home: Home) -> N
     store.close()
     found = statuses(facts)
     assert set(found.values()) == {"passed"}, found
-    assert len(found) == 11
+    assert len(found) == 12
 
 
 def test_the_database_check_closes_the_database_it_read(

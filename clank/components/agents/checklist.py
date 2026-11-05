@@ -9,9 +9,11 @@ the model and the folder are not known (`unknown`), which the items say rather t
 The items, in order: Docker installed, Docker running, Docker starts with the computer (only where systemd says,
 Docker Engine), Docker usable by this account, Docker limits memory (only where it cannot), Clank's service, the
 sandbox image (built in the background by the service's `workspaces.image` while it is not built for this Clank), a
-model, a folder, and Clank's VS Code window. The service comes before the image, which it builds; both
-come after Docker, so a service the setup starts never starts before this account may use Docker (a process keeps the
-groups it started with). Starting with the computer and the VS Code window are offered, not required.
+model, a folder, Clank's VS Code window, and who else may open Clank's secrets and state (only where someone may,
+decision 0167, in the doctor's words, its commands the owner's to run). The service comes before the image, which it
+builds; both come after Docker, so a service the setup starts never starts before this account may use Docker (a
+process keeps the groups it started with). Starting with the computer, the VS Code window and the private folders are
+offered, not required: Clank's service makes secrets and state private itself each time it starts.
 
 Each Docker state of §5 has its words, its fix and whether Clank does it (`Fix.does`): not installed, the installer's
 Docker step in the terminal (`winget` on Windows, Homebrew on macOS, Clank's installer on Linux), on a yes; the snap's
@@ -44,6 +46,8 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
 from clank.components.workspaces.service import MEMORY_FIX, SetupReading, account_name, memory_said, owner_commands
+from clank.kernel import private
+from clank.kernel.private import Exposed
 
 State = Literal["done", "to do", "doing", "waits", "unknown"]
 Does = Literal["", "terminal", "docker", "service", "image", "model", "folder"]
@@ -127,6 +131,7 @@ class Facts:
     gpus: tuple[str, ...] = ()  # each NVIDIA GPU, "NVIDIA GeForce RTX 5080, 16 GB"
     vscode: VsCode = field(default_factory=VsCode)
     tools: frozenset[str] = frozenset()  # of `TOOLS`, those found
+    exposed: tuple[Exposed, ...] = ()  # of CLANK_HOME's secrets/ and state/, those someone else may open
 
 
 def found_tools(which: Callable[[str], str | None] = shutil.which) -> frozenset[str]:
@@ -423,6 +428,15 @@ def _vscode(facts: Facts) -> Item:
     return Item("vscode", title, "to do", said, False, fix)
 
 
+def _private(facts: Facts) -> Item | None:
+    """Who else may open CLANK_HOME's secrets/ and state/, said only when someone may (decision 0167), as the doctor
+    says it; the commands that take it away are the owner's to run, and Clank sets both itself as its service starts."""
+    if not facts.exposed:
+        return None
+    said, fix = private.words(facts.exposed)
+    return Item("private_folders", "Only you can open secrets and state", "to do", said, False, Fix(fix))
+
+
 def items(facts: Facts) -> list[Item]:
     """Every item, in order."""
     installed = _installed(facts)
@@ -430,7 +444,7 @@ def items(facts: Facts) -> list[Item]:
     access = _access(facts, running)
     found = [installed, running, _boot(facts), access, _memory(facts), _service(facts, access)]
     usable = access.state == "done" and facts.docker.status.running
-    found += [_image(facts, usable), _model(facts), _folder(facts), _vscode(facts)]
+    found += [_image(facts, usable), _model(facts), _folder(facts), _vscode(facts), _private(facts)]
     return [item for item in found if item is not None]
 
 

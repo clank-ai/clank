@@ -31,7 +31,7 @@ what the review changed), and revised where design 0002, the foundation, was app
 | 4 | Switching, failures and safety | Approved 2026-10-11; §4.2 and §4.8 revised when design 0002 §2 was approved |
 | 5 | The console | Approved 2026-10-11; §5.3 revised when design 0002 §3 was approved |
 | 6 | The gateway | Approved 2026-10-11; §6.6 revised when design 0002 §1 was approved (sandboxes reach it through their edge), §6.4 when its §2 was |
-| 7 | Setup and portability | Approved 2026-10-11; §7.2 revised when design 0002 §2 was approved; §7.1 revised by decision 0030 (2026-10-12) |
+| 7 | Setup and portability | Approved 2026-10-11; §7.2 revised when design 0002 §2 was approved; §7.1 revised by decision 0030 (2026-10-12); §7.2 revised after approval (2026-11-05): secrets/ and state/ the user's alone on every platform, on Windows by an access list of their own, and the doctor says who else may open them (decision 0167) |
 | 8 | Testing | Approved 2026-10-11 |
 | 9 | Order of work, and what comes over from the prototype | Approved 2026-10-11; §9.1 replaced by design 0002 §3 when it was approved |
 
@@ -666,6 +666,15 @@ developer can point it at the repository's ignored `local/` folder):
 | `library/` | What the user installs: skills, tool servers, modes, shared suites and presets (design 0002 §2.11) |
 | `artifacts/` | Files made for the user, such as a figure the agent was asked for (design 0002 §2.12) |
 
+`secrets/` and `state/` (which holds the local token that opens Clank's API) can be opened only by the user Clank runs
+as, whatever the folder above them allows. *Revised after approval (2026-11-05), decision 0167: Windows ignores a
+folder's mode, so the two folders took the access list of the folder above, and a `CLANK_HOME` outside the profile
+took the drive's.* Each time Clank creates its folders (every start of its service), it keeps them so: mode 0700 on
+Linux and macOS; on Windows an access list of their own, inheritance from the folder above turned off, full control
+for the user and SYSTEM alone, inherited by everything made inside, read first and written only when it is not
+exactly that. `clank doctor` says whether anyone else may open them, naming each other entry with the command that
+removes it (`icacls`, or `chmod 700`), and `clank setup` shows the same while anyone may; neither changes anything.
+
 Clank touches nothing outside this folder except what the user approves in the guide (installing system packages, for
 example). Removing Clank means removing this folder and the repository; the guide shows how much disk each folder
 takes.
@@ -903,3 +912,4 @@ Every change to an approved section, with its reason. Approvals themselves are i
 | 2026-10-11 | §9.1, §9.3 | The milestones replaced by design 0002 §3's, and §9.3's milestone numbers changed to match | Design 0002 §3 approved |
 | 2026-10-12 | §7.1 | On Windows the service runs on Windows and the engines in WSL distributions, through hosts | Decision 0030 (design 0003 §2) |
 | 2026-10-21 | §3.2 | An engine's own sampling defaults are also launch options, unset unless a preset sets them, shown with the engine's default | The owner: make these settings visible (decision 0119, design 0003 §4.1) |
+| 2026-11-05 | §7.2 | secrets/ and state/ are the user's alone on every platform: mode 0700 on Linux and macOS, and on Windows an access list of their own (inheritance off, the user and SYSTEM alone), set each time Clank creates its folders; `clank doctor` and `clank setup` name any other entry with the command that removes it | The audit of 2026-10-30: Windows ignores a folder's mode, so the two folders took the folder above's access list (a drive's, for a CLANK_HOME outside the profile), and the doctor did not look (decision 0167) |
