@@ -22,6 +22,7 @@ Windows, and Python's `shutil.which`, the same for everything this process start
 """
 
 import contextlib
+import ntpath
 import os
 import queue
 import subprocess
@@ -118,9 +119,10 @@ def clank_command(*arguments: str, python: str | None = None) -> list[str]:
 
 
 def windows_powershell(environ: Mapping[str, str] = os.environ) -> str:
-    """Windows PowerShell's own program, in the system's folder, never one found by its name."""
-    system = os.path.join(environ.get("SYSTEMROOT") or r"C:\Windows", "System32")
-    return os.path.join(system, "WindowsPowerShell", "v1.0", "powershell.exe")
+    """Windows PowerShell's own program, in the system's folder, never one found by its name (a Windows path on any
+    system, so it reads the same where it is tested)."""
+    system = ntpath.join(environ.get("SYSTEMROOT") or r"C:\Windows", "System32")
+    return ntpath.join(system, "WindowsPowerShell", "v1.0", "powershell.exe")
 
 
 def decode(output: bytes) -> str:
