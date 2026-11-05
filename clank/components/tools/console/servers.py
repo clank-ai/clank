@@ -52,7 +52,12 @@ READ_SECONDS = 5.0
 FIELDS = [
     Field("name", "Name (letters, digits, - and _)", "myproject"),
     Field("command", "Command line, or the URL of a server that listens", "myproject-mcp --quiet"),
-    Field("env", "Environment, KEY=VALUE separated by spaces (or, for a URL, headers: Name: value; ...)", ""),
+    Field(
+        "env",
+        "Environment, KEY=VALUE separated by spaces (or, for a URL, headers: Name: value; ...): for yours, secrets the "
+        "agent of each workspace you give it to can read",
+        "",
+    ),
     Field("scope", "Where: user (yours, everywhere) or project (this folder's .mcp.json)", "user", "user"),
 ]
 SOURCES = {"clank": "built in", "user": "yours", "project": "project"}
@@ -398,9 +403,20 @@ class McpServersPage(Page):
             return
         scope = values["scope"] or "user"
         body = {"name": values["name"], "scope": scope, "folder": self.console.folder, "entry": entry}
-        actions.call(
-            self.console, lambda: self.console.client.post("mcp/servers", body), done=f"added {values['name']}"
-        )
+        client, name = self.console.client, values["name"]
+
+        def work() -> None:
+            """Added, and what a server with secrets means, in the service's words (decision 0168)."""
+            try:
+                added = client.post("mcp/servers", body)
+            except (NotRunning, ClientError) as error:
+                self.console.call_from_thread(self.console.say, str(error), True)
+                return
+            said = f"added {name}" + (f": {added['secrets_said']}" if added.get("secrets_said") else "")
+            self.console.call_from_thread(self.console.say, said)
+            self.console.call_from_thread(self._read)
+
+        self.run_worker(work, thread=True, group="mcp-add", exit_on_error=False)
 
     def _remove(self, server: dict[str, Any], answer: str | None) -> None:
         if answer != "remove":

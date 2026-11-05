@@ -72,7 +72,7 @@ def router(tools: "Tools") -> APIRouter:
 
     @routes.post("/mcp/servers")
     async def add(new: NewServer, request: Request) -> dict[str, Any]:
-        """Add an MCP server."""
+        """Add an MCP server; one of yours with secrets says what that means (`secrets_said`, decision 0168)."""
         actor = client_actor(request.headers.get(CLIENT_HEADER))
         return tools.add(
             new.name, new.entry, scope=new.scope, folder=new.folder, actor=actor, local_only=new.local_only

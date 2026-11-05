@@ -42,6 +42,9 @@
   it, whatever the variable (the agent's thread counts too).
 - **A running OpenCode that does not know such a server is not given it live**: no entry, so no value, is sent over
   the bridge; it is given at the agent's next start, and the answer says so.
+- **Adding a server with secrets says so**: `clank mcp add` and the console's form say, in the service's words (the
+  server's `secrets_said`), that its values go to no workspace until you give it to one, and that the agent of every
+  workspace you give it to can read them.
 
 ## Alternatives considered
 

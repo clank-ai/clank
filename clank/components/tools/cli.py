@@ -245,6 +245,8 @@ def _post(name: str, scope: str, entry: dict[str, Any], local_only: bool | None 
 
 def _added(server: dict[str, Any]) -> None:
     click.echo(f"Added {server['name']} to {_place(server['scope'])} ({server['transport']}: {_how(server)}).")
+    if server.get("secrets_said"):
+        click.echo(server["secrets_said"])
     click.echo(f"Check it with `clank mcp check {server['name']}`.")
 
 

@@ -18,6 +18,9 @@ refused, saying how to check it (decision 0166). Its check says whether that wor
 allowed, not allowed yet, or changed since it was allowed (`fingerprint`, the digest of its entry the agents component
 keeps when the owner allows it: a changed command, argument or environment counts as not allowed until allowed again).
 
+One of your servers with secrets goes only to the workspaces you give it to, whose agent can read its values (decision
+0168): its view says so (`secrets_said`), for the commands and the console to say where it is added.
+
 The last check of each server that answered is remembered (`state/mcp-checks.json`): what the server is, its tools with
 their parameters, when, and where it ran; `checked` gives it while the server is started or reached as it was then
 (a changed command or address is checked again), for the console's MCP servers page.
@@ -401,6 +404,8 @@ class Tools:
             "checked": self._remembered(name, scope, server),
             "local_only": scope == "user" and bool(self.kernel.settings.get(KIND, name).record.model_dump().get(
                 "local_only")),
+            "secrets_said": secrets_said(name, [*sorted(server.env), *sorted(server.headers)]) if scope == "user"
+            else "",
         }  # fmt: skip
 
     def _read_project(self, file: Path) -> dict[str, Any]:
@@ -433,6 +438,18 @@ def fingerprint(server: Server) -> str:
     """A server's entry as the owner allows it, as a short digest: its command, its arguments or its environment
     changed give another, so an allowance holds for the entry allowed alone (design 0004 §10)."""
     return hashlib.sha256(json.dumps(server.entry(), sort_keys=True).encode("utf-8")).hexdigest()[:16]
+
+
+def secrets_said(name: str, carried: list[str]) -> str:
+    """What one of your servers with secrets means, said where it is added and shown (decision 0168): its values go only
+    to the workspaces you give it to, whose agent can read them; empty for one without secrets."""
+    if not carried:
+        return ""
+    return (
+        f"Its secret values ({', '.join(carried)}) go to no workspace until you give {name} to one (`clank mcp allow "
+        f"{name}` in its folder, m on the folder's page, s on the MCP servers page): the agent of every workspace you "
+        "give it to can read them."
+    )
 
 
 def _key_of(server: Server) -> str:

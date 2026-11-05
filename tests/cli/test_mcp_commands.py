@@ -4,7 +4,10 @@ the name without `--`; a URL with `--transport http` (or alone); `-e` and `-H` g
 project` writing the current folder's `.mcp.json`; `add-json` taking an entry as that file holds one. A command that
 starts with a dash (the owner's own first try, `clank mcp add myproject --myproject-mcp`) is refused, showing the form
 with `--`. `list`, `get` (secrets by name and last four characters), `remove` and `check` (following its operation) do
-the rest."""
+the rest.
+
+Design 0002 §2.8 (decision 0168): adding one with secrets says the agent of every workspace it is given to can read
+them."""
 
 import json
 import sys
@@ -58,6 +61,19 @@ def test_a_server_clank_starts_is_added_with_its_command_after_the_double_dash(k
     assert "env.API_KEY: set" in shown.output
     assert "ends in 1234" in shown.output
     assert SECRET not in shown.output
+
+
+def test_adding_one_with_secrets_says_the_agent_of_every_workspace_given_it_can_read_them(kernel: Kernel) -> None:
+    """Decision 0168: said where it is added, a server without secrets saying nothing of it."""
+    added = run("add", "-e", f"API_KEY={SECRET}", "tool", "--", "tool-mcp")
+    assert added.exit_code == 0, added.output
+    assert "Its secret values (API_KEY) go to no workspace until you give tool to one" in added.output
+    assert "the agent of every workspace you give it to can read them" in added.output
+    assert "clank mcp allow tool" in added.output
+    headed = run("add", "-H", f"Authorization: Bearer {SECRET}", "remote", "https://x.test/mcp")
+    assert "Its secret values (Authorization) go to no workspace" in headed.output
+    plain = run("add", "plain", "--", "plain-mcp")
+    assert "secret values" not in plain.output
 
 
 def test_without_the_double_dash_the_first_word_is_the_command_and_unknown_options_go_with_it(kernel: Kernel) -> None:

@@ -8,7 +8,8 @@ says so and starts nothing; in the workspace, the page and the check's message s
 allowed. Design 0011 §4 and §8 (board E14): the details' panel is titled with the highlighted server's name.
 
 Design 0002 §2.8 (decision 0168): `s` on one of yours with secrets, for a workspace that may use a cloud model, asks
-first in the service's words."""
+first in the service's words; adding one with secrets says the agent of every workspace it is given to can read
+them."""
 
 import json
 import sys
@@ -119,6 +120,8 @@ async def test_the_page_lists_adds_checks_and_removes_servers(kernel: Kernel, se
         app.screen.query_one("#form-env", Input).value = "MODE=fast"
         await pilot.press("ctrl+s")
         await settle(pilot, lambda: "added" in rows(app), seconds=20)
+        await settle(pilot, lambda: "the agent of every workspace you give it to can read them" in message(app))
+        assert "Its secret values (MODE) go to no workspace until you give added to one" in message(app)
         assert kernel.parts["tools"].server("added")["args"] == ["--flag", "two words"]
         await focus_on(pilot, app, listed, rows(app).index("added"))
         await settle(pilot, lambda: "x-mcp --flag 'two words'" in page_text(app))
