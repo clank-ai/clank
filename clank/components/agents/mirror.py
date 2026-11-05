@@ -27,12 +27,13 @@ from dataclasses import dataclass, field
 from time import monotonic
 from typing import Any
 
+from clank.components.agents.sessions import AT_WORK
+
 FORGET_MINUTES = 30  # a session no client read for this long is forgotten
 FULL_BYTES = 4_000_000  # of a session's text and outputs held whole, at most
 TRIMMED = 0.9  # past FULL_BYTES, the oldest parts are cut until this share of it is held: room for what comes next
 TEXT = 6000  # the brief a part's text falls back to (the bridge's TEXT)
 CHANGES = 2000  # changes kept with their versions for the stream (design 0023 §3); a client behind them gets a snapshot
-AT_WORK = ("busy", "retry")  # a session's status while it works (as `sessions.py` says it)
 WAITS = ("asked", "replied", "question", "answered")
 Subscriber = Callable[[int], None]
 

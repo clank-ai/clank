@@ -116,6 +116,7 @@ from clank.components.agents.review import EVENT_TYPES as REVIEW_EVENTS
 from clank.components.agents.review import Review
 from clank.components.agents.review import ReviewError as ReviewError  # for the components that use this one
 from clank.components.agents.sessionflow.kept import SessionFlows, gateway_asker, plan_reader
+from clank.components.agents.sessions import AT_WORK as AT_WORK  # for the components that read a session's status
 from clank.components.agents.sessions import EVENT_TYPES as SESSION_EVENTS
 from clank.components.agents.sessions import SessionError as SessionError  # for the components that use this one
 from clank.components.agents.sessions import Sessions

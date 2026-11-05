@@ -7,7 +7,8 @@ serves it, takes the connection's own address, never that header. The page itsel
 paired device's token. A code made on the computer pairs one device, once, before it expires; wrong codes are counted
 and entry rests after eight; a token works only with the login it paired with and stops working when revoked. Every
 action carries the page's own header. A paired device sees the model, the workspaces and what waits, and the files the
-agents sent (served from an outbox only, by name)."""
+agents sent (served from an outbox only, by name). A session at work, busy or trying again, is shown working by
+the flag the service sends with it."""
 
 import json
 import threading
@@ -262,3 +263,9 @@ def test_remote_access_is_off_until_turned_on_and_a_code_comes_with_the_pages_ad
     assert remote.status()["pairing"]["name"] == "phone"
     assert remote.switch(True, actor=YOU)["on"] is True
     assert [event.data["on"] for event in kernel.events.after(0, types=["remote.switched"])] == [True]
+
+
+def test_the_page_shows_a_session_at_work_by_the_services_flag_so_one_trying_again_is_not_idle() -> None:
+    script = (Path(create_phone_app.__code__.co_filename).parent / "page" / "app.js").read_text(encoding="utf-8")
+    assert 'session.status === "busy"' not in script, "a status of its own would miss a session that tries again"
+    assert script.count("session.working") >= 2, "a session's row and its workspace's line read the service's flag"

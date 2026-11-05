@@ -64,6 +64,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError
 
+from clank.components.agents.service import AT_WORK
 from clank.components.flows import preparing
 from clank.components.flows.deliverables import fingerprint
 from clank.components.flows.kinds import Box, Flow, FlowDefaults, FlowLimits, Limits, Line
@@ -381,7 +382,7 @@ def steps(
     head = dict((session_flow or {}).get("head") or {})
     nodes = list((session_flow or {}).get("nodes") or [])
     calls = int(head.get("calls") or 0)
-    if planning.session and (calls or head.get("status") == "busy"):
+    if planning.session and (calls or head.get("status") in AT_WORK):  # trying again is at work too
         found.append(
             {"kind": "reading", "said": f"reading the folder: {calls} tool call{'s' if calls != 1 else ''} so far"}
         )

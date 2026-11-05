@@ -71,6 +71,7 @@ from typing import TYPE_CHECKING, Any
 from clank.components.agents.adapters.opencode import PROVIDER
 from clank.components.agents.context import ROLE, reported
 from clank.components.agents.sessionflow.text import brief
+from clank.components.agents.sessions import AT_WORK
 from clank.components.agents.watchfor.marks import WATCH, Unavailable
 from clank.kernel.events import Actor
 
@@ -86,7 +87,6 @@ KEYS = {"stop": ".", "note": "m", "compact": "k", "undo": "u", "drop": "x"}  # d
 TITLES = {"stop": "Stop now", "note": "Note", "compact": "Compact now", "undo": "Undo", "drop": "Drop"}
 UNDO_TITLES = {"step": "Undo", "turn": "Undo turn", "redo": "Redo"}  # Undo's title by its mode
 MODEL = {"providerID": PROVIDER, "modelID": ROLE}  # the gateway's agent role, as OpenCode names the model
-WORKING = ("busy", "retry")
 READ_LEAST = 256  # tokens a step must read anew for its time to the first token to measure the reading speed
 NO_SERVER = "no OpenCode server is known to run this session: its watcher has not seen it run since the service started"
 IDLE = "the session is idle and nothing waits in it: there is nothing to stop"
@@ -153,7 +153,7 @@ def offer(
     everything: list[dict[str, Any]] = list(view.get("nodes") or [])
     nodes: list[dict[str, Any]] = [node for node in everything if not node.get("undone")]
     session = str(head.get("session") or "")
-    working = head.get("status") in WORKING
+    working = head.get("status") in AT_WORK
     asks = [node for node in nodes if node.get("kind") == "call" and node.get("asking")]
     fields: Mapping[str, str] = ((totals.get("facts") or {}).get("engine") or {}).get("fields") or {}
     speed = reading_speed(ended, fields)
@@ -488,7 +488,7 @@ def _state(
              "why": kept.get("why") or "", "step": None}  # fmt: skip
     if action in ("undo", "drop"):
         shown["what"] = str(kept.get("what") or "")
-    working = head.get("status") in WORKING
+    working = head.get("status") in AT_WORK
     if shown["state"] == "failed":
         return shown
     if action == "undo" and shown["state"] in ("undone", "redone"):

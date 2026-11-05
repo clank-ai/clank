@@ -41,8 +41,8 @@ from typing import Any
 from urllib.parse import quote
 
 from clank.client import Client, ClientError
+from clank.components.agents.sessions import AT_WORK
 
-WORKING = ("busy", "retry")
 WORKSPACE_EVERY = 10  # readings between two readings of the folder's workspace
 SUBAGENTS = 16  # subagents' flows read at most, the newest first
 
@@ -65,7 +65,7 @@ class Seen:
 def pick(heads: list[dict[str, Any]]) -> dict[str, Any] | None:
     """The session to follow: the newest active root session, else the newest root session (heads newest first)."""
     roots = [head for head in heads if not head.get("parent")]
-    return next((head for head in roots if head.get("status") in WORKING), roots[0] if roots else None)
+    return next((head for head in roots if head.get("status") in AT_WORK), roots[0] if roots else None)
 
 
 def merged(held: dict[str, Any] | None, changes: dict[str, Any]) -> dict[str, Any]:

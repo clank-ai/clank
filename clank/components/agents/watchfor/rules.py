@@ -30,6 +30,7 @@ from typing import Any
 
 from clank.components.agents.adapters.opencode import counted_output
 from clank.components.agents.sessionflow.text import brief
+from clank.components.agents.sessions import AT_WORK
 
 LOOP_WORDS = "Clank's loop guard stopped the answer"  # the gateway's words (its `LOOPED`), as OpenCode keeps them
 ENGINE_WORDS = ("the engine broke off", "the engine stopped before answering", "the engine did not answer")
@@ -41,7 +42,6 @@ PACE_STEPS = 3  # the last finished steps whose growth gives the pace
 RETRIES = 5  # OpenCode's attempts at most
 EDITS = ("edit", "write", "multiedit", "patch", "apply_patch")
 FILE = re.compile(r'"(?:filePath|file_path|path)"\s*:\s*"([^"]+)"')
-WORKING = ("busy", "retry")
 WHY = 160  # characters of a call's words a mark quotes
 
 
@@ -352,7 +352,7 @@ def _call_then_step_failed(head: dict[str, Any], nodes: list[dict[str, Any]], fa
 
 
 def _stopped_with_an_ask_waiting(head: dict[str, Any], nodes: list[dict[str, Any]], facts: Facts) -> list[Hit]:
-    if head.get("status") in WORKING:
+    if head.get("status") in AT_WORK:
         return []
     return [
         (f"stopped:{call['asking']}", call["id"],
@@ -441,7 +441,7 @@ def _budget_near(head: dict[str, Any], nodes: list[dict[str, Any]], facts: Facts
 
 def _engine_taken(head: dict[str, Any], nodes: list[dict[str, Any]], facts: Facts) -> list[Hit]:
     session = str(head.get("session") or "")
-    if not facts.holds or facts.holds == session or head.get("status") not in WORKING:
+    if not facts.holds or facts.holds == session or head.get("status") not in AT_WORK:
         return []
     steps = _of(nodes, "step")
     newest = steps[-1]["id"] if steps else ""

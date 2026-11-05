@@ -70,6 +70,7 @@ from typing import Any
 from clank.components.agents.sessionflow import branches, todos
 from clank.components.agents.sessionflow.pairing import pair
 from clank.components.agents.sessionflow.text import brief
+from clank.components.agents.sessions import AT_WORK
 
 ABORTED = "MessageAbortedError"  # the error of a step the owner stopped
 NOT_CONTENT = ("step-start", "reasoning")  # parts that do not keep a stopped step in the context
@@ -261,7 +262,7 @@ class Flow:
     def _session_line(self, kind: str, line: dict[str, Any]) -> None:
         if kind == "message":
             info = line.get("message") or {}
-            busy = self._status.get("status") in ("busy", "retry")
+            busy = self._status.get("status") in AT_WORK
             if info.get("role") == "user" and busy and str(info.get("id")) not in self._messages:
                 self._busy_said.add(str(info.get("id")))
             self._keep(self._messages, info, live=True)
@@ -434,7 +435,7 @@ class Flow:
     ) -> tuple[str, list[dict[str, Any]], dict[str, str]]:
         """Where the branches come from (plan, todo or said), the branches, and the branch each step joins."""
         plan, named = self._planned()
-        busy = self._status.get("status") in ("busy", "retry")
+        busy = self._status.get("status") in AT_WORK
         listed = branches.checklist(self._plan_text) if plan and self._plan_text is not None else []
         ordered = [info for info in messages if info.get("role") == "assistant"]
         steps = [branches.Step(str(info["id"]), str(info.get("parent") or "")) for info in ordered]
@@ -523,7 +524,7 @@ class Flow:
             read = next((str(step["id"]) for step in steps[begun:] if step.get("parent") == info["id"]), "")
         state = ""
         if note:
-            state = "read" if read else ("waiting" if self._status.get("status") in ("busy", "retry") else "not read")
+            state = "read" if read else ("waiting" if self._status.get("status") in AT_WORK else "not read")
         decides = read or (str(last["id"]) if note and last is not None else "")
         before = info["id"] in self._said_before and (not decides or decides in self._before)
         return {

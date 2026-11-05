@@ -148,9 +148,9 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | What the owner does | none yet |
-| 2 | Reaching OpenCode in a workspace: the session bridge | `tests/components/agents/test_sessions.py` (16) |
+| 2 | Reaching OpenCode in a workspace: the session bridge | `tests/components/agents/test_sessions.py` (17) |
 | 3 | Files for the phone: the agent's outbox | none yet |
-| 4 | The phone page and who may reach it | `tests/components/remote/test_phone.py` (10), `tests/components/remote/test_phone_flows.py` (9) |
+| 4 | The phone page and who may reach it | `tests/components/remote/test_phone.py` (11), `tests/components/remote/test_phone_flows.py` (9) |
 | 5 | The console's Phone page | `tests/components/remote/test_phone_page.py` (3) |
 | 6 | What waits | `tests/components/remote/test_phone_marks.py` (4) |
 
@@ -315,7 +315,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 12 | The Flow view in the Monitor | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_planning_view.py` (4), `tests/components/flows/test_summaries.py` (9), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_view.py` (12), `tests/console/test_monitor_flow_watch.py` (12), `tests/console/test_monitor_page.py` (16), `tests/console/test_orchestrator_panel.py` (6) |
 | 13 | What flows do not cover | none yet |
 | 14 | Build steps | `tests/components/flows/test_flow_view.py` (17), `tests/components/flows/test_flows.py` (7), `tests/components/flows/test_runs.py` (7), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_box_chart.py` (11), `tests/console/test_monitor_flow_boards.py` (12), `tests/console/test_monitor_flow_view.py` (12), `tests/kernel/test_settings_checks.py` (3), `vscode/test/gates.test.ts` (16) |
-| 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_flow_tools.py` (9), `tests/components/agents/test_sessions.py` (16), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (26), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (11) |
+| 15 | A flow built with the model | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_flow_tools.py` (9), `tests/components/agents/test_sessions.py` (17), `tests/components/flows/test_building.py` (32), `tests/components/flows/test_built_run.py` (6), `tests/components/flows/test_flow_built.py` (9), `tests/components/flows/test_planning_view.py` (4), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_command.py` (4), `tests/console/test_folder.py` (26), `tests/console/test_keys_bar.py` (10), `tests/console/test_monitor_flow_built.py` (5), `tests/console/test_monitor_flow_watch.py` (12), `tests/kernel/test_where.py` (11) |
 | 16 | The orchestrator: a model that steers the run | `tests/cli/test_flow_commands.py` (25), `tests/components/agents/test_agent_servers.py` (9), `tests/components/flows/test_orchestrator.py` (18), `tests/components/gateway/test_flows_forwarding.py` (3), `tests/console/test_orchestrator_panel.py` (6) |
 | 17 | Jobs, and the work done while one runs | `tests/components/flows/test_box_jobs.py` (8), `tests/components/flows/test_first_message.py` (10), `tests/components/flows/test_jobs.py` (10), `tests/components/flows/test_side_work.py` (7), `tests/console/test_side_work_panel.py` (3) |
 
@@ -514,7 +514,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | What the owner felt, measured | none yet |
 | 2 | The conversation is read from the service's mirror | `tests/components/agents/test_conversation_mirror.py` (1), `tests/components/agents/test_mirror.py` (8), `tests/components/agents/test_monitor_bridge.py` (12), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_monitor_watch.py` (12) |
 | 3 | Pushed, not polled: the conversation stream | `tests/components/agents/test_conversation_stream.py` (5), `tests/components/remote/test_phone_session.py` (3), `vscode/test/talking.test.ts` (4), `tests/phone/talk.test.mjs` (6) |
-| 4 | Acting without waiting: the resident bridge | `tests/components/agents/test_conversation_mirror.py` (1), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_sessions.py` (16), `tests/components/agents/test_watch_channel.py` (9) |
+| 4 | Acting without waiting: the resident bridge | `tests/components/agents/test_conversation_mirror.py` (1), `tests/components/agents/test_monitor_sessions.py` (8), `tests/components/agents/test_sessions.py` (17), `tests/components/agents/test_watch_channel.py` (9) |
 | 5 | What the owner sees | `vscode/test/following.test.ts` (3), `vscode/test/talking.test.ts` (4) |
 | 6 | Measurements that hold it to its word | `tests/components/agents/test_conversation_stream.py` (5) |
 | 7 | What else it mends | `tests/components/workspaces/test_sandbox.py` (10) |
@@ -1584,6 +1584,7 @@ Design 0005 §2-§3: the session bridge and the agent's outbox, run on this mach
 - a new session on a server just started waits for its slow first answer
 - the bridge shows a session on a window that answers late and again
 - a session the window does not show stands and says so
+- each session the service lists says whether it is at work trying again included
 
 ### `tests/components/agents/test_setup_checklist.py`
 
@@ -2909,6 +2910,7 @@ Design 0005 §4 (decision 0012): who may reach the phone page, pairing, and what
 - every exchange with a device is kept whole and shown to it and to the computer
 - tailscale says this machines name and user or why not
 - remote access is off until turned on and a code comes with the pages address
+- the page shows a session at work by the services flag so one trying again is not idle
 
 ### `tests/components/remote/test_phone_checkup.py`
 

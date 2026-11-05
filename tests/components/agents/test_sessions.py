@@ -285,6 +285,7 @@ def test_the_service_drives_a_session_through_the_bridge_and_records_who_did_wha
     sessions = kernel.parts["agents"].sessions
     [server] = sessions.servers("paper")
     assert server["sessions"][0]["status"] == "busy"
+    assert server["sessions"][0]["working"] is True, "the service says which sessions are at work"
     sessions.send("paper", opencode, "ses_1", "send me the figure", actor=PHONE_USER)
     sessions.permission("paper", opencode, "per_1", "reject", actor=PHONE_USER)
     acted = kernel.events.after(0, types=["agents.acted"])
@@ -541,3 +542,15 @@ def test_a_session_the_window_does_not_show_stands_and_says_so(opencode: int) ->
     finally:
         OpenCode.unshown = False
     assert found == {"ok": True, "session": "ses_2", "shown": False}
+
+
+def test_each_session_the_service_lists_says_whether_it_is_at_work_trying_again_included(
+    kernel: Kernel, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sessions = kernel.parts["agents"].sessions
+    rows = [{"id": "ses_a", "status": "busy"}, {"id": "ses_b", "status": "retry"}, {"id": "ses_c", "status": "idle"}]
+    monkeypatch.setattr(sessions, "_bridge", lambda workspace, argv: {"servers": [{"port": 4096, "sessions": rows}]})
+    [server] = sessions.servers("paper")
+    assert [(each["id"], each["working"]) for each in server["sessions"]] == [
+        ("ses_a", True), ("ses_b", True), ("ses_c", False)
+    ]  # fmt: skip

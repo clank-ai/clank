@@ -235,6 +235,9 @@ class Sessions:
         """Each OpenCode server in the workspace's container: its port, its sessions (with their status), and the
         permissions and questions waiting."""
         found: list[dict[str, Any]] = self._bridge(workspace, ["servers"])["servers"]
+        for server in found:
+            for session in server.get("sessions") or []:  # at work: busy, or trying again (AT_WORK), said once here
+                session["working"] = session.get("status") in AT_WORK
         return found
 
     def messages(self, workspace: str, port: int, session: str, limit: int = 40) -> dict[str, Any]:

@@ -125,7 +125,7 @@ function row({ glyph, glyphClass = "dim", line, sub, meta, onclick }) {
 }
 
 function sessionRow(session) {
-  const busy = session.status === "busy";
+  const busy = Boolean(session.working); // busy, or trying again: the service says which are at work
   return row({
     glyph: busy ? "●" : "○", glyphClass: busy ? "good" : "dim", line: session.title || "a session",
     sub: `${session.workspace} · ${busy ? "working" : "idle"}`, meta: ago(session.updated),
@@ -577,7 +577,7 @@ function workView(overview) {
   for (const workspace of overview.workspaces) {
     const running = workspace.state === "running";
     const sessions = workspace.servers.reduce((sum, server) => sum + server.sessions.length, 0);
-    const busy = workspace.servers.some((server) => server.sessions.some((session) => session.status === "busy"));
+    const busy = workspace.servers.some((server) => server.sessions.some((session) => session.working));
     parts.push(row({
       glyph: running ? "●" : "○", glyphClass: workspace.problem ? "warn" : running ? "good" : "dim", line: workspace.name,
       sub: workspace.problem ? "its agents cannot be reached" : running ? `${sessions} session${sessions === 1 ? "" : "s"}${busy ? " · working" : ""}` : workspace.state,

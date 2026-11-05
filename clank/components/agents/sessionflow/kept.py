@@ -40,7 +40,7 @@ import anyio.to_thread
 from clank.components.agents.plans import is_plan, plan_path
 from clank.components.agents.sessionflow.branches import same_file
 from clank.components.agents.sessionflow.flow import Flow
-from clank.components.agents.sessions import ServerGone
+from clank.components.agents.sessions import AT_WORK, ServerGone
 from clank.kernel.infolder import place
 
 if TYPE_CHECKING:
@@ -55,7 +55,6 @@ READS = 8  # flows read from the history in one round at most
 RETRY_SECONDS = 2.0  # the wait before a reading that failed is tried again, doubled each time it fails again
 RETRY_MOST = 60.0  # the longest such wait
 LARGEST = 1_000_000  # bytes of a plan's file read
-WORKING = ("busy", "retry")
 Ask = Callable[[str], dict[str, Any]]  # a session's activity at the gateway, with its requests that ended
 Read = Callable[[str, str], "str | None"]  # a file of a workspace's folder, by its path there; None when it cannot be
 Key = tuple[str, str]  # a flow's workspace and session
@@ -328,7 +327,7 @@ class SessionFlows:
         if kind == "part" and (line.get("part") or {}).get("type") == "text":
             self._planning.add((workspace, session))  # a message of the owner's may name a plan
         if len(kept) > KEPT:
-            idle = [id for id, each in kept.items() if each.view()["head"]["status"] not in WORKING and id != session]
+            idle = [id for id, each in kept.items() if each.view()["head"]["status"] not in AT_WORK and id != session]
             for id in (idle or list(kept))[: len(kept) - KEPT]:
                 del kept[id]
                 self._forget((workspace, id))

@@ -49,6 +49,7 @@ from datetime import tzinfo
 from typing import Any
 
 from clank.components.agents.sessionflow.text import brief
+from clank.components.agents.sessions import AT_WORK
 from clank.components.workspaces.service import WORKSPACE
 from clank.console.style import current
 from clank.console.text import count
@@ -66,7 +67,6 @@ WHAT = ("filePath", "file_path", "path", "pattern", "url", "query", "description
 PAIR = re.compile(r'"(\w+)"\s*:\s*"((?:[^"\\]|\\.)*)')  # a key and its text, in an input cut short
 OTHER = {"plan": "before the plan", "todo": "before the todo list"}
 DEEPEST = 8  # subagents within subagents drawn at most this deep (the '/' in a node's id count how deep)
-WORKING = ("busy", "retry")
 
 
 @dataclass
@@ -226,7 +226,7 @@ class _Tree:
         said = [node for node in nodes if node.get("kind") == "said"]
         noted = {f"said:{node['id']}" for node in said if node.get("note")}
         items = [dict(item) for item in view.get("items") or [] if item.get("key") not in noted]
-        if source == "said" and items and head.get("status") in WORKING:  # a note is no branch: the last one works
+        if source == "said" and items and head.get("status") in AT_WORK:  # a note is no branch: the last one works
             for item in items:
                 item["state"] = "now" if item is items[-1] else ("done" if item["state"] == "now" else item["state"])
         placed = self._placed(nodes, said, items, source)
@@ -466,7 +466,7 @@ class _Tree:
             notes = [each for each in view.get("nodes") or [] if each.get("kind") == "said" and each.get("note")]
             entries = sorted([*facts.steps, *notes], key=_at)
             node.children = self._work(entries, facts, id + "/")
-        node.default = status in ("completed", "error") or (call is None and sub.get("state") not in WORKING)
+        node.default = status in ("completed", "error") or (call is None and sub.get("state") not in AT_WORK)
         return node
 
     def _together(self, step: dict[str, Any], made: list[Node], prefix: str) -> Node:
