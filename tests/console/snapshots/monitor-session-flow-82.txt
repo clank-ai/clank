@@ -19,7 +19,7 @@
  └─────────────────────────────┘  │ │  ├─ bash ls studies/  100 chars           │
                                   │ │  ├─ ✎ your note: Keep the grid to 3 siz…  │
  ┌─ Watch for w ───────────────┐  │ │  └─ ● working                             │
- │ no session yet              │  │ ├┄ ○ Estimate run times                     │
+ │ nothing marked yet          │  │ ├┄ ○ Estimate run times                     │
  └─────────────────────────────┘  │ └┄ ○ Write the plan file                    │
                                   │                                             │
  ┌─ Guide g ───────────────────┐  │                                             │

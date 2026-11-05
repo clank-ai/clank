@@ -19,7 +19,7 @@
  └─────────────────────────────────────────────┘  │ │  ├─ bash ls studies/  100 chars                                   │ │ Disk read 12.0 MB/s · write 3.0 M… │
                                                   │ │  ├─ ✎ your note: Keep the grid to 3 sizes.                        │ │ 1s                 █ max 15.0 MB/s │
  ┌─ Watch for w ───────────────────────────────┐  │ │  └─ ● working                                                     │ │      C: █████████▍░░░░░░░░░░░  44% │
- │ no session yet                              │  │ ├┄ ○ Estimate run times                                             │ │                                    │
+ │ nothing marked yet                          │  │ ├┄ ○ Estimate run times                                             │ │                                    │
  └─────────────────────────────────────────────┘  │ └┄ ○ Write the plan file                                            │ │ Net  ↓ 1.2 MB/s  ↑ 40 KB/s         │
                                                   │                                                                     │ │ 1s                 █  max 1.2 MB/s │
  ┌─ Guide g ───────────────────────────────────┐  │                                                                     │ └────────────────────────────────────┘

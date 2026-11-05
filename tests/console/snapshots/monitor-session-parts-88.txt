@@ -24,7 +24,7 @@
  └─────────────────────────────────────────────┘  │ │  ├─ bash ls studies/  100 chars                                   │ │ 1s                 █  max 1.2 MB/s │
                                                   │ │  ├─ ✎ your note: Keep the grid to 3 sizes.                        │ └────────────────────────────────────┘
  ┌─ Watch for w ───────────────────────────────┐  │ │  └─ ● working                                                     │
- │ no session yet                              │  │ ├┄ ○ Estimate run times                                             │ ┌─ Clank now ────────────────────────┐
+ │ nothing marked yet                          │  │ ├┄ ○ Estimate run times                                             │ ┌─ Clank now ────────────────────────┐
  └─────────────────────────────────────────────┘  │ └┄ ○ Write the plan file                                            │ │ ✓ last 12:31:00 · 37,729 in · 61 … │
                                                   │                                                                     │ └────────────────────────────────────┘
  ┌─ Guide g ───────────────────────────────────┐  │                                                                     │
