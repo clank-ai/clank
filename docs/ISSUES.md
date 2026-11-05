@@ -11,8 +11,6 @@ Update this page in the same commit as the fix.
 | --- | --- | --- | --- |
 | With no model loaded, Clank waits about 28 s to know which model can load | The console's start, Add a model and `clank work` wait while each local preset's files are asked of WSL, one call each | `runtime/service.py` (`usable`, `needs`), `hosts/wsl.py` | Decide from Clank's records; ask the host only when a load plans (the 2026-10-26 fix covered the case with a model loaded) |
 | A flow's box can stay working with nothing behind it | The box says it works, nothing runs, and only Stop then Run from frees it; it follows a failure while the box's try was being settled | `flows/runner.py` (`_settle_anyway`, `_advance`, `_recover`) | Named transitions with a check when a run is saved: a working box has an operation or a question |
-| Run from, after a stop, can stop its own first box | "Stopped by you before its session started" | `flows/runner.py` (`stop` leaves its mark until a box's operation ends) | Clear the mark in Run from and when a review checkpoint ends |
-| After a job, a box can resume on the orchestrator's model and tools | A try recorded with its own preset ran on another, or failed with "session gone" | `flows/runner.py` (`_wait_on_job`, `_orchestrate`) | Run a job's checkpoint on the box's own preset and server |
 | A job or side session goes on after its box fails | Trying the box again starts a second job on the same files | `flows/runner.py` | End them when the box fails or is canceled |
 | Retrying a flow's operation from the Operations page goes around the flow | The run's box can be tried twice, or a checkpoint dropped | `kernel/operations.py`, `flows/runner.py` (`_box`) | Flows' operations are not retried there; the flow's own Run from is |
 | Some errors read as something else | "Its preset is not there", or "there is no workspace", for any error | `flows/runner.py`, `agents/artifacts.py`, `agents/boards.py`, `agents/jobs.py` | Catch the errors meant |
@@ -21,6 +19,13 @@ Update this page in the same commit as the fix.
 | pytest is not in the sandbox image | The agent's test runs fail with "No module named pytest" while This folder says nothing needs installing | `workspaces/image/Dockerfile` | Add it at the next change of the image |
 | No scriptable way to give the agent a task | `opencode run` rejects every edit under review mode, and Clank does not see its session | `clank work` | `clank work --message`, on the start route Clank already has |
 | The phone's chat (design 0025 §12) | Not built yet: a normal chat, the workspaces with the saved ones first, any session picked up, figures and the agent's questions in place | `remote/page/` | Plan s60 (branch `feature/phone-chat`, begun) |
+
+## Fixed on 2026-11-05
+
+| Issue | Cause | Commit |
+| --- | --- | --- |
+| Run from, after a stop, could stop its own first box | A stop made while a review checkpoint held the run stayed armed until a box's operation ended | 3f13056 |
+| After a job, a box could resume on the orchestrator's model and tools | A job's checkpoint switched the main slot and could start the flow's server again under the waiting box | 119213c |
 
 ## Fixed on 2026-11-04
 
