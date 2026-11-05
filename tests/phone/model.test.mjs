@@ -8,7 +8,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-  allSessions, clockText, lastKnown, linkBadge, machineGauges, modelLine, present, streamState, waitingCount, workingRows,
+  RECONNECT_SECONDS, allSessions, clockText, failedLink, lastKnown, linkBadge, machineGauges, modelLine, present,
+  streamState, waitingCount, workingRows,
 } from "../../clank/components/remote/page/model.mjs";
 
 const NOW = {
@@ -28,18 +29,32 @@ const NOW = {
 };
 
 test("the stream is live, then reconnecting with the pause's age, then offline after thirty seconds", () => {
-  assert.deepEqual(streamState({ connected: true }, 1000), { state: "live", pausedSeconds: 0, tries: 0, nextTryIn: 0 });
-  const dropped = { connected: false, failedSince: 100_000, tries: 2 };
+  assert.deepEqual(streamState({ connected: true }, 1000),
+    { state: "live", pausedSeconds: 0, tries: 0, nextTryIn: 0, lastTrySeconds: null });  // prettier-ignore
+  const dropped = { connected: false, failedSince: 100_000, tries: 2, lastTryAt: 111_000, nextTryAt: 116_000 };
   const young = streamState(dropped, 114_000);
   assert.equal(young.state, "reconnecting");
   assert.equal(young.pausedSeconds, 14);
-  assert.equal(young.nextTryIn, 1, "the next try comes on the fives");
+  assert.equal(young.nextTryIn, 2, "the try Clank set, counted down");
+  assert.equal(young.lastTrySeconds, 3);
   const old = streamState(dropped, 131_000);
   assert.equal(old.state, "offline");
   assert.equal(old.pausedSeconds, 31);
   assert.equal(old.tries, 2);
   assert.equal(clockText(14), "0:14");
   assert.equal(clockText(3723), "1:02:03");
+});
+
+test("each failure sets the next try RECONNECT_SECONDS on, and the stream is tried again then, however it failed", () => {
+  // Design 0025 §3, it retries every five seconds: after `closing` (Clank restarting) or a refused answer (Tailscale's
+  // proxy while the listener is down), the browser gives up, so the app tries again itself (2026-11-05).
+  const first = failedLink({ connected: true, failedSince: null, tries: 0 }, 100_000);
+  assert.deepEqual(first, { connected: false, failedSince: 100_000, tries: 1, lastTryAt: 100_000, nextTryAt: 105_000 });
+  const second = failedLink(first, 105_400);
+  assert.deepEqual(second, { connected: false, failedSince: 100_000, tries: 2, lastTryAt: 105_400, nextTryAt: 110_400 });
+  assert.equal(streamState(second, 107_000).nextTryIn, 4);
+  assert.equal(streamState(second, 111_000).nextTryIn, 0, "due: never a count below none");
+  assert.equal(RECONNECT_SECONDS, 5);
 });
 
 test("the header says the stream's state in a class of its own, apart from a session's LIVE tag and the offline screen", () => {

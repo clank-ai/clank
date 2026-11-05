@@ -1,5 +1,6 @@
 // The phone app's logic that needs no browser (design 0025 §3, §5, §6 and §7): the live stream's state (live,
-// reconnecting with the pause's age, offline after thirty seconds with the tries) and the header's word for it, a
+// reconnecting with the pause's age, offline after thirty seconds with the tries), each failure's next try, and the
+// header's word for it, a
 // screen's parts without the absent ones, what Now draws from the `now` payload
 // (the model's line, the machine's gauges, what waits, what works, the summary kept for the offline screen), the Flows
 // tab's filters, controls and glyphs, and a session's talk built from the conversation stream (the extension's client,
@@ -15,15 +16,27 @@ export const PHASES = {
 };
 
 // The stream's state from what the link knows: whether it is connected, when it last heard an event, since when it
-// fails and how many tries; `nowMs` is the clock. Live while connected; reconnecting while a drop is young, with how long
-// the live updates have paused; offline once the drop is `OFFLINE_AFTER_SECONDS` old, with the tries and the next.
+// fails, how many tries, when the last was and when the next is set (`failedLink`); `nowMs` is the clock. Live while
+// connected; reconnecting while a drop is young, with how long the live updates have paused; offline once the drop is
+// `OFFLINE_AFTER_SECONDS` old, with the tries, how long ago the last one was and when the next comes.
 export function streamState(link, nowMs) {
-  if (link.connected) return { state: "live", pausedSeconds: 0, tries: 0, nextTryIn: 0 };
+  if (link.connected) return { state: "live", pausedSeconds: 0, tries: 0, nextTryIn: 0, lastTrySeconds: null };
   const since = link.failedSince ?? nowMs;
   const paused = Math.max(0, Math.floor((nowMs - since) / 1000));
-  const nextTryIn = Math.max(0, RECONNECT_SECONDS - (paused % RECONNECT_SECONDS));
-  if (paused < OFFLINE_AFTER_SECONDS) return { state: "reconnecting", pausedSeconds: paused, tries: link.tries, nextTryIn };
-  return { state: "offline", pausedSeconds: paused, tries: link.tries, nextTryIn };
+  const nextTryIn = link.nextTryAt ? Math.max(0, Math.ceil((link.nextTryAt - nowMs) / 1000)) : 0;
+  const lastTrySeconds = link.lastTryAt ? Math.max(0, Math.floor((nowMs - link.lastTryAt) / 1000)) : null;
+  const state = paused < OFFLINE_AFTER_SECONDS ? "reconnecting" : "offline";
+  return { state, pausedSeconds: paused, tries: link.tries, nextTryIn, lastTrySeconds };
+}
+
+// The link after a try failed at `nowMs` (an error, `closing`, a refused answer): not connected, failing since the first
+// failure, one more try, and the next set `RECONNECT_SECONDS` on, when the app opens the stream again itself (the
+// browser gives up on a stream the PC refused or closed, design 0025 §3).
+export function failedLink(link, nowMs) {
+  return {
+    connected: false, failedSince: link.connected || link.failedSince == null ? nowMs : link.failedSince,
+    tries: (link.tries || 0) + 1, lastTryAt: nowMs, nextTryAt: nowMs + RECONNECT_SECONDS * 1000,
+  };
 }
 
 // The header's word for the stream's state, and its class: `link-<state>`, its own. The state's bare name took the looks

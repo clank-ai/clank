@@ -163,15 +163,20 @@ def test_the_stream_says_now_first_then_each_event_with_its_title_and_a_changed_
         events.close()
 
 
+@pytest.mark.parametrize("by", ["header", "after"])
 def test_a_device_that_comes_back_gets_the_events_it_missed_and_an_unpaired_one_nothing(
-    kernel: Kernel, served: str
+    kernel: Kernel, served: str, by: str
 ) -> None:
+    """The browser's own reconnection says `Last-Event-ID`; the app's own retry, a new stream, says `after`."""
     unpaired = httpx2.get(f"{served}/api/stream", headers=THROUGH_TAILSCALE, timeout=10)
     assert unpaired.status_code == 401
     cookies = paired(kernel, served)
     first = kernel.events.record("remote.switched", summary="the first", actor=YOU, data={"on": True})
     second = kernel.events.record("remote.switched", summary="the second", actor=YOU, data={"on": False})
-    events = Events(served, {**THROUGH_TAILSCALE, "Last-Event-ID": str(first.id)}, cookies)
+    if by == "header":
+        events = Events(served, {**THROUGH_TAILSCALE, "Last-Event-ID": str(first.id)}, cookies)
+    else:
+        events = Events(served, THROUGH_TAILSCALE, cookies, path=f"/api/stream?after={first.id}")
     try:
         heard = events.until("now")
         kinds = [each[0] for each in heard]

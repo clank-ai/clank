@@ -7,7 +7,8 @@
 // action carries the X-Clank-Phone header. The logic that needs no browser is `model.mjs`.
 
 import {
-  RECONNECT_SECONDS, allSessions, applyTalk, boxGlyph, clockText, emptyTalk, failedTalk, flowFilter, lastKnown, linkBadge,
+  RECONNECT_SECONDS, allSessions, applyTalk, boxGlyph, clockText, emptyTalk, failedLink, failedTalk, flowFilter, lastKnown,
+  linkBadge,
   liveIndex, machineGauges, modelLine, phaseWords, present, runControls, sentTalk, streamState, talkItems, waitingCount,
   workingRows,
 } from "./model.mjs";
@@ -31,7 +32,8 @@ const state = {
   tab: "now", place: null, overview: null, talk: null, talkSource: null, sessionTimer: null, task: "", files: null,
   log: { items: [], open: {} }, notes: {}, reads: {}, events: [], known: null,
   flows: { rows: null, plannings: {}, filter: "all", view: null, building: false, timer: null },
-  link: { connected: false, failedSince: null, tries: 0, lastEventAt: null, source: null },
+  link: { connected: false, failedSince: null, tries: 0, lastTryAt: null, nextTryAt: null, lastEventAt: null, lastId: null,
+    source: null, retry: null },
 };
 try { state.known = JSON.parse(localStorage.getItem(KNOWN) || "null"); } catch { state.known = null; }
 
@@ -1003,7 +1005,8 @@ function offlineView() {
     el("h2", {}, "Can't reach the PC"),
     el("div", { class: "why" }, "Is Tailscale on? Is the PC awake?"),
     kv([["this iPhone", navigator.onLine ? "online" : "offline"],
-      [location.hostname.split(".")[0] || "the PC", `didn't answer · ${link.tries} ${link.tries === 1 ? "try" : "tries"}, the last ${clockText(link.pausedSeconds % RECONNECT_SECONDS)} ago`]]),
+      [location.hostname.split(".")[0] || "the PC", `didn't answer · ${link.tries} ${link.tries === 1 ? "try" : "tries"}` +
+        (link.lastTrySeconds === null ? "" : `, the last ${clockText(link.lastTrySeconds)} ago`)]]),
     el("div", { class: "muted" }, "Tailscale on this iPhone: an app can't see it. Open Tailscale and check it says Connected. The PC asleep or off: Clank can't wake it from here."),
     el("div", { class: "btns" }, el("button", { class: "btn go", onclick: () => stream(true) }, "Try again"),
       el("span", { class: "dim" }, ` next try in ${link.nextTryIn} s`)),
@@ -1070,14 +1073,20 @@ function noticed(event) {
 }
 
 // The live stream (design 0025 §3): `now` draws the app, each `event` is kept and may ask for attention; a drop is said
-// in the header, then the offline screen after thirty seconds; the browser resumes it from the last event it saw.
+// in the header, then the offline screen after thirty seconds. Every failure (an error, the PC's `closing`, an answer
+// refused while Clank restarts) closes the stream, and the app opens it again itself `RECONNECT_SECONDS` later
+// (`failedLink`), from the last event it saw (`after`), so the countdown on the screen is the try that comes; a 401
+// asks to pair again instead.
 function stream(again = false) {
+  clearTimeout(state.link.retry);
+  state.link.retry = null;
   if (state.link.source) { state.link.source.close(); state.link.source = null; }
-  if (again) { state.link.failedSince = null; state.link.tries = 0; draw(); }
-  const source = new EventSource("api/stream");
+  if (again) { Object.assign(state.link, { failedSince: null, tries: 0, lastTryAt: null, nextTryAt: null }); draw(); }
+  const source = new EventSource(state.link.lastId === null ? "api/stream" : `api/stream?after=${state.link.lastId}`);
   state.link.source = source;
   source.addEventListener("open", () => {
-    state.link.connected = true; state.link.failedSince = null; state.link.tries = 0; drawHeader();
+    Object.assign(state.link, { connected: true, failedSince: null, tries: 0, lastTryAt: null, nextTryAt: null });
+    drawHeader();
   });
   source.addEventListener("connected", () => {
     state.link.connected = true;
@@ -1095,6 +1104,7 @@ function stream(again = false) {
   source.addEventListener("event", (message) => {
     const event = JSON.parse(message.data);
     state.link.lastEventAt = Date.now();
+    if (/^\d+$/.test(message.lastEventId)) state.link.lastId = Number(message.lastEventId);
     state.events.unshift(event);
     if (state.events.length > 500) state.events.length = 500;
     noticed(event);
@@ -1102,17 +1112,23 @@ function stream(again = false) {
     if (state.place && state.place.more === "events") draw();
   });
   source.addEventListener("reset", () => { say("the PC pruned events while this phone was away: shown afresh"); });
-  source.addEventListener("closing", () => { source.close(); state.link.source = null; state.link.connected = false; state.link.failedSince = Date.now(); draw(); });
-  source.addEventListener("error", () => {
-    if (state.link.connected || state.link.failedSince === null) state.link.failedSince = Date.now();
-    state.link.connected = false;
-    state.link.tries += 1;
-    if (source.readyState === EventSource.CLOSED) { // the browser gave up (a 401, a 403): pair again, or wait
-      state.link.source = null;
-      api("api/me").catch((error) => { if (error.status === 401) pairView(); });
-    }
-    draw();
+  source.addEventListener("closing", () => dropped(source));
+  source.addEventListener("error", () => dropped(source));
+}
+
+// A try of the stream failed: it is closed, said, and tried again `RECONNECT_SECONDS` later, unless the device is no
+// longer paired (pair again) or the page is hidden (it opens again when shown).
+function dropped(source) {
+  if (state.link.source !== source) return; // an old stream's last words
+  source.close();
+  state.link.source = null;
+  Object.assign(state.link, failedLink(state.link, Date.now()));
+  clearTimeout(state.link.retry);
+  state.link.retry = setTimeout(() => { if (!document.hidden) stream(); }, RECONNECT_SECONDS * 1000);
+  api("api/me").catch((error) => {
+    if (error.status === 401) { clearTimeout(state.link.retry); state.link.retry = null; pairView(); }
   });
+  draw();
 }
 
 // The column fills the screen by itself (style.css, the app shell); while the keyboard is up (a field has the focus and
@@ -1166,8 +1182,7 @@ async function start() {
     await api("api/me");
   } catch (error) {
     if (error.status === 401) return pairView();
-    state.link.failedSince = state.link.failedSince || Date.now();
-    state.link.tries += 1;
+    Object.assign(state.link, failedLink(state.link, Date.now()));
     view.replaceChildren(...offlineView());
     setTimeout(start, RECONNECT_SECONDS * 1000);
     return;
@@ -1196,7 +1211,13 @@ for (const button of tabs.querySelectorAll("button")) {
 }
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") { if (!state.link.source) stream(); followSession(); }
-  else { closeSession(); if (state.link.source) { state.link.source.close(); state.link.source = null; } }
+  else {
+    closeSession();
+    clearTimeout(state.link.retry);
+    state.link.retry = null;
+    if (state.link.source) { state.link.source.close(); state.link.source = null; }
+    state.link.connected = false; // what shows when it comes back is not live until the stream opens again
+  }
 });
 setInterval(() => {
   if (document.hidden) return;

@@ -298,9 +298,9 @@ def create_phone_app(remote: "Remote") -> FastAPI:
     @app.get(STREAM_PATH)
     async def stream(request: Request) -> StreamingResponse:
         """The phone's one live stream (design 0025 §3): now, then each event as it is recorded, now again when it
-        changed; `Last-Event-ID` resumes."""
+        changed; `Last-Event-ID` resumes, and so does `after` (the app's own retry, design 0025 §3)."""
         device_of(request)
-        given = request.headers.get("last-event-id", "").strip()
+        given = request.headers.get("last-event-id", "").strip() or request.query_params.get("after", "").strip()
         after = int(given) if given.isdigit() else None
         text = phone_stream(remote, after, lambda: _overview(remote, files=False), remote.closers)
         headers = {"Cache-Control": "no-store", "X-Accel-Buffering": "no"}
