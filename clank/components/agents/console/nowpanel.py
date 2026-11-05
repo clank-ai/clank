@@ -38,7 +38,8 @@ from textual.widgets import Label, Static
 from clank.components.agents.console.flowpanel import NO_SESSION
 from clank.components.agents.console.flowtree import tone_of, what
 from clank.console.gauges import bar, spark, spinner
-from clank.console.style import current, mark
+from clank.console.style import mark
+from clank.console.text import cut_to
 
 WIDTH = 48  # the width drawn for before the panel is laid out
 LABEL = 12  # the labels' column: "loop guard" and two spaces
@@ -75,7 +76,7 @@ def lines(now: dict[str, Any] | None, width: int) -> list[Content]:
     if now is None:
         return []
     if now.get("unavailable"):
-        return [_cut(Content.styled(f"not available: {now['unavailable']}", "$clank-quiet"), width)]
+        return [cut_to(Content.styled(f"not available: {now['unavailable']}", "$clank-quiet"), width)]
     shown = [
         _labeled("prompt", _prompt(now)),
         _labeled("last prompt", _last_prompt(now)),
@@ -85,7 +86,7 @@ def lines(now: dict[str, Any] | None, width: int) -> list[Content]:
         _labeled("speed", _speed(now.get("speed") or {}, width)),
         _labeled("loop guard", _guard(now.get("guard") or {})),
     ]
-    return [_cut(line, width) for line in shown]
+    return [cut_to(line, width) for line in shown]
 
 
 def seconds(value: float) -> str:
@@ -168,13 +169,6 @@ def _guard(guard: dict[str, Any]) -> Content:
 def _part(part: dict[str, Any]) -> str:
     name = str(part.get("part") or "")
     return str(part.get("name") or "a call") if name.startswith("tool") else name
-
-
-def _cut(line: Content, width: int) -> Content:
-    """A line cut to `width` cells, ending in the style's mark of cut text when it was cut."""
-    if line.cell_length <= width:
-        return line
-    return Content.assemble(line.truncate(max(width - 1, 0)), current().marks.cut)
 
 
 class NowSpin(Static):

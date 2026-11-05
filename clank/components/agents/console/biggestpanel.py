@@ -27,6 +27,7 @@ from clank.components.agents.console.parts import SWATCH, tokens, tone
 from clank.components.agents.estimate import LABELS
 from clank.console.lists import refill
 from clank.console.style import current
+from clank.console.text import cut_to
 
 SHOWN = 12  # the biggest items listed
 ROWS = 8  # the rows it shows, scrolling beyond them
@@ -88,7 +89,7 @@ def line(row: dict[str, Any], width: int) -> Content:
         if room >= min(LEAST, len(what)):
             break
     shown = Content.assemble(head, stepped, _fit(what, max(room, 0)), (ending, "$clank-quiet"))
-    return shown if shown.cell_length <= width else _cut(shown, width)
+    return shown if shown.cell_length <= width else cut_to(shown, width)
 
 
 def item_line(row: dict[str, Any]) -> str:
@@ -131,10 +132,6 @@ def whole(row: dict[str, Any], estimate: dict[str, Any] | None) -> list[str]:
 def _fit(text: str, width: int) -> str:
     """Text cut to `width`, ending in the style's mark of cut text, no space before it."""
     return text if len(text) <= width else text[: max(width - 1, 0)].rstrip() + current().marks.cut
-
-
-def _cut(shown: Content, width: int) -> Content:
-    return Content.assemble(shown.truncate(max(width - 1, 0)), current().marks.cut)
 
 
 class BiggestList(ListView):

@@ -1,11 +1,13 @@
 """Design 0002 §3.2: the console shows a state in color: green when it is as wanted, yellow while it changes, red when
 it is not; text is shown as it is, never read as markup; a state that appears more than once is colored each time, in
 order. Design 0016 §11: a cost is shown in US dollars, cents from a dollar up, two significant digits below, an
-estimate marked ≈; a model's window in thousands of tokens."""
+estimate marked ≈; a model's window in thousands of tokens. Design 0011 §5: a line too wide for its panel is cut to
+its width, ending in the style's mark of cut text."""
 
 from textual.content import Content
 
-from clank.console.text import painted, tone
+from clank.console.style import current
+from clank.console.text import cut_to, painted, tone
 from clank.money import money, tokens
 
 
@@ -37,3 +39,15 @@ def test_money_is_cents_from_a_dollar_up_and_two_significant_digits_below_an_est
 
 def test_a_window_of_tokens_is_said_in_thousands() -> None:
     assert [tokens(count) for count in (262144, 131072, 32768, 900)] == ["262K", "131K", "33K", "900"]
+
+
+def test_a_line_too_wide_is_cut_to_its_width_ending_in_the_cut_mark_and_one_that_fits_is_as_it_is() -> None:
+    mark = current().marks.cut
+    line = Content("tests/test_api.py  2.2K chars")
+    assert cut_to(line, 40) is line, "a line that fits is the line itself"
+    cut = cut_to(line, 12)
+    assert cut.cell_length == 12
+    assert cut.plain == "tests/test_" + mark
+    failed = cut_to(line, 12, "$clank-failed")
+    assert failed.plain == cut.plain
+    assert colored(failed)[-1] == (mark, "$clank-failed"), "the mark in the style asked for"

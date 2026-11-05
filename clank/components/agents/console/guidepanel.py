@@ -25,7 +25,7 @@ from textual.widgets import Label
 
 from clank.components.agents.console.flowpanel import NO_SESSION
 from clank.components.agents.console.flowtree import Node, flat
-from clank.console.style import current
+from clank.console.text import cut_to
 
 WIDTH = 60  # the width drawn for before the panel is laid out
 PRESSED = {"full_stop": "stop", "m": "note", "k": "compact", "p": "pause", "u": "undo", "x": "drop"}  # Textual's names
@@ -54,7 +54,7 @@ def lines(guide: dict[str, Any] | None, width: int, zone: tzinfo | None = None) 
     if guide is None:
         return [Content.styled(NO_SESSION, "$clank-quiet")]
     if guide.get("unavailable"):
-        return [_cut(Content.styled(f"the Guide is not available: {guide['unavailable']}", "$clank-quiet"), width)]
+        return [cut_to(Content.styled(f"the Guide is not available: {guide['unavailable']}", "$clank-quiet"), width)]
     offered = list(guide.get("actions") or [])
     reasons = {str(action["why"]) for action in offered if not action["can"]}
     if offered and not any(action["can"] for action in offered) and len(reasons) == 1:  # one reason: said once
@@ -62,7 +62,7 @@ def lines(guide: dict[str, Any] | None, width: int, zone: tzinfo | None = None) 
             Content.assemble((f"{action['key']} ", "bold $clank-key"), (str(action["title"]), "$clank-quiet"))
             for action in offered
         )
-        return [_cut(keys, width), _cut(Content.styled(reasons.pop(), "$clank-quiet"), width)]
+        return [cut_to(keys, width), cut_to(Content.styled(reasons.pop(), "$clank-quiet"), width)]
     shown: list[Content] = []
     for action in offered:
         key = (f"{action['key']} ", "bold $clank-key")
@@ -73,10 +73,10 @@ def lines(guide: dict[str, Any] | None, width: int, zone: tzinfo | None = None) 
             said = Content.assemble(key, title, str(action["brief"]), (f" · {_cost(action['cost'])}", "$clank-quiet"))
         else:
             said = Content.assemble(key, title, (action["why"], "$clank-quiet"))
-        shown.append(_cut(said, width))
+        shown.append(cut_to(said, width))
         state = action.get("state")
         if state:
-            shown.append(_cut(_state(state, zone), width))
+            shown.append(cut_to(_state(state, zone), width))
     return shown
 
 
@@ -156,13 +156,6 @@ def _timer(seconds: Any) -> str:
         return f"{whole} s"
     hours, rest = divmod(whole, 3600)
     return f"{hours}:{rest // 60:02}:{rest % 60:02}" if hours else f"{rest // 60}:{rest % 60:02}"
-
-
-def _cut(line: Content, width: int) -> Content:
-    """A line cut to `width` cells, ending in the style's mark of cut text when it was cut."""
-    if line.cell_length <= width:
-        return line
-    return Content.assemble(line.truncate(max(width - 1, 0)), current().marks.cut)
 
 
 class GuideList(Label):

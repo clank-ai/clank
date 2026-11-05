@@ -49,6 +49,7 @@ from clank.components.agents.console.flowpanel import NO_SESSION
 from clank.components.agents.watchfor.rules import LOOP_WORDS, size
 from clank.console.gauges import level
 from clank.console.style import current, mark
+from clank.console.text import cut_to
 
 NOT_REPORTED = "not reported by this engine"
 WIDTH = 80  # the width drawn for before the panel is laid out
@@ -76,7 +77,7 @@ def lines(
     if totals is None:
         return [Content.styled(NO_SESSION, "$clank-quiet")]
     if totals.get("unavailable"):
-        return [_cut(Content.styled(f"context totals not available: {totals['unavailable']}", "$clank-quiet"), width)]
+        return [cut_to(Content.styled(f"context totals not available: {totals['unavailable']}", "$clank-quiet"), width)]
     shown = [_totals(totals)]
     if totals.get("window") and totals.get("line"):
         shown.append(parts.bar(totals, width) if totals.get("parts") else bar(totals, width))
@@ -88,7 +89,7 @@ def lines(
     for line in (gpu_line(totals), grew, _holder(totals, zone), _sources(totals), _switched(totals)):
         if line is not None:
             shown.append(line)
-    return [_cut(line, width) for line in shown]
+    return [cut_to(line, width) for line in shown]
 
 
 def summary(totals: dict[str, Any] | None, width: int, zone: tzinfo | None = None) -> list[Content]:
@@ -102,7 +103,7 @@ def summary(totals: dict[str, Any] | None, width: int, zone: tzinfo | None = Non
     for line in (parts.legend(totals, width), _holder(totals, zone), _switched(totals)):
         if line is not None:
             shown.append(line)
-    return [_cut(line, width) for line in shown]
+    return [cut_to(line, width) for line in shown]
 
 
 def growth(view: dict[str, Any] | None) -> list[Point]:
@@ -156,7 +157,7 @@ def spark_line(points: list[Point], width: int, window: int | None, zone: tzinfo
         cells.append((sparks[step], tone))
     said = [mark_words(point, zone) for point in shown if point.mark]
     legend = ("  " + " · ".join(said), "$clank-quiet") if said else ""
-    return _cut(Content.assemble((label, "$clank-quiet"), *cells, legend), width)
+    return cut_to(Content.assemble((label, "$clank-quiet"), *cells, legend), width)
 
 
 def mark_words(point: Point, zone: tzinfo | None) -> str:
@@ -342,13 +343,6 @@ def _clock(time: str, zone: tzinfo | None) -> str:
         return datetime.fromisoformat(time).astimezone(zone).strftime("%H:%M")
     except ValueError:
         return time
-
-
-def _cut(line: Content, width: int) -> Content:
-    """A line cut to `width` cells, ending in the style's mark of cut text when it was cut."""
-    if line.cell_length <= width:
-        return line
-    return Content.assemble(line.truncate(max(width - 1, 0)), current().marks.cut)
 
 
 class ContextWindow(Label):

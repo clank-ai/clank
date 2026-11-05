@@ -20,6 +20,7 @@ from textual.content import Content
 
 from clank.console.gauges import level
 from clank.console.style import current
+from clank.console.text import cut_to
 
 SHORT = {
     "system": "system", "tools": "tools", "yours": "you", "text": "text", "thinking": "thinking", "calls": "calls",
@@ -94,7 +95,7 @@ def legend(totals: dict[str, Any] | None, width: int) -> Content | None:
         left = len(parts) - len(kept)
         shown = _legend(kept, left)
         if shown.cell_length <= width or len(kept) <= 1:
-            return shown if shown.cell_length <= width else _cut(shown, width)
+            return shown if shown.cell_length <= width else cut_to(shown, width)
         kept.remove(min(kept, key=lambda part: (part["part"] == "loop", part["tokens"])))
 
 
@@ -108,10 +109,3 @@ def _legend(parts: list[dict[str, Any]], left: int) -> Content:
     if left:
         pieces.append((f" · +{left} more", "$clank-quiet"))
     return Content.assemble(*pieces)
-
-
-def _cut(line: Content, width: int) -> Content:
-    """A line cut to `width` cells, ending in the style's mark of cut text."""
-    if line.cell_length <= width:
-        return line
-    return Content.assemble(line.truncate(max(width - 1, 0)), current().marks.cut)

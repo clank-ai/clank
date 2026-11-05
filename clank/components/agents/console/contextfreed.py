@@ -18,6 +18,7 @@ from textual.widgets import ListView
 
 from clank.console.lists import refill
 from clank.console.style import current
+from clank.console.text import cut_to
 
 NOTHING_FREED = "nothing to free: no loop text, no call made again, and the session within what a compaction keeps"
 DROPPED = (
@@ -42,14 +43,14 @@ def line(row: dict[str, Any], width: int) -> Content:
     figure = f"frees about {int(row.get('tokens') or 0):,}"
     room = width - 3 - 2 - len(figure)
     shown = Content.assemble((f" {key} ", "$clank-key"), _fit(words, max(room, 0)).ljust(max(room, 0)), "  ", figure)
-    return shown if shown.cell_length <= width else _cut(shown, width)
+    return shown if shown.cell_length <= width else cut_to(shown, width)
 
 
 def freed(totals: dict[str, Any] | None, width: int) -> list[Content]:
     """Could be freed, a line each; what it says without the estimate or with nothing to free."""
     rows = freed_rows(totals)
     if not rows:
-        return [_cut(Content.styled(NOTHING_FREED, "$clank-quiet"), width)]
+        return [cut_to(Content.styled(NOTHING_FREED, "$clank-quiet"), width)]
     return [line(row, width) for row in rows]
 
 
@@ -73,12 +74,6 @@ def freed_notes(totals: dict[str, Any] | None, row: dict[str, Any]) -> list[str]
 
 def _fit(text: str, width: int) -> str:
     return text if len(text) <= width else text[: max(width - 1, 0)].rstrip() + current().marks.cut
-
-
-def _cut(shown: Content, width: int) -> Content:
-    if shown.cell_length <= width:
-        return shown
-    return Content.assemble(shown.truncate(max(width - 1, 0)), current().marks.cut)
 
 
 class FreedList(ListView):

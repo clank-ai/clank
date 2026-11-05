@@ -121,3 +121,11 @@ def live_text(parts: list[list[str]]) -> Content:
     if not shown:
         return Content.assemble(("(nothing written yet)", "dim"))
     return Content.assemble(*shown)
+
+
+def cut_to(line: Content, width: int, style: str = "") -> Content:
+    """A line cut to `width` cells, ending in the style's mark of cut text (in `style` when given) when it was cut."""
+    if line.cell_length <= width:
+        return line
+    mark = current().marks.cut
+    return Content.assemble(line.truncate(max(width - 1, 0)), (mark, style) if style else mark)

@@ -20,6 +20,7 @@ from textual.content import Content
 from clank.components.agents.console.contextpanel import gpu_line
 from clank.components.agents.console.flowpanel import NO_SESSION
 from clank.console.style import current
+from clank.console.text import cut_to
 
 NAME = 11  # a row's name
 FIGURE = 8  # its tokens
@@ -73,7 +74,7 @@ def gpu_drawn(
     totals: dict[str, Any] | None, width: int, zone: tzinfo | None, view: dict[str, Any] | None
 ) -> list[Content]:
     """On the GPU exactly, each line cut to `width`."""
-    return [_cut(line, width) for line in gpu(totals, view, zone)]
+    return [cut_to(line, width) for line in gpu(totals, view, zone)]
 
 
 def _row(glyph: str, tone: str, name: str, figure: str, words: str) -> Content:
@@ -87,9 +88,3 @@ def _last_said(view: dict[str, Any] | None, zone: tzinfo | None) -> str:
         return ""
     created = float(said[-1]["created"]) / 1000
     return datetime.fromtimestamp(created, UTC).astimezone(zone).strftime("%H:%M")
-
-
-def _cut(line: Content, width: int) -> Content:
-    if line.cell_length <= width:
-        return line
-    return Content.assemble(line.truncate(max(width - 1, 0)), current().marks.cut)

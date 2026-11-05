@@ -34,6 +34,7 @@ from clank.console.details import DetailsScreen
 from clank.console.lists import refill
 from clank.console.panel import WindowPanel
 from clank.console.style import current, mark
+from clank.console.text import cut_to
 
 SHOWN = 50  # the newest calls the panel lists
 ROWS = 8  # the rows it shows, scrolling beyond them (fewer when the page is short of rows)
@@ -63,12 +64,12 @@ def line(row: dict[str, Any], width: int, zone: tzinfo | None = None) -> Content
     room = width - head.cell_length - (len(size) + 1 if size else 0)
     said = what(row) or str(row.get("error") or "")
     if room < 4:  # too narrow for what it does: the time, the mark and the tool, cut
-        return _cut(head, width, failed)
+        return cut_to(head, width, "$clank-failed" if failed else "")
     words = said if len(said) <= room else said[: max(room - 1, 0)] + current().marks.cut
     shown = Content.assemble(head, (f"{words:<{room}}", "$clank-failed" if failed else ""))
     if size:
         shown = Content.assemble(shown, " ", (size.rjust(min(SIZE, len(size))), "$clank-quiet"))
-    return _cut(shown, width, failed)
+    return cut_to(shown, width, "$clank-failed" if failed else "")
 
 
 def whole(row: dict[str, Any], found: dict[str, Any] | None, why: str = "", zone: tzinfo | None = None) -> list[str]:
@@ -99,12 +100,6 @@ def _clock(started: Any, zone: tzinfo | None) -> str:
     if not isinstance(started, int | float) or isinstance(started, bool) or started <= 0:
         return "--:--:--"
     return datetime.fromtimestamp(float(started) / 1000, UTC).astimezone(zone).strftime("%H:%M:%S")
-
-
-def _cut(shown: Content, width: int, failed: bool) -> Content:
-    if shown.cell_length <= width:
-        return shown
-    return Content.assemble(shown.truncate(max(width - 1, 0)), (current().marks.cut, "$clank-failed" if failed else ""))
 
 
 class CallsList(ListView):

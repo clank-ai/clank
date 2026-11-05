@@ -21,6 +21,7 @@ from clank.components.agents.console.contextpanel import Point, growth, mark_wor
 from clank.components.agents.console.flowpanel import NO_SESSION
 from clank.components.agents.console.parts import tokens, tone
 from clank.console.style import current, mark
+from clank.console.text import cut_to
 
 CHART_ROWS = 8
 AXIS = 6  # the axis's columns: " 262K "
@@ -34,10 +35,10 @@ def over_session(
     if totals is None:
         return [Content.styled(NO_SESSION, "$clank-quiet")]
     if totals.get("unavailable"):
-        return [_cut(Content.styled(f"context totals not available: {totals['unavailable']}", "$clank-quiet"), width)]
+        return [cut_to(Content.styled(f"context totals not available: {totals['unavailable']}", "$clank-quiet"), width)]
     points = growth(view)
     if not points:
-        return [_cut(Content.styled(NO_STEP, "$clank-quiet"), width)]
+        return [cut_to(Content.styled(NO_STEP, "$clank-quiet"), width)]
     top = float(totals.get("window") or max(point.size for point in points) or 1)
     room = max(width - AXIS, 0)
     shown = points[-room:] if room else []
@@ -57,7 +58,7 @@ def over_session(
     lines.append(Content.styled(" " * AXIS + _times(shown, zone), "$clank-quiet"))
     if marked:
         lines.append(Content.styled(" · ".join(mark_words(point, zone) for point in marked), "$clank-quiet"))
-    return [_cut(line, width) for line in lines]
+    return [cut_to(line, width) for line in lines]
 
 
 def _cell(point: Point, row: int, top: float, parts: dict[str, int] | None) -> tuple[str, str]:
@@ -106,9 +107,3 @@ def _clock(at: int | None, zone: tzinfo | None) -> str:
     if at is None or at <= 0:
         return "--:--"
     return datetime.fromtimestamp(at / 1000, UTC).astimezone(zone).strftime("%H:%M")
-
-
-def _cut(line: Content, width: int) -> Content:
-    if line.cell_length <= width:
-        return line
-    return Content.assemble(line.truncate(max(width - 1, 0)), current().marks.cut)

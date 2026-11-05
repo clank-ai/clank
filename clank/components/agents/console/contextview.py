@@ -41,6 +41,7 @@ from clank.components.agents.console.parts import SHORT, SWATCH, tokens, tone
 from clank.console.gauges import spark
 from clank.console.lists import refill, relabel
 from clank.console.style import current
+from clank.console.text import cut_to
 
 NAME = 11  # a part's swatch and short name (the legend's)
 TOKENS = 8
@@ -69,7 +70,7 @@ def contents(totals: dict[str, Any] | None, width: int) -> list[Content]:
     """What is in it: a header, then a row per part, none wider than `width` (module docstring)."""
     said_first = waiting(totals)
     if said_first is not None or totals is None:
-        return [_cut(said_first or Content(""), width)]
+        return [cut_to(said_first or Content(""), width)]
     found = totals["parts"]
     trends = _trends(totals)
     for trend, items, biggest in ((True, True, True), (False, True, True), (False, False, True), (False, False, False)):
@@ -102,7 +103,7 @@ def contents(totals: dict[str, Any] | None, width: int) -> list[Content]:
             top = max(values, default=0.0)
             pieces += [" " * GAP, spark(values, TREND, top=top, style=tone(name)) if top else " " * TREND]
         shown.append(Content.assemble(*pieces))
-    return [_cut(line, width) for line in shown]
+    return [cut_to(line, width) for line in shown]
 
 
 def part_rows(totals: dict[str, Any] | None, part: str) -> list[dict[str, Any]]:
@@ -137,12 +138,12 @@ def room(totals: dict[str, Any] | None, width: int) -> list[Content]:
     """Where the room went: the biggest groups, each with its tokens and its share, the words cut first."""
     said_first = waiting(totals)
     if said_first is not None or totals is None:
-        return [_cut(said_first or Content(""), width)]
+        return [cut_to(said_first or Content(""), width)]
     shown = []
     for group in totals["parts"].get("groups") or []:
         figures = f"{int(group['tokens']):,}".rjust(8) + f"{group['share']:.0%}".rjust(5)
         words = _fit(str(group["words"]), max(width - len(figures), 0)).ljust(max(width - len(figures), 0))
-        shown.append(_cut(Content.assemble(words, figures), width))
+        shown.append(cut_to(Content.assemble(words, figures), width))
     return shown
 
 
@@ -213,12 +214,6 @@ def _trends(totals: dict[str, Any]) -> dict[str, list[float]]:
 
 def _fit(text: str, width: int) -> str:
     return text if len(text) <= width else text[: max(width - 1, 0)].rstrip() + current().marks.cut
-
-
-def _cut(line: Content, width: int) -> Content:
-    if line.cell_length <= width:
-        return line
-    return Content.assemble(line.truncate(max(width - 1, 0)), current().marks.cut)
 
 
 DRAWINGS: dict[str, Drawing] = {

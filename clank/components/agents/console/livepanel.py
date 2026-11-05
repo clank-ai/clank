@@ -21,8 +21,8 @@ from textual.content import Content
 from textual.widgets import Label
 
 from clank.console.lists import relabel
-from clank.console.style import current, mark
-from clank.console.text import live_text
+from clank.console.style import mark
+from clank.console.text import cut_to, live_text
 
 WIDTH = 100  # the width drawn for before the panel is laid out
 
@@ -32,7 +32,7 @@ def head(found: dict[str, Any] | None, width: int) -> Content:
     meta = (found or {}).get("meta")
     if not meta:
         why = (found or {}).get("problem") or "the session's next model request shows here as it is written"
-        return _cut(Content.styled(f"no request of this session yet: {why}", "$clank-quiet"), width)
+        return cut_to(Content.styled(f"no request of this session yet: {why}", "$clank-quiet"), width)
     speed = f" · {meta['per_second']:.0f} tok/s" if meta.get("per_second") else ""
     if found and found.get("flying"):
         state = Content.assemble((f"{mark('on')} ", "$clank-now"), ("being written", "bold"))
@@ -44,13 +44,7 @@ def head(found: dict[str, Any] | None, width: int) -> Content:
         f" · {int(meta.get('tokens') or 0):,} tokens{speed}",
         (f" · asked: {asked}" if asked else "", "$clank-quiet"),
     )
-    return _cut(said, width)
-
-
-def _cut(line: Content, width: int) -> Content:
-    if line.cell_length <= width:
-        return line
-    return Content.assemble(line.truncate(max(width - 1, 0)), current().marks.cut)
+    return cut_to(said, width)
 
 
 class LiveView(Vertical):
