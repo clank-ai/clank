@@ -7,6 +7,8 @@ outside the folder, or with neither a mark nor a word."""
 
 import base64
 import json
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -119,3 +121,38 @@ def test_an_annotation_is_refused_with_the_reason_when_it_cannot_be_sent(
     with pytest.raises(AnnotationError, match=r"no agent runs in paper: start it"):
         annotations.send(str(folder), str(figure), [mark], "", copy, actor=YOU)
     assert not (folder / ".clank" / "annotations").exists(), "nothing kept for what was not sent"
+
+
+def _link_folder(link: Path, target: Path) -> None:
+    """A link to a folder, as the agent could make one: a junction on Windows, else a symbolic link."""
+    if sys.platform == "win32":
+        import _winapi
+
+        _winapi.CreateJunction(str(target), str(link))
+    else:
+        os.symlink(target, link, target_is_directory=True)
+
+
+def test_a_figure_reached_through_a_link_is_never_read_and_no_copy_is_kept_through_one(
+    kernel: Kernel,  # noqa: F811
+    opencode: int,  # noqa: F811
+    figure: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    folder = figure.parents[1]
+    workspace(kernel, folder, opencode, monkeypatch)
+    annotations = kernel.parts["agents"].annotations
+    copy = "data:image/png;base64," + base64.b64encode(figure.read_bytes()).decode()
+    mark = {"n": 1, "kind": "pen", "color": "#e5484d", "points": [[10, 10], [20, 20]]}
+    elsewhere = tmp_path / "owners"
+    elsewhere.mkdir()
+    shutil.copyfile(figure, elsewhere / "secret.png")
+    _link_folder(folder / "linked", elsewhere)
+    with pytest.raises(AnnotationError, match="is a link"):
+        annotations.send(str(folder), str(folder / "linked" / "secret.png"), [mark], "", copy, actor=YOU)
+    (folder / ".clank").mkdir(exist_ok=True)
+    _link_folder(folder / ".clank" / "annotations", elsewhere)
+    with pytest.raises(AnnotationError, match="is a link"):
+        annotations.send(str(folder), str(figure), [mark], "", copy, actor=YOU)
+    assert sorted(each.name for each in elsewhere.iterdir()) == ["secret.png"], "nothing kept through the link"

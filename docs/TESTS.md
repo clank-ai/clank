@@ -187,9 +187,9 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | What was learned | none yet |
 | 3 | A figure's geometry | `tests/components/workspaces/test_figure_geometry.py` (4) |
 | 4 | A mark in words | `tests/components/agents/test_figures.py` (5) |
-| 5 | Sending to the agent | `tests/components/agents/test_annotations.py` (2) |
+| 5 | Sending to the agent | `tests/components/agents/test_annotations.py` (3) |
 | 6 | The annotator in VS Code | `vscode/test/annotator.page.test.ts` (2), `vscode/test/marks.test.ts` (10) |
-| 7 | The vision model and its modes | `tests/components/agents/test_annotations.py` (2), `tests/components/agents/test_look.py` (3), `tests/components/gateway/test_vision.py` (2), `tests/components/gateway/test_vision_gateway.py` (2) |
+| 7 | The vision model and its modes | `tests/components/agents/test_annotations.py` (3), `tests/components/agents/test_look.py` (3), `tests/components/gateway/test_vision.py` (2), `tests/components/gateway/test_vision_gateway.py` (2) |
 
 ## Design 0009: plan mode, and handing a plan to the agent
 
@@ -856,6 +856,7 @@ Design 0008 §5: a figure the owner marked up goes to the workspace's agent, run
 
 - a marked up figure reaches the agent with its marks in words and the copy attached
 - an annotation is refused with the reason when it cannot be sent
+- a figure reached through a link is never read and no copy is kept through one
 
 ### `tests/components/agents/test_artifact_tool.py`
 

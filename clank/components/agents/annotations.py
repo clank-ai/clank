@@ -14,9 +14,11 @@ rule to change only what the marks ask and answer each by its number, which is c
 """
 
 import base64
+import contextlib
 import hashlib
 import json
 import ntpath
+import os
 import re
 import threading
 from collections.abc import Callable
@@ -28,7 +30,7 @@ from clank.components.agents.latex.answers import Answers
 from clank.components.agents.latex.pages import PageMarks, page_image
 from clank.kernel.clock import to_text
 from clank.kernel.events import Actor, EventType, Subject
-from clank.kernel.infolder import Outside, inside
+from clank.kernel.infolder import Outside, Place, place
 
 if TYPE_CHECKING:
     from clank.components.agents.sessions import Sessions
@@ -64,10 +66,36 @@ class AnnotationError(Exception):
     """An annotation that cannot be sent, and why."""
 
 
-def _inside(folder: Path, relative: str) -> Path:
-    """A path below `folder` reached through no link (decision 0159); `AnnotationError` saying why for any other."""
+def _figure(workspace: str, root: Path, figure: str) -> tuple[str, bytes]:
+    """The figure the owner marked, by its path from the folder, and its bytes, read through no link (decision 0164);
+    `AnnotationError` for a file not in the folder, or not to be read."""
     try:
-        return inside(folder, relative)
+        found = place(root, Path(os.path.relpath(Path(figure), root)).as_posix())
+    except ValueError as error:  # on another drive; or Outside (a ValueError), a name that leaves the folder
+        raise AnnotationError(f"{figure} is not in the folder of {workspace} ({root})") from error
+    try:
+        return found.relative, found.read_bytes()
+    except Outside as error:
+        raise AnnotationError(str(error)) from error
+    except OSError as error:
+        raise AnnotationError(f"{found.relative} cannot be read: {error.strerror or error}") from error
+
+
+def _keep(kept: Place, stem: str, marked: bytes) -> Place:
+    """Keep the marked-up copy under the first number no file has yet (`.clank/annotations/` kept out of git by a
+    `.gitignore` of its own), never through a link; where it is."""
+    try:
+        with contextlib.suppress(FileExistsError):  # one there, or a link there, is left as it is
+            (kept / ".gitignore").write_text("*\n", new=True)
+        number = 1
+        while True:
+            copy = kept / f"{stem}-{number}.png"
+            try:
+                copy.write_bytes(marked, new=True)
+            except FileExistsError:
+                number += 1
+            else:
+                return copy
     except Outside as error:
         raise AnnotationError(str(error)) from error
 
@@ -96,12 +124,7 @@ class Annotations:
         """Keep the annotation, then send it to the agent; where it went, what was said, and whether the marked-up copy
         went as an image."""
         workspace, root = self._workspace(folder)
-        path = Path(figure)
-        try:
-            relative = path.resolve().relative_to(root.resolve()).as_posix()
-        except ValueError as error:
-            raise AnnotationError(f"{figure} is not in the folder of {workspace} ({root})") from error
-        data = path.read_bytes()
+        relative, data = _figure(workspace, root, figure)
         size = image_size(data)
         if size is None:
             raise AnnotationError(f"{relative} is not a PNG or a JPEG")
@@ -118,19 +141,11 @@ class Annotations:
             about = f"the figure `{relative}`"
         target = self._target(workspace)
         attached = self.reads_images()
+        kept = place(root, "/".join(KEPT))
+        stem = re.sub(r"[^A-Za-z0-9_.-]+", "-", Path(relative).stem).strip(".") or "figure"
         with self._lock:
-            kept = _inside(root, "/".join(KEPT))  # nothing written through a link (decision 0159)
-            kept.mkdir(parents=True, exist_ok=True)
-            ignore = _inside(kept, ".gitignore")
-            if not ignore.exists():
-                ignore.write_text("*\n", encoding="utf-8")
-            stem = re.sub(r"[^A-Za-z0-9_.-]+", "-", Path(relative).stem) or "figure"
-            number = 1
-            while (kept / f"{stem}-{number}.png").exists() or (kept / f"{stem}-{number}.png").is_symlink():
-                number += 1
-            copy = _inside(kept, f"{stem}-{number}.png")
-            copy.write_bytes(marked)
-        shown = "/".join([*KEPT, copy.name])
+            copy = _keep(kept, stem, marked)
+        shown = copy.relative
         seen = "" if attached or not marks else self.read_image(marked, READING)
         rule = PAGE_RULE if page is not None and marks else ""
         measured = geometry is not None or page is not None
@@ -141,7 +156,10 @@ class Annotations:
             "geometry": geometry is not None, "attached": attached, "seen": seen, "workspace": workspace,
             "port": target["port"], "session": target["session"], "time": to_text(self.kernel.clock.now()),
         }  # fmt: skip
-        _inside(kept, f"{stem}-{number}.json").write_text(json.dumps(record, ensure_ascii=False, indent=1), "utf-8")
+        try:
+            (kept / f"{copy.stem}.json").write_text(json.dumps(record, ensure_ascii=False, indent=1))
+        except Outside as error:
+            raise AnnotationError(str(error)) from error
         self.sessions.send(workspace, target["port"], target["session"], text, actor=actor, files=files)
         if rule and self.answers is not None:
             numbers = [int(mark.get("n") or 0) for mark in marks if mark.get("n")]
@@ -196,11 +214,12 @@ class Annotations:
     def _geometry(root: Path, relative: str, data: bytes) -> dict[str, Any] | None:
         """The figure's geometry, when Matplotlib saved it in the workspace and it is still this figure's."""
         try:
-            kept = inside(root, f".clank/figures/{relative}.json")  # read through no link (decision 0159)
-            geometry: dict[str, Any] = json.loads(kept.read_text(encoding="utf-8"))
+            geometry = json.loads(place(root, f".clank/figures/{relative}.json").read_text())  # decision 0164
         except (OSError, ValueError):  # Outside too: a record reached through a link is none
             return None
-        return geometry if geometry.get("sha256") == hashlib.sha256(data).hexdigest() else None
+        if not isinstance(geometry, dict) or geometry.get("sha256") != hashlib.sha256(data).hexdigest():
+            return None
+        return geometry
 
 
 def compose(
