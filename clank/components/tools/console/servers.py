@@ -11,10 +11,11 @@ found, and why it is off or failed.
 Keys: Enter shows its tools, each with its parameters; `s` starts or stops it (at once in a running agent, and for the
 agent's next start; one of yours with secrets goes only to the workspaces it is given to, asked first in a window for
 one that may use a cloud model, decision 0168); `c` checks it (one of yours in the workspace's container while an agent
-runs there, else on this computer; a project's only in the folder's workspace container, never on this computer,
-saying so when the folder is no workspace, and after its check whether the agent may use it as it is now); `a` adds a
-server in a form; `d` removes one after a question. The page reads the state again every few seconds while it is on
-screen, changing only what changed.
+runs there, one with secrets only when the workspace gets it, else on this computer, so its values stay out of the
+container of a workspace you did not give it to; a project's only in the folder's workspace container, never on this
+computer, saying so when the folder is no workspace, and after its check whether the agent may use it as it is now);
+`a` adds a server in a form; `d` removes one after a question. The page reads the state again every few seconds while
+it is on screen, changing only what changed.
 
 Its panels are board E14's (design 0011 §8): "Workspace", "Servers" (the list under its column headings) and
 "Details · (the highlighted server)".
@@ -269,7 +270,9 @@ class McpServersPage(Page):
             "is whether it starts with the agent. s changes it at once in a running agent, and for its next start.",
             "c checks a server: starts it where the agent would, asks for its tools, and ends it. A project one runs "
             "only in this folder's workspace container, never on this computer, and the check says whether the agent "
-            "may use it as it is now. Enter lists the tools of its last check, with their parameters.",
+            "may use it as it is now. One of yours with secrets runs in the workspace's container only once you gave "
+            "it to the workspace, else on this computer. Enter lists the tools of its last check, with their "
+            "parameters.",
             "Your servers' environment and header values are secrets, kept in CLANK_HOME/secrets and shown only by "
             "their last four characters. A server of yours with secrets goes only to the workspaces you give it to "
             "(s), asked first for one that may use a cloud model; the agent of each can read its values.",
@@ -428,7 +431,8 @@ class McpServersPage(Page):
     def _check(self, server: dict[str, Any]) -> None:
         name = server["name"]
         body: dict[str, Any] = {"folder": self.console.folder, "scope": server["scope"]}
-        if self.workspace and (self.agents or server["scope"] in ("clank", "project")):
+        kept_out = bool(server.get("secret_names")) and not server.get("given")  # its values stay out of the container
+        if self.workspace and ((self.agents and not kept_out) or server["scope"] in ("clank", "project")):
             body["workspace"] = self.workspace
         if server["scope"] == "clank" and "workspace" not in body:
             self.console.say("Clank's own server runs in a workspace: open this folder as one first (F4, then o)", True)

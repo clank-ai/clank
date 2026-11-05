@@ -375,7 +375,10 @@ download (§3: no route out).
   and the allowance read the same fingerprint of the entry. A check is not an allowance: a server not allowed may be
   checked in the container, so its tools can be seen before it is allowed. The owner's own servers are checked as
   before: on this computer, or in the folder's workspace when it is named (`--workspace`; on the page, while an agent
-  runs there).
+  runs there). *Revised after approval (2026-11-05), decision 0168: one of the owner's own with secrets is started in a
+  workspace's container only once the owner gave it to that workspace, since its values go only to the workspaces
+  named for it; in another, its check is refused before any value is read, saying how to check it, and the page checks
+  it on this computer instead.*
 - **The folder's page**: a step "Its software" (installed with what, or the key `e` that installs it; `g` installs it
   too, asked first), and under "then work" each MCP server with whether the agent gets it and its tools once checked;
   `m` picks a server and gives it or takes it away (a given one is checked at once when the container runs).

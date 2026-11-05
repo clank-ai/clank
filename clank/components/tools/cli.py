@@ -134,13 +134,15 @@ def remove(scope: str | None, name: str) -> None:
 @click.option("--seconds", type=float, default=30.0, show_default=True, help="How long it may take to answer.")
 @click.option(
     "--workspace", "in_workspace", is_flag=True,
-    help="Start one of yours in this folder's workspace, as its agent would (a folder's own always starts there).",
+    help="Start one of yours in this folder's workspace, as its agent would: one with secrets only once you gave it to "
+    "the workspace (a folder's own always starts there).",
 )  # fmt: skip
 @click.argument("name")
 def check(scope: str | None, seconds: float, in_workspace: bool, name: str) -> None:
     """Start (or reach) an MCP server, ask it what it is and what tools it offers, and end it. One of yours runs on this
-    computer (in this folder's workspace with --workspace); a folder's own (.mcp.json) runs only in the folder's
-    workspace container, never on this computer, and the check says whether that workspace's agent may use it."""
+    computer (in this folder's workspace with --workspace, one with secrets only once you gave it to that workspace);
+    a folder's own (.mcp.json) runs only in the folder's workspace container, never on this computer, and the check
+    says whether that workspace's agent may use it."""
     client = common.call(common.connect)
     body = {"folder": os.getcwd(), "scope": scope, "seconds": seconds}
     if in_workspace:

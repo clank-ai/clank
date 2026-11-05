@@ -40,6 +40,9 @@
   `clank flow`, the console and VS Code run the command with `env` over their own environment).
 - **Every `docker exec` Clank makes names each variable alone**, its value in the environment of the process that runs
   it, whatever the variable (the agent's thread counts too).
+- **A check starts such a server in a workspace's container only when that workspace gets it** (its record names
+  it): in another workspace the check is refused before any value is read, saying how to check it, and the MCP servers
+  page's `c` checks it on this computer instead.
 - **A running OpenCode that does not know such a server is not given it live**: no entry, so no value, is sent over
   the bridge; it is given at the agent's next start, and the answer says so.
 - **Adding a server with secrets says so**: `clank mcp add` and the console's form say, in the service's words (the

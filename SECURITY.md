@@ -52,7 +52,8 @@ Clank is in beta: fixes go into the newest version only.
   needs allowing again). Clank starts one only in the folder's workspace container, never on your computer: checking
   it (`clank mcp check`, or `c` on the MCP servers page) is refused, saying how, until the folder is a workspace whose
   container runs, and the check says whether the agent may use it as it is now. Your own servers (`clank mcp add`)
-  are checked on your computer, or in the workspace with `--workspace`.
+  are checked on your computer, or in the workspace with `--workspace`; one with secrets only in a workspace you gave
+  it to, so a check never puts its values in the container of another.
 - **The gateway** records every request, and sends a workspace's work to a cloud provider only after you agreed to
   that provider once and allowed that workspace; content marked local (Notion, and the MCP servers you mark) is kept
   from the cloud.

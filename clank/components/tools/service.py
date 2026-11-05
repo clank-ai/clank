@@ -19,7 +19,9 @@ allowed, not allowed yet, or changed since it was allowed (`fingerprint`, the di
 keeps when the owner allows it: a changed command, argument or environment counts as not allowed until allowed again).
 
 One of your servers with secrets goes only to the workspaces you give it to, whose agent can read its values (decision
-0168): its view says so (`secrets_said`), for the commands and the console to say where it is added.
+0168): its view says so (`secrets_said`), for the commands and the console to say where it is added, and its check
+starts it in a workspace's container only when that workspace gets it (its record's `mcp_secrets`), refused otherwise
+before any value is read.
 
 The last check of each server that answered is remembered (`state/mcp-checks.json`): what the server is, its tools with
 their parameters, when, and where it ran; `checked` gives it while the server is started or reached as it was then
@@ -220,8 +222,10 @@ class Tools:
                     raise ApiError(409, "refused", "Clank's own server is in the workspace's image: check it there")
                 server, place, box = self._clank(), CLANK, ""
             else:
-                server = self.runnable(name, folder, scope, why="a check")
                 place, box = self._where(name, folder, scope), ""
+                if place == "user" and workspace:
+                    self._gets_it(name, workspace)  # refused before any value is read
+                server = self.runnable(name, folder, scope, why="a check")
             if place == "project":  # never on this computer: in the folder's workspace container alone
                 workspace, box = self._projects_workspace(name, folder, workspace, server)
                 allowance = self._allowance(name, workspace, server)
@@ -301,6 +305,27 @@ class Tools:
         else:
             return {"allowed": True, "allowed_said": f"allowed for {workspace}'s agent as it is now"}
         return {"allowed": False, "allowed_said": said}
+
+    def _gets_it(self, name: str, workspace: str) -> None:
+        """One of your servers with secrets starts in a workspace's container only when that workspace gets it (its
+        record names it, `mcp_secrets`, decision 0168): its values go only to the workspaces you give it to. Refused
+        otherwise, saying how to check it; one without secrets starts in any workspace's container."""
+        server = self._user(name)
+        carried = [*sorted(server.env), *sorted(server.headers)]
+        if not carried:
+            return
+        try:
+            named = self.kernel.settings.get("workspace", workspace).record.model_dump().get("mcp_secrets") or []
+        except SettingsError:
+            named = []
+        if name in named:
+            return
+        raise ApiError(
+            409, "refused", f"{name} carries secret values ({', '.join(carried)}), which go only to the workspaces you "
+            f"give it to, and {workspace} does not get it: check it on this computer (`clank mcp check {name}`, "
+            f"without --workspace), or give it to {workspace} first (`clank mcp allow {name}` in its folder, m on the "
+            "folder's page, s on the MCP servers page)",
+        )  # fmt: skip
 
     def _clank(self) -> Server:
         from clank.components.workspaces.service import PHONE_PROGRAM

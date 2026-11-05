@@ -82,7 +82,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.5 | Questions | `tests/components/remote/test_phone_flows.py` (9), `tests/console/test_home.py` (15), `tests/console/test_questions.py` (2), `tests/kernel/test_question_numbers.py` (3), `tests/kernel/test_questions.py` (10), `tests/vscode/test_client.py` (1), `vscode/test/controller.test.ts` (19), `vscode/test/gates.test.ts` (16), `vscode/test/live.test.ts` (1) |
 | 2.6 | Policy | none yet |
 | 2.7 | Callers and access | `tests/components/gateway/test_callers.py` (6), `tests/console/test_home.py` (15), `tests/kernel/test_access.py` (6), `tests/kernel/test_api.py` (17), `tests/kernel/test_service.py` (7), `tests/kernel/test_service_silent.py` (3), `tests/vscode/test_client.py` (1), `vscode/test/client.test.ts` (7), `vscode/test/connection.test.ts` (5), `vscode/test/controller.test.ts` (19), `vscode/test/live.test.ts` (1) |
-| 2.8 | Secrets | `tests/cli/test_flow_commands.py` (25), `tests/cli/test_mcp_commands.py` (8), `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_flow_servers.py` (7), `tests/components/agents/test_secret_servers.py` (4), `tests/components/agents/test_secret_servers_named.py` (3), `tests/components/agents/test_work.py` (11), `tests/components/tools/test_console_servers.py` (4), `tests/components/tools/test_project_check.py` (8), `tests/components/tools/test_servers.py` (7), `tests/components/workspaces/test_docker_containers.py` (19), `tests/console/test_folder.py` (27), `tests/console/test_terminal.py` (6), `tests/kernel/test_handed_environment.py` (2), `tests/kernel/test_secrets.py` (4), `vscode/test/agent.test.ts` (14) |
+| 2.8 | Secrets | `tests/cli/test_flow_commands.py` (25), `tests/cli/test_mcp_commands.py` (8), `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_flow_servers.py` (7), `tests/components/agents/test_secret_servers.py` (4), `tests/components/agents/test_secret_servers_named.py` (3), `tests/components/agents/test_work.py` (11), `tests/components/tools/test_console_servers.py` (5), `tests/components/tools/test_project_check.py` (8), `tests/components/tools/test_secret_server_check.py` (3), `tests/components/tools/test_servers.py` (7), `tests/components/workspaces/test_docker_containers.py` (19), `tests/console/test_folder.py` (27), `tests/console/test_terminal.py` (6), `tests/kernel/test_handed_environment.py` (2), `tests/kernel/test_secrets.py` (4), `vscode/test/agent.test.ts` (14) |
 | 2.9 | Processes and containers | `tests/components/workspaces/test_docker.py` (2), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_sandbox.py` (10), `tests/kernel/test_processes.py` (8), `tests/kernel/test_programs_found.py` (6) |
 | 2.10 | Adapters | `tests/components/workspaces/test_docker_desktop.py` (9), `tests/contract/test_container_platform.py` (9), `tests/kernel/test_adapters.py` (5), `tests/test_architecture.py` (7) |
 | 2.11 | The library: what the user installs | `tests/components/tools/test_servers.py` (7) |
@@ -141,7 +141,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (5) |
 | 9 | The console: easy to use, dynamic, the machine on the right | `tests/components/machine/test_meters.py` (9), `tests/console/test_machine_column.py` (14) |
-| 10 | A project's own software and MCP servers | `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_secret_servers.py` (4), `tests/components/agents/test_secret_servers_named.py` (3), `tests/components/tools/test_console_servers.py` (4), `tests/components/tools/test_project_check.py` (8), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_setup.py` (10), `tests/console/test_workspaces_page.py` (4) |
+| 10 | A project's own software and MCP servers | `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_secret_servers.py` (4), `tests/components/agents/test_secret_servers_named.py` (3), `tests/components/tools/test_console_servers.py` (5), `tests/components/tools/test_project_check.py` (8), `tests/components/tools/test_secret_server_check.py` (3), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_setup.py` (10), `tests/console/test_workspaces_page.py` (4) |
 
 ## Design 0005: the phone (the first slice of M9)
 
@@ -233,11 +233,11 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 1 | What the owner gets | none yet |
 | 2 | The style: a file of named elements | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/kernel/test_console_kinds.py` (6) |
 | 3 | The style in the console | `tests/console/test_console_style.py` (14) |
-| 4 | The panel | `tests/components/tools/test_console_servers.py` (4), `tests/console/test_frames.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_pages_fit.py` (1), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_windows.py` (3), `tests/console/test_workspaces_page.py` (4) |
+| 4 | The panel | `tests/components/tools/test_console_servers.py` (5), `tests/console/test_frames.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_pages_fit.py` (1), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_windows.py` (3), `tests/console/test_workspaces_page.py` (4) |
 | 5 | Text never spills out of a panel | `tests/console/test_frames.py` (1), `tests/console/test_text.py` (5), `tests/console/test_windows.py` (3) |
 | 6 | No color written in a page | `tests/test_repository.py` (11), `tests/tools/test_check_colors.py` (8) |
 | 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (3), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_pages_fit.py` (1), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (21), `tests/console/test_windows.py` (3), `tests/console/test_windows_placed.py` (3) |
-| 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (5), `tests/components/tools/test_console_servers.py` (4), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_workspaces_page.py` (4) |
+| 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (5), `tests/components/tools/test_console_servers.py` (5), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_workspaces_page.py` (4) |
 | 9 | Narrow windows | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_machine_column.py` (14), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5) |
 | 10 | What changes in the tests | none yet |
 | 11 | Build steps | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_keys_bar.py` (10), `tests/console/test_machine_column.py` (14), `tests/console/test_pages_fit.py` (1), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_windows.py` (3) |
@@ -3621,6 +3621,7 @@ Design 0004 §10 and the M8.0 plan, task 3: the console's MCP servers page lists
 - a folders own server is not checked on this computer when the folder is no workspace
 - a folders own server changed since it was allowed says so and is checked in the container
 - s on a server with secrets asks first for a workspace that may use a cloud model
+- c while an agent runs checks one with secrets the workspace does not get on this computer
 
 ### `tests/components/tools/test_mcp.py`
 
@@ -3645,6 +3646,14 @@ Design 0004 §10: a folder's own MCP server (its `.mcp.json`) is checked only in
 - a check says whether the workspaces agent may use a folders server as it is now
 - your own servers are still checked on this computer
 - clank mcp check refuses a folders server without its workspace and says whether it is allowed
+
+### `tests/components/tools/test_secret_server_check.py`
+
+Design 0004 §10 and design 0002 §2.8 (decision 0168): one of your MCP servers that carries secret values is started in a workspace's container, for its check, only when that workspace gets it (its record names it, `mcp_secrets`): its values go only to the workspaces you give it to. Checked in another workspace, the check is refused before any value is read, saying how to check it (on this computer, or after giving it to the workspace), and nothing is started; `clank mcp check NAME --workspace` prints it. On this computer it is checked as before, and one without secrets is checked in any workspace's container.
+
+- one of yours with secrets is not started in a workspace that does not get it
+- it is checked in the containers of the workspaces given it and on this computer
+- clank mcp check with workspace says why it is refused
 
 ### `tests/components/tools/test_servers.py`
 

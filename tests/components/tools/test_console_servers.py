@@ -9,7 +9,8 @@ allowed. Design 0011 §4 and §8 (board E14): the details' panel is titled with 
 
 Design 0002 §2.8 (decision 0168): `s` on one of yours with secrets, for a workspace that may use a cloud model, asks
 first in the service's words; adding one with secrets says the agent of every workspace it is given to can read
-them."""
+them; and `c` while an agent runs checks one the workspace does not get on this computer, so its values stay out of
+that workspace's container."""
 
 import json
 import sys
@@ -219,3 +220,30 @@ async def test_s_on_a_server_with_secrets_asks_first_for_a_workspace_that_may_us
         await pilot.press("enter")
         await settle(pilot, lambda: named() == ["notes"], seconds=20)
         await settle(pilot, lambda: "its agent can read its secret values" in message(app), seconds=20)
+
+
+async def test_c_while_an_agent_runs_checks_one_with_secrets_the_workspace_does_not_get_on_this_computer(
+    kernel: Kernel, served: Client, platform: FakePlatform, started: list[Server], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Decision 0168: its values go only to the workspaces you give it to, so its check runs in the container of a
+    workspace that gets it, and on this computer while the workspace does not."""
+    for name in ("notes", "given"):
+        entry = {"command": f"{name}-mcp", "env": {"KEY": SECRET}}
+        served.post("mcp/servers", {"name": name, "scope": "user", "folder": str(Path.cwd()), "entry": entry})
+    kernel.settings.write("workspace", "project", {"path": str(Path.cwd())}, base=None, actor=YOU)
+    box = names(kernel.home.id).container("project")
+    platform.containers.append(container(box, labels={"clank.home": kernel.home.id}))
+    kernel.parts["agents"].allow("project", "given", True, actor=YOU)
+    monkeypatch.setattr(kernel.parts["agents"].sessions, "mcp", lambda workspace: {})  # an agent runs there
+    app = ClankConsole(served, now=lambda: NOW, zone=UTC, home=kernel.home, page="tools")
+    async with app.run_test(size=(140, 44)) as pilot:
+        await settle(pilot, lambda: "agent running" in page_text(app) and "notes" in rows(app), seconds=20)
+        listed = app.query_one("#mcp-list", ListView)
+        await focus_on(pilot, app, listed, rows(app).index("notes"))
+        await pilot.press("c")
+        await settle(pilot, lambda: "notes answers, with 1 tools" in message(app), seconds=30)
+        assert started == [Server("stdio", command="notes-mcp", env={"KEY": SECRET})], "on this computer"
+        await focus_on(pilot, app, listed, rows(app).index("given"))
+        await pilot.press("c")
+        await settle(pilot, lambda: "given answers, with 1 tools" in message(app), seconds=30)
+        assert started[-1].args[-2:] == [box, "given-mcp"], "in the container of the workspace that gets it"
