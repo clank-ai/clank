@@ -280,6 +280,30 @@ async def test_e_installs_the_folders_software_and_m_gives_the_agent_the_folders
     assert "--tty" not in server.args
 
 
+async def test_m_asks_first_before_it_gives_a_server_with_secrets_to_a_workspace_that_may_use_a_cloud_model(
+    kernel: Kernel, client: Client, platform: FakePlatform, gateway: None, project: Path
+) -> None:
+    """Design 0002 §2.8 (decision 0168): in the service's words; Enter gives it, and the page says the agent can read
+    its values."""
+    kernel.parts["tools"].add("notes", {"command": "notes-mcp", "env": {"KEY": "k1-value"}}, scope="user", folder="",
+                              actor=YOU)  # fmt: skip
+    kernel.settings.write("workspace", "paper", {"path": str(project), "models": "cloud"}, base=None, actor=YOU)
+    app = console(client, kernel, project)
+    async with app.run_test(size=(220, 50)) as pilot:
+        await settle(pilot, lambda: "notes" in text(app), seconds=20)
+        await pilot.press("m")
+        await settle(pilot, lambda: isinstance(app.screen, PickScreen))
+        await pilot.press("down")  # Clank's own first, then yours
+        await pilot.press("enter")
+        await settle(pilot, lambda: isinstance(app.screen, ConfirmScreen))
+        said = " ".join(str(label.content) for label in app.screen.query(Label))
+        assert "a model at a provider will be able to read what the agent reads" in said
+        await pilot.pause()
+        await pilot.press("enter")
+        await settle(pilot, lambda: "it can read its secret values (KEY)" in message(app), seconds=20)
+    assert kernel.settings.get("workspace", "paper").record.model_dump()["mcp_secrets"] == ["notes"]
+
+
 async def test_o_opens_the_workspace_after_its_image_question_is_answered_on_the_page(
     kernel: Kernel, client: Client, platform: FakePlatform, gateway: None, project: Path
 ) -> None:

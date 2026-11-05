@@ -103,7 +103,15 @@ class Workspace(Settings):
     mcp_off: list[str] = Field(
         default_factory=list,
         title="Your MCP servers held back",
-        description="Your own MCP servers (clank mcp add) this workspace's agent does not get; the others it gets.",
+        description="Your own MCP servers (clank mcp add) this workspace's agent does not get; the others without "
+        "secrets it gets.",
+    )
+    mcp_secrets: list[str] = Field(
+        default_factory=list,
+        title="Your MCP servers with secrets it gets",
+        description="Your own MCP servers that carry secret values (an environment variable or a header) this "
+        "workspace's agent gets: only those named here (clank mcp allow, m on the folder's page), and its agent can "
+        "read their values (decision 0168).",
     )
     hosts: dict[str, str] = Field(
         default_factory=dict,

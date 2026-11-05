@@ -862,31 +862,48 @@ class FolderPage(Page):
 
         self.console.push_screen(PickScreen("Give an MCP server to the agent, or take it away", choices), picked)
 
-    def _toggle(self, workspace: str, name: str) -> None:
-        """Give the server or take it away, in a worker; a server given is checked in the workspace's container."""
+    def _toggle(self, workspace: str, name: str, confirm: bool = False) -> None:
+        """Give the server or take it away, in a worker; a server given is checked in the workspace's container. One of
+        yours with secrets, given to a workspace that may use a cloud model, is asked about first in a window, in the
+        service's words (the row's `confirm`, decision 0168)."""
         if self.running:
             self.console.say("a step runs from this page: it is followed under What runs from here", True)
             return
         row = next(server for server in self.servers or [] if server["name"] == name)
+        if not row["given"] and row.get("confirm") and not confirm:
+            body = {"workspace": workspace, "name": name, "given": True, "confirm": True}
+            lines = [str(row["confirm"]), f"The call: POST /api/v1/agents/servers {json.dumps(body)}"]
+
+            def answered(yes: bool | None) -> None:
+                if yes:
+                    self._toggle(workspace, name, confirm=True)
+
+            self.console.push_screen(ConfirmScreen(f"Give {name} to {workspace}?", lines), answered)
+            return
         client, folder = self.console.client, self.console.folder
         running = (self.view or {}).get("state") == "running"
         self.running = True
+        carries = (
+            f"; it can read its secret values ({', '.join(row['secret_names'])})" if row.get("secret_names") else ""
+        )
 
         def work() -> None:
             try:
-                now = client.post("agents/servers", {"workspace": workspace, "name": name, "given": not row["given"]})
+                asked = {"workspace": workspace, "name": name, "given": not row["given"], "confirm": confirm}
+                now = client.post("agents/servers", asked)
                 if not now["given"]:
                     self.checked.pop(name, None)
                     self._say(f"{name}: the agent does not get it ({now['why']})")
                 elif not running:
-                    self._say(f"{name}: the agent gets it; it is checked once the workspace runs (o)")
+                    self._say(f"{name}: the agent gets it{carries}; it is checked once the workspace runs (o)")
                 else:
                     asked = {"folder": folder, "scope": now["scope"], "workspace": workspace}
                     operation = client.post(f"mcp/servers/{name}/check", asked)
                     if self._follow(operation):
                         result = client.get(f"records/operation/{operation['id']}")["values"]["result"]
                         self.checked[name] = f"{len(result['tools'])} tools"
-                        self._say(f"{name}: the agent gets it, with {len(result['tools'])} tools, when it next starts")
+                        tools = len(result["tools"])
+                        self._say(f"{name}: the agent gets it, with {tools} tools, when it next starts{carries}")
                     else:
                         self.checked[name] = "its check failed (the message line says why)"
             except (NotRunning, ClientError) as error:

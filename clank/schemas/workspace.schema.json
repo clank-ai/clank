@@ -84,11 +84,19 @@
       "type": "object"
     },
     "mcp_off": {
-      "description": "Your own MCP servers (clank mcp add) this workspace's agent does not get; the others it gets.",
+      "description": "Your own MCP servers (clank mcp add) this workspace's agent does not get; the others without secrets it gets.",
       "items": {
         "type": "string"
       },
       "title": "Your MCP servers held back",
+      "type": "array"
+    },
+    "mcp_secrets": {
+      "description": "Your own MCP servers that carry secret values (an environment variable or a header) this workspace's agent gets: only those named here (clank mcp allow, m on the folder's page), and its agent can read their values (decision 0168).",
+      "items": {
+        "type": "string"
+      },
+      "title": "Your MCP servers with secrets it gets",
       "type": "array"
     },
     "hosts": {

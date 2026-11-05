@@ -1,6 +1,8 @@
 """The tools component's commands: `clank mcp add|add-json|list|get|remove|check`, the way other harnesses add MCP
 servers (`claude mcp add`, `codex mcp add`; the M8.0 plan), and `clank mcp allow|hold NAME`, which give a server to
-this folder's agent or hold it back (design 0004 §10). `check` starts one of yours on this computer, or with
+this folder's agent or hold it back (design 0004 §10): one of yours with secrets goes only to the workspaces it is
+allowed for, and allowing it for a workspace that may use a cloud model asks first, in the service's words (`--yes`
+answers it; decision 0168). `check` starts one of yours on this computer, or with
 `--workspace` where this folder's agent will; a folder's own (`.mcp.json`) only ever in the folder's workspace
 container, saying whether that workspace's agent may use it as it is now.
 
@@ -156,11 +158,12 @@ def check(scope: str | None, seconds: float, in_workspace: bool, name: str) -> N
 
 
 @mcp.command()
+@click.option("--yes", is_flag=True, help="Give it without asking first, whatever giving it means.")
 @click.argument("name")
-def allow(name: str) -> None:
-    """Give an MCP server to this folder's agent: one of yours held back from it, or one of the folder's own
-    (.mcp.json), allowed as its entry is now."""
-    _give(name, True)
+def allow(yes: bool, name: str) -> None:
+    """Give an MCP server to this folder's agent: one of yours held back from it or carrying secrets, or one of the
+    folder's own (.mcp.json), allowed as its entry is now."""
+    _give(name, True, yes)
 
 
 @mcp.command()
@@ -170,11 +173,27 @@ def hold(name: str) -> None:
     _give(name, False)
 
 
-def _give(name: str, given: bool) -> None:
+def _give(name: str, given: bool, yes: bool = False) -> None:
+    """Give a server or take it away; what giving it asks first (the row's `confirm`) is asked here, in the service's
+    words, unless `yes`."""
     client = common.call(common.connect)
     workspace = _workspace_here(client)
-    row = common.call(lambda: client.post("agents/servers", {"workspace": workspace, "name": name, "given": given}))
-    if row["given"]:
+    body = {"workspace": workspace, "name": name, "given": given, "confirm": yes}
+    rows = common.call(lambda: client.get("agents/servers", workspace=workspace))["servers"]
+    asked = next((row.get("confirm") for row in rows if row["name"] == name), "")
+    if given and asked and not yes:
+        click.echo(asked)
+        if not click.confirm(f"Give {name} to {workspace}'s agent?", default=False):
+            click.echo(f"{workspace}'s agent does not get {name}.")
+            raise click.exceptions.Exit(1)
+        body["confirm"] = True
+    row = common.call(lambda: client.post("agents/servers", body))
+    if row["given"] and row.get("secret_names"):
+        click.echo(
+            f"{workspace}'s agent gets {name} ({row['shown']}) when it next starts; it can read its secret values "
+            f"({', '.join(row['secret_names'])})."
+        )
+    elif row["given"]:
         click.echo(f"{workspace}'s agent gets {name} ({row['shown']}) when it next starts.")
     else:
         click.echo(f"{workspace}'s agent does not get {name}: {row['why']}.")

@@ -1,5 +1,6 @@
-"""Design 0004 §10: the MCP servers a workspace's agent gets, and the threads it starts. Your own servers are given to
-every workspace's agent unless held back from one; a folder's own (its `.mcp.json`) are offered, never trusted: given
+"""Design 0004 §10: the MCP servers a workspace's agent gets, and the threads it starts. Your own servers without
+secrets are given to every workspace's agent unless held back from one, and one with secrets only to the workspaces
+named for it (decision 0168); a folder's own (its `.mcp.json`) are offered, never trusted: given
 once allowed for that workspace, and not given again after their entry changes until allowed again. A server reached by
 address is not given (the container reaches nothing but the model). The agent's configuration carries the servers it
 gets, each a local command run in the container with its environment, your servers' secrets named there and their
@@ -82,6 +83,10 @@ def test_your_servers_are_given_and_the_folders_only_once_allowed(
               folder="", actor=YOU)  # fmt: skip
     tools.add("web", {"type": "http", "url": "http://127.0.0.1:9000/mcp"}, scope="user", folder="", actor=YOU)
     container_name = opened(kernel, platform, folder)
+    found = given(kernel)
+    assert found["notes"][0] is False, "it carries a secret: given only to the workspaces named for it"
+    assert "it carries secret values (KEY)" in found["notes"][1]
+    agents.allow("paper", "notes", True, actor=YOU)
     found = given(kernel)
     assert found["notes"] == (True, "")
     assert found["myproject"][0] is False

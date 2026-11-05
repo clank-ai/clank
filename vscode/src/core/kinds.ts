@@ -206,8 +206,10 @@ export interface Workspace {
   set_up: string;
   /** The folder's own MCP servers (its .mcp.json) its agent gets, each with the fingerprint of its entry as allowed: an entry changed since is not given until it is allowed again. */
   mcp_allowed: Record<string, string>;
-  /** Your own MCP servers (clank mcp add) this workspace's agent does not get; the others it gets. */
+  /** Your own MCP servers (clank mcp add) this workspace's agent does not get; the others without secrets it gets. */
   mcp_off: string[];
+  /** Your own MCP servers that carry secret values (an environment variable or a header) this workspace's agent gets: only those named here (clank mcp allow, m on the folder's page), and its agent can read their values (decision 0168). */
+  mcp_secrets: string[];
   /** The internet hosts its agent reaches through Clank's proxy (design 0024): a name (pypi.org) or a suffix (.arxiv.org: arxiv.org and every name under it), each with when and how it was allowed. Every other host is refused; private addresses always. */
   hosts: Record<string, string>;
   /** review: the agent asks before it changes a file, and you accept or reject the change (VS Code shows it beside your files); auto: it changes files without asking, and VS Code shows each change after. */

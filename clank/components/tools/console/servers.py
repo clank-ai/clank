@@ -9,15 +9,18 @@ what starts it (or its address), where it is defined, its secrets by name and la
 found, and why it is off or failed.
 
 Keys: Enter shows its tools, each with its parameters; `s` starts or stops it (at once in a running agent, and for the
-agent's next start); `c` checks it (one of yours in the workspace's container while an agent runs there, else on this
-computer; a project's only in the folder's workspace container, never on this computer, saying so when the folder is no
-workspace, and after its check whether the agent may use it as it is now); `a` adds a server in a form; `d` removes one
-after a question. The page reads the state again every few seconds while it is on screen, changing only what changed.
+agent's next start; one of yours with secrets goes only to the workspaces it is given to, asked first in a window for
+one that may use a cloud model, decision 0168); `c` checks it (one of yours in the workspace's container while an agent
+runs there, else on this computer; a project's only in the folder's workspace container, never on this computer,
+saying so when the folder is no workspace, and after its check whether the agent may use it as it is now); `a` adds a
+server in a form; `d` removes one after a question. The page reads the state again every few seconds while it is on
+screen, changing only what changed.
 
 Its panels are board E14's (design 0011 §8): "Workspace", "Servers" (the list under its column headings) and
 "Details · (the highlighted server)".
 """
 
+import json
 import shlex
 import time
 from collections.abc import Sequence
@@ -33,6 +36,7 @@ from textual.widgets import Label, ListView
 from clank.client import ClientError, NotRunning
 from clank.components.tools.service import CHECK_SECONDS
 from clank.console import actions
+from clank.console.confirm import ConfirmScreen
 from clank.console.data import ConsoleData
 from clank.console.form import Field, FormScreen
 from clank.console.keys import PageKey
@@ -262,7 +266,8 @@ class McpServersPage(Page):
             "only in this folder's workspace container, never on this computer, and the check says whether the agent "
             "may use it as it is now. Enter lists the tools of its last check, with their parameters.",
             "Your servers' environment and header values are secrets, kept in CLANK_HOME/secrets and shown only by "
-            "their last four characters.",
+            "their last four characters. A server of yours with secrets goes only to the workspaces you give it to "
+            "(s), asked first for one that may use a cloud model; the agent of each can read its values.",
         ]
         return (server["name"] if server else "MCP servers"), lines
 
@@ -329,17 +334,44 @@ class McpServersPage(Page):
         self.console.push_screen(ToolsScreen(title, detail_lines(server, self.console.zone, False), tool_lines(server)))
 
     def _switch(self, server: dict[str, Any]) -> None:
+        """`s`: start or stop it; one of yours with secrets, given to a workspace that may use a cloud model, is asked
+        about first in a window, in the service's words (the row's `confirm`, decision 0168)."""
         if self.workspace is None:
             self.console.say("Servers start with an agent: open this folder as a workspace first (F4, then o)", True)
             return
         on = not server.get("given", False)
-        body = {"workspace": self.workspace, "name": server["name"], "given": on}
+        if on and server.get("confirm"):
+            self._ask(server, str(server["confirm"]))
+            return
+        self._send(server, on)
+
+    def _ask(self, server: dict[str, Any], words: str) -> None:
+        """What giving it means, in the service's words, in a window: Enter gives it, Esc leaves it as it was."""
+        body = {"workspace": self.workspace, "name": server["name"], "given": True, "confirm": True}
+        lines = [words, f"The call: POST /api/v1/agents/servers {json.dumps(body)}"]
+        title = f"Give {server['name']} to {self.workspace}?"
+        self.console.push_screen(
+            ConfirmScreen(title, lines), lambda yes: self._send(server, True, confirm=True) if yes else None
+        )
+
+    def _send(self, server: dict[str, Any], on: bool, *, confirm: bool = False) -> None:
+        """Start or stop it, with the owner's yes when it was asked for; a service that asks for one the page did not
+        know of (the workspace's bound changed meanwhile) is asked about in its words."""
+        if self.workspace is None:
+            return
+        body = {"workspace": self.workspace, "name": server["name"], "given": on, "confirm": confirm}
         client, name = self.console.client, server["name"]
 
         def work() -> None:
             try:
                 found = client.post("agents/servers", body)
-            except (NotRunning, ClientError) as error:
+            except ClientError as error:
+                if error.code == "unconfirmed" and not confirm:
+                    self.console.call_from_thread(self._ask, server, str(error))
+                else:
+                    self.console.call_from_thread(self.console.say, str(error), True)
+                return
+            except NotRunning as error:
                 self.console.call_from_thread(self.console.say, str(error), True)
                 return
             if found.get("problem") and (on and not found.get("given")):
@@ -348,6 +380,8 @@ class McpServersPage(Page):
                 said, bad = f"{name} {'started' if on else 'stopped'}", False
             else:
                 said, bad = f"{name} is {'on' if on else 'off'}: it applies when the agent starts", False
+            if on and found.get("given") and found.get("secret_names"):
+                said += f"; its agent can read its secret values ({', '.join(found['secret_names'])})"
             self.console.call_from_thread(self.console.say, said, bad)
             self.console.call_from_thread(self._read)
 

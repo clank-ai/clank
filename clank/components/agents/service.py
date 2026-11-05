@@ -181,6 +181,8 @@ LOCAL_ONLY = "held back: local only, it never goes to the cloud model"
 # alone, as it starts (design 0002 §2.8), so it is never added live with them.
 SECRETS_AT_START = "its secret values reach OpenCode only in its environment, as it starts: the agent gets it then"
 UNKNOWN_TO_IT = "is not one of this agent's MCP servers"  # the bridge's words for a server its OpenCode does not know
+# A server of yours with secrets goes only to the workspaces that name it (decision 0168).
+SECRETS_NAMED = "only the workspaces you name get it, and their agent can read them"
 # Its tools that only read, which the planner may use (design 0010 §4): Notion's reading, never its proposals; and
 # finding figures and opening files for the owner to see (design 0018 §7).
 CLANK_READ_ONLY = (
@@ -202,6 +204,16 @@ def secret_names(view: dict[str, Any]) -> list[str]:
     return [*view.get("env", []), *view.get("headers", [])]
 
 
+def confirm_said(name: str, workspace: str, carried: list[str]) -> str:
+    """What giving one of your servers with secrets to a workspace that may use a cloud model does, asked before it is
+    given (decision 0168)."""
+    return (
+        f"{name} carries secret values ({', '.join(carried)}): given to {workspace}, {workspace}'s agent can read "
+        f"them. {workspace} may use a cloud model: a model at a provider will be able to read what the agent reads, "
+        "those values too."
+    )
+
+
 def limits(model: AgentModel) -> dict[str, int]:
     """What the program is told (`context`, `output`), the engine's own window and the margin kept free in it."""
     return {"context": model.context - model.margin, "output": model.output, "window": model.context,
@@ -210,6 +222,10 @@ def limits(model: AgentModel) -> dict[str, int]:
 
 class AgentError(Exception):
     """An agent that cannot be made ready, and why."""
+
+
+class Unconfirmed(AgentError):
+    """Giving a server waits for the owner's confirmation, asked in these words (decision 0168)."""
 
 
 class Agents:
@@ -685,16 +701,21 @@ class Agents:
 
     def servers(self, workspace: str) -> list[dict[str, Any]]:
         """The MCP servers of a workspace's agent: yours, then its folder's, each with whether the agent gets it and,
-        when not, why (design 0004 §10)."""
+        when not, why (design 0004 §10); the names of the secret values one of yours carries (`secret_names`), and
+        what giving it asks you first (`confirm`, empty when nothing is asked). One of yours with secrets is given
+        only when the workspace names it (`mcp_secrets`, decision 0168), asked first while the workspace may use a
+        cloud model."""
         from clank.components.workspaces.service import CURRENT_PHONE
 
         loaded = self._workspace(workspace)
         record = loaded.record.model_dump()
         tools: Tools = self.kernel.parts["tools"]
         held = CLANK_SERVER in record["mcp_off"]
+        cloud = record.get("models") == "cloud"
         rows: list[dict[str, Any]] = [{
             "name": CLANK_SERVER, "scope": "clank", "transport": "stdio", "shown": f"python3 {CURRENT_PHONE}",
             "given": not held, "why": "held back from this workspace (m gives it)" if held else "",
+            "secret_names": [], "confirm": "",
         }]  # fmt: skip
         mine = {view["name"] for view in tools.servers() if view["scope"] == "user"} | {CLANK_SERVER}
         for view in tools.servers(record["path"]):
@@ -702,15 +723,21 @@ class Agents:
                 continue  # Clank's own has the name
 
             name, scope = view["name"], view["scope"]
+            carried = secret_names(view) if scope == "user" else []
+            named = name in record.get("mcp_secrets", [])
             current = ""
             if scope == "project":  # a project's server has no secret: reading it records no use
                 current = fingerprint(tools.runnable(name, record["path"], scope, why=""))
             if view["transport"] != "stdio":
                 why = "reached by address: nothing but the model is reachable from the container yet"
-            elif scope == "user" and view.get("local_only") and record.get("models") == "cloud":
+            elif scope == "user" and view.get("local_only") and cloud:
                 why = LOCAL_ONLY  # design 0016 §10: what it gives the agent never goes to the cloud model
+            elif scope == "user" and name in record["mcp_off"]:
+                why = "held back from this workspace (m gives it)"
+            elif carried and not named:
+                why = f"it carries secret values ({', '.join(carried)}): {SECRETS_NAMED} (m gives it)"
             elif scope == "user":
-                why = "held back from this workspace (m gives it)" if name in record["mcp_off"] else ""
+                why = ""
             elif name in mine:
                 why = "it has the name of one of yours, which the agent gets instead"
             elif name not in record["mcp_allowed"]:
@@ -722,7 +749,9 @@ class Agents:
             shown = view["command"] if view["transport"] == "stdio" else view["url"]
             rows.append({
                 "name": name, "scope": scope, "transport": view["transport"], "shown": " ".join([shown, *view["args"]]),
-                "given": not why, "why": why,
+                "given": not why, "why": why, "secret_names": carried,
+                "confirm": confirm_said(name, workspace, carried) if carried and why and cloud and why != LOCAL_ONLY
+                and view["transport"] == "stdio" else "",
             })  # fmt: skip
         return rows
 
@@ -746,12 +775,13 @@ class Agents:
             row["checked"] = tools.checked(row["name"], row["scope"], folder)
         return rows
 
-    def switch(self, workspace: str, name: str, on: bool, *, actor: Actor) -> dict[str, Any]:
+    def switch(self, workspace: str, name: str, on: bool, *, actor: Actor, confirm: bool = False) -> dict[str, Any]:
         """Start an MCP server for the workspace's agent or stop it: given or taken away for its next start, and
-        connected or disconnected now in the agents that run (`applied`: now, or at the agent's next start). One of
-        yours with secrets is connected only in an agent that knows it already, its values in OpenCode's environment
-        since it started; no entry with its values is sent to one that does not (design 0002 §2.8)."""
-        row = self.allow(workspace, name, on, actor=actor)
+        connected or disconnected now in the agents that run (`applied`: now, or at the agent's next start), asked
+        first as `allow` asks (`confirm`). One of yours with secrets is connected only in an agent that knows it
+        already, its values in OpenCode's environment since it started; no entry with its values is sent to one that
+        does not (design 0002 §2.8)."""
+        row = self.allow(workspace, name, on, actor=actor, confirm=confirm)
         if on and not row["given"]:
             return {**row, "applied": "", "problem": row["why"]}
         config: dict[str, Any] = {}
@@ -815,17 +845,24 @@ class Agents:
         kept = {name: why for name, why in sorted(said.items()) if name not in chosen and name in connected_now}
         return {"connected": connected_now, "started": started, "stopped": stopped, "failed": failed, "kept": kept}
 
-    def allow(self, workspace: str, name: str, given: bool, *, actor: Actor) -> dict[str, Any]:
-        """Give a server to a workspace's agent, or take it away: one of yours is held back or not; the folder's own is
-        allowed as its entry is now (its fingerprint kept), or not."""
+    def allow(self, workspace: str, name: str, given: bool, *, actor: Actor, confirm: bool = False) -> dict[str, Any]:
+        """Give a server to a workspace's agent, or take it away: one of yours is held back or not, and one with secrets
+        named for the workspace or not (`mcp_secrets`, decision 0168), which asks first (`Unconfirmed`, in the row's
+        `confirm` words, until `confirm`) while the workspace may use a cloud model; the folder's own is allowed as its
+        entry is now (its fingerprint kept), or not."""
         loaded = self._workspace(workspace)
         record = loaded.record.model_dump()
         row = next((row for row in self.servers(workspace) if row["name"] == name), None)
         if row is None:
             raise AgentError(f"{name} is not an MCP server of yours or of {record['path']}")
+        if given and row["confirm"] and not confirm:
+            raise Unconfirmed(row["confirm"])
         if row["scope"] in ("user", "clank"):
             off = [held for held in record["mcp_off"] if held != name]
             record["mcp_off"] = off if given else sorted({*off, name})
+            if row["secret_names"]:
+                named = [each for each in record.get("mcp_secrets", []) if each != name]
+                record["mcp_secrets"] = sorted({*named, name}) if given else named
         else:
             tools: Tools = self.kernel.parts["tools"]
             allowed = {key: value for key, value in record["mcp_allowed"].items() if key != name}

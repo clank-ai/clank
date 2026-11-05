@@ -63,7 +63,7 @@ def test_a_servers_secret_values_reach_opencode_in_its_environment_and_its_confi
 ) -> None:
     kernel.parts["tools"].add("notes", {"command": "notes-mcp", "env": {"KEY": VALUE}}, scope="user", folder="",
                               actor=YOU)  # fmt: skip
-    box = opened(kernel, platform, tmp_path / "paper")
+    box = opened(kernel, platform, tmp_path / "paper", mcp_secrets=["notes"])  # named for paper (decision 0168)
     agents: Agents = kernel.parts["agents"]
     prepared = agents.prepare("paper")
     written = platform.files[(box, CONFIG)]

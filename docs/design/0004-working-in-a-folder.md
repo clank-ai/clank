@@ -35,7 +35,7 @@ recommendation, built as recommended so the owner can try it, and changed if the
 | 7 | NInfer's context | Retired 2026-10-13 with NInfer (decision 0034) |
 | 8 | What the tests must prove, and what waits | Proposed 2026-10-13 |
 | 9 | The console: easy to use, dynamic, the machine on the right | Built 2026-10-14; revised 2026-10-26 (a GPU whose handle its driver dropped) |
-| 10 | A project's own software and MCP servers | Built 2026-10-14 as proposed; verified on a simulator; revised after approval (2026-11-05): a folder's own MCP server is checked only in its workspace's container, never on this computer, and its check says whether the agent may use it as it is now (decision 0166) |
+| 10 | A project's own software and MCP servers | Built 2026-10-14 as proposed; verified on a simulator; revised after approval (2026-11-05): a folder's own MCP server is checked only in its workspace's container, never on this computer, and its check says whether the agent may use it as it is now (decision 0166); revised again (2026-11-05): one of your own MCP servers with secrets goes only to the workspaces you name for it, its values in OpenCode's environment alone (decision 0168) |
 
 ## 1. What the owner does
 
@@ -351,7 +351,12 @@ download (§3: no route out).
   it is stopped and opened again).
 - **MCP servers for the agent**: the ones the agent gets are written into its configuration when it starts (OpenCode's
   `mcp`, each a local command run in the container). The user's own servers (`clank mcp add`) are given to every
-  workspace's agent unless the owner takes one away for a workspace; a folder's own servers (its `.mcp.json`, which
+  workspace's agent unless the owner takes one away for a workspace. *Revised after approval (2026-11-05), decision
+  0168: one of the user's own that carries secret values (an environment variable or a header) is given only to the
+  workspaces the owner names for it (the record's `mcp_secrets`: `clank mcp allow`, `m` here, `s` on the MCP servers
+  page), asked first, in the service's words, for a workspace that may use a cloud model; its values reach OpenCode in
+  its own environment, named from its configuration, never in a file in the container (design 0002 §2.8), and the agent
+  can read them.* A folder's own servers (its `.mcp.json`, which
   other harnesses read too) are offered, never trusted (design 0002 §2.11): each is given once the owner allows it for
   that workspace, and the record keeps a fingerprint of the entry as allowed, so an entry changed since is not given
   until it is allowed again. A server reached by address (`http`, `sse`) is not given: nothing but the model is

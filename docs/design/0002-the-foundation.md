@@ -46,7 +46,7 @@ each designed at the start of their own milestone (§3.1), in a design document 
 | § | Section | Status |
 | --- | --- | --- |
 | 1 | The whole system | Approved 2026-10-11; two terms renamed, the `machine` component listed, and two sentences aligned with the outside review after approval (revision log); revised after approval 2026-10-26: a dropped client no longer closes a server's socket on Windows, and a service that holds its home's lock without answering is named in `state/service.pid` and ended by `clank stop` (the owner's service went deaf that day and could be neither stopped nor started) |
-| 2 | The kernel | Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021; §2.9 revised after approval 2026-11-04: Clank runs itself again with `-P`, and on Windows finds a program named alone on the PATH alone (decision 0155); §2.3 revised 2026-11-04: a thread that records an event never waits for the event loop (decision 0158) |; Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021; §2.9 revised after approval 2026-11-04: Clank runs itself again with `-P`, and on Windows finds a program named alone on the PATH alone (decision 0155); §2.7 revised after approval 2026-11-04: VS Code reads CLANK_HOME from the owner's settings alone and connects only to a service on this machine (decision 0156) |
+| 2 | The kernel | Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021; §2.9 revised after approval 2026-11-04: Clank runs itself again with `-P`, and on Windows finds a program named alone on the PATH alone (decision 0155); §2.3 revised 2026-11-04: a thread that records an event never waits for the event loop (decision 0158) |; Approved 2026-10-11, after its revision for the outside review; its choices are decisions 0014-0021; §2.9 revised after approval 2026-11-04: Clank runs itself again with `-P`, and on Windows finds a program named alone on the PATH alone (decision 0155); §2.7 revised after approval 2026-11-04: VS Code reads CLANK_HOME from the owner's settings alone and connects only to a service on this machine (decision 0156); §2.8 revised after approval 2026-11-05: the user's own MCP servers' values enter only the containers of the workspaces named for them, in the agent program's environment alone, and no value is on a command line (decision 0168) |
 | 3 | The skeleton (M0) and the order of milestones | Approved 2026-10-11, after its revision for the outside review |
 
 ## 1. The whole system
@@ -359,6 +359,15 @@ name, when it was set, and its last four characters. A secret never enters a san
 one (a git push), the edge adds it on the way out. It enters a tool server's container only if a grant the user
 approved names it. Before anything is written (records, events, the gateway's records, process logs), the kernel
 removes the value of every secret it holds, wherever it appears.
+
+*Revised after approval (2026-11-05), decision 0168: the values of the user's own MCP servers (`clank mcp add`) enter
+a workspace's container, since such a server runs there beside the agent, and only the container of a workspace the
+user named for that server, asked first when the workspace may use a cloud model.* There they are in the agent
+program's own environment alone, never in a file: its configuration names a variable for each value (OpenCode's
+`{env:NAME}`), and the variables reach it by name. The agent can read them, as the servers it starts can, and a cloud
+model the workspace uses can read what the agent reads. No value is ever on a command line: every `docker exec` names
+each variable alone (`--env NAME`), its value in the environment of the process that runs it, the service's or the
+client's (`agents/prepare` answers the command and that environment, for the owner's own clients alone).
 
 ### 2.9 Processes and containers
 
@@ -681,3 +690,4 @@ Every change to an approved section, with its reason. Approvals themselves are i
 | 2026-11-04 | §2.9 | A program Clank starts is the one it means: Clank runs itself again as `python -P -m clank`, and on Windows a program named without its folder is found on the PATH alone (decision 0155) | The audit of 2026-10-30: Clank's commands start in a project's folder, where `-m` would import a folder named clank and Windows looks for a program before the PATH |
 | 2026-11-04 | §2.3 | A thread that records an event never waits for the streams to take it: work is handed to the event loop without waiting (decision 0158) | The audit of 2026-10-30: a thread holding review mode's lock waited for a loop that waited for that lock, and the service froze for good (reproduced) |
 | 2026-11-04 | §2.7 | VS Code's extension takes CLANK_HOME from the owner's settings alone (the setting's machine scope, and only its user value read) and connects only to a service on this machine (decision 0156) | The audit of 2026-10-30: a folder's own settings could choose which service the extension trusted |
+| 2026-11-05 | §2.8 | The values of the user's own MCP servers enter the container of a workspace the user named for each server (asked first for one that may use a cloud model), in the agent program's own environment alone, named from its configuration, never in a file; every `docker exec` names each variable alone, its value in the environment of the process that runs it (decision 0168) | The audit of 2026-10-30: such a server runs beside the agent, so the section's "never enters a sandbox" did not hold for it; its values sat in OpenCode's configuration in every workspace's home, and a value given to `docker exec` was on its command line |

@@ -199,6 +199,7 @@ def test_a_server_of_yours_with_secrets_the_flows_server_does_not_know_is_not_ad
     served = agents(kernel).sessions.serve("paper", agents(kernel).configure("paper"))
     tools = kernel.parts["tools"]
     tools.add("notes", {"command": "notes-mcp", "env": {"KEY": "k1-value"}}, scope="user", folder="", actor=OWNER)
+    agents(kernel).allow("paper", "notes", True, actor=OWNER)  # named for paper (decision 0168)
     found = agents(kernel).box_tools("paper", served, None)
     assert found["failed"] == {"notes": SECRETS_AT_START}
     assert found["connected"] == ["clank"]

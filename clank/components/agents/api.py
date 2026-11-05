@@ -54,11 +54,13 @@ if TYPE_CHECKING:
 
 
 class GiveRequest(BaseModel):
-    """An MCP server to give to a workspace's agent (`given`), or to take away."""
+    """An MCP server to give to a workspace's agent (`given`), or to take away; `confirm`, the owner's yes to what
+    giving it asks first (one of yours with secrets, to a workspace that may use a cloud model: decision 0168)."""
 
     workspace: str
     name: str
     given: bool = True
+    confirm: bool = False
 
 
 class PrepareRequest(BaseModel):
@@ -290,6 +292,7 @@ def router(agents: "Agents") -> APIRouter:
         PageError,
         ReviewError,
         ShowError,
+        Unconfirmed,
     )
     from clank.components.agents.sessions import SessionError
     from clank.kernel.api import ApiError
@@ -945,12 +948,16 @@ def router(agents: "Agents") -> APIRouter:
     @routes.post("/agents/servers")
     async def give(wanted: GiveRequest, request: Request) -> dict[str, Any]:
         """Give an MCP server to a workspace's agent, or take it away (a folder's own is allowed as its entry is now);
-        the agents running in the workspace's container start or stop it at once (`applied`)."""
+        the agents running in the workspace's container start or stop it at once (`applied`). One of yours with secrets
+        given to a workspace that may use a cloud model needs `confirm`: without it, 409 `unconfirmed`, in the words
+        of the row's `confirm` (decision 0168)."""
         actor = client_actor(request.headers.get(CLIENT_HEADER))
         try:
             found: dict[str, Any] = await anyio.to_thread.run_sync(
-                lambda: agents.switch(wanted.workspace, wanted.name, wanted.given, actor=actor)
+                lambda: agents.switch(wanted.workspace, wanted.name, wanted.given, actor=actor, confirm=wanted.confirm)
             )
+        except Unconfirmed as error:
+            raise ApiError(409, "unconfirmed", str(error)) from error
         except AgentError as error:
             raise ApiError(409, "refused", str(error)) from error
         return found

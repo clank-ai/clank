@@ -5,7 +5,10 @@ would); `c` checks one (one of yours on this computer when the folder is not a w
 its tools and Enter lists them with their parameters; `s` asks for a workspace first; `d` removes one after a question.
 A folder's own server (its `.mcp.json`) is checked only in the folder's workspace container: with no workspace, `c`
 says so and starts nothing; in the workspace, the page and the check's message say when its entry changed since it was
-allowed. Design 0011 §4 and §8 (board E14): the details' panel is titled with the highlighted server's name."""
+allowed. Design 0011 §4 and §8 (board E14): the details' panel is titled with the highlighted server's name.
+
+Design 0002 §2.8 (decision 0168): `s` on one of yours with secrets, for a workspace that may use a cloud model, asks
+first in the service's words."""
 
 import json
 import sys
@@ -24,6 +27,7 @@ from clank.components.tools.mcp import Checked, Server, Tool
 from clank.components.workspaces import service as workspaces_service
 from clank.components.workspaces.sandbox import names
 from clank.console.app import ClankConsole
+from clank.console.confirm import ConfirmScreen
 from clank.console.form import FormScreen
 from clank.console.panel import Panel
 from clank.console.pick import PickScreen
@@ -176,3 +180,39 @@ async def test_a_folders_own_server_changed_since_it_was_allowed_says_so_and_is_
         await settle(pilot, lambda: "answers, with 1 tools" in message(app), seconds=30)
         assert "changed since you allowed it" in message(app)
     assert [server.args[-3:] for server in started] == [[box, "myproject-mcp", "--other"]], "in its container"
+
+
+async def test_s_on_a_server_with_secrets_asks_first_for_a_workspace_that_may_use_a_cloud_model(
+    kernel: Kernel, served: Client, platform: FakePlatform
+) -> None:
+    """Decision 0168: one of yours with secrets goes only to the workspaces named for it; giving it to one that may use
+    a cloud model asks first, in the service's words. Esc leaves it as it was, Enter gives it."""
+    entry = {"command": "notes-mcp", "env": {"KEY": SECRET}}
+    served.post("mcp/servers", {"name": "notes", "scope": "user", "folder": str(Path.cwd()), "entry": entry})
+    kernel.settings.write("workspace", "project", {"path": str(Path.cwd()), "models": "cloud"}, base=None, actor=YOU)
+    box = names(kernel.home.id).container("project")
+    platform.containers.append(container(box, labels={"clank.home": kernel.home.id}))
+    app = ClankConsole(served, now=lambda: NOW, zone=UTC, home=kernel.home, page="tools")
+
+    def named() -> list[str]:
+        return list(kernel.settings.get("workspace", "project").record.model_dump()["mcp_secrets"])
+
+    async with app.run_test(size=(140, 44)) as pilot:
+        await settle(pilot, lambda: "notes" in rows(app), seconds=20)
+        await focus_on(pilot, app, app.query_one("#mcp-list", ListView), rows(app).index("notes"))
+        await settle(pilot, lambda: "it carries secret values (KEY)" in page_text(app))
+        await pilot.press("s")
+        await settle(pilot, lambda: isinstance(app.screen, ConfirmScreen))
+        said = " ".join(str(label.content) for label in app.screen.query(Label))
+        assert "project's agent can read them" in said
+        assert "a model at a provider will be able to read what the agent reads" in said
+        assert SECRET not in said
+        await pilot.press("escape")
+        await settle(pilot, lambda: not isinstance(app.screen, ConfirmScreen))
+        assert named() == [], "left as it was"
+        await pilot.press("s")
+        await settle(pilot, lambda: isinstance(app.screen, ConfirmScreen))
+        await pilot.pause()
+        await pilot.press("enter")
+        await settle(pilot, lambda: named() == ["notes"], seconds=20)
+        await settle(pilot, lambda: "its agent can read its secret values" in message(app), seconds=20)
