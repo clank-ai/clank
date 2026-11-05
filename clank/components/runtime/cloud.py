@@ -36,7 +36,7 @@ from clank.components.runtime.kinds import Endpoint, Preset
 from clank.components.runtime.state import LastGood, SlotRecord
 from clank.kernel.api import ApiError
 from clank.kernel.events import CLANK
-from clank.kernel.operations import OperationContext
+from clank.kernel.operations import Canceled, OperationContext
 
 if TYPE_CHECKING:
     from clank.components.runtime.service import Runtime
@@ -209,7 +209,12 @@ async def bring_up(
         context.log(f"nothing starts on this machine: {model} runs at {label}; the gateway is handed the key")
     async with step("health"):
         try:
+            context.check_canceled()  # here, inside the try, as the step's own check is outside it
             said, usd = await context.run_blocking(_healthy, runtime, prepared, launch)
+            context.check_canceled()
+        except Canceled:
+            slots.canceled(context, name, launch, title, "nothing ran on this machine")
+            raise
         except CloudError as error:
             slots._failed(context, name, launch, prepared.preset_id, f"{title}: {error}")
             from clank.components.runtime.slots import SlotError

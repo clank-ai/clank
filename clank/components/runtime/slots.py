@@ -278,8 +278,17 @@ class Slots:
                 raise SlotError(f"{title} did not start: {error}") from error
             state.update_slot(name, pid=identity.pid, started=identity.started, command=identity.command)
             context.log(f"started: process {identity.pid} on {prepared.host_name}; its log: {log}")
-        async with step("health"):
-            await self._healthy(context, name, launch, prepared, identity, log, started)
+        try:
+            async with step("health"):
+                await self._healthy(context, name, launch, prepared, identity, log, started)
+            context.check_canceled()  # the measure step's own check, made here where the engine is stopped
+        except Canceled:  # the engine started is stopped, not left holding the GPU and the port (and the slot)
+            try:
+                ended: str = await context.run_blocking(prepared.host.stop, identity, STOP_SECONDS)
+            except HostError as error:
+                ended = f"it could not be stopped: {error}"
+            self.canceled(context, name, launch, title, ended)
+            raise
         async with step("measure"):
             after = await context.run_blocking(self.runtime.read_gpu)
             seconds = round(time.monotonic() - started, 1)
@@ -384,6 +393,12 @@ class Slots:
                 context.log(f"the GPU still holds {now.used_mib - target:,} MiB of what it took after {seconds:.0f} s")
                 return
             await anyio.sleep(WAIT_SECONDS)
+
+    def canceled(self, context: OperationContext, name: str, launch: int, title: str, ended: str) -> None:
+        """A start canceled before it was ready: its launch stopped and the slot stopped, saying so (a switch goes back
+        to nothing: the one who canceled it chose)."""
+        self.runtime.state.finish_launch(launch, "stopped", detail=f"canceled while it started; {ended}")
+        self.runtime.state.set_slot(name, "stopped", f"{title}'s start was canceled ({ended})", actor=context.actor)
 
     def _failed(self, context: OperationContext, name: str, launch: int, preset: str, reason: str) -> None:
         self.runtime.state.finish_launch(launch, "failed", detail=reason)

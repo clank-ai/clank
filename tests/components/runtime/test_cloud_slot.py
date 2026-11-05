@@ -11,6 +11,7 @@ whose key is set; with none, the answer says to add one. The answer names the ru
 when none has worked yet."""
 
 import json
+import threading
 from collections.abc import Iterator
 from typing import Any
 
@@ -86,6 +87,37 @@ async def test_a_load_of_a_cloud_preset_starts_nothing_here_and_leaves_the_slot_
     assert KEY not in json.dumps(route)
     assert KEY not in json.dumps(launch.model_dump(mode="json"))
     assert cloud.runtime.state.slot("main").last_good is not None
+
+
+async def test_a_cloud_load_canceled_during_its_tiny_request_leaves_the_slot_stopped(
+    cloud: Rig, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from clank.components.runtime import cloud as cloud_module
+
+    asked, answer = threading.Event(), threading.Event()
+    healthy = cloud_module._healthy
+
+    def slow(*args: Any) -> tuple[str, float]:
+        asked.set()
+        answer.wait(10)
+        return healthy(*args)
+
+    monkeypatch.setattr(cloud_module, "_healthy", slow)
+    async with cloud.kernel.operations.running():
+        started = await cloud.kernel.operations.start("runtime.load", {"slot": "main", "preset": "cloud-example-coder"},
+                                                      actor=YOU)  # fmt: skip
+        with anyio.fail_after(10):
+            while not asked.is_set():
+                await anyio.sleep(0.02)
+        await cloud.kernel.operations.cancel(started.id, actor=YOU)
+        answer.set()
+        with anyio.fail_after(10):
+            done = await cloud.kernel.operations.wait(started.id)
+    assert done.status == "canceled"
+    slot = cloud.runtime.state.slot("main")
+    assert slot.status == "stopped"
+    assert "canceled" in slot.reason
+    assert cloud.runtime.state.launches(1)[0].outcome == "stopped"
 
 
 async def test_the_route_reads_the_agreement_live_so_withdrawing_it_applies_at_once(cloud: Rig) -> None:

@@ -1,9 +1,11 @@
 """Design 0003 §6.1 and §6.4, design 0001 §4.2-§4.3: a switch stops what runs and starts the new preset; one whose new
 engine fails at its start, or is not ready in time, stops what it started, starts the last configuration that worked
 again (with the options it had then), and says why the new one failed in the engine's own words; with no configuration
-that worked, the slot is left failed. The new preset here is "fake KVMem small" (a context of 4K), which the fake
-engine's `--fake-only-context 4096` makes fail while "fake KVMem" (8K) still starts from the same install. A port still
-held a moment after Clank stopped its own engine is waited for, not blamed on another program."""
+that worked, the slot is left failed. A load or a switch canceled while its engine starts stops that engine and leaves
+the slot stopped, its launch said so, with nothing gone back to. The new preset here is "fake KVMem small" (a context
+of 4K), which the fake engine's `--fake-only-context 4096` makes fail while "fake KVMem" (8K) still starts from the
+same install. A port still held a moment after Clank stopped its own engine is waited for, not blamed on another
+program."""
 
 import json
 from collections.abc import Iterator
@@ -141,6 +143,32 @@ async def test_a_switch_whose_engine_is_never_ready_goes_back_too(engines: Rig, 
     assert done.status == "failed"
     assert "was not ready within 2 seconds" in done.error
     assert engines.runtime.state.slot("main").preset == "fake-kvmem"
+
+
+@pytest.mark.parametrize("kind", ["runtime.load", "runtime.switch"])
+async def test_a_load_or_switch_canceled_while_its_engine_starts_stops_it_and_leaves_the_slot_stopped(
+    engines: Rig, tmp_path: Path, kind: str
+) -> None:
+    async with engines.kernel.operations.running():
+        if kind == "runtime.switch":
+            await run(engines, "runtime.load", preset="fake KVMem")
+        small_fails(engines, tmp_path, "--fake-start-seconds", "30")
+        started = await engines.kernel.operations.start(kind, {"slot": "main", "preset": "fake KVMem small"},
+                                                        actor=YOU)  # fmt: skip
+        with anyio.fail_after(30):
+            while not ((slot := engines.runtime.state.slot("main")).status == "starting" and slot.pid is not None):
+                await anyio.sleep(0.05)
+        spawned = identity(engines)
+        await engines.kernel.operations.cancel(started.id, actor=YOU)
+        with anyio.fail_after(30):
+            done = await engines.kernel.operations.wait(started.id)
+    assert done.status == "canceled"
+    slot = engines.runtime.state.slot("main")
+    assert (slot.status, slot.pid, slot.port) == ("stopped", None, None)
+    assert "canceled" in slot.reason
+    launch = engines.runtime.state.launch(engines.runtime.state.launches(1)[0].id)
+    assert (launch.preset, launch.outcome) == ("fake-kvmem-small", "stopped")
+    assert LocalHost().alive(spawned) is False, "the engine it started was stopped"
 
 
 async def test_with_nothing_that_worked_a_failed_switch_leaves_the_slot_failed(engines: Rig, tmp_path: Path) -> None:
