@@ -279,7 +279,7 @@ def test_a_listener_whose_port_is_taken_leaves_the_service_running_says_why_and_
         """A listener whose port another program holds: uvicorn says so, then exits."""
 
         started = False
-        config = uvicorn.Config(app=None, port=7721)
+        config = uvicorn.Config(app="no.app:here", port=7721)  # never loaded: serve exits first
 
         async def serve(self) -> None:
             raise SystemExit(3)

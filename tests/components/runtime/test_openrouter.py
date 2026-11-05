@@ -21,7 +21,8 @@ from typing import Any
 import pytest
 
 from clank.components.runtime import guide
-from clank.components.runtime.adapters.openrouter import OpenRouter, default_output, most_output
+from clank.components.runtime.adapters.endpoint import default_output, most_output
+from clank.components.runtime.adapters.openrouter import OpenRouter
 
 KEY = "sk-or-v1-made-up-key"
 CODER: dict[str, Any] = {
