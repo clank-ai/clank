@@ -48,8 +48,11 @@ def test_the_header_says_dev_mode_beside_the_model_while_it_is_on() -> None:
     data.endpoints = [{"id": "openrouter", "dev_mode": False}]
     assert "dev mode" not in header(data, None, NOW, heard=True, frame=None).plain
     data.endpoints = [{"id": "openrouter", "dev_mode": True}]
+    older = header(data, None, NOW, heard=True, frame=None)
+    assert older.plain.endswith("● dev mode"), "a service that does not answer for dev mode alone: the plain words"
+    data.dev = {"on": True, "said": "Dev mode is on", "short": PILL}  # as the service answers it
     shown = header(data, None, NOW, heard=True, frame=None)
-    assert shown.plain == f" ◆ CLANK   ● service up 14m  ● cloud: Coder  ● {PILL}"
+    assert shown.plain == f" ◆ CLANK   ● service up 14m  ● cloud: Coder  ● {PILL}", "the service's own short words"
     pills = [(shown.plain[span.start : span.end], str(span.style)) for span in shown.spans]
     assert (f"● {PILL}", "$clank-attention") in pills, "in attention's color"
     narrower = header(data, None, NOW, heard=True, frame=None, width=60)
@@ -61,7 +64,7 @@ def test_the_header_says_dev_mode_beside_the_model_while_it_is_on() -> None:
 def test_the_header_says_dev_mode_whatever_providers_there_are() -> None:
     data = ConsoleData(service={"started": "2026-10-21T09:00:00.000000Z"}, connected=True)
     data.endpoints = []
-    data.dev = {"on": True, "said": "Dev mode is on"}
+    data.dev = {"on": True, "said": "Dev mode is on", "short": PILL}  # as the service answers it
     assert header(data, None, NOW, heard=True, frame=None).plain.endswith(f"● {PILL}"), (
         "a local model only: dev mode opens the agent's internet all the same"
     )

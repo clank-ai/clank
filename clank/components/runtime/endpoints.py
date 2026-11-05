@@ -157,9 +157,10 @@ class Endpoints:
         return self.runtime.settings().dev_mode
 
     def dev_view(self) -> dict[str, Any]:
-        """Dev mode as clients show it: on or off, and what that means."""
+        """Dev mode as clients show it: on or off, what that means, and its short words while it is on (where room is
+        short: the console's header), so no client words it its own way."""
         on = self.dev_mode()
-        return {"on": on, "said": guide.DEV_SAID[on]}
+        return {"on": on, "said": guide.DEV_SAID[on], "short": guide.DEV_SHORT if on else ""}
 
     def set_dev(self, on: bool, *, actor: Actor) -> dict[str, Any]:
         """Turn dev mode on or off in the runtime's settings, recorded with who did it; the next request and the

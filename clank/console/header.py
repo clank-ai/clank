@@ -78,7 +78,7 @@ def dev(data: ConsoleData, activity: dict[str, Any] | None, now: datetime) -> Sa
         on = any(each.get("dev_mode") for each in data.endpoints or [])
     if not data.connected or not on:
         return None
-    return Said("dev mode: any provider, any host", "dev mode", "waiting")
+    return Said(str((data.dev or {}).get("short") or "dev mode"), "dev mode", "waiting")  # the service's words
 
 
 def gateway(data: ConsoleData, activity: dict[str, Any] | None, now: datetime) -> Said | None:

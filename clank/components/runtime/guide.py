@@ -73,6 +73,7 @@ POLICY = {
     "deny": "Clank asks only for providers that do not keep your data (data_collection deny).",
     "allow": "Clank asks for any provider, those that may keep your data too (data_collection allow).",
 }
+DEV_SHORT = "dev mode: any provider, any host"  # what a client shows of it while it is on, where room is short
 DEV_SAID = {  # dev mode, on and off (decisions 0149 and 0152)
     True: "Dev mode is on: Clank asks every cloud provider for any of a model's providers, those that may keep or "
     "train on what they are sent too (data_collection allow), whatever its own record says; and every workspace's "

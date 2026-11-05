@@ -69,12 +69,14 @@ async def test_dev_mode_is_off_until_turned_on_and_kept_with_who_turned_it_on(ri
     off = http.get(DEV, headers=AUTH).json()
     assert off["on"] is False
     assert off["said"].startswith("Dev mode is off: each cloud provider is asked as its record says")
+    assert off["short"] == "", "nothing to show while it is off"
     on = http.put(DEV, json={"on": True}, headers=AUTH)
     assert on.status_code == 200, on.text
     assert on.json()["on"] is True
     assert on.json()["said"].startswith(
         "Dev mode is on: Clank asks every cloud provider for any of a model's providers"
     )
+    assert on.json()["short"] == "dev mode: any provider, any host", "the words every client shows, from the service"
     assert '"dev_mode": true' in (rig.kernel.home.config / "runtime.json").read_text(encoding="utf-8")
     assert rig.runtime.settings().dev_mode is True
     [changed] = runtime_changes(rig)
