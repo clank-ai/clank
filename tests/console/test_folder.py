@@ -696,8 +696,8 @@ async def test_h_allows_the_agent_a_named_set_of_hosts_or_a_host_and_takes_one_b
         await settle(pilot, lambda: isinstance(app.screen, PickScreen))
         await pilot.press("down")  # python first, then papers
         await pilot.press("enter")
-        await settle(pilot, lambda: "api.crossref.org" in text(app), seconds=20)
-        assert "Hosts its agent reaches: api.crossref.org, api.openalex.org, api.semanticscholar.org" in text(app)
+        papers = "Hosts its agent reaches: api.crossref.org, api.openalex.org, api.semanticscholar.org"
+        await settle(pilot, lambda: papers in text(app), seconds=20)  # the whole set, not its first host alone
         await pilot.press("h")
         await settle(pilot, lambda: isinstance(app.screen, PickScreen))
         await pilot.press("down")
