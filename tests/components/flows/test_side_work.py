@@ -87,6 +87,37 @@ async def test_a_box_waiting_on_its_job_hands_the_model_to_a_job_checkpoint_whos
     assert rig.bridge.prompted("Study · side") is None
 
 
+async def test_a_job_checkpoint_reads_on_the_waiting_boxs_own_server_and_model_switching_and_restarting_nothing(
+    rig: Rig, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The box waiting on its job keeps the main slot and the server its session runs on: its checkpoint switches no
+    preset into the slot and starts or ends no server (one that did, for another preset, left the box on a model it
+    never named, or its session gone), and it runs on that same server, as a side task does."""
+    steps: list[tuple[str, str]] = []
+    load, serve = rig.runner._load, rig.runner._serve
+
+    async def loading(context: Any, run: Any, flow: Any, box: Any) -> str:
+        steps.append(("model", box.id))
+        return await load(context, run, flow, box)
+
+    async def serving(context: Any, run: Any, box: Any, *, keep: bool = True) -> int:
+        steps.append(("server", box.id))
+        return await serve(context, run, box, keep=keep)
+
+    monkeypatch.setattr(rig.runner, "_load", loading)
+    monkeypatch.setattr(rig.runner, "_serve", serving)
+    async with running(rig.kernel):
+        grid, checkpoint = await to_the_job(rig)
+        assert steps[-2:] == [("model", "T1"), ("server", "T1")], "nothing loaded or served for the job's checkpoint"
+        assert checkpoint.port == grid.port, "on the server the box's session runs on"
+        rig.runner.decide(WORKSPACE, decision("wait"), actor=ORCHESTRATOR)
+        rig.bridge.finish(checkpoint.session)
+        await until(lambda: rig.run().orchestration.working is None)
+        rig.bridge.hold[SEARCH].set()
+        await until(lambda: len(sent_to(rig, grid.session)) == 2)
+    assert [each.port for each in rig.bridge.prompts if each.session == grid.session] == [grid.port, grid.port]
+
+
 async def test_a_second_job_in_the_same_try_gets_a_checkpoint_numbered_after_the_first(rig: Rig) -> None:
     """The fourth long run numbered both of a try's job checkpoints 5: the box's run, read as it started, was handed
     to the second (2026-10-23)."""

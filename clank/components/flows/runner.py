@@ -1442,8 +1442,9 @@ class Runner:
         )  # fmt: skip
 
     async def _orchestrate(self, context: OperationContext) -> dict[str, Any]:
-        """A checkpoint's operation: the model, the flow's server (no box's try kept on it), a fresh Plan-mode session
-        handed `_checkpoint_message`, followed to its end within the checkpoint's limits, then its decision applied."""
+        """A checkpoint's operation: the model, the flow's server (no box's try kept on it; a job's checkpoint takes
+        neither from the box waiting on its job, `_waiting_server`), a fresh Plan-mode session handed
+        `_checkpoint_message`, followed to its end within the checkpoint's limits, then its decision applied."""
         flow_id, number, cp = str(context.params["flow"]), int(context.params["run"]), int(context.params["checkpoint"])
         working: Working | None = None
         run = self.runs.load(flow_id, number)
@@ -1458,10 +1459,18 @@ class Runner:
                 raise RunError(f"{flow_id} is gone")
             flow, checkpoint = record[0], found
             box = self._orchestrator_box(flow)
-            async with context.step("model"):
-                await self._load(context, run, flow, box)
-            async with context.step("server"):
-                port = await self._serve(context, run, box, keep=False)
+            if checkpoint.kind == "job":  # the box waiting on its job keeps the slot and its server (§17)
+                async with context.step("model"):
+                    context.log(
+                        f"it reads on the model the main slot runs for {checkpoint.box}, which waits on its job"
+                    )
+                async with context.step("server"):
+                    port = await self._waiting_server(context, run, checkpoint.box)
+            else:
+                async with context.step("model"):
+                    await self._load(context, run, flow, box)
+                async with context.step("server"):
+                    port = await self._serve(context, run, box, keep=False)
             async with context.step("session"):
                 folder = self._folder(run)
                 fresh = self.runs.load(flow_id, number)
@@ -1510,6 +1519,19 @@ class Runner:
                     self._stopping.pop(run.name, None)
             self.nudge()
         return {"checkpoint": cp}
+
+    async def _waiting_server(self, context: OperationContext, run: Run, box: str) -> int:
+        """A job's checkpoint's server: the one the session of the box waiting on its job runs on, as it is, as a side
+        task's is (design 0013 §17). Switching the slot to the orchestrator's preset, or starting the server again with
+        its limits, would leave the box on a model it never named, or its session gone; nor are its MCP servers
+        changed. A `RunError` when that server no longer runs."""
+        tries = self.runs.load(run.flow, run.number).box(box).tries
+        port = tries[-1].port if tries else None
+        listed = await context.run_blocking(self._agents.sessions.servers, run.workspace)
+        if port is None or not any(int(each["port"]) == port and not each.get("terminal") for each in listed):
+            raise RunError(f"the OpenCode server {box}'s session runs on does not run")
+        context.log(f"it reads on {box}'s server, on port {port}, as it is")
+        return port
 
     def _orchestrator_box(self, flow: Flow) -> Box:
         """What a checkpoint runs as, for the model and server steps: a Plan-mode box of the orchestrator's preset (the
