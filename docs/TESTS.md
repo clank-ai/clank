@@ -544,7 +544,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 5 | Now | `tests/phone/model.test.mjs` (7) |
 | 6 | Flows: the list, a flow, building one, a gate | `tests/components/flows/test_summaries.py` (9), `tests/components/remote/test_phone_flow_screens.py` (5), `tests/phone/flows.test.mjs` (3) |
 | 7 | A session, the Guide, its context | `tests/components/remote/test_phone_session.py` (3), `tests/phone/talk.test.mjs` (6) |
-| 8 | Work and Files | `tests/components/remote/test_phone_files.py` (3) |
+| 8 | Work and Files | `tests/components/remote/test_phone_files.py` (4) |
 | 9 | More: activity, models, cost, settings | none yet |
 | 10 | Choices made since the canvas | none yet |
 | 11 | Order of work | none yet |
@@ -2938,6 +2938,7 @@ Design 0025 §8 (decision 0157): the files the agents sent, as the phone's liste
 - a page a drawing or a script sent comes back only as a download in a sandbox
 - an image a pdf or plain text sent is served to be seen in place never sniffed
 - the list says each files type as it is served
+- an outbox reached through a link is neither listed nor served
 
 ### `tests/components/remote/test_phone_flow_screens.py`
 

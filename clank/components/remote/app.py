@@ -22,13 +22,13 @@ from typing import TYPE_CHECKING, Any
 
 import anyio.to_thread
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from clank.components.remote.devices import TTL_DAYS, PairingError
 from clank.components.remote.flowsapi import flow_routes
 from clank.components.remote.icon import icon_png
-from clank.components.remote.outbox import SAVED, served_type
+from clank.components.remote.outbox import SAVED, disposition, served_type
 from clank.components.remote.sessionapi import CONVERSATION_STREAM_PATH, session_routes
 from clank.components.remote.stream import phone_stream
 from clank.kernel.events import Actor
@@ -400,12 +400,12 @@ def create_phone_app(remote: "Remote") -> FastAPI:
         """A file an agent sent: an image, a PDF or plain text to be seen in place, as its own type (never sniffed for
         another); any other kind only as a download (decision 0157)."""
         device_of(request)
-        path = await anyio.to_thread.run_sync(remote.file_path, workspace, name)
-        if path is None:
+        data = await anyio.to_thread.run_sync(remote.file_bytes, workspace, name)  # read once, through no link
+        if data is None:
             raise HTTPException(404, "no such file was sent")
         kind = served_type(name)
         shown = "attachment" if kind == SAVED else "inline"
-        return FileResponse(path, media_type=kind, filename=name, content_disposition_type=shown)
+        return Response(data, media_type=kind, headers={"Content-Disposition": disposition(shown, name)})
 
     @app.post("/api/signout")
     async def signout(request: Request) -> Response:

@@ -6,6 +6,8 @@ nothing sent runs as the app. The list of files says each one's type as it is se
 only for an image and its links save the rest (`download`)."""
 
 import json
+import os
+import sys
 from collections.abc import Iterator, Mapping
 from pathlib import Path
 
@@ -116,3 +118,26 @@ def test_the_list_says_each_files_type_as_it_is_served(phone: TestClient) -> Non
     for shown in ("function fileRow", "function fileTile"):
         assert "download: saved(file)" in script.split(shown, 1)[1].split("\n}\n", 1)[0], f"{shown} saves a download"
     assert '=== "application/octet-stream" ? file.file : null' in script, "a download is a file served as one"
+
+
+def test_an_outbox_reached_through_a_link_is_neither_listed_nor_served(
+    kernel: Kernel, phone: TestClient, tmp_path: Path
+) -> None:
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    (elsewhere / "secret.txt").write_bytes(b"the owner's own")
+    note = {"file": "secret.txt", "caption": "a secret", "from": "secret.txt", "sent": 1792038999.0}
+    (elsewhere / "secret.txt.json").write_text(json.dumps(note), encoding="utf-8")
+    (tmp_path / "other" / ".clank").mkdir(parents=True)
+    if sys.platform == "win32":
+        import _winapi
+
+        _winapi.CreateJunction(str(elsewhere), str(tmp_path / "other" / ".clank" / "outbox"))
+    else:
+        os.symlink(elsewhere, tmp_path / "other" / ".clank" / "outbox", target_is_directory=True)
+    kernel.settings.write("workspace", "other", {"path": str(tmp_path / "other")}, base=None, actor=YOU)
+    listed = phone.get("/api/files", headers=THROUGH_TAILSCALE).json()["files"]
+    assert "other" not in {file["workspace"] for file in listed}, "nothing listed through the link"
+    assert phone.get("/api/files/other/secret.txt", headers=THROUGH_TAILSCALE).status_code == 404
+    named = phone.get("/api/files/paper/..%2Fother%2Fsecret.txt", headers=THROUGH_TAILSCALE)
+    assert named.status_code == 404, "a name with a folder in it is no sent file"

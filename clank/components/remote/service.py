@@ -227,10 +227,10 @@ class Remote:
         """The files the agents sent to the phone, the newest first."""
         return outbox.files(self._folders(), limit)
 
-    def file_path(self, workspace: str, file: str) -> Any:
-        """A sent file's path on this machine, or None."""
+    def file_bytes(self, workspace: str, file: str) -> bytes | None:
+        """A sent file's bytes, read from its workspace's outbox through no link (decision 0164), or None."""
         folder = dict(self._folders()).get(workspace)
-        return outbox.path_of(folder, file) if folder else None
+        return outbox.read_sent(folder, file) if folder else None
 
     async def run(self) -> None:
         """Keep the listener and Tailscale as the setting says, and watch the outboxes, every few seconds."""
