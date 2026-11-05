@@ -28,14 +28,6 @@ def provider_path(provider: str) -> str:
     return f"runtime/endpoints/{provider}"
 
 
-def ended(operation: dict[str, Any]) -> dict[str, Any]:
-    """The result of an operation that ended well; else its error said, and exit 1."""
-    if operation["status"] != "done":
-        click.echo(f"{operation['title']}: {operation.get('error') or operation['status']}")
-        raise click.exceptions.Exit(1)
-    return dict(operation.get("result") or {})
-
-
 def agreement(client: Client) -> dict[str, Any]:
     """The guide's agreement step: what goes to the provider, where, and what never goes."""
     guide = common.call(lambda: client.get("runtime/guide"))
@@ -199,7 +191,7 @@ def preset(
     if not as_json:
         click.echo(f"Wrote {written['title']} ({written['id']}): {written['provider']} · {written['model']}")
     operation = common.call(lambda: client.post(f"{provider_path(provider)}/test", {"preset": written["id"]}))
-    result = ended(follow.follow(client, operation) if not as_json else wait(client, operation))
+    result = common.result_of(follow.follow(client, operation) if not as_json else wait(client, operation))
     if as_json:
         click.echo(json.dumps({"preset": written, "test": result}, indent=2))
     else:
@@ -217,7 +209,7 @@ def check(provider: str, model: str | None, as_json: bool) -> None:
     client = common.call(common.connect)
     body = {"model": model} if model else {}
     operation = common.call(lambda: client.post(f"{provider_path(provider)}/check", body))
-    result = ended(follow.follow(client, operation) if not as_json else wait(client, operation))
+    result = common.result_of(follow.follow(client, operation) if not as_json else wait(client, operation))
     if as_json:
         click.echo(json.dumps(result, indent=2))
         return

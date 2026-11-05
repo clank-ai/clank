@@ -83,7 +83,7 @@ def code(folder: str | None, yes: bool) -> None:
     else:
         click.echo("Opening Clank's VS Code window (the first time, it installs its extensions)")
     body = where.vscode_request(path, os.environ)
-    opened = _done(follow.follow(client, common.call(lambda: client.post("agents/vscode", body))))
+    opened = common.result_of(follow.follow(client, common.call(lambda: client.post("agents/vscode", body))))
     for name in opened["failed"]:
         click.echo(f"  {name} could not be installed: it is tried again the next time")
     on = " on your computer" if place == where.REMOTE else ""
@@ -98,8 +98,8 @@ def _ready(client: Client, path: str, yes: bool) -> dict[str, Any]:
             click.echo(docker.get("said") or f"Docker is {docker['state']}: {docker['detail']}")
             raise click.exceptions.Exit(1)
         click.echo(f"Docker is {docker['state']}: starting it")
-        _done(follow.follow(client, common.call(lambda: client.post("docker/start"))))
-    opened = _done(
+        common.result_of(follow.follow(client, common.call(lambda: client.post("docker/start"))))
+    opened = common.result_of(
         follow.follow(client, common.call(lambda: client.post("workspaces/open", {"folder": path, "yes": yes})))
     )
     _model(client)
@@ -132,7 +132,9 @@ def _model(client: Client) -> None:
     first = fallback if fallback in candidates or not candidates else candidates[0]
     preset = (main.get("last_good") or {}).get("preset") or first
     click.echo(f"No model runs: loading {preset}")
-    _done(follow.follow(client, common.call(lambda: client.post("runtime/slots/main/load", {"preset": preset}))))
+    common.result_of(
+        follow.follow(client, common.call(lambda: client.post("runtime/slots/main/load", {"preset": preset})))
+    )
 
 
 def _optional(client: Client, path: str) -> Any:
@@ -180,11 +182,3 @@ def _cloud(client: Client, workspace: str) -> None:
         asked = common.call(lambda: client.post(f"workspaces/{workspace}/cloud/ask"))
     if not asked.get("start", True):
         raise click.ClickException(f"{asked['why']} (clank workspace allow FOLDER --cloud allows it)")
-
-
-def _done(operation: dict[str, Any]) -> dict[str, Any]:
-    """The result of an operation that ended well; else its error said, and exit 1."""
-    if operation["status"] != "done":
-        click.echo(f"{operation['title']}: {operation['error'] or operation['status']}")
-        raise click.exceptions.Exit(1)
-    return dict(operation.get("result") or {})

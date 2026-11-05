@@ -32,6 +32,14 @@ def call[T](action: Callable[[], T]) -> T:
         fail(error)
 
 
+def result_of(operation: dict[str, Any]) -> dict[str, Any]:
+    """The result of an operation that ended well; else its error said, and exit 1."""
+    if operation["status"] != "done":
+        click.echo(f"{operation['title']}: {operation.get('error') or operation['status']}")
+        raise click.exceptions.Exit(1)
+    return dict(operation.get("result") or {})
+
+
 def local_time(time: str) -> str:
     """A time from the API, in this computer's time zone: 11:42:05."""
     return datetime.fromisoformat(time.replace("Z", "+00:00")).astimezone().strftime("%H:%M:%S")

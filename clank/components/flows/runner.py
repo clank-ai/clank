@@ -467,7 +467,7 @@ class Runner:
         if latest.operation:
             raise RunError(f"a box of {flow} works now ({latest.at}): stop the run first, or wait for the box")
         if latest.waiting is not None:
-            self._withdraw(latest.waiting.question, f"{actor.describe()} ran {flow} again from {box}", actor)
+            self.withdraw(latest.waiting.question, f"{actor.describe()} ran {flow} again from {box}", actor)
         now = self._standing(latest, made, box)
         with self._lock:
             active = [each for each in self.runs.all() if each.status in ACTIVE and each.flow != flow]
@@ -948,7 +948,7 @@ class Runner:
             run.waiting, run.ended, run.paused = None, self.kernel.clock.now(), False
             self.runs.save(run)
         if waited:  # outside the lock: its listeners may wait for the service's event loop
-            self._withdraw(waited, reason or "the run ended", actor)
+            self.withdraw(waited, reason or "the run ended", actor)
         self.proposing.ended(run, reason or "the run ended", actor)
         said = f"{run.title} ({run.name}) is done" if outcome == "done" else f"{run.title} ({run.name}) {reason}"
         self._record_event("flows.run_ended", run, said, actor, outcome=run.status, reason=reason)
@@ -1322,7 +1322,8 @@ class Runner:
         """The run waits for a question asked outside the driver's own (a batch of proposals)."""
         self._change(run, lambda each: setattr(each, "waiting", waiting))
 
-    def _withdraw(self, question: str, reason: str, actor: Actor) -> None:
+    def withdraw(self, question: str, reason: str, actor: Actor) -> None:
+        """Withdraw a question of the flow's, unless it was answered or withdrawn meanwhile."""
         with contextlib.suppress(QuestionError):  # answered meanwhile: the answer is read and set aside
             self.kernel.questions.withdraw(question, reason=reason, by=actor)
 
@@ -1742,7 +1743,7 @@ class Runner:
 
         run = self._change(run, keep)
         if withdraw:
-            self._withdraw(decision.question, f"the orchestrator sent the work back to {decision.back_to}", RUNNER)
+            self.withdraw(decision.question, f"the orchestrator sent the work back to {decision.back_to}", RUNNER)
         if decision.tell_user:
             run = self._tell(run, decision)
         self._write_ledger(run)

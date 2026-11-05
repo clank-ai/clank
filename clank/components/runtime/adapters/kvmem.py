@@ -265,20 +265,7 @@ class KvmemLlamacpp(EngineAdapter):
     def plan(self, options: Mapping[str, OptionValue], launch: Launch) -> Plan:
         """`llama-kvmem-server -m MODEL <options> --host ADDRESS --port PORT`, in its install folder, with its
         libraries on the path."""
-        argv, env = self.arguments(options, launch.facts)
-        if "library_path" in launch.facts:
-            env["LD_LIBRARY_PATH"] = launch.facts["library_path"]
-        command = (
-            *launch.program,
-            "-m",
-            launch.model_path,
-            *argv,
-            "--host",
-            launch.address,
-            "--port",
-            str(launch.port),
-        )
-        return Plan(command, env, launch.facts.get("folder", ""), launch.port, self.memory(options, launch))
+        return self.server_plan(options, launch, self.memory(options, launch))
 
     def memory(self, options: Mapping[str, OptionValue], launch: Launch) -> MemoryEstimate:
         """The GPU memory a launch takes: the model's weights (their share on the GPU, with fewer layers there than the

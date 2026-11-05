@@ -241,6 +241,25 @@ class EngineAdapter(Adapter):
     def plan(self, options: Mapping[str, OptionValue], launch: Launch) -> Plan:
         """The exact launch of a preset's options, and its memory estimate."""
 
+    def server_plan(self, options: Mapping[str, OptionValue], launch: Launch, memory: MemoryEstimate) -> Plan:
+        """A llama.cpp server's launch, as both engines run one: `<program> -m MODEL <options> --host ADDRESS --port
+        PORT`, in its install folder, with its libraries on the path when the install says where they are; `memory`
+        the engine's own estimate of what it takes."""
+        argv, env = self.arguments(options, launch.facts)
+        if "library_path" in launch.facts:
+            env["LD_LIBRARY_PATH"] = launch.facts["library_path"]
+        command = (
+            *launch.program,
+            "-m",
+            launch.model_path,
+            *argv,
+            "--host",
+            launch.address,
+            "--port",
+            str(launch.port),
+        )
+        return Plan(command, env, launch.facts.get("folder", ""), launch.port, memory)
+
     @abstractmethod
     def ready(self, line: str) -> bool:
         """Whether a line of the engine's log says it is ready for requests."""

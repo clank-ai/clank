@@ -110,7 +110,7 @@ def open_workspace(folder: str | None, yes: bool) -> None:
     """Open a folder (this one unless named) as a workspace: its container runs, with the folder at /workspace."""
     client = common.call(common.connect)
     body = {"folder": str(Path(folder or os.getcwd()).resolve()), "yes": yes}
-    result = _done(follow.follow(client, common.call(lambda: client.post("workspaces/open", body))))
+    result = common.result_of(follow.follow(client, common.call(lambda: client.post("workspaces/open", body))))
     click.echo(
         f"{result['workspace']}: its container runs ({result['container']}), with {result['folder']} at /workspace"
     )
@@ -197,7 +197,7 @@ def setup_workspace(folder: str | None, command: str, yes: bool) -> None:
     client = common.call(common.connect)
     body = {"folder": str(Path(folder or os.getcwd()).resolve()), "command": command, "yes": yes}
     operation = common.call(lambda: client.post("workspaces/setup", body))
-    result = _done(follow.follow(client, operation, answer="install" if yes else None))
+    result = common.result_of(follow.follow(client, operation, answer="install" if yes else None))
     if result.get("installed"):
         click.echo(f"{result['workspace']}: installed with {result['command']}")
     else:
@@ -212,7 +212,7 @@ def stop_workspace(name: str | None) -> None:
     """Stop a workspace's container (this folder's workspace unless one is named)."""
     client = common.call(common.connect)
     chosen = name or _here(common.call(lambda: client.get("workspaces")))
-    result = _done(follow.follow(client, common.call(lambda: client.post(f"workspaces/{chosen}/stop"))))
+    result = common.result_of(follow.follow(client, common.call(lambda: client.post(f"workspaces/{chosen}/stop"))))
     click.echo(f"{result['workspace']}: {result['container']} stopped")
 
 
@@ -223,7 +223,7 @@ def remove_workspace(name: str, yes: bool) -> None:
     """Remove a workspace's container, its home (its agent's settings and sessions) and its record; never its folder."""
     client = common.call(common.connect)
     operation = common.call(lambda: client.post(f"workspaces/{name}/remove", {"yes": yes}))
-    result = _done(follow.follow(client, operation))
+    result = common.result_of(follow.follow(client, operation))
     click.echo(f"{result['workspace']} is removed; {result['folder']} is as it was")
 
 
@@ -235,11 +235,3 @@ def _here(rows: list[dict[str, Any]]) -> str:
             return str(row["name"])
     click.echo(f"{Path.cwd()} is no workspace: name one (`clank workspace list` shows them)")
     raise click.exceptions.Exit(1)
-
-
-def _done(operation: dict[str, Any]) -> dict[str, Any]:
-    """The result of an operation that ended well; else its error said, and exit 1."""
-    if operation["status"] != "done":
-        click.echo(f"{operation['title']}: {operation['error'] or operation['status']}")
-        raise click.exceptions.Exit(1)
-    return dict(operation.get("result") or {})

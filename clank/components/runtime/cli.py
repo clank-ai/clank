@@ -95,7 +95,7 @@ def download(name: str, form: str, role: str, host_name: str, yes: bool, limit: 
     used only once its SHA-256 is the catalog's."""
     client = common.call(common.connect)
     body = {"model": name, "format": form, "role": role, "host": host_name, "yes": yes, "limit": limit}
-    result = _ended(follow.follow(client, common.call(lambda: client.post("runtime/downloads", body))))
+    result = common.result_of(follow.follow(client, common.call(lambda: client.post("runtime/downloads", body))))
     already = "" if result["fetched"] else ", already there"
     click.echo(f"{result['file']} is on {result['host']} at {result['path']}{already}")
 
@@ -110,7 +110,7 @@ def adopt_file(name: str, form: str, role: str, host_name: str, path: str) -> No
     """Adopt a model's file you already have, where it is, once its size and SHA-256 are the catalog's."""
     client = common.call(common.connect)
     body = {"model": name, "format": form, "role": role, "host": host_name, "path": path}
-    result = _ended(follow.follow(client, common.call(lambda: client.post("runtime/model-files", body))))
+    result = common.result_of(follow.follow(client, common.call(lambda: client.post("runtime/model-files", body))))
     click.echo(f"{result['file']} is adopted on {result['host']} at {result['path']}")
 
 
@@ -125,7 +125,9 @@ def remove(name: str, host_name: str, form: str | None, role: str | None, yes: b
     so `clank model download` brings them back. A file you keep elsewhere is only forgotten, never deleted."""
     client = common.call(common.connect)
     body = {"model": name, "host": host_name, "format": form, "role": role, "yes": yes}
-    result = _ended(follow.follow(client, common.call(lambda: client.post("runtime/model-files/remove", body))))
+    result = common.result_of(
+        follow.follow(client, common.call(lambda: client.post("runtime/model-files/remove", body)))
+    )
     removed, forgotten = result["removed"], result["forgotten"]
     if removed:
         freed = size_text(result["freed"])
@@ -139,19 +141,8 @@ def remove(name: str, host_name: str, form: str | None, role: str | None, yes: b
         click.echo(f"Nothing of {result['name']} is on {result['host']}.")
 
 
-def _ended(operation: dict[str, Any]) -> dict[str, Any]:
-    """The result of an operation that ended well; else its error said, and exit 1."""
-    if operation["status"] != "done":
-        click.echo(f"{operation['title']}: {operation['error'] or operation['status']}")
-        raise click.exceptions.Exit(1)
-    return dict(operation.get("result") or {})
-
-
 def _report(operation: dict[str, Any], preset: str) -> None:
-    result = operation.get("result") or {}
-    if operation["status"] != "done":
-        click.echo(f"{operation['title']}: {operation['error'] or operation['status']}")
-        raise click.exceptions.Exit(1)
+    result = common.result_of(operation)
     if "stopped" in result:
         click.echo(f"{result['slot']}: stopped ({result['stopped']})")
         return
@@ -367,7 +358,7 @@ def uninstall(setup: str, version: str, host_name: str, yes: bool) -> None:
     builds it again); one adopted where it was is only forgotten, its folder kept."""
     client = common.call(common.connect)
     body = {"setup": setup, "version": version, "host": host_name, "yes": yes}
-    result = _ended(follow.follow(client, common.call(lambda: client.post("runtime/installs/remove", body))))
+    result = common.result_of(follow.follow(client, common.call(lambda: client.post("runtime/installs/remove", body))))
     if result["kept"]:
         click.echo(
             f"Clank forgot {result['title']} on {result['host']}; its folder stays where it is: {result['folder']}"

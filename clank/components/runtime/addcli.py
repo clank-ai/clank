@@ -15,7 +15,7 @@ import click
 
 from clank.cli import common, follow
 from clank.client import Client, ClientError
-from clank.components.runtime.cloudcli import ended, read_key
+from clank.components.runtime.cloudcli import read_key
 from clank.components.runtime.cloudclient import written
 from clank.money import dollars
 
@@ -143,7 +143,7 @@ def test(client: Client, preset: dict[str, Any]) -> None:
     say(step)
     if step["mode"] == "ask":
         operation = common.call(lambda: client.post("runtime/endpoints/openrouter/test", {"preset": preset["id"]}))
-        result = ended(follow.follow(client, operation))
+        result = common.result_of(follow.follow(client, operation))
         click.echo(f"It answered: {result['said']}" if result.get("ok") else f"It failed: {result['said']}")
         if not result.get("ok"):
             raise click.exceptions.Exit(1)
@@ -153,7 +153,7 @@ def test(client: Client, preset: dict[str, Any]) -> None:
         path = "runtime/slots/main/switch"
     else:
         path = "runtime/slots/main/load"
-    loaded = ended(follow.follow(client, common.call(lambda: client.post(path, {"preset": preset["id"]}))))
+    loaded = common.result_of(follow.follow(client, common.call(lambda: client.post(path, {"preset": preset["id"]}))))
     ready = steps(client, preset["id"])["ready"]
     say(ready)
     click.echo(f"{ready['runs']} Its test: {loaded.get('said', '')}".strip())
@@ -173,5 +173,5 @@ def local(client: Client, guide: dict[str, dict[str, Any]]) -> None:
             click.echo("Nothing more was done.")
             raise click.exceptions.Exit(1)
         started = common.call(partial(client.post, step["call"]["path"], step["call"]["body"]))
-        ended(follow.follow(client, started))
+        common.result_of(follow.follow(client, started))
     click.echo(steps(client)["ready"]["runs"])

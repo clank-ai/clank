@@ -34,11 +34,11 @@ def setup(folder: str | None, yes: bool, restart: bool) -> None:
     docker = common.call(lambda: client.get("docker", refresh=True))
     if docker["state"] != "running":
         click.echo(f"Docker is {docker['state']}: starting it")
-        _done(follow.follow(client, common.call(lambda: client.post("docker/start"))))
+        common.result_of(follow.follow(client, common.call(lambda: client.post("docker/start"))))
     opened = _open(client, path, yes)
     name = opened["workspace"]
     if restart:
-        _done(follow.follow(client, common.call(lambda: client.post(f"workspaces/{name}/stop"))))
+        common.result_of(follow.follow(client, common.call(lambda: client.post(f"workspaces/{name}/stop"))))
         opened = _open(client, path, yes)
     view = common.call(lambda: client.get("workspaces/folder", folder=path))
     click.echo(f"TeX is in {name}'s image ({opened['image']})")
@@ -71,12 +71,4 @@ def build(file: str) -> None:
 
 def _open(client: Client, path: str, yes: bool) -> dict[str, Any]:
     started = common.call(lambda: client.post("workspaces/open", {"folder": path, "yes": yes, "layers": ["tex"]}))
-    return _done(follow.follow(client, started))
-
-
-def _done(operation: dict[str, Any]) -> dict[str, Any]:
-    """The result of an operation that ended well; else its error said, and exit 1."""
-    if operation["status"] != "done":
-        click.echo(f"{operation['title']}: {operation['error'] or operation['status']}")
-        raise click.exceptions.Exit(1)
-    return dict(operation.get("result") or {})
+    return common.result_of(follow.follow(client, started))

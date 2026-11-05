@@ -26,7 +26,6 @@ for it: the driver calls `hold`, `answered` and `set_aside` on a thread, and wha
 `pending`, `ended`) reads it without the lock, each batch file being replaced whole.
 """
 
-import contextlib
 import threading
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Literal
@@ -389,7 +388,7 @@ class Proposing:
                     aside.append((batch, each))
                 self.batches.save(batch)
                 if batch.question:
-                    self._withdraw(batch.question, reason, RUNNER)
+                    self.runner.withdraw(batch.question, reason, RUNNER)
         for batch, each in aside:
             self._decided(run, batch, each, "replaced", RUNNER)
 
@@ -398,7 +397,7 @@ class Proposing:
         their proposals stay waiting, decided from the command line, joining the flow's file for its next run."""
         questions = [batch.question for batch in self.batches.of_run(run) if batch.question and batch.waiting()]
         for question in questions:
-            self._withdraw(question, reason, actor)
+            self.runner.withdraw(question, reason, actor)
 
     def answered(self, question: Question) -> None:
         """A question about a flow was answered: when it asks about a batch of an active run, its answer decides the
@@ -501,7 +500,7 @@ class Proposing:
         for batch, _ in batches.values():
             asked = set(batch.asked)
             if batch.question and not any(each.id in asked for each in batch.waiting()):
-                self._withdraw(batch.question, f"{actor.describe()} decided each proposal it asks about", actor)
+                self.runner.withdraw(batch.question, f"{actor.describe()} decided each proposal it asks about", actor)
         for batch, each in decided:
             self._decided(run, batch, each, "accepted" if decision == "accept" else "rejected", actor)
         return [each.id for _, each in decided]
@@ -582,7 +581,7 @@ class Proposing:
     def _ask(self, run: Run, box: Box, batch: Batch) -> None:
         """Ask the owner about the batch's proposals still waiting (the one asked before withdrawn)."""
         if batch.question:
-            self._withdraw(batch.question, "asked again with the proposals staged since", RUNNER)
+            self.runner.withdraw(batch.question, "asked again with the proposals staged since", RUNNER)
         waiting = batch.waiting()
         count = f"{len(waiting)} box" + ("" if len(waiting) == 1 else "es")
         lines = [batch.summary, ""] if batch.summary else []
@@ -618,10 +617,6 @@ class Proposing:
         )
         asked = self.kernel.questions.ask(draft, asked_by=RUNNER)
         batch.question, batch.asked = asked.id, [each.id for each in waiting]
-
-    def _withdraw(self, question: str, reason: str, actor: Actor) -> None:
-        with contextlib.suppress(QuestionError):  # answered or withdrawn meanwhile
-            self.kernel.questions.withdraw(question, reason=reason, by=actor)
 
     def _decided(self, run: Run, batch: Batch, proposal: Proposal, decision: str, actor: Actor) -> None:
         was = proposal.original is not None and proposal.original != proposal.box.model_copy(

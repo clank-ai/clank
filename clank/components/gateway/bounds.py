@@ -70,11 +70,6 @@ class Bounds:
         rows = self.kernel.store.read("SELECT * FROM workspace_keys WHERE workspace = ?", (workspace,))
         return _view(rows[0]) if rows else None
 
-    def answered_at(self, workspace: str) -> str:
-        """When the owner last answered the cloud question for a workspace; "" for never."""
-        rows = self.kernel.store.read("SELECT answered FROM workspace_keys WHERE workspace = ?", (workspace,))
-        return str(rows[0]["answered"]) if rows else ""
-
     def routes(self) -> dict[str, dict[str, Any]]:
         """Each key's hash, with its workspace's bound."""
         rows = self.kernel.store.read("SELECT * FROM workspace_keys WHERE key_hash IS NOT NULL")

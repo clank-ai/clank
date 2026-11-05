@@ -639,10 +639,6 @@ class ClankConsole(App[str]):
         stops = self._stops()
         return next((widget for widget in stops if not isinstance(widget, Buttons)), stops[0])
 
-    def to_main(self) -> None:
-        """Esc on a group of buttons: back to the page's main list."""
-        self.main().focus()
-
     def into_page(self) -> None:
         """↑ on the keys bar: back into the page, to its main list."""
         self.main().focus()
