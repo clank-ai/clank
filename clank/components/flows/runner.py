@@ -478,6 +478,7 @@ class Runner:
                 f"the user ran the flow again from {box}, a box before this one",
             )
             _again(run, made, box, told, now)
+            self._stopping.pop(run.name, None)  # a stop of the run's last life is spent (a checkpoint's held it)
             run.at, run.waiting, run.paused, run.ended = box, None, False, None
             if run.status not in ACTIVE:
                 run.status = "queued" if ahead is not None else "running"
@@ -1446,10 +1447,12 @@ class Runner:
         flow_id, number, cp = str(context.params["flow"]), int(context.params["run"]), int(context.params["checkpoint"])
         working: Working | None = None
         run = self.runs.load(flow_id, number)
+        held = False  # whether it holds the run (a review), so a stop meant for it is its to spend
         try:
             with anyio.fail_after(10):  # the checkpoint is kept on the run just before its operation starts
                 while (found := self.runs.load(flow_id, number).orchestration.working) is None or found.number != cp:
                     await anyio.sleep(0.02)
+            held = found.kind == "review"
             record = self._record(flow_id)
             if record is None:
                 raise RunError(f"{flow_id} is gone")
@@ -1502,6 +1505,9 @@ class Runner:
             raise
         finally:
             self._forget(working)
+            if held:
+                with self._lock:
+                    self._stopping.pop(run.name, None)
             self.nudge()
         return {"checkpoint": cp}
 

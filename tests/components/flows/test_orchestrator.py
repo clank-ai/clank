@@ -282,6 +282,19 @@ async def test_answering_its_word_with_pause_pauses_the_run_and_with_stop_stops_
         await until(lambda: rig.run().status == "stopped")
 
 
+async def test_a_run_stopped_during_a_checkpoint_and_run_again_from_a_box_starts_that_boxs_session(rig: Rig) -> None:
+    """A stop while a checkpoint holds the run is spent when the run ends: running it again from a box starts that box's
+    session, not a try stopped at once."""
+    async with running(rig.kernel):
+        await to_the_first_checkpoint(rig)
+        rig.runner.stop(FLOW, actor=OWNER)
+        await until(lambda: rig.run().status == "stopped" and not rig.run().operation)
+        rig.runner.run_from(FLOW, "plan", actor=OWNER)
+        again = await at_work(rig, "plan", 2)
+        assert again.session
+        assert rig.run().box("plan").tries[-1].outcome is None, "at work, not stopped"
+
+
 async def test_after_a_box_it_may_pause_the_run_telling_the_owner_why(rig: Rig) -> None:
     async with running(rig.kernel):
         first = await to_the_first_checkpoint(rig)
