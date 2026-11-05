@@ -498,10 +498,10 @@ Each test file begins with a docstring naming the design sections it verifies (d
 
 | § | Section | Tests |
 | --- | --- | --- |
-| 1 | A board is a file in the folder | `tests/components/agents/test_boards.py` (10) |
-| 2 | What a board holds | `tests/components/agents/test_boards.py` (10), `vscode/test/board.test.ts` (11) |
+| 1 | A board is a file in the folder | `tests/components/agents/test_boards.py` (11) |
+| 2 | What a board holds | `tests/components/agents/test_boards.py` (11), `vscode/test/board.test.ts` (11) |
 | 3 | The owner on the board | `vscode/test/board.page.test.ts` (2), `vscode/test/board.test.ts` (11) |
-| 4 | The agent on the board | `tests/components/agents/test_board_place.py` (7), `tests/components/agents/test_board_tools.py` (3), `tests/components/agents/test_boards.py` (10) |
+| 4 | The agent on the board | `tests/components/agents/test_board_place.py` (7), `tests/components/agents/test_board_tools.py` (3), `tests/components/agents/test_boards.py` (11) |
 | 5 | Asking the agent about the board | none yet |
 | 6 | LaTeX on the board | `tests/components/agents/test_board_latex.py` (6), `tests/docker/test_board_layer.py` (1), `vscode/test/board.test.ts` (11) |
 | 7 | A board's figures out: export | `tests/components/agents/test_board_export.py` (5), `tests/components/agents/test_board_export_service.py` (3), `tests/components/agents/test_board_tools.py` (3), `tests/docker/test_board_layer.py` (1), `vscode/test/board.test.ts` (11) |
@@ -948,6 +948,7 @@ Design 0022 §1, §2 and §4: a board is a `.board` file of the folder, JSON: it
 - clank board makes lists and shows a folders boards
 - the agent closes a pin it dealt with
 - a boards history is never written through a link
+- a figure reached through a link is never read and a new board takes no taken name
 
 ### `tests/components/agents/test_changes.py`
 

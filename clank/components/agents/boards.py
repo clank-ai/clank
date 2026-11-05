@@ -4,11 +4,12 @@ tools, which come here: `new`, `list`, `read` and `describe` (the board in words
 `remove`. The agent places things by where (`boardplace.py`), never by pixels.
 
 **The file is the board.** Each change of the agent's reads it fresh, changes it, keeps the board as it was in its
-history (`.clank/boards/<board's path>/history/`, the newest `HISTORY` kept) and writes it whole, so the owner's latest
-moves are never lost and any change of the agent's can be taken back; then `agents.board_changed` is recorded and the
-owner's window draws it. Figures name their file and are sized from it (`image_size`: PNG, JPEG, GIF, WebP, SVG),
-360 wide by default at their aspect, a caption's line under them. What a frame holds, and what an annotation is over,
-follow from where they are: an item inside a frame's rectangle is in it, a pen stroke or pin over an item is on it.
+history (`.clank/boards/<board's path>/history/`, the newest `HISTORY` kept) and writes it whole, through no link
+(`kernel/infolder.py`, decision 0164), so the owner's latest moves are never lost and any change of the agent's can be
+taken back; then `agents.board_changed` is recorded and the owner's window draws it. Figures name their file and are
+sized from it (`image_size`: PNG, JPEG, GIF, WebP, SVG), 360 wide by default at their aspect, a caption's line under
+them. What a frame holds, and what an annotation is over, follow from where they are: an item inside a frame's rectangle
+is in it, a pen stroke or pin over an item is on it.
 
 **The agent adds** figures, LaTeX (math, drawn at once, or compiled), notes, slots, frames (around items it names) and
 arrows between items; the owner's own marks (pen strokes, highlights, pins) are the owner's. A figure placed in a slot
@@ -16,13 +17,12 @@ takes the slot. Refused, saying why: a board that is not there or not a board, a
 kind the agent does not add, an item not on the board.
 """
 
+import contextlib
 import copy
 import hashlib
 import json
 import math
-import os
 import re
-import shutil
 import struct
 import xml.etree.ElementTree as ET
 from collections.abc import Sequence
@@ -33,7 +33,8 @@ from clank.components.agents.boardexport import Art, ExportError, art_of_picture
 from clank.components.agents.boardlatex import build, flatten
 from clank.components.agents.boardplace import GRID, INSET, TITLE, PlaceError, frame_of, place
 from clank.kernel.events import CLANK, EventType, Subject
-from clank.kernel.infolder import Outside, inside, linked
+from clank.kernel.infolder import Outside, Place
+from clank.kernel.infolder import place as in_folder
 
 if TYPE_CHECKING:
     from clank.components.workspaces.service import Workspaces
@@ -78,12 +79,13 @@ class BoardError(Exception):
     """A board that cannot be read or changed as asked, and why."""
 
 
-def image_size(path: Path) -> tuple[int, int] | None:
+def image_size(file: Place) -> tuple[int, int] | None:
     """An image's width and height in pixels, from its file's head (PNG, JPEG, GIF, WebP) or an SVG's size or
-    viewBox; None for a file that is not one of those."""
+    viewBox, read through no link; None for a file that is not one of those."""
+    svg = file.suffix.lower() == ".svg"
     try:
-        head = path.read_bytes()[: 1 << 16] if path.suffix.lower() != ".svg" else b""
-    except OSError:
+        head = b"" if svg else file.read_bytes(most=1 << 16)
+    except (OSError, Outside):
         return None
     if head[:8] == b"\x89PNG\r\n\x1a\n" and head[12:16] == b"IHDR":
         width, height = struct.unpack(">II", head[16:24])
@@ -95,8 +97,8 @@ def image_size(path: Path) -> tuple[int, int] | None:
         return _webp(head)
     if head[:2] == b"\xff\xd8":
         return _jpeg(head)
-    if path.suffix.lower() == ".svg":
-        return _svg(path)
+    if svg:
+        return _svg(file)
     return None
 
 
@@ -126,10 +128,10 @@ def _webp(head: bytes) -> tuple[int, int] | None:
     return None
 
 
-def _svg(path: Path) -> tuple[int, int] | None:
+def _svg(file: Place) -> tuple[int, int] | None:
     try:
-        text = path.read_text(encoding="utf-8", errors="replace")[:4096]
-    except OSError:
+        text = file.read_text(errors="replace", most=1 << 14)[:4096]
+    except (OSError, Outside):
         return None
     root = re.search(r"<svg\b[^>]*>", text)
     if not root:
@@ -175,23 +177,19 @@ class Boards:
             raise BoardError(f"there is no workspace {workspace!r}") from error
 
     @staticmethod
-    def _relative(named: str) -> tuple[str, ...]:
+    def _inside(folder: Path, named: str) -> Place:
+        """A file of the folder by its name (from the folder, or under `/workspace/`), never one of Clank's own (under
+        `.clank/`), read and written through no link (decision 0164); `BoardError` for any other name."""
         relative = named[len(CONTAINER) :] if named.startswith(CONTAINER) else named
-        return PurePosixPath(relative.replace("\\", "/")).parts
-
-    def _inside(self, folder: Path, named: str) -> Path:
-        parts = self._relative(named)
-        path = folder.joinpath(*parts)
-        if (
-            not parts
-            or ".." in parts
-            or parts[:1] == (".clank",)
-            or not path.resolve().is_relative_to(folder.resolve())
-        ):
+        try:
+            found = in_folder(folder, relative)
+        except Outside as error:
+            raise BoardError(f"{named} is not a file of the folder") from error
+        if not found.parts or found.parts[0] == ".clank":
             raise BoardError(f"{named} is not a file of the folder")
-        return path
+        return found
 
-    def _board(self, workspace: str, board: str) -> tuple[Path, Path]:
+    def _board(self, workspace: str, board: str) -> tuple[Path, Place]:
         """The folder and the board's file: a path in the folder (with or without `.board`), or a board's bare name."""
         folder = self._folder(workspace)
         named = board if board.endswith(SUFFIX) else f"{board}{SUFFIX}"
@@ -199,54 +197,65 @@ class Boards:
         if path.is_file():
             return folder, path
         if "/" not in named.replace("\\", "/"):
-            found = sorted(self._all(folder), key=lambda each: (len(each.parts), str(each)))
+            found = sorted(self._all(folder), key=lambda each: (len(each.parts), each.relative))
             matching = [each for each in found if each.name == named]
             if matching:
                 return folder, matching[0]
         raise BoardError(f"there is no board {board} in {workspace}")
 
     @staticmethod
-    def _all(folder: Path) -> list[Path]:
-        found = []
-        for root, dirs, files in os.walk(folder):
-            dirs[:] = [each for each in dirs if each not in SKIPPED]
-            found += [Path(root) / name for name in files if name.endswith(SUFFIX)]
+    def _all(folder: Path) -> list[Place]:
+        """The folder's boards, links and the folders no work is in (`SKIPPED`) left out."""
+        return [board for board, _ in Boards._listed(folder)]
+
+    @staticmethod
+    def _listed(folder: Path) -> list[tuple[Place, float]]:
+        """The folder's boards with when each was changed last."""
+        top, found = in_folder(folder), []
+        for relative, info in top.files(skip=SKIPPED):
+            if relative.endswith(SUFFIX):
+                with contextlib.suppress(Outside):  # a name this system would read as another
+                    found.append((top / relative, info.st_mtime))
         return found
 
     @staticmethod
-    def _load(path: Path) -> dict[str, Any]:
+    def _load(path: Place) -> dict[str, Any]:
         try:
-            board: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as error:
+            board: dict[str, Any] = json.loads(path.read_text())
+        except (OSError, ValueError) as error:  # Outside too, a ValueError
             raise BoardError(f"{path.name} is not a board Clank can read: {error}") from error
         if not isinstance(board.get("items"), list):
             raise BoardError(f"{path.name} is not a board: it has no items")
         return board
 
     @staticmethod
-    def _kept(folder: Path, path: Path, *more: str) -> Path:
-        """Where Clank keeps a board's own files (its history, its compiled LaTeX), and `more` below it, reached through
-        no link (decision 0159): `BoardError` otherwise."""
-        name = path.relative_to(folder).with_suffix("").as_posix().replace("/", "-")
+    def _kept(path: Place, *more: str) -> Place:
+        """Where Clank keeps a board's own files (its history, its compiled LaTeX, its exports' drawings), and `more`
+        below it, read and written through no link (decision 0164)."""
+        name = PurePosixPath(path.relative).with_suffix("").as_posix().replace("/", "-")
         try:
-            return inside(folder, "/".join([FOLDER, name, *more]))
+            return in_folder(path.folder, "/".join([FOLDER, name, *more]))
         except Outside as error:
             raise BoardError(str(error)) from error
 
-    def _save(self, folder: Path, path: Path, board: dict[str, Any], *, keep: bool) -> None:
-        if keep and path.is_file():
-            kept = self._kept(folder, path, "history")
-            kept.mkdir(parents=True, exist_ok=True)
-            older = sorted(kept.glob(f"*{SUFFIX}"), key=lambda each: int(each.stem))
-            number = int(older[-1].stem) + 1 if older else 1
-            shutil.copyfile(path, self._kept(folder, path, "history", f"{number}{SUFFIX}"))
-            for gone in older[: max(0, len(older) + 1 - HISTORY)]:
-                gone.unlink(missing_ok=True)
-        written = path.with_name(f".{path.name}.writing")
-        if linked(written):
-            raise BoardError(f"{written.name} is a link: Clank follows no link in the folder")
-        written.write_text(json.dumps(board, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        os.replace(written, path)
+    def _save(self, path: Place, board: dict[str, Any], *, keep: bool) -> None:
+        """Write the board whole (under a name of its own, then put in place: decision 0164), the one it replaces kept
+        in its history first when `keep`, the newest `HISTORY` of them."""
+        try:
+            if keep and path.is_file():
+                kept = self._kept(path, "history")
+                older = sorted(
+                    int(name[: -len(SUFFIX)])
+                    for name, kind in kept.entries()
+                    if kind == "file" and name.endswith(SUFFIX) and name[: -len(SUFFIX)].isdigit()
+                )
+                number = older[-1] + 1 if older else 1
+                (kept / f"{number}{SUFFIX}").write_bytes(path.read_bytes())
+                for gone in older[: max(0, len(older) + 1 - HISTORY)]:
+                    (kept / f"{gone}{SUFFIX}").remove()
+            path.write_text(json.dumps(board, indent=2, ensure_ascii=False) + "\n")
+        except Outside as error:
+            raise BoardError(str(error)) from error
 
     def _record(self, workspace: str, board: str, change: str, item: str, said: str) -> None:
         self.kernel.events.record(
@@ -261,13 +270,15 @@ class Boards:
         """A new, empty board in the folder (in `folder` under it), named from `name`; its path from the folder."""
         root = self._folder(workspace)
         stem = NAME.sub("-", name.lower()).strip("-") or "board"
-        place = self._inside(root, f"{folder.strip('/')}/{stem}{SUFFIX}" if folder.strip("/") else f"{stem}{SUFFIX}")
-        if place.exists():
-            raise BoardError(f"{place.relative_to(root).as_posix()} is already a board of the folder")
-        place.parent.mkdir(parents=True, exist_ok=True)
+        target = self._inside(root, f"{folder.strip('/')}/{stem}{SUFFIX}" if folder.strip("/") else f"{stem}{SUFFIX}")
         board = {"board": 1, "title": title or name, "settings": {"grid": GRID, "preamble": ""}, "items": []}
-        self._save(root, place, board, keep=False)
-        relative = place.relative_to(root).as_posix()
+        try:  # only a name nothing has yet: a board, or a link, there is left as it is
+            target.write_text(json.dumps(board, indent=2, ensure_ascii=False) + "\n", new=True)
+        except FileExistsError as error:
+            raise BoardError(f"{target.relative} is already a board of the folder") from error
+        except Outside as error:
+            raise BoardError(str(error)) from error
+        relative = target.relative
         self._record(workspace, relative, "new", "", f"the board {relative} made")
         return {"board": relative, "said": f"The board {relative} is made; it opens in the owner's VS Code window."}
 
@@ -275,20 +286,20 @@ class Boards:
         """The folder's boards, the newest changed first: each one's path, title and how many items it holds."""
         root = self._folder(workspace)
         found = []
-        for path in self._all(root):
+        for path, changed in self._listed(root):
             try:
                 board = self._load(path)
             except BoardError:
                 continue
-            found.append({"board": path.relative_to(root).as_posix(), "title": str(board.get("title") or path.stem),
-                          "items": len(board["items"]), "changed": path.stat().st_mtime})  # fmt: skip
+            found.append({"board": path.relative, "title": str(board.get("title") or path.stem),
+                          "items": len(board["items"]), "changed": changed})  # fmt: skip
         return sorted(found, key=lambda each: -float(each["changed"]))
 
     def read(self, workspace: str, board: str) -> dict[str, Any]:
         """A board whole: its path, title, settings and items, and the board in words (`describe`)."""
-        root, path = self._board(workspace, board)
+        _, path = self._board(workspace, board)
         loaded = self._load(path)
-        relative = path.relative_to(root).as_posix()
+        relative = path.relative
         return {"board": relative, "title": loaded.get("title", ""), "settings": loaded.get("settings", {}),
                 "items": loaded["items"], "said": self._words(relative, loaded)}  # fmt: skip
 
@@ -390,7 +401,7 @@ class Boards:
             path = self._inside(root, str(fields.get("file") or ""))
             if not path.is_file():
                 raise BoardError(f"{fields.get('file')} is not a file of the folder")
-            kept["file"] = path.relative_to(root).as_posix()
+            kept["file"] = path.relative
         if kind == "latex":
             if not str(fields.get("source", "")).strip():
                 raise BoardError("LaTeX on a board needs its source")
@@ -455,8 +466,8 @@ class Boards:
             what = kept.get("file") or kept.get("label") or kept.get("name") or kind
             said = f"Placed {id} ({what})" + (f" in the slot {placed.taken}" if placed.taken else
                                                f" {self._at_words(at)}")  # fmt: skip
-        self._save(root, path, loaded, keep=True)
-        relative = path.relative_to(root).as_posix()
+        self._save(path, loaded, keep=True)
+        relative = path.relative
         self._record(workspace, relative, "add", id, f"{relative}: {said}")
         after += self._redo_kept(workspace, root, path, before, loaded)
         return {"board": relative, "id": id, "said": f"{said} on {relative}. The owner sees it at once.{after}"}
@@ -530,8 +541,8 @@ class Boards:
             if placed.taken:
                 items.remove(next(each for each in items if each.get("id") == placed.taken))
             self._grow(items, placed.grown)
-        self._save(root, path, loaded, keep=True)
-        relative = path.relative_to(root).as_posix()
+        self._save(path, loaded, keep=True)
+        relative = path.relative
         said = f"Changed {id}" + (f", moved {self._at_words(at)}" if at else "")
         self._record(workspace, relative, "update", id, f"{relative}: {said}")
         after += self._redo_kept(workspace, root, path, before, loaded)
@@ -546,8 +557,8 @@ class Boards:
         if not any(each.get("id") == id for each in items):
             raise BoardError(f"there is no item {id} on the board")
         loaded["items"] = [each for each in items if each.get("id") != id]
-        self._save(root, path, loaded, keep=True)
-        relative = path.relative_to(root).as_posix()
+        self._save(path, loaded, keep=True)
+        relative = path.relative
         self._record(workspace, relative, "remove", id, f"{relative}: took {id} away")
         again = self._redo_kept(workspace, root, path, before, loaded)
         return {"board": relative, "id": id, "said": f"Took {id} away from {relative}; its history keeps it.{again}"}
@@ -565,23 +576,27 @@ class Boards:
         if item.get("kind") != "latex" or item.get("mode") != "compiled":
             raise BoardError(f"{id} is not compiled LaTeX: math is drawn at once, in the owner's window")
         built, error = self._compiled(workspace, root, path, loaded, str(item.get("source") or ""))
-        return {"error": error} if error else {"file": built.relative_to(root).as_posix()}
+        return {"error": error} if error else {"file": built.relative}
 
-    def _compiled(self, workspace: str, root: Path, path: Path, board: dict[str, Any], source: str) -> tuple[Path, str]:
+    def _compiled(
+        self, workspace: str, root: Path, path: Place, board: dict[str, Any], source: str
+    ) -> tuple[Place, str]:
         """The drawing of `source` with the board's preamble, built once and kept by their hash; or why not."""
         preamble = str((board.get("settings") or {}).get("preamble") or "")
         key = hashlib.sha256(f"{preamble}\0{source}".encode()).hexdigest()[:16]
-        kept = self._kept(root, path, "latex", f"{key}.svg")
+        kept = self._kept(path, "latex", f"{key}.svg")
         if not kept.is_file():
             svg, error = build(self.kernel.parts["workspaces"].run_in, workspace, source, preamble)
             if error:
                 return kept, error
-            kept.parent.mkdir(parents=True, exist_ok=True)
-            kept.write_text(flatten(svg, f"k{key[:8]}"), encoding="utf-8")
+            try:
+                kept.write_text(flatten(svg, f"k{key[:8]}"))
+            except Outside as refused:
+                raise BoardError(str(refused)) from refused
         return kept, ""
 
     @staticmethod
-    def _drawn(root: Path, built: Path) -> tuple[int, int] | None:
+    def _drawn(root: Path, built: Place) -> tuple[int, int] | None:
         """A built drawing's size on the board: its own, made narrower than `LATEX_WIDEST` when it is wider."""
         size = image_size(built) if built.is_file() else None
         if not size or not size[0]:
@@ -614,25 +629,27 @@ class Boards:
         if named is None:
             titled: dict[str, Any] = next((each for each in loaded["items"] if each.get("id") == frame), {})
             stem = NAME.sub("-", str(titled.get("name") or f"{path.stem} selection").lower()).strip("-") or "figure"
-            named = PurePosixPath(path.relative_to(root).parent.as_posix()) / f"{stem}.{format}"
+            named = PurePosixPath(path.parent.relative) / f"{stem}.{format}"
         elif not named.suffix:
             named = named.with_suffix(f".{format}")
         out = self._inside(root, named.as_posix())
         arts, problems = self._arts(workspace, root, path, loaded, items)
         composed = compose(items, arts, background="#ffffff" if format == "png" else "")
-        out.parent.mkdir(parents=True, exist_ok=True)
-        relative = out.relative_to(root).as_posix()
-        if format == "svg":
-            out.write_text(composed, encoding="utf-8")
-        else:
-            kept = self._kept(root, path, "export", f"{out.stem}.svg")
-            kept.parent.mkdir(parents=True, exist_ok=True)
-            kept.write_text(composed, encoding="utf-8")
-            size = ["-d", str(dpi), "-p", str(dpi)] if format == "png" else []
-            argv = ["rsvg-convert", "-f", format, *size, "-o", f"{CONTAINER}{relative}",
-                    f"{CONTAINER}{kept.relative_to(root).as_posix()}"]  # fmt: skip
-            self._convert(workspace, argv, format)
-        board_path = path.relative_to(root).as_posix()
+        relative = out.relative
+        try:
+            if format == "svg":
+                out.write_text(composed)
+            else:
+                out.parent.make()  # TeX's converter writes the file, in the container
+                kept = self._kept(path, "export", f"{out.stem}.svg")
+                kept.write_text(composed)
+                size = ["-d", str(dpi), "-p", str(dpi)] if format == "png" else []
+                argv = ["rsvg-convert", "-f", format, *size, "-o", f"{CONTAINER}{relative}",
+                        f"{CONTAINER}{kept.relative}"]  # fmt: skip
+                self._convert(workspace, argv, format)
+        except Outside as error:
+            raise BoardError(str(error)) from error
+        board_path = path.relative
         if keep is not None and frame:
             framed = next(each for each in loaded["items"] if each.get("id") == frame)
             remembered = {"file": relative, "format": format, "dpi": dpi} if keep else None
@@ -641,7 +658,7 @@ class Boards:
                     framed["export"] = remembered
                 else:
                     framed.pop("export", None)
-                self._save(root, path, loaded, keep=True)
+                self._save(path, loaded, keep=True)
         what = frame or ", ".join(str(each["id"]) for each in items if each.get("kind") != "arrow")
         said = f"Exported {what} as {relative}" + ("; it is made again each time the frame changes" if keep else "")
         if problems:
@@ -649,7 +666,7 @@ class Boards:
         self._record(workspace, board_path, "export", frame or "", f"{board_path}: {said}")
         return {"board": board_path, "file": relative, "problems": problems, "said": f"{said}."}
 
-    def _redo_kept(self, workspace: str, root: Path, path: Path, before: dict[str, Any], after: dict[str, Any]) -> str:
+    def _redo_kept(self, workspace: str, root: Path, path: Place, before: dict[str, Any], after: dict[str, Any]) -> str:
         """Make again the kept exports whose frame shows something else after the agent's change; said in words."""
         said = ""
         for frame in after["items"]:
@@ -660,7 +677,7 @@ class Boards:
             if _part(before, id) == _part(after, id):
                 continue
             try:
-                made = self.export(workspace, path.relative_to(root).as_posix(), frame=id,
+                made = self.export(workspace, path.relative, frame=id,
                                    format=str(kept.get("format") or "pdf"), file=str(kept.get("file") or ""),
                                    dpi=int(kept.get("dpi") or 300))  # fmt: skip
                 said += f" Made {id}'s export {made['file']} again."
@@ -669,7 +686,7 @@ class Boards:
         return said
 
     def _arts(
-        self, workspace: str, root: Path, path: Path, board: dict[str, Any], items: list[dict[str, Any]]
+        self, workspace: str, root: Path, path: Place, board: dict[str, Any], items: list[dict[str, Any]]
     ) -> tuple[dict[str, Art], list[str]]:
         """Each part's drawing: a figure's file, the LaTeX and the captions typeset by TeX; and what could not be."""
         arts: dict[str, Art] = {}
@@ -682,12 +699,12 @@ class Boards:
                 try:
                     picture = self._inside(root, str(item.get("file", "")))
                     if picture.suffix.lower() == ".svg":
-                        arts[id] = art_of_svg(picture.read_text(encoding="utf-8"), f"f{mark}")
+                        arts[id] = art_of_svg(picture.read_text(), f"f{mark}")
                     else:
                         size = image_size(picture) or (float(item.get("w", 360)), float(item.get("h", 270)))
                         mime = PICTURES.get(picture.suffix.lower(), "image/png")
                         arts[id] = art_of_picture(picture.read_bytes(), mime, *size)
-                except (BoardError, OSError, ET.ParseError) as error:
+                except (BoardError, OSError, ValueError, ET.ParseError) as error:  # Outside too, a ValueError
                     problems.append(f"{id} ({error})")
                 if item.get("caption"):
                     self._typeset(workspace, root, path, board, f"\\small {tex_text(str(item['caption']))}",
@@ -698,13 +715,16 @@ class Boards:
                 self._typeset(workspace, root, path, board, source, id, f"t{mark}", arts, problems)
         return arts, problems
 
-    def _typeset(self, workspace: str, root: Path, path: Path, board: dict[str, Any], source: str, key: str,
+    def _typeset(self, workspace: str, root: Path, path: Place, board: dict[str, Any], source: str, key: str,
                  prefix: str, arts: dict[str, Art], problems: list[str]) -> None:  # fmt: skip
         built, error = self._compiled(workspace, root, path, board, source)
         if error:
             problems.append(f"{key.split(':')[0]} (it does not build: {error})")
         else:
-            arts[key] = art_of_svg(built.read_text(encoding="utf-8"), prefix)
+            try:
+                arts[key] = art_of_svg(built.read_text(), prefix)
+            except (OSError, ValueError, ET.ParseError) as error:  # Outside too, a ValueError
+                problems.append(f"{key.split(':')[0]} ({error})")
 
     def _convert(self, workspace: str, argv: list[str], format: str) -> None:
         workspaces: Workspaces = self.kernel.parts["workspaces"]

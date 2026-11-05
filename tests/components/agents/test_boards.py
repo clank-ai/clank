@@ -29,6 +29,7 @@ from clank.kernel.clock import FakeClock
 from clank.kernel.core import Kernel, open_kernel
 from clank.kernel.events import Actor
 from clank.kernel.home import Home
+from clank.kernel.infolder import place
 from tests.fakes.platform import FakePlatform
 
 YOU = Actor(kind="user", via="console")
@@ -79,10 +80,10 @@ def on_disk(folder: Path, board: str = "figures/fig3.board") -> dict[str, Any]:
 
 
 def test_images_are_measured_from_their_files(folder: Path) -> None:
-    assert image_size(folder / "figures" / "amp.png") == (800, 600)
-    assert image_size(folder / "figures" / "wide.svg") == (400, 100)
+    assert image_size(place(folder, "figures/amp.png")) == (800, 600)
+    assert image_size(place(folder, "figures/wide.svg")) == (400, 100)
     (folder / "notes.txt").write_text("not an image", encoding="utf-8")
-    assert image_size(folder / "notes.txt") is None
+    assert image_size(place(folder, "notes.txt")) is None
 
 
 def test_a_new_board_is_a_file_of_the_folder_and_is_listed(kernel: Kernel, folder: Path) -> None:
@@ -251,3 +252,24 @@ def test_a_boards_history_is_never_written_through_a_link(kernel: Kernel, folder
     with pytest.raises(BoardError, match="is a link"):
         boards.remove("resonance", "fig3", "fig-1")
     assert list(elsewhere.iterdir()) == [], "nothing written through the link"
+
+
+def test_a_figure_reached_through_a_link_is_never_read_and_a_new_board_takes_no_taken_name(
+    kernel: Kernel, folder: Path, tmp_path: Path
+) -> None:
+    boards = boards_of(kernel)
+    boards.new("resonance", "fig3", folder="figures")
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    shutil.copyfile(folder / "figures" / "amp.png", elsewhere / "secret.png")
+    if sys.platform == "win32":
+        import _winapi
+
+        _winapi.CreateJunction(str(elsewhere), str(folder / "linked"))
+    else:
+        os.symlink(elsewhere, folder / "linked", target_is_directory=True)
+    with pytest.raises(BoardError, match="not a file of the folder"):
+        boards.add("resonance", "fig3", "figure", {"file": "linked/secret.png"})
+    assert [each["kind"] for each in on_disk(folder)["items"]] == [], "nothing placed"
+    with pytest.raises(BoardError, match="already a board"):
+        boards.new("resonance", "fig3", folder="figures")
