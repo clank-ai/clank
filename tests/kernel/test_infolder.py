@@ -203,3 +203,30 @@ def test_on_windows_a_folder_on_the_way_cannot_be_renamed_while_clank_holds_it(p
         with pytest.raises(PermissionError):
             os.rename(folder / ".clank" / "jobs" / "1", folder / ".clank" / "jobs" / "2")
     os.rename(folder / ".clank" / "jobs", folder / ".clank" / "moved")  # let go: the agent may move it again
+
+
+def test_a_file_is_read_in_pieces_or_from_its_end_and_found_with_its_own_stat(project: tuple[Path, Path]) -> None:
+    folder, elsewhere = project
+    log = place(folder, ".clank/jobs/1/log")
+    log.write_bytes(b"".join(b"line %d\n" % number for number in range(1000)))
+    assert b"".join(log.chunks(size=100)) == log.read_bytes(), "the pieces make the whole"
+    assert log.read_bytes(last=9) == b"line 999\n", "the end only"
+    found = infolder.file_of(folder, ".clank/jobs/1/log")
+    assert found is not None
+    assert found[0] == log
+    assert found[1].st_size == len(log.read_bytes())
+    assert infolder.file_of(folder, ".clank/jobs/1") is None, "a folder is no file"
+    assert infolder.file_of(folder, "../elsewhere/secret") is None, "a name that leaves the folder is none"
+    _link_folder(folder / ".clank" / "linked", elsewhere)
+    assert infolder.file_of(folder, ".clank/linked/secret") is None, "a file reached through a link is none"
+    with pytest.raises(Outside):
+        list(place(folder, ".clank/linked/secret").chunks())
+
+
+def test_hidden_folders_are_left_out_of_a_search_when_asked(tmp_path: Path) -> None:
+    place(tmp_path, "plans/a.md").write_text("# a")
+    place(tmp_path, ".git/objects/x").write_text("x")
+    place(tmp_path, "notes/.cache/y.md").write_text("y")
+    everything = sorted(name for name, _ in place(tmp_path).files())
+    assert everything == [".git/objects/x", "notes/.cache/y.md", "plans/a.md"]
+    assert [name for name, _ in place(tmp_path).files(hidden=False)] == ["plans/a.md"]

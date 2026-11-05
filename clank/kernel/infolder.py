@@ -15,7 +15,7 @@ A file is written whole under a name of its own, then put in place (`os.replace`
 replaced, never written through; `new` writes only a name nothing has yet. A name that leaves the folder (absolute,
 `..`, a drive, `:`, and on Windows a device's name or a name Windows would change) or passes through a link is
 `Outside`, a `ValueError`, whose words name the path. The workspace's folder itself is the owner's choice, taken as it
-is. `inside` and `linked`, which only check a path before it is used, go once every caller uses a `Place`.
+is.
 """
 
 import contextlib
@@ -543,27 +543,3 @@ def file_of(folder: Path | str, relative: str | PurePath) -> tuple[Place, os.sta
         return None
     info = found.stat()
     return (found, info) if info is not None and stat.S_ISREG(info.st_mode) else None
-
-
-def linked(path: Path) -> bool:
-    """Whether `path` is itself a link: a symbolic link, or on Windows a reparse point that names another place. False
-    when it is not there."""
-    try:
-        found = os.lstat(path)
-    except FileNotFoundError:
-        return False
-    return stat.S_ISLNK(found.st_mode) or _surrogate_stat(found)
-
-
-def inside(folder: Path, relative: str | PurePath) -> Path:
-    """`folder` joined with `relative`, when the name stays below the folder and nothing on the way to it is a link (the
-    module's docstring); `Outside` otherwise. A check before use only: `Place` holds the way while it is used."""
-    parts = _parts(relative)
-    if not parts:
-        raise Outside(f"{relative} is not a path inside the folder")
-    path = folder
-    for part in parts:
-        path = path / part
-        if linked(path):
-            raise Outside(f"{path.relative_to(folder).as_posix()} is a link: Clank follows no link in the folder")
-    return path
