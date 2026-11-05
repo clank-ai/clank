@@ -595,7 +595,7 @@ export function activate(context: vscode.ExtensionContext): ClankExtension {
     return found ? new ClankClient(found.url, found.token) : undefined;
   };
   const presenter = new VsCodePresenter(clankItem, dockerItem);
-  const artifacts = new ArtifactPanels(context.extensionUri, {
+  const artifacts = new ArtifactPanels({
     connect, info: (text) => presenter.info(text), warn: (text) => presenter.warn(text), column: filesColumn,
   });
   presenter.artifacts = artifacts;

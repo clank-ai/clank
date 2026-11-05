@@ -1,10 +1,12 @@
-// Artifacts in VS Code (design 0021 §5): the service's `agents.artifact_made` read (`artifactMade`), and a page made
-// ready to show (`artifactPage`): the agent's page as it wrote it, with Clank's content security policy first in its
-// head (nothing from the network: the webview's own files, inline scripts and styles, and `eval`, which Plotly's and
-// Mermaid's builds use), a <base> at its version's folder so its relative paths work, its `clank-lib/` names pointed
-// at the extension's copy of the libraries (decision 0135), and Clank's bar at the end of its body. Its Open in
+// Artifacts in VS Code (design 0021 §5): the service's `agents.artifact_made` read (`artifactMade`), and the panel's own
+// document (`artifactPanel`, decision 0165), written by Clank alone: Clank's bar, the one call to VS Code's API, and an
+// `<iframe sandbox="allow-scripts">` holding the version's page. The service builds that page whole, the one an export
+// writes (its files and Clank's libraries inside it), and it reaches the frame as its `srcdoc`, so no script, message
+// or address carries it. In the frame the page has an origin of its own: it reaches neither the panel's document nor
+// VS Code's API, and the panel listens to no message, so only the bar's clicks reach the extension. The frame takes the
+// panel's content policy as well as the page's own, so the panel holds itself to the page's (`PANEL_POLICY`). Open in
 // browser opens the version only once the owner answers VS Code's own question (`openInBrowser`, decision 0156). Pure:
-// `artifacts.ts` beside `extension.ts` opens the panels and reads the files.
+// `artifacts.ts` beside `extension.ts` opens the panels and asks the service for the pages.
 
 import type { ServerEvent } from "./events";
 
@@ -19,14 +21,57 @@ export interface ArtifactMade {
   entry: string;
 }
 
-/** Where a page's files and the libraries are, as the webview reaches them, and what goes into it. */
-export interface PageParts {
-  base: string; // the version's folder, ending with a slash
-  lib: string; // the extension's copy of the libraries, no slash at the end
-  source: string; // the webview's own source, for the policy
-  nonce: string;
-  bar: string; // Clank's bar: HTML, with its script carrying the nonce
+/** A version as the service answers it to be shown (`GET agents/artifacts/{workspace}/{name}/page`): its page whole,
+ * with the artifact's title and how many versions it has. */
+export interface ArtifactShown {
+  name: string;
+  title: string;
+  kind: string;
+  version: number;
+  versions: number;
+  html: string;
 }
+
+/** The panel's content policy: the one every version's page carries first (`EXPORT_POLICY` in agents/artifacts.py; a
+ * test reads it there), since the frame holds the page to the panel's policy as well as its own. Nothing on the
+ * network; the page's files and libraries are inside it (inline, data and blob); inline scripts (the page's and the
+ * panel's: a nonce here would stop the page's) and `eval`, which Plotly's and Mermaid's builds use. */
+export const PANEL_POLICY =
+  "default-src 'none'; img-src data: blob:; media-src data: blob:; font-src data:; style-src 'unsafe-inline' data:; " +
+  "script-src 'unsafe-inline' 'unsafe-eval' data:; connect-src data: blob:; form-action 'none'; base-uri 'none'";
+
+/** The frame's sandbox: its scripts run, and nothing else is allowed. Without `allow-same-origin` it has an origin of its
+ * own, out of reach of the panel's document and VS Code's API; it cannot move the window, open one, submit a form,
+ * show a dialog or start a download. */
+export const FRAME_SANDBOX = "allow-scripts";
+
+/** The panel's own styles: the frame fills it, white beneath the page as in a browser; the bar floats over its corner
+ * as a widget of the window's VS Code theme (the find widget's ground, edge and shadow, the secondary buttons), with
+ * the dark theme's colors where none is given. */
+const PANEL_STYLE =
+  "html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden}" +
+  "#clank-artifact-page{display:block;width:100%;height:100%;border:0;background:#fff}" +
+  ".bar{position:fixed;top:8px;right:8px;z-index:1;display:flex;gap:6px;align-items:center;" +
+  "font:12px var(--vscode-font-family,system-ui),sans-serif;padding:4px 6px 4px 10px;" +
+  "background:var(--vscode-editorWidget-background,#252526);color:var(--vscode-editorWidget-foreground,#cccccc);" +
+  "border:1px solid var(--vscode-widget-border,#454545);border-radius:8px;" +
+  "box-shadow:0 2px 8px var(--vscode-widget-shadow,rgba(0,0,0,.36))}" +
+  ".bar button,.bar select{font:inherit;color:var(--vscode-button-secondaryForeground,#cccccc);" +
+  "background:var(--vscode-button-secondaryBackground,#313131);border:0;border-radius:4px;padding:3px 8px;" +
+  "cursor:pointer}.bar button:hover{background:var(--vscode-button-secondaryHoverBackground,#3c3c3c)}" +
+  ".bar button:focus-visible,.bar select:focus-visible{outline:1px solid var(--vscode-focusBorder,#0078d4);" +
+  "outline-offset:1px}";
+
+/** The panel's script, its only one: it tells the extension what was chosen on the bar, and listens to nothing. */
+const PANEL_SCRIPT =
+  "(() => {" +
+  "const vscode = acquireVsCodeApi();" +
+  'const bar = document.getElementById("clank-artifact-bar");' +
+  'bar.querySelector("select").addEventListener("change", (event) =>' +
+  ' vscode.postMessage({ type: "version", version: Number(event.target.value) }));' +
+  'bar.querySelectorAll("button").forEach((button) => button.addEventListener("click", () =>' +
+  " vscode.postMessage({ type: button.dataset.act })));" +
+  "})();";
 
 /** The artifact an `agents.artifact_made` event names; nothing for any other event. */
 export function artifactMade(message: ServerEvent): ArtifactMade | undefined {
@@ -40,57 +85,31 @@ export function artifactMade(message: ServerEvent): ArtifactMade | undefined {
   };
 }
 
-/** The page ready to show (module comment). */
-export function artifactPage(page: string, parts: PageParts): string {
-  const policy =
-    `default-src 'none'; img-src ${parts.source} data: blob:; media-src ${parts.source} data: blob:; ` +
-    `font-src ${parts.source} data:; style-src ${parts.source} 'unsafe-inline'; ` +
-    `script-src ${parts.source} 'unsafe-inline' 'unsafe-eval'; connect-src ${parts.source};`;
-  const head = `<meta http-equiv="Content-Security-Policy" content="${policy}"><base href="${parts.base}">`;
-  let shown = page.replace(/(["'(])clank-lib\//g, `$1${parts.lib}/`);
-  if (/<head[^>]*>/i.test(shown)) {
-    shown = shown.replace(/<head[^>]*>/i, (open) => `${open}${head}`);
-  } else if (/<html[^>]*>/i.test(shown)) {
-    shown = shown.replace(/<html[^>]*>/i, (open) => `${open}<head>${head}</head>`);
-  } else {
-    shown = `<!doctype html><html><head>${head}</head><body>${shown}</body></html>`;
-  }
-  const close = shown.search(/<\/body>/i);
-  return close >= 0 ? `${shown.slice(0, close)}${parts.bar}${shown.slice(close)}` : `${shown}${parts.bar}`;
+/** The panel's own document (module comment): its policy first, Clank's bar, the page in the sandboxed frame as its
+ * `srcdoc` (its ampersands and quotes escaped, so the attribute holds the page whole and ends only where Clank ends it),
+ * and the panel's script. */
+export function artifactPanel(page: string, title: string, versions: ReturnType<typeof versionsSaid>): string {
+  return (
+    '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
+    `<meta http-equiv="Content-Security-Policy" content="${PANEL_POLICY}">` +
+    `<title>${escaped(title)}</title><style>${PANEL_STYLE}</style></head><body>` +
+    artifactBar(title, versions) +
+    `<iframe id="clank-artifact-page" title="${escaped(title)}" sandbox="${FRAME_SANDBOX}" ` +
+    `srcdoc="${page.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}"></iframe>` +
+    `<script>${PANEL_SCRIPT}</script></body></html>`
+  );
 }
 
-/** Clank's bar over an artifact's page: its title, its versions, Comment and Open in browser, in a shadow root so its
- * styles and the page's never meet; it tells the extension what was chosen. It is drawn as a widget of the window's VS
- * Code theme (the find widget's ground, edge and shadow, the secondary buttons), whose variables reach into the shadow
- * root, with the dark theme's colors where none is given. */
-export function artifactBar(title: string, versions: ReturnType<typeof versionsSaid>, nonce: string): string {
+/** Clank's bar over an artifact's page: its title, its versions, Comment and Open in browser. It lies in the panel's
+ * document, outside the page's frame, so the page can neither draw over it nor press it. */
+export function artifactBar(title: string, versions: ReturnType<typeof versionsSaid>): string {
   const options = versions
     .map((each) => `<option value="${each.version}"${each.shown ? " selected" : ""}>${escaped(each.label)}</option>`)
     .join("");
-  const inside =
-    "<style>.bar{display:flex;gap:6px;align-items:center;font:12px var(--vscode-font-family,system-ui),sans-serif;" +
-    "padding:4px 6px 4px 10px;background:var(--vscode-editorWidget-background,#252526);" +
-    "color:var(--vscode-editorWidget-foreground,#cccccc);border:1px solid var(--vscode-widget-border,#454545);" +
-    "border-radius:8px;box-shadow:0 2px 8px var(--vscode-widget-shadow,rgba(0,0,0,.36))}" +
-    "button,select{font:inherit;color:var(--vscode-button-secondaryForeground,#cccccc);" +
-    "background:var(--vscode-button-secondaryBackground,#313131);border:0;border-radius:4px;padding:3px 8px;" +
-    "cursor:pointer}button:hover{background:var(--vscode-button-secondaryHoverBackground,#3c3c3c)}" +
-    "button:focus-visible,select:focus-visible{outline:1px solid var(--vscode-focusBorder,#0078d4);" +
-    "outline-offset:1px}</style>" +
-    `<div class="bar"><b>${escaped(title)}</b><select>${options}</select>` +
-    '<button data-act="comment">Comment</button><button data-act="browser">Open in browser</button></div>';
   return (
-    '<div id="clank-artifact-bar" style="position:fixed;top:8px;right:8px;z-index:2147483647"></div>' +
-    `<template id="clank-artifact-bar-inside">${inside}</template>` + // inert until copied into the shadow root
-    `<script nonce="${nonce}">(() => {` +
-    "const vscode = acquireVsCodeApi();" +
-    'const root = document.getElementById("clank-artifact-bar").attachShadow({ mode: "closed" });' +
-    'root.appendChild(document.getElementById("clank-artifact-bar-inside").content.cloneNode(true));' +
-    'root.querySelector("select").addEventListener("change", (event) =>' +
-    ' vscode.postMessage({ type: "version", version: Number(event.target.value) }));' +
-    'root.querySelectorAll("button").forEach((button) => button.addEventListener("click", () =>' +
-    " vscode.postMessage({ type: button.dataset.act })));" +
-    "})();</script>"
+    `<div id="clank-artifact-bar" class="bar" role="toolbar" aria-label="Artifact"><b>${escaped(title)}</b>` +
+    `<select aria-label="Version">${options}</select>` +
+    '<button data-act="comment">Comment</button><button data-act="browser">Open in browser</button></div>'
   );
 }
 

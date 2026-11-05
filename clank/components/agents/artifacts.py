@@ -58,7 +58,7 @@ TYPES = {
 # A version's page's content policy, first in it (decisions 0156 and 0165): its files and libraries are inside it
 # (inline, or as data and blob; its own scripts and style sheets as data), so in a browser and in VS Code's frame alike
 # it reaches nothing on the network, submits no form and moves no base. VS Code's panel holds itself to the same policy,
-# which the frame takes as well.
+# which the frame takes as well (`PANEL_POLICY` in vscode/src/core/artifacts.ts; a test there keeps the two the same).
 EXPORT_POLICY = (
     "default-src 'none'; img-src data: blob:; media-src data: blob:; font-src data:; style-src 'unsafe-inline' data:; "
     "script-src 'unsafe-inline' 'unsafe-eval' data:; connect-src data: blob:; form-action 'none'; base-uri 'none'"

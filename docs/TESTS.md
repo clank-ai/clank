@@ -486,7 +486,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | What the review found | none yet |
 | 3 | The model's readout | `tests/components/agents/test_readout.py` (4), `vscode/test/readout.test.ts` (12), `vscode/test/throttle.test.ts` (2) |
 | 4 | The agent panel | `tests/components/agents/test_conversation.py` (3), `vscode/test/agent.page.test.ts` (3), `vscode/test/conversation.test.ts` (9) |
-| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (19), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.test.ts` (7) |
+| 5 | Artifacts | `tests/components/agents/test_artifact_tool.py` (2), `tests/components/agents/test_artifacts.py` (19), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/tools/test_artifact_libs.py` (2), `vscode/test/artifacts.page.test.ts` (1), `vscode/test/artifacts.test.ts` (8) |
 | 6 | Jobs: long work for the agent | `tests/components/agents/test_agent_jobs.py` (8), `tests/components/agents/test_job_tools.py` (3), `tests/components/agents/test_readout.py` (4), `tests/components/gateway/test_agents_forwarding.py` (3), `tests/components/workspaces/test_jobs_runner.py` (2) |
 | 7 | The engine keeps one conversation | none yet |
 | 8 | Sessions that stay fast | none yet |
@@ -5502,13 +5502,20 @@ Design 0008 §6, in a real browser: the annotator page (media/annotator.html, as
 - a box drawn on the figure and a message sent leave the page with the marks, the words and the marked-up copy
 - a note opens as a bubble that stays on the figure; dragged, only the bubble moves; a click edits it
 
+### `vscode/test/artifacts.page.test.ts`
+
+Design 0021 §5, in a real browser (decision 0165): an artifact's panel as `artifactPanel` writes it, in headless Edge with a stand-in for VS Code's API, holding a page of several megabytes built as the service builds one (Plotly inlined, the export's content policy first, its own script and style sheet as data). In its sandboxed frame the page draws its plot and runs its own script and style; it has an origin of its own, so it reaches neither the panel's document nor VS Code's API; it reaches nothing on the network, opens no window and moves no window. What it posts reaches nothing: only the bar's clicks and its version reach VS Code. A screenshot is left in out/test/.
+
+- the page runs in its sandboxed frame, reaches nothing outside it, and only the bar reaches VS Code
+
 ### `vscode/test/artifacts.test.ts`
 
-Design 0021 §5: artifacts in VS Code. The service's `agents.artifact_made` names the workspace, its folder on this machine, the artifact, its title, kind, version and page, and a window on that folder opens it. A page is shown as the agent wrote it, with Clank's content security policy first in its head (nothing from the network: only the webview's own files, inline scripts and styles), a <base> at its version's folder (so its relative paths work), its `clank-lib/` names pointed at the extension's copy of the libraries, and Clank's bar (versions, Comment, Open in browser) in a shadow root of its own at the end of its body, so neither's styles touch the other's.
+Design 0021 §5: artifacts in VS Code. The service's `agents.artifact_made` names the workspace, its folder on this machine, the artifact, its title, kind, version and page, and a window on that folder opens it. The panel's document is Clank's alone (decision 0165): its content policy first (the one the page carries, read here from the service's code, since the frame takes the panel's policy as well), Clank's bar (the title, the versions, Comment, Open in browser), the one call to VS Code's API, and the page the service built, whole, as the `srcdoc` of an `<iframe sandbox="allow-scripts">`; a page whose markup looks like Clank's stays inside the frame, and the panel listens to no message.
 
 - an artifact made is read from its event, and nothing else is
-- a page gets the policy, its base, the libraries' place and the bar, and keeps the agent's own
-- a page without a head or a body still gets them
+- the panel's document is Clank's: its policy, its bar, the one call to VS Code's API, and the page in a frame sandboxed to scripts alone
+- a page whose markup looks like Clank's stays inside the frame, whole
+- the panel holds itself to the page's own content policy, which the frame takes as well
 - the versions are said newest first, the one shown marked
 - the bar names the artifact, lists its versions and asks for a comment or a browser, its words escaped
 - a 'browser' message alone opens nothing: the owner is asked first, naming the artifact, and only Open opens it

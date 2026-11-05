@@ -1,16 +1,15 @@
-// Artifacts in VS Code (design 0021 §5): a webview panel per artifact, in the files' group, showing a version's page as
-// `core/artifacts.ts` makes it ready (Clank's policy, its <base>, the libraries' place, the bar). The bar's version
-// shows that version; Comment asks for the owner's words and sends them to the session that made it; Open in browser
-// asks the owner first, in VS Code's own question (`BrowserQuestions`, decision 0156), then has the service export the
-// version as one page and opens it. `Clank: Open an artifact` lists the folder's.
-
-import { randomBytes } from "node:crypto";
-import { posix } from "node:path";
+// Artifacts in VS Code (design 0021 §5): a webview panel per artifact, in the files' group, showing a version as
+// `core/artifacts.ts` writes the panel (Clank's bar over the page, which runs in a sandboxed frame, decision 0165). The
+// page is the service's (`GET agents/artifacts/{workspace}/{name}/page`), built whole with its files and libraries, so
+// the panel loads nothing from disk. The bar's version shows that version; Comment asks for the owner's words and sends
+// them to the session that made it; Open in browser asks the owner first, in VS Code's own question
+// (`BrowserQuestions`, decision 0156), then has the service export the version as one page and opens it. `Clank: Open
+// an artifact` lists the folder's.
 
 import * as vscode from "vscode";
 
 import type { ClankClient } from "./core/client";
-import { artifactBar, type ArtifactMade, artifactPage, BrowserQuestions, versionsSaid } from "./core/artifacts";
+import { type ArtifactMade, artifactPanel, type ArtifactShown, BrowserQuestions, versionsSaid } from "./core/artifacts";
 
 export const ARTIFACT = "clank.artifact";
 
@@ -20,13 +19,6 @@ interface Open {
   made: ArtifactMade;
   shown: number;
   questions: BrowserQuestions;
-}
-
-interface Kept {
-  name: string;
-  title: string;
-  kind: string;
-  versions: Array<{ version: number; entry: string }>;
 }
 
 /** What the panels need of the rest of the extension. */
@@ -41,10 +33,7 @@ export interface ArtifactHost {
 export class ArtifactPanels implements vscode.Disposable {
   private readonly open = new Map<string, Open>();
 
-  constructor(
-    private readonly extension: vscode.Uri,
-    private readonly host: ArtifactHost,
-  ) {}
+  constructor(private readonly host: ArtifactHost) {}
 
   dispose(): void {
     for (const each of this.open.values()) {
@@ -54,31 +43,29 @@ export class ArtifactPanels implements vscode.Disposable {
 
   /** Show an artifact's version (its newest by default) in its panel, made when it is not open. */
   async show(made: ArtifactMade, version?: number): Promise<void> {
-    const key = `${made.folder}|${made.name}`;
-    const home = vscode.Uri.file(posix.join(made.folder.replace(/\\/g, "/"), ".clank", "artifacts", made.name));
-    let kept: Kept;
+    const client = this.host.connect();
+    if (!client) {
+      this.host.warn("the Clank service does not run: `clank serve --background` starts it");
+      return;
+    }
+    let shown: ArtifactShown;
     try {
-      kept = JSON.parse(new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(home, "artifact.json"))));
-    } catch {
-      this.host.warn(`the artifact ${made.name} cannot be read in ${made.folder}`);
+      shown = await client.get<ArtifactShown>(`${route(made)}/page`, { version });
+    } catch (error) {
+      this.host.warn(`the artifact ${made.name} cannot be shown: ${error instanceof Error ? error.message : String(error)}`);
       return;
     }
-    const shown = version ?? kept.versions.length;
-    const entry = kept.versions.find((each) => each.version === shown)?.entry;
-    if (!entry) {
-      return;
-    }
+    const key = `${made.folder}|${made.name}`;
     let open = this.open.get(key);
     if (!open) {
-      const lib = vscode.Uri.joinPath(this.extension, "media", "lib");
       const panel = vscode.window.createWebviewPanel(
         ARTIFACT,
-        `Artifact: ${kept.title}`,
+        `Artifact: ${shown.title}`,
         { viewColumn: this.host.column(), preserveFocus: true },
-        { enableScripts: true, localResourceRoots: [home, lib], retainContextWhenHidden: true },
+        { enableScripts: true, enableForms: false, localResourceRoots: [], retainContextWhenHidden: true },
       );
       panel.iconPath = new vscode.ThemeIcon("graph");
-      open = { panel, made: { ...made, title: kept.title }, shown, questions: new BrowserQuestions() };
+      open = { panel, made, shown: shown.version, questions: new BrowserQuestions() };
       this.open.set(key, open);
       const opened = open;
       panel.onDidDispose(() => this.open.delete(key));
@@ -86,22 +73,10 @@ export class ArtifactPanels implements vscode.Disposable {
         void this.received(opened, message),
       );
     }
-    open.shown = shown;
-    const webview = open.panel.webview;
-    const page = new TextDecoder().decode(
-      await vscode.workspace.fs.readFile(vscode.Uri.joinPath(home, `v${shown}`, ...entry.split("/"))),
-    );
-    const folder = posix.dirname(entry);
-    const base = vscode.Uri.joinPath(home, `v${shown}`, ...(folder === "." ? [] : folder.split("/")));
-    const nonce = randomBytes(16).toString("base64");
-    webview.html = artifactPage(page, {
-      base: `${webview.asWebviewUri(base).toString()}/`,
-      lib: webview.asWebviewUri(vscode.Uri.joinPath(this.extension, "media", "lib")).toString(),
-      source: webview.cspSource,
-      nonce,
-      bar: artifactBar(kept.title, versionsSaid(kept.versions.length, shown), nonce),
-    });
-    open.panel.title = `Artifact: ${kept.title} (v${shown})`;
+    open.made = { ...open.made, title: shown.title };
+    open.shown = shown.version;
+    open.panel.webview.html = artifactPanel(shown.html, shown.title, versionsSaid(shown.versions, shown.version));
+    open.panel.title = `Artifact: ${shown.title} (v${shown.version})`;
     open.panel.reveal(undefined, true);
   }
 
@@ -116,7 +91,7 @@ export class ArtifactPanels implements vscode.Disposable {
       this.host.warn("the Clank service does not run: `clank serve --background` starts it");
       return;
     }
-    const path = `agents/artifacts/${encodeURIComponent(made.workspace)}/${encodeURIComponent(made.name)}`;
+    const path = route(made);
     try {
       if (message.type === "comment") {
         const text = await vscode.window.showInputBox({
@@ -141,4 +116,9 @@ export class ArtifactPanels implements vscode.Disposable {
       this.host.warn(error instanceof Error ? error.message : String(error));
     }
   }
+}
+
+/** The service's route of an artifact. */
+function route(made: ArtifactMade): string {
+  return `agents/artifacts/${encodeURIComponent(made.workspace)}/${encodeURIComponent(made.name)}`;
 }
