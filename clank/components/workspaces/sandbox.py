@@ -22,8 +22,9 @@ A workspace's setup (design 0004 §10, decision 0169) runs in a container of its
 ends: mounted, contained and limited as the workspace's container, on the workspace's own internal network, and told
 the proxy as the workspace's container is (the lowercase forms too, which some programs read alone), under the setup's
 own identity, so it reaches only the hosts the gateway's routes carry for it while it runs (the package indexes). It
-runs `setup.setup_script` with `bash -c` (never a login shell), its HOME a clean folder of its own and pip's
-configuration Clank's alone (`setup.setup_env`).
+runs `setup.setup_script` with `/bin/bash -c` (never a login shell, and never a `bash` found in the home's
+`~/.venv/bin`, which the image puts first on its PATH), its HOME a clean folder of its own, its PATH the image's
+without `~/.venv/bin` and pip's configuration Clank's alone (`setup.setup_env`).
 
 All of them run Clank's sandbox image, built from the Dockerfile in the `image` folder beside this module; its tag is
 the checksum of that Dockerfile (`image_tag`), so a change to it builds a new image, and an image of that tag is the one
@@ -52,7 +53,7 @@ from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
 
-from clank.components.workspaces.setup import setup_env, setup_script
+from clank.components.workspaces.setup import SHELL, setup_env, setup_script
 
 USER = "1000:1000"
 WORKSPACE = "/workspace"
@@ -188,15 +189,15 @@ def setup_spec(
 ) -> ContainerSpec:
     """The container that installs a workspace's software (design 0004 §10, decision 0169): mounted, contained and
     limited as the workspace's own, on its internal network, told the `proxy` (the setup's URL, with its own token) in
-    upper and lower case; it runs the command in `setup.setup_script` with `bash -c`, a clean HOME and pip set up by
-    Clank alone, and is removed."""
+    upper and lower case; it runs the command in `setup.setup_script` with `/bin/bash -c`, a clean HOME, a PATH outside
+    the workspace's home and pip set up by Clank alone, and is removed."""
     found = names(home)
     return ContainerSpec(
         name=found.setup(name),
         image=image,
         labels=_labels(home, name),
         networks=((found.inner(name), ""),),
-        command=("bash", "-c", setup_script(command)),
+        command=(SHELL, "-c", setup_script(command)),
         binds=((folder, WORKSPACE),),
         volumes=((found.volume(name), AGENT_HOME),),
         workdir=WORKSPACE,

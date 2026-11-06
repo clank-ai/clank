@@ -4,14 +4,15 @@ virtual environment in the workspace's home. The setup runs in a container of it
 it: the sandbox image, the folder and the home mounted as in the workspace's container, the same user and limits, on
 the workspace's own internal network, going out only through Clank's proxy (HTTP_PROXY, HTTPS_PROXY and their
 lowercase forms) under an identity of its own (`<workspace>.setup`), which the gateway's routes carry, with the hosts of
-the set `setup` (the package indexes), only while it runs. It runs with `bash -c` (no login shell), a clean home of its
-own and pip set up by Clank alone, `~/.venv` made afresh by the image's own Python first, so nothing else in the
-workspace's home runs; `~/.venv` in its command is still the workspace's environment. Before it runs, the workspace's
-network is there with the edge on it, and the gateway runs (else it is refused, saying so). The operation asks first
-unless told yes, saying what runs (the folder's own steps, which can run code from the folder, reaching only the package
-indexes, through the proxy), and asks again each time it runs (a changed requirements file too); it keeps a command it
-is given in the workspace's record, logs each line of the install, and records the command that ran to its end; a setup
-that fails leaves that record as it was."""
+the set `setup` (the package indexes), only while it runs. It runs with `/bin/bash -c` (no login shell), a clean home of
+its own, pip set up by Clank alone and a PATH outside the workspace's home, `~/.venv` made afresh by the image's own
+Python first (each of its steps named by its full path) before `~/.venv/bin` comes first on the PATH again, so nothing
+else in the workspace's home runs; `~/.venv` in its command is still the workspace's environment. Before it runs, the
+workspace's network is there with the edge on it, and the gateway runs (else it is refused, saying so). The operation
+asks first unless told yes, saying what runs (the folder's own steps, which can run code from the folder, reaching only
+the package indexes, through the proxy), and asks again each time it runs (a changed requirements file too); it keeps a
+command it is given in the workspace's record, logs each line of the install, and records the command that ran to its
+end; a setup that fails leaves that record as it was."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -29,12 +30,21 @@ from clank.components.workspaces.sandbox import (
     NO_PROXY,
     WORKSPACE,
     ContainerSpec,
+    image_folder,
     image_tag,
     names,
     run_arguments,
     setup_spec,
 )
-from clank.components.workspaces.setup import PIP_CONFIG, SETUP_HOME, VENV, VENV_PATH, proposed_setup, setup_script
+from clank.components.workspaces.setup import (
+    PIP_CONFIG,
+    PYTHON,
+    SETUP_HOME,
+    VENV,
+    VENV_PATH,
+    proposed_setup,
+    setup_script,
+)
 from clank.kernel.access import local_token
 from clank.kernel.clock import FakeClock
 from clank.kernel.core import Kernel, open_kernel
@@ -117,7 +127,7 @@ def test_the_setup_container_joins_the_workspaces_network_and_goes_out_only_thro
 
 def test_the_setup_runs_with_bash_c_a_clean_home_and_pip_set_up_by_clank_alone() -> None:
     spec = a_setup("make env")
-    assert spec.command[:2] == ("bash", "-c"), "not a login shell, which would read the home's profile"
+    assert spec.command[:2] == ("/bin/bash", "-c"), "not a login shell, which would read the home's profile"
     assert spec.command[2] == setup_script("make env")
     env = dict(spec.env)
     assert env["HOME"] == SETUP_HOME
@@ -133,6 +143,37 @@ def test_the_setup_runs_with_bash_c_a_clean_home_and_pip_set_up_by_clank_alone()
     assert made in first, "~/.venv made afresh by the image's own Python"
     assert first.index("rm -rf") < first.index(made)
     assert first.endswith("|| exit"), "a step of Clank's that fails ends the setup"
+
+
+def image_path() -> str:
+    """The PATH the sandbox image gives every container, from its Dockerfile."""
+    for line in (image_folder() / "Dockerfile").read_text(encoding="utf-8").splitlines():
+        if line.startswith("ENV PATH="):
+            return line.removeprefix("ENV PATH=").split()[0]
+    raise AssertionError("the Dockerfile sets no PATH")
+
+
+def test_the_setup_looks_up_nothing_in_the_workspaces_home_until_it_made_venv_afresh() -> None:
+    """The image puts ~/.venv/bin first on its PATH, and the home is the workspace's volume: the setup's PATH is the
+    image's without it, and its shell and Clank's own first steps are named by their full paths, so none of them can be
+    a program left in ~/.venv/bin. Once ~/.venv is made afresh, its bin comes first again, as in the workspace's
+    container, for the folder's own steps."""
+    spec = a_setup("pip install -r requirements.txt")
+    env = dict(spec.env)
+    assert f"{VENV_PATH}/bin:" in image_path(), "the image's PATH starts in the home"
+    assert env["PATH"] == image_path().replace(f"{VENV_PATH}/bin:", "")
+    assert AGENT_HOME not in env["PATH"]
+    arguments = run_arguments(spec)
+    assert arguments[arguments.index(spec.image) + 1 :][:2] == ["/bin/bash", "-c"], "docker-init finds no other bash"
+    first, command = spec.command[2].splitlines()
+    *steps, last = first.removesuffix(" || exit").split(" && ")
+    for step in steps:
+        program = step.split()[0]
+        assert program.startswith("/"), step
+        assert not program.startswith(AGENT_HOME), step
+    assert steps[-1].startswith(f"{PYTHON} -I -m venv "), "~/.venv made afresh before it comes first"
+    assert last == f"export PATH={VENV_PATH}/bin:{env['PATH']}"
+    assert command == "pip install -r requirements.txt", "the folder's own steps find the fresh ~/.venv's pip first"
 
 
 def test_the_setups_tilde_venv_is_still_the_workspaces_environment() -> None:
@@ -203,7 +244,7 @@ async def test_the_setup_installs_the_proposed_software_and_the_record_says_with
     setup = names(kernel.home.id).container("paper") + "-setup"
     assert platform.calls[-1] == f"setup {setup}"
     spec = platform.specs[setup]
-    assert spec.command == ("bash", "-c", setup_script(command))
+    assert spec.command == ("/bin/bash", "-c", setup_script(command))
     assert spec.image == image_tag()
     assert spec.networks == ((names(kernel.home.id).inner("paper"), ""),)
     token = network_token(local_token(kernel.home), "paper.setup")
