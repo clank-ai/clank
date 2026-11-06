@@ -6,6 +6,12 @@ the edge forwards the port here. The token is `network_token`: the SHA-256 HMAC 
 workspace's name, so the gateway process (which holds the local token) checks it without being handed anything, it
 survives every restart, and it names the workspace; a request without the right one is answered 407.
 
+A workspace's setup (design 0004 §10, decision 0169) goes out under an identity of its own, the workspace's name with
+`.setup` after it (`setup_identity`), and its own token, derived the same way: the routes carry its hosts (the set
+`setup`, the package indexes) only while it runs. A host not among them is refused at once, in words that name the set
+(never asked for: nobody waits at a setup), and dev mode does not lift that: dev mode opens the agent's internet, not a
+setup's.
+
 `Proxy` serves HTTP/1.1 on the loopback: a `CONNECT host:port` (TLS, or any stream) to a host the workspace is
 allowed (`allowed_host`: an exact name, or a suffix `.example.org` for the name and every name under it) is resolved
 here (the container has no way to the internet's names), refused when the name or any address it resolves to is
@@ -59,6 +65,8 @@ PRIVATE_SUFFIXES = (".localhost", ".local", ".internal", ".home.arpa")
 # unique local and link-local IPv6) besides what `ipaddress` calls private.
 PRIVATE_NETWORKS = [ipaddress.ip_network(each) for each in ("100.64.0.0/10", "0.0.0.0/8", "fc00::/7", "fe80::/10")]
 HOP_BY_HOP = ("proxy-authorization", "proxy-connection", "connection", "keep-alive", "te", "trailer", "upgrade")
+SETUP = ".setup"  # after a workspace's name: the identity of its setup at the proxy (design 0004 §10)
+SETUP_LISTED = "the set setup in config/network-sets.json"  # where the hosts a setup reaches are listed (decision 0169)
 Resolve = Callable[[str, int], Awaitable[list[tuple[str, int]]]]
 Ask = Callable[[str, str], Awaitable[str]]  # workspace, host: always, once or no
 
@@ -66,6 +74,17 @@ Ask = Callable[[str, str], Awaitable[str]]  # workspace, host: always, once or n
 def network_token(local: str, workspace: str) -> str:
     """A workspace's token at the proxy: the local token's HMAC over its name, 32 hex characters."""
     return hmac.new(local.encode(), f"network:{workspace}".encode(), hashlib.sha256).hexdigest()[:32]
+
+
+def setup_identity(workspace: str) -> str:
+    """The identity a workspace's setup has at the proxy: "paper.setup" (its token is `network_token`'s of it)."""
+    return f"{workspace}{SETUP}"
+
+
+def setup_of(identity: str) -> str | None:
+    """The workspace whose setup an identity at the proxy is; None for a workspace's agent."""
+    workspace = identity.removesuffix(SETUP)
+    return workspace if workspace and workspace != identity else None
 
 
 def allowed_host(host: str, patterns: list[str]) -> bool:
@@ -157,15 +176,17 @@ class NetworkLog:
                 log.warning("the network log could not be written: %s", error)
 
     def recent(self, limit: int, workspace: str = "") -> list[dict[str, Any]]:
-        """The newest exchanges first, of one workspace when named, read from the files' ends (design 0024 §4)."""
+        """The newest exchanges first, of one workspace when named (its agent's and its setup's), read from the files'
+        ends (design 0024 §4)."""
         from clank.components.gateway.records import _newest_first, _parsed
 
         found: list[dict[str, Any]] = []
         if not self.folder.is_dir():
             return found
+        whose = (workspace, setup_identity(workspace))
         for line in _newest_first(self.folder):
             record = _parsed(line)
-            if record is None or (workspace and record.get("workspace") != workspace):
+            if record is None or (workspace and record.get("workspace") not in whose):
                 continue
             found.append(record)
             if len(found) >= limit:
@@ -306,7 +327,8 @@ class Proxy:
     async def _admitted(self, workspace: str, host: str, port: int) -> tuple[tuple[str, int], str]:
         """The address to connect to for a public host allowed or let out, and why it was let out when it was not
         allowed (`asked: once`, `asked: always`, `dev mode`; "" for a host allowed); `Refused` otherwise. A private
-        address is refused first and last, whatever the allowances or dev mode say."""
+        address is refused first and last, whatever the allowances or dev mode say; a setup's host not allowed is
+        refused at once, dev mode or not (decision 0169)."""
         patterns = self.hosts(workspace)
         literal: str | None = None
         with contextlib.suppress(ValueError):  # a name, not an address
@@ -315,6 +337,9 @@ class Proxy:
             raise Refused(403, "private", _private(host))
         why = ""
         if not allowed_host(host, patterns or []):
+            setup = setup_of(workspace)
+            if setup is not None:
+                raise Refused(403, "not allowed", _not_for_setup(host, setup))
             if self._dev():
                 why = DEV  # every public host, at once and never asked for (decision 0152)
             elif self.ask is None:
@@ -488,6 +513,13 @@ def _not_allowed(host: str, workspace: str, asked: bool = False) -> str:
     return (
         f"{host} is not allowed for the workspace {workspace}: the owner allows it with "
         f"`clank workspace allow FOLDER --host {host}` (or you may ask once, in words, and otherwise work without it)."
+    )
+
+
+def _not_for_setup(host: str, workspace: str) -> str:
+    return (
+        f"{host} is not among the hosts {workspace}'s setup reaches through Clank's proxy ({SETUP_LISTED}, in Clank's "
+        f"home): the owner adds it there to let a setup reach it, then runs the setup again."
     )
 
 

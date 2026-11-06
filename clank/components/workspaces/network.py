@@ -10,9 +10,12 @@ into the record (the answerer the actor, so the record says who), and *no* or no
 (`QUIET_MINUTES`), so a retrying program does not flood the owner; *once* leaves everything as it was: the next
 request asks again. The proxy's side is `gateway/proxy.py`; the routes are the workspaces' API.
 
-The named sets (design 0024 §5) are here too: `sets(home)` reads `config/network-sets.json` (written with the five
-default sets when missing: Python packages, papers, code, data and models, documentation), and the service allows a
-set by allowing each of its hosts, marked with the set's name.
+The named sets (design 0024 §5) are here too: `sets(home)` reads `config/network-sets.json` (written with the default
+sets when missing: Python packages, papers, code, data and models, documentation, and `setup`), and the service allows
+a set by allowing each of its hosts, marked with the set's name. The set `setup` (design 0004 §10, decision 0169) is
+not an agent's: it lists what a workspace's setup reaches through the proxy while it runs, the package indexes its
+install steps download from (`setup_hosts`). A file written before it has none, so Clank's default stands in for it,
+saying so, and the owner's file is left as it is: a set named `setup` there changes it.
 """
 
 import json
@@ -54,7 +57,13 @@ DEFAULT_SETS: dict[str, dict[str, Any]] = {
         "hosts": ["docs.python.org", "numpy.org", "scipy.org", "matplotlib.org", "pandas.pydata.org"],
         "for": "the documentation of what the container has",
     },
+    "setup": {
+        "hosts": ["pypi.org", "files.pythonhosted.org"],
+        "for": "what a workspace's setup reaches while it installs the folder's own software: the package indexes "
+               "(never its agent: python is the agent's set)",
+    },
 }  # fmt: skip
+SETUP_SET = "setup"  # the set a workspace's setup reaches (design 0004 §10, decision 0169), never allowed to an agent
 ASKER = Actor(kind="clank", via="network")
 KIND = "workspace"
 Allow = Callable[..., Any]  # Workspaces.allow_host(name, host, allow, *, actor)
@@ -84,7 +93,17 @@ def sets(home: "Home") -> dict[str, dict[str, Any]]:
         if not isinstance(hosts, list):
             raise WorkspaceError(f"the set {name!r} in {file} has no list of hosts")
         found[str(name)] = {"hosts": [str(host) for host in hosts], "for": str(each.get("for") or "")}
+    if SETUP_SET not in found:  # a file written before the set: Clank's own stands in, the file left as it is
+        default = DEFAULT_SETS[SETUP_SET]
+        said = f"{default['for']}; Clank's default: a set named setup in config/{SETS_FILE} changes it"
+        found[SETUP_SET] = {"hosts": list(default["hosts"]), "for": said}
     return found
+
+
+def setup_hosts(home: "Home") -> list[str]:
+    """The hosts a workspace's setup reaches through the proxy (design 0004 §10, decision 0169): the set `setup`, read
+    each time; a `WorkspaceError` when the sets file cannot be read."""
+    return list(sets(home)[SETUP_SET]["hosts"])
 
 
 class HostAsks:

@@ -56,7 +56,7 @@ from clank.components.workspaces.edge import Edge
 from clank.components.workspaces.kinds import DockerSettings, Workspace
 from clank.components.workspaces.memory import MEMORY_FIX as MEMORY_FIX  # for the doctor (design 0014 §5)
 from clank.components.workspaces.memory import memory_said as memory_said
-from clank.components.workspaces.network import SETS_FILE, HostAsks, sets
+from clank.components.workspaces.network import SETS_FILE, SETUP_SET, HostAsks, sets
 from clank.components.workspaces.readiness import SetupReading as SetupReading  # for `clank setup` (design 0028 §4)
 from clank.components.workspaces.readiness import setup_reading
 from clank.components.workspaces.sandbox import BRIDGE_PROGRAM as BRIDGE_PROGRAM  # for the agents (design 0005)
@@ -471,7 +471,7 @@ class Workspaces:
     def allow_set(self, name: str, set_name: str, allow: bool, *, actor: Actor) -> dict[str, Any]:
         """Allow a workspace's agent a named set of hosts (design 0024 §5), each written into its record marked with
         the set; or take the set back: the hosts still marked with it go, one the owner also allowed by name stays.
-        Its view after."""
+        The set `setup` is a setup's, never allowed to an agent (decision 0169). Its view after."""
         from clank.components.workspaces.folders import WorkspaceError
 
         self._named(name)
@@ -479,6 +479,11 @@ class Workspaces:
         if set_name not in known:
             raise WorkspaceError(
                 f"there is no set {set_name!r}: the sets are {', '.join(known)} (config/{SETS_FILE} holds them)"
+            )
+        if set_name == SETUP_SET and allow:
+            raise WorkspaceError(
+                f"the set {SETUP_SET} is what a workspace's setup reaches while it installs the folder's software, "
+                "never its agent: python is the set for the agent's own pip install"
             )
         if allow:
             for host in known[set_name]["hosts"]:
@@ -792,9 +797,18 @@ class Workspaces:
         gateway: Gateway = self.kernel.parts["gateway"]
         return bool(gateway.status()["state"] == "running")
 
+    def carry_setup(self, name: str, hosts: list[str] | None) -> None:
+        """Let a workspace's setup reach these hosts through the proxy while it runs, through the gateway's routes;
+        None once it ended (design 0004 §10, decision 0169)."""
+        from clank.components.gateway.service import Gateway
+
+        gateway: Gateway = self.kernel.parts["gateway"]
+        gateway.set_setup(name, hosts)
+
     def proxy_url(self, name: str) -> str:
         """The proxy as a workspace's container is told it: its URL through the edge, with the workspace's own token
-        (design 0024 §2), so the proxy knows whose request each is."""
+        (design 0024 §2), so the proxy knows whose request each is; a setup's, given its identity (`<name>.setup`,
+        design 0004 §10), with that identity's own token."""
         from clank.components.gateway.service import network_token
         from clank.kernel.access import local_token
 

@@ -26,6 +26,7 @@ from clank.components.workspaces.sandbox import (
 
 HOME = "abc123"
 IMAGE = "clank-sandbox:0123456789ab"
+PROXY = "http://my-project.setup:tok@edge:18211"
 
 
 def values(arguments: list[str], flag: str) -> list[str]:
@@ -77,7 +78,9 @@ def test_every_program_in_a_workspaces_container_starts_as_many_threads_as_the_c
     assert arguments.index("--env") < arguments.index(IMAGE)
     small = workspace_spec(HOME, "small", r"C:\work\small", IMAGE, cpus=0.5, memory_mib=1024)
     assert "NUMBA_NUM_THREADS=1" in values(run_arguments(small), "--env"), "at least one"
-    setup = setup_spec(HOME, "my-project", r"C:\work\my-project", IMAGE, cpus=8.0, memory_mib=4096, command="make")
+    setup = setup_spec(
+        HOME, "my-project", r"C:\work\my-project", IMAGE, cpus=8.0, memory_mib=4096, command="make", proxy=PROXY
+    )
     assert "NUMBA_NUM_THREADS=8" in values(run_arguments(setup), "--env")
     assert values(run_arguments(edge_spec(HOME, IMAGE, gateway_port=18210, proxy_port=18211)), "--env") == []
 
@@ -137,7 +140,9 @@ def test_the_images_tag_follows_its_dockerfile_alone_since_the_programs_are_moun
     assert sandbox.image_tag() == first
     (tmp_path / "Dockerfile").write_text("FROM ubuntu:24.04\nRUN true\n", encoding="utf-8")
     assert sandbox.image_tag() != first
-    setup = setup_spec(HOME, "my-project", r"C:\work\my-project", IMAGE, cpus=8.0, memory_mib=4096, command="make")
+    setup = setup_spec(
+        HOME, "my-project", r"C:\work\my-project", IMAGE, cpus=8.0, memory_mib=4096, command="make", proxy=PROXY
+    )
     assert f"type=bind,source={tmp_path},target=/opt/clank,readonly" in values(run_arguments(setup), "--mount")
 
 

@@ -16,7 +16,8 @@ always, unloaded when off, and after its idle minutes when on demand). `routes` 
 second: each slot as the runtime reports it (`Runtime.route`) and the roles (`agent` is the main slot's, and any other
 name too; `completion` is the fast slot's, design 0006; `vision` the vision slot's, loaded on demand), each with its
 preset's facts (design 0012 §4), and what the agent's proxy follows (each workspace's hosts, and the runtime's dev mode,
-decision 0152); `facts` gives any preset's. `completion` asks the gateway for its last
+decision 0152), with the hosts of a workspace's setup while it runs (`set_setup`, as the workspaces component gives
+them: design 0004 §10, decision 0169); `facts` gives any preset's. `completion` asks the gateway for its last
 completions, for the CPU models page. `pause`, `resume` and `release` set a session's pause in the gateway (design 0012
 §9.4, decision 0055), with the service's local token, which the gateway's routes for it take (decision 0084); `holds`
 says what is paused and held.
@@ -56,6 +57,7 @@ from clank.components.gateway.kinds import CompletionSettings, CostSettings, Gat
 from clank.components.gateway.proxy import HOLD_SECONDS as HOLD_SECONDS  # the workspaces' ask reads these three
 from clank.components.gateway.proxy import allowed_host as allowed_host  # through this service (design 0024 §3)
 from clank.components.gateway.proxy import network_token as network_token
+from clank.components.gateway.proxy import setup_identity as setup_identity  # a setup's identity (design 0004 §10)
 from clank.components.gateway.routing import NOTION_TOOLS
 from clank.components.gateway.sockets import GATEWAY_SOCKET as GATEWAY_SOCKET  # the edge's ways in (design 0014 §3)
 from clank.components.gateway.sockets import PROXY_SOCKET as PROXY_SOCKET
@@ -168,6 +170,8 @@ class Gateway:
         self._local_only: list[str] | None = None  # the tools never sent to the cloud, as the agents component gives
         self.costs = Costs(self)  # what the cloud cost, taken from the gateway's spool (design 0016 §12)
         self._socket_again: int | None = None  # the process started again for its socket (design 0014 §3)
+        self._setups: dict[str, list[str]] = {}  # the hosts each workspace's setup reaches, while it runs (0169)
+        self._setups_lock = threading.Lock()
         kernel.events.subscribe(self._heard)
 
     def _heard(self, event: Any) -> None:
@@ -376,11 +380,28 @@ class Gateway:
 
     def network_routes(self) -> dict[str, dict[str, Any]]:
         """Each workspace's hosts allowed through the proxy (design 0024 §1), from its record, as the gateway's
-        routes carry them."""
-        return {
+        routes carry them; and, while a workspace's setup runs, its setup's (`setup_identity`: design 0004 §10,
+        decision 0169), never in place of a workspace's own."""
+        routes = {
             loaded.id: {"hosts": sorted(loaded.record.model_dump().get("hosts") or {})}
             for loaded in self.kernel.settings.records("workspace")
         }
+        with self._setups_lock:
+            setups = dict(self._setups)
+        for workspace, hosts in setups.items():
+            if workspace in routes:
+                routes.setdefault(setup_identity(workspace), {"hosts": sorted(hosts)})
+        return routes
+
+    def set_setup(self, workspace: str, hosts: list[str] | None) -> None:
+        """A workspace's setup runs and may reach these hosts through the proxy (design 0004 §10, decision 0169), as
+        the workspaces component gives them as it begins; None once it ended. The next routes carry it, so its way out
+        is open only while it runs."""
+        with self._setups_lock:
+            if hosts is None:
+                self._setups.pop(workspace, None)
+            else:
+                self._setups[workspace] = list(hosts)
 
     def local_only(self) -> list[str]:
         """The tools that never go to a cloud model (design 0016 §10), by their prefixes: Clank's Notion tools always,

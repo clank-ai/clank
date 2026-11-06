@@ -46,8 +46,14 @@ Clank is in beta: fixes go into the newest version only.
   the hosts you allowed for that workspace (`clank network`; a host it asks for waits for your answer, and every
   exchange is in `clank network log`). Dev mode, which you turn on for testing (`clank dev on`, shown in the
   console's header), lets every public host out at once instead; a private address (your computer, your network,
-  your tailnet) is refused in dev mode too. Installing a folder's software runs in a separate container Clank
-  starts, asking first.
+  your tailnet) is refused in dev mode too.
+- **Installing a folder's software** (its setup) runs in a separate container Clank starts, asking first and saying
+  what runs: the folder's own install steps, which can run code from the folder. That container is on the
+  workspace's network and reaches only the package indexes (`pypi.org` and `files.pythonhosted.org`: the set `setup`
+  in `config/network-sets.json`, yours to change, `clank workspace sets` lists it), through Clank's proxy and only
+  while it runs, each exchange in `clank network log`; a host not in the set is refused, dev mode or not. It runs with
+  a clean home of its own and pip reading no configuration file, and Clank makes the workspace's `~/.venv` afresh
+  first, so nothing written into the workspace's home changes what the setup runs.
 - **A folder's own MCP servers** (its `.mcp.json`) are offered, never trusted: the agent gets one only after you allow
   it for that workspace, and only as its entry was when you allowed it (a changed command, argument or environment
   needs allowing again). Clank starts one only in the folder's workspace container, never on your computer: checking

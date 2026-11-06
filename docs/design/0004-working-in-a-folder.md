@@ -35,7 +35,7 @@ recommendation, built as recommended so the owner can try it, and changed if the
 | 7 | NInfer's context | Retired 2026-10-13 with NInfer (decision 0034) |
 | 8 | What the tests must prove, and what waits | Proposed 2026-10-13 |
 | 9 | The console: easy to use, dynamic, the machine on the right | Built 2026-10-14; revised 2026-10-26 (a GPU whose handle its driver dropped) |
-| 10 | A project's own software and MCP servers | Built 2026-10-14 as proposed; verified on a simulator; revised after approval (2026-11-05): a folder's own MCP server is checked only in its workspace's container, never on this computer, and its check says whether the agent may use it as it is now (decision 0166); revised again (2026-11-05): one of your own MCP servers with secrets goes only to the workspaces you name for it, its values in OpenCode's environment alone (decision 0168) |
+| 10 | A project's own software and MCP servers | Built 2026-10-14 as proposed; verified on a simulator; revised after approval (2026-11-05): a folder's own MCP server is checked only in its workspace's container, never on this computer, and its check says whether the agent may use it as it is now (decision 0166); revised again (2026-11-05): one of your own MCP servers with secrets goes only to the workspaces you name for it, its values in OpenCode's environment alone (decision 0168); revised again (2026-11-05): a setup joins the workspace's network and reaches only the package indexes (the set `setup`) through its proxy, while it runs, with a clean home and `~/.venv` made afresh (decision 0169) |
 
 ## 1. What the owner does
 
@@ -336,11 +336,23 @@ download (§3: no route out).
   folder's page), and it is kept in the workspace's record.
 - **Choice: where the setup reaches the internet.** Recommended and built: in a container of its own, made for the
   setup and removed after it (`docker run --rm` of the sandbox image, the folder and the home mounted as in the
-  workspace's container, the same user and limits), on Docker's default network, which reaches the internet; the
-  workspace's container, where the agent runs, never does. The operation `workspaces.setup` asks first (it names the
-  command and says it downloads), each line of the install goes to its log, and the record keeps the command that last
-  ran to its end, so the folder's page says whether the software is installed and with what. Network grants from inside
-  (M7) stay as designed; this is the one way out, run by Clank, not by the agent.
+  workspace's container, the same user and limits). *Revised after approval (2026-11-05), decision 0169: it was on
+  Docker's default network, which reaches the whole internet; it now joins the workspace's own internal network and
+  goes out only through the workspace's proxy (design 0024 §2), told it as the workspace's container is (the lowercase
+  forms too), under an identity of its own (`<workspace>.setup`) that the gateway's routes carry only while it runs,
+  with the hosts of the set `setup`: the package indexes (`pypi.org`, `files.pythonhosted.org`), the owner's to change
+  (design 0024 §5). A host not in the set is refused, never asked for, dev mode or not, and each exchange is in the
+  network log. Before it runs, the workspace's network and the edge on it are put right, and the gateway must run. It
+  runs `bash -c` (never a login shell) with `HOME` a clean folder of its own and pip reading no configuration file, and
+  Clank makes `~/.venv` afresh with the image's own Python first (what the agent installed in it by itself goes), so
+  nothing written into the workspace's home since changes what runs; `~/.venv` in the command is still the
+  workspace's environment. So what a setup reaches is the owner's to see and change, as the agent's is.* The operation
+  `workspaces.setup` asks first, saying what runs (the folder's own install steps, which can run code from the folder)
+  and what it reaches (only the package indexes, through Clank's proxy), each time it runs, so a changed requirements
+  file is installed only when asked for; each line of the install goes to its log, and the record keeps the command
+  that last ran to its end, so the folder's page says whether the software is installed and with what. This is the one
+  way out run by Clank, not by the agent; the agent's own goes through the same proxy by its own allowances (design
+  0024).
 - **The image** puts `~/.venv/bin` first on the `PATH` and has a `python` command, so the agent, its terminal and the
   MCP servers it starts find the folder's programs without being told.
 - **Threads**: the workspace's container (and its setup's) sets `OMP_NUM_THREADS`, `NUMBA_NUM_THREADS`,

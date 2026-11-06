@@ -47,7 +47,7 @@ against. It runs 64-bit Raspberry Pi OS (Debian 13, kernel 6.18) and Docker Engi
 | 1 | What runs on Linux and arm64 today, and what this design refines | Proposed 2026-10-18 |
 | 2 | The container platform adapters | Proposed 2026-10-18; built at the owner's instruction, 2026-10-27 (plan s9 L0-L4): the `docker-engine` adapter on Docker Engine 28.0.4's recording, `auto`, the doctor and the meters through the adapter |
 | 3 | The edge's way to the gateway on Linux | Proposed 2026-10-18; option (a) chosen 2026-10-27 (decision 0071); the gateway's socket (step L5) and the edge's way on Docker Engine (step L6) built 2026-10-27 |
-| 4 | A workspace's container on Docker Engine | Proposed 2026-10-18; its memory limits, the agent's user and the workspaces' networks without this computer's address built at the owner's instruction, 2026-10-27 (plan s9 L7, L8, and L6's networks); the escape test of the host's own address comes with §3 (L6) |
+| 4 | A workspace's container on Docker Engine | Proposed 2026-10-18; its memory limits, the agent's user and the workspaces' networks without this computer's address built at the owner's instruction, 2026-10-27 (plan s9 L7, L8, and L6's networks); the escape test of the host's own address comes with §3 (L6); revised 2026-11-05 (the setup's network, decision 0169) |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | Proposed 2026-10-18; Docker's checks built with L4 and L7 (2026-10-27); the Pi's profile and checks (P3) wait |
 | 6 | OpenCode on arm64 | Proposed 2026-10-18 |
 | 7 | CI on arm64 | Proposed 2026-10-18 |
@@ -380,7 +380,9 @@ gateway listens on each platform.
   usually 1000 (`id -u` says). GitHub's runners may use another id, so the docker-marked tests in CI may meet this
   first (§7).
 - **The setup's network.** A workspace's setup (design 0004 §10) reaches the internet on Docker's default network
-  (`workspaces/sandbox.py:43`). On Docker Engine it goes out through the host. Nothing changes.
+  (`workspaces/sandbox.py:43`). On Docker Engine it goes out through the host. Nothing changes. *Revised 2026-11-05,
+  decision 0169: a setup joins the workspace's own internal network and goes out only through the proxy, as the
+  workspace's container does, so on Docker Engine it reaches the proxy through the edge and the gateway's socket.*
 
 ## 5. The doctor and the machine profile on a Raspberry Pi 5
 

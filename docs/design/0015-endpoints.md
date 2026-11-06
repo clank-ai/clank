@@ -271,7 +271,8 @@ Host clank-hpc clank-hpc-jump
   Desktop that includes a container that reaches `host.docker.internal`, which is how the edge reaches the gateway,
   itself listening on the loopback only (`workspaces/sandbox.py:168`, `gateway/server.py:611`). A workspace's setup
   container can (it runs on Docker's default network, `workspaces/sandbox.py:132-151`), and the gateway's bound check
-  (§10) never sees it. The server's key, which no container holds, is what stops such a program: one more reason a
+  (§10) never sees it. (Since 2026-11-05, decision 0169, a setup's container is on the workspace's internal network
+  and reaches only the proxy, so it cannot.) The server's key, which no container holds, is what stops such a program: one more reason a
   server beyond this machine needs one (§2).
 - **Where the tunnel ends** (`ends_at`). `login` is the cluster's recipe: the login host connects to the node's port,
   so the server listens for other computers on the cluster's network, and the traffic is encrypted only as far as the

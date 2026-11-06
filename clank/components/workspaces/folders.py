@@ -33,12 +33,16 @@
   sandbox image alone, built as an opening builds it when no image of its tag is there (asked first unless `yes`, each
   line in its log, cancelable), so `clank setup` builds it in the background and the first folder opens at once; an
   opening while it builds is refused, naming it. Docker must run, as for an opening.
-- `workspaces.setup` {folder, command, yes}, under its own lock (design 0004 §10): the folder's workspace must be open
-  once (its record made, the image built). A command given is kept in its record; the command is the record's, else
-  the one proposed from the folder's files (`setup.proposed_setup`), else there is nothing to install. Asked first
-  unless `yes` (it names the command and says it reaches the internet), it runs in a container of its own made for it
-  (`sandbox.setup_spec`), each line in the operation's log, cancelable; the record keeps the command once it ran to its
-  end, and a setup that fails leaves that as it was.
+- `workspaces.setup` {folder, command, yes}, under its own lock (design 0004 §10, decision 0169): the folder's
+  workspace must be open once (its record made, the image built), and the gateway must run, since the setup goes out
+  through its proxy. A command given is kept in its record; the command is the record's, else the one proposed from
+  the folder's files (`setup.proposed_setup`), else there is nothing to install. Asked first unless `yes`, saying what
+  runs (the folder's own install steps, which can run code from the folder) and what it reaches (only the package
+  indexes of the set `setup`, through the proxy), each time it runs. Then the workspace's network and the edge on it
+  are put right as an opening does, the gateway's routes carry the setup's identity with those hosts while it runs
+  (`Workspaces.carry_setup`), and it runs in a container of its own made for it (`sandbox.setup_spec`), each line in
+  the operation's log, cancelable; the record keeps the command once it ran to its end, and a setup that fails leaves
+  that as it was.
 - `workspaces.stop` {name}: its container stops; the edge, which others share, stays.
 - `workspaces.remove` {name, yes}: asked first unless `yes`; its container, its home (its agent's settings and
   sessions) and its network are removed, then its record. Its folder is never touched.
@@ -51,9 +55,11 @@ from datetime import timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from clank.components.gateway.service import setup_identity
 from clank.components.workspaces.adapters.platform import Container, ContainerPlatform, NetworkGone
 from clank.components.workspaces.kinds import Workspace
 from clank.components.workspaces.memory import memory_refused, memory_said
+from clank.components.workspaces.network import SETS_FILE, setup_hosts
 from clank.components.workspaces.sandbox import (
     PROXY_LABEL,
     ContainerSpec,
@@ -82,6 +88,10 @@ STOP_SECONDS = 10
 NAME_LENGTH = 40
 RESERVED = frozenset({"edge"})  # names whose container is another of Clank's: `clank-<home>-edge` is the edge's
 FALLBACK_LIMITS = (4, 8192)  # CPUs and MiB, when the platform does not say what it has
+NO_GATEWAY = (
+    "the gateway does not run: a setup reaches the package indexes through its proxy, so start the gateway first (g on "
+    "the folder's page, or clank gateway restart)"
+)
 LAYER_WORDS = {  # each image layer: its name, and what it adds (design 0020 §3)
     "tex": (
         "the TeX layer",
@@ -224,25 +234,9 @@ class Folders:
                 await self._build(context, platform, tag)
             image = await self._layers(context, platform, name, workspace)
         async with context.step("networks"):
-            found = names(home)
-            labels = {"clank.home": home, "clank.component": "workspaces"}
-            await context.run_blocking(lambda: platform.ensure_network(found.outer, internal=False, labels=labels))
-            await self._inner_network(context, platform, name, labels, status.containers)
+            await self._networks(context, platform, name, status.containers)
         async with context.step("edge"):
-            repair = await context.run_blocking(
-                lambda: self.workspaces.edge.ready(
-                    name, status.containers, everyone=True, remake=True, found_by=f"opening {name}", log=context.log
-                )
-            )
-            if repair.problem:
-                raise WorkspaceError(repair.problem)
-            unreached = await context.run_blocking(
-                lambda: self.workspaces.edge.reached(
-                    name, status.containers, found_by=f"opening {name}", log=context.log
-                )
-            )
-            if unreached:
-                raise WorkspaceError(unreached)
+            await self._edge(context, name, status.containers, f"opening {name}", everyone=True)
         async with context.step("container"):
             cpus, memory_mib = await self._limits(context, platform, workspace)
             proxy = self.workspaces.proxy_url(name)
@@ -270,8 +264,9 @@ class Folders:
         return {"tag": tag, "built": True}
 
     async def setup(self, context: OperationContext) -> dict[str, Any]:
-        """Install the folder's software into its workspace's home, asked first, in a container that reaches the
-        internet; the record keeps a command given, and the command once it ran to its end."""
+        """Install the folder's software into its workspace's home, asked first, in a container of its own on the
+        workspace's network that reaches only the package indexes, through the proxy, while it runs (decision 0169);
+        the record keeps a command given, and the command once it ran to its end."""
         async with context.step("plan"):
             folder = checked_folder(
                 str(context.params["folder"]), self.kernel.home.root, self.workspaces.socket_folder()
@@ -289,22 +284,39 @@ class Folders:
             if command is None:
                 context.log(f"{folder} has nothing to install: no pyproject.toml or requirements.txt, no setup command")
                 return {"workspace": loaded.id, "installed": False}
+            hosts = setup_hosts(self.kernel.home)
             platform = self.workspaces.platform
             tag = layered_tag(workspace.layers)
             if not await context.run_blocking(platform.image_exists, tag):
                 raise WorkspaceError(f"{loaded.id}'s image ({tag}) is not built: open {loaded.id} first (o builds it)")
+            if not self.workspaces.gateway_runs():
+                raise WorkspaceError(NO_GATEWAY)
             if not context.params.get("yes"):
-                await self._ask_setup(context, loaded.id, command)
+                await self._ask_setup(context, loaded.id, command, hosts)
         async with context.step("install"):
-            cpus, memory_mib = await self._limits(context, platform, workspace)
-            spec = setup_spec(
-                self.kernel.home.id, loaded.id, folder, tag, cpus=cpus, memory_mib=memory_mib, command=command
-            )
-            context.log(f"running in {spec.name}: {command}")
-            status = await context.run_blocking(platform.run_once, spec, context.log, lambda: _canceled(context))
+            name = loaded.id
+            self.workspaces.carry_setup(name, hosts)  # its way out, while it runs
+            try:
+                reading = await context.run_blocking(platform.status)
+                await self._networks(context, platform, name, reading.containers)
+                await self._edge(context, name, reading.containers, f"installing {name}'s software", everyone=False)
+                cpus, memory_mib = await self._limits(context, platform, workspace)
+                proxy = self.workspaces.proxy_url(setup_identity(name))
+                spec = setup_spec(
+                    self.kernel.home.id, name, folder, tag, cpus=cpus, memory_mib=memory_mib, command=command,
+                    proxy=proxy,
+                )  # fmt: skip
+                context.log(f"it reaches {_reached(hosts)} through Clank's proxy, as {setup_identity(name)}")
+                context.log(f"Clank makes ~/.venv afresh, then runs in {spec.name}: {command}")
+                status = await context.run_blocking(platform.run_once, spec, context.log, lambda: _canceled(context))
+            finally:
+                self.workspaces.carry_setup(name, None)
             context.check_canceled()
             if status != 0:
-                raise WorkspaceError(f"the setup did not finish (exit {status}): the lines above say why")
+                raise WorkspaceError(
+                    f"the setup did not finish (exit {status}): the lines above say why; a host it reaches that is not "
+                    f"in the set setup (config/{SETS_FILE}) is refused by Clank's proxy, as clank network log shows"
+                )
             self._write(self._loaded(loaded.id), context, set_up=command)
             context.log(f"installed with: {command}")
         return {"workspace": loaded.id, "installed": True, "command": command}
@@ -470,6 +482,33 @@ class Folders:
         else:
             context.log(f"{spec.name} runs")
 
+    async def _networks(
+        self, context: OperationContext, platform: ContainerPlatform, name: str, containers: Sequence[Container]
+    ) -> None:
+        """The network that reaches the host, which only the edge joins, and the workspace's own (`_inner_network`),
+        each made when it is not there."""
+        found = names(self.kernel.home.id)
+        labels = {"clank.home": self.kernel.home.id, "clank.component": "workspaces"}
+        await context.run_blocking(lambda: platform.ensure_network(found.outer, internal=False, labels=labels))
+        await self._inner_network(context, platform, name, labels, containers)
+
+    async def _edge(
+        self, context: OperationContext, name: str, containers: Sequence[Container], found_by: str, *, everyone: bool
+    ) -> None:
+        """The edge put right and on the workspace's network (`Edge.ready`; on every workspace's with `everyone`), and
+        on Docker Engine reaching the gateway (`Edge.reached`); `WorkspaceError` saying why when it cannot be."""
+        edge = self.workspaces.edge
+        repair = await context.run_blocking(
+            lambda: edge.ready(name, containers, everyone=everyone, remake=True, found_by=found_by, log=context.log)
+        )
+        if repair.problem:
+            raise WorkspaceError(repair.problem)
+        unreached = await context.run_blocking(
+            lambda: edge.reached(name, containers, found_by=found_by, log=context.log)
+        )
+        if unreached:
+            raise WorkspaceError(unreached)
+
     async def _inner_network(
         self,
         context: OperationContext,
@@ -543,12 +582,18 @@ class Folders:
         )
         await self._ask(context, title, lines, "build", "Build it", "nothing is built")
 
-    async def _ask_setup(self, context: OperationContext, name: str, command: str) -> None:
+    async def _ask_setup(self, context: OperationContext, name: str, command: str, hosts: list[str]) -> None:
         lines = [
-            f"Clank installs {name}'s own software into its home (~/.venv), so its agent can run it:",
+            f"Clank installs {name}'s own software into its home (~/.venv), so its agent can run it, with the folder's "
+            "own install steps:",
             f"  {command}",
-            "It runs in a container of its own that reaches the internet to download the packages, mounted like the "
-            "workspace's; the workspace's container, where the agent runs, never reaches out.",
+            "These steps can run code from the folder (its build, a setup.py), as installing it anywhere would.",
+            f"They run in a container of its own on {name}'s network, which reaches {_reached(hosts)}, through Clank's "
+            f"proxy, each exchange in clank network log; the set setup in config/{SETS_FILE} lists them, yours to "
+            "change.",
+            "Clank makes ~/.venv afresh first, with the image's own Python (what was installed in it before is "
+            "removed), and the steps run with a clean home and pip set up by Clank alone, so nothing else in the "
+            "workspace's home changes what runs.",
             "The first time it may take a few minutes.",
         ]
         await self._ask(context, f"Install {name}'s software?", lines, "install", "Install it", "nothing is installed")
@@ -580,6 +625,11 @@ class Folders:
         answer = await context.ask(draft)
         if answer.option != yes:
             raise Canceled(f"{otherwise}: {answer.by.describe()} chose not to")
+
+
+def _reached(hosts: Sequence[str]) -> str:
+    """What a setup reaches, in words: "only the package indexes (pypi.org, files.pythonhosted.org)"."""
+    return f"only the package indexes ({', '.join(hosts)})" if hosts else "no host at all (its set is empty)"
 
 
 def _lock(params: Mapping[str, Any]) -> list[str]:

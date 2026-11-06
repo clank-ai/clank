@@ -141,7 +141,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 7 | NInfer's context (retired) | none yet |
 | 8 | What the tests must prove, and what waits | `tests/docker/test_escape.py` (5) |
 | 9 | The console: easy to use, dynamic, the machine on the right | `tests/components/machine/test_meters.py` (9), `tests/console/test_machine_column.py` (14) |
-| 10 | A project's own software and MCP servers | `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_secret_servers.py` (4), `tests/components/agents/test_secret_servers_named.py` (3), `tests/components/tools/test_console_servers.py` (5), `tests/components/tools/test_project_check.py` (8), `tests/components/tools/test_secret_server_check.py` (3), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_setup.py` (10), `tests/console/test_workspaces_page.py` (4) |
+| 10 | A project's own software and MCP servers | `tests/components/agents/test_agent_servers.py` (9), `tests/components/agents/test_secret_servers.py` (4), `tests/components/agents/test_secret_servers_named.py` (3), `tests/components/gateway/test_proxy_setup.py` (4), `tests/components/tools/test_console_servers.py` (5), `tests/components/tools/test_project_check.py` (8), `tests/components/tools/test_secret_server_check.py` (3), `tests/components/workspaces/test_network_sets.py` (5), `tests/components/workspaces/test_sandbox.py` (10), `tests/components/workspaces/test_setup.py` (16), `tests/console/test_workspaces_page.py` (4) |
 
 ## Design 0005: the phone (the first slice of M9)
 
@@ -525,11 +525,11 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | § | Section | Tests |
 | --- | --- | --- |
 | 1 | The rule: through Clank, by allowance | `tests/components/gateway/test_proxy.py` (13), `tests/components/gateway/test_proxy_dev_mode.py` (7), `tests/components/workspaces/test_workspace_commands.py` (5) |
-| 2 | The way out: a forward proxy at the gateway | `tests/components/gateway/test_proxy.py` (13), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10) |
+| 2 | The way out: a forward proxy at the gateway | `tests/components/gateway/test_proxy.py` (13), `tests/components/gateway/test_proxy_setup.py` (4), `tests/components/workspaces/test_edge.py` (5), `tests/components/workspaces/test_edge_reach.py` (10), `tests/components/workspaces/test_sandbox.py` (10) |
 | 3 | A host the agent asks for | `tests/components/agents/test_dev_mode_agent.py` (5), `tests/components/gateway/test_proxy_dev_mode.py` (7), `tests/components/workspaces/test_host_asks.py` (3) |
 | 4 | What the owner sees | `tests/components/gateway/test_network_views.py` (3), `tests/console/test_dev_mode_console.py` (5), `tests/console/test_folder.py` (27) |
-| 5 | Packages, papers, data: the named sets | `tests/components/workspaces/test_network_sets.py` (4), `tests/console/test_folder.py` (27) |
-| 6 | Search | `tests/components/agents/test_dev_mode_agent.py` (5), `tests/components/workspaces/test_network_sets.py` (4) |
+| 5 | Packages, papers, data: the named sets | `tests/components/workspaces/test_network_sets.py` (5), `tests/console/test_folder.py` (27) |
+| 6 | Search | `tests/components/agents/test_dev_mode_agent.py` (5), `tests/components/workspaces/test_network_sets.py` (5) |
 | 7 | What is never reached | `tests/components/gateway/test_proxy.py` (13), `tests/components/gateway/test_proxy_dev_mode.py` (7) |
 | 8 | Order of work | none yet |
 
@@ -2658,6 +2658,15 @@ Design 0024 §1, §3 and §7 (decision 0152): dev mode opens the agent's interne
 - the proxy the gateways process makes follows dev mode as the routes carry it
 - the services routes say dev mode as the runtime has it
 
+### `tests/components/gateway/test_proxy_setup.py`
+
+Design 0004 §10 and design 0024 §2 (decision 0169): a workspace's setup goes out through the proxy under an identity of its own, `<workspace>.setup`, with a token of its own: it reaches the hosts the routes carry for it (the set `setup`, the package indexes, while it runs) and nothing else. A host not among them is refused in words that name the set, never asked for, and dev mode does not lift that; a private address stays refused; the workspace's own token is not the setup's. Each exchange is logged under the setup's identity, and the log of a workspace shows its setup's exchanges with its agent's.
+
+- a setups identity is its workspaces name with setup after it
+- a setup reaches its hosts and nothing else never asked and not in dev mode either
+- a setup the routes do not carry reaches nothing
+- a workspaces log shows its setups exchanges with its agents
+
 ### `tests/components/gateway/test_reasoning_field.py`
 
 Design 0016 §8 and design 0015 §8 (decision 0074): thinking streamed as `reasoning`, as OpenRouter streams it, is read as `reasoning_content` is: it shows in the live view, counts as thinking, trips the loop guard when it repeats itself, and reaches the tool unchanged; a delta that carries both is read once.
@@ -3902,11 +3911,12 @@ Design 0020 §8-§10: the TeX layer's build helper (`layers/tex/latex_build.py`,
 
 ### `tests/components/workspaces/test_network_sets.py`
 
-Design 0024 §5 and §6 (decision 0141): the named sets of hosts (Python packages, papers, code, data and models, documentation) live in `CLANK_HOME/config/network-sets.json`, written with the defaults when missing and read each time, so the owner can change it; a set allowed writes its hosts into the workspace's record one by one, each marked with the set, and taking it back removes those still marked (a host the owner also allowed by name stays); the route and the command (`clank workspace allow FOLDER --set papers`, `clank workspace sets`); the agent's instructions (`network.md`) name the proxy, the ask once in words, and the literature calls, every host of which the Papers set allows.
+Design 0024 §5 and §6 (decision 0141): the named sets of hosts (Python packages, papers, code, data and models, documentation) live in `CLANK_HOME/config/network-sets.json`, written with the defaults when missing and read each time, so the owner can change it; a set allowed writes its hosts into the workspace's record one by one, each marked with the set, and taking it back removes those still marked (a host the owner also allowed by name stays); the route and the command (`clank workspace allow FOLDER --set papers`, `clank workspace sets`); the agent's instructions (`network.md`) name the proxy, the ask once in words, and the literature calls, every host of which the Papers set allows. Design 0004 §10 (decision 0169): the set `setup` is what a workspace's setup reaches, the package indexes, Clank's default while the owner's file names none (the file left as it is), the owner's to change, listed with the others and never allowed to an agent.
 
 - the sets file is written with the defaults and read back when the owner changes it
 - a set allowed writes its hosts marked with it and taking it back removes only those
 - the route and the command allow a set and list the sets
+- the setup set names the package indexes a setup reaches and is never an agents
 - the instructions tell the agent how it reaches the internet and the literature calls fit the papers set
 
 ### `tests/components/workspaces/test_platform_setup.py`
@@ -3937,16 +3947,22 @@ Design 0004 §3 and §6, design 0002 §2.9: a workspace's container mounts its f
 
 ### `tests/components/workspaces/test_setup.py`
 
-Design 0004 §10: a workspace's software. Clank proposes the setup from the folder's files (a `pyproject.toml`: an editable install, with its `dev` extra when it has one; a `requirements.txt`: those requirements; else nothing), into a virtual environment in the workspace's home. The setup runs in a container of its own, made for it and removed after it: the sandbox image, the folder and the home mounted as in the workspace's container, the same user and limits, on Docker's default network (the internet), which the workspace's own container never joins. The operation asks first unless told yes, keeps a command it is given in the workspace's record, logs each line of the install, and records the command that ran to its end; a setup that fails leaves that record as it was.
+Design 0004 §10: a workspace's software. Clank proposes the setup from the folder's files (a `pyproject.toml`: an editable install, with its `dev` extra when it has one; a `requirements.txt`: those requirements; else nothing), into a virtual environment in the workspace's home. The setup runs in a container of its own, made for it and removed after it: the sandbox image, the folder and the home mounted as in the workspace's container, the same user and limits, on the workspace's own internal network, going out only through Clank's proxy (HTTP_PROXY, HTTPS_PROXY and their lowercase forms) under an identity of its own (`<workspace>.setup`), which the gateway's routes carry, with the hosts of the set `setup` (the package indexes), only while it runs. It runs with `bash -c` (no login shell), a clean home of its own and pip set up by Clank alone, `~/.venv` made afresh by the image's own Python first, so nothing else in the workspace's home runs; `~/.venv` in its command is still the workspace's environment. Before it runs, the workspace's network is there with the edge on it, and the gateway runs (else it is refused, saying so). The operation asks first unless told yes, saying what runs (the folder's own steps, which can run code from the folder, reaching only the package indexes, through the proxy), and asks again each time it runs (a changed requirements file too); it keeps a command it is given in the workspace's record, logs each line of the install, and records the command that ran to its end; a setup that fails leaves that record as it was.
 
 - a pyproject with a dev extra is installed editable with it
 - a pyproject without a dev extra is installed editable
 - requirements are installed and a folder with neither needs nothing
 - an unreadable pyproject is installed without extras
-- the setup container reaches the internet is removed after and is contained like the workspaces
+- the setup container joins the workspaces network and goes out only through the proxy
+- the setup runs with bash c a clean home and pip set up by clank alone
+- the setups tilde venv is still the workspaces environment
 - the setup installs the proposed software and the record says with what
+- the gateways routes carry a setups hosts only while it runs and only for a workspace there
+- before it runs the setup makes the workspaces network and puts the edge on it
+- a setup while the gateway does not run is refused saying so
 - a command given is kept and one that fails leaves the record as it was
-- the setup asks first naming the command and that it downloads
+- the setup asks first saying what runs and what it reaches
+- a setup run again asks again so a changed requirements file is asked for
 - a folder not opened yet or with nothing to install is said so
 - the folders view says what its software is and whether it is installed
 

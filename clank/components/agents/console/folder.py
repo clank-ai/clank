@@ -629,8 +629,10 @@ class FolderPage(Page):
             "computer (`ssh_host` in config/vscode.json names this PC there).",
             "e installs the folder's own software (its packages, its command line, its MCP server) into the "
             "workspace's home, where the agent finds it: Clank proposes the command from the folder's pyproject.toml "
-            "or requirements.txt, and you may change it; it runs in a container of its own that reaches the internet, "
-            "while the agent's never does. The agent can start without it; g and c offer it, asked first.",
+            "or requirements.txt, and you may change it. Clank makes ~/.venv afresh, then runs it in a container of "
+            "its own that reaches only the package indexes (the set setup in config/network-sets.json), through "
+            "Clank's proxy, while the gateway runs; it can run code from the folder. The agent can start without it; g "
+            "and c offer it, asked first.",
             "r switches how the agent changes your files: review (the default) has it ask first, and the change opens "
             "in VS Code beside your files to accept or reject (or answer it here, under waiting for you, or from the "
             "phone); auto lets it change files without asking, and VS Code shows each change after it is made. A "
@@ -824,13 +826,14 @@ class FolderPage(Page):
         setup = view.get("setup") or {}
         field = Field(
             "command",
-            "The command that installs it, run in the folder (/workspace) with the internet",
+            "The command that installs it, run in the folder (/workspace), reaching the package indexes",
             "python3 -m venv --system-site-packages ~/.venv && ~/.venv/bin/python -m pip install -r requirements.txt",
             setup.get("command") or "",
         )
         note = (
-            "It runs in a container of its own that reaches the internet; the agent's never does. The command is kept "
-            "for next time. Enter installs; Esc closes this."
+            "Clank makes ~/.venv afresh, then runs it in a container of its own that reaches only the package indexes "
+            "(the set setup in config/network-sets.json), through Clank's proxy; it can run code from the folder. The "
+            "command is kept for next time. Enter installs; Esc closes this."
         )
 
         def given(values: dict[str, str] | None) -> None:
@@ -938,7 +941,9 @@ class FolderPage(Page):
         self.run_worker(work, thread=True, group="folder-hosts", exclusive=True, exit_on_error=False)
 
     def _show_hosts(self, workspace: str, sets: dict[str, dict[str, Any]], hosts: dict[str, str]) -> None:
-        """The picker: each set allowed or not, a host by name, and each host allowed (to take back)."""
+        """The picker: each set allowed or not (but `setup`, a workspace's setup's, never its agent's: decision 0169), a
+        host by name, and each host allowed (to take back)."""
+        sets = {name: each for name, each in sets.items() if name != "setup"}
         allowed = {name: all(host in hosts for host in each.get("hosts") or []) for name, each in sets.items()}
         choices = [
             Choice(

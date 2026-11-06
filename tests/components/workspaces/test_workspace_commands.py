@@ -16,6 +16,7 @@ from clank import registry
 from clank.cli import common
 from clank.cli.main import main
 from clank.client import Client
+from clank.components.gateway.service import Gateway
 from clank.components.workspaces import service as workspaces_service
 from clank.components.workspaces.sandbox import names
 from clank.kernel.api import create_app
@@ -77,7 +78,9 @@ def test_the_workspace_commands_open_list_stop_and_remove(
 def test_the_setup_command_installs_the_folders_software_and_says_with_what(
     kernel: Kernel, http: TestClient, platform: FakePlatform, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Design 0004 §10: `clank workspace setup [FOLDER] [--command TEXT] [--yes]`."""
+    """Design 0004 §10: `clank workspace setup [FOLDER] [--command TEXT] [--yes]`, while the gateway runs (a setup goes
+    out through its proxy)."""
+    monkeypatch.setattr(Gateway, "status", lambda self: {"state": "running", "port": 18210, "problem": ""})
     folder = tmp_path / "paper"
     folder.mkdir()
     (folder / "requirements.txt").write_text("numpy\n", encoding="utf-8")

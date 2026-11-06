@@ -18,9 +18,12 @@ bridge's address and nothing listens there, it reaches them through their socket
 gateway's socket folder read-only at `/run/clank`, its only mount besides Clank's programs, and runs as the owner
 (`owner_ids`), so it may open them.
 
-A workspace's setup (design 0004 §10) runs in a container of its own, made for it and removed when it ends: mounted,
-contained and limited as the workspace's container, but on Docker's default network, which reaches the internet, so
-the folder's own software can be downloaded into the home without the workspace's container ever reaching out.
+A workspace's setup (design 0004 §10, decision 0169) runs in a container of its own, made for it and removed when it
+ends: mounted, contained and limited as the workspace's container, on the workspace's own internal network, and told
+the proxy as the workspace's container is (the lowercase forms too, which some programs read alone), under the setup's
+own identity, so it reaches only the hosts the gateway's routes carry for it while it runs (the package indexes). It
+runs `setup.setup_script` with `bash -c` (never a login shell), its HOME a clean folder of its own and pip's
+configuration Clank's alone (`setup.setup_env`).
 
 All of them run Clank's sandbox image, built from the Dockerfile in the `image` folder beside this module; its tag is
 the checksum of that Dockerfile (`image_tag`), so a change to it builds a new image, and an image of that tag is the one
@@ -49,6 +52,8 @@ from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
 
+from clank.components.workspaces.setup import setup_env, setup_script
+
 USER = "1000:1000"
 WORKSPACE = "/workspace"
 AGENT_HOME = "/home/agent"
@@ -69,7 +74,6 @@ CURRENT_INSTRUCTIONS = f"{AGENT_CLANK}/instructions/*.md"  # Clank's instruction
 NETWORK_INSTRUCTIONS = f"{AGENT_CLANK}/instructions/network.md"  # the agent's internet, as dev mode says (0152)
 LITERATURE = "## The literature"  # where the network instructions' rules end and the literature's calls begin
 IMAGE = "clank-sandbox"
-DEFAULT_NETWORK = "bridge"  # Docker's own, which reaches the internet: a workspace's setup only
 LAYERS = ("tex",)  # the image layers Clank knows (design 0020 §3), in the order they are built
 THREADS = ("OMP_NUM_THREADS", "NUMBA_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")
 
@@ -153,7 +157,7 @@ def workspace_spec(
     env = thread_env(cpus)
     labels = _labels(home, name)
     if proxy:
-        env += (("HTTP_PROXY", proxy), ("HTTPS_PROXY", proxy), ("ALL_PROXY", proxy), ("NO_PROXY", NO_PROXY))
+        env += proxy_env(proxy)
         labels += ((PROXY_LABEL, proxy.rsplit(":", 1)[-1].rstrip("/")),)  # the port, never the token
     return ContainerSpec(
         name=found.container(name),
@@ -171,25 +175,35 @@ def workspace_spec(
     )
 
 
+def proxy_env(proxy: str, *, lowercase: bool = False) -> tuple[tuple[str, str], ...]:
+    """The proxy as a container is told it (design 0024 §2): HTTP_PROXY, HTTPS_PROXY and ALL_PROXY its URL, and what
+    reaches past it in NO_PROXY; with `lowercase`, each also as http_proxy and the like, which some programs read
+    alone (curl and git its plain HTTP)."""
+    found = (("HTTP_PROXY", proxy), ("HTTPS_PROXY", proxy), ("ALL_PROXY", proxy), ("NO_PROXY", NO_PROXY))
+    return found + tuple((key.lower(), value) for key, value in found) if lowercase else found
+
+
 def setup_spec(
-    home: str, name: str, folder: str, image: str, *, cpus: float, memory_mib: int, command: str
+    home: str, name: str, folder: str, image: str, *, cpus: float, memory_mib: int, command: str, proxy: str
 ) -> ContainerSpec:
-    """The container that installs a workspace's software (design 0004 §10): mounted, contained and limited as the
-    workspace's own, on Docker's default network, which reaches the internet; it runs the command and is removed."""
+    """The container that installs a workspace's software (design 0004 §10, decision 0169): mounted, contained and
+    limited as the workspace's own, on its internal network, told the `proxy` (the setup's URL, with its own token) in
+    upper and lower case; it runs the command in `setup.setup_script` with `bash -c`, a clean HOME and pip set up by
+    Clank alone, and is removed."""
     found = names(home)
     return ContainerSpec(
         name=found.setup(name),
         image=image,
         labels=_labels(home, name),
-        networks=((DEFAULT_NETWORK, ""),),
-        command=("bash", "-lc", command),
+        networks=((found.inner(name), ""),),
+        command=("bash", "-c", setup_script(command)),
         binds=((folder, WORKSPACE),),
         volumes=((found.volume(name), AGENT_HOME),),
         workdir=WORKSPACE,
         cpus=cpus,
         memory_mib=memory_mib,
         once=True,
-        env=thread_env(cpus),
+        env=(*thread_env(cpus), *proxy_env(proxy, lowercase=True), *setup_env()),
         programs=str(image_folder()),
     )
 

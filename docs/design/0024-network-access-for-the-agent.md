@@ -4,8 +4,8 @@ The agent reaches the internet only through Clank, and only where the owner allo
 
 A workspace's container joins an internal network where nothing answers but the edge, and the edge forwards one
 port to the gateway (design 0004 §3). So the agent cannot fetch a paper, read a package's documentation, download a
-data set or `pip install` a library while it works (only a workspace's setup runs with the internet, design 0004
-§10). For research this is the largest gap the review of 2026-10-26 found (the inspection that led to design 0023).
+data set or `pip install` a library while it works (a workspace's setup, design 0004 §10, reaches the package indexes
+alone, through the same proxy: decision 0169). For research this is the largest gap the review of 2026-10-26 found (the inspection that led to design 0023).
 This design opens the network the way Clank opens everything: visibly, by the owner's word, recorded.
 
 ## Sections
@@ -16,7 +16,7 @@ This design opens the network the way Clank opens everything: visibly, by the ow
 | 2 | The way out: a forward proxy at the gateway | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)); revised after approval 2026-10-26 (the edge made again joins every workspace's network back) |
 | 3 | A host the agent asks for | Approved 2026-10-26; built 2026-10-26 ([plan s54](../plans/s54-the-ask.md)); revised after approval 2026-10-29 (the owner's request: nothing held or asked in dev mode, and the instructions say so, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)); revised 2026-11-04 (a question nobody answered is not a no, decision 0162) |
 | 4 | What the owner sees | Approved 2026-10-26; built 2026-10-26 ([plan s56](../plans/s56-the-network-views.md)) but the Monitor's fetching line, which comes with the Monitor's move to the stream (design 0023 step 4); revised after approval 2026-10-29 (the owner's request: This folder and the log say dev mode, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
-| 5 | Packages, papers, data: the named sets | Approved 2026-10-26; built 2026-10-26 ([plan s55](../plans/s55-the-named-sets.md)): the file, `clank workspace allow --set`; the console's key with the views |
+| 5 | Packages, papers, data: the named sets | Approved 2026-10-26; built 2026-10-26 ([plan s55](../plans/s55-the-named-sets.md)): the file, `clank workspace allow --set`; the console's key with the views; revised after approval 2026-11-05 (the set `setup`, what a workspace's setup reaches, decision 0169) |
 | 6 | Search | Approved 2026-10-26; the literature calls built 2026-10-26 in the agent's instructions ([plan s55](../plans/s55-the-named-sets.md)); a web search provider is the owner's choice, when the need shows; revised after approval 2026-10-29 (the owner's request: OpenCode's own web tools in dev mode, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)) |
 | 7 | What is never reached | Approved 2026-10-26; built 2026-10-26 ([plan s53](../plans/s53-the-proxy.md)); revised after approval 2026-10-29 (the owner's request: private addresses refused in dev mode too, decision 0152), built 2026-10-30 ([plan s64](../plans/s64-dev-mode-opens-the-internet.md)); revised after approval 2026-11-04 (the audit of 2026-10-30: an IPv6 address judged by the IPv4 one it carries, and any address that is not public refused, decision 0157) |
 | 8 | Order of work | Approved 2026-10-26 |
@@ -116,11 +116,19 @@ Clank offers named sets the owner allows with one key, each listing what it open
 | Code | `github.com`, `raw.githubusercontent.com`, `codeload.github.com`, `api.github.com`, `gitlab.com` | reading and cloning public code |
 | Data and models | `zenodo.org`, `huggingface.co`, `cdn-lfs.huggingface.co`, `osf.io` | data sets and model files |
 | Documentation | `docs.python.org`, `numpy.org`, `scipy.org`, `matplotlib.org`, `pandas.pydata.org` | the documentation of what the container has |
+| Setup | `pypi.org`, `files.pythonhosted.org` | what a workspace's setup reaches while it installs the folder's software (design 0004 §10), never its agent |
 
 A set is sugar over §1's allowances: allowing it writes its hosts into the record, each marked with the set's name;
 the sets live in a readable file (`config/network-sets.json`) the owner can change. With the Python set allowed, a
 workspace's `~/.venv` takes `pip install` directly (it already sees the image's scientific packages, decision 0138);
 the setup command stays for the reproducible install.
+
+*Revised after approval (2026-11-05), decision 0169: the set `setup` is not an agent's. It lists what a workspace's
+setup reaches through the proxy, under the setup's own identity (`<workspace>.setup`), while it runs: the package
+indexes its install steps download from. It is never allowed to an agent (`--set setup` is refused, naming `python`,
+and `h` does not offer it), `clank workspace sets` lists it with the others, and the owner changes it in the same
+file. A file written before it has none: Clank's default stands in then, saying so, and the file is left as it is. A
+host a setup reaches that is not in it is refused, never asked for, dev mode or not.*
 
 ## 6. Search
 
