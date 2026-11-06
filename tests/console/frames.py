@@ -80,6 +80,9 @@ def assert_frame(frame: str, name: str) -> None:
     assert scrollbar_masked(shown) == scrollbar_masked(expected), f"the frame differs from {path.name}:\n{difference}"
 
 
+QUIET = 0.35  # seconds a frame stays the same to be steady: more than the console's update period, a quarter second
+
+
 async def settle(pilot: Pilot[Any], until: Callable[[], bool], seconds: float = 10) -> None:
     """Let the console run until a condition holds (it loads and redraws in its own time) and the screen on top is
     drawn: a window pushed a moment ago is on screen before its first layout, and its frame is empty until then (a
@@ -99,18 +102,20 @@ def drawn(app: App[Any]) -> bool:
 
 
 async def steady_frame(pilot: Pilot[Any], app: App[Any], seconds: float = 10) -> str:
-    """The app's frame once it has stopped changing: the same frame twice, a tenth of a second apart, so no frame is
-    taken between a change and the layout that follows it (a row of panels stacks on its first resize, and its panels
-    then draw their titles again for their new widths)."""
+    """The app's frame once it has stopped changing: the same frame for `QUIET` seconds, longer than the console's
+    update period, so no frame is taken between a change and the layout that follows it (a row of panels stacks on its
+    first resize, and its panels then draw their titles again for their new widths), nor before a change already
+    queued for the console's next update (two frames a tenth of a second apart could both come before it)."""
     deadline = time.monotonic() + seconds
     SHOWN[:] = [app]
-    frame = render_text(app)
+    frame, since = render_text(app), time.monotonic()
     while time.monotonic() < deadline:
-        await pilot.pause(0.1)
+        await pilot.pause(0.05)
         again = render_text(app)
-        if again == frame:
+        if again != frame:
+            frame, since = again, time.monotonic()
+        elif time.monotonic() - since >= QUIET:
             return frame
-        frame = again
     raise AssertionError("the frame never stopped changing")
 
 

@@ -128,8 +128,7 @@ async def test_each_view_draws_its_panels_titled_and_empty_saying_no_session_yet
         page = await opened(pilot, app)
         for view in VIEWS:
             page.show_view(view)
-            await pilot.pause()
-            frame = render_text(app)
+            frame = await steady_frame(pilot, app)
             boards = [f"board-{name}" for name in page.BOARDS]  # the Flow view's D4, beside its D1
             shown = [panel for panel in page.panels(view) if not any(panel.has_class(each) for each in boards)]
             panels = [panel for panel in shown if panel.id != "monitor-session-live"]

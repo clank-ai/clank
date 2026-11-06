@@ -131,7 +131,7 @@ async def test_the_live_text_is_read_from_its_offset_only_while_shown_and_a_new_
         for view in ("context", "flow"):  # F10 to the Context view, then to the Flow view: the live text is not on them
             await pilot.press("f10")
             await settle(pilot, partial(shows, page, view))
-            await pilot.pause(0.5)  # a reading that began before
+            await pilot.pause(1.0)  # a reading that began before, its answer slow (0.6 s) in the slow case
             count = len(asked)
             await pilot.pause(1.5)
             assert len(asked) == count, f"not read on the {view} view, where it is not shown"
