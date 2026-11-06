@@ -380,6 +380,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `tools/check_secrets.py` | Refuse anything in the repository that looks like a key, a token, a home folder or a machine's identity (design |
 | `tools/check_spelling.py` | Refuse British spellings anywhere in the repository: Clank is written in American English, in code, comments, |
 | `tools/codemap.py` | Write `docs/CODEMAP.md`: one line per module of `clank/`, `tools/`, the VS Code extension (`vscode/src/`, |
+| `tools/constraints.py` | Write `constraints.txt`: each dependency Clank installs, at the version `uv.lock` names (decision 0170). |
 | `tools/eventsdoc.py` | Write `docs/EVENTS.md`: every event type Clank declares, with what it means, its data, whether it is kept, and |
 | `tools/extension.py` | Check the VS Code extension: install its tools from their lock when needed, then compile and test it (decision |
 | `tools/files.py` | The repository's files as the checks see them: what git tracks or would track, read as text when they are text. |

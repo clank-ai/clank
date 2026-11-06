@@ -1,9 +1,12 @@
 """`clank update` (design 0026): what is installed and what is newer (`--check`), and the update itself, the way Clank
-was installed; `--dry-run` says each step and changes nothing. The logic is `clank/updates.py`."""
+was installed, each dependency at the version the release was tested with (decision 0170); `--dry-run` says each step
+and changes nothing. The logic is `clank/updates.py`."""
 
 import json
 import os
 import sys
+import urllib.error
+from pathlib import Path
 from typing import Any
 
 import click
@@ -75,7 +78,9 @@ def _clone(install: updates.Install, found: dict[str, Any], dry_run: bool) -> No
         )
     steps = [f"git pull --ff-only (in {install.where})"]
     if found["dependencies"]:
-        steps.append(" ".join(updates.install_command(install, found)) + " (its dependencies changed), by a helper")
+        own = Path(install.where) / updates.CONSTRAINTS  # as it is pulled
+        command = updates.install_command(install, found, own)
+        steps.append(" ".join(command) + f" (its dependencies changed; with its {updates.CONSTRAINTS}), by a helper")
     else:
         steps.append("start the service again, so the new code runs")
     if found["extension"]:
@@ -106,12 +111,29 @@ def _helper(install: updates.Install, found: dict[str, Any], dry_run: bool) -> N
     log = home.logs / "update.log"
     windows = sys.platform == "win32"
     script = home.state / ("update-helper.ps1" if windows else "update-helper.sh")
-    command = updates.install_command(install, found)
+    place = home.state / "update-constraints.txt"
+    if dry_run and install.kind == "release":
+        url = updates.constraints_url(str(found["latest"]))
+        click.echo(f"Would read the versions {found['latest']} was tested with ({url}) into {place}")
+        command = updates.install_command(install, found, place)
+        click.echo("Would stop the service and the gateway (their files are the tool's), then run this helper:")
+        click.echo(updates.helper_script(command, log, os.getpid(), windows))
+        return
+    try:
+        constraints, said = updates.constraints_of(install, found, place)
+    except (urllib.error.URLError, OSError) as error:
+        raise click.ClickException(
+            f"the versions {found.get('latest') or install.version} was tested with could not be read ({error}): "
+            "nothing was changed; try clank update again"
+        ) from error
+    command = updates.install_command(install, found, constraints)
     text = updates.helper_script(command, log, os.getpid(), windows)
     if dry_run:
+        click.echo(f"Would install {said}")
         click.echo("Would stop the service and the gateway (their files are the tool's), then run this helper:")
         click.echo(text)
         return
+    click.echo(f"Installing {said}")
     updates.stop_running()
     home.state.mkdir(parents=True, exist_ok=True)
     home.logs.mkdir(parents=True, exist_ok=True)

@@ -1,15 +1,15 @@
 """Run every check that continuous integration runs, in one command: formatting, lint, types, the VS Code extension
 and the tests.
 
-`uv run python -m tools.check` runs them all and names each one that fails, so one run shows every problem. With
-`--fix` it first rewrites what can be rewritten safely: the formatting, Ruff's safe fixes, and the generated files (the
-settings schemas, the extension's TypeScript types, the events page, the API page, the code map, the tests page). The
-extension is compiled and tested before the tests, which run its client against a real service. Continuous integration
-runs this same module (`.github/workflows/checks.yml`), so passing here means passing there. The types are checked
-twice, as on Windows and as on Linux (each with its own cache), because the type checker skips code under the other
-platform's `if sys.platform` and CI checks Windows only for pull requests and tags. The tests include the repository's
-own checks (`tests/test_repository.py`): links, indexes, secrets, spelling, and the colors and marks written in the
-console's code.
+`uv run python -m tools.check` runs them all and names each one that fails, so one run shows every problem. With `--fix`
+it first rewrites what can be rewritten safely: the formatting, Ruff's safe fixes, and the generated files (the settings
+schemas, the extension's TypeScript types, the events page, the API page, the code map, the tests page, the
+constraints). The extension is compiled and tested before the tests, which run its client against a real service.
+Continuous integration runs this same module (`.github/workflows/checks.yml`), so passing here means passing there. The
+types are checked twice, as on Windows and as on Linux (each with its own cache), because the type checker skips code
+under the other platform's `if sys.platform` and CI checks Windows only for pull requests and tags. The tests include
+the repository's own checks (`tests/test_repository.py`): links, indexes, secrets, spelling, and the colors and marks
+written in the console's code.
 """
 
 import subprocess
@@ -27,6 +27,7 @@ FIXES: list[tuple[str, list[str]]] = [
     ("API page", [sys.executable, "-m", "tools.apidoc"]),
     ("code map", [sys.executable, "-m", "tools.codemap"]),
     ("tests page", [sys.executable, "-m", "tools.testspage"]),
+    ("constraints", [sys.executable, "-m", "tools.constraints"]),
 ]
 CHECKS: list[tuple[str, list[str]]] = [
     ("formatting", [sys.executable, "-m", "ruff", "format", "--check", "."]),

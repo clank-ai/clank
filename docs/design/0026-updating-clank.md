@@ -9,7 +9,7 @@ easily". Before it, getting-started said to run the installer again.
 | § | Section | Status |
 | --- | --- | --- |
 | 1 | What is installed, and what is newer | Approved 2026-10-26 (the owner's request); built 2026-10-26 ([plan s61](../plans/s61-updating-clank.md)); revised 2026-11-04 (published releases only, decision 0163) |
-| 2 | Updating | Approved 2026-10-26 (the owner's request); built 2026-10-26 ([plan s61](../plans/s61-updating-clank.md)); revised 2026-11-04 (every value the helper writes quoted for its shell, decision 0163) |
+| 2 | Updating | Approved 2026-10-26 (the owner's request); built 2026-10-26 ([plan s61](../plans/s61-updating-clank.md)); revised 2026-11-04 (every value the helper writes quoted for its shell, decision 0163); revised after approval 2026-11-06 (each dependency at the version the release was tested with, decision 0170) |
 | 3 | Saying it where the owner looks | Approved 2026-10-26 (the owner's request); `clank update --check` built; the console's line and VS Code's next |
 
 ## 1. What is installed, and what is newer
@@ -37,7 +37,9 @@ doing it. The owner's settings and state (`~/.clank`) are never touched.
   build and install it. Then the service is started again, so the new code runs.
 - **A release**: the newest release installed as the installer installs it (`uv tool install --force
   --reinstall-package clank --python 3.12 git+https://github.com/clank-ai/clank@<tag>`, Git allowed long paths for that
-  one download).
+  one download), each dependency at the version that release was tested with: its `constraints.txt`, read at its tag
+  and passed as `--constraints` (decision 0170). A release from before the file has none, which the update says; a
+  file that cannot be read stops the update before anything changed. A clone installed again takes its own file.
 - **Finishing in a helper** (decision 0145): on Windows a program's files cannot be replaced while it runs, and the
   service, the gateway and `clank update` itself run from the tool's files. So when the tool must be installed again,
   `clank update` stops the service and the gateway, starts a small helper of its own (a PowerShell or sh script under

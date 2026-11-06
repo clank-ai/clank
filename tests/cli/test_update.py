@@ -137,6 +137,7 @@ def test_a_release_is_installed_by_a_helper_after_clank_update_ends_and_a_dry_ru
     install = updates.Install("release", "0.3.0b1", "v0.3.0b1", "")
     monkeypatch.setattr(updates, "installed", lambda **_: install)
     monkeypatch.setattr(updates, "fetch", lambda url: {"tag_name": "v0.3.1"})
+    monkeypatch.setattr(updates, "download", lambda url: None)  # a release from before its tested versions
     monkeypatch.setenv("CLANK_HOME", str(tmp_path / "home"))
     started: list[Path] = []
     stopped: list[str] = []
@@ -210,3 +211,83 @@ def test_only_pre_releases_follow_the_newest_published_one_never_a_bare_tag(monk
     odd = updates.newer(install, fetch=lambda url: {"tag_name": "v0.3.1; rm -rf ~"})
     assert odd["newer"] is None
     assert "names no version" in odd["error"]
+
+
+TESTED = "fastapi==0.143.0\ntextual==8.2.8\nuvicorn==0.54.0\n"
+
+
+def test_a_release_installs_each_dependency_at_the_version_it_was_tested_with(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Decision 0170: the release's own constraints.txt, read at its tag, is uv's `--constraints`; a release from
+    before it names none, and the update says it takes the newest versions allowed."""
+    install = updates.Install("release", "0.3.0b1", "v0.3.0b1", "")
+    monkeypatch.setattr(updates, "installed", lambda **_: install)
+    monkeypatch.setattr(updates, "fetch", lambda url: {"tag_name": "v0.3.1"})
+    asked: list[str] = []
+
+    def download(url: str) -> str | None:
+        asked.append(url)
+        return TESTED
+
+    monkeypatch.setattr(updates, "download", download)
+    home = tmp_path / "home"
+    monkeypatch.setenv("CLANK_HOME", str(home))
+    started: list[Path] = []
+    monkeypatch.setattr(updates, "stop_running", lambda: None)
+    monkeypatch.setattr(updates, "start_helper", lambda script: started.append(script))
+    dry = CliRunner().invoke(update, ["--dry-run"])
+    assert dry.exit_code == 0, dry.output
+    assert "https://raw.githubusercontent.com/clank-ai/clank/v0.3.1/constraints.txt" in dry.output
+    assert (asked, started) == ([], []), "a dry run reads and writes nothing"
+    done = CliRunner().invoke(update, [])
+    assert done.exit_code == 0, done.output
+    assert asked == ["https://raw.githubusercontent.com/clank-ai/clank/v0.3.1/constraints.txt"]
+    pinned = home / "state" / "update-constraints.txt"
+    assert pinned.read_text(encoding="utf-8") == TESTED
+    text = started[-1].read_text(encoding="utf-8")
+    assert "--constraints" in text
+    assert str(pinned) in text
+    assert "each dependency at the version v0.3.1 was tested with" in done.output
+
+    monkeypatch.setattr(updates, "download", lambda url: None)
+    older = CliRunner().invoke(update, [])
+    assert older.exit_code == 0, older.output
+    assert "--constraints" not in started[-1].read_text(encoding="utf-8")
+    assert "v0.3.1 names no tested versions" in older.output
+
+
+def test_a_release_whose_tested_versions_cannot_be_read_is_not_updated(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    install = updates.Install("release", "0.3.0b1", "v0.3.0b1", "")
+    monkeypatch.setattr(updates, "installed", lambda **_: install)
+    monkeypatch.setattr(updates, "fetch", lambda url: {"tag_name": "v0.3.1"})
+
+    def unreachable(url: str) -> str | None:
+        raise urllib.error.URLError("no route to host")
+
+    monkeypatch.setattr(updates, "download", unreachable)
+    monkeypatch.setenv("CLANK_HOME", str(tmp_path / "home"))
+    stopped: list[str] = []
+    monkeypatch.setattr(updates, "stop_running", lambda: stopped.append("stopped"))
+    monkeypatch.setattr(updates, "start_helper", lambda script: pytest.fail("nothing is started"))
+    refused = CliRunner().invoke(update, [])
+    assert refused.exit_code != 0
+    assert "could not be read" in refused.output
+    assert "nothing was changed" in refused.output
+    assert stopped == [], "the service runs on as it was"
+
+
+def test_a_clone_installs_with_its_own_constraints_when_it_has_them(tmp_path: Path) -> None:
+    clone = tmp_path / "clone"
+    clone.mkdir()
+    install = updates.Install("clone", "0.3.0b8", str(clone), "")
+    assert updates.constraints_of(install, {}, tmp_path / "pinned.txt")[0] is None, "a clone from before: none"
+    (clone / "constraints.txt").write_text(TESTED, encoding="utf-8")
+    found, said = updates.constraints_of(install, {}, tmp_path / "pinned.txt")
+    assert found == clone / "constraints.txt"
+    assert "constraints.txt" in said
+    command = updates.install_command(install, {}, found)
+    assert command[-2:] == ["--constraints", str(clone / "constraints.txt")]
+    assert updates.install_command(install, {})[-1] == "3.12", "none given: none passed"

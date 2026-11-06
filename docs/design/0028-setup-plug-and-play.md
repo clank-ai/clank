@@ -19,7 +19,7 @@ Linux ([design 0014](0014-linux-and-small-machines.md) §2-§4, built at the own
 | --- | --- | --- |
 | 1 | Who sets Clank up, and the one path each follows | Proposed 2026-10-27; being built at the owner's instruction |
 | 2 | Rules every step of the setup keeps | Proposed 2026-10-27; being built at the owner's instruction |
-| 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9); revised 2026-10-29 at the owner's instruction (`install.sh` in color, `clank setup` offered at its end, no log out and in: decision 0150) |
+| 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9); revised 2026-10-29 at the owner's instruction (`install.sh` in color, `clank setup` offered at its end, no log out and in: decision 0150); revised after approval 2026-11-06 (Clank at the versions its release was tested with, decision 0170) |
 | 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: the checklist (S2), the fixes (S3) and the sandbox image built in the background (S4), `clank setup` and the console's Setup page ([plan s62](../plans/s62-clank-setup.md)); Clank's VS Code window's install is said, not done by the setup; revised 2026-10-29 at the owner's instruction (in color; the docker group taken at once, decision 0150); revised after approval (2026-11-05): an item says who else may open Clank's secrets and state, only while someone may (decision 0167) |
 | 5 | Docker, configured correctly on each system | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: each state's words and fix (S2), and the fixes Clank does, in the terminal on a yes (S3); revised 2026-10-29 at the owner's instruction (no log out and in: decision 0150) |
 | 6 | Clank's VS Code extension without building it | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction (S5) |
@@ -75,7 +75,9 @@ key, and accepting Docker Desktop's terms on Windows and macOS.
 
 The installers stay short, readable scripts on the website (`install.ps1`, `install.sh`), in five numbered steps. What
 changes is step 3, Docker, which today only says where to get it on macOS and Linux, and a last step that hands over
-to `clank setup`.
+to `clank setup`. Step 4 installs Clank at the latest release's tag with each dependency at the version that release
+was tested with: its `constraints.txt`, read at the tag and passed to uv as `--constraints` (decision 0170; revised
+after approval 2026-11-06); a release from before the file has none, and the installer says so.
 
 - **Windows** (`install.ps1`). uv, Git and Docker Desktop with winget, asking first, as now. Then, while Docker
   Desktop is new: it opens Docker Desktop once and waits for its engine (up to five minutes, saying so), because its

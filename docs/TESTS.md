@@ -58,7 +58,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 8.1 | Layers | none yet |
 | 8.2 | Contract tests make plug and play safe | `tests/contract/test_container_platform.py` (9), `tests/contract/test_engine.py` (4) |
 | 8.3 | Fixtures recorded from the real engines | `tests/fakes/test_recorded.py` (7) |
-| 8.4 | Continuous integration | `tests/test_repository.py` (11), `tests/tools/test_check.py` (4), `tests/tools/test_check_docs.py` (12), `tests/tools/test_check_secrets.py` (9), `tests/tools/test_extension.py` (5), `tests/tools/test_files.py` (4), `tests/tools/test_markdown.py` (5) |
+| 8.4 | Continuous integration | `tests/test_repository.py` (12), `tests/tools/test_check.py` (4), `tests/tools/test_check_docs.py` (12), `tests/tools/test_check_secrets.py` (9), `tests/tools/test_extension.py` (5), `tests/tools/test_files.py` (4), `tests/tools/test_markdown.py` (5) |
 | 8.5 | Tests say what they prove | `tests/tools/test_markdown.py` (5), `tests/tools/test_testspage.py` (12) |
 | 8.6 | Tests come first | none yet |
 | 8.7 | The computer stays usable, measured | none yet |
@@ -95,7 +95,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2.18 | Choices this section makes | none yet |
 | 3 | The skeleton (M0) and the order of milestones | see its subsections |
 | 3.1 | How the rest is designed and built | none yet |
-| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (4), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (15), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (21), `tests/console/test_text.py` (5), `tests/test_repository.py` (11), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (7), `tests/tools/test_codemap.py` (10), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (19) |
+| 3.2 | M0: the skeleton | `tests/cli/test_docker_commands.py` (6), `tests/components/machine/test_doctor.py` (4), `tests/components/workspaces/test_docker.py` (2), `tests/console/test_home.py` (15), `tests/console/test_pages.py` (10), `tests/console/test_shell.py` (21), `tests/console/test_text.py` (5), `tests/test_repository.py` (12), `tests/test_version.py` (4), `tests/tools/test_check_spelling.py` (7), `tests/tools/test_codemap.py` (10), `tests/tools/test_generated.py` (4), `tests/tools/test_vsix.py` (4), `vscode/test/controller.test.ts` (19) |
 | 3.3 | The milestones after M0 | `tests/docker/test_escape.py` (5) |
 | 3.4 | Carried into the later milestones' designs | none yet |
 
@@ -235,7 +235,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 3 | The style in the console | `tests/console/test_console_style.py` (14) |
 | 4 | The panel | `tests/components/tools/test_console_servers.py` (5), `tests/console/test_frames.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_pages_fit.py` (1), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_windows.py` (3), `tests/console/test_workspaces_page.py` (4) |
 | 5 | Text never spills out of a panel | `tests/console/test_frames.py` (1), `tests/console/test_text.py` (5), `tests/console/test_windows.py` (3) |
-| 6 | No color written in a page | `tests/test_repository.py` (11), `tests/tools/test_check_colors.py` (8) |
+| 6 | No color written in a page | `tests/test_repository.py` (12), `tests/tools/test_check_colors.py` (8) |
 | 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (3), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_pages_fit.py` (1), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (21), `tests/console/test_windows.py` (3), `tests/console/test_windows_placed.py` (3) |
 | 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (5), `tests/components/tools/test_console_servers.py` (5), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_workspaces_page.py` (4) |
 | 9 | Narrow windows | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_machine_column.py` (14), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5) |
@@ -554,8 +554,8 @@ Each test file begins with a docstring naming the design sections it verifies (d
 
 | § | Section | Tests |
 | --- | --- | --- |
-| 1 | What is installed, and what is newer | `tests/cli/test_update.py` (8) |
-| 2 | Updating | `tests/cli/test_update.py` (8) |
+| 1 | What is installed, and what is newer | `tests/cli/test_update.py` (11) |
+| 2 | Updating | `tests/cli/test_update.py` (11) |
 | 3 | Saying it where the owner looks | none yet |
 
 ## Design 0027: One look: Clank's surfaces beside its website
@@ -807,6 +807,9 @@ Design 0026 §1 and §2 (decision 0145): what is installed, read from uv's recor
 - check says what is installed what is newer and what it contacted
 - the helper takes a home path with quotes and dollars as it is
 - only pre releases follow the newest published one never a bare tag
+- a release installs each dependency at the version it was tested with
+- a release whose tested versions cannot be read is not updated
+- a clone installs with its own constraints when it has them
 
 ### `tests/cli/test_work_cloud.py`
 
@@ -5363,6 +5366,7 @@ Design 0001 §8.4, design 0002 §3.2 and design 0011 §6: the repository passes 
 - the events page is up to date
 - the api page is up to date
 - the extensions typescript types are up to date
+- the constraints are the versions uv lock names
 - the settings schemas are up to date
 - clanks own default settings read without a problem
 - every link index and section status is in order

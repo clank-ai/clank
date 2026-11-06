@@ -29,7 +29,7 @@ commit.
 | `vscode/` | The VS Code extension (TypeScript, decision 0028): `src/core/` is its logic, tested by Node's own runner without VS Code; `src/extension.ts` is the thin glue; `src/core/kinds.ts` is generated; its README says what it shows |
 | `tools/` | Development tools, never shipped: the generated files (code map, tests page, events page, settings schemas), the documentation, secrets, spelling and colors checks, and `check`, which runs every check |
 | `bench/` | Benches, never shipped: measurements against the running service and the real model (`uv run python -m bench.talking FOLDER`, design 0023 §6), printing timings and counts only; their numbers are kept in the design section they measure |
-| `pyproject.toml`, `uv.lock`, `.python-version` | The package, its dependencies (pinned in the lock) and its tools' settings; Python 3.12 for development |
+| `pyproject.toml`, `uv.lock`, `constraints.txt`, `.python-version` | The package, its dependencies (pinned in the lock; `constraints.txt`, generated from it, is what installs and updates take: decision 0170) and its tools' settings; Python 3.12 for development |
 | `.github/workflows/checks.yml` | Continuous integration: the same checks, on every push, and the Docker tests on Linux with Docker Engine (design 0014 §10); a version tag whose checks pass gets its GitHub release, carrying the VS Code extension and its SHA-256 (`tools.release`, design 0028 §6); beside it, `record-docker-engine.yml`, run only by hand, records Docker Engine for its adapter's contract (design 0014 §2) |
 | `docs/PRINCIPLES.md` | The design philosophy |
 | `docs/ROADMAP.md` | The milestones in build order and the parts they build, with their status |

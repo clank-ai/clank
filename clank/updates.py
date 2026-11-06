@@ -6,9 +6,10 @@ requirement, or Clank run from a working copy with no record), or another way. `
 latest release (its newest tag while there is no release) for a release; the commits a clone's branch is behind its
 upstream, after a fetch, with whether its tree has changes of its own and whether those commits touch Clank's
 dependencies or its VS Code extension, for a clone. `helper_script` writes what finishes an update that installs the
-tool again once `clank update` has ended (decision 0145: Windows keeps a running program's files). Every outside call
-goes through `run` and `fetch`, and the service through `restart_service`, `stop_running` and `start_helper`, which the
-tests replace.
+tool again once `clank update` has ended (decision 0145: Windows keeps a running program's files). uv installs each
+dependency at the version the release was tested with (`constraints_of`, decision 0170): its `constraints.txt`, read
+at its tag, or a clone's own. Every outside call goes through `run`, `fetch` and `download`, and the service through
+`restart_service`, `stop_running` and `start_helper`, which the tests replace.
 """
 
 import json
@@ -29,6 +30,8 @@ from clank.kernel.processes import background_flags, clank_command, resolved, wi
 
 REPO = "https://github.com/clank-ai/clank"
 API = "https://api.github.com/repos/clank-ai/clank"
+RAW = "https://raw.githubusercontent.com/clank-ai/clank"  # a file of the repository at a tag
+CONSTRAINTS = "constraints.txt"  # each dependency at the version uv.lock names (decision 0170, tools/constraints.py)
 TIMEOUT = 10.0  # seconds GitHub has to answer
 PACKAGE = Path(__file__).resolve().parent
 DEPENDENCIES = ("pyproject.toml", "uv.lock")  # a pull that changes one installs the tool again
@@ -38,6 +41,7 @@ STAGES = {"a": 0, "b": 1, "rc": 2}  # a final version comes after its pre-releas
 
 Run = Callable[[list[str], str], tuple[int, str]]  # a command and its folder; its status and what it said
 Fetch = Callable[[str], Any]  # a URL; its JSON
+Download = Callable[[str], str | None]  # a URL; its text, None when there is none
 
 
 @dataclass(frozen=True)
@@ -72,6 +76,44 @@ def fetch(url: str) -> Any:
     headers = {"User-Agent": f"clank/{__version__} (update check)", "Accept": "application/vnd.github+json"}
     with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=TIMEOUT) as answer:
         return json.load(answer)
+
+
+def download(url: str) -> str | None:
+    """The text at `url`; None when there is none there (404). `TIMEOUT` seconds at most."""
+    headers = {"User-Agent": f"clank/{__version__} (update)"}
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=TIMEOUT) as answer:
+            return str(answer.read().decode("utf-8"))
+    except urllib.error.HTTPError as error:
+        if error.code == 404:
+            return None
+        raise
+
+
+def constraints_url(tag: str) -> str:
+    """Where a release's tested versions are: its `constraints.txt`, at its tag."""
+    return f"{RAW}/{tag}/{CONSTRAINTS}"
+
+
+def constraints_of(
+    install: Install, found: dict[str, Any], place: Path, read: Download | None = None
+) -> tuple[Path | None, str]:
+    """The constraints uv installs with (decision 0170), and what that means, in words: a release's `constraints.txt`,
+    read at its tag and written to `place`; a clone's own, as it was pulled. None when there is none (a release or a
+    clone from before them): uv then takes the newest versions `pyproject.toml` allows. A release's file that cannot
+    be read raises (`urllib.error.URLError`, `OSError`): the update is not made."""
+    if install.kind == "clone":
+        own = Path(install.where) / CONSTRAINTS
+        if own.is_file():
+            return own, f"each dependency at the version its {CONSTRAINTS} names"
+        return None, f"it has no {CONSTRAINTS}: uv takes the newest versions pyproject.toml allows"
+    tag = str(found["latest"])
+    text = (read or download)(constraints_url(tag))
+    if text is None:
+        return None, f"{tag} names no tested versions (it is from before them): uv takes the newest versions it allows"
+    place.parent.mkdir(parents=True, exist_ok=True)
+    place.write_text(text, encoding="utf-8")
+    return place, f"each dependency at the version {tag} was tested with ({CONSTRAINTS})"
 
 
 def installed(*, prefix: Path | None = None, run: Run = run) -> Install:
@@ -176,12 +218,14 @@ def _clone(install: Install, run: Run) -> dict[str, Any]:
     return found
 
 
-def install_command(install: Install, found: dict[str, Any]) -> list[str]:
-    """uv's command that installs the tool again: the latest release as the installer installs it, or the clone."""
+def install_command(install: Install, found: dict[str, Any], constraints: Path | None = None) -> list[str]:
+    """uv's command that installs the tool again: the latest release as the installer installs it, or the clone; with
+    `constraints`, each dependency at the version they name (decision 0170)."""
+    pinned = ["--constraints", str(constraints)] if constraints is not None else []
     if install.kind == "release":
-        return ["uv", "tool", "install", "--force", "--reinstall-package", "clank", "--python", "3.12",
+        return ["uv", "tool", "install", "--force", "--reinstall-package", "clank", "--python", "3.12", *pinned,
                 f"git+{REPO}@{found['latest']}"]  # fmt: skip
-    return ["uv", "tool", "install", "--force", "--editable", install.where, "--python", "3.12"]
+    return ["uv", "tool", "install", "--force", "--editable", install.where, "--python", "3.12", *pinned]
 
 
 def helper_script(command: list[str], log: Path, waits_for: int, windows: bool) -> str:

@@ -4,6 +4,8 @@ spelling, a color or a state's mark written in the console's code."""
 
 from pathlib import Path
 
+import pytest
+
 from tools import (
     apidoc,
     check_colors,
@@ -11,6 +13,7 @@ from tools import (
     check_secrets,
     check_spelling,
     codemap,
+    constraints,
     eventsdoc,
     schemas,
     testspage,
@@ -44,6 +47,13 @@ def test_the_api_page_is_up_to_date(tmp_path: Path) -> None:
 
 def test_the_extensions_typescript_types_are_up_to_date() -> None:
     assert current(tstypes.OUTPUT) == tstypes.render_repository(), f"run `{tstypes.COMMAND}`"
+
+
+def test_the_constraints_are_the_versions_uv_lock_names() -> None:
+    """Decision 0170: what the installer and `clank update` install is what was tested (`uv export` of the lock)."""
+    if not constraints.uv():
+        pytest.skip("uv is not on the PATH here")
+    assert current(constraints.OUTPUT) == constraints.render(REPO), f"run `{constraints.COMMAND}`"
 
 
 def test_the_settings_schemas_are_up_to_date() -> None:
