@@ -56,6 +56,8 @@ async def test_a_pasted_key_shows_as_dots_and_its_last_four_and_nothing_else_of_
     app = make(client, home)
     async with app.run_test(size=(88, 30)) as pilot:
         await settle(pilot, lambda: "Fake Docker" in render_text(app))
+        marks = ("This folder   ✗", "Docker         ●", "Models         ●")  # the menu's, which come later
+        await settle(pilot, lambda: all(mark in render_text(app) for mark in marks))
         form = FormScreen("Your OpenRouter key", [Field("key", "paste your OpenRouter key", secret=True)])
         app.push_screen(form, given.append)
         await settle(pilot, lambda: bool(app.screen.query(SecretField)))
