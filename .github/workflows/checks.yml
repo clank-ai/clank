@@ -1,10 +1,13 @@
 # The repository's checks: formatting, lint, types, the VS Code extension, and the tests, which include the
-# documentation, secrets and spelling checks. They run by the same command as on a working copy, `uv run python -m tools.check` (design 0001
-# §8.4). Python 3.12, the oldest Clank supports, runs on every push; Python 3.14 on Linux and Windows runs for pull
-# requests, version tags and on demand (decision 0022). The Docker tests run on Linux with Docker Engine on every push
-# (design 0014 §10). A version tag whose checks all pass then gets its GitHub release, carrying the VS Code extension
-# (design 0028 §6). Each action is pinned to the commit of a release at least
-# two weeks old.
+# documentation, secrets and spelling checks. They run by the same command as on a working copy,
+# `uv run python -m tools.check` (design 0001 §8.4). Python 3.12, the oldest Clank supports and the one it installs
+# with, runs on Linux and on Windows on every push, and so does an install made as the installers make it, each
+# dependency at the version constraints.txt names (decision 0170). Python 3.14 on Linux and Windows is a canary: it runs
+# for pull requests, version tags, each night and on demand, and holds no release (decision 0171). Each Monday the
+# checks run on the newest version of every dependency the ranges allow, to learn of a break before a release bumps the
+# lock. The Docker tests run on Linux with Docker Engine on every push (design 0014 §10). A version tag whose two 3.12
+# lanes pass then gets its GitHub release, carrying the VS Code extension (design 0028 §6); a tag is pushed only on a
+# commit whose push run passed (decision 0171). Each action is pinned to the commit of a release at least two weeks old.
 name: checks
 
 on:
@@ -12,19 +15,30 @@ on:
     branches: [main]
     tags: ["v*"]
   pull_request:
+  schedule:
+    - cron: "17 5 * * *"  # each night: Python 3.14, the canary
+    - cron: "41 6 * * 1"  # each Monday: the newest dependencies
   workflow_dispatch:
 
+# A push to main runs to its end, so each push has its verdict and a tag can be put on one that passed (decision
+# 0171); a pull request's newer push cancels its older run.
 concurrency:
-  group: checks-${{ github.ref }}
-  cancel-in-progress: true
+  group: checks-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
   oldest-python:
-    name: Linux, Python 3.12
-    runs-on: ubuntu-24.04
+    name: Python 3.12
+    if: github.event_name != 'schedule'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
@@ -41,8 +55,10 @@ jobs:
       - run: uv run --locked python -m tools.check
 
   newest-python:
-    name: Python 3.14
-    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
+    name: Python 3.14 (canary)
+    if: >-
+      (github.event_name != 'push' && github.event_name != 'schedule') || startsWith(github.ref, 'refs/tags/') ||
+      github.event.schedule == '17 5 * * *'
     strategy:
       fail-fast: false
       matrix:
@@ -66,6 +82,85 @@ jobs:
       - if: runner.os == 'Linux'
         run: uv run --locked python -m tools.extension --host
 
+  # Clank installed as the installers install it (decision 0170): `uv tool install` with constraints.txt, which reads no
+  # lock, then each dependency checked at the version the file names, and the command run.
+  installed:
+    name: Installed as users install it, ${{ matrix.os }}
+    if: github.event_name != 'schedule'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.3"
+          python-version: "3.12"
+          enable-cache: false
+      - run: uv tool install --constraints constraints.txt --python 3.12 .
+      - name: Each dependency at the version constraints.txt names
+        shell: bash
+        run: |
+          tools=$(uv tool dir)
+          if command -v cygpath >/dev/null; then tools=$(cygpath -u "$tools"); fi  # Windows: a path bash can use
+          python="$tools/clank/bin/python"
+          [ -x "$python" ] || python="$tools/clank/Scripts/python.exe"
+          "$python" -I -c '
+          import importlib.metadata as metadata, pathlib, sys
+          wrong = []
+          for line in pathlib.Path("constraints.txt").read_text(encoding="utf-8").splitlines():
+              line = line.split(";")[0].strip()
+              if not line or line.startswith("#"):
+                  continue
+              name, version = line.split("==")
+              try:
+                  found = metadata.version(name)
+              except metadata.PackageNotFoundError:
+                  continue  # a dependency of another platform
+              if found != version:
+                  wrong.append(f"{name} {found}, not {version}")
+          print("\n".join(wrong) or "every dependency at its version")
+          sys.exit(1 if wrong else 0)'
+      - shell: bash
+        run: |
+          bin=$(uv tool dir --bin)
+          if command -v cygpath >/dev/null; then bin=$(cygpath -u "$bin"); fi
+          export PATH="$bin:$PATH"
+          clank --version
+          clank doctor || true
+
+  # Each Monday, the checks on the newest version of every dependency the ranges in pyproject.toml allow, the lock
+  # upgraded in the job alone (and constraints.txt written from it), so a break upstream is known before a release.
+  newest-dependencies:
+    name: Newest dependencies, Linux, Python 3.12
+    if: github.event.schedule == '41 6 * * 1' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.3"
+          python-version: "3.12"
+          enable-cache: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: vscode/package-lock.json
+      - run: uv lock --upgrade
+      - run: git diff --stat uv.lock
+      - run: uv sync
+      - run: uv run python -m tools.constraints
+      - run: uv run python -m tools.check
+
   # The Docker tests on a real Linux (design 0014 §10, P2 for x64): GitHub's ubuntu-24.04 runner has Docker Engine, the
   # system's service from Docker's own packages, so the docker-engine adapter, the edge's way to the gateway's socket and
   # the workspaces' networks without this computer's address run as on a Linux computer. The runner's user is not the
@@ -73,6 +168,7 @@ jobs:
   # built once in the job. Its checkout keeps no token.
   linux-docker:
     name: Linux, Docker Engine
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -89,7 +185,8 @@ jobs:
         run: uv run --locked clank doctor || true
       - run: uv run --locked pytest -m docker tests/docker/test_escape.py tests/docker/test_agent_files_live.py tests/docker/test_cloud_live.py tests/docker/test_setup_live.py -p no:cacheprovider -ra
 
-  # The GitHub release of a version tag, once every check passed on it (design 0028 §6): the VS Code extension compiled,
+  # The GitHub release of a version tag, once both 3.12 lanes and the install passed on it (design 0028 §6, decision
+  # 0171; the 3.14 canary holds none): the VS Code extension compiled,
   # tested and packaged as on a working copy (tools.extension, tools.vsix), then attached with its SHA-256 by
   # tools.release, so a release installed by the one-line installer gets the extension without Node. The only job that
   # may write to the repository, and only its releases; it restores no cache that another run wrote, and its checkout
@@ -97,7 +194,7 @@ jobs:
   release:
     name: GitHub release
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: [oldest-python, newest-python]
+    needs: [oldest-python, installed]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

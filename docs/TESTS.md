@@ -329,7 +329,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 4 | A workspace's container on Docker Engine | `tests/components/machine/test_checks.py` (10), `tests/components/workspaces/test_agent_access.py` (4), `tests/components/workspaces/test_docker_containers.py` (19), `tests/components/workspaces/test_workspace_operations.py` (17), `tests/docker/test_escape.py` (5) |
 | 5 | The doctor and the machine profile on a Raspberry Pi 5 | `tests/components/machine/test_checks.py` (10) |
 | 6 | OpenCode on arm64 | none yet |
-| 7 | CI on arm64 | `tests/tools/test_workflows.py` (2) |
+| 7 | CI on arm64 | `tests/tools/test_release_gate.py` (5), `tests/tools/test_workflows.py` (2) |
 | 8 | A small machine: memory, VS Code and the owner's settings | none yet |
 | 9 | What this design does not cover | none yet |
 | 10 | Build steps | `tests/docker/test_cloud_live.py` (1), `tests/tools/test_workflows.py` (2) |
@@ -582,7 +582,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 3 | The installer on each system | none yet |
 | 4 | `clank setup`: the checklist, and the fixes it can make | `tests/cli/test_model_add.py` (7), `tests/cli/test_paint.py` (2), `tests/cli/test_setup_command.py` (7), `tests/cli/test_setup_fixes.py` (19), `tests/components/agents/test_setup_checklist.py` (31), `tests/components/machine/test_private_folders.py` (8), `tests/components/workspaces/test_image_operation.py` (5), `tests/console/test_data.py` (20), `tests/console/test_setup_page.py` (7), `tests/console/test_setup_page_fixes.py` (8), `tests/console/test_shell.py` (21), `tests/docker/test_setup_live.py` (1) |
 | 5 | Docker, configured correctly on each system | `tests/cli/test_docker_group.py` (3), `tests/cli/test_setup_fixes.py` (19), `tests/components/agents/test_setup_checklist.py` (31), `tests/components/workspaces/test_platform_setup.py` (6), `tests/console/test_setup_page_fixes.py` (8), `tests/contract/test_container_platform.py` (9), `tests/docker/test_setup_live.py` (1) |
-| 6 | Clank's VS Code extension without building it | `tests/components/agents/test_vscode_release.py` (6), `tests/tools/test_release.py` (6) |
+| 6 | Clank's VS Code extension without building it | `tests/components/agents/test_vscode_release.py` (6), `tests/tools/test_release.py` (6), `tests/tools/test_release_gate.py` (5) |
 | 7 | Local models: what is one step and what is not yet | none yet |
 | 8 | Tests and build steps | none yet |
 
@@ -5547,6 +5547,16 @@ Design 0028 §6: each version tag's GitHub release carries Clank's VS Code exten
 - a final versions release is not a prerelease and without its section the notes link to the changelog
 - a tag that is not clanks version or an extension not packaged makes no release
 - a dry run says the command and the notes and runs nothing
+
+### `tests/tools/test_release_gate.py`
+
+Design 0028 §6 (decisions 0170 and 0171): continuous integration's release gate. Python 3.12, the Python Clank installs with, runs on Linux and on Windows on every push, and so does an install made as the installers make it, with constraints.txt; a push to main runs to its end, so each has its verdict; the release waits for those lanes alone, Python 3.14 being a canary that holds none; each Monday the checks run on the newest dependencies. The workflow is read as text, since Clank has no YAML library (design 0014 §7).
+
+- python 3 12 runs on linux and windows on every push
+- an install as users make it runs on every push and checks each version
+- a push to main runs to its end and only a pull request cancels its older run
+- the release waits for the 3 12 lanes and the install and not the canary
+- each monday the checks run on the newest dependencies
 
 ### `tests/tools/test_schemas.py`
 

@@ -93,7 +93,10 @@ def test_the_docker_tests_run_in_ci_on_linux_x64() -> None:
     text = (WORKFLOWS / "checks.yml").read_text(encoding="utf-8")
     linux = job(text, "linux-docker")
     assert "runs-on: ubuntu-24.04" in linux
-    assert "if:" not in linux.split("steps:", 1)[0], "on every push and pull request the checks run on"
+    conditions = [line.strip() for line in linux.split("steps:", 1)[0].splitlines() if "if:" in line]
+    assert conditions in ([], ["if: github.event_name != 'schedule'"]), (
+        "on every push and pull request the checks run on"
+    )
     assert "pytest -m docker tests/docker/test_escape.py tests/docker/test_agent_files_live.py" in linux
     assert "tests/docker/test_cloud_live.py" in linux, "an agent's request through the edge and gateway to the cloud"
     assert "tests/docker/test_setup_live.py" in linux, "`clank setup --check` on a real Linux"

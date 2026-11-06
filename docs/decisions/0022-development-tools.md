@@ -1,6 +1,7 @@
 # 0022. Development tools: uv, hatchling, pytest, Ruff and mypy
 
-- Status: Accepted; its snapshot tool is superseded by [0027](0027-console-snapshots-are-text.md)
+- Status: Accepted; its snapshot tool is superseded by [0027](0027-console-snapshots-are-text.md), its line on
+  continuous integration's Python 3.14 by [0171](0171-the-release-gate-is-python-3-12-on-linux-and-windows-on-every-push.md)
 - Date: 2026-10-11
 - Decided by: proposed by Claude in the M0.1 plan, under the owner's instruction to "plan M0.1, and start building"
   (2026-10-11); the owner can revisit it

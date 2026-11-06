@@ -22,7 +22,7 @@ Linux ([design 0014](0014-linux-and-small-machines.md) §2-§4, built at the own
 | 3 | The installer on each system | Proposed 2026-10-27; built 2026-10-27 on the website (`install.sh` c9727ce, `install.ps1` 05f8fa9); revised 2026-10-29 at the owner's instruction (`install.sh` in color, `clank setup` offered at its end, no log out and in: decision 0150); revised after approval 2026-11-06 (Clank at the versions its release was tested with, decision 0170) |
 | 4 | `clank setup`: the checklist, and the fixes it can make | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: the checklist (S2), the fixes (S3) and the sandbox image built in the background (S4), `clank setup` and the console's Setup page ([plan s62](../plans/s62-clank-setup.md)); Clank's VS Code window's install is said, not done by the setup; revised 2026-10-29 at the owner's instruction (in color; the docker group taken at once, decision 0150); revised after approval (2026-11-05): an item says who else may open Clank's secrets and state, only while someone may (decision 0167) |
 | 5 | Docker, configured correctly on each system | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction: each state's words and fix (S2), and the fixes Clank does, in the terminal on a yes (S3); revised 2026-10-29 at the owner's instruction (no log out and in: decision 0150) |
-| 6 | Clank's VS Code extension without building it | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction (S5) |
+| 6 | Clank's VS Code extension without building it | Proposed 2026-10-27; built 2026-10-27 at the owner's instruction (S5); revised after approval 2026-11-06 (the release waits for Python 3.12 on Linux and Windows, decision 0171) |
 | 7 | Local models: what is one step and what is not yet | Proposed 2026-10-27 |
 | 8 | Tests and build steps | Proposed 2026-10-27; the installers' tests built (the website's `installer` workflow); `clank setup`'s tests built (S2-S4) |
 
@@ -235,7 +235,9 @@ installed by the one-line installer has none. Each release carries it instead:
   its SHA-256 against the release's, and installs it. A clone builds its own, as now.
 - No Node and no build are needed to use Clank's VS Code window.
 
-As built (2026-10-27): CI's job `release` (`.github/workflows/checks.yml`) runs once every check passed on a tag `v*`,
+As built (2026-10-27; revised after approval 2026-11-06, decision 0171): CI's job `release`
+(`.github/workflows/checks.yml`) runs once Python 3.12 on Linux and on Windows and an install made as users make
+it passed on a tag `v*` (Python 3.14 is a canary that holds no release),
 builds the extension as a working copy does (`tools.extension`, `tools.vsix`), and makes the release with
 `tools/release.py`: the tag must be Clank's own version, the release carries `clank-<the extension's version>.vsix` and
 `SHA256SUMS`, a tag with a, b or rc is a pre-release, and its notes are the version's section of CHANGELOG.md (or a

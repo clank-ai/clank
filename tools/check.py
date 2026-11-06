@@ -7,9 +7,9 @@ schemas, the extension's TypeScript types, the events page, the API page, the co
 constraints). The extension is compiled and tested before the tests, which run its client against a real service.
 Continuous integration runs this same module (`.github/workflows/checks.yml`), so passing here means passing there. The
 types are checked twice, as on Windows and as on Linux (each with its own cache), because the type checker skips code
-under the other platform's `if sys.platform` and CI checks Windows only for pull requests and tags. The tests include
-the repository's own checks (`tests/test_repository.py`): links, indexes, secrets, spelling, and the colors and marks
-written in the console's code.
+under the other platform's `if sys.platform`, and a type error the Windows lane would find is best found here. The tests
+include the repository's own checks (`tests/test_repository.py`): links, indexes, secrets, spelling, and the colors and
+marks written in the console's code.
 """
 
 import subprocess
