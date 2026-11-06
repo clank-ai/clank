@@ -711,7 +711,7 @@ async def test_u_changes_the_bound_asked_first_and_the_held_back_servers_and_the
         )
         await settle(pilot, lambda: "held back: local only" in text(app))
         assert "its sessions: $0.84 today (Requests, F7, shows each)" in text(app)
-    assert ("POST", "workspaces/paper/cloud", {"allow": True}) in cloud_api.calls
+    assert ("POST", "workspaces/paper/cloud", {"allow": True, "confirm": True}) in cloud_api.calls
 
 
 async def test_h_allows_the_agent_a_named_set_of_hosts_or_a_host_and_takes_one_back(

@@ -106,6 +106,40 @@ def test_clank_workspace_allow_cloud_says_so_before_it_changes_anything(
     assert kernel.settings.get("workspace", "paper").record.model_dump()["models"] == "this-machine"
 
 
+def test_the_service_allows_the_cloud_to_a_workspace_carrying_them_only_when_told_the_owner_was_shown_it(
+    kernel: Kernel, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The words are every client's to show, and the service holds to them: without `confirm`, 409 `unconfirmed` in
+    the words of `cloud_confirm`, as giving such a server to a workspace that may use a cloud model is refused."""
+    folder = tmp_path / "paper"
+    opened(kernel, folder)
+    opened(kernel, tmp_path / "other", "other")
+    kernel.parts["agents"].allow("paper", "notes", True, actor=YOU)
+    with TestClient(create_app(kernel, token="t", port=7732), base_url="http://127.0.0.1:7732") as http:
+        headers = {"Authorization": "Bearer t"}
+        refused = http.post("/api/v1/workspaces/paper/cloud", json={"allow": True}, headers=headers)
+        assert refused.status_code == 409
+        assert refused.json()["error"]["code"] == "unconfirmed"
+        assert "your MCP server with secrets notes (KEY)" in refused.json()["error"]["message"]
+        assert kernel.settings.get("workspace", "paper").record.model_dump()["models"] == "this-machine"
+        plain = http.post("/api/v1/workspaces/other/cloud", json={"allow": True}, headers=headers)
+        assert plain.status_code == 200, "nothing with secrets goes with it: nothing more to confirm"
+        kept = http.post("/api/v1/workspaces/paper/cloud", json={"allow": False}, headers=headers)
+        assert kept.status_code == 200, "keeping it here sends nothing anywhere"
+        allowed = http.post("/api/v1/workspaces/paper/cloud", json={"allow": True, "confirm": True}, headers=headers)
+        assert allowed.status_code == 200
+        assert allowed.json()["models"] == "cloud"
+        kernel.parts["workspaces"].allow_cloud("paper", False, actor=YOU)
+        monkeypatch.setattr(common, "connect", lambda: Client("http://127.0.0.1:7732", "t", name="cli", http=http))
+        said = CliRunner().invoke(main, ["workspace", "allow", str(folder), "--cloud"], input="y\n")
+        assert said.exit_code == 0, said.output
+        assert kernel.settings.get("workspace", "paper").record.model_dump()["models"] == "cloud"
+        kernel.parts["workspaces"].allow_cloud("paper", False, actor=YOU)
+        told = CliRunner().invoke(main, ["workspace", "allow", str(folder), "--cloud", "--yes"])
+        assert told.exit_code == 0, told.output
+        assert kernel.settings.get("workspace", "paper").record.model_dump()["models"] == "cloud"
+
+
 def test_the_cloud_question_names_them_too(kernel: Kernel, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     opened(kernel, tmp_path / "paper")
     kernel.parts["agents"].allow("paper", "notes", True, actor=YOU)

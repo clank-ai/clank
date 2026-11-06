@@ -44,9 +44,12 @@ class SetupRequest(BaseModel):
 
 
 class CloudAnswer(BaseModel):
-    """Whether a workspace's agent may use the cloud model (false: kept on this machine)."""
+    """Whether a workspace's agent may use the cloud model (false: kept on this machine), and whether the owner was
+    shown what allowing it does (`cloud_confirm`): a workspace whose agent gets your MCP servers with secrets is allowed
+    it only with `confirm` (decision 0168)."""
 
     allow: bool
+    confirm: bool = False
 
 
 class HostWanted(BaseModel):
@@ -164,10 +167,12 @@ def router(workspaces: "Workspaces") -> APIRouter:
 
     @routes.post("/workspaces/{name}/cloud")
     async def cloud(name: str, answer: CloudAnswer, request: Request) -> dict[str, Any]:
-        """Allow a workspace's agent the cloud model, or keep it on this machine (design 0016 §9); its view after."""
+        """Allow a workspace's agent the cloud model, or keep it on this machine (design 0016 §9); its view after.
+        Allowing one whose agent gets your MCP servers with secrets needs `confirm`: without it, 409 `unconfirmed`, in
+        the words of its `cloud_confirm` (decision 0168)."""
         actor = client_actor(request.headers.get(CLIENT_HEADER))
         found: dict[str, Any] = await anyio.to_thread.run_sync(
-            lambda: workspaces.allow_cloud(name, answer.allow, actor=actor)
+            lambda: workspaces.allow_cloud(name, answer.allow, actor=actor, confirm=answer.confirm)
         )
         return found
 

@@ -37,7 +37,7 @@ def test_allow_cloud_asks_first_in_the_services_words(cloud_api: CloudBench, pap
     allowed = run("workspace", "allow", str(paper), "--cloud", given="y\n")
     assert allowed.exit_code == 0, allowed.output
     assert "paper: may use the cloud model: paper's requests may go to OpenRouter" in allowed.output
-    assert ("POST", "workspaces/paper/cloud", {"allow": True}) in cloud_api.calls
+    assert ("POST", "workspaces/paper/cloud", {"allow": True, "confirm": True}) in cloud_api.calls
 
 
 def test_allow_local_with_yes_asks_nothing(cloud_api: CloudBench, paper: Path) -> None:

@@ -165,7 +165,8 @@ def allow(
         if not click.confirm("Change it", default=False):
             click.echo("Nothing was changed.")
             raise click.exceptions.Exit(1)
-    changed = common.call(lambda: client.post(f"workspaces/{name}/cloud", {"allow": bound == "cloud"}))
+    body = {"allow": bound == "cloud", "confirm": True}  # its words were shown, or --yes said them answered
+    changed = common.call(lambda: client.post(f"workspaces/{name}/cloud", body))
     click.echo(f"{name}: {changed.get('cloud_said') or changed['models']}")
 
 

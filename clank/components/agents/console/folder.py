@@ -1245,7 +1245,8 @@ class FolderPage(Page):
             return
         allow = (self.view or {}).get("models") != "cloud"
         lines = [((self.view or {}).get("cloud_confirm") or {}).get("allow" if allow else "local", "")]
-        lines.append(f"The call: POST /api/v1/workspaces/{workspace}/cloud {json.dumps({'allow': allow})}")
+        body = {"allow": allow, "confirm": True}  # sent once the owner said yes to these words
+        lines.append(f"The call: POST /api/v1/workspaces/{workspace}/cloud {json.dumps(body)}")
         title = f"Let {workspace} use the cloud model?" if allow else f"Keep {workspace} on this machine?"
 
         def answered(yes: bool | None) -> None:
@@ -1255,7 +1256,7 @@ class FolderPage(Page):
 
             def work() -> None:
                 try:
-                    client.post(f"workspaces/{workspace}/cloud", {"allow": allow})
+                    client.post(f"workspaces/{workspace}/cloud", body)
                 except (NotRunning, ClientError) as error:
                     self._say(str(error), True)
                     return

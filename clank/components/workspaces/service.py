@@ -51,6 +51,7 @@ from clank.components.workspaces.adapters.platform import Container, ContainerPl
 from clank.components.workspaces.adapters.platform import PlatformStatus as PlatformStatus  # for the doctor
 from clank.components.workspaces.cloud import EVENT_TYPES as CLOUD_EVENT_TYPES
 from clank.components.workspaces.cloud import CloudBounds
+from clank.components.workspaces.cloudwords import confirm_said
 from clank.components.workspaces.edge import EVENT_TYPES as EDGE_EVENT_TYPES
 from clank.components.workspaces.edge import Edge
 from clank.components.workspaces.kinds import DockerSettings, Workspace
@@ -427,9 +428,15 @@ class Workspaces:
         (the agents component knows them, decision 0168): allowing the workspace the cloud names them first."""
         self.cloud.carried = carried
 
-    def allow_cloud(self, name: str, allow: bool, *, actor: Actor) -> dict[str, Any]:
-        """Allow a workspace the cloud model, or keep it on this machine; its view after."""
+    def allow_cloud(self, name: str, allow: bool, *, actor: Actor, confirm: bool = False) -> dict[str, Any]:
+        """Allow a workspace the cloud model, or keep it on this machine; its view after. A workspace whose agent gets
+        your MCP servers with secrets is allowed it only with `confirm`, the owner having been shown its
+        `cloud_confirm` (decision 0168): 409 `unconfirmed` otherwise, in those words."""
+        from clank.kernel.api import ApiError
+
         self._named(name)
+        if allow and not confirm and self.cloud.carried(name):
+            raise ApiError(409, "unconfirmed", confirm_said(name, self.cloud.carried(name))["allow"])
         self.cloud.allow(name, allow, actor=actor)
         return next(row for row in self.records() if row["name"] == name)
 
