@@ -1047,9 +1047,22 @@ class Agents:
         return prefixes
 
     def _heard_tools(self, event: Any) -> None:
-        """An MCP server added, removed or changed (its local mark among them): the gateway is given the names again."""
+        """An MCP server added, removed or changed (its local mark among them): the gateway is given the names again.
+        One of yours removed is named by no workspace's `mcp_secrets` any more, so one added again under its name goes
+        to no workspace until you give it (decision 0168)."""
         if event.type == "mcp.changed" or (event.type == "settings.changed" and event.data.get("kind") == "mcp-server"):
             self.give_local_only()
+        if event.type == "mcp.changed" and event.data.get("how") == "removed" and event.data.get("scope") == "user":
+            self._forget_given(str(event.data["name"]), event.actor)
+
+    def _forget_given(self, name: str, actor: Actor) -> None:
+        """Your server `name` taken out of every workspace's `mcp_secrets` (its holds, `mcp_off`, stay)."""
+        for loaded in self.kernel.settings.records("workspace"):
+            record = loaded.record.model_dump()
+            named = record.get("mcp_secrets") or []
+            if any(each.lower() == name.lower() for each in named):
+                record["mcp_secrets"] = [each for each in named if each.lower() != name.lower()]
+                self.kernel.settings.write("workspace", loaded.id, record, base=loaded.revision, actor=actor)
 
     def reads_images(self) -> bool:
         """Whether the agent's model reads images: its slot's preset sees them, and vision is not off (design 0008

@@ -23,13 +23,14 @@ Clank is in beta: fixes go into the newest version only.
 - **Your MCP servers' keys** go where such a server runs, beside the agent in a workspace's container, and only to the
   workspaces you give that server to (`clank mcp allow` in the folder, `m` on its page, `s` on the MCP servers page): a
   server of yours with secrets goes to no workspace until you do, and giving it to one that may use a cloud model asks
-  first; allowing a workspace the cloud names first each such server its agent gets, so either way you are asked
-  knowing the values can reach a model at a provider. There the values are in OpenCode's own environment alone,
-  named from its configuration, never written in a file in the container, and never on a command line: every
-  `docker exec` Clank makes names each variable alone, its value in the environment of the process that runs it (the
-  console, the `clank` command and VS Code receive the values of the servers given to a workspace when they start its
-  agent, to hand them to `docker exec`). **The agent of a workspace can read the values of the servers given to
-  it**, as those servers can, and a cloud model the workspace uses can read what the agent reads.
+  first; allowing a workspace the cloud names first each such server its agent gets, and the service refuses it until
+  the client says you were shown that, so either way you are asked knowing the values can reach a model at a provider.
+  There the values are in OpenCode's own environment alone, named from its configuration, never written in a file in the
+  container, and never on a command line: every `docker exec` Clank makes names each variable alone, its value in the
+  environment of the process that runs it (the console, the `clank` command and VS Code receive the values of the
+  servers given to a workspace when they start its agent, to hand them to `docker exec`). **The agent of a workspace can
+  read the values of the servers given to it**, as those servers can, and a cloud model the workspace uses can read what
+  the agent reads. Removing a server takes it from every workspace it was given to.
 - **Your secrets and state folders** (`CLANK_HOME/secrets` and `CLANK_HOME/state`, which holds the local token) can be
   opened only by you, whatever the folder above them allows, set each time Clank's service starts. On Linux and macOS
   each is mode 0700. On Windows each has an access list of its own: inheritance from the folder above is turned off,

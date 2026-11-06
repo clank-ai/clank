@@ -142,3 +142,22 @@ def test_the_service_refuses_it_unconfirmed_and_clank_mcp_allow_asks_in_the_term
         assert unasked.exit_code == 0, unasked.output
         assert READS not in unasked.output, "--yes answers it"
         assert row(kernel, "paper", "notes")["given"] is True
+
+
+def test_a_server_removed_is_named_by_no_workspace_so_one_added_again_under_its_name_goes_nowhere_unasked(
+    kernel: Kernel, platform: FakePlatform, tmp_path: Path
+) -> None:
+    opened(kernel, platform, tmp_path / "paper")
+    opened(kernel, platform, tmp_path / "other", name="other")
+    agents: Agents = kernel.parts["agents"]
+    tools = kernel.parts["tools"]
+    agents.allow("paper", "notes", True, actor=YOU)
+    agents.allow("other", "notes", True, actor=YOU)
+    agents.allow("other", "plain", False, actor=YOU)
+    tools.remove("notes", scope="user", folder="", actor=YOU)
+    for workspace in ("paper", "other"):
+        assert kernel.settings.get("workspace", workspace).record.model_dump()["mcp_secrets"] == []
+    tools.add("notes", {"command": "other-mcp", "env": {"KEY": "k2-value"}}, scope="user", folder="", actor=YOU)
+    assert row(kernel, "paper", "notes")["given"] is False, "a new server: given to no workspace until you give it"
+    assert row(kernel, "other", "notes")["given"] is False
+    assert kernel.settings.get("workspace", "other").record.model_dump()["mcp_off"] == ["plain"], "a hold stays"

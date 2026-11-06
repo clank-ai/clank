@@ -37,9 +37,14 @@
   The question asked once says so in its detail, and so do the words `u` on the folder's page and `clank workspace allow
   FOLDER --cloud` show before they change the bound (`cloud_confirm`); a server marked local only, which never goes
   with the cloud, is not named. So whichever comes first, the server or the cloud, the owner is asked knowing the
-  values can reach a model at a provider. The agents component, which knows which servers a workspace gets, tells the
-  workspaces' service how to read them as it is built (`on_carried`), so no component uses the other in a cycle
-  (decision 0019).
+  values can reach a model at a provider. The service holds to those words: allowing the cloud to a workspace whose
+  agent gets such a server needs `confirm` (`POST /workspaces/{name}/cloud`), refused without it (`409 unconfirmed`,
+  in the words of `cloud_confirm`), which the console and `clank workspace allow` send once the owner said yes to them
+  (or `--yes`). The agents component, which knows which servers a workspace gets, tells the workspaces' service how to
+  read them as it is built (`on_carried`), so no component uses the other in a cycle (decision 0019).
+- **A server of yours removed is named by no workspace any more**: `clank mcp remove` takes it out of every
+  workspace's `mcp_secrets`, so a server added again under its name, whatever it now runs, goes to no workspace until
+  you give it to one. A workspace's hold on it (`mcp_off`) stays.
 - **The values reach the agent in OpenCode's own environment, never in a file.** OpenCode's configuration names a
   variable for each value (`"KEY": "{env:CLANK_MCP_<SERVER>__KEY}"`); the variable's text is the value as JSON writes
   it inside a string (quotes, backslashes and line breaks escaped, and each `{` written as JSON's escape for it), so
