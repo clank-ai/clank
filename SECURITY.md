@@ -52,8 +52,10 @@ Clank is in beta: fixes go into the newest version only.
   workspace's network and reaches only the package indexes (`pypi.org` and `files.pythonhosted.org`: the set `setup`
   in `config/network-sets.json`, yours to change, `clank workspace sets` lists it), through Clank's proxy and only
   while it runs, each exchange in `clank network log`; a host not in the set is refused, dev mode or not. It runs with
-  a clean home of its own and pip reading no configuration file, and Clank makes the workspace's `~/.venv` afresh
-  first, so nothing written into the workspace's home changes what the setup runs.
+  a clean home of its own, pip reading no configuration file and a `PATH` that leaves out the workspace's home, its
+  shell and first steps named by their full paths, and Clank makes the workspace's `~/.venv` afresh before the
+  folder's steps find it first on the `PATH`, so nothing written into the workspace's home changes what the setup
+  runs.
 - **A folder's own MCP servers** (its `.mcp.json`) are offered, never trusted: the agent gets one only after you allow
   it for that workspace, and only as its entry was when you allowed it (a changed command, argument or environment
   needs allowing again). Clank starts one only in the folder's workspace container, never on your computer: checking

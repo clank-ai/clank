@@ -35,7 +35,7 @@ recommendation, built as recommended so the owner can try it, and changed if the
 | 7 | NInfer's context | Retired 2026-10-13 with NInfer (decision 0034) |
 | 8 | What the tests must prove, and what waits | Proposed 2026-10-13 |
 | 9 | The console: easy to use, dynamic, the machine on the right | Built 2026-10-14; revised 2026-10-26 (a GPU whose handle its driver dropped) |
-| 10 | A project's own software and MCP servers | Built 2026-10-14 as proposed; verified on a simulator; revised after approval (2026-11-05): a folder's own MCP server is checked only in its workspace's container, never on this computer, and its check says whether the agent may use it as it is now (decision 0166); revised again (2026-11-05): one of your own MCP servers with secrets goes only to the workspaces you name for it, its values in OpenCode's environment alone (decision 0168); revised again (2026-11-05): a setup joins the workspace's network and reaches only the package indexes (the set `setup`) through its proxy, while it runs, with a clean home and `~/.venv` made afresh (decision 0169) |
+| 10 | A project's own software and MCP servers | Built 2026-10-14 as proposed; verified on a simulator; revised after approval (2026-11-05): a folder's own MCP server is checked only in its workspace's container, never on this computer, and its check says whether the agent may use it as it is now (decision 0166); revised again (2026-11-05): one of your own MCP servers with secrets goes only to the workspaces you name for it, its values in OpenCode's environment alone (decision 0168); revised again (2026-11-05): a setup joins the workspace's network and reaches only the package indexes (the set `setup`) through its proxy, while it runs, with a clean home, a `PATH` outside it and `~/.venv` made afresh (decision 0169) |
 
 ## 1. What the owner does
 
@@ -343,10 +343,12 @@ download (§3: no route out).
   with the hosts of the set `setup`: the package indexes (`pypi.org`, `files.pythonhosted.org`), the owner's to change
   (design 0024 §5). A host not in the set is refused, never asked for, dev mode or not, and each exchange is in the
   network log. Before it runs, the workspace's network and the edge on it are put right, and the gateway must run. It
-  runs `bash -c` (never a login shell) with `HOME` a clean folder of its own and pip reading no configuration file, and
-  Clank makes `~/.venv` afresh with the image's own Python first (what the agent installed in it by itself goes), so
-  nothing written into the workspace's home since changes what runs; `~/.venv` in the command is still the
-  workspace's environment. So what a setup reaches is the owner's to see and change, as the agent's is.* The operation
+  runs `/bin/bash -c` (never a login shell) with `HOME` a clean folder of its own, pip reading no configuration file
+  and a `PATH` without `~/.venv/bin` (the image puts it first); Clank makes `~/.venv` afresh with the image's own
+  Python first (what the agent installed in it by itself goes), its shell and each of these steps named by its full
+  path, and only then puts `~/.venv/bin` first on the `PATH` for the command, so nothing written into the workspace's
+  home since changes what runs; `~/.venv` in the command is still the workspace's environment. So what a setup
+  reaches is the owner's to see and change, as the agent's is.* The operation
   `workspaces.setup` asks first, saying what runs (the folder's own install steps, which can run code from the folder)
   and what it reaches (only the package indexes, through Clank's proxy), each time it runs, so a changed requirements
   file is installed only when asked for; each line of the install goes to its log, and the record keeps the command

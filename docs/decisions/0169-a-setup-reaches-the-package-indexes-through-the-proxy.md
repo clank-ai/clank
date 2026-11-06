@@ -20,7 +20,9 @@
   another index or a git URL.
 - A login shell reads the profile in the home, pip reads configuration files in the home and in the environment it
   runs, Python runs the `.pth` files of the site-packages it starts with, and git and setuptools read files in the home
-  too. Everything in the home volume can have been written by the agent.
+  too. The image puts `~/.venv/bin` first on its `PATH`, so every program found by name (the shell Docker's init
+  starts, `mkdir`, `pip`) is looked for in the home first. Everything in the home volume can have been written by the
+  agent.
 
 ## Decision
 
@@ -41,12 +43,15 @@
   setup), and dev mode does not lift it: dev mode opens the agent's internet, not a setup's. A private address is
   refused as always. Each exchange is in the network log under the setup's identity, and a workspace's log shows its
   setup's with its agent's.
-- **It runs nothing of the home but what it makes.** The container runs `bash -c`, never a login shell. Its `HOME` is
-  `/tmp/clank-setup-home`, a folder in the container's own files, made empty and removed with it; `PIP_CONFIG_FILE` is
-  `/dev/null`, so pip reads no configuration file. Before the command, Clank removes `~/.venv` (a link as a link) and
-  makes it afresh with the image's own Python in isolated mode (`/usr/bin/python3 -I -m venv
-  --system-site-packages`); a step of these that fails ends the setup. `~/.venv` in the command is still the
-  workspace's environment (`/home/agent/.venv`), so a command kept from before installs where the agent finds it.
+- **It runs nothing of the home but what it makes.** The container runs `/bin/bash -c`, never a login shell. Its
+  `HOME` is `/tmp/clank-setup-home`, a folder in the container's own files, made empty and removed with it;
+  `PIP_CONFIG_FILE` is `/dev/null`, so pip reads no configuration file; its `PATH` is the image's without
+  `~/.venv/bin`. Before the command, Clank removes `~/.venv` (a link as a link) and makes it afresh with the image's own
+  Python in isolated mode (`/usr/bin/python3 -I -m venv --system-site-packages`), each program of these steps named by
+  its full path (`/bin/mkdir`, `/bin/rm`); a step of these that fails ends the setup. Then it puts `~/.venv/bin` first
+  on the `PATH`, as the image does, so the folder's steps find the fresh environment's `pip` and `python` first.
+  `~/.venv` in the command is still the workspace's environment (`/home/agent/.venv`), so a command kept from before
+  installs where the agent finds it.
 - **The question says what runs**: the folder's own install steps, which can run code from the folder; that they reach
   only the package indexes (naming them), through Clank's proxy, each exchange in `clank network log`; and that
   `~/.venv` is made afresh first, with a clean home and pip set up by Clank alone. Each setup asks again, so a changed
@@ -63,6 +68,9 @@
   reaches are different choices: the owner changing one should not change the other.
 - **Keeping `~/.venv` and installing on top of it.** What the agent installed by itself would stay, but pip itself, the
   interpreter's links and the `.pth` files would be the home's, so the setup would run what was written there.
+- **Leaving `~/.venv/bin` off the `PATH` for the command too.** A command kept from before that names `pip` alone
+  would then find the system's, which Ubuntu refuses to install with (its Python is managed by its packages). Put back
+  only once `~/.venv` is made afresh, it holds only what Clank and the folder's own steps put there.
 - **Rewriting no command.** A command kept from before (Clank's own proposal, kept by the folder page's form) names
   `~/.venv`; with the clean `HOME` it would install into the container's own files and be lost while the setup said
   it was installed. `~/.venv` is read as the workspace's environment instead, `~` alone anything else.
