@@ -1,6 +1,6 @@
 # 0168. Your MCP servers with secrets go only to the workspaces you name, their values in OpenCode's environment alone
 
-- Status: Accepted (the audit of 2026-10-30); revises design 0002 §2.8 and design 0004 §10
+- Status: Accepted (the audit of 2026-10-30); revises design 0002 §2.8, design 0004 §10 and design 0016 §9
 - Date: 2026-11-05
 - Decided by: the audit's item on the owner's MCP servers, as its spec asks (opt-in per workspace, values by name)
 
