@@ -86,8 +86,8 @@ class Workspace(Settings):
         None,
         title="Setup",
         description="The command that installs the folder's own software into its home (~/.venv), run by Clank in a "
-        "container that reaches the internet; empty: proposed from the folder's files (pyproject.toml, "
-        "requirements.txt).",
+        "container that reaches only the package indexes (the set setup), through Clank's proxy; empty: proposed from "
+        "the folder's files (pyproject.toml, requirements.txt).",
     )
     set_up: str = Field(
         "",

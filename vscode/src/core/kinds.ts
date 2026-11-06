@@ -200,7 +200,7 @@ export interface Workspace {
   memory_mib: number | null;
   /** What its container has besides Clank's sandbox image, each built on it once: tex (TeX Live, for the LaTeX the agent writes, design 0020). Its container moves to the new image when it is next made. */
   layers: string[];
-  /** The command that installs the folder's own software into its home (~/.venv), run by Clank in a container that reaches the internet; empty: proposed from the folder's files (pyproject.toml, requirements.txt). */
+  /** The command that installs the folder's own software into its home (~/.venv), run by Clank in a container that reaches only the package indexes (the set setup), through Clank's proxy; empty: proposed from the folder's files (pyproject.toml, requirements.txt). */
   setup: string | null;
   /** The setup command that last ran to its end; empty: the software is not installed. */
   set_up: string;

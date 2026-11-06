@@ -55,8 +55,8 @@ switches a slot to another preset, `u` unloads, `c` checks one.
    - `s` starts Docker; `o` opens the workspace (it builds the sandbox image the first time, about a gigabyte, asked
      first); `l` loads a model.
    - `e` installs the folder's software into the workspace (Clank proposes the command from `pyproject.toml` or
-     `requirements.txt`, for `myproject` `pip install -e '.[dev]'`; it downloads in a container of its own, so the
-     agent's never reaches the internet).
+     `requirements.txt`, for `myproject` `pip install -e '.[dev]'`; it runs in a container of its own that reaches only
+     the package indexes, through Clank's proxy, and makes `~/.venv` afresh).
    - `m` gives an MCP server to the agent: yours (F3) unless you take one away, but one of yours with secrets only to
      the workspaces you give it to (`m`), and the agent there can read its values; the folder's own (its `.mcp.json`,
      for `myproject` its simulator's tools) once you allow it. Its tools show beside it.

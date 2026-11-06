@@ -193,7 +193,9 @@ def list_sets(as_json: bool) -> None:
 @click.option("--yes", is_flag=True, help="Install without asking first.")
 def setup_workspace(folder: str | None, command: str, yes: bool) -> None:
     """Install a workspace's own software (this folder's unless one is named) into its home, where its agent finds it;
-    it runs in a container of its own that reaches the internet."""
+    Clank makes ~/.venv afresh, then runs it in a container of its own that reaches only the package indexes (the
+    set setup in config/network-sets.json, see clank workspace sets), through Clank's proxy; it can run code from the
+    folder."""
     client = common.call(common.connect)
     body = {"folder": str(Path(folder or os.getcwd()).resolve()), "command": command, "yes": yes}
     operation = common.call(lambda: client.post("workspaces/setup", body))

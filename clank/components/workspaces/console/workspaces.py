@@ -174,8 +174,10 @@ class WorkspacesPage(Page):
             "stops its container; d removes it, asked first: its container and its home (the agent's settings and "
             "sessions) go, its folder stays as it is.",
             "e installs the folder's own software into the workspace's home (~/.venv), where the agent finds it: the "
-            "command is proposed from the folder's pyproject.toml or requirements.txt, and kept once you change it; it "
-            "runs in a container of its own that reaches the internet (design 0004 §10).",
+            "command is proposed from the folder's pyproject.toml or requirements.txt, and kept once you change it. "
+            "Clank makes ~/.venv afresh, then runs it in a container of its own that reaches only the package indexes "
+            "(the set setup in config/network-sets.json), through Clank's proxy; it can run code from the folder "
+            "(design 0004 §10).",
             "The highlighted workspace's use (CPU and memory) comes from Docker, read every ten seconds; its MCP "
             "servers are chosen on This folder (F4, m) or with clank mcp allow|hold.",
             "A workspace cut off shows so in place of its state: its container runs, but the edge, its only way to the "
@@ -238,7 +240,7 @@ class WorkspacesPage(Page):
         setup = selected.get("setup") or {}
         field = Field(
             "command",
-            "The command that installs its software, run in the folder (/workspace) with the internet",
+            "The command that installs its software, run in the folder (/workspace), reaching the package indexes",
             "python3 -m venv --system-site-packages ~/.venv && ~/.venv/bin/python -m pip install -r requirements.txt",
             setup.get("command") or "",
         )
@@ -251,5 +253,9 @@ class WorkspacesPage(Page):
             actions.call(self.console, lambda: client.post("workspaces/setup", body),
                          done=f"installing {name}'s software: Operations (6) follows it")  # fmt: skip
 
-        note = "It runs in a container of its own that reaches the internet; the agent's never does. Esc closes this."
+        note = (
+            "Clank makes ~/.venv afresh, then runs it in a container of its own that reaches only the package indexes "
+            "(the set setup in config/network-sets.json), through Clank's proxy; it can run code from the folder. Esc "
+            "closes this."
+        )
         self.console.push_screen(FormScreen(f"Install {name}'s software", [field], note), given)

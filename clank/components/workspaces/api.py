@@ -133,7 +133,8 @@ def router(workspaces: "Workspaces") -> APIRouter:
     @routes.post("/workspaces/setup")
     async def setup_workspace(wanted: SetupRequest, request: Request) -> dict[str, Any]:
         """Install a workspace's own software into its home: an operation that asks first, then runs the setup in a
-        container of its own that reaches the internet (design 0004 §10)."""
+        container of its own that reaches only the package indexes, through Clank's proxy (design 0004 §10, decision
+        0169)."""
         return await _start(workspaces, "workspaces.setup", request, wanted.model_dump())
 
     @routes.post("/workspaces/{name}/stop")

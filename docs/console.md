@@ -28,8 +28,10 @@ same checklist in a terminal, without the service if need be, and `clank setup` 
    spinner turns on the step being worked on, and "What runs from here" says how far it is.
 3. **Its software** (`e`): the folder's own packages, installed into the workspace so the agent can run its tests,
    scripts and MCP server. Clank proposes the command from `pyproject.toml` or `requirements.txt`; `e` shows it in a
-   form to change or take as it is. It downloads in a container of its own; the agent's reaches the internet only
-   through Clank's proxy, host by host as you allow (below).
+   form to change or take as it is. It runs in a container of its own, which makes `~/.venv` afresh and reaches only
+   the package indexes (the set `setup`, `clank workspace sets`), through Clank's proxy; it can run code from the
+   folder, as the question says. The agent's container reaches the internet only through the same proxy, host by host
+   as you allow (below).
 4. **MCP servers** (`m`): listed under "Then work". Yours (F3) are given to the agent, but one of yours with secrets
    only to the workspaces you give it to (`m`), and the agent there can read its values; a folder's own (its
    `.mcp.json`) only once you allow it. `m` gives one or takes it away, and checks one given in the workspace's
