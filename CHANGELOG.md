@@ -5,6 +5,82 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
+## 0.3.0b8: the audit's security fixes, and installs as tested (2026-11-06)
+
+The rest of the audit of 0.3.0b6's security, and its release gate. Clank reads and writes a project's folder without a
+gap between its check and its use, runs an artifact's page where it cannot reach VS Code, checks a project's own MCP
+servers only in its container, keeps your secrets and state folders yours alone on Windows too, gives your MCP servers'
+keys only to the workspaces you choose, and runs a folder's setup with nothing but the package indexes. Every install
+and update takes the versions its release was tested with, and a release waits for Windows on Python 3.12. Seventeen
+fixes from a later review besides: the phone, the board, flows, the runtime, Notion and VS Code. From 0.3.0b2 or later,
+`clank update`; from 0.3.0b1, run the installer again. Read **Before you update** first.
+
+### Before you update
+
+- **Your MCP servers that carry keys go to no workspace until you give them to one** (decision 0168): `m` on the
+  folder's page, `s` on the MCP servers page, or `clank mcp allow NAME` in the folder. Your servers without keys go to
+  every workspace, as before.
+- **A folder's setup reaches only the package indexes** (decision 0169): `pypi.org` and `files.pythonhosted.org`, the
+  set `setup` in `~/.clank/config/network-sets.json`. A folder that installs from elsewhere (another index, a Git
+  repository) needs that host added to the set, then its setup run again.
+- **Clank keeps `~/.clank/secrets` and `~/.clank/state` to you and SYSTEM on Windows** (decision 0167), and stops at
+  its start, saying why, when it cannot: a `CLANK_HOME` on a drive with no access lists (FAT, exFAT) is refused.
+
+### Security
+
+- **Clank reads and writes a project's folder a folder at a time, holding each** (decision 0164): every file it keeps
+  under `.clank/` (artifacts, jobs, boards, figures, plans, LaTeX builds, the phone's outbox) is reached through no
+  link, and nothing on the way can change between the check and the use.
+- **An artifact's page runs in a sandboxed frame** of Clank's panel (decision 0165, extension 0.10.6): its scripts reach
+  neither VS Code nor the panel, and its export carries the same content policy.
+- **A project's own MCP server is checked only in its workspace's container** (decision 0166), never on this computer,
+  and the check says whether the agent may use it as it is now: an entry changed since you allowed it (its command,
+  arguments or environment) is not given until you allow it again.
+- **`secrets/` and `state/` are yours alone on Windows too** (decision 0167): each start gives them an access list of
+  their own, you and SYSTEM, whatever the folder above allows. `clank doctor` and `clank setup` name any other entry,
+  with the `icacls` command that removes it.
+- **Your MCP servers' keys go only where you send them** (decision 0168): one of your servers with keys goes only to
+  the workspaces you give it to; its values reach OpenCode in its own environment, never in a file in the container,
+  and no value is ever on a command line (`docker exec` names each variable alone). Giving such a server to a
+  workspace that may use a cloud model, or allowing the cloud to a workspace that has one, asks first, saying a model
+  at a provider will be able to read the values, and the service holds to that; removing a server takes it from every
+  workspace.
+- **A folder's setup reaches only the package indexes, through Clank's proxy** (decision 0169), with a clean home of
+  its own, pip reading no configuration file, and `~/.venv` made afresh before the folder's own steps run; its question
+  says those steps can run code from the folder, and each setup asks again.
+- **Installs and updates take the versions a release was tested with** (decision 0170): `constraints.txt`, generated
+  from the lock, is what the installers and `clank update` pass to uv, so an install never takes a dependency's newer
+  release that no check ran with; and the installers follow published releases, never a bare tag.
+
+### Fixed
+
+- **The phone** stays paired when used every day (its cookie is renewed), tries its live stream again itself after
+  Clank restarts or updates and counts down to the true try, no longer ends the service when another program holds its
+  port, and shows a JSON file the agent sent.
+- **The board**: an item placed beside or below another stays on that side.
+- **The agent panel**: a conversation followed is kept however long no client read it, and comes back whole.
+- **Jobs**: a job's end reaches the session that started it after a restart, and a send refused is tried again.
+- **Flows**: running a flow again from a box after a stop runs it; a job's checkpoint reads on the server and model of
+  the box waiting on its job; a failed try keeps its failure's class where it failed, so the orchestrator no longer
+  takes a failed check for one outside the work because a command named a workspace or a container.
+- **The runtime**: a load, switch or restart canceled while its engine starts stops that engine; an engine slot's
+  route says what was launched, its preset file edited or gone; a cloud preset's most output has one bound.
+- **The cloud's spending limit**: after a restart while the cloud is paused, one question waits, and only that one
+  raises the limit.
+- **Notion**: rewording a heading, a quote or a callout keeps what it holds; a batch being written is held, and each
+  proposal is kept as soon as it is written.
+- **VS Code**: math is never looked for in code or between two prices; an option that asks for a number is answered
+  in a box that checks it.
+- **An artifact opened in the browser** showed without its own script and style sheet since 0.3.0b7.
+
+### Changed
+
+- **Continuous integration's release gate** (decision 0171): Python 3.12 runs on Linux and on Windows on every push,
+  with an install made as users make it; Python 3.14 is a canary that holds no release; each Monday the checks run on
+  the newest dependencies.
+- **Each dependency is bounded below its next major version** in `pyproject.toml`.
+- **Dev mode's short words** come from the service, so every client says them the same way.
+
 ## 0.3.0b7: the audit's first fixes: safer around a project's files, no frozen service, a quicker console (2026-11-04)
 
 From a full audit of 0.3.0b6 (speed, security, technical debt and the experience of a first day). Clank now starts only
