@@ -127,17 +127,18 @@ On Windows, in PowerShell:
 irm https://clank-ai.github.io/install.ps1 | iex
 ```
 
-On macOS or Linux (an untested beta):
+On Linux or macOS (macOS is untested):
 
 ```sh
 curl -fsSL https://clank-ai.github.io/install.sh | sh
 ```
 
-The installer installs [uv](https://docs.astral.sh/uv/) if it is missing, checks Git and Docker (on Windows it offers
-to install each with winget, asking first), installs Clank's latest release and runs `clank setup --check`, which says
-what is set up and what is next. Run it again to update. Then open a new terminal and type `clank`: while anything is
-missing it opens on **Setup**, whose model item opens **Add a model**, where you choose a cloud model with an OpenRouter
-key or a model on your own GPU. Then open a terminal in any project folder and type `clank`.
+The installer installs [uv](https://docs.astral.sh/uv/) if it is missing, checks Git and Docker (on Windows it offers to
+install each with winget, asking first), installs Clank's latest release, each dependency at the version it was tested
+with, and runs `clank setup --check`, which says what is set up and what is next. Run it again to update. Then open a
+new terminal and type `clank`: while anything is missing it opens on **Setup**, whose model item opens **Add a model**,
+where you choose a cloud model with an OpenRouter key or a model on your own GPU. Then open a terminal in any project
+folder and type `clank`.
 
 Or by hand, from a clone (Windows, in PowerShell):
 
