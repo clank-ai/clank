@@ -11,6 +11,7 @@ starts fresh yet knows the run, and none needs a long context. Its five answers 
 progress ledger; the stall count rises with each checkpoint that answers "not progressing" or "looping" and returns to
 0 at progress; at the flow's stall limit a review may not go on (docs/research/orchestration.md)."""
 
+import re
 from datetime import datetime
 from importlib import resources
 from pathlib import Path
@@ -23,7 +24,7 @@ from clank.kernel.events import Actor
 from clank.kernel.infolder import file_of
 
 if TYPE_CHECKING:
-    from clank.components.flows.runs import Run
+    from clank.components.flows.runs import Run, Try
 
 ORCHESTRATOR = Actor(kind="clank", via="orchestrator")  # who answers a question the orchestrator decided
 Kind = Literal["review", "question", "job"]
@@ -156,22 +157,37 @@ class Orchestration(Part):
     side_seconds: int = Field(0, description="Seconds of side work so far in the run, against its side budget.")
 
 
+OUTSIDE, LIMIT, RESULT = "outside the work", "a limit", "its result"  # a failure's classes (design 0013 §16)
+LIMIT_WORDS = ("past its limit", "ran past its", "was killed")  # the runner's words for a limit, its command's too
+OUTSIDE_WORDS = ("session is gone", "server stopped", "server is not known", "could not be sent",
+                 "could not be started", "cannot be started", "could not run", "gave no exit status",
+                 "the service stopped", "switch", "preset", "not there", "container", "unavailable")  # fmt: skip
+QUOTED = re.compile(r"`[^`]*`")
+
+
 def instructions() -> str:
     """The orchestrator's standing instructions, as shipped."""
     return resources.files("clank.components.flows").joinpath("prompts", "orchestrator.md").read_text("utf-8")
 
 
-def failure_class(reason: str) -> str:
-    """Why a try failed, in the three classes that decide its remedy: `outside the work` (try it again as it was), `a
-    limit` (more of it, when the work was progressing), `its result` (a changed approach)."""
-    said = reason.lower()
-    if "past its limit" in said:
-        return "a limit"
-    outside = ("session is gone", "server stopped", "cannot be started", "switch", "preset", "not there",
-               "container", "workspace", "timed out", "unavailable")  # fmt: skip
-    if any(word in said for word in outside):
-        return "outside the work"
-    return "its result"
+def failure_class(attempt: "Try") -> str:
+    """Why a try failed, in the three classes that decide its remedy (design 0013 §16): `outside the work` (try it again
+    as it was), `a limit` (more of it, when the work was progressing), `its result` (a changed approach). It is the one
+    the runner kept on the try where it decided the failure (`Try.failure`); a try from before it kept one is read
+    from the runner's own words (`guessed_class`)."""
+    return attempt.failure or guessed_class(attempt.reason)
+
+
+def guessed_class(reason: str) -> str:
+    """A failure's class read from its reason, for a try that kept none (from before 0.3.0b8): the runner's own
+    sentences, with what an accept command's reason quotes (the owner's command, in backticks) left out, since its
+    words say nothing of why."""
+    said = QUOTED.sub("``", reason.lower())
+    if any(words in said for words in LIMIT_WORDS):
+        return LIMIT
+    if any(words in said for words in OUTSIDE_WORDS):
+        return OUTSIDE
+    return RESULT
 
 
 def side_left(state: Orchestration, limits: Any) -> bool:
@@ -458,7 +474,7 @@ def report(flow: Flow, run: "Run", box: Box, folder: Path, note: str) -> str:
         f"- Try {last.number} of {cap}: {last.outcome or 'running'}" + (f": {last.reason}" if last.reason else "")
     )
     if last.outcome == "failed" and last.reason:
-        said.append(f"- Its failure's class: {failure_class(last.reason)}")
+        said.append(f"- Its failure's class: {failure_class(last)}")
     said.append(f"- Tokens written: {last.tokens:,}")
     for path in box.writes:
         found = file_of(folder, path)  # through no link (decision 0164)

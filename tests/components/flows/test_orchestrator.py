@@ -14,6 +14,7 @@ role `watch` it reads each box, goes on or pauses, and decides no question. Run 
 synthetic folder."""
 
 from collections.abc import Iterator
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,7 @@ from fastapi.testclient import TestClient
 
 from clank.components.flows.orchestrating import ORCHESTRATOR, failure_class
 from clank.components.flows.runner import RunError
+from clank.components.flows.runs import Try
 from clank.kernel.api import create_app
 from clank.kernel.clock import FakeClock
 from clank.kernel.home import Home
@@ -387,9 +389,26 @@ def test_the_decide_route_refuses_with_409_saying_why(rig: Rig) -> None:
     assert "no checkpoint of an orchestrator works in myproject now" in answer.json()["error"]["message"]
 
 
-def test_a_failures_class_says_whether_to_try_again_as_it_was() -> None:
-    assert failure_class("its session is gone: its OpenCode server stopped") == "outside the work"
-    assert failure_class("it ran past its limit of 30 minutes: Clank stopped its session") == "a limit"
-    assert failure_class("it wrote 210,000 tokens, past its limit of 200,000: Clank stopped its session") == "a limit"
-    assert failure_class("its accept command failed (exit 1)") == "its result"
-    assert failure_class("it ended without a verdict") == "its result"
+def test_a_failures_class_is_the_one_its_try_kept_and_for_a_try_from_before_read_from_the_runners_own_words() -> None:
+    def tried(reason: str, failure: str = "") -> Try:
+        return Try(
+            number=1, started=datetime(2026, 11, 6, tzinfo=UTC), outcome="failed", reason=reason, failure=failure
+        )
+
+    assert failure_class(tried("its session is gone: its OpenCode server stopped", "its result")) == "its result"
+    assert failure_class(tried("anything at all", "a limit")) == "a limit", "kept where it failed: never guessed"
+    # A try from before its class was kept: the runner's own sentences, the command's own words left out.
+    assert failure_class(tried("its session is gone: its OpenCode server stopped")) == "outside the work"
+    assert failure_class(tried("its session's OpenCode server is not known: its job's end could not be sent")) == (
+        "outside the work"
+    )
+    assert failure_class(tried("it ran past its limit of 30 minutes: Clank stopped its session")) == "a limit"
+    assert failure_class(tried("it wrote 210,000 tokens, past its limit of 200,000: Clank stopped its session")) == (
+        "a limit"
+    )
+    assert failure_class(tried("its accept command `make check` ran past its 2 minutes and was ended")) == "a limit"
+    assert failure_class(tried("its accept command `make -C workspace check` exited 1")) == "its result"
+    assert failure_class(tried("its accept command `make check` could not run: the container stops")) == (
+        "outside the work"
+    )
+    assert failure_class(tried("it wrote no grid.json")) == "its result"

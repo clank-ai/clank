@@ -82,6 +82,7 @@ from clank.components.flows.diffs import LARGEST_SHOWN, compare, text_of
 from clank.components.flows.first import came_from
 from clank.components.flows.kinds import Box, Flow
 from clank.components.flows.models import named
+from clank.components.flows.orchestrating import LIMIT, OUTSIDE, RESULT
 from clank.components.flows.rules import effective_mode
 from clank.components.flows.runs import Job, Kept, Run, Runs, ServerLimits, Try, Waiting, WaitingFor, after, order
 from clank.components.flows.verdicts import Verdict, VerdictRefused, given
@@ -309,6 +310,7 @@ class Working:
     gone: bool = False
     stop: str = ""
     stopped_by: Actor | None = None
+    failure: str = ""  # the class of the failure the work step decided, kept on the try (design 0013 §16)
     steps: dict[str, int] = field(default_factory=dict)  # each finished step's tokens written, by its part
     wake: anyio.Event = field(default_factory=anyio.Event)
 
@@ -1363,18 +1365,26 @@ class Runner:
             self._settle_anyway(flow_id, number, box_id, "stopped", str(stopped), working)
             return {"outcome": "stopped", "reason": str(stopped)}
         except Exception as error:
-            self._settle_anyway(flow_id, number, box_id, "failed", str(error) or type(error).__name__, working)
+            reason = str(error) or type(error).__name__  # Clank's own step failed: a switch, the container, a server
+            self._settle_anyway(flow_id, number, box_id, "failed", reason, working, failure=OUTSIDE)
             raise
         self._finished(flow_id, number, working)
         return result
 
     def _settle_anyway(
-        self, flow_id: str, number: int, box_id: str, outcome: str, reason: str, working: Working | None
+        self,
+        flow_id: str,
+        number: int,
+        box_id: str,
+        outcome: str,
+        reason: str,
+        working: Working | None,
+        failure: str = "",
     ) -> None:
         """A box that ended otherwise than by its session's end: its try settled as far as it can be, and its run freed
         for the driver, whatever happens."""
         try:
-            self._collect(flow_id, number, box_id, outcome, reason, working)
+            self._collect(flow_id, number, box_id, outcome, reason, working, failure=failure)
         except Exception:
             log.exception("settling %s of %s#%s failed", box_id, flow_id, number)
         finally:
@@ -2198,6 +2208,7 @@ class Runner:
                     await self._stop_session(working, working.stopped_by or RUNNER)
                     return "stopped", working.stop
                 if working.gone:
+                    working.failure = OUTSIDE
                     return "failed", "its session is gone: its OpenCode server stopped"
                 job = self._running_job(run, box) if working.idle or self.kernel.clock.now() >= deadline else None
                 if working.idle and job is not None:  # its turn ended while its job runs: it waits on it (§17)
@@ -2222,6 +2233,7 @@ class Runner:
                     return "ended", ""
                 if working.tokens() > tokens:
                     await self._stop_session(working, RUNNER)
+                    working.failure = LIMIT
                     return (
                         "failed",
                         f"it wrote {working.tokens():,} tokens, past its limit of {tokens:,}: Clank "
@@ -2230,6 +2242,7 @@ class Runner:
                 if self.kernel.clock.now() >= deadline and job is None:
                     await self._stop_session(working, RUNNER)
                     span = f"{minutes} minute" + ("" if minutes == 1 else "s")
+                    working.failure = LIMIT
                     return "failed", f"it ran past its limit of {span}: Clank stopped its session"
                 if time.monotonic() - looked >= LOOK:
                     looked = time.monotonic()
@@ -2328,6 +2341,7 @@ class Runner:
         notes = corpus.index_text([each for each in found if each[0] in written])
         text = jobs.told(job.number, job.title or job.command, said, seconds, job.folder, end, files, notes)
         if working.port is None:
+            working.failure = OUTSIDE
             return "failed", "its session's OpenCode server is not known: its job's end could not be sent", waited
         with self._lock:
             working.idle = working.seen = False  # an idle before its answer began is not its end
@@ -2339,6 +2353,7 @@ class Runner:
                 )
             )  # fmt: skip
         except (SessionError, AgentError) as error:
+            working.failure = OUTSIDE
             return "failed", f"its job's end could not be sent to its session: {error}", waited
         return "", "", waited
 
@@ -2524,9 +2539,12 @@ class Runner:
         reason: str,
         working: Working | None,
         ran: accepting.Ran | None = None,
+        failure: str = "",
     ) -> dict[str, Any]:
         """The step collect: the deliverables fingerprinted and copied as the session and the box's accept command, if
-        it ran (`ran`), left them; the try and the box settled."""
+        it ran (`ran`), left them; the try and the box settled. A failed try keeps its failure's class (design 0013
+        §16), decided where it failed: `failure`, the work step's (`working.failure`), or here (a deliverable not
+        written, an accept command's end); its result when nothing said another."""
         run = self.runs.load(flow_id, number)
         record = self._record(flow_id)
         box = _box_of(record[0], box_id) if record is not None else None
@@ -2548,10 +2566,14 @@ class Runner:
             submitted = self.proposing.submitted(run, box_id, attempt.number)
             reason = _unfinished(box, now, {kept.path: kept for kept in attempt.before}, attempt.verdict, submitted)
             outcome = "failed" if reason else "done"
+            failure = RESULT if reason else ""
             if outcome == "done" and box.accept_command.strip() and commanded is None:
                 outcome, reason = "failed", f"its accept command `{box.accept_command}` did not run"
+                failure = OUTSIDE
             elif outcome == "done" and commanded is not None and not commanded.passed:
-                outcome, reason = "failed", commanded.reason
+                outcome, reason, failure = "failed", commanded.reason, commanded.failure
+        decided = working.failure if working is not None else ""
+        failure = (failure or decided or RESULT) if outcome == "failed" else ""
         copies = self.runs.try_folder(run, box_id, attempt.number) / "deliverables"
         for kept in now:
             if kept.sha256 and kept.size <= flow.defaults.copied_up_to:
@@ -2573,6 +2595,7 @@ class Runner:
             found = each.box(box_id)
             last = found.tries[-1]
             last.ended, last.outcome, last.reason = self.kernel.clock.now(), outcome, reason  # type: ignore[assignment]
+            last.failure = failure  # type: ignore[assignment]
             last.deliverables, last.tokens = now, max(last.tokens, tokens)
             last.command = commanded or last.command
             last.handoff = note
@@ -2881,7 +2904,7 @@ class Runner:
             )
             self._change(run, functools.partial(_set_operation, operation=""))
             if state.tries:
-                self._collect(run.flow, run.number, run.at, "failed", reason, None)
+                self._collect(run.flow, run.number, run.at, "failed", reason, None, failure=OUTSIDE)
             else:
                 self._change(run, functools.partial(_set_failed, box=run.at, reason=reason))
 

@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from clank.components.flows.orchestrating import LIMIT, OUTSIDE, RESULT
+
 if TYPE_CHECKING:
     from clank.components.workspaces.service import Workspaces
 
@@ -66,6 +68,14 @@ class Commanded(BaseModel):
     def reason(self) -> str:
         """Why the box failed, when it did not pass."""
         return f"its accept command `{self.command}` {self.ended}"
+
+    @property
+    def failure(self) -> str:
+        """The class of the box's failure, when it did not pass (design 0013 §16): a limit when it ran past its time or
+        was killed, outside the work when it could not run or gave no exit status, else its result."""
+        if self.status in (TIMED_OUT, KILLED):
+            return LIMIT
+        return OUTSIDE if self.status is None else RESULT
 
 
 @dataclass(frozen=True)

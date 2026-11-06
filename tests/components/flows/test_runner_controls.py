@@ -53,6 +53,7 @@ async def test_a_box_over_its_time_limit_has_its_session_stopped_and_fails(rig: 
         failed = await until(lambda: question(rig, "Write the plan failed"))
         assert "it ran past its limit of 1 minute: Clank stopped its session" in failed.title
         assert rig.bridge.done("abort") == [[str(plan.port), plan.session]]
+    assert rig.run().box("plan").tries[0].failure == "a limit", "its class, kept where it was decided"
 
 
 async def test_a_box_past_the_tokens_it_may_write_has_its_session_stopped_and_fails(rig: Rig) -> None:
@@ -68,7 +69,7 @@ async def test_a_box_past_the_tokens_it_may_write_has_its_session_stopped_and_fa
         assert "it wrote 1,100 tokens, past its limit of 1,000: Clank stopped its session" in failed.title
         assert rig.bridge.done("abort") == [[str(plan.port), plan.session]]
     attempt = rig.run().box("plan").tries[0]
-    assert (attempt.outcome, attempt.tokens) == ("failed", 1100)
+    assert (attempt.outcome, attempt.tokens, attempt.failure) == ("failed", 1100, "a limit")
 
 
 async def test_a_box_that_ended_unheard_is_found_ended_by_the_runners_own_look(

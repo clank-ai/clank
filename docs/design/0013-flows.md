@@ -62,7 +62,7 @@ these words differ, the words are the rule, and the board is drawn again (Claude
 | 13 | What flows do not cover | Approved 2026-10-18 |
 | 14 | Build steps | Approved 2026-10-18; revised 2026-10-20 at the owner's request (each box prepared: decisions 0085-0087): step 8; revised 2026-10-20 (the next flow: decision 0091): step 9; revised 2026-10-20 at the owner's request (a flow built with the model, §15): step 10 |
 | 15 | A flow built with the model | Approved 2026-10-20 (the owner's three answers); Claude's calls listed in it (decisions 0097-0099); revised after approval 2026-10-20 (the owner: OpenCode beside the console, watch it built, start from the Monitor and This folder; two SSH windows): **Beside the console** (decisions 0100-0101); revised 2026-10-21: the template names no model (decision 0117) |
-| 16 | The orchestrator: a model that steers the run | Approved 2026-10-22 (the owner's request: a toggle, research the best configurations, implement what is useful); Claude's calls listed in it (decisions 0123-0124) |
+| 16 | The orchestrator: a model that steers the run | Approved 2026-10-22 (the owner's request: a toggle, research the best configurations, implement what is useful); Claude's calls listed in it (decisions 0123-0124); revised after approval 2026-11-06: each failed try keeps its failure's class where the runner decided it |
 | 17 | Jobs, and the work done while one runs | Approved 2026-10-23 (the owner's two choices: the box asks for a job; the orchestrator decides what is done while it runs); Claude's calls listed in it (decision 0132) |
 
 ## 1. What the owner gets
@@ -872,7 +872,12 @@ checked by the rules of §11 like any edit. A **note** goes to the next box's fi
 - *A failure's class decides the remedy* (the Stabilizer Rank Challenge's research loop): a failure outside the work
   (the session gone, the server, a model switch) is tried again as it was; a time or token limit reached by work that
   was progressing gets more of it; a result that failed its check gets a changed approach (a sharper prompt, a smaller
-  step, a different method), never the same try again.
+  step, a different method), never the same try again. The runner keeps each failed try's class on the try
+  (`failure`), where it decided the failure: its session gone, a job's end it could not send, Clank's own step failing
+  (a switch, the container) or an accept command that could not run are outside the work; its time or tokens running
+  out, its accept command's time too, are a limit; a deliverable not written, a missing verdict or an accept command
+  that exited otherwise are its result. Only a try from before it kept one is read from the runner's words, the
+  command an accept command's reason quotes left out (revised after approval 2026-11-06).
 - *Effort follows the budget* (Anthropic's research system): the budget left is in every message; with little left it
   wraps up (the tasks that can finish, then INTEGRATE) rather than starting new work.
 - *Stalls are named.* A **stall count** rises at each checkpoint that answers "not progressing" or "looping", and
@@ -1108,3 +1113,8 @@ again); the side tasks in Auto mode (they write only their notes); the numbers.
 - **2026-10-23, §9 revised after approval, Claude's call while conducting the third long run:** a VERIFY that ends
   without calling `flow_verdict` is reminded once, in the same session, before its try fails (a local model wrote its
   verdict as text and ended), as a checkpoint that ends without `flow_decide` is (§16).
+- **2026-11-06, §16 revised after approval, from the audit of 2026-10-30:** a failed try keeps its failure's class
+  (`failure`), set where the runner decided the failure, in place of a class read from the reason's words, which took
+  a failure of the work for one outside it when the owner's accept command or a path named a workspace, a container
+  or a switch, and never called an accept command's time running out a limit; the orchestrator would try the same
+  thing again. The words are read only for a try from before.

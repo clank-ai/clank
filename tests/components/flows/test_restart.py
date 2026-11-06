@@ -85,6 +85,7 @@ async def test_a_session_gone_with_its_server_fails_its_box_at_a_gate(rig: Rig) 
         failed = await until(lambda: question(again, "Write the plan failed"))
         assert "its session is gone" in failed.title
         assert len(again.bridge.done("new")) == 1, "no session started again"
+        assert again.run().box("plan").tries[0].failure == "outside the work", "try it again as it was"
         assert boxes(again) == [("interrupted", "", ["model", "server", "session", "work"])]
 
 

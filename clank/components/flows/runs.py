@@ -95,6 +95,13 @@ class Try(Part):
     told: str = Field("", description="What its first message said of the last try, the owner's note included.")
     outcome: Outcome | None = Field(None, description="done, failed or stopped; empty while it runs.")
     reason: str = Field("", description="Why it failed or was stopped.")
+    failure: Literal["", "outside the work", "a limit", "its result"] = Field(
+        "",
+        description="Why it failed, in the class that decides its remedy (design 0013 §16), kept where the runner "
+        "decided it: outside the work (its session gone, its server, a model switch, its command unable to run), a "
+        "limit (its time or tokens ran out, its accept command's time too) or its result (its check failed, it wrote "
+        "nothing, it ended without a verdict); empty unless it failed, and for a try from before.",
+    )
     tokens: int = Field(0, description="The tokens its model wrote, thinking included.")
     before: list[Kept] = Field(default_factory=list, description="Its deliverables as they were when it started.")
     earlier: list[Kept] = Field(

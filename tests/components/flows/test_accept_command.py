@@ -99,6 +99,22 @@ async def test_a_box_whose_accept_command_exits_1_fails_saying_the_command_and_i
     assert "line 22 of the run" not in again.text
     kept = rig.runner.runs.try_folder(rig.run(), "T1", 1) / "accept-command.txt"
     assert "line 1 of the run\n" in kept.read_text(encoding="utf-8"), "kept whole in the try's folder"
+    assert rig.run().box("T1").tries[0].failure == "its result", "a check that failed: change the approach"
+
+
+async def test_a_failed_accept_command_is_its_results_failure_whatever_its_own_words_name(rig: Rig) -> None:
+    """The owner's command names a workspace, a container and a switch: the failure is still the work's (the class
+    once guessed from the reason's words took it for one outside the work)."""
+    command = "docker-free check --workspace container/switch --timed-out-ok"
+    flow = study()
+    flow["boxes"][3]["accept_command"] = command
+    rig.write_flow(flow)
+    rig.bridge.commands[command] = Answer(2, "2 checks failed\n", "")
+    async with running(rig.kernel):
+        grid = await to_the_grid(rig)
+        rig.bridge.finish(grid.session, {"grid.json": "[]\n"})
+        await until(lambda: question(rig, "The grid failed"))
+    assert rig.run().box("T1").tries[0].failure == "its result"
 
 
 async def test_a_command_that_runs_past_the_boxs_time_fails_the_box(rig: Rig) -> None:
@@ -108,6 +124,7 @@ async def test_a_command_that_runs_past_the_boxs_time_fails_the_box(rig: Rig) ->
         rig.bridge.finish(grid.session, {"grid.json": "[]\n"})
         failed = await until(lambda: question(rig, "The grid failed"))
     assert failed.title.endswith(f"its accept command `{TESTS}` ran past its 2 minutes and was ended")
+    assert rig.run().box("T1").tries[0].failure == "a limit", "its time ran out: more of it, or another way"
 
 
 async def test_a_box_that_wrote_nothing_does_not_run_its_accept_command(rig: Rig) -> None:
