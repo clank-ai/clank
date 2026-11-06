@@ -342,7 +342,7 @@ Free and open source under the AGPL-3.0.
 ### Not yet
 
 - A one-line installer and an update command: Clank is installed from a clone with uv, and updated with `git pull`.
-  (Both came after this release: see Unreleased.)
+  (Both came with 0.3.0b2.)
 - Linux and macOS: not tested yet; on Linux, the agent's container reaching the gateway is still being built.
 - Local models need building: the engine is built in WSL and the model files downloaded, step by step.
 - The "daily 262K" preset needs a vision projector Clank cannot download; run it with its vision off, or another
