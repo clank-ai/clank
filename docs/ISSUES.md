@@ -14,11 +14,20 @@ Update this page in the same commit as the fix.
 | A job or side session goes on after its box fails | Trying the box again starts a second job on the same files | `flows/runner.py` | End them when the box fails or is canceled |
 | Retrying a flow's operation from the Operations page goes around the flow | The run's box can be tried twice, or a checkpoint dropped | `kernel/operations.py`, `flows/runner.py` (`_box`) | Flows' operations are not retried there; the flow's own Run from is |
 | Some errors read as something else | "Its preset is not there", or "there is no workspace", for any error | `flows/runner.py`, `agents/artifacts.py`, `agents/boards.py`, `agents/jobs.py` | Catch the errors meant |
-| CI takes 29 to 35 minutes, and console frame tests fail now and then | A red run after a push that broke nothing | `tests/console/frames.py` (a frame called steady after 0.1 s, less than the console's 0.25 s update period), one CI job for everything | Wait until the console is quiet (no update queued, no worker); pytest-xdist; a first job of lint, types and generated files |
+| CI takes 29 to 35 minutes | A push's verdict comes half an hour later | One CI job for everything on each system | pytest-xdist; a first job of lint, types and generated files |
 | The console still says some confusing things | "Nothing runs from here" while OpenCode runs; the Monitor opens on an empty Flow view; Watch for shows another workspace's mark | `agents/console/folder.py`, the Monitor, `console/app.py` | A pass over the console's words (the menu's entries change every frame's snapshot) |
 | pytest is not in the sandbox image | The agent's test runs fail with "No module named pytest" while This folder says nothing needs installing | `workspaces/image/Dockerfile` | Add it at the next change of the image |
 | No scriptable way to give the agent a task | `opencode run` rejects every edit under review mode, and Clank does not see its session | `clank work` | `clank work --message`, on the start route Clank already has |
 | The phone's chat (design 0025 §12) | Not built yet: a normal chat, the workspaces with the saved ones first, any session picked up, figures and the agent's questions in place | `remote/page/` | Plan s60 (branch `feature/phone-chat`, begun) |
+
+## Fixed on 2026-11-06
+
+| Issue | Cause | Commit |
+| --- | --- | --- |
+| Console frame tests failed now and then, most on CI's Windows | A frame was called steady when two reads a tenth of a second apart matched, both before an update the console had queued; rate tests asked a slow runner for a rate | 32deed6 |
+| The orchestrator could try a failed check again as it was | A failure's class was read from its reason's words: a command or path naming a workspace, a container or a switch made it one outside the work | 2658f6b |
+| An install could run versions no check ran with | `uv tool install` from a tag reads no lock, and the ranges had no upper bound | 9e4d52e (decision 0170) |
+| Windows on Python 3.12 was never tested, and most pushes had no verdict | Windows ran on 3.14 for tags alone, and each push canceled the run before it | ca65d2c (decision 0171) |
 
 ## Fixed on 2026-11-05
 
