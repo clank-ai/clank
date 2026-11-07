@@ -5,7 +5,7 @@ installer installs the latest release; from the release after 0.3.0b1, `clank up
 a clone). Problems known now are in
 [docs/ISSUES.md](docs/ISSUES.md), open and fixed.
 
-## 0.3.0b8: the audit's security fixes, and installs as tested (2026-11-06)
+## 0.3.0b8: the audit's security fixes, and installs as tested (2026-11-07)
 
 The rest of the audit of 0.3.0b6's security, and its release gate. Clank reads and writes a project's folder without a
 gap between its check and its use, runs an artifact's page where it cannot reach VS Code, checks a project's own MCP
@@ -71,6 +71,8 @@ fixes from a later review besides: the phone, the board, flows, the runtime, Not
   proposal is kept as soon as it is written.
 - **VS Code**: math is never looked for in code or between two prices; an option that asks for a number is answered
   in a box that checks it.
+- **The console**: a long value on Providers and models (the cloud key's account, a model's files) and a long
+  question on Home wrap under the value, never back under its name.
 - **An artifact opened in the browser** showed without its own script and style sheet since 0.3.0b7.
 
 ### Changed
