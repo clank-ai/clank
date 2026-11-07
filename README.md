@@ -133,9 +133,10 @@ On Linux or macOS (macOS is untested):
 curl -fsSL https://clank-ai.github.io/install.sh | sh
 ```
 
-The installer installs [uv](https://docs.astral.sh/uv/) if it is missing, checks Git and Docker (on Windows it offers to
-install each with winget, asking first), installs Clank's latest release, each dependency at the version it was tested
-with, and runs `clank setup --check`, which says what is set up and what is next. Run it again to update. Then open a
+The installer installs [uv](https://docs.astral.sh/uv/) if it is missing, offers Git and Docker when they are missing,
+asking first (winget on Windows, your package manager or Homebrew elsewhere), and installs Clank's latest release, each
+dependency at the version it was tested with. On Windows it ends with `clank setup --check`, which says what is set up
+and what is next; on macOS and Linux it offers `clank setup` at once. `clank update` updates Clank later. Then open a
 new terminal and type `clank`: while anything is missing it opens on **Setup**, whose model item opens **Add a model**,
 where you choose a cloud model with an OpenRouter key or a model on your own GPU. Then open a terminal in any project
 folder and type `clank`.
@@ -149,7 +150,7 @@ winget install --id Docker.DockerDesktop -e
 
 git clone https://github.com/clank-ai/clank Clank
 cd Clank
-uv tool install --editable .
+uv tool install --editable . --python 3.12 --constraints constraints.txt
 uv tool update-shell
 clank
 ```

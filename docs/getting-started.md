@@ -7,8 +7,8 @@ runs the model one of three ways:
 - **On your own GPU** (an NVIDIA card): nothing paid per request; an engine and a model file to set up.
 - **Both**: a model on your GPU for most work, a frontier model in the cloud when it helps.
 
-Clank runs on Windows, macOS and Linux. Where a step differs by system, it says so, with a block for each: open
-yours. Every step says what it does before it does it, and asks before it installs anything.
+Clank runs on Windows and Linux; on macOS it is untested beyond its installer. Where a step differs by system, it
+says so, with a block for each: open yours. Every step says what it does before it does it, and asks before it installs anything.
 
 ## 1. What you need
 
@@ -150,7 +150,7 @@ Open Docker Desktop once, accept its terms and let it finish starting. Open a ne
 ```
 git clone https://github.com/clank-ai/clank
 cd clank
-uv tool install --editable .
+uv tool install --editable . --python 3.12 --constraints constraints.txt
 uv tool update-shell
 ```
 
@@ -165,7 +165,7 @@ as step 2 above says (or run the installer once for Docker alone). Open a new te
 ```
 git clone https://github.com/clank-ai/clank
 cd clank
-uv tool install --editable .
+uv tool install --editable . --python 3.12 --constraints constraints.txt
 uv tool update-shell
 ```
 
@@ -284,7 +284,8 @@ after you agree once, and only for the workspaces you allow.
 8. **Ready.** Clank says whether Docker is running (`s` starts Docker Desktop); Enter takes you to **This folder**.
 
 What it costs shows on the header, Home, Requests (F7), the Monitor and `clank cost`. Set a daily or monthly limit
-(`L` anywhere, or `clank cost limit`); when it is reached, cloud requests pause until you raise it.
+(`L` on **Providers and models**, or `clank cost limit --day 5 --month 50`); when it is reached, cloud requests pause
+until you raise it (`L` then works on any page) or its day or month ends.
 
 **Its settings later.** A model's thinking and its answer share its preset's most output (32,768 tokens for a model that
 thinks, with a context of at least 131,072; 16,384 for the others; never more than the model's own), so a reasoning
@@ -505,6 +506,7 @@ Clank says why and what to do. The usual ones:
 | "OpenRouter refuses … under your OpenRouter account's privacy settings" | Your account at OpenRouter refuses providers that may train on prompts, as many free models' do: allow them at [openrouter.ai/settings/privacy](https://openrouter.ai/settings/privacy), or pick another model |
 | "Rate limited" (429) on a free model | Free models take 20 requests a minute: OpenCode waits and asks again |
 | "The free models' limit for the day" | Free models take 50 requests a day until you bought 10 credits once, then 1,000; the count starts again at midnight UTC. An agent's task can take dozens of requests: wait, buy credits, or pick a paid model |
+| A folder's setup fails reaching a host (another package index, a Git repository) | A setup reaches only the package indexes, `pypi.org` and `files.pythonhosted.org`: the set `setup` in `~/.clank/config/network-sets.json` (decision 0169). Add the host there, then run the setup again (`e` on **This folder**) |
 
 <details>
 <summary><b>Windows</b></summary>
