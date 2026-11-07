@@ -234,7 +234,7 @@ Each test file begins with a docstring naming the design sections it verifies (d
 | 2 | The style: a file of named elements | `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/kernel/test_console_kinds.py` (6) |
 | 3 | The style in the console | `tests/console/test_console_style.py` (14) |
 | 4 | The panel | `tests/components/tools/test_console_servers.py` (5), `tests/console/test_frames.py` (1), `tests/console/test_keys_bar.py` (10), `tests/console/test_pages_fit.py` (1), `tests/console/test_panel.py` (12), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_windows.py` (3), `tests/console/test_workspaces_page.py` (4) |
-| 5 | Text never spills out of a panel | `tests/console/test_frames.py` (1), `tests/console/test_text.py` (5), `tests/console/test_windows.py` (3) |
+| 5 | Text never spills out of a panel | `tests/console/test_frames.py` (1), `tests/console/test_hanging.py` (11), `tests/console/test_text.py` (5), `tests/console/test_windows.py` (3) |
 | 6 | No color written in a page | `tests/test_repository.py` (12), `tests/tools/test_check_colors.py` (8) |
 | 7 | The header, the menu, the keys bar, the machine column and the windows | `tests/components/remote/test_phone_page.py` (3), `tests/console/test_keys_bar.py` (10), `tests/console/test_keys_bar_buttons.py` (6), `tests/console/test_machine_column.py` (14), `tests/console/test_pages_fit.py` (1), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_shell.py` (21), `tests/console/test_windows.py` (3), `tests/console/test_windows_placed.py` (3) |
 | 8 | The pages, board by board | `tests/components/runtime/test_console_options.py` (5), `tests/components/tools/test_console_servers.py` (5), `tests/console/test_home_and_folder_boards.py` (11), `tests/console/test_panels_everywhere.py` (5), `tests/console/test_requests_page.py` (11), `tests/console/test_workspaces_page.py` (4) |
@@ -4293,6 +4293,22 @@ Design 0011 §12.1, §12.7 and §12.9 (This folder's buttons, board K2; a button
 Design 0011 §4 and §5 (decision 0045: text never spills out of a panel), decision 0027 (the console's frames compared as text): the stand-ins a frame's changing parts are replaced by (a version, a port, an id) keep each line's width, so a panel's right border stands in the snapshot where the console drew it. A version of more digits than the stand-in ("v0.16.0-rc1") had shortened its line by a cell, and the border of every line that named it stood one cell left.
 
 - a frames stand ins keep each lines width
+
+### `tests/console/test_hanging.py`
+
+Design 0011 §5: a name and its value, written as one line of text, wraps under its value, never back under its name; a line with no name wraps under its own start; a heading wraps at the panel's edge, as prose does.
+
+- a value that wraps goes on under its value never under its name
+- a name of two words keeps its value column
+- a line with no name wraps under its own start
+- a heading wraps at the panel edge as prose does
+- a line that fits is left as it is
+- in a narrow panel a value wraps under the line start rather than in a sliver
+- a word longer than the line is cut and goes on under its value
+- each word keeps its color when its line wraps
+- the panel is as tall as the lines it shows
+- a label showing it reads as its words
+- a word too long for the value column but not the panel goes on whole under the line start
 
 ### `tests/console/test_home.py`
 

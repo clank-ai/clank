@@ -282,7 +282,9 @@ Every line inside a panel is one of these:
 3. **A drawing** (a bar, a graph, a table's columns, the Monitor's flow) is drawn for the width its panel gives, by a
    function of that width, as the machine column's parts are drawn today (`(seen, width)`), never wider.
 4. **A name and its value** (`Rows`, `clank/console/rows.py`): the value wraps under itself, never back under the
-   name, and the name stands above its value when the values' column is narrower than 36 columns. Today the doctor's
+   name, and the name stands above its value when the values' column is narrower than 36 columns. A page that writes
+   its rows as lines of text (`  key       set …`) shows them through `Hanging` (`clank/console/hanging.py`), which
+   wraps each the same way at its panel's width. Today the doctor's
    advice on Machine wraps back to the panel's edge (the `machine` snapshot); it moves under its own column.
 5. **A panel that may not grow** (a list of a hundred requests) shows a set number of rows and scrolls, taking the
    focus so that the arrows reach it.
@@ -752,3 +754,6 @@ lines and the arrows' order reworked).
 - **2026-11-04, §12.5 revised after approval** (decision 0160): the classes that show and hide the menu and the
   machine column are those widgets' own, not the screen's, so Ctrl+B, Esc to the menu and F5 restyle them alone
   (they restyled every widget of every page, about 690, 0.1 to 0.3 seconds each).
+- **2026-11-06, §5 item 4 built for lines of text**: Providers and models wrote its rows (the cloud provider's key,
+  account and spending; each model's files) as lines of text, so a long value wrapped back to the panel's edge, under
+  its name; `Hanging` wraps such a line under its value, or under its own start (a question's words on Home).

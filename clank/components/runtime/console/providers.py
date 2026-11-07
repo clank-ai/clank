@@ -36,6 +36,7 @@ from clank.console.confirm import ConfirmScreen
 from clank.console.data import ConsoleData
 from clank.console.details import DetailsScreen
 from clank.console.form import Field, FormScreen
+from clank.console.hanging import Hanging
 from clank.console.keys import PageKey
 from clank.console.menu import MenuEntry
 from clank.console.pages import Page
@@ -178,15 +179,15 @@ class ProvidersPage(Page):
     def draw(self, data: ConsoleData, changed: set[str]) -> None:
         """Draw the setups again when the engines changed, and read the models' files again."""
         if changed & {"all", "engines", "hosts"}:
-            self.query_one("#providers-engines", Label).update(engines_text(data.engines))
+            self.query_one("#providers-engines", Label).update(Hanging(engines_text(data.engines)))
             self._read_models()
         if changed & {"all", "models"}:
-            self.query_one("#providers-models", Label).update(models_text(self.models))
+            self.query_one("#providers-models", Label).update(Hanging(models_text(self.models)))
         if changed & {"all", "endpoints"}:
             self._read_account()
         if changed & {"all", "endpoints", "cost", "presets", "account"}:
             text = cloud_text(data.endpoints, self.account, data.cost, data.presets, self.console.zone)
-            self.query_one("#providers-cloud-text", Label).update(text)
+            self.query_one("#providers-cloud-text", Label).update(Hanging(text))
 
     def press(self, key: str) -> bool:
         """`i` installs an engine by its recipe; `d` downloads a model's file; `x` removes a model's files from a host;

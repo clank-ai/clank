@@ -312,6 +312,7 @@ it is for. The module's docstring says why it is built the way it is.
 | `clank/console/editor.py` | A text to edit, over the console: a box's prompt, what it is accepted when (design 0013 §12, boards D2 and D4). The |
 | `clank/console/form.py` | A form over the console: a title, fields to fill in, each with its label and an example, and a note (design 0001 |
 | `clank/console/gauges.py` | How the console draws numbers that move (the owner's request, 2026-10-14: the menu should be more dynamic): a bar |
+| `clank/console/hanging.py` | Lines of text whose wrapped part goes on under its value (design 0011 §5, a name and its value): for a page that |
 | `clank/console/header.py` | The console's header (design 0001 §5, design 0004 §9, design 0011 §7): one row on `bars`, the same on every page: |
 | `clank/console/keys.py` | The console's keys (design 0011 §4 and §7, decision 0046): each page declares its own once, as named actions with |
 | `clank/console/keysbar.py` | The keys bar (design 0011 §7 and §12): the console's bottom row, in place of Textual's footer, and a group of buttons |

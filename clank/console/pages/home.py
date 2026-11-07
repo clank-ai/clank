@@ -40,6 +40,7 @@ from textual.widgets import Label
 from clank.console.buttons import Buttons
 from clank.console.data import ConsoleData
 from clank.console.gauges import size, spinner
+from clank.console.hanging import Hanging
 from clank.console.keys import PageKey
 from clank.console.menu import MenuEntry
 from clank.console.pages import Page
@@ -414,12 +415,12 @@ class HomePage(Page):
             self.query_one("#run-cloud", Label).update(shown or "")
         if every or "questions" in changed:
             first, rest = self._waiting(data)
-            self.query_one("#waiting-text", Label).update(first)
+            self.query_one("#waiting-text", Label).update(Hanging(first))
             options = self.query_one("#waiting-options", Buttons)
             options.show(option_buttons(data.questions[0], self.KEYS) if data.questions else [])
             options.display = bool(data.questions)
             more = self.query_one("#waiting-more", Label)
-            more.update(rest)
+            more.update(Hanging(rest))
             more.display = bool(rest.plain)
             self.query_one("#waiting-where", Label).display = not data.questions
             asking = asking_below(current().spacing) if data.questions else STACK_BELOW
