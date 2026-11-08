@@ -22,10 +22,17 @@ windows = pytest.mark.skipif(sys.platform != "win32", reason="Windows' access li
 posix = pytest.mark.skipif(sys.platform == "win32", reason="a mode means nothing on Windows")
 
 
-def user_sid() -> str:
-    """The SID of the user the tests run as, as Windows' own `whoami` says it."""
+def user_sid(scratch: Path) -> str:
+    """The user the tests run as, as SDDL writes it in a list: their SID, as Windows' own `whoami` says it, given alone
+    to a file of its own by `icacls` and read back as `icacls /save` writes it. A well-known account is written by its
+    two letters (the computer's own Administrator, as CI's Windows runner runs, is `LA`), any other by its SID."""
     found = subprocess.run(["whoami", "/user", "/fo", "csv", "/nh"], check=True, capture_output=True, text=True)
-    return next(csv.reader(io.StringIO(found.stdout.strip())))[1]
+    sid = next(csv.reader(io.StringIO(found.stdout.strip())))[1]
+    probe = scratch / "user-probe.txt"
+    probe.write_text("", encoding="utf-8")
+    subprocess.run(["icacls", str(probe), "/inheritance:r", "/grant:r", f"*{sid}:F"], check=True, capture_output=True)
+    (entry,) = listed(probe, scratch / "user-probe-acl.txt")[1]
+    return entry.rsplit(";", 1)[1]
 
 
 def listed(path: Path, saved: Path) -> tuple[str, set[str]]:
@@ -49,7 +56,7 @@ def test_ensure_gives_secrets_and_state_a_list_of_their_user_and_system_alone_wi
 ) -> None:
     home = Home(tmp_path / "home")
     home.ensure()
-    user = user_sid()
+    user = user_sid(tmp_path)
     for folder in (home.secrets, home.state):
         flags, entries = listed(folder, tmp_path / "acl.txt")
         assert flags.startswith("P"), f"{folder.name}: inheritance from the folder above is off"
@@ -66,7 +73,7 @@ def test_what_is_made_inside_them_has_those_two_entries_alone_made_before_or_aft
     after = home.state / "inner" / "newer.txt"
     after.parent.mkdir()
     after.write_text("made after", encoding="utf-8")
-    user = user_sid()
+    user = user_sid(tmp_path)
     for path in (before, after):
         flags, entries = listed(path, tmp_path / "acl.txt")
         assert not flags.startswith("P"), f"{path.name} takes its list from its folder"
@@ -95,7 +102,7 @@ def test_ensure_puts_a_list_changed_since_right_again(tmp_path: Path) -> None:
     subprocess.run(["icacls", str(home.secrets), "/grant", "*S-1-5-32-545:(OI)(CI)R"], check=True, capture_output=True)
     assert "A;OICI;FR;;;BU" in listed(home.secrets, tmp_path / "acl.txt")[1]
     home.ensure()
-    assert listed(home.secrets, tmp_path / "acl.txt") == ("PAI", alone("OICI", user_sid()))
+    assert listed(home.secrets, tmp_path / "acl.txt") == ("PAI", alone("OICI", user_sid(tmp_path)))
 
 
 @windows
