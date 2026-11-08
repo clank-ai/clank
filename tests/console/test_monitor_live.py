@@ -123,7 +123,7 @@ async def test_the_live_text_is_read_from_its_offset_only_while_shown_and_a_new_
         assert all(each["session"] == SESSION for each in asked)
         assert [each["after"] for each in asked[1:4]] == [80, 100, 120], "each from the offset held"
         assert asked[1]["id"] == "r-9", "the request it follows"
-        await settle(pilot, lambda: live(app).request == "r-10")
+        await settle(pilot, lambda: live(app).request == "r-10", seconds=30)  # 12 reads, at the page's own pace
         await settle(pilot, lambda: live(app).text.plain == "Done: the grid is written.")
         begun = next(index for index, each in enumerate(asked) if each["id"] == "r-10")
         assert asked[begun]["after"] == 0, "a new request: read from its start"

@@ -79,11 +79,35 @@ def holds_focus(app: ClankConsole, panel: str) -> bool:
     return focused_panel(app) == panel
 
 
+async def focused_by(pilot: Pilot[Any], app: ClankConsole, letter: str, panel: str) -> None:
+    """A panel's letter pressed until that panel holds the focus: while its list is filled on a slow machine, a panel
+    can have nothing shown for a moment that takes the focus, and a letter pressed then moves nothing."""
+    for _ in range(10):
+        await pilot.press(letter)
+        try:
+            await settle(pilot, partial(holds_focus, app, panel), seconds=1)
+            return
+        except AssertionError:
+            continue
+    raise AssertionError(f"{letter} never moved the focus to {panel}")
+
+
+def tabs_drawn(app: ClankConsole) -> bool:
+    """Whether the Monitor's tabs row is drawn with each view's title."""
+    tabs = app.query_one("#monitor-tabs", Label)
+    lines = render_text(app).splitlines()
+    if not tabs.region.height or tabs.region.y >= len(lines):
+        return False
+    row = lines[tabs.region.y][tabs.region.x : tabs.region.right]
+    return all(TITLES[view] in row for view in VIEWS)
+
+
 async def opened(pilot: Pilot[Any], app: ClankConsole) -> MonitorPage:
-    """The console loaded, then F10 pressed: the Monitor on screen."""
+    """The console loaded, then F10 pressed: the Monitor on screen, its first reading shown and its tabs drawn (on a
+    slow machine, GitHub's Windows runner, a test that went on at once read a page still being laid out)."""
     await frame_when(pilot, app, "Fake Docker")
     await pilot.press("f10")
-    await settle(pilot, lambda: on_screen(app) == "monitor")
+    await settle(pilot, lambda: on_screen(app) == "monitor" and monitor(app).seen is not None and tabs_drawn(app))
     return monitor(app)
 
 
@@ -222,8 +246,7 @@ async def test_in_the_session_view_a_panels_letter_and_tab_move_the_focus_from_p
     async with app.run_test(size=(160, 40)) as pilot:
         await opened(pilot, app)
         for letter, panel in LETTERS.items():
-            await pilot.press(letter)
-            await settle(pilot, partial(holds_focus, app, panel))
+            await focused_by(pilot, app, letter, panel)
             assert app.query_one(f"#{panel}", Panel).key == letter, "its letter beside its title"
         assert set(LETTERS) == set("cnftbwg")
         await pilot.press("c")
@@ -261,7 +284,7 @@ async def test_question_mark_says_the_heading_line_whole_where_the_page_cuts_it(
     app = make(client, home)
     async with app.run_test(size=(62, 50)) as pilot:  # the page 60 columns wide, no menu beside it (decision 0125)
         await opened(pilot, app)
-        frame = await frame_when(pilot, app, "No session yet")
+        frame = await frame_when(pilot, app, "No session yet", "This folder …")
         await pilot.press("c", "question_mark")
         await settle(pilot, lambda: isinstance(app.screen, DetailsScreen))
         said = " ".join(str(label.content) for label in app.screen.query(Label))

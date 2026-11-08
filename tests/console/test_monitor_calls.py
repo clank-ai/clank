@@ -161,7 +161,7 @@ async def test_when_rows_are_short_tool_calls_give_up_rows_so_no_panel_is_cut(
     async with app.run_test(size=(160, 40)) as pilot:
         page = await opened(pilot, app)
         await settle(pilot, lambda: len(calls(app).shown) > 0)
-        await settle(pilot, lambda: page.max_scroll_y == 0 and calls(app).size.height > 0)
+        await settle(pilot, lambda: page.max_scroll_y == 0 and 0 < calls(app).size.height < ROWS, seconds=20)
         await pilot.pause(0.6)  # a few ticks: it stays so
         assert page.max_scroll_y == 0, "the Session view fits the page: nothing below its last row"
         assert 0 < calls(app).size.height < ROWS, "Tool calls gave up rows"
